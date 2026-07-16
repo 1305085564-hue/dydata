@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Lock, Loader2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -57,7 +57,12 @@ import {
 } from "@/components/submission/填报表单状态";
 import {
   normalizeOptionalText,
+  resolveDraftManualTopicState,
+  resolveDraftTopicId,
+  sanitizeTopicSearchKeyword,
+  shouldAutoBindNewTopic,
   shouldAutoRedirectToGrowthAfterSubmit,
+  shouldAutoSelectSuggestedTopic,
 } from "./video-submit-form-state";
 
 import type {
@@ -479,6 +484,7 @@ export function VideoSubmitForm({
   const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
   const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
   const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(() => createEditableSlots());
+  const slotsRef = useRef(slots);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -502,12 +508,31 @@ export function VideoSubmitForm({
   const [urlLocked, setUrlLocked] = useState(false);
   const [selectedTopicName, setSelectedTopicName] = useState<string>("");
   const [selectedTopicCategory, setSelectedTopicCategory] = useState<string>("");
+  const [topicNameError, setTopicNameError] = useState<"not_found" | "load_failed" | null>(null);
+  const [topicNameRetrySeq, setTopicNameRetrySeq] = useState(0);
+  const [suggestFailed, setSuggestFailed] = useState(false);
+  const [suggestRetrySeq, setSuggestRetrySeq] = useState(0);
+  const urlLockedRef = useRef(urlLocked);
+  const isManuallySetRef = useRef(isManuallySet);
+  const topicIdRef = useRef<FormMetaState["topicId"]>(null);
+  const suggestSeqRef = useRef(0);
 
   // 搜索相关状态（“换一个” Dialog）
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<TopicSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+
+  useEffect(() => {
+    urlLockedRef.current = urlLocked;
+    isManuallySetRef.current = isManuallySet;
+    topicIdRef.current = meta.topicId;
+  }, [urlLocked, isManuallySet, meta.topicId]);
+
+  useEffect(() => {
+    slotsRef.current = slots;
+  }, [slots]);
 
   // 1. URL 锁定逻辑
   useEffect(() => {
@@ -515,6 +540,9 @@ export function VideoSubmitForm({
       const searchParams = new URLSearchParams(window.location.search);
       const urlTopicId = searchParams.get("topicId") || searchParams.get("topic_id");
       if (urlTopicId) {
+        topicIdRef.current = urlTopicId;
+        urlLockedRef.current = true;
+        isManuallySetRef.current = true;
         updateMeta("topicId", urlTopicId);
         setUrlLocked(true);
         setIsManuallySet(true);
@@ -524,34 +552,59 @@ export function VideoSubmitForm({
 
   // 2. 根据选中的 topicId 获取其详细名称
   useEffect(() => {
+    let cancelled = false;
+
     const fetchTopicName = async () => {
+      setSelectedTopicName("");
+      setSelectedTopicCategory("");
+      setTopicNameError(null);
+
       if (!meta.topicId) {
-        setSelectedTopicName("");
-        setSelectedTopicCategory("");
         return;
       }
       try {
         const supabase = createClient();
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("sub_topics")
           .select("title, topics(name)")
           .eq("id", meta.topicId)
           .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          setTopicNameError("load_failed");
+          return;
+        }
         if (data) {
           setSelectedTopicName(data.title);
           setSelectedTopicCategory(getTopicName(data.topics) || "常规母题");
+        } else {
+          setTopicNameError("not_found");
         }
       } catch (err) {
+        if (cancelled) return;
         console.error("获取选题名称失败:", err);
+        setTopicNameError("load_failed");
       }
     };
     void fetchTopicName();
-  }, [meta.topicId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [meta.topicId, topicNameRetrySeq]);
 
   // 3. 监听新建选题事件：自动绑定最新创建的选题
   useEffect(() => {
     const handleNewTopic = async () => {
       if (!userId) return;
+      if (
+        !shouldAutoBindNewTopic({
+          urlLocked: urlLockedRef.current,
+          isManuallySet: isManuallySetRef.current,
+          topicId: topicIdRef.current,
+        })
+      ) {
+        return;
+      }
       try {
         const supabase = createClient();
         const { data } = await supabase
@@ -564,6 +617,8 @@ export function VideoSubmitForm({
 
         if (data) {
           updateMeta("topicId", data.id);
+          topicIdRef.current = data.id;
+          isManuallySetRef.current = true;
           setIsManuallySet(true);
           feedbackToast.success(`已自动关联新创建的选题：“${data.title}”`);
         }
@@ -577,42 +632,73 @@ export function VideoSubmitForm({
 
   // 4. 防抖推荐逻辑
   useEffect(() => {
-    if (urlLocked || isManuallySet) return;
+    suggestSeqRef.current += 1;
+    if (urlLocked || isManuallySet) {
+      setLoadingSuggestions(false);
+      return;
+    }
     if (!meta.videoTitle.trim() && !meta.content.trim()) {
       setSuggestions([]);
+      setSuggestFailed(false);
+      setLoadingSuggestions(false);
       updateMeta("topicId", null);
       return;
     }
 
     const timer = setTimeout(async () => {
+      const seq = ++suggestSeqRef.current;
       setLoadingSuggestions(true);
+      setSuggestFailed(false);
       try {
         const params = new URLSearchParams();
         params.append("title", meta.videoTitle.trim());
         params.append("content", meta.content.trim());
         const res = await fetch(`/api/topics/sub-topics/suggest?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSuggestions(data || []);
-          if (data && data.length > 0 && !isManuallySet) {
-            updateMeta("topicId", data[0].id);
-          }
+        if (!res.ok) {
+          throw new Error("suggest request failed");
+        }
+        const data = await res.json();
+        if (seq !== suggestSeqRef.current) return;
+        setSuggestions(data || []);
+        if (data && data.length > 0) {
+          setMeta((current) => {
+            if (
+              !shouldAutoSelectSuggestedTopic({
+                urlLocked: urlLockedRef.current,
+                isManuallySet: isManuallySetRef.current,
+                currentTopicId: current.topicId,
+              })
+            ) {
+              return current;
+            }
+            topicIdRef.current = data[0].id;
+            return { ...current, topicId: data[0].id };
+          });
         }
       } catch (err) {
+        if (seq !== suggestSeqRef.current) return;
         console.error("推荐获取失败:", err);
+        setSuggestions([]);
+        setSuggestFailed(true);
       } finally {
-        setLoadingSuggestions(false);
+        if (seq === suggestSeqRef.current) {
+          setLoadingSuggestions(false);
+        }
       }
     }, 450);
 
     return () => clearTimeout(timer);
-  }, [meta.videoTitle, meta.content, urlLocked, isManuallySet]);
+  }, [meta.videoTitle, meta.content, urlLocked, isManuallySet, suggestRetrySeq]);
 
   // 5. 换一个：子题搜索逻辑
   useEffect(() => {
     if (!searchDialogOpen) return;
+    let cancelled = false;
+    setSearching(true);
+    setSearchError(false);
     const delayDebounce = setTimeout(async () => {
       setSearching(true);
+      setSearchError(false);
       try {
         const supabase = createClient();
         let query = supabase
@@ -621,10 +707,17 @@ export function VideoSubmitForm({
           .order("created_at", { ascending: false })
           .limit(10);
         
-        if (searchQuery.trim()) {
-          query = query.ilike("title", `%${searchQuery.trim()}%`);
+        const keyword = sanitizeTopicSearchKeyword(searchQuery);
+        if (keyword) {
+          query = query.or(`title.ilike.%${keyword}%,hook.ilike.%${keyword}%`);
         }
-        const { data } = await query;
+        const { data, error } = await query;
+        if (cancelled) return;
+        if (error) {
+          setSearchResults([]);
+          setSearchError(true);
+          return;
+        }
         if (data) {
           setSearchResults(
             data.map((item) => ({
@@ -635,13 +728,21 @@ export function VideoSubmitForm({
           );
         }
       } catch (err) {
+        if (cancelled) return;
         console.error("搜索选题失败:", err);
+        setSearchResults([]);
+        setSearchError(true);
       } finally {
-        setSearching(false);
+        if (!cancelled) {
+          setSearching(false);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(delayDebounce);
+    return () => {
+      cancelled = true;
+      clearTimeout(delayDebounce);
+    };
   }, [searchQuery, searchDialogOpen]);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
@@ -718,6 +819,7 @@ export function VideoSubmitForm({
     slots: Record<SubmissionSlotRole, SlotViewState>;
     scriptText: string;
     keywordInput: string;
+    isManuallySet?: boolean;
   };
 
   const draftData: DraftData = useMemo(
@@ -731,14 +833,15 @@ export function VideoSubmitForm({
       },
       scriptText,
       keywordInput,
+      isManuallySet,
     }),
-    [meta, fields, slots, scriptText, keywordInput]
+    [meta, fields, slots, scriptText, keywordInput, isManuallySet]
   );
 
   const { hasDraft, restoreDraft, clearDraft, lastSavedAt } = useFormDraft<DraftData>(
     draftKey,
     draftData,
-    [meta, fields, slots, scriptText, keywordInput],
+    [meta, fields, slots, scriptText, keywordInput, isManuallySet],
     { isEmpty: isVideoSubmitDraftEmpty }
   );
 
@@ -748,7 +851,26 @@ export function VideoSubmitForm({
     const draft = restoreDraft();
     if (!draft) return;
 
-    setMeta(draft.meta);
+    setMeta((current) => {
+      const nextTopicId = resolveDraftTopicId({
+        urlLocked: urlLockedRef.current,
+        currentTopicId: current.topicId,
+        draftTopicId: draft.meta.topicId,
+      });
+      topicIdRef.current = nextTopicId;
+      return {
+        ...draft.meta,
+        topicId: nextTopicId,
+      };
+    });
+    setIsManuallySet((current) =>
+      resolveDraftManualTopicState({
+        urlLocked: urlLockedRef.current,
+        currentIsManuallySet: current,
+        draftIsManuallySet: draft.isManuallySet,
+        draftTopicId: draft.meta.topicId,
+      })
+    );
     setFields(draft.fields);
     setSlots((current) => ({
       screenshot_1: { ...current.screenshot_1, ...draft.slots.screenshot_1, file: null, previewUrl: null },
@@ -838,7 +960,14 @@ export function VideoSubmitForm({
       nextMeta.uploadedAt = initialSummary.uploadedAt ?? nextMeta.uploadedAt;
     }
 
-    setMeta(nextMeta);
+    setMeta((current) => {
+      const nextTopicId = urlLockedRef.current ? current.topicId : nextMeta.topicId;
+      topicIdRef.current = nextTopicId;
+      return {
+        ...nextMeta,
+        topicId: nextTopicId,
+      };
+    });
     setFields(createEditableFields());
     setSlots(createEditableSlots());
     setIsSubmitted(false);
@@ -878,6 +1007,9 @@ export function VideoSubmitForm({
         : "提交今日数据";
 
   function updateMeta<Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) {
+    if (key === "topicId") {
+      topicIdRef.current = value as FormMetaState["topicId"];
+    }
     setMeta((current) => ({ ...current, [key]: value }));
   }
 
@@ -1110,6 +1242,9 @@ export function VideoSubmitForm({
         targetRole = "screenshot_2";
       }
 
+      const shouldAutoMoveSlot =
+        role !== targetRole &&
+        (slotsRef.current[targetRole].status === "empty" || slotsRef.current[targetRole].status === "failed");
       setSlots((current) => {
         const newSlotData = {
           ...current[role],
@@ -1155,6 +1290,13 @@ export function VideoSubmitForm({
           [role]: newSlotData,
         };
       });
+
+      if (shouldAutoMoveSlot) {
+        const detectedLabel = detectedType === "data" ? "流量数据图" : detectedType === "retention" ? "留存完播图" : "截图";
+        feedbackToast.success(`已识别为${detectedLabel}，自动归入${SLOT_LABELS[targetRole]}`, {
+          duration: 2000,
+        });
+      }
 
       if (data.slot_status === "failed") {
         feedbackToast.error(resolvedError || OCR_FAIL_MESSAGE);
@@ -1235,7 +1377,7 @@ export function VideoSubmitForm({
 
   function handleSlotRetry(role: SubmissionSlotRole) {
     const slot = slots[role];
-    if (slot.error !== NETWORK_RETRY_MESSAGE || !slot.file) {
+    if (slot.status !== "failed" || !slot.file) {
       return;
     }
     void handleSlotUpload(role, slot.file);
@@ -1515,6 +1657,9 @@ export function VideoSubmitForm({
       }
 
       if (event.key === "Escape") {
+        if (document.querySelector('[role="dialog"]')) {
+          return;
+        }
         event.preventDefault();
         setActivePanelTab((tab) => (tab === "upload" ? "confirm" : "upload"));
       }
@@ -1546,7 +1691,6 @@ export function VideoSubmitForm({
           className="space-y-4 pb-2"
         >
           <div 
-            onClick={() => setCountdown(null)}
             className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] select-none"
           >
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/5 border border-[#6FAA7D]/10">
@@ -1786,6 +1930,7 @@ export function VideoSubmitForm({
                       <button
                         type="button"
                         onClick={() => setActivePanelTab("upload")}
+                        title="Esc 快速切换"
                         className={cn(
                           "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
                           activePanelTab === "upload"
@@ -1798,6 +1943,7 @@ export function VideoSubmitForm({
                       <button
                         type="button"
                         onClick={() => setActivePanelTab("confirm")}
+                        title="Esc 快速切换"
                         className={cn(
                           "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
                           activePanelTab === "confirm"
@@ -1919,35 +2065,38 @@ export function VideoSubmitForm({
                       <Lightbulb className="size-4 text-[#D97757]" />
                       <span>关联选题库</span>
                     </Label>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSearchDialogOpen(true)}
-                        className="text-[12px] font-medium text-[#8AA8C7] hover:underline focus:outline-none cursor-pointer"
-                      >
-                        换一个
-                      </button>
-                      <span className="text-stone-300 text-[10px]">|</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateMeta("topicId", null);
-                          setIsManuallySet(true);
-                        }}
-                        className="text-[12px] font-medium text-stone-400 hover:text-stone-600 focus:outline-none cursor-pointer"
-                      >
-                        暂无对应
-                      </button>
-                      <span className="text-stone-300 text-[10px]">|</span>
-                      <button
-                        type="button"
-                        onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
-                        className="text-[12px] font-medium text-[#D97757] hover:underline inline-flex items-center gap-0.5 focus:outline-none cursor-pointer"
-                      >
-                        <Plus className="size-3 stroke-[2.5]" />
-                        <span>新建选题</span>
-                      </button>
-                    </div>
+                    {!urlLocked ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSearchDialogOpen(true)}
+                          className="text-[12px] font-medium text-[#8AA8C7] hover:underline focus:outline-none cursor-pointer"
+                        >
+                          换一个
+                        </button>
+                        <span className="text-stone-300 text-[10px]">|</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateMeta("topicId", null);
+                            isManuallySetRef.current = true;
+                            setIsManuallySet(true);
+                          }}
+                          className="text-[12px] font-medium text-stone-400 hover:text-stone-600 focus:outline-none cursor-pointer"
+                        >
+                          暂无对应
+                        </button>
+                        <span className="text-stone-300 text-[10px]">|</span>
+                        <button
+                          type="button"
+                          onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
+                          className="text-[12px] font-medium text-[#D97757] hover:underline inline-flex items-center gap-0.5 focus:outline-none cursor-pointer"
+                        >
+                          <Plus className="size-3 stroke-[2.5]" />
+                          <span>新建选题</span>
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
 
                   {meta.topicId ? (
@@ -1959,11 +2108,37 @@ export function VideoSubmitForm({
                           </span>
                         )}
                         <span className="text-[12.5px] font-semibold text-stone-800 truncate">
-                          {selectedTopicName || "获取选题信息中..."}
+                          {topicNameError === "not_found"
+                            ? "未找到该选题（可能已被删除）"
+                            : topicNameError === "load_failed"
+                              ? "选题信息加载失败"
+                              : selectedTopicName || "获取选题信息中..."}
                         </span>
                       </div>
                       
-                      {urlLocked ? (
+                      {topicNameError === "not_found" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            updateMeta("topicId", null);
+                            urlLockedRef.current = false;
+                            isManuallySetRef.current = true;
+                            setUrlLocked(false);
+                            setIsManuallySet(true);
+                          }}
+                          className="shrink-0 text-[10.5px] text-stone-500 hover:text-stone-700 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium"
+                        >
+                          清除关联
+                        </button>
+                      ) : topicNameError === "load_failed" ? (
+                        <button
+                          type="button"
+                          onClick={() => setTopicNameRetrySeq((value) => value + 1)}
+                          className="shrink-0 text-[10.5px] text-stone-500 hover:text-stone-700 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium"
+                        >
+                          重试
+                        </button>
+                      ) : urlLocked ? (
                         <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-stone-400 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium select-none">
                           <Lock className="size-3 text-stone-400" />
                           认领锁定
@@ -1982,6 +2157,31 @@ export function VideoSubmitForm({
                             <Loader2 className="size-3 animate-spin text-stone-400" />
                             <span>正在匹配关联的选题...</span>
                           </div>
+                        ) : suggestFailed ? (
+                          <div className="flex items-center gap-2 py-1">
+                            <span className="text-[#C9604D]">选题推荐加载失败</span>
+                            <button
+                              type="button"
+                              onClick={() => setSuggestRetrySeq((value) => value + 1)}
+                              className="text-[11.5px] font-medium text-stone-500 hover:text-stone-700 underline-offset-2 hover:underline"
+                            >
+                              重试
+                            </button>
+                          </div>
+                        ) : isManuallySet && !urlLocked ? (
+                          <div className="flex items-center justify-between gap-3 py-1">
+                            <span className="text-stone-500">已标记：本条作品暂无对应选题</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                isManuallySetRef.current = false;
+                                setIsManuallySet(false);
+                              }}
+                              className="shrink-0 text-[11.5px] font-medium text-[#8AA8C7] hover:underline"
+                            >
+                              重新自动匹配
+                            </button>
+                          </div>
                         ) : suggestions.length > 0 ? (
                           <div className="space-y-1.5">
                             <span className="block text-[11px] font-medium text-stone-400">系统根据标题/文案推荐选题：</span>
@@ -1992,6 +2192,8 @@ export function VideoSubmitForm({
                                   type="button"
                                   onClick={() => {
                                     updateMeta("topicId", s.id);
+                                    isManuallySetRef.current = true;
+                                    setIsManuallySet(true);
                                   }}
                                   className="inline-flex items-center rounded-lg border border-stone-200 bg-white hover:border-stone-300 px-2 py-1 text-[11px] font-medium text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
                                 >
@@ -2183,10 +2385,13 @@ export function VideoSubmitForm({
                       <span>{issueSummary.reason || "请补全必要信息"}</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
-                      <span>已就绪,可提交</span>
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+                        <span>已就绪,可提交</span>
+                      </span>
+                      <span className="text-[12px] text-stone-400">⌘/Ctrl + Enter 快捷提交</span>
+                    </div>
                   )}
                 </div>
 
@@ -2243,7 +2448,21 @@ export function VideoSubmitForm({
       </AnimatePresence>
 
       {/* 模糊选择选题 Dialog */}
-      <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
+      <Dialog
+        open={searchDialogOpen}
+        onOpenChange={(open) => {
+          setSearchDialogOpen(open);
+          if (open) {
+            setSearching(true);
+            setSearchError(false);
+          } else {
+            setSearchQuery("");
+            setSearchResults([]);
+            setSearchError(false);
+            setSearching(false);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[460px] p-5 rounded-2xl">
           <DialogHeader>
             <DialogTitle>选择关联的子选题</DialogTitle>
@@ -2263,6 +2482,10 @@ export function VideoSubmitForm({
               <div className="flex h-36 items-center justify-center">
                 <Loader2 className="size-5 animate-spin text-stone-400" />
               </div>
+            ) : searchError ? (
+              <div className="flex h-36 items-center justify-center text-[12.5px] text-[#C9604D]">
+                搜索失败，请重试
+              </div>
             ) : searchResults.length === 0 ? (
               <div className="flex h-36 items-center justify-center text-[12.5px] text-stone-400">
                 未搜索到匹配的选题
@@ -2275,9 +2498,13 @@ export function VideoSubmitForm({
                     type="button"
                     onClick={() => {
                       updateMeta("topicId", item.id);
+                      isManuallySetRef.current = true;
                       setIsManuallySet(true);
                       setSearchDialogOpen(false);
                       setSearchQuery("");
+                      setSearchResults([]);
+                      setSearchError(false);
+                      setSearching(false);
                     }}
                     className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-stone-50/50 hover:bg-stone-50 hover:border-stone-300 p-3 text-left text-[12.5px] font-medium text-stone-700 transition-colors cursor-pointer"
                   >
@@ -2291,7 +2518,18 @@ export function VideoSubmitForm({
             )}
           </div>
           <DialogFooter>
-            <Button size="sm" variant="outline" onClick={() => setSearchDialogOpen(false)} className="rounded-lg">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setSearchDialogOpen(false);
+                setSearchQuery("");
+                setSearchResults([]);
+                setSearchError(false);
+                setSearching(false);
+              }}
+              className="rounded-lg"
+            >
               关闭
             </Button>
           </DialogFooter>
@@ -2325,10 +2563,22 @@ function VideoStatusSegmented({
   value: AnomalyStatus;
   onChange: (next: AnomalyStatus) => void;
 }) {
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const currentIndex = VIDEO_STATUS_OPTIONS.findIndex((option) => option.value === value);
+    const nextIndex =
+      event.key === "ArrowRight"
+        ? (currentIndex + 1) % VIDEO_STATUS_OPTIONS.length
+        : (currentIndex - 1 + VIDEO_STATUS_OPTIONS.length) % VIDEO_STATUS_OPTIONS.length;
+    onChange(VIDEO_STATUS_OPTIONS[nextIndex].value);
+  };
+
   return (
     <div
       role="radiogroup"
       aria-label="视频状态"
+      onKeyDown={handleKeyDown}
       className="inline-flex h-9 items-center rounded-full border border-stone-200 bg-stone-50 p-0.5"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
