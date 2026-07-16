@@ -81,7 +81,7 @@ export function GlobalTopicCreate() {
         }
       } catch (err) {
         console.error("加载母题失败:", err);
-        feedbackToast.error("加载母题列表失败，使用本地预设", {
+        feedbackToast.error("加载母题列表失败，请刷新后重试", {
           details: err instanceof Error ? err.message : String(err)
         });
       } finally {
@@ -97,7 +97,7 @@ export function GlobalTopicCreate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTopicId) {
+    if (!selectedTopicId || selectedTopicId.startsWith("temp-")) {
       feedbackToast.warning("请选择一个母题分类");
       return;
     }
@@ -114,7 +114,7 @@ export function GlobalTopicCreate() {
         body: JSON.stringify({
           title: inputText.trim(),
           hook: inputText.trim(),
-          topic_id: selectedTopicId.startsWith("temp-") ? null : selectedTopicId
+          topic_id: selectedTopicId
         })
       });
 
@@ -187,6 +187,11 @@ export function GlobalTopicCreate() {
                 })}
               </div>
             )}
+            {!isLoadingTopics && topics.length === 0 && (
+              <div className="rounded-lg border border-[#C9604D]/15 bg-[#C9604D]/5 px-3 py-2 text-[12px] text-[#C9604D]">
+                母题加载失败，请刷新后重试
+              </div>
+            )}
           </div>
 
           {/* 一句话选题 */}
@@ -223,7 +228,7 @@ export function GlobalTopicCreate() {
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || !selectedTopicId || !inputText.trim()}
+              disabled={isSubmitting || !selectedTopicId || selectedTopicId.startsWith("temp-") || topics.length === 0 || !inputText.trim()}
               className="h-8.5 rounded-lg px-5 font-medium"
             >
               {isSubmitting ? (

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
+    "seed:topics": "tsx scripts/seed-topic-library.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
     "perf:ttfb": "node scripts/measure-ttfb.mjs",
     "analyze": "ANALYZE=true next build"

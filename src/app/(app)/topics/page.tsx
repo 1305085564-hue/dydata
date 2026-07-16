@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { SubTopicCard, type SubTopicItem } from "@/components/topics/sub-topic-card";
+import { SubTopicCard, type SubTopicItem, type SubTopicClaim } from "@/components/topics/sub-topic-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,27 +26,16 @@ interface TopicInfo {
   sort_order: number;
 }
 
-interface TopicBase {
-  id: string;
-  title: string;
-  hook: string;
-  topics: {
-    id: string;
-    name: string;
-  } | null;
-  topic_groups: {
-    id: string;
-    name: string;
-  } | null;
+function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
+  return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
 
-interface ClaimRecord {
-  id: string;
-  sub_topic_id: string;
-  user_id: string;
-  status: "candidate" | "scripting" | "returned";
-  claimed_at: string;
-  sub_topics: TopicBase & { created_by: string } | null;
+function isClaimedByMe(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
+  return !!getMyClaim(item, currentUserId);
+}
+
+function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | null }>, currentUserId: string) {
+  return items.filter((item) => getMyClaim(item, currentUserId)?.status === "candidate").length;
 }
 
 export default function TopicPoolPage() {
@@ -63,7 +52,8 @@ export default function TopicPoolPage() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   // 认领上限校验辅助
-  const [myClaims, setMyClaims] = useState<ClaimRecord[]>([]);
+  // /api/topics/pool?view=my_claims 返回的是子题列表，不是认领记录
+  const [myClaims, setMyClaims] = useState<SubTopicItem[]>([]);
   
   // 折叠母题 ID 集合
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<Set<string>>(new Set());
@@ -179,12 +169,9 @@ export default function TopicPoolPage() {
     void fetchPoolData(nextPage, true);
   };
 
-  const activeCandidateCount = myClaims.filter((c) => c.status === "candidate").length;
+  // 从子题内的 sub_topic_claims 统计当前用户的 candidate 数量
+  const activeCandidateCount = countMyCandidates(myClaims, currentUserId);
   const isLimitReached = activeCandidateCount >= 5;
-
-  const isClaimedByMe = (subTopicId: string) => {
-    return myClaims.some((c) => c.sub_topic_id === subTopicId);
-  };
 
   // 根据母题进行前端分组聚合
   const groupedGroups = useMemo(() => {
@@ -372,7 +359,7 @@ export default function TopicPoolPage() {
                           item={subTopic}
                           currentUserId={currentUserId}
                           isLimitReached={isLimitReached}
-                          isClaimedByMe={isClaimedByMe(subTopic.id)}
+                          isClaimedByMe={isClaimedByMe(subTopic, currentUserId)}
                           onClaimSuccess={fetchMyClaims}
                         />
                       ))}

@@ -24,7 +24,7 @@ interface TopicSummary {
   latestCopy: string | null;
 }
 
-interface SubTopicClaim {
+export interface SubTopicClaim {
   id: string;
   user_id: string;
   status: "candidate" | "scripting" | "returned";
@@ -45,6 +45,7 @@ export interface SubTopicItem {
   topics: {
     id: string;
     name: string;
+    sort_order?: number;
   } | null;
   topic_groups: {
     id: string;

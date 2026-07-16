@@ -48,6 +48,7 @@ export interface VideoSubmitValidationResult {
     platform_notice: string | null;
     appeal: string | null;
     topic_tag: string | null;
+    topic_id: string | null;
     video_form: string | null;
     content_keywords: string[];
     script_text: string | null;
@@ -196,6 +197,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       platform_notice: normalizeOptionalText(payload.platform_notice),
       appeal: normalizeOptionalText(payload.appeal),
       topic_tag: normalizeOptionalText(payload.topic_tag),
+      topic_id: normalizeVideoIdLike(payload.topic_id),
       video_form: normalizeOptionalText(payload.video_form),
       content_keywords: keywords,
       script_text: normalizeOptionalText(payload.script_text),

@@ -52,6 +52,7 @@ test("提交校验会返回规范化后的写入数据", () => {
     biz_date: "2025-04-08",
     anomaly_status: " 正常 ",
     topic_tag: " 干货 ",
+    topic_id: "123e4567-e89b-12d3-a456-426614174001",
     video_form: " 出镜 ",
     content_keywords: [" 复盘 ", "热点"],
     script_text: "  关注公众号领取复盘表  ",
@@ -85,6 +86,7 @@ test("提交校验会返回规范化后的写入数据", () => {
   assert.equal(result.normalized.published_at_text, "2025-04-08 12:00");
   assert.equal(result.normalized.anomaly_status, "normal");
   assert.equal(result.normalized.topic_tag, "干货");
+  assert.equal(result.normalized.topic_id, "123e4567-e89b-12d3-a456-426614174001");
   assert.equal(result.normalized.video_form, "出镜");
   assert.equal(result.normalized.script_text, "关注公众号领取复盘表");
   assert.equal(result.normalized.script_format, "mixed");

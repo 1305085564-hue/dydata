@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -146,6 +147,19 @@ type ScreenshotUploadResponse = {
   };
   error?: string;
 };
+
+export interface TopicSuggestion {
+  id: string;
+  title: string;
+  hook?: string;
+  topics?: { name: string }[] | { name: string } | null;
+}
+
+function getTopicName(topics: TopicSuggestion["topics"]) {
+  if (!topics) return null;
+  if (Array.isArray(topics)) return topics[0]?.name ?? null;
+  return topics.name ?? null;
+}
 
 type FormMetaState = {
   videoUrl: string;
@@ -481,15 +495,6 @@ export function VideoSubmitForm({
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
 
-  interface TopicSuggestion {
-    id: string;
-    title: string;
-    hook: string;
-    topics?: {
-      name: string;
-    } | null;
-  }
-
   // 关联选题相关状态
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -534,7 +539,7 @@ export function VideoSubmitForm({
           .maybeSingle();
         if (data) {
           setSelectedTopicName(data.title);
-          setSelectedTopicCategory(data.topics?.name || "常规母题");
+          setSelectedTopicCategory(getTopicName(data.topics) || "常规母题");
         }
       } catch (err) {
         console.error("获取选题名称失败:", err);
@@ -621,7 +626,13 @@ export function VideoSubmitForm({
         }
         const { data } = await query;
         if (data) {
-          setSearchResults(data);
+          setSearchResults(
+            data.map((item) => ({
+              id: item.id,
+              title: item.title,
+              topics: item.topics,
+            }))
+          );
         }
       } catch (err) {
         console.error("搜索选题失败:", err);
@@ -1317,6 +1328,7 @@ export function VideoSubmitForm({
           appeal: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.appeal ?? "") : undefined,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
+          topic_id: meta.topicId || null,
           content_keywords: meta.contentKeywords,
           assets: buildAssets(slots),
           script_text: parseMetric(fields.follower_convert.value) > 0 ? scriptText.trim() || null : null,
@@ -2271,7 +2283,7 @@ export function VideoSubmitForm({
                   >
                     <span className="truncate max-w-[240px] text-stone-800 font-semibold">{item.title}</span>
                     <span className="text-[10px] bg-stone-200/85 px-1.5 py-0.5 rounded-md text-stone-500 font-semibold">
-                      {item.topics?.name || "常规"}
+                      {getTopicName(item.topics) || "常规"}
                     </span>
                   </button>
                 ))}

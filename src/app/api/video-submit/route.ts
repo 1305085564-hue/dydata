@@ -136,11 +136,12 @@ export async function POST(request: NextRequest) {
     punish_type: normalized.punish_type,
     platform_notice: normalized.platform_notice,
     appeal: normalized.appeal,
+    topic_id: normalized.topic_id,
   };
 
   const { data: existingVideo, error: existingVideoError } = await supabase
     .from("videos")
-    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, created_at")
+    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, created_at")
     .eq("id", submissionVideoId)
     .maybeSingle();
 

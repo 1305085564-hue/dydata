@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -23,13 +24,26 @@ interface TopicBase {
   } | null;
 }
 
+interface SubTopicClaim {
+  id: string;
+  user_id: string;
+  status: "candidate" | "scripting" | "returned";
+  claimed_at: string;
+}
+
+interface SubTopicItem extends TopicBase {
+  created_by: string;
+  created_at: string;
+  sub_topic_claims?: SubTopicClaim[];
+}
+
 interface ClaimRecord {
   id: string;
   sub_topic_id: string;
   user_id: string;
   status: "candidate" | "scripting" | "returned";
   claimed_at: string;
-  sub_topics: TopicBase & { created_by: string } | null;
+  sub_topics: SubTopicItem | null;
 }
 
 interface WorkRecord {
@@ -45,22 +59,47 @@ interface WorkRecord {
 interface ActiveData {
   recentlyClaimed: ClaimRecord[];
   recentlyWorked: WorkRecord[];
-  recentlyCreated: (TopicBase & { created_at: string })[];
+  recentlyCreated: SubTopicItem[];
+}
+
+function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
+  return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
+}
+
+function isClaimedByMe(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
+  return !!getMyClaim(item, currentUserId);
+}
+
+function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | null }>, currentUserId: string) {
+  return items.filter((item) => getMyClaim(item, currentUserId)?.status === "candidate").length;
 }
 
 export default function TodayWorkspacePage() {
   const [data, setData] = useState<ActiveData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [myClaims, setMyClaims] = useState<ClaimRecord[]>([]);
+  const [myClaims, setMyClaims] = useState<SubTopicItem[]>([]);
   const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set());
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  // 获取当前用户 ID
+  useEffect(() => {
+    const getUserId = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    void getUserId();
+  }, []);
 
   // 获取当前用户的所有认领状态，以限制 5 条及展示“已认领”
+  // /api/topics/pool?view=my_claims 返回的是子题列表，不是认领记录
   const fetchMyClaims = async () => {
     try {
       const res = await fetch("/api/topics/pool?view=my_claims&time_range=3m");
       if (res.ok) {
         const json = await res.json();
-        // 过滤出 status 为 candidate 的认领
         setMyClaims(json.items || []);
       }
     } catch (err) {
@@ -99,13 +138,14 @@ export default function TodayWorkspacePage() {
     return () => window.removeEventListener("refresh-topics", handleRefresh);
   }, [loadAll]);
 
-  // 计算当前属于 candidate 状态的认领总数
-  const activeCandidateCount = myClaims.filter((c) => c.status === "candidate").length;
+  // 计算当前属于 candidate 状态的认领总数（从子题内的 sub_topic_claims 匹配当前用户）
+  const activeCandidateCount = countMyCandidates(myClaims, currentUserId);
   const isLimitReached = activeCandidateCount >= 5;
 
-  // 判断是否已被当前用户认领（在 myClaims 列表中存在且未 returned）
-  const isClaimedByMe = (subTopicId: string) => {
-    return myClaims.some((c) => c.sub_topic_id === subTopicId);
+  // 判断是否已被当前用户认领
+  const isClaimedByMeCached = (subTopicId: string) => {
+    const item = myClaims.find((c) => c.id === subTopicId);
+    return item ? isClaimedByMe(item, currentUserId) : false;
   };
 
   // 处理一键认领
@@ -234,7 +274,7 @@ export default function TodayWorkspacePage() {
               data.recentlyClaimed.map((record) => {
                 const subTopic = record.sub_topics;
                 if (!subTopic) return null;
-                const isClaimed = isClaimedByMe(subTopic.id);
+                const isClaimed = isClaimedByMeCached(subTopic.id);
                 const isClaiming = claimingIds.has(subTopic.id);
 
                 return (
@@ -272,7 +312,7 @@ export default function TodayWorkspacePage() {
                       </div>
 
                       {isClaimed ? (
-                        <Link href={`/topics/${subTopic.id}`}>
+                        <Link href={`/dashboard?topicId=${subTopic.id}`}>
                           <Button size="xs" variant="outline" className="h-6.5 rounded-md gap-0.5 text-[11.5px]">
                             去创作 <ChevronRight className="size-3" />
                           </Button>
@@ -320,7 +360,7 @@ export default function TodayWorkspacePage() {
               data.recentlyWorked.map((work) => {
                 const subTopic = work.sub_topics;
                 if (!subTopic) return null;
-                const isClaimed = isClaimedByMe(subTopic.id);
+                const isClaimed = isClaimedByMeCached(subTopic.id);
                 const isClaiming = claimingIds.has(subTopic.id);
 
                 return (
@@ -360,7 +400,7 @@ export default function TodayWorkspacePage() {
                         </span>
 
                         {isClaimed ? (
-                          <Link href={`/topics/${subTopic.id}`}>
+                          <Link href={`/dashboard?topicId=${subTopic.id}`}>
                             <Button size="xs" variant="outline" className="h-6.5 rounded-md gap-0.5 text-[11.5px]">
                               去创作 <ChevronRight className="size-3" />
                             </Button>
@@ -407,7 +447,7 @@ export default function TodayWorkspacePage() {
               </div>
             ) : (
               data.recentlyCreated.map((subTopic) => {
-                const isClaimed = isClaimedByMe(subTopic.id);
+                const isClaimed = isClaimedByMeCached(subTopic.id);
                 const isClaiming = claimingIds.has(subTopic.id);
 
                 return (
@@ -445,7 +485,7 @@ export default function TodayWorkspacePage() {
                       </div>
 
                       {isClaimed ? (
-                        <Link href={`/topics/${subTopic.id}`}>
+                        <Link href={`/dashboard?topicId=${subTopic.id}`}>
                           <Button size="xs" variant="outline" className="h-6.5 rounded-md gap-0.5 text-[11.5px]">
                             去创作 <ChevronRight className="size-3" />
                           </Button>

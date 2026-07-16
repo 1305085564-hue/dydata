@@ -90,12 +90,20 @@ interface AllClaimsRecord {
   } | null;
 }
 
-interface ClaimRecord {
+interface SubTopicClaim {
   id: string;
-  sub_topic_id: string;
   user_id: string;
   status: "candidate" | "scripting" | "returned";
   claimed_at: string;
+}
+
+interface SubTopicItemWithClaims {
+  id: string;
+  sub_topic_claims?: SubTopicClaim[];
+}
+
+function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
+  return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
 
 export default function TopicDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
@@ -136,19 +144,23 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   }, []);
 
   // 加载认领上限校验
+  // /api/topics/pool?view=my_claims 返回的是子题列表，需从每个子题的 sub_topic_claims 中匹配当前用户
   const checkClaimLimit = useCallback(async () => {
+    if (!currentUserId) return;
     try {
       const res = await fetch("/api/topics/pool?view=my_claims&time_range=3m");
       if (res.ok) {
         const json = await res.json();
-        const activeClaims: ClaimRecord[] = json.items || [];
-        const activeCandidateCount = activeClaims.filter((c) => c.status === "candidate").length;
+        const activeItems: SubTopicItemWithClaims[] = json.items || [];
+        const activeCandidateCount = activeItems.filter(
+          (item) => getMyClaim(item, currentUserId)?.status === "candidate"
+        ).length;
         setClaimLimitReached(activeCandidateCount >= 5);
       }
     } catch (err) {
       console.error("上限检查失败:", err);
     }
-  }, []);
+  }, [currentUserId]);
 
   // 加载当前用户的本题认领记录
   const fetchMyClaim = useCallback(async () => {
@@ -359,7 +371,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
 
         {/* 创作跳转辅助 */}
         {myClaim && (
-          <Link href={`/video-review/submit?topicId=${detail.id}`} className="inline-block">
+          <Link href={`/dashboard?topicId=${detail.id}`} className="inline-block">
             <Button size="sm" className="h-8 rounded-lg gap-1 font-medium bg-[#8AA8C7] hover:bg-[#7998b8]">
               <span>使用此选题去创作/上传</span>
               <ExternalLink className="size-3.5" />
