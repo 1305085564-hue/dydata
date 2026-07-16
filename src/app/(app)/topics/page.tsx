@@ -15,7 +15,6 @@ import {
   Layers,
   Compass,
   CheckCircle,
-  FolderMinus,
   RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -282,7 +281,7 @@ export default function TopicPoolPage() {
             <Calendar className="size-3.5 text-stone-400" />
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as any)}
+              onChange={(e) => setTimeRange(e.target.value as "3d" | "1w" | "1m" | "3m")}
               className="h-8.5 rounded-xl border border-stone-200 bg-white px-3 py-1 text-[12.5px] text-stone-700 outline-none hover:border-stone-300 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20"
             >
               <option value="3d">近 3 天</option>

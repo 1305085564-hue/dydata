@@ -2,11 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Loader2, Plus, Check, ChevronRight, User, Video, Calendar } from "lucide-react";
+import { Loader2, ChevronRight, User, Video, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -53,7 +52,6 @@ export default function TodayWorkspacePage() {
   const [data, setData] = useState<ActiveData | null>(null);
   const [loading, setLoading] = useState(true);
   const [myClaims, setMyClaims] = useState<ClaimRecord[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set());
 
   // 获取当前用户的所有认领状态，以限制 5 条及展示“已认领”
@@ -91,18 +89,6 @@ export default function TodayWorkspacePage() {
   }, []);
 
   useEffect(() => {
-    const getSession = async () => {
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setCurrentUserId(user.id);
-        }
-      } catch (err) {
-        console.error("获取当前用户失败:", err);
-      }
-    };
-    void getSession();
     void loadAll();
 
     // 监听新建选题后的刷新通知

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Check, Lock, Loader2 } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Lock, Loader2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -527,7 +527,7 @@ export function VideoSubmitForm({
       }
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("sub_topics")
           .select("title, topics(name)")
           .eq("id", meta.topicId)
@@ -549,7 +549,7 @@ export function VideoSubmitForm({
       if (!userId) return;
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("sub_topics")
           .select("id, title, topics(name)")
           .eq("created_by", userId)
@@ -619,7 +619,7 @@ export function VideoSubmitForm({
         if (searchQuery.trim()) {
           query = query.ilike("title", `%${searchQuery.trim()}%`);
         }
-        const { data, error } = await query;
+        const { data } = await query;
         if (data) {
           setSearchResults(data);
         }
@@ -2289,6 +2289,7 @@ export function VideoSubmitForm({
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const WIZARD_STEPS = [
   { key: "screenshots", label: "截图与识别", hint: "上传 2 张关键截图，OCR 自动识别成功后会进入下一步。" },
   { key: "metrics", label: "数据指标", hint: "核对识别结果，按需补全播放、互动与留存指标。" },

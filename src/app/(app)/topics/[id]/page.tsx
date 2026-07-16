@@ -15,14 +15,12 @@ import {
   Award,
   Video,
   User,
-  Plus,
-  RefreshCw,
   AlertTriangle,
   ExternalLink,
-  BookOpen
+  BookOpen,
+  TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
 interface TopicDetail {
   id: string;
@@ -100,17 +98,6 @@ interface ClaimRecord {
   claimed_at: string;
 }
 
-interface WorksData {
-  items: WorkItem[];
-  similarReferences: WorkItem[];
-  summary: WorksSummary;
-  pagination: {
-    page: number;
-    pageSize: number;
-    totalItems: number;
-  };
-}
-
 export default function TopicDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
   const router = useRouter();
@@ -124,14 +111,12 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
 
   // 排序与分页
   const [sortType, setSortType] = useState<"best" | "recent">("best");
-  const [worksPage, setWorksPage] = useState(1);
   const [totalWorks, setTotalWorks] = useState(0);
   const [loadingWorks, setLoadingWorks] = useState(false);
 
   // 认领状态
   const [myClaim, setMyClaim] = useState<ClaimInfo | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [isAdmin, setIsAdmin] = useState(false);
   const [allClaims, setAllClaims] = useState<AllClaimsRecord[]>([]); // 全局认领记录 (低频展开看)
   const [showAllClaims, setShowAllClaims] = useState(false);
   
@@ -145,16 +130,6 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
-        
-        // 查 profile 获取 role 用以判断管理员权限
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .single();
-        if (profile) {
-          setIsAdmin(["owner", "admin", "team_admin"].includes(profile.role));
-        }
       }
     };
     void checkUser();
@@ -258,7 +233,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
       } else {
         await fetchWorks(1, sortType);
       }
-    } catch (err) {
+    } catch {
       feedbackToast.error("加载选题详情出错");
     } finally {
       setLoading(false);
@@ -280,7 +255,6 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   // 当切换排序时重新拉取作品
   const handleSortChange = (type: "best" | "recent") => {
     setSortType(type);
-    setWorksPage(1);
     void fetchWorks(1, type);
   };
 
