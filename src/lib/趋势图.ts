@@ -159,7 +159,6 @@ export function build个人趋势数据(
         date,
         score: self?.score ?? null,
         teamAverageScore: team?.score ?? null,
-        teamP70Score: team?.score ?? null,
       };
     }),
   };
@@ -194,8 +193,44 @@ export function build团队趋势数据(
         date,
         score: total?.score ?? null,
         teamAverageScore: team?.score ?? null,
-        teamP70Score: team?.score ?? null,
       };
     }),
   };
+}
+
+
+// ─── 诚实趋势图日期工具（客户端补全连续日序列用） ──────────────────
+
+/** 日期字符串（YYYY-MM-DD）平移天数，无法解析时原样返回 */
+export function 平移日期字符串(date: string, days: number): string {
+  const time = Date.parse(`${date}T00:00:00Z`);
+  if (!Number.isFinite(time)) return date;
+  return new Date(time + days * 86400000).toISOString().slice(0, 10);
+}
+
+/** 两个日期字符串相差天数（b - a），无法解析时返回 null */
+export function 日期相差天数(a: string, b: string): number | null {
+  const aTime = Date.parse(`${a}T00:00:00Z`);
+  const bTime = Date.parse(`${b}T00:00:00Z`);
+  if (!Number.isFinite(aTime) || !Number.isFinite(bTime)) return null;
+  return Math.round((bTime - aTime) / 86400000);
+}
+
+const 连续日期上限 = 400;
+
+/**
+ * 把稀疏日期序列补成从最早日期到 today 的连续日序列。
+ * 日报是日粒度数据，补齐后类目轴的均匀排布 = 真实日期分布；
+ * 缺失日在图表上表现为空档（虚线桥接 / 断流斜纹带）。
+ */
+export function 补全连续日期(dates: string[], today: string): string[] {
+  if (!dates.length) return [];
+  const start = dates.reduce((min, date) => (date < min ? date : min), today);
+  const result: string[] = [];
+  let current = start;
+  while (current <= today && result.length < 连续日期上限) {
+    result.push(current);
+    current = 平移日期字符串(current, 1);
+  }
+  return result;
 }

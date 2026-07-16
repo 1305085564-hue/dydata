@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { GrowthRadarItem } from "@/lib/growth-page";
+import { GROWTH_DIMENSION_RULES, type GrowthRadarItem } from "@/lib/growth-page";
 
 // ─── 雷达图大小常量 ───────────────────────────────────────────
 const RADAR_SIZE = 300;
@@ -53,10 +54,63 @@ function getScores(item: GrowthRadarItem) {
 interface 六维雷达面板Props {
   radar: GrowthRadarItem[];
   weakestDimension?: "开头留人" | "中段跳出" | "整体完播" | "增长转化" | "互动吸引" | "话题爆点" | null;
+  /** 累积期锁定态：只画虚线空六边形骨架，不画任何数据形状 */
+  locked?: boolean;
+  lockedText?: string;
 }
 
-export function SixRadarPanel({ radar, weakestDimension }: 六维雷达面板Props) {
+function 锁定雷达({ text }: { text: string }) {
+  const dimensions = GROWTH_DIMENSION_RULES.map((rule) => rule.name);
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative flex w-full max-w-[320px] items-center justify-center">
+        <svg viewBox="-20 -20 340 340" className="w-full" aria-label="能力画像未解锁">
+          {Array.from({ length: LEVELS }, (_, level) => {
+            const radius = ((level + 1) / LEVELS) * MAX_RADIUS;
+            const points = Array.from({ length: DIMS }, (_, i) => {
+              const { x, y } = polarToXY(radius, i);
+              return `${x},${y}`;
+            }).join(" ");
+            return (
+              <polygon
+                key={level}
+                points={points}
+                fill="none"
+                stroke="#E7E5E4"
+                strokeWidth="1"
+                strokeDasharray="4,3"
+              />
+            );
+          })}
+          {dimensions.map((dimension, i) => {
+            const { x, y } = polarToXY(MAX_RADIUS + 16, i);
+            let textAnchor: "start" | "end" | "middle" = "middle";
+            if (i === 1 || i === 2) textAnchor = "start";
+            if (i === 4 || i === 5) textAnchor = "end";
+            return (
+              <text key={dimension} x={x} y={y + 4} textAnchor={textAnchor} fontSize="11" fill="#A8A29E" className="select-none">
+                {dimension}
+              </text>
+            );
+          })}
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-400 shadow-sm">
+            <Lock className="h-4.5 w-4.5" />
+          </span>
+        </div>
+      </div>
+      <p className="max-w-[260px] text-center text-[12px] leading-[1.6] text-stone-500">{text}</p>
+    </div>
+  );
+}
+
+export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedText }: 六维雷达面板Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  if (locked) {
+    return <锁定雷达 text={lockedText ?? "随日报积累自动解锁。解锁前不画假形状。"} />;
+  }
 
   if (!radar || radar.length === 0) {
     return (

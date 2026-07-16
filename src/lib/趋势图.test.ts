@@ -9,7 +9,7 @@ async function load趋势图模块() {
   }
 }
 
-test("个人趋势数据会按日期汇总并合并团队人均线", async () => {
+test("个人趋势数据会按日期汇总并合并团队 P70 线", async () => {
   const mod = await load趋势图模块();
   const build个人趋势数据 = mod?.build个人趋势数据;
 
@@ -106,34 +106,34 @@ test("个人趋势数据会按日期汇总并合并团队人均线", async () =>
       {
         date: "2026-03-15",
         playCount: 150,
-        playCountTeamAverage: 70,
+        playCountTeamAverage: 82,
         followerGain: 8,
-        followerGainTeamAverage: 3.5,
+        followerGainTeamAverage: 4.1,
       },
       {
         date: "2026-03-16",
         playCount: 80,
-        playCountTeamAverage: 50,
+        playCountTeamAverage: 62,
         followerGain: 2,
-        followerGainTeamAverage: 1.5,
+        followerGainTeamAverage: 1.7,
       },
     ],
     互动趋势: [
       {
         date: "2026-03-15",
         score: 14.3,
-        teamAverageScore: 6.4,
+        teamAverageScore: 8,
       },
       {
         date: "2026-03-16",
         score: 3.7,
-        teamAverageScore: 2.35,
+        teamAverageScore: 2.89,
       },
     ],
   });
 });
 
-test("团队趋势数据会返回每日总和与 active 成员人均", async () => {
+test("团队趋势数据会返回每日总和与 active 成员 P70", async () => {
   const mod = await load趋势图模块();
   const build团队趋势数据 = mod?.build团队趋势数据;
 
@@ -198,28 +198,28 @@ test("团队趋势数据会返回每日总和与 active 成员人均", async () 
       {
         date: "2026-03-15",
         playCount: 140,
-        playCountTeamAverage: 70,
+        playCountTeamAverage: 82,
         followerGain: 7,
-        followerGainTeamAverage: 3.5,
+        followerGainTeamAverage: 4.1,
       },
       {
         date: "2026-03-16",
         playCount: 100,
-        playCountTeamAverage: 50,
+        playCountTeamAverage: 62,
         followerGain: 3,
-        followerGainTeamAverage: 1.5,
+        followerGainTeamAverage: 1.7,
       },
     ],
     互动趋势: [
       {
         date: "2026-03-15",
         score: 12.8,
-        teamAverageScore: 6.4,
+        teamAverageScore: 8,
       },
       {
         date: "2026-03-16",
         score: 4.7,
-        teamAverageScore: 2.35,
+        teamAverageScore: 2.89,
       },
     ],
   });
@@ -242,3 +242,23 @@ test("图表 Y 轴上限会忽略空值并处理全零数据", async () => {
   assert.equal(getTrendAxisUpperBound?.([null, 980, 1200]), 2000);
 });
 
+
+
+test("日期工具：平移、相差天数与连续日期补全", async () => {
+  const mod = await load趋势图模块();
+
+  assert.equal(mod?.平移日期字符串?.("2026-07-01", 15), "2026-07-16");
+  assert.equal(mod?.平移日期字符串?.("2026-06-28", 5), "2026-07-03");
+  assert.equal(mod?.平移日期字符串?.("2025-12-30", 3), "2026-01-02");
+  assert.equal(mod?.日期相差天数?.("2026-07-01", "2026-07-16"), 15);
+  assert.equal(mod?.日期相差天数?.("2026-07-16", "2026-07-01"), -15);
+
+  assert.deepEqual(mod?.补全连续日期?.(["2026-07-12", "2026-07-10"], "2026-07-12"), [
+    "2026-07-10",
+    "2026-07-11",
+    "2026-07-12",
+  ]);
+  assert.deepEqual(mod?.补全连续日期?.([], "2026-07-12"), []);
+  // 数据日期全都晚于 today 时，起点收敛到 today
+  assert.deepEqual(mod?.补全连续日期?.(["2026-07-20"], "2026-07-12"), ["2026-07-12"]);
+});

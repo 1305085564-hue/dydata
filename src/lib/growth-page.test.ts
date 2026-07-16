@@ -8,6 +8,8 @@ import {
   buildScriptBreakdownData,
   buildWeakBenchmarkCards,
   getGrowthCredibility,
+  resolveGrowthPhase,
+  resolveGrowthStage,
 } from "./growth-page";
 
 type MetricsReport = {
@@ -342,4 +344,115 @@ test("buildGrowthDataContract 有结构化脚本时按顺序返回，缺实名�
       { type: "core_point", order: 2, content: "再给方法" },
     ],
   });
+});
+
+
+test("resolveGrowthPhase 按全历史份数和团队人数划分三态", () => {
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 0, teamActiveCount: 8 }), "accumulation");
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 9, teamActiveCount: 8 }), "accumulation");
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 10, teamActiveCount: 8 }), "observation");
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 30, teamActiveCount: 8 }), "observation");
+  // >30 份但团队不足 5 人时不升成熟期
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 31, teamActiveCount: 4 }), "observation");
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 31, teamActiveCount: 5 }), "mature");
+  assert.equal(resolveGrowthPhase({ lifetimeReportCount: 60, teamActiveCount: 12 }), "mature");
+});
+
+test("resolveGrowthStage 断流超过 3 天只标记 isStale 不改变期", () => {
+  const windowReports = Array.from({ length: 12 }, (_, index) =>
+    buildReport({ report_date: `2026-07-${String(index + 1).padStart(2, "0")}` }),
+  );
+  const stage = resolveGrowthStage({
+    windowReports,
+    context: {
+      now: new Date("2026-07-16T08:00:00+08:00"),
+      lifetimeReportCount: 12,
+      lastReportDate: "2026-07-12",
+      teamActiveCount: 6,
+    },
+  });
+
+  assert.equal(stage.phase, "observation");
+  assert.equal(stage.daysSinceLastReport, 4);
+  assert.equal(stage.isStale, true);
+  assert.equal(stage.windowReportCount, 12);
+
+  const notStale = resolveGrowthStage({
+    windowReports,
+    context: {
+      now: new Date("2026-07-16T08:00:00+08:00"),
+      lifetimeReportCount: 12,
+      lastReportDate: "2026-07-13",
+      teamActiveCount: 6,
+    },
+  });
+  assert.equal(notStale.daysSinceLastReport, 3);
+  assert.equal(notStale.isStale, false);
+});
+
+test("resolveGrowthStage 缺省上下文时退化为窗口口径，且全历史份数不小于窗口份数", () => {
+  const windowReports = [buildReport({ report_date: "2026-07-10" }), buildReport({ report_date: "2026-07-12" })];
+  const fallback = resolveGrowthStage({ windowReports });
+  assert.equal(fallback.lifetimeReportCount, 2);
+  assert.equal(fallback.lastReportDate, "2026-07-12");
+  assert.equal(fallback.phase, "accumulation");
+
+  const guarded = resolveGrowthStage({
+    windowReports,
+    context: { lifetimeReportCount: 1, lastReportDate: undefined },
+  });
+  assert.equal(guarded.lifetimeReportCount, 2);
+  // 上下文缺省时回退到窗口内最近日期
+  assert.equal(guarded.lastReportDate, "2026-07-12");
+});
+
+test("buildGrowthDataContract 重度断流（窗口空但全历史有数据）不误报新人空态", () => {
+  const frozen = buildGrowthDataContract({
+    profileName: "老成员",
+    accountCount: 1,
+    myProfileId: "self-user",
+    myReports: [],
+    teamReports: [],
+    scriptSegments: [],
+    scriptSegmentsByAccountId: new Map(),
+    growthContext: { lifetimeReportCount: 20, lastReportDate: "2026-06-01", teamActiveCount: 6, now: new Date("2026-07-16T08:00:00+08:00") },
+  });
+
+  assert.equal(frozen.emptyState.isEmpty, false);
+  assert.equal(frozen.stage.phase, "observation");
+  assert.equal(frozen.stage.isStale, true);
+  assert.equal(frozen.stage.windowReportCount, 0);
+  assert.equal(frozen.verdict, null);
+
+  const newcomer = buildGrowthDataContract({
+    profileName: "新同事",
+    accountCount: 0,
+    myProfileId: "new-user",
+    myReports: [],
+    teamReports: [],
+    scriptSegments: [],
+    scriptSegmentsByAccountId: new Map(),
+    growthContext: { lifetimeReportCount: 0, lastReportDate: null, teamActiveCount: 6 },
+  });
+  assert.equal(newcomer.emptyState.isEmpty, true);
+  assert.equal(newcomer.stage.phase, "accumulation");
+});
+
+test("buildGrowthDataContract 正常数据时 stage 随上下文进入契约", () => {
+  const contract = buildGrowthDataContract({
+    profileName: "阿禅",
+    accountCount: 1,
+    myProfileId: "self-user",
+    myReports: [buildReport({ completion_rate_5s: "20", completion_rate: "18" })],
+    teamReports: [],
+    scriptSegments: [],
+    scriptSegmentsByAccountId: new Map(),
+    growthContext: { lifetimeReportCount: 5, lastReportDate: "2026-07-01", teamActiveCount: 2, now: new Date("2026-07-16T08:00:00+08:00") },
+  });
+
+  assert.equal(contract.stage.phase, "accumulation");
+  assert.equal(contract.stage.lifetimeReportCount, 5);
+  assert.equal(contract.stage.daysSinceLastReport, 15);
+  assert.equal(contract.stage.isStale, true);
+  assert.equal(contract.stage.teamActiveCount, 2);
 });

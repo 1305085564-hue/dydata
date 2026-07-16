@@ -12,6 +12,7 @@ import {
   type GrowthDimensionCard,
   type GrowthPageContract,
   type GrowthPkRow,
+  type GrowthStageContext,
   type ScriptBreakdownData,
   type StatusCardItem,
   type WeakBenchmarkCard,
@@ -410,6 +411,7 @@ function buildGrowthPageResponse({
   allAccounts,
   teamReports,
   scriptContextData,
+  growthContext,
 }: {
   mode: GrowthPageLoadMode;
   now: Date;
@@ -420,6 +422,7 @@ function buildGrowthPageResponse({
   allAccounts: MetricsAccount[];
   teamReports: DailyReportRow[];
   scriptContextData: Awaited<ReturnType<typeof loadScriptContextData>> | null;
+  growthContext?: GrowthStageContext;
 }): GrowthPageData {
   const weekAgo = shiftDateOnly(now, -7);
   const twoWeeksAgo = shiftDateOnly(now, -14);
@@ -511,6 +514,7 @@ function buildGrowthPageResponse({
     teamReports: teamReportsWithSubmitter,
     scriptSegments: linkedScriptSegments,
     scriptSegmentsByAccountId,
+    growthContext,
   });
   const advice: AdviceSections = contract.verdict
     ? {
@@ -614,7 +618,7 @@ async function loadFullGrowthPageData({
   now: Date;
 }) {
   const monthAgo = shiftDateOnly(now, -30);
-  const [allAccountsResult, teamReportsResult, scriptContextData] = await Promise.all([
+  const [allAccountsResult, teamReportsResult, scriptContextData, lifetimeStatsResult, activeProfilesResult] = await Promise.all([
     measureAsync("growth.full.allAccounts", () =>
       supabase
         .from("accounts")
@@ -628,6 +632,22 @@ async function loadFullGrowthPageData({
         .gte("report_date", monthAgo),
     ),
     measureAsync("growth.full.scriptContext.total", () => loadScriptContextData(supabase, userId)),
+    // 全历史累计份数 + 最近一份日报日期：三态判定与断流检测的口径来源（轻量 count 查询）
+    measureAsync("growth.full.lifetimeStats", () =>
+      supabase
+        .from("daily_reports")
+        .select("report_date", { count: "exact" })
+        .eq("user_id", userId)
+        .order("report_date", { ascending: false })
+        .limit(1),
+    ),
+    // 团队 active 人数：成熟期/P70 对比线的启用条件，与趋势路由的 active 口径一致
+    measureAsync("growth.full.activeProfiles", () =>
+      supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "active"),
+    ),
   ]);
 
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
@@ -642,6 +662,15 @@ async function loadFullGrowthPageData({
   const profileNameMap = buildProfileNameMap(profiles);
   const profile = profiles.find((item) => item.id === userId) ?? null;
 
+  const growthContext: GrowthStageContext = {
+    now,
+    lifetimeReportCount: lifetimeStatsResult.count ?? undefined,
+    lastReportDate:
+      (lifetimeStatsResult.data?.[0] as { report_date?: string } | undefined)?.report_date ?? undefined,
+    // active 人数查询失败时退化为"有账号的成员数"，避免整块功能不可用
+    teamActiveCount: activeProfilesResult.count ?? new Set(allAccounts.map((account) => account.profile_id)).size,
+  };
+
   return buildGrowthPageResponse({
     mode: "full",
     now,
@@ -652,6 +681,7 @@ async function loadFullGrowthPageData({
     allAccounts,
     teamReports: mapReportsWithSubmitter(teamReports, profileNameMap),
     scriptContextData,
+    growthContext,
   });
 }
 

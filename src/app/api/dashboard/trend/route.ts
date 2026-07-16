@@ -77,7 +77,7 @@ export async function GET() {
 
     const trendData = build个人趋势数据(selfReports, teamReports, activeUserIds);
 
-    return NextResponse.json({ trendData, accountIds });
+    return NextResponse.json({ trendData, accountIds, activeUserCount: activeUserIds.length });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "加载趋势失败" },

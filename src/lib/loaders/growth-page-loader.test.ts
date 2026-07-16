@@ -16,6 +16,7 @@ type QueryCall = {
 type QueryResult = {
   data: unknown;
   error: { message: string } | null;
+  count?: number | null;
 };
 
 class FakeQuery {
@@ -735,4 +736,51 @@ test("成长页 full 补拉返回页面关键升级字段，并收窄重复基�
 
   assert.equal(calls.some((call) => call.table === "ai_insight_result"), false);
   assert.equal(calls.some((call) => call.table === "profiles" && call.single), false);
+});
+
+
+test("成长页 full 模式把全历史份数、最近日报日期和团队 active 人数写入 stage", async () => {
+  __internal.resetContentScriptSchemaCache();
+  const now = new Date("2026-07-16T08:00:00+08:00");
+  const myReports = [
+    createReport({ report_date: "2026-07-01" }),
+    createReport({ report_date: "2026-06-28" }),
+  ];
+  const supabase = createFakeSupabase((call) => {
+    if (call.table === "accounts") {
+      return {
+        data: [{ id: "acc-self", profile_id: "user-1", name: "我的账号", content_direction: "财经", presentation_format: "口播" }],
+        error: null,
+      };
+    }
+    if (call.table === "daily_reports" && call.eq.user_id === "user-1" && call.limit === 1) {
+      // 全历史统计查询：exact count + 最近一份日期
+      return { data: [{ report_date: "2026-07-01" }], error: null, count: 5 };
+    }
+    if (call.table === "daily_reports") {
+      return { data: myReports, error: null };
+    }
+    if (call.table === "profiles" && call.eq.status === "active") {
+      return { data: null, error: null, count: 3 };
+    }
+    if (call.table === "profiles") {
+      return { data: [{ id: "user-1", name: "阿禅" }], error: null };
+    }
+    return { data: [], error: null };
+  }, []);
+
+  const contract = await loadGrowthPageContract({
+    supabase: supabase as never,
+    userId: "user-1",
+    userEmail: "user@example.com",
+    now,
+  });
+
+  assert.equal(contract.stage.lifetimeReportCount, 5);
+  assert.equal(contract.stage.lastReportDate, "2026-07-01");
+  assert.equal(contract.stage.daysSinceLastReport, 15);
+  assert.equal(contract.stage.isStale, true);
+  assert.equal(contract.stage.teamActiveCount, 3);
+  assert.equal(contract.stage.windowReportCount, 2);
+  assert.equal(contract.stage.phase, "accumulation");
 });

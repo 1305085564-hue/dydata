@@ -1,4 +1,5 @@
 import { calcInteractionScore, calcRates, parsePercentText, type MetricsAccount, type MetricsReport } from "./metrics";
+import { formatShanghaiDateOnly } from "./loaders/shared";
 
 export type SampleSignal = "red" | "yellow" | "green";
 export type RatingTone = "success" | "warning" | "danger" | "neutral";
@@ -159,6 +160,87 @@ export type GrowthRadarItem = {
   rating: GrowthRating;
 };
 
+/** 三态：累积期（<10 份）/ 观察期（10–30 份）/ 成熟期（>30 份且团队 ≥5 人） */
+export type GrowthPhase = "accumulation" | "observation" | "mature";
+
+export type GrowthStage = {
+  phase: GrowthPhase;
+  /** 全历史累计日报份数（三态判定口径） */
+  lifetimeReportCount: number;
+  /** 全历史最近一份日报日期（YYYY-MM-DD），无则为 null */
+  lastReportDate: string | null;
+  /** 最近一份日报距今天数（上海时区日期），无日报则为 null */
+  daysSinceLastReport: number | null;
+  /** 断流：超过 3 天没有新日报（只驱动横幅提醒，不降级模块） */
+  isStale: boolean;
+  /** 近 30 天窗口内日报份数（窗口指标能否计算的事实依据） */
+  windowReportCount: number;
+  /** 团队 active 人数（P70 对比线与榜单启用条件） */
+  teamActiveCount: number;
+};
+
+export type GrowthStageContext = {
+  now?: Date;
+  lifetimeReportCount?: number;
+  lastReportDate?: string | null;
+  teamActiveCount?: number;
+};
+
+export const GROWTH_RATE_UNLOCK_SAMPLE_COUNT = 10;
+export const GROWTH_STALE_DAYS_THRESHOLD = 3;
+export const GROWTH_MATURE_TEAM_SIZE = 5;
+
+export function resolveGrowthPhase({
+  lifetimeReportCount,
+  teamActiveCount,
+}: {
+  lifetimeReportCount: number;
+  teamActiveCount: number;
+}): GrowthPhase {
+  if (lifetimeReportCount < 10) return "accumulation";
+  if (lifetimeReportCount > 30 && teamActiveCount >= GROWTH_MATURE_TEAM_SIZE) return "mature";
+  return "observation";
+}
+
+function diffDateOnlyDays(from: string, to: string) {
+  const fromTime = Date.parse(`${from}T00:00:00Z`);
+  const toTime = Date.parse(`${to}T00:00:00Z`);
+  if (!Number.isFinite(fromTime) || !Number.isFinite(toTime)) return null;
+  return Math.round((toTime - fromTime) / 86400000);
+}
+
+export function resolveGrowthStage({
+  windowReports,
+  context,
+}: {
+  windowReports: MetricsReport[];
+  context?: GrowthStageContext;
+}): GrowthStage {
+  const windowReportCount = windowReports.length;
+  const windowLastDate = windowReports.reduce<string | null>(
+    (max, report) => (max && max > report.report_date ? max : report.report_date),
+    null,
+  );
+  // 全历史份数不可能小于窗口内份数；调用方（加载器）给不出全历史时退化为窗口口径
+  const lifetimeReportCount = Math.max(context?.lifetimeReportCount ?? windowReportCount, windowReportCount);
+  const lastReportDate = context?.lastReportDate ?? windowLastDate;
+  const today = formatShanghaiDateOnly(context?.now ?? new Date());
+  const rawDays = lastReportDate ? diffDateOnlyDays(lastReportDate, today) : null;
+  const daysSinceLastReport = rawDays === null ? null : Math.max(rawDays, 0);
+  const isStale = daysSinceLastReport !== null && daysSinceLastReport > GROWTH_STALE_DAYS_THRESHOLD;
+  const teamActiveCount = context?.teamActiveCount ?? 0;
+
+  return {
+    phase: resolveGrowthPhase({ lifetimeReportCount, teamActiveCount }),
+    lifetimeReportCount,
+    lastReportDate,
+    daysSinceLastReport,
+    isStale,
+    windowReportCount,
+    teamActiveCount,
+  };
+}
+
 export type GrowthVerdict = {
   weakestDimension: GrowthDimensionName;
   diagnosis: string;
@@ -191,6 +273,7 @@ export type GrowthScriptBreakdownContract =
 export type GrowthPageContract = {
   identity: { profileName: string; accountCount: number; reportCount: number };
   credibility: GrowthCredibility;
+  stage: GrowthStage;
   verdict: GrowthVerdict | null;
   radar: GrowthRadarItem[];
   metricsOverview: Array<{ label: string; value: number; trend: number | null; unit: string }>;
@@ -487,6 +570,7 @@ export function buildGrowthDataContract({
   teamReports,
   scriptSegments,
   scriptSegmentsByAccountId,
+  growthContext,
 }: {
   profileName: string;
   accountCount: number;
@@ -495,21 +579,26 @@ export function buildGrowthDataContract({
   teamReports: GrowthAnalysisReport[];
   scriptSegments: ScriptSegmentItem[];
   scriptSegmentsByAccountId: Map<string, Array<{ content: string }>>;
+  growthContext?: GrowthStageContext;
 }): GrowthPageContract {
   const identity = { profileName, accountCount, reportCount: myReports.length };
   const credibility = getGrowthCredibility(myReports.length);
+  const stage = resolveGrowthStage({ windowReports: myReports, context: growthContext });
 
   if (myReports.length === 0) {
+    // 全历史也没有日报才是新人空态；窗口为空但有历史 = 重度断流，走冻结页而不是误报"还没有数据"
+    const isNewcomer = stage.lifetimeReportCount === 0;
     return {
       identity,
       credibility,
+      stage,
       verdict: null,
       radar: [],
       metricsOverview: [],
       benchmark: { state: "none" },
       scriptBreakdown: { state: "none" },
       trend: [],
-      emptyState: { isEmpty: true, reason: "还没有真实日报数据" },
+      emptyState: isNewcomer ? { isEmpty: true, reason: "还没有真实日报数据" } : { isEmpty: false },
     };
   }
 
@@ -537,6 +626,7 @@ export function buildGrowthDataContract({
   return {
     identity,
     credibility,
+    stage,
     verdict: {
       weakestDimension,
       diagnosis,

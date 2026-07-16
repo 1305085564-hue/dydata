@@ -1,3 +1,12 @@
+export const INTERACTION_SCORE_WEIGHTS = {
+  comments: 0.35,
+  shares: 0.25,
+  likes: 0.25,
+  favorites: 0.15,
+} as const
+
+export const INTERACTION_SCORE_FORMULA_TEXT = "评论×0.35 + 分享×0.25 + 点赞×0.25 + 收藏×0.15"
+
 export function calcInteractionScore(
   likes: number,
   comments: number,
@@ -6,10 +15,10 @@ export function calcInteractionScore(
 ) {
   return Number(
     (
-      comments * 0.35 +
-      shares * 0.25 +
-      likes * 0.25 +
-      favorites * 0.15
+      comments * INTERACTION_SCORE_WEIGHTS.comments +
+      shares * INTERACTION_SCORE_WEIGHTS.shares +
+      likes * INTERACTION_SCORE_WEIGHTS.likes +
+      favorites * INTERACTION_SCORE_WEIGHTS.favorites
     ).toFixed(2)
   )
 }
