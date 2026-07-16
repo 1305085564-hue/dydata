@@ -219,3 +219,33 @@ test("复核校验拒绝非数组或非 UUID 的踩雷点标签", () => {
     { ok: false, message: "reason_tag_ids 包含非法 UUID" },
   );
 });
+
+test("复核校验接受字符范围违规段落标注，并拒绝非法范围", () => {
+  const result = validateReviewViolationPayload({
+    status: "verified",
+    risk_level: "high",
+    highlighted_sections: [{
+      start: 12,
+      end: 28,
+      text: "  这里是被标注的违规片段  ",
+      reason: " 疑似引流 ",
+    }],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.deepEqual(result.data.highlighted_sections, [{
+    start: 12,
+    end: 28,
+    text: "这里是被标注的违规片段",
+    reason: "疑似引流",
+  }]);
+
+  assert.deepEqual(
+    validateReviewViolationPayload({
+      status: "verified",
+      highlighted_sections: [{ start: 8, end: 8, text: "非法" }],
+    }),
+    { ok: false, message: "highlighted_sections 的字符范围不合法" },
+  );
+});

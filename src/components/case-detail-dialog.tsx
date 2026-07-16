@@ -30,6 +30,42 @@ import { resolveConfidence } from "@/lib/case-library/confidence";
 import { cn } from "@/lib/utils";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
+function renderHighlightedText(text: string, highlights: string[]) {
+  if (!highlights || highlights.length === 0 || !text) {
+    return text;
+  }
+
+  const activeHighlights = highlights.filter((h) => h && h.trim().length > 0);
+  if (activeHighlights.length === 0) {
+    return text;
+  }
+
+  // Escape special regex characters in highlights
+  const escapedHighlights = activeHighlights.map((h) => h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  // Create a regex matching any of the highlights, global
+  const regex = new RegExp(`(${escapedHighlights.join("|")})`, "g");
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        const isHighlighted = activeHighlights.includes(part);
+        if (isHighlighted) {
+          return (
+            <mark
+              key={index}
+              className="bg-rose-100 text-rose-700 border-b border-rose-400 font-medium px-0.5 rounded-sm select-none"
+            >
+              {part}
+            </mark>
+          );
+        }
+        return part;
+      })}
+    </>
+  );
+}
+
 interface CaseDetailDialogProps {
   caseId: string | null;
   open: boolean;
@@ -77,9 +113,42 @@ export function CaseDetailDialog({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // 划词标注的高亮段落列表和当前选中文字
+  const [highlightedSections, setHighlightedSections] = useState<string[]>([]);
+  const [selectedText, setSelectedText] = useState("");
+
+  const handleTextMouseUp = () => {
+    if (!canManage) return;
+    const selection = window.getSelection();
+    if (!selection) return;
+    const text = selection.toString().trim();
+    if (text.length > 0 && data?.script_text?.includes(text)) {
+      setSelectedText(text);
+    } else {
+      setSelectedText("");
+    }
+  };
+
+  const handleAddHighlight = () => {
+    if (!selectedText) return;
+    if (!highlightedSections.includes(selectedText)) {
+      const next = [...highlightedSections, selectedText];
+      setHighlightedSections(next);
+      window.getSelection()?.removeAllRanges();
+      setSelectedText("");
+    }
+  };
+
+  const handleRemoveHighlight = (textToRemove: string) => {
+    setHighlightedSections((prev) => prev.filter((h) => h !== textToRemove));
+  };
+
   useEffect(() => {
     if (data) {
       setEditText(data.script_text || "");
+      setHighlightedSections(data.highlighted_sections || []);
+    } else {
+      setHighlightedSections([]);
     }
   }, [data]);
 
@@ -113,6 +182,8 @@ export function CaseDetailDialog({
       setEditText("");
       setSaving(false);
       setDeleting(false);
+      setHighlightedSections([]);
+      setSelectedText("");
     }
   }, [open]);
 
@@ -124,10 +195,21 @@ export function CaseDetailDialog({
       const res = await fetch(`/api/violations/${caseId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ script_text: editText.trim() }),
+        body: JSON.stringify({
+          script_text: editText.trim(),
+          highlighted_sections: highlightedSections,
+        }),
       });
       if (!res.ok) throw new Error("保存修改失败");
-      setData((prev) => prev ? { ...prev, script_text: editText.trim() } : null);
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              script_text: editText.trim(),
+              highlighted_sections: highlightedSections,
+            }
+          : null
+      );
       setIsEditing(false);
       feedbackToast.success("已保存修改");
       router.refresh();
@@ -400,9 +482,62 @@ export function CaseDetailDialog({
                     placeholder="请输入修改后的话术原文"
                   />
                 ) : (
-                  <p className="whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
-                    {data.script_text}
-                  </p>
+                  <div className="space-y-3">
+                    <p
+                      onMouseUp={handleTextMouseUp}
+                      className="whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700 select-text"
+                    >
+                      {renderHighlightedText(data.script_text, highlightedSections)}
+                    </p>
+
+                    {canManage && selectedText && (
+                      <div className="flex items-center gap-2 pt-1 border-t border-stone-100 animate-fadeIn">
+                        <button
+                          type="button"
+                          onClick={handleAddHighlight}
+                          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 transition-all hover:bg-rose-100 active:translate-y-0"
+                        >
+                          <AlertTriangle className="size-3 text-rose-500" />
+                          标记选中文案为违规段落:
+                          <span className="max-w-[150px] truncate bg-rose-200/50 px-1 rounded font-mono">
+                            "{selectedText}"
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedText("")}
+                          className="text-stone-400 hover:text-stone-600 text-[11px]"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    )}
+
+                    {highlightedSections.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 items-center pt-2 border-t border-stone-100/50">
+                        <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-wider">
+                          已标记违规段落 ({highlightedSections.length})：
+                        </span>
+                        {highlightedSections.map((h, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
+                          >
+                            <span className="max-w-[150px] truncate">{h}</span>
+                            {canManage && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveHighlight(h)}
+                                className="text-rose-400 hover:text-rose-700 transition-colors"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -577,6 +712,7 @@ export function CaseDetailDialog({
                       initialSuggestedAction={data.suggested_action}
                       initialReasonTagIds={[]}
                       isOwner={isOwner}
+                      highlightedSections={highlightedSections}
                       onSuccess={() => {
                         onReviewSuccess?.();
                         onOpenChange(false);

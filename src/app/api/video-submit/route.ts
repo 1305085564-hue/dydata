@@ -7,6 +7,7 @@ import { replaceDailyReportUsageRecord } from "@/lib/conversion-hub/service";
 import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
+import { syncAbnormalVideoCase } from "./abnormal-case";
 
 type RollbackAction = () => Promise<void>;
 
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")
-    .select("id, profile_id")
+    .select("id, profile_id, name")
     .eq("id", normalized.account_id)
     .single();
 
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("name")
+    .select("name, team_id")
     .eq("id", user.id)
     .single();
 
@@ -422,6 +423,32 @@ export async function POST(request: NextRequest) {
       await rollbackSafely(rollbackActions);
       return NextResponse.json({ error: usageRecordResult.message }, { status: usageRecordResult.status });
     }
+  }
+
+  const abnormalCaseResult = await syncAbnormalVideoCase({
+    supabase,
+    input: {
+      videoId: persistedVideo.id,
+      submitterId: user.id,
+      accountId: normalized.account_id,
+      accountName: account.name ?? null,
+      teamId: profile?.team_id ?? null,
+      anomalyStatus: normalized.anomaly_status,
+      punishType: normalized.punish_type,
+      platformNotice: normalized.platform_notice,
+      appeal: normalized.appeal,
+      scriptText: normalized.content,
+      screenshotPaths: screenshotUrls,
+      videoUrl: normalized.video_url,
+      videoTitle: normalized.video_title,
+    },
+  });
+
+  if (abnormalCaseResult.status === "failed") {
+    console.error("[video-submit] abnormal case sync failed", {
+      videoId: persistedVideo.id,
+      error: abnormalCaseResult.error,
+    });
   }
 
   return NextResponse.json({

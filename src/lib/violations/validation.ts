@@ -136,6 +136,14 @@ export type ReviewViolationPayload = {
   admin_conclusion: string | null;
   suggested_action: string | null;
   reason_tag_ids?: string[];
+  highlighted_sections?: HighlightedSectionInput[];
+};
+
+export type HighlightedSectionInput = {
+  start: number;
+  end: number;
+  text: string;
+  reason: string | null;
 };
 
 export type ReviewViolationValidationResult =
@@ -200,6 +208,52 @@ export function validateReviewViolationPayload(body: unknown): ReviewViolationVa
     reasonTagIds = Array.from(new Set(collected)).slice(0, 10);
   }
 
+  let highlightedSections: HighlightedSectionInput[] | undefined;
+  if (body.highlighted_sections !== undefined) {
+    if (!Array.isArray(body.highlighted_sections) || body.highlighted_sections.length > 50) {
+      return { ok: false, message: "highlighted_sections 不合法" };
+    }
+
+    highlightedSections = [];
+    for (const section of body.highlighted_sections) {
+      if (!isPlainObject(section)) {
+        return { ok: false, message: "highlighted_sections 包含非法项" };
+      }
+
+      const start = section.start;
+      const end = section.end;
+      if (
+        typeof start !== "number"
+        || typeof end !== "number"
+        || !Number.isInteger(start)
+        || !Number.isInteger(end)
+        || start < 0
+        || end <= start
+      ) {
+        return { ok: false, message: "highlighted_sections 的字符范围不合法" };
+      }
+
+      const text = typeof section.text === "string" ? section.text.trim() : "";
+      if (!text || text.length > 1000) {
+        return { ok: false, message: "highlighted_sections 的 text 不合法" };
+      }
+
+      const reason = section.reason === undefined || section.reason === null
+        ? null
+        : typeof section.reason === "string"
+          ? section.reason.trim()
+          : null;
+      if (section.reason !== undefined && section.reason !== null && reason === null) {
+        return { ok: false, message: "highlighted_sections 的 reason 不合法" };
+      }
+      if (reason && reason.length > 500) {
+        return { ok: false, message: "highlighted_sections 的 reason 不能超过 500 字" };
+      }
+
+      highlightedSections.push({ start, end, text, reason: reason || null });
+    }
+  }
+
   return {
     ok: true,
     data: {
@@ -210,6 +264,7 @@ export function validateReviewViolationPayload(body: unknown): ReviewViolationVa
       admin_conclusion: normalizeOptionalText(body.admin_conclusion, 3000),
       suggested_action: normalizeOptionalText(body.suggested_action, 3000),
       ...(reasonTagIds ? { reason_tag_ids: reasonTagIds } : {}),
+      ...(highlightedSections !== undefined ? { highlighted_sections: highlightedSections } : {}),
     },
   };
 }

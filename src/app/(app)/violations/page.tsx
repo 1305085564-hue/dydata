@@ -121,14 +121,6 @@ export default async function ViolationsPage({
                     审核工作台
                   </Link>
                 ) : null}
-                <Link
-                  href="/violations/submit"
-                  className="group inline-flex h-10 items-center gap-2 rounded-xl bg-[#D97757] px-4 text-[13px] font-medium text-white transition-all hover:bg-[#C96442] active:translate-y-0"
-                >
-                  <FilePlus2 className="size-4 stroke-[1.75]" />
-                  上传话术
-                  <ArrowRight className="size-3.5 stroke-[1.75] transition-transform group-hover:translate-x-0.5" />
-                </Link>
               </>
             )}
           </div>

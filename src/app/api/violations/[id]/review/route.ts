@@ -101,6 +101,7 @@ export async function buildReviewViolationResponse(
   }
 
   const adminSupabase = deps.createAdminClient ? deps.createAdminClient() : supabase;
+  const reviewedAt = new Date().toISOString();
 
   const reviewCasesTable = adminSupabase.from("violation_cases") as MinimalReviewCaseTable;
 
@@ -123,7 +124,15 @@ export async function buildReviewViolationResponse(
       admin_conclusion: validation.data.admin_conclusion,
       suggested_action: validation.data.suggested_action,
       reviewed_by: user.id,
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: reviewedAt,
+      ...(validation.data.highlighted_sections !== undefined
+        ? {
+            highlighted_sections: validation.data.highlighted_sections.map((section) => ({
+              ...section,
+              created_at: reviewedAt,
+            })),
+          }
+        : {}),
     })
     .eq("id", id)
     .eq("is_deleted", false)

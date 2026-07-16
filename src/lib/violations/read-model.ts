@@ -80,6 +80,9 @@ export type ViolationCaseDetailRow = {
   promotion_level?: string | null;
   usage_state?: string | null;
   reviewed_by?: string | null;
+  source_video_id?: string | null;
+  source_metadata?: Record<string, unknown> | null;
+  highlighted_sections?: unknown[] | null;
   submitter?: unknown;
   team?: unknown;
   reviewer?: unknown;
@@ -263,6 +266,9 @@ const VIOLATION_DETAIL_SELECT = `
   promotion_level,
   usage_state,
   reviewed_by,
+  source_video_id,
+  source_metadata,
+  highlighted_sections,
   submitter:profiles!violation_cases_submitted_by_fkey(id, name),
   team:teams(id, name),
   reviewer:profiles!violation_cases_reviewed_by_fkey(id, name)

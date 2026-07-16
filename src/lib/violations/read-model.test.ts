@@ -13,9 +13,10 @@ type DetailRow = {
   script_text: string;
   purpose: "violation" | "conversion";
   is_deleted: boolean;
+  highlighted_sections?: unknown[];
 };
 
-function createDetailClient(rows: DetailRow[]): DetailClientLike {
+function createDetailClient(rows: DetailRow[], onSelect?: (query: string) => void): DetailClientLike {
   return {
     from(table: string) {
       assert.equal(table, "violation_cases");
@@ -34,7 +35,8 @@ function createDetailClient(rows: DetailRow[]): DetailClientLike {
       };
 
       const builder = {
-        select() {
+        select(query: string) {
+          onSelect?.(query);
           return builder;
         },
         eq(column: string, value: unknown) {
@@ -76,6 +78,29 @@ test("detail service 在主查询 miss 时会回退读取 conversion 案例", as
   assert.equal(result.errorMessage, null);
   assert.equal(result.data?.id, "conv-1");
   assert.equal(result.data?.purpose, "conversion");
+});
+
+test("已发布案例详情读取 highlighted_sections", async () => {
+  let detailSelect = "";
+  const client = createDetailClient([{
+    id: "case-1",
+    script_text: "违规话术",
+    purpose: "violation",
+    is_deleted: false,
+    highlighted_sections: [{ start: 2, end: 5, text: "引流", reason: "疑似引流" }],
+  }], (query) => {
+    detailSelect = query;
+  });
+
+  const result = await loadViolationCaseDetail({ supabase: client, id: "case-1" });
+
+  assert.match(detailSelect, /highlighted_sections/);
+  assert.deepEqual(result.data?.highlighted_sections, [{
+    start: 2,
+    end: 5,
+    text: "引流",
+    reason: "疑似引流",
+  }]);
 });
 
 test("违规列表默认读取 violation_cases，不再读取 videos 异常记录", async () => {

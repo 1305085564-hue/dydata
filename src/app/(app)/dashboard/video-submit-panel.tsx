@@ -191,9 +191,6 @@ export function VideoSubmitPanel({
   });
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
-  const violationSubmitHref = selectedAccountId
-    ? `/violations/submit?account_id=${encodeURIComponent(selectedAccountId)}`
-    : "/violations/submit";
   const setSelectedAccountId = useCallback(
     (accountId: string) => {
       setInternalSelectedAccountId(accountId);
@@ -640,16 +637,6 @@ export function VideoSubmitPanel({
                     <div className="text-[12px] font-medium text-stone-500">
                       {activeBizDate === today ? "今日填报" : "历史补填"}
                     </div>
-                    <a href={violationSubmitHref}>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-9 border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 hover:bg-stone-50"
-                      >
-                        <ShieldAlert className="size-4 stroke-[1.5] text-[#D99E55]" />
-                        上传话术
-                      </Button>
-                    </a>
                   </div>
                 </div>
                 <CheckpointTracker
@@ -776,16 +763,6 @@ export function VideoSubmitPanel({
                     >
                       去查看我的成长与大盘数据 🚀
                     </Button>
-                    <a href={violationSubmitHref} className="w-full">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-10 w-full rounded-xl border-stone-200 bg-white text-[13px] font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors duration-150"
-                      >
-                        <ShieldAlert className="size-4 stroke-[1.5] text-[#D99E55]" />
-                        上传话术
-                      </Button>
-                    </a>
                     <Button
                       type="button"
                       variant="outline"

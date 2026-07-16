@@ -131,6 +131,7 @@ interface Props {
   isOwner: boolean;
   /** 审核保存成功后的回调（用于让外层 Dialog 自行关闭）；不传则只 router.refresh */
   onSuccess?: () => void;
+  highlightedSections?: string[];
 }
 
 function asUsageState(value: string | null | undefined, purpose: CasePurpose): UsageState {
@@ -156,6 +157,7 @@ export function ReviewDecisionPanel({
   initialReasonTagIds,
   isOwner,
   onSuccess,
+  highlightedSections,
 }: Props) {
   const router = useRouter();
   const isViolation = purpose === "violation";
@@ -251,6 +253,9 @@ export function ReviewDecisionPanel({
       };
       if (isViolation) {
         payload.reason_tag_ids = reasonTagIds;
+        if (highlightedSections) {
+          payload.highlighted_sections = highlightedSections;
+        }
       }
       if (decision === "verify") {
         payload.usage_state = usageState;

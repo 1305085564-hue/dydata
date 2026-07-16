@@ -88,6 +88,7 @@ export type ViolationCase = {
   visual_tags?: { id: string; name: string }[] | null;
   promotion_level?: string | null;
   usage_state?: string | null;
+  highlighted_sections?: string[] | null;
 };
 
 export type ViolationTestRecord = {

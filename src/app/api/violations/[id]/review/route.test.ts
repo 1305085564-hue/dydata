@@ -15,6 +15,7 @@ type CaseRow = {
   promotion_level?: string | null;
   reviewed_by?: string | null;
   reviewed_at?: string | null;
+  highlighted_sections?: unknown[];
   is_deleted: boolean;
 };
 
@@ -148,4 +149,81 @@ test("review response 包含 update 前的完整 snapshot", async () => {
   assert.equal(json.data.suggested_action, "新建议");
   assert.equal(rows[0].status, "verified");
   assert.equal(rows[0].usage_state, "available");
+});
+
+test("管理员审核时可保存违规段落标注", async () => {
+  const rows: CaseRow[] = [{
+    id: "case-1",
+    status: "submitted",
+    usage_state: "testing",
+    risk_level: null,
+    admin_conclusion: null,
+    suggested_action: null,
+    highlighted_sections: [],
+    is_deleted: false,
+  }];
+
+  const response = await buildReviewViolationResponse(
+    createRequest({
+      status: "verified",
+      highlighted_sections: [{ start: 12, end: 28, text: "疑似引流", reason: "联系方式外露" }],
+    }),
+    { params: Promise.resolve({ id: "case-1" }) },
+    {
+      getAuthenticatedContext: async () => ({
+        supabase: createReviewSupabase(rows),
+        user: { id: "owner-1" },
+      }),
+      requireViolationAdmin: async () => ({ ok: true, profile: { id: "owner-1" } }),
+      createAdminClient: () => createReviewSupabase(rows),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(rows[0].highlighted_sections?.length, 1);
+  assert.deepEqual(rows[0].highlighted_sections?.[0], {
+    start: 12,
+    end: 28,
+    text: "疑似引流",
+    reason: "联系方式外露",
+    created_at: (rows[0].highlighted_sections?.[0] as { created_at?: string }).created_at,
+  });
+  assert.equal(
+    typeof (rows[0].highlighted_sections?.[0] as { created_at?: unknown }).created_at,
+    "string",
+  );
+});
+
+test("普通员工不能通过审核接口写入违规段落标注", async () => {
+  const rows: CaseRow[] = [{
+    id: "case-1",
+    status: "submitted",
+    usage_state: "testing",
+    risk_level: null,
+    admin_conclusion: null,
+    suggested_action: null,
+    highlighted_sections: [],
+    is_deleted: false,
+  }];
+
+  const response = await buildReviewViolationResponse(
+    createRequest({
+      status: "verified",
+      highlighted_sections: [{ start: 0, end: 4, text: "违规段落" }],
+    }),
+    { params: Promise.resolve({ id: "case-1" }) },
+    {
+      getAuthenticatedContext: async () => ({
+        supabase: createReviewSupabase(rows),
+        user: { id: "member-1" },
+      }),
+      requireViolationAdmin: async () => ({
+        ok: false,
+        response: new Response(JSON.stringify({ error: { code: "FORBIDDEN" } }), { status: 403 }),
+      }),
+    },
+  );
+
+  assert.equal(response.status, 403);
+  assert.deepEqual(rows[0].highlighted_sections, []);
 });
