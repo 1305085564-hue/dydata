@@ -596,7 +596,10 @@ test("成长页 full 模式会恢复 PK、团队对比和结构化脚本数据",
   assert.equal(result.isPartial, false);
   assert.equal(result.loadMode, "full");
   assert.equal(result.scriptBreakdown.state, "structured");
-  assert.equal(result.contract.scriptBreakdown.state, "ok");
+  assert.deepEqual(result.contract.ownScriptSnippet, {
+    reportDate: "2026-05-30",
+    snippet: "开头先说结论，再补一个反常识案例。",
+  });
   assert.equal(result.contract.verdict?.source, "rule");
   assert.deepEqual(Object.keys(result.contract.benchmark.peer ?? {}).sort(), ["dimensionValue", "name", "scriptSnippet"]);
   assert.equal(result.pkPanel?.rightName, "小王");

@@ -6,8 +6,6 @@ import dynamic from "next/dynamic";
 import {
   Sparkles,
   Target,
-  ChevronDown,
-  ChevronUp,
   Award,
   BookOpen,
   ArrowRight,
@@ -50,15 +48,6 @@ const Leaderboard = dynamic(
     </div>
   ) }
 );
-
-// ─── 脚本分段类型配置 ───────────────────────────────────────────
-const SEGMENT_METAS = {
-  hook: { label: "开头钩子", tone: "bg-stone-50 text-stone-700 border-stone-200", desc: "视频前 3 秒留人的黄金钩子，决定观众是否划走。" },
-  background: { label: "背景铺垫", tone: "bg-stone-50 text-stone-700 border-stone-200", desc: "交代背景和痛点，引导出后续的核心干货。" },
-  core_point: { label: "核心观点", tone: "bg-stone-50 text-stone-700 border-stone-200", desc: "视频的核心观点、干货或干脆利落的金句。" },
-  action_cta: { label: "互动引导", tone: "bg-stone-50 text-stone-700 border-stone-200", desc: "引导点赞、收藏或评论，触发社交互动指数。" },
-  closing: { label: "结尾收束", tone: "bg-stone-100 text-stone-700 border-stone-200", desc: "简短利落的收尾，防止观众在结尾前提前流失。" }
-};
 
 // ─── 指标数值格式化工具 ───────────────────────────────────────────
 function formatMetricValue(dimension: string, value: number): string {
@@ -120,15 +109,6 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       .finally(() => setLoadingLeaderboard(false));
   }, []);
 
-  // 展开折页控制
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    script: true,
-  });
-
-  const toggleSection = (key: string) => {
-    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
   // 1. 新人空数据状态（全历史也没有日报）
   if (contract.emptyState?.isEmpty) {
     return (
@@ -155,7 +135,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
     );
   }
 
-  const { identity, verdict, radar, metricsOverview, benchmark, scriptBreakdown, stage } = contract;
+  const { identity, verdict, radar, metricsOverview, benchmark, ownScriptSnippet, stage } = contract;
   const phase = stage.phase;
   const ratesUnlocked = stage.windowReportCount >= GROWTH_RATE_UNLOCK_SAMPLE_COUNT;
   const weakestRule = verdict
@@ -360,6 +340,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               ? { name: benchmark.peer.name, scriptSnippet: benchmark.peer.scriptSnippet }
               : null
           }
+          own={ownScriptSnippet}
         />
       ) : null}
 
@@ -477,10 +458,23 @@ export function GrowthClient({ contract }: GrowthClientProps) {
 
                   {benchmark.peer.scriptSnippet ? (
                     <div className="space-y-2">
-                      <span className="text-[12px] font-medium text-stone-500">高表现文案片段（拆解参考）：</span>
-                      <blockquote className="relative rounded-lg border border-stone-200 border-l-4 border-l-[#D97757] bg-stone-50/50 p-3.5 text-[12px] text-stone-700 italic leading-[1.6] whitespace-pre-wrap">
-                        “{benchmark.peer.scriptSnippet}”
-                      </blockquote>
+                      <span className="text-[12px] font-medium text-stone-500">文案对照（看差距在哪）：</span>
+                      <div className={cn("grid gap-3", ownScriptSnippet ? "md:grid-cols-2" : "")}>
+                        <div className="space-y-1.5">
+                          <span className="text-[12px] text-stone-500">同事的写法 · {benchmark.peer.name}</span>
+                          <blockquote className="relative rounded-lg border border-stone-200 border-l-4 border-l-[#D97757] bg-stone-50/50 p-3.5 text-[12px] text-stone-700 italic leading-[1.6] whitespace-pre-wrap">
+                            “{benchmark.peer.scriptSnippet}”
+                          </blockquote>
+                        </div>
+                        {ownScriptSnippet ? (
+                          <div className="space-y-1.5">
+                            <span className="text-[12px] text-stone-500">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）</span>
+                            <blockquote className="relative rounded-lg border border-stone-200 border-l-4 border-l-stone-300 bg-stone-50/50 p-3.5 text-[12px] text-stone-700 leading-[1.6] whitespace-pre-wrap">
+                              “{ownScriptSnippet.snippet}”
+                            </blockquote>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   ) : (
                     <p className="text-[12px] text-stone-500 italic">暂无对标文案片段，先参考该同事近期内容。</p>
@@ -528,6 +522,12 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                     “{benchmark.peer.scriptSnippet}”
                   </blockquote>
                 ) : null}
+                {ownScriptSnippet ? (
+                  <p className="mt-2 whitespace-pre-wrap border-l-2 border-stone-300 pl-3 text-[12px] leading-[1.6] text-stone-600">
+                    <span className="font-medium text-stone-500">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）：</span>
+                    “{ownScriptSnippet.snippet}”
+                  </p>
+                ) : null}
               </div>
             ) : null}
             {loadingLeaderboard ? (
@@ -552,57 +552,6 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           </div>
         )}
       </section>
-
-      {/* 最近视频文案结构化拆解：观察期起保留（累积期不展示） */}
-      {phase !== "accumulation" && scriptBreakdown.state === "ok" && (
-        <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          <button
-            type="button"
-            aria-expanded={openSections.script}
-            onClick={() => toggleSection("script")}
-            className="flex w-full items-center justify-between p-5 transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-400/30"
-          >
-            <div className="flex items-center gap-2.5">
-              <BookOpen className="h-5 w-5 text-[#6FAA7D]" />
-              <div className="text-left">
-                <h4 className="text-[18px] font-medium text-stone-900">最新视频文案拆解</h4>
-                <p className="text-[12px] text-stone-500">分析最近一篇日报脚本的分段结构与写法。</p>
-              </div>
-            </div>
-            {openSections.script ? (
-              <ChevronUp className="h-5 w-5 text-stone-500" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-stone-500" />
-            )}
-          </button>
-
-          {openSections.script && (
-            <div className="border-t border-stone-100 p-5 space-y-4">
-              <div className="flex flex-col gap-4">
-                {scriptBreakdown.segments.map((segment: { type: "hook" | "background" | "core_point" | "action_cta" | "closing"; order: number; content: string }) => {
-                  const meta = SEGMENT_METAS[segment.type] || SEGMENT_METAS.closing;
-                  return (
-                    <div key={`${segment.type}-${segment.order}`} className="flex flex-col gap-2 rounded-xl border border-stone-200 bg-stone-50/50 p-4 transition-colors hover:bg-stone-50">
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={cn("rounded-full border px-2.5 py-0.5 text-[12px] font-medium select-none", meta.tone)}>
-                            {meta.label}
-                          </span>
-                          <span className="text-[12px] text-stone-500">SEGMENT #{segment.order}</span>
-                        </div>
-                        <span className="text-[12px] text-stone-500 italic max-w-xs truncate">{meta.desc}</span>
-                      </div>
-                      <p className="mt-1 text-[13px] text-stone-700 leading-[1.7] whitespace-pre-wrap font-sans">
-                        {segment.content}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </AppShell>
   );
 }

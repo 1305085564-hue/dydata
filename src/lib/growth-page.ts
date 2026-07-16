@@ -263,13 +263,6 @@ export type GrowthBenchmark = {
   teamAvg?: number;
 };
 
-export type GrowthScriptBreakdownContract =
-  | {
-      state: "ok";
-      segments: Array<{ type: ScriptSegmentItem["segmentType"]; order: number; content: string }>;
-    }
-  | { state: "none" };
-
 export type GrowthPageContract = {
   identity: { profileName: string; accountCount: number; reportCount: number };
   credibility: GrowthCredibility;
@@ -278,7 +271,8 @@ export type GrowthPageContract = {
   radar: GrowthRadarItem[];
   metricsOverview: Array<{ label: string; value: number; trend: number | null; unit: string }>;
   benchmark: GrowthBenchmark;
-  scriptBreakdown: GrowthScriptBreakdownContract;
+  /** 最近一篇带文案日报的开头片段，用于"该学谁"里的「同事的写法 vs 你的写法」对照；没有则为 null */
+  ownScriptSnippet: { reportDate: string; snippet: string } | null;
   trend: Array<{
     date: string;
     playCount: number;
@@ -558,6 +552,21 @@ function getOverviewUnit(item: StatusCardItem) {
   return "次";
 }
 
+const OWN_SNIPPET_MAX_LENGTH = 80;
+
+/** 取最近一篇带文案日报的开头一段，作为"该学谁"对照里「你的写法」；长开头截断 */
+function buildOwnScriptSnippet(myReports: GrowthAnalysisReport[]) {
+  const latestWithContent = [...myReports]
+    .sort((left, right) => right.report_date.localeCompare(left.report_date))
+    .find((report) => typeof report.content === "string" && report.content.trim().length > 0);
+  const opening = latestWithContent?.content?.trim().split(/\n+/)[0]?.trim() ?? "";
+  if (!latestWithContent || !opening) return null;
+  return {
+    reportDate: latestWithContent.report_date,
+    snippet: opening.length > OWN_SNIPPET_MAX_LENGTH ? `${opening.slice(0, OWN_SNIPPET_MAX_LENGTH)}…` : opening,
+  };
+}
+
 /**
  * 个人成长页 V1 的唯一数据契约生成器。
  * 六维名称、指标、方向、评级阈值、诊断和改法只允许来自 GROWTH_DIMENSION_RULES。
@@ -568,7 +577,6 @@ export function buildGrowthDataContract({
   myProfileId,
   myReports,
   teamReports,
-  scriptSegments,
   scriptSegmentsByAccountId,
   growthContext,
 }: {
@@ -577,7 +585,6 @@ export function buildGrowthDataContract({
   myProfileId: string;
   myReports: GrowthAnalysisReport[];
   teamReports: GrowthAnalysisReport[];
-  scriptSegments: ScriptSegmentItem[];
   scriptSegmentsByAccountId: Map<string, Array<{ content: string }>>;
   growthContext?: GrowthStageContext;
 }): GrowthPageContract {
@@ -596,7 +603,7 @@ export function buildGrowthDataContract({
       radar: [],
       metricsOverview: [],
       benchmark: { state: "none" },
-      scriptBreakdown: { state: "none" },
+      ownScriptSnippet: null,
       trend: [],
       emptyState: isNewcomer ? { isEmpty: true, reason: "还没有真实日报数据" } : { isEmpty: false },
     };
@@ -651,17 +658,7 @@ export function buildGrowthDataContract({
       teamReports: peerReports,
       scriptSegmentsByAccountId,
     }),
-    scriptBreakdown:
-      scriptSegments.length > 0
-        ? {
-            state: "ok",
-            segments: scriptSegments.map((segment, index) => ({
-              type: segment.segmentType,
-              order: index + 1,
-              content: segment.content,
-            })),
-          }
-        : { state: "none" },
+    ownScriptSnippet: buildOwnScriptSnippet(myReports),
     trend: [...myReports]
       .sort((left, right) => left.report_date.localeCompare(right.report_date))
       .map((report) => ({

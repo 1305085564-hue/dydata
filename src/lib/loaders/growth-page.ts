@@ -512,7 +512,6 @@ function buildGrowthPageResponse({
     myProfileId: userId,
     myReports: myAllReports,
     teamReports: teamReportsWithSubmitter,
-    scriptSegments: linkedScriptSegments,
     scriptSegmentsByAccountId,
     growthContext,
   });
