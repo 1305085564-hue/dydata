@@ -410,13 +410,6 @@ export async function loadViolationsList({
   let visualTagCaseIds: string[] | null = null;
 
   if (visualTagIdList.length > 0) {
-    if ((purpose ?? "violation") === "violation") {
-      return {
-        payload: buildViolationsListPayload([], view, page, pageSize, 0, sort, order),
-        errorMessage: null,
-      };
-    }
-
     if (!loadCaseIdsByVisualTagIds) {
       return { payload: null, errorMessage: "画面标签筛选器未初始化" };
     }
@@ -437,37 +430,7 @@ export async function loadViolationsList({
     }
   }
 
-  if ((purpose ?? "violation") === "violation") {
-    let query = asRangeSelectable<VideoViolationListRow>(supabase, "videos")
-      .select(
-        "id, content, anomaly_status, punish_type, uploaded_at, created_at",
-        { count: "exact" },
-      )
-      .in("anomaly_status", [...VIDEO_ABNORMAL_STATUS_VALUES]);
-
-    if (category) {
-      query = query.eq("punish_type", category);
-    }
-
-    if (search) {
-      query = query.ilike("content", `%${search}%`);
-    }
-
-    const orderedQuery = query
-      .order("uploaded_at", { ascending: sort === "created_at" ? order === "asc" : false, nullsFirst: false })
-      .order("created_at", { ascending: sort === "created_at" ? order === "asc" : false, nullsFirst: false });
-
-    const { data, error, count } = await orderedQuery.range(from, to);
-    if (error) {
-      return { payload: null, errorMessage: "获取违规话术列表失败" };
-    }
-
-    return {
-      payload: buildViolationsListPayload((data ?? []).map(mapVideoViolationRow), view, page, pageSize, count ?? 0, sort, order),
-      errorMessage: null,
-    };
-  }
-
+  const effectivePurpose = purpose || "violation";
   const usesInMemoryPassRateSort = sort === "pass_rate";
   let query = asRangeSelectable<ViolationsListItemRow>(supabase)
     .select(
@@ -475,7 +438,7 @@ export async function loadViolationsList({
       usesInMemoryPassRateSort ? undefined : { count: "exact" },
     )
     .eq("is_deleted", false)
-    .eq("purpose", purpose || "violation");
+    .eq("purpose", effectivePurpose);
 
   if (status) {
     query = applyStatusFilter(query, status);
@@ -502,9 +465,10 @@ export async function loadViolationsList({
   }
 
   if (view === "staff") {
-    query = query
-      .eq("status", "verified")
-      .in("usage_state", ["available", "testing"]);
+    query = query.eq("status", "verified");
+    if (effectivePurpose === "conversion") {
+      query = query.in("usage_state", ["available", "testing"]);
+    }
   }
 
   let orderedQuery = query;

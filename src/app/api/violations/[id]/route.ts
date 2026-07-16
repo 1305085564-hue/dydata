@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  buildDeleteViolationResponse,
+  buildPatchViolationResponse,
+} from "../id-route-helpers";
 
 import {
   getAuthenticatedContext,
   jsonNotFound,
   jsonUnauthorized,
-  requireViolationAdmin,
 } from "@/lib/violations/api";
 import { loadViolationCaseDetail } from "@/lib/violations/read-model";
 
@@ -34,33 +37,15 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
-  const { supabase, user } = await getAuthenticatedContext();
+  return buildDeleteViolationResponse(request, context);
+}
 
-  if (!user) {
-    return jsonUnauthorized();
-  }
-
-  const admin = await requireViolationAdmin(supabase, user);
-  if (!admin.ok) {
-    return admin.response;
-  }
-
-  const { id } = await context.params;
-  const { data, error } = await supabase
-    .from("violation_cases")
-    .update({ is_deleted: true })
-    .eq("id", id)
-    .eq("is_deleted", false)
-    .eq("purpose", "violation")
-    .select("id")
-    .single();
-
-  if (error || !data) {
-    return jsonNotFound("违规话术不存在");
-  }
-
-  return NextResponse.json({ ok: true });
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  return buildPatchViolationResponse(request, context);
 }

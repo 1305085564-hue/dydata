@@ -962,7 +962,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
   );
   const staffJson = await staffResponse.json();
   assert.equal(staffJson.view, "staff");
-  assert.deepEqual(staffJson.data.map((item: CaseRow) => item.id), ["case-1", "case-2", "case-3"]);
+  assert.deepEqual(staffJson.data.map((item: CaseRow) => item.id), ["case-1", "case-2"]);
 
   const adminResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations?view=admin"),
@@ -979,7 +979,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
   );
   const adminJson = await adminResponse.json();
   assert.equal(adminJson.view, "admin");
-  assert.deepEqual(adminJson.data.map((item: CaseRow) => item.id), ["case-1", "case-2", "case-3"]);
+  assert.deepEqual(adminJson.data.map((item: CaseRow) => item.id), ["case-3", "case-1", "case-2"]);
 
   const inferredResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations"),
@@ -1105,7 +1105,7 @@ test("violations list 支持排序和多种筛选参数", async () => {
     deps,
   );
   const visualTagsJson = await visualTagsResponse.json();
-  assert.deepEqual(visualTagsJson.data.map((item: CaseRow) => item.id), []);
+  assert.deepEqual(visualTagsJson.data.map((item: CaseRow) => item.id), ["case-c"]);
 });
 
 test("violations list 支持话术库 pending/processed 状态分栏筛选", async () => {
@@ -1180,7 +1180,7 @@ test("violations list 支持话术库 pending/processed 状态分栏筛选", asy
     deps,
   );
   const pendingJson = await pendingResponse.json();
-  assert.deepEqual(pendingJson.data.map((item: CaseRow) => item.id), ["case-pending", "case-verified", "case-rejected", "case-archived"]);
+  assert.deepEqual(pendingJson.data.map((item: CaseRow) => item.id), ["case-pending"]);
 
   const processedResponse = await buildViolationsListResponse(
     createRequest("https://dydata.cc/api/violations?status=processed&sort=created_at&order=desc"),
@@ -1189,7 +1189,7 @@ test("violations list 支持话术库 pending/processed 状态分栏筛选", asy
   const processedJson = await processedResponse.json();
   assert.deepEqual(
     processedJson.data.map((item: CaseRow) => item.id),
-    ["case-pending", "case-verified", "case-rejected", "case-archived"],
+    ["case-verified", "case-rejected", "case-archived"],
   );
 });
 

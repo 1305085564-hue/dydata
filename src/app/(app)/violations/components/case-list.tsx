@@ -181,6 +181,8 @@ export function CaseList({
         open={dialogCaseId !== null}
         onOpenChange={handleCloseDialog}
         onOpenLightbox={handleOpenLightbox}
+        canManage={canManageViolations}
+        isOwner={isOwner}
       />
 
       {/* Lightbox */}

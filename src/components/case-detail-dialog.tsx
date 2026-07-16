@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { AlertTriangle, Check, Copy, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, Check, Copy, Edit2, Loader2, Save, Trash2, X } from "lucide-react";
 
 import {
   Dialog,
@@ -27,6 +28,7 @@ import type {
 } from "@/app/(app)/violations/components/types";
 import { resolveConfidence } from "@/lib/case-library/confidence";
 import { cn } from "@/lib/utils";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 interface CaseDetailDialogProps {
   caseId: string | null;
@@ -36,6 +38,8 @@ interface CaseDetailDialogProps {
   /** 管理员视角：内嵌 ReviewDecisionPanel */
   showReviewPanel?: boolean;
   isOwner?: boolean;
+  /** 是否管理员角色 — 允许其编辑、下架话术 */
+  canManage?: boolean;
   /** 审批保存成功后回调（用于关闭 Dialog） */
   onReviewSuccess?: () => void;
 }
@@ -59,16 +63,29 @@ export function CaseDetailDialog({
   onOpenLightbox,
   showReviewPanel = false,
   isOwner = false,
+  canManage = false,
   onReviewSuccess,
 }: CaseDetailDialogProps) {
+  const router = useRouter();
   const [data, setData] = useState<DetailRow | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // 编辑与删除的状态
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (data) {
+      setEditText(data.script_text || "");
+    }
+  }, [data]);
+
   useEffect(() => {
     if (!caseId || !open) return;
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     fetch(`/api/violations/${caseId}`)
       .then((res) => (res.ok ? res.json() : null))
@@ -90,11 +107,93 @@ export function CaseDetailDialog({
 
   useEffect(() => {
     if (!open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(null);
       setCopied(false);
+      setIsEditing(false);
+      setEditText("");
+      setSaving(false);
+      setDeleting(false);
     }
   }, [open]);
+
+  // 修改保存逻辑
+  const handleSaveEdit = async () => {
+    if (!caseId || !editText.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/violations/${caseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ script_text: editText.trim() }),
+      });
+      if (!res.ok) throw new Error("保存修改失败");
+      setData((prev) => prev ? { ...prev, script_text: editText.trim() } : null);
+      setIsEditing(false);
+      feedbackToast.success("已保存修改");
+      router.refresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "保存修改失败");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 下架删除逻辑与 5s 倒计时撤销机制
+  const handleDelete = async () => {
+    if (!caseId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/violations/${caseId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("下架话术失败");
+      const payload = await res.json().catch(() => ({}));
+      const snapshot = payload?.snapshot;
+
+      // 视觉上立刻关闭详情 Dialog
+      onOpenChange(false);
+
+      let undone = false;
+      const UNDO_WINDOW_MS = 5000;
+
+      // 5s 后若未被撤销，则刷新大盘列表，正式移除该数据项
+      const commitTimer = setTimeout(() => {
+        if (!undone) {
+          router.refresh();
+        }
+      }, UNDO_WINDOW_MS);
+
+      feedbackToast.success("已下架该话术", {
+        duration: UNDO_WINDOW_MS,
+        action: snapshot
+          ? {
+              label: "撤销",
+              onClick: async () => {
+                undone = true;
+                clearTimeout(commitTimer);
+                try {
+                  const restoreRes = await fetch("/api/violations/review/restore", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ snapshots: [snapshot] }),
+                  });
+                  if (!restoreRes.ok) throw new Error("撤销失败");
+                  feedbackToast.success("已恢复话术");
+                  router.refresh();
+                } catch (e) {
+                  feedbackToast.error(e instanceof Error ? e.message : "撤销失败");
+                  router.refresh();
+                }
+              },
+            }
+          : undefined,
+      });
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "下架话术失败");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleCopy = useCallback(async () => {
     const text = data?.script_text;
@@ -202,38 +301,109 @@ export function CaseDetailDialog({
                 ) : null}
               </div>
 
-              {/* 话术全文 + 复制按钮 */}
+              {/* 话术全文 + 管理操作按钮 */}
               <div className="rounded-xl border border-stone-200 bg-stone-50/40 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <p className="text-[12px] uppercase tracking-[0.25em] text-stone-500">
                     话术全文
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className={cn(
-                      "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[12px] transition-all active:translate-y-0",
-                      copied
-                        ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
-                        : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:text-stone-900",
-                    )}
-                  >
-                    {copied ? (
+                  <div className="flex items-center gap-1.5">
+                    {isEditing ? (
                       <>
-                        <Check className="size-3 stroke-[2]" />
-                        已复制
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={handleSaveEdit}
+                          className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/10 px-2 text-[12px] font-medium text-[#6FAA7D] transition-all hover:bg-[#6FAA7D]/15 active:translate-y-0 disabled:opacity-60"
+                        >
+                          {saving ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <Save className="size-3" />
+                          )}
+                          保存
+                        </button>
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => {
+                            setIsEditing(false);
+                            setEditText(data.script_text || "");
+                          }}
+                          className="inline-flex h-7 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 text-[12px] text-stone-700 transition-all hover:bg-stone-50 active:translate-y-0"
+                        >
+                          取消
+                        </button>
                       </>
                     ) : (
                       <>
-                        <Copy className="size-3 stroke-[1.75]" />
-                        复制
+                        <button
+                          type="button"
+                          onClick={handleCopy}
+                          className={cn(
+                            "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[12px] transition-all active:translate-y-0",
+                            copied
+                              ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                              : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:text-stone-900",
+                          )}
+                        >
+                          {copied ? (
+                            <>
+                              <Check className="size-3 stroke-[2]" />
+                              已复制
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3 stroke-[1.75]" />
+                              复制
+                            </>
+                          )}
+                        </button>
+                        {canManage && !showReviewPanel && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditText(data.script_text || "");
+                                setIsEditing(true);
+                              }}
+                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 text-[12px] text-stone-700 transition-all hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
+                            >
+                              <Edit2 className="size-3 text-stone-500" />
+                              编辑
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deleting}
+                              onClick={handleDelete}
+                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#C9604D]/25 bg-white px-2 text-[12px] text-[#C9604D] transition-all hover:bg-[#C9604D]/5 active:translate-y-0 disabled:opacity-60"
+                            >
+                              {deleting ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-3" />
+                              )}
+                              下架
+                            </button>
+                          </>
+                        )}
                       </>
                     )}
-                  </button>
+                  </div>
                 </div>
-                <p className="whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
-                  {data.script_text}
-                </p>
+                {isEditing ? (
+                  <textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    disabled={saving}
+                    className="w-full min-h-[120px] rounded-lg border border-stone-300 bg-white p-2.5 text-[13px] leading-[1.6] text-stone-800 outline-none focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20 disabled:bg-stone-50 disabled:text-stone-500"
+                    placeholder="请输入修改后的话术原文"
+                  />
+                ) : (
+                  <p className="whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700">
+                    {data.script_text}
+                  </p>
+                )}
               </div>
 
               {/* 统计指标 */}

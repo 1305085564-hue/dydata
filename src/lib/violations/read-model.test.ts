@@ -78,32 +78,36 @@ test("detail service 在主查询 miss 时会回退读取 conversion 案例", as
   assert.equal(result.data?.purpose, "conversion");
 });
 
-test("违规列表默认读取 videos 异常记录，不再读取 violation_cases", async () => {
+test("违规列表默认读取 violation_cases，不再读取 videos 异常记录", async () => {
   const requestedTables: string[] = [];
   const client = {
     from(table: string) {
       requestedTables.push(table);
-      assert.equal(table, "videos");
+      assert.equal(table, "violation_cases");
 
       const rows = [
         {
-          id: "video-1",
-          content: "违规文案",
-          anomaly_status: "abnormal",
-          punish_type: "limited",
-          uploaded_at: "2026-07-15T08:00:00.000Z",
+          id: "case-1",
+          script_text: "违规文案",
+          category: "直播",
+          purpose: "violation",
+          is_deleted: false,
+          status: "verified",
           created_at: "2026-07-15T08:00:00.000Z",
         },
       ];
+      let filtered = rows.slice();
 
       const builder = {
         select() {
           return builder;
         },
-        in() {
+        in(column: string, values: string[]) {
+          filtered = filtered.filter((row) => values.includes(String(row[column as keyof typeof row] ?? "")));
           return builder;
         },
-        eq() {
+        eq(column: string, value: unknown) {
+          filtered = filtered.filter((row) => row[column as keyof typeof row] === value);
           return builder;
         },
         ilike() {
@@ -113,7 +117,7 @@ test("违规列表默认读取 videos 异常记录，不再读取 violation_case
           return builder;
         },
         async range() {
-          return { data: rows, error: null, count: rows.length };
+          return { data: filtered, error: null, count: filtered.length };
         },
       };
 
@@ -133,10 +137,91 @@ test("违规列表默认读取 videos 异常记录，不再读取 violation_case
   });
 
   assert.equal(errorMessage, null);
-  assert.deepEqual(requestedTables, ["videos"]);
-  assert.equal(payload?.data[0]?.id, "video-1");
+  assert.deepEqual(requestedTables, ["violation_cases"]);
+  assert.equal(payload?.data[0]?.id, "case-1");
   assert.equal(payload?.data[0]?.script_text, "违规文案");
-  assert.equal(payload?.data[0]?.category, "limited");
+  assert.equal(payload?.data[0]?.category, "直播");
+});
+
+test("staff 视角违规列表只返回 verified 且未删除的 violation_cases", async () => {
+  const client = {
+    from(table: string) {
+      assert.equal(table, "violation_cases");
+
+      const rows = [
+        {
+          id: "verified-1",
+          script_text: "已发布违规",
+          category: "直播",
+          purpose: "violation",
+          is_deleted: false,
+          status: "verified",
+          usage_state: "banned",
+          created_at: "2026-07-15T08:00:00.000Z",
+        },
+        {
+          id: "submitted-1",
+          script_text: "待审核违规",
+          category: "直播",
+          purpose: "violation",
+          is_deleted: false,
+          status: "submitted",
+          usage_state: "available",
+          created_at: "2026-07-15T08:00:00.000Z",
+        },
+        {
+          id: "deleted-1",
+          script_text: "已删除违规",
+          category: "直播",
+          purpose: "violation",
+          is_deleted: true,
+          status: "verified",
+          usage_state: "available",
+          created_at: "2026-07-15T08:00:00.000Z",
+        },
+      ];
+      let filtered = rows.slice();
+
+      const builder = {
+        select() {
+          return builder;
+        },
+        eq(column: string, value: unknown) {
+          filtered = filtered.filter((row) => row[column as keyof typeof row] === value);
+          return builder;
+        },
+        in(column: string, values: string[]) {
+          filtered = filtered.filter((row) => values.includes(String(row[column as keyof typeof row] ?? "")));
+          return builder;
+        },
+        ilike() {
+          return builder;
+        },
+        order() {
+          return builder;
+        },
+        async range() {
+          return { data: filtered, error: null, count: filtered.length };
+        },
+      };
+
+      return builder;
+    },
+  };
+
+  const { payload, errorMessage } = await loadViolationsList({
+    supabase: client,
+    view: "staff",
+    page: 1,
+    pageSize: 20,
+    from: 0,
+    to: 19,
+    sort: null,
+    order: "desc",
+  });
+
+  assert.equal(errorMessage, null);
+  assert.deepEqual(payload?.data.map((row) => row.id), ["verified-1"]);
 });
 
 test("高转化列表仍读取 violation_cases，避免破坏转化库", async () => {
