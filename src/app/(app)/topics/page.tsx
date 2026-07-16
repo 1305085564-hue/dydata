@@ -27,6 +27,29 @@ interface TopicInfo {
   sort_order: number;
 }
 
+interface TopicBase {
+  id: string;
+  title: string;
+  hook: string;
+  topics: {
+    id: string;
+    name: string;
+  } | null;
+  topic_groups: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+interface ClaimRecord {
+  id: string;
+  sub_topic_id: string;
+  user_id: string;
+  status: "candidate" | "scripting" | "returned";
+  claimed_at: string;
+  sub_topics: TopicBase & { created_by: string } | null;
+}
+
 export default function TopicPoolPage() {
   const [items, setItems] = useState<SubTopicItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +64,7 @@ export default function TopicPoolPage() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   // 认领上限校验辅助
-  const [myClaims, setMyClaims] = useState<any[]>([]);
+  const [myClaims, setMyClaims] = useState<ClaimRecord[]>([]);
   
   // 折叠母题 ID 集合
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<Set<string>>(new Set());
@@ -157,11 +180,11 @@ export default function TopicPoolPage() {
     void fetchPoolData(nextPage, true);
   };
 
-  const activeCandidateCount = myClaims.length;
+  const activeCandidateCount = myClaims.filter((c) => c.status === "candidate").length;
   const isLimitReached = activeCandidateCount >= 5;
 
   const isClaimedByMe = (subTopicId: string) => {
-    return myClaims.some((c) => c.id === subTopicId);
+    return myClaims.some((c) => c.sub_topic_id === subTopicId);
   };
 
   // 根据母题进行前端分组聚合

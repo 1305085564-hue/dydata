@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Check, Lock } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Check, Lock, Loader2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -481,8 +481,17 @@ export function VideoSubmitForm({
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
 
+  interface TopicSuggestion {
+    id: string;
+    title: string;
+    hook: string;
+    topics?: {
+      name: string;
+    } | null;
+  }
+
   // 关联选题相关状态
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [isManuallySet, setIsManuallySet] = useState(false);
   const [urlLocked, setUrlLocked] = useState(false);
@@ -492,7 +501,7 @@ export function VideoSubmitForm({
   // 搜索相关状态（“换一个” Dialog）
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<TopicSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
 
   // 1. URL 锁定逻辑

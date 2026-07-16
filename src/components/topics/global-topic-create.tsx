@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils";
 
 // 预定义母题以防数据库未加载完成时进行占位/降级渲染
 const DEFAULT_TOPICS = [
-  { name: "暴力战法类", sort_order: 10 },
-  { name: "热点/新闻解读类", sort_order: 20 },
-  { name: "情绪周期类", sort_order: 30 },
-  { name: "案例拆解/复盘类", sort_order: 40 },
-  { name: "避坑防雷类", sort_order: 50 },
-  { name: "降维认知类", sort_order: 60 },
-  { name: "顶级心法类", sort_order: 70 },
-  { name: "工具/神技类", sort_order: 80 }
+  { id: "temp-1", name: "暴力战法类", sort_order: 10 },
+  { id: "temp-2", name: "热点/新闻解读类", sort_order: 20 },
+  { id: "temp-3", name: "情绪周期类", sort_order: 30 },
+  { id: "temp-4", name: "案例拆解/复盘类", sort_order: 40 },
+  { id: "temp-5", name: "避坑防雷类", sort_order: 50 },
+  { id: "temp-6", name: "降维认知类", sort_order: 60 },
+  { id: "temp-7", name: "顶级心法类", sort_order: 70 },
+  { id: "temp-8", name: "工具/神技类", sort_order: 80 }
 ];
 
 interface TopicItem {
@@ -36,7 +36,7 @@ export const triggerGlobalTopicCreate = (detail?: { title?: string }) => {
 export function GlobalTopicCreate() {
   const [isOpen, setIsOpen] = useState(false);
   const [topics, setTopics] = useState<TopicItem[]>([]);
-  const [selectedTopicId, setSelectedTopicId] = useState<string>("");
+  const [selectedTopicId, setSelectedTopicId] = useState<string>("temp-1");
   const [inputText, setInputText] = useState("");
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,7 +114,7 @@ export function GlobalTopicCreate() {
         body: JSON.stringify({
           title: inputText.trim(),
           hook: inputText.trim(),
-          topic_id: selectedTopicId
+          topic_id: selectedTopicId.startsWith("temp-") ? null : selectedTopicId
         })
       });
 

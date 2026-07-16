@@ -9,14 +9,14 @@ import { Button } from "@/components/ui/button";
 import {
   Loader2,
   ChevronLeft,
+  ChevronUp,
+  ChevronDown,
   Calendar,
-  Flame,
   Award,
   Video,
   User,
   Plus,
   RefreshCw,
-  TrendingUp,
   AlertTriangle,
   ExternalLink,
   BookOpen
@@ -62,15 +62,48 @@ interface WorkItem {
   }>;
 }
 
+interface WorksSummary {
+  qualifiedWorkCount: number;
+  averagePlayCount: number | null;
+  bestCopy: string | null;
+  latestCopy: string | null;
+}
+
+interface ClaimInfo {
+  id: string;
+  sub_topic_id: string;
+  user_id: string;
+  status: "candidate" | "scripting" | "returned";
+  claimed_at: string;
+  returned_at?: string | null;
+  notes?: string | null;
+}
+
+interface AllClaimsRecord {
+  id: string;
+  sub_topic_id: string;
+  user_id: string;
+  status: "candidate" | "scripting" | "returned";
+  claimed_at: string;
+  profiles: {
+    display_name: string | null;
+    name: string;
+    role: string;
+  } | null;
+}
+
+interface ClaimRecord {
+  id: string;
+  sub_topic_id: string;
+  user_id: string;
+  status: "candidate" | "scripting" | "returned";
+  claimed_at: string;
+}
+
 interface WorksData {
   items: WorkItem[];
   similarReferences: WorkItem[];
-  summary: {
-    qualifiedWorkCount: number;
-    averagePlayCount: number | null;
-    bestCopy: string | null;
-    latestCopy: string | null;
-  };
+  summary: WorksSummary;
   pagination: {
     page: number;
     pageSize: number;
@@ -86,7 +119,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   const [detail, setDetail] = useState<TopicDetail | null>(null);
   const [works, setWorks] = useState<WorkItem[]>([]);
   const [similarWorks, setSimilarWorks] = useState<WorkItem[]>([]);
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<WorksSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 排序与分页
@@ -96,10 +129,10 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
   const [loadingWorks, setLoadingWorks] = useState(false);
 
   // 认领状态
-  const [myClaim, setMyClaim] = useState<any | null>(null);
+  const [myClaim, setMyClaim] = useState<ClaimInfo | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const [allClaims, setAllClaims] = useState<any[]>([]); // 全局认领记录 (低频展开看)
+  const [allClaims, setAllClaims] = useState<AllClaimsRecord[]>([]); // 全局认领记录 (低频展开看)
   const [showAllClaims, setShowAllClaims] = useState(false);
   
   const [actionLoading, setActionLoading] = useState(false);
@@ -133,8 +166,9 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
       const res = await fetch("/api/topics/pool?view=my_claims&time_range=3m");
       if (res.ok) {
         const json = await res.json();
-        const activeClaims = json.items || [];
-        setClaimLimitReached(activeClaims.length >= 5);
+        const activeClaims: ClaimRecord[] = json.items || [];
+        const activeCandidateCount = activeClaims.filter((c) => c.status === "candidate").length;
+        setClaimLimitReached(activeCandidateCount >= 5);
       }
     } catch (err) {
       console.error("上限检查失败:", err);

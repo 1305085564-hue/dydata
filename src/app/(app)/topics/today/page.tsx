@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -51,7 +52,8 @@ interface ActiveData {
 export default function TodayWorkspacePage() {
   const [data, setData] = useState<ActiveData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [myClaims, setMyClaims] = useState<any[]>([]);
+  const [myClaims, setMyClaims] = useState<ClaimRecord[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
   const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set());
 
   // 获取当前用户的所有认领状态，以限制 5 条及展示“已认领”
@@ -89,6 +91,18 @@ export default function TodayWorkspacePage() {
   }, []);
 
   useEffect(() => {
+    const getSession = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setCurrentUserId(user.id);
+        }
+      } catch (err) {
+        console.error("获取当前用户失败:", err);
+      }
+    };
+    void getSession();
     void loadAll();
 
     // 监听新建选题后的刷新通知
@@ -100,12 +114,12 @@ export default function TodayWorkspacePage() {
   }, [loadAll]);
 
   // 计算当前属于 candidate 状态的认领总数
-  const activeCandidateCount = myClaims.length;
+  const activeCandidateCount = myClaims.filter((c) => c.status === "candidate").length;
   const isLimitReached = activeCandidateCount >= 5;
 
   // 判断是否已被当前用户认领（在 myClaims 列表中存在且未 returned）
   const isClaimedByMe = (subTopicId: string) => {
-    return myClaims.some((c) => c.id === subTopicId);
+    return myClaims.some((c) => c.sub_topic_id === subTopicId);
   };
 
   // 处理一键认领
