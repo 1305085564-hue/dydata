@@ -364,6 +364,22 @@ export function ContentList({
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleResetFilters = useCallback(() => {
+    const defaultFilters: ContentFilterValue = {
+      profileId: "all",
+      accountId: "all",
+      startDate: "",
+      endDate: "",
+      status: "all",
+      hasSnapshot: "all",
+      reviewed: "all",
+      feedbackStatus: "all",
+      rankScope: "all",
+      sortMode: "latest",
+    };
+    handleFilter(defaultFilters);
+  }, [handleFilter]);
+
   const filtered = useMemo(() => {
     const rows = videos.filter((video) => {
       if (filters.profileId !== "all" && video.user_id !== filters.profileId) return false;
@@ -609,9 +625,19 @@ export function ContentList({
               </TableHeader>
               <TableBody>
                 {visible.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={11} className="py-12 text-center text-[13px] text-stone-500">
-                      暂无内容
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={11} className="py-16 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2.5">
+                        <span className="text-[13px] text-stone-500">没有找到符合条件的视频</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleResetFilters}
+                          className="h-8 rounded-xl border-stone-200 bg-white text-[12px] text-stone-600 hover:bg-stone-50 active:scale-[0.98] transition-all"
+                        >
+                          清除过滤条件
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (

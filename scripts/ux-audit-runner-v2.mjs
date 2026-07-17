@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 
-const OUTPUT_DIR = path.resolve('/Users/mac/Projects/dydata/output/playwright');
+const OUTPUT_DIR = path.resolve('/Users/mac/.gemini/antigravity/brain/c70087e5-acd9-4358-b5f1-063c5ea5d68a/screenshots');
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }

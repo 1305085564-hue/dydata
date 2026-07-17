@@ -213,6 +213,8 @@ export function ContentDiagnosisWorkbench({
   const [reusableOpen, setReusableOpen] = useState(false);
   const [highlightedSegmentIndex, setHighlightedSegmentIndex] = useState<number | null>(null);
   const [isFlashMainIssues, setIsFlashMainIssues] = useState(false);
+  const [quotedIndices, setQuotedIndices] = useState<Set<number>>(new Set());
+  const [showSendConfirm, setShowSendConfirm] = useState(false);
 
   // 自动保存草稿状态
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
@@ -253,6 +255,8 @@ export function ContentDiagnosisWorkbench({
     setCardDetail(null);
     setDraftSavedAt(null);
     setHighlightedSegmentIndex(null);
+    setQuotedIndices(new Set());
+    setShowSendConfirm(false);
     skipNextSaveRef.current = true;
 
     // Load feedback card details
@@ -593,16 +597,44 @@ export function ContentDiagnosisWorkbench({
   // Segment quoting helper
   const handleQuoteSegment = useCallback((text: string, index: number) => {
     setHighlightedSegmentIndex(index);
-    setMainIssues((prev) => {
-      const current = prev.trim();
-      if (!current) return `文案问题：「${text}」`;
-      if (current.includes(text)) return current;
-      return `${current} / 文案：「${text}」`;
+    
+    setQuotedIndices((prev) => {
+      const next = new Set(prev);
+      const isQuoted = next.has(index);
+      
+      if (isQuoted) {
+        // 撤销引用
+        next.delete(index);
+        setMainIssues((issuesPrev) => {
+          const target = ` / 文案：「${text}」`;
+          const targetStart = `文案问题：「${text}」`;
+          let result = issuesPrev.replace(target, "").trim();
+          if (result.startsWith(targetStart)) {
+            result = result.replace(targetStart, "").trim();
+            if (result.startsWith("/")) {
+              result = result.substring(1).trim();
+            }
+          }
+          return result;
+        });
+        feedbackToast.success("已撤销该句子的引用");
+      } else {
+        // 添加引用
+        next.add(index);
+        setMainIssues((issuesPrev) => {
+          const current = issuesPrev.trim();
+          if (!current) return `文案问题：「${text}」`;
+          if (current.includes(text)) return current;
+          return `${current} / 文案：「${text}」`;
+        });
+        feedbackToast.success("已引用该句子至主要问题");
+      }
+      return next;
     });
+
     setActiveTab("feedback");
     setIsFlashMainIssues(true);
     setTimeout(() => setIsFlashMainIssues(false), 850);
-    feedbackToast.success("已提取选中脚本段落至主要问题");
   }, []);
 
   const canConfirm = (mainIssues.trim().length > 0 || feedback.trim().length > 0) && !isConfirming;
@@ -882,27 +914,38 @@ export function ContentDiagnosisWorkbench({
                 <div className="max-h-[220px] overflow-y-auto divide-y divide-stone-100 overflow-hidden rounded-2xl border border-stone-200 bg-white">
                   {scriptSegments.map((seg, idx) => {
                     const isHighlighted = highlightedSegmentIndex === idx;
+                    const isQuoted = quotedIndices.has(idx);
                     return (
                       <div
                         key={idx}
                         onClick={() => handleQuoteSegment(seg, idx)}
-                        className={`group/seg flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors text-left ${
-                          isHighlighted ? "bg-amber-50/50" : "hover:bg-stone-50"
+                        className={`group/seg flex items-start gap-3 px-4 py-3 cursor-pointer transition-all text-left ${
+                          isQuoted 
+                            ? "bg-[#6FAA7D]/5 hover:bg-[#6FAA7D]/10 border-l-2 border-[#6FAA7D]" 
+                            : isHighlighted 
+                              ? "bg-amber-50/50 border-l-2 border-amber-300" 
+                              : "hover:bg-stone-50 border-l-2 border-transparent"
                         }`}
                       >
-                        <span className="mt-1 w-4 shrink-0 text-[12px] text-stone-500 tabular-nums">
+                        <span className={`mt-1 w-4 shrink-0 text-[12px] tabular-nums ${isQuoted ? "text-[#6FAA7D] font-medium" : "text-stone-500"}`}>
                           {idx + 1}
                         </span>
-                        <p className={`text-[12px] leading-relaxed flex-1 ${isHighlighted ? "text-amber-900 font-medium" : "text-stone-700"}`}>
+                        <p className={`text-[12px] leading-relaxed flex-1 ${
+                          isQuoted 
+                            ? "text-stone-500 line-through decoration-stone-300/60" 
+                            : isHighlighted 
+                              ? "text-amber-900 font-medium" 
+                              : "text-stone-700"
+                        }`}>
                           {seg}
                         </p>
                         <div className="opacity-0 group-hover/seg:opacity-100 transition-opacity shrink-0 flex items-center gap-1.5">
                           <button
                             type="button"
-                            title="引用此句"
-                            className="rounded-md p-1 text-stone-500 hover:bg-stone-100 hover:text-[#D97757]"
+                            title={isQuoted ? "取消引用" : "引用此句"}
+                            className={`rounded-md p-1 ${isQuoted ? "text-[#6FAA7D] hover:bg-[#6FAA7D]/10" : "text-stone-500 hover:bg-stone-100 hover:text-[#D97757]"}`}
                           >
-                            <Quote className="size-3" />
+                            {isQuoted ? <FileCheck className="size-3.5" /> : <Quote className="size-3" />}
                           </button>
                         </div>
                       </div>
@@ -1214,11 +1257,23 @@ export function ContentDiagnosisWorkbench({
                   </Button>
                   <Button
                     size="sm"
-                    className="h-8 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
-                    onClick={handleConfirmAndSend}
+                    className={`h-8 rounded-lg px-4 text-[12px] text-white transition-all duration-150 active:scale-[0.98] ${
+                      showSendConfirm
+                        ? "bg-[#C9604D] hover:bg-[#B54D3C] animate-shake"
+                        : "bg-[#D97757] hover:bg-[#C96442]"
+                    }`}
+                    onClick={() => {
+                      if (!showSendConfirm) {
+                        setShowSendConfirm(true);
+                        setTimeout(() => setShowSendConfirm(false), 5000);
+                      } else {
+                        handleConfirmAndSend();
+                        setShowSendConfirm(false);
+                      }
+                    }}
                     disabled={!canConfirm}
                   >
-                    {isConfirming ? "下发中..." : "确认并下发"}
+                    {isConfirming ? "下发中..." : showSendConfirm ? "再次点击下发给员工" : "确认并下发"}
                   </Button>
                 </>
               ) : (
