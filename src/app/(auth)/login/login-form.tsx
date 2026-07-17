@@ -128,25 +128,25 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex flex-col gap-2 relative">
             <Label htmlFor="password">密码</Label>
+            <Input
+              autoComplete="current-password"
+              id="password"
+              name="password"
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="请输入密码"
+              required
+              type="password"
+              value={password}
+            />
             <Link
-              className="active:translate-y-0 text-[12px] text-stone-500 hover:text-stone-700"
+              className="absolute right-0 top-0 active:translate-y-0 text-[12px] text-stone-500 hover:text-stone-700"
               href="/forgot-password"
             >
               忘记密码
             </Link>
           </div>
-          <Input
-            autoComplete="current-password"
-            id="password"
-            name="password"
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="请输入密码"
-            required
-            type="password"
-            value={password}
-          />
         </div>
 
         <label

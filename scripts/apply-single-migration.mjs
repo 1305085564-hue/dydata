@@ -2,6 +2,12 @@
 import { readFileSync } from 'fs';
 import { createClient } from '@supabase/supabase-js';
 
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load env vars
+dotenv.config({ path: path.resolve('./.env.local') });
+
 const SUPABASE_URL = 'https://gcrhhxaopomtposmahsw.supabase.co';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

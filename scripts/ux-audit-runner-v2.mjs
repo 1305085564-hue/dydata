@@ -61,6 +61,10 @@ async function run() {
 
     // ─── THREAD 1: DASHBOARD (/dashboard) ───
     console.log("\n--- Traversing Thread 1: Dashboard (/dashboard) ---");
+    console.log("Waiting for dashboard content to load...");
+    await page.locator('text=今日提交').first().waitFor({ state: 'visible', timeout: 30000 });
+    await page.waitForTimeout(1000); // stable
+    
     const viewports = [
       { name: 'desktop_1440', width: 1440, height: 900 },
       { name: 'tablet_1024', width: 1024, height: 768 },
@@ -113,6 +117,9 @@ async function run() {
     console.log("\n--- Traversing Thread 2: Admin Fulfillment (/admin/fulfillment) ---");
     await page.goto('http://localhost:3000/admin/fulfillment');
     await page.waitForLoadState('networkidle');
+    console.log("Waiting for fulfillment workbench to load...");
+    await page.locator('text=发布管理工作台').first().waitFor({ state: 'visible', timeout: 30000 });
+    await page.waitForTimeout(1000);
     console.log("Reached /admin/fulfillment page. URL:", page.url());
 
     for (const vp of viewports) {
@@ -139,26 +146,26 @@ async function run() {
 
     // 2. Monthly Matrix expand
     console.log("Checking for Monthly Matrix...");
-    const matrixBtn = page.locator('button:has-text("月度矩阵")');
+    // The h2 element inside the button contains "月度矩阵"
+    const matrixBtn = page.locator('button:has(h2:has-text("月度矩阵"))').first();
     if (await matrixBtn.isVisible()) {
       console.log("Clicking 月度矩阵 to expand...");
       await matrixBtn.click();
       await page.waitForTimeout(600);
       await page.screenshot({ path: path.join(OUTPUT_DIR, 'fulfillment_monthly_matrix_expanded.png') });
     } else {
-      console.log("月度矩阵 section not found.");
+      console.log("月度矩阵 section not found in the DOM.");
     }
 
     // 3. Exception Queue details click
     console.log("Checking for Exception Queue row click...");
-    // Let's click the first member name or element that looks like a row
-    // Inside exception queue, there are names, let's find one.
-    const memberNameSpan = page.locator('td span.text-\\[13px\\].font-medium.text-stone-900').first();
-    if (await memberNameSpan.isVisible()) {
-      const name = await memberNameSpan.innerText();
+    // Let's click the first member name button in the exception table
+    const memberNameBtn = page.locator('td button p.font-medium.text-stone-900').first();
+    if (await memberNameBtn.isVisible()) {
+      const name = await memberNameBtn.innerText();
       console.log(`Clicking member row for: ${name}...`);
-      await memberNameSpan.click();
-      await page.waitForTimeout(600);
+      await memberNameBtn.click();
+      await page.waitForTimeout(800); // wait for drawer opening animation
       await page.screenshot({ path: path.join(OUTPUT_DIR, 'fulfillment_member_drawer_open.png') });
       console.log("Closing member drawer...");
       await page.keyboard.press('Escape');
