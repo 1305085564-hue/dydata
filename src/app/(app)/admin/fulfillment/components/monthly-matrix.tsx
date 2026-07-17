@@ -7,6 +7,15 @@ import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfil
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
+interface FulfillmentAppeal {
+  id: string;
+  user_id: string;
+  record_date: string;
+  reason: string;
+  status: string;
+  handler_name?: string | null;
+}
+
 interface MonthlyMatrixProps {
   year: number;
   month: number;
@@ -14,7 +23,7 @@ interface MonthlyMatrixProps {
   today: string;
   onCellClick: (member: FulfillmentMemberSummary, date: string) => void;
   onMonthChange: (year: number, month: number) => void;
-  appeals?: any[];
+  appeals?: FulfillmentAppeal[];
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -76,7 +85,7 @@ export function MonthlyMatrix({
 
   // 构建申诉缓存映射
   const appealMap = useMemo(() => {
-    const map = new Map<string, any>();
+    const map = new Map<string, FulfillmentAppeal>();
     if (Array.isArray(appeals)) {
       for (const appeal of appeals) {
         map.set(`${appeal.user_id}_${appeal.record_date}`, appeal);
@@ -115,10 +124,19 @@ export function MonthlyMatrix({
     <TooltipProvider delay={100}>
       <div className="space-y-3">
         {/* 折叠头部 */}
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setExpanded(!expanded)}
-          className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 hover:bg-stone-50/50"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              // Ensure key events on inner buttons don't double trigger expansion
+              if ((e.target as HTMLElement).closest("button")) return;
+              e.preventDefault();
+              setExpanded(!expanded);
+            }
+          }}
+          className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 cursor-pointer select-none hover:bg-stone-50/50"
         >
           <div className="flex items-center gap-3">
             <h2 className="text-[18px] font-medium text-stone-900">月度矩阵</h2>
@@ -139,7 +157,7 @@ export function MonthlyMatrix({
                   <ChevronRight className="size-3.5" />
                 </Button>
                 {!isCurrentMonth() && (
-                <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[12px]">
+                  <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[12px]">
                     当月
                   </Button>
                 )}
@@ -151,7 +169,7 @@ export function MonthlyMatrix({
               <ChevronDown className="size-4 text-stone-500" />
             )}
           </div>
-        </button>
+        </div>
 
         {/* 展开内容 */}
         {expanded && (
@@ -247,7 +265,7 @@ export function MonthlyMatrix({
                                       员工申诉 ({appeal.status === "pending" ? "待处理" : appeal.status === "approved" ? "申诉通过" : "被驳回"})
                                     </div>
                                     <p className="mt-1 text-[12px] italic leading-[1.7] text-stone-100">
-                                      "{appeal.reason}"
+                                      &ldquo;{appeal.reason}&rdquo;
                                     </p>
                                     {appeal.handler_name && (
                                       <span className="mt-1 block text-right text-[12px] text-stone-500">处理人: {appeal.handler_name}</span>

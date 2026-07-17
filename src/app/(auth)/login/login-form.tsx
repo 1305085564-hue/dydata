@@ -25,8 +25,6 @@ type LoginFormProps = {
   notice?: string | null;
 };
 
-const STORAGE_KEY = "dydata.rememberedEmail";
-
 const initialState: LoginFormState = {
   error: null,
   email: "",
@@ -57,31 +55,15 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   const [state, formAction] = useActionState(action, { ...initialState, email: initialEmail });
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
-  const [rememberEmail, setRememberEmail] = useState(Boolean(initialEmail));
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   useEffect(() => {
     setShowExpiredAlert(isExpired);
   }, [isExpired]);
 
   useEffect(() => {
-    const savedEmail = window.localStorage.getItem(STORAGE_KEY);
-    if (!initialEmail && savedEmail) {
-      setEmail(savedEmail);
-      setRememberEmail(true);
-    }
-  }, [initialEmail]);
-
-  useEffect(() => {
     if (state.email) setEmail(state.email);
   }, [state.email]);
-
-  useEffect(() => {
-    if (rememberEmail) {
-      if (email.trim()) window.localStorage.setItem(STORAGE_KEY, email.trim());
-      return;
-    }
-    window.localStorage.removeItem(STORAGE_KEY);
-  }, [email, rememberEmail]);
 
   useEffect(() => {
     if (state.error) {
@@ -151,15 +133,15 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
 
         <label
           className="flex items-center gap-2 text-[13px] text-stone-500"
-          htmlFor="remember-email"
+          htmlFor="keep-logged-in"
         >
           <Checkbox
-            checked={rememberEmail}
-            id="remember-email"
-            name="rememberEmail"
-            onCheckedChange={(checked) => setRememberEmail(checked === true)}
+            checked={keepLoggedIn}
+            id="keep-logged-in"
+            name="keepLoggedIn"
+            onCheckedChange={(checked) => setKeepLoggedIn(checked === true)}
           />
-          记住邮箱
+          保持登录状态（30天免密）
         </label>
 
         <SubmitButton />

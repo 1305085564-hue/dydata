@@ -148,20 +148,22 @@ async function run() {
     console.log("Checking for Monthly Matrix...");
     // The h2 element inside the button contains "月度矩阵"
     const matrixBtn = page.locator('button:has(h2:has-text("月度矩阵"))').first();
-    if (await matrixBtn.isVisible()) {
+    try {
+      await matrixBtn.waitFor({ state: 'visible', timeout: 10000 });
       console.log("Clicking 月度矩阵 to expand...");
       await matrixBtn.click();
       await page.waitForTimeout(600);
       await page.screenshot({ path: path.join(OUTPUT_DIR, 'fulfillment_monthly_matrix_expanded.png') });
-    } else {
-      console.log("月度矩阵 section not found in the DOM.");
+    } catch (e) {
+      console.log("月度矩阵 section not found in the DOM or timed out.");
     }
 
     // 3. Exception Queue details click
     console.log("Checking for Exception Queue row click...");
     // Let's click the first member name button in the exception table
     const memberNameBtn = page.locator('td button p.font-medium.text-stone-900').first();
-    if (await memberNameBtn.isVisible()) {
+    try {
+      await memberNameBtn.waitFor({ state: 'visible', timeout: 10000 });
       const name = await memberNameBtn.innerText();
       console.log(`Clicking member row for: ${name}...`);
       await memberNameBtn.click();
@@ -170,8 +172,8 @@ async function run() {
       console.log("Closing member drawer...");
       await page.keyboard.press('Escape');
       await page.waitForTimeout(500);
-    } else {
-      console.log("No member row found in the exception queue to click.");
+    } catch (e) {
+      console.log("No member row found in the exception queue or timed out.");
     }
 
   } catch (err) {

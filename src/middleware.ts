@@ -3,11 +3,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
 import { createServerClient } from "@supabase/ssr";
+import {
+  applyAuthCookieLifetime,
+  isKeepLoggedInCookieValue,
+  KEEP_LOGGED_IN_COOKIE_NAME,
+} from "@/lib/supabase/session-cookie";
 
 const SITE_CLEARED_COOKIE = "dydata-site-cleared";
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 
-function createClientFromRequest(request: NextRequest) {
+function createClientFromRequest(request: NextRequest, response: NextResponse) {
+  const keepLoggedIn = isKeepLoggedInCookieValue(request.cookies.get(KEEP_LOGGED_IN_COOKIE_NAME)?.value);
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -16,8 +23,12 @@ function createClientFromRequest(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll() {
-          // middleware 中不写入 cookie
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const cookieOptions = applyAuthCookieLifetime(options, keepLoggedIn);
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, cookieOptions);
+          });
         },
       },
     },
@@ -106,13 +117,22 @@ export async function middleware(request: NextRequest) {
         response.cookies.delete(cookieName);
       });
     }
+    response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
     return response;
   }
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-next-pathname", pathname);
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   // 有 cookie 时进一步校验 session 是否有效
   if (hasAuthCookie && isProtectedAppRoute) {
     try {
-      const supabase = createClientFromRequest(request);
+      const supabase = createClientFromRequest(request, response);
       const { data, error } = await supabase.auth.getSession();
       if (error || !data.session) {
         // session 无效或过期，清除 cookie 并重定向到登录页
@@ -120,6 +140,7 @@ export async function middleware(request: NextRequest) {
         listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
           response.cookies.delete(cookieName);
         });
+        response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
         return response;
       }
     } catch {
@@ -127,14 +148,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-next-pathname", pathname);
-
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return response;
 }
 
 export const config = {

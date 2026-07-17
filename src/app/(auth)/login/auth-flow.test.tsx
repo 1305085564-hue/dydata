@@ -24,13 +24,14 @@ test("登录表单会保留传入邮箱并显示忘记密码入口", () => {
   assert.match(html, /href="\/forgot-password"/);
 });
 
-test("登录表单包含记住邮箱选项", () => {
+test("登录表单包含保持登录选项", () => {
   const html = renderToStaticMarkup(
     <LoginForm action={async () => ({ error: null, email: "" })} />,
   );
 
   assert.match(html, /type="checkbox"/);
-  assert.match(html, /记住邮箱/);
+  assert.match(html, /name="keepLoggedIn"/);
+  assert.match(html, /保持登录状态（30天免密）/);
 });
 
 test("登录成功后所有角色都默认进入 dashboard", () => {

@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { getLoginNotice } from "@/lib/auth-password";
 import { createClient } from "@/lib/supabase/server";
+import {
+  KEEP_LOGGED_IN_COOKIE_NAME,
+  KEEP_LOGGED_IN_COOKIE_VALUE,
+  KEEP_LOGGED_IN_MAX_AGE,
+} from "@/lib/supabase/session-cookie";
 
 import { LoginForm } from "./login-form";
 import { getPostLoginRedirectPath } from "./post-login-redirect";
@@ -28,12 +34,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
     const email = formData.get("email")?.toString().trim() ?? "";
     const password = formData.get("password")?.toString() ?? "";
+    const keepLoggedIn = formData.get("keepLoggedIn") === "on";
 
     if (!email || !password) {
       return { error: "请输入邮箱和密码。", email };
     }
 
-    const supabase = await createClient();
+    const supabase = await createClient({ keepLoggedIn });
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -51,6 +58,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
     if (profileError || !profile) {
       return { error: "未找到账号资料，请联系管理员。", email };
+    }
+
+    const cookieStore = await cookies();
+    if (keepLoggedIn) {
+      cookieStore.set(KEEP_LOGGED_IN_COOKIE_NAME, KEEP_LOGGED_IN_COOKIE_VALUE, {
+        httpOnly: true,
+        maxAge: KEEP_LOGGED_IN_MAX_AGE,
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    } else {
+      cookieStore.delete(KEEP_LOGGED_IN_COOKIE_NAME);
     }
 
     redirect(getPostLoginRedirectPath(profile.role, params.next));
