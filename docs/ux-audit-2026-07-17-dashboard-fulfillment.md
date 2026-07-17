@@ -13,7 +13,7 @@
 
 | 序号 | 漏洞/痛点描述 | 影响页面 | 严重级别 | 类别 | 状态 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | **生产库表结构缺失（schema 漂移）** | `发布管理` / `违规中心` | **Blocker (阻碍)** | 数据库配置 | 待同步 |
+| 1 | **生产库履约申诉表缺失（schema 漂移）** | `发布管理` | **Blocker (阻碍)** | 数据库配置 | **已修复** |
 | 2 | **HTML 嵌套错误（React 水合失败）** | `发布管理` -> `月度矩阵` | **High (高)** | HTML 规范/交互 | **已修复** ✓ |
 | 3 | **本地开发编译死循环** | 本地 E2E 测试 | **Medium (中)** | 开发环境构建 | **已修复** ✓ |
 | 4 | **移动端首屏高度占比过大** | `发布管理` (375px 视口) | **Low (低)** | 响应式布局 | 建议优化 |
@@ -22,21 +22,18 @@
 
 ## 2. 缺陷细节与整改台账
 
-### 01. 生产库表结构缺失（Blocker）
+### 01. 生产库履约申诉表缺失（Blocker）
 *   **现象**：
     在访问发布管理工作台时，控制台报错：
     `[HTTP 500] Internal Server Error - http://localhost:3000/api/admin/fulfillment/appeals?limit=150`。
-    访问 `/violations` 页面时同样会遭遇数据库查询缓存错误。
 *   **根因分析**：
-    我们在代码中进行了直连数据库测试，发现 `profiles` 和 `fulfillment_records` 正常运作，但查询 `fulfillment_appeals` 和 `violations` 时均报：
+    我们在代码中进行了直连数据库测试，发现 `profiles` 和 `fulfillment_records` 正常运作，但查询 `fulfillment_appeals` 时报：
     `Could not find the table 'public.fulfillment_appeals' in the schema cache`。
-    这表明 remote 新加坡生产数据库（`gcrhhxaopomtposmahsw.supabase.co`）缺失了 `055_violation_system.sql` 和 `20260628001455_fulfillment_backend_loop_fix.sql` 两大迁移文件定义的表结构。
+    这表明 remote 新加坡生产数据库（`gcrhhxaopomtposmahsw.supabase.co`）虽然迁移历史记录了 `20260628001455_fulfillment_backend_loop_fix.sql`，但真实表结构缺失其中的履约申诉与系统设置对象。后续 CX 复核确认 `055_violation_system.sql` 对应的真实表是 `violation_cases` / `violation_test_records`，远端已存在；`public.violations` 不是当前代码使用的表。
 *   **业务影响**：
-    申诉展示失效，管理员无法正常审批及查阅申诉；违规日志页面直接抛出 500。
-*   **解决方案**：
-    需要通过 Supabase 数据库直连或在 Supabase 控制台的 SQL Editor 中手动执行以下两份 Migration 脚本：
-    1.  [055_violation_system.sql](file:///Users/mac/Projects/dydata/supabase/migrations/055_violation_system.sql)
-    2.  [20260628001455_fulfillment_backend_loop_fix.sql](file:///Users/mac/Projects/dydata/supabase/migrations/20260628001455_fulfillment_backend_loop_fix.sql)
+    申诉展示失效，管理员无法正常审批及查阅申诉。
+*   **解决方案 (已修复)**：
+    CX 已新增并应用补丁迁移 [20260717235530_restore_fulfillment_backend_loop.sql](file:///Users/mac/Projects/dydata/supabase/migrations/20260717235530_restore_fulfillment_backend_loop.sql)，补齐 `fulfillment_appeals`、`system_settings`、相关 RLS 策略、触发器与 `handle_fulfillment_appeal` RPC。验证结果：`fulfillment_appeals` / `system_settings` REST 查询返回 200，登录态访问 `/api/admin/fulfillment/appeals?limit=150` 返回 200。
 
 ### 02. HTML 嵌套错误导致 React 水合/水合失效（High）
 *   **现象**：
@@ -62,7 +59,7 @@
 
 ### 数据台 (`/dashboard`)
 *   **1440px 桌面端**：视觉设计十分精致。骨架屏、日历和提交卡片均显示正常。
-*   **1024px / 768px 平板端**：导航自动收缩为侧边/顶栏模式。提交面板 the 布局能够自适应缩放，无文字截断或元素错位。
+*   **1024px / 768px 平板端**：导航自动收缩为侧边/顶栏模式。提交面板布局能够自适应缩放，无文字截断或元素错位。
 *   **375px 移动端**：
     *   顶部导航完美折叠至汉堡菜单内。
     *   `数据查看`、`历史记录`、`避坑案例` 与 `申请豁免` 四个 Tab 自动以两行自适应排版。
