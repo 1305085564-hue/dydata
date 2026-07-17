@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -36,8 +36,15 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full" disabled={pending} type="submit">
-      {pending ? "登录中" : "登录"}
+    <Button className="w-full relative overflow-hidden transition-all duration-150 active:scale-[0.98]" disabled={pending} type="submit">
+      {pending ? (
+        <span className="flex items-center justify-center gap-1.5">
+          <Loader2 className="size-3.5 animate-spin" />
+          <span>验证凭证中...</span>
+        </span>
+      ) : (
+        "进入工作台"
+      )}
     </Button>
   );
 }

@@ -1,0 +1,38 @@
+- generic [active] [ref=f4e1]:
+  - main [ref=f4e2]:
+    - generic [ref=f4e4]:
+      - generic [ref=f4e7]:
+        - paragraph [ref=f4e8]: DYData
+        - heading "回到工作台" [level=1] [ref=f4e9]
+      - generic [ref=f4e10]:
+        - generic [ref=f4e11]:
+          - generic [ref=f4e12]: 邮箱
+          - textbox "邮箱" [ref=f4e13]:
+            - /placeholder: you@dydata.cc
+            - text: 1305085564@qq.com
+        - generic [ref=f4e14]:
+          - generic [ref=f4e15]:
+            - generic [ref=f4e16]: 密码
+            - link "忘记密码" [ref=f4e17] [cursor=pointer]:
+              - /url: /forgot-password
+          - textbox "密码" [ref=f4e18]:
+            - /placeholder: 请输入密码
+            - text: dydata123456
+        - generic [ref=f4e19]:
+          - checkbox "记住邮箱" [ref=f4e20]
+          - checkbox [ref=f4e21]
+          - text: 记住邮箱
+        - button "登录中" [disabled]
+        - paragraph [ref=f4e23]:
+          - text: 还没有账号？
+          - link "去注册" [ref=f4e24] [cursor=pointer]:
+            - /url: /register
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f4e30] [cursor=pointer]:
+    - generic [ref=f4e52]:
+      - text: Compiling
+      - generic [ref=f4e53]:
+        - generic [ref=f4e54]: .
+        - generic [ref=f4e55]: .
+        - generic [ref=f4e56]: .
+  - alert [ref=f4e38]: 回到工作台

@@ -212,6 +212,7 @@ export function ContentDiagnosisWorkbench({
   const [isMarkingExperience, setIsMarkingExperience] = useState(false);
   const [reusableOpen, setReusableOpen] = useState(false);
   const [highlightedSegmentIndex, setHighlightedSegmentIndex] = useState<number | null>(null);
+  const [isFlashMainIssues, setIsFlashMainIssues] = useState(false);
 
   // 自动保存草稿状态
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
@@ -595,8 +596,12 @@ export function ContentDiagnosisWorkbench({
     setMainIssues((prev) => {
       const current = prev.trim();
       if (!current) return `文案问题：「${text}」`;
+      if (current.includes(text)) return current;
       return `${current} / 文案：「${text}」`;
     });
+    setActiveTab("feedback");
+    setIsFlashMainIssues(true);
+    setTimeout(() => setIsFlashMainIssues(false), 850);
     feedbackToast.success("已提取选中脚本段落至主要问题");
   }, []);
 
@@ -739,7 +744,10 @@ export function ContentDiagnosisWorkbench({
                     <YAxis domain={[0, 100]} tickLine={false} axisLine={false} tick={{ fill: "#78716C", fontSize: 12 }} />
                     <ChartTooltip
                       contentStyle={{ borderRadius: "12px", border: "1px solid #E7E5E4", boxShadow: "0 4px 12px rgba(28,25,23,0.08)" }}
-                      formatter={(val: any) => [`${parseFloat(val).toFixed(1)}%`, "留存率"]}
+                      formatter={(val) => {
+                        const numericVal = typeof val === "number" ? val : parseFloat(String(val));
+                        return [`${isNaN(numericVal) ? "-" : numericVal.toFixed(1)}%`, "留存率"];
+                      }}
                     />
                     <Area type="monotone" dataKey="rate" stroke="#D97757" strokeWidth={2} fillOpacity={1} fill="url(#colorRate)" />
                   </AreaChart>
@@ -818,18 +826,37 @@ export function ContentDiagnosisWorkbench({
             </div>
             
             {/* Save Status */}
-            <div className="flex items-center gap-1.5 text-[12px] text-stone-500">
-              {isSavingDraft ? (
-                <>
-                  <Loader2 className="size-3 animate-spin text-[#D99E55]" />
-                  正在保存草稿...
-                </>
-              ) : draftSavedAt ? (
-                <>
-                  <span className="size-1.5 rounded-full bg-green-500" />
-                  已自动保存
-                </>
-              ) : null}
+            <div className="flex items-center gap-1.5 text-[12px] text-stone-500 min-h-5 overflow-hidden">
+              <AnimatePresence mode="wait">
+                {isSavingDraft ? (
+                  <motion.div
+                    key="saving"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Loader2 className="size-3 animate-spin text-[#D99E55]" />
+                    <span>正在保存草稿...</span>
+                  </motion.div>
+                ) : draftSavedAt ? (
+                  <motion.div
+                    key="saved"
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center gap-1.5 text-stone-400"
+                  >
+                    <span className="relative flex size-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full size-1.5 bg-[#6FAA7D]"></span>
+                    </span>
+                    <span>已自动保存</span>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -1101,7 +1128,11 @@ export function ContentDiagnosisWorkbench({
                   <textarea
                     value={mainIssues}
                     onChange={(e) => setMainIssues(e.target.value)}
-                    className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
+                    className={`w-full resize-none rounded-xl border p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-all duration-300 ${
+                      isFlashMainIssues
+                        ? "border-[#D97757] ring-2 ring-[#D97757]/15 bg-amber-50/20 scale-[1.005]"
+                        : "border-stone-200 bg-stone-50"
+                    }`}
                     rows={2}
                     placeholder="例如：开头留人弱 / 选题不清 / 互动性差"
                     disabled={!isEditable}
@@ -1295,7 +1326,7 @@ function MiniBar({ label, pct, color }: { label: string; pct: number; color: str
     <div className="flex items-center gap-1.5 text-[12px] leading-none text-stone-500">
       <span className="w-6 shrink-0">{label}</span>
       <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${Math.max(5, Math.min(100, pct))}%` }} />
+        <div className={`h-full rounded-full ${color} transition-[width] duration-500 ease-out`} style={{ width: `${Math.max(5, Math.min(100, pct))}%` }} />
       </div>
     </div>
   );

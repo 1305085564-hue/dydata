@@ -641,8 +641,21 @@ export function ContentList({
                         ) : null}
                         <TableRow
                           data-video-id={video.id}
+                          onClick={(e) => {
+                            if (window.getSelection()?.toString()) return;
+                            const target = e.target as HTMLElement;
+                            if (
+                              target.closest("button") || 
+                              target.closest("a") || 
+                              target.closest("input") || 
+                              target.closest("[role='checkbox']")
+                            ) {
+                              return;
+                            }
+                            onSelectVideoId(video.id);
+                          }}
                           className={[
-                            "group border-b border-stone-100 hover:bg-stone-100",
+                            "group border-b border-stone-100 hover:bg-stone-50/80 cursor-pointer transition-colors duration-150",
                             isNewBatch && "animate-fade-in-up",
                           ].filter(Boolean).join(" ")}
                           style={
@@ -675,12 +688,12 @@ export function ContentList({
                             {(() => {
                               const hasSignal = Boolean(video.play_change_signal);
                               const sent = cardStatus === "sent" || cardStatus === "viewed";
-                              // 三档：异常未复盘 → 暖橙实色推到眼前；已下发 → outline 灰；其他 → ghost 极淡
+                              // 三档：异常未复盘 → 暖橙实色推到眼前（常态显示）；已下发 → outline 灰（常态半透明）；其他 → ghost 极淡（常态半透明）
                               if (hasSignal && !sent) {
                                 return (
                                   <Button
                                     size="sm"
-                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] shadow-[0_2px_8px_rgba(217,119,87,0.12)]"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     复盘
@@ -692,7 +705,7 @@ export function ContentList({
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-45 group-hover:opacity-100 focus-within:opacity-100"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     查看
@@ -703,7 +716,7 @@ export function ContentList({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 rounded-lg px-3 text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                                  className="h-7 rounded-lg px-3 text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-45 group-hover:opacity-100 focus-within:opacity-100"
                                   onClick={() => onSelectVideoId(video.id)}
                                 >
                                   复盘
