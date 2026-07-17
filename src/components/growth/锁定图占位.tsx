@@ -13,12 +13,12 @@ export function LockedChartPlaceholder({ title, description }: LockedChartPlaceh
         <p className="mt-1 text-[12px] text-stone-500">数据不足时占位，不画假曲线。</p>
       </div>
       <div className="relative mt-4 flex min-h-[280px] flex-1 items-center justify-center sm:min-h-[320px]">
-        <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" aria-hidden="true">
-          <line x1="8%" y1="25%" x2="92%" y2="25%" stroke="#E7E5E4" strokeWidth="0.5" strokeDasharray="3 3" />
-          <line x1="8%" y1="50%" x2="92%" y2="50%" stroke="#E7E5E4" strokeWidth="0.5" strokeDasharray="3 3" />
-          <line x1="8%" y1="75%" x2="92%" y2="75%" stroke="#E7E5E4" strokeWidth="0.5" strokeDasharray="3 3" />
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="8" y1="25" x2="92" y2="25" stroke="#E7E5E4" strokeWidth="0.5" strokeDasharray="3 3" />
+          <line x1="8" y1="50" x2="92" y2="50" stroke="#E7E5E4" strokeWidth="0.5" strokeDasharray="3 3" />
+          <line x1="8" y1="75" x2="92" y2="75" stroke="#E7E5E4" strokeWidth="0.5" strokeDasharray="3 3" />
           <path
-            d="M 8% 70% L 25% 55% L 42% 62% L 60% 40% L 78% 48% L 92% 30%"
+            d="M 8 70 L 25 55 L 42 62 L 60 40 L 78 48 L 92 30"
             fill="none"
             stroke="#D6D3D1"
             strokeWidth="1.5"

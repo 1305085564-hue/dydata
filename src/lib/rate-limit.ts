@@ -19,6 +19,10 @@ const MAX_REQUESTS = 20;
  *   - retryAfter: 若被限制，多少秒后恢复
  */
 export function checkRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
+  if (process.env.NODE_ENV === "development") {
+    return { allowed: true, retryAfter: 0 };
+  }
+
   const now = Date.now();
   const entry = store.get(ip);
 

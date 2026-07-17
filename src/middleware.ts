@@ -67,7 +67,9 @@ export async function middleware(request: NextRequest) {
   const hasClearedSiteData = request.cookies.get(SITE_CLEARED_COOKIE)?.value === "1";
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
 
-  if (!hasClearedSiteData && !isClearSiteDataPass) {
+  if (process.env.NODE_ENV === "development") {
+    // 本地开发模式下免除 Clear-Site-Data 校验，避免 headless 浏览器下的重定向死循环
+  } else if (!hasClearedSiteData && !isClearSiteDataPass) {
     return buildClearSiteDataResponse(request);
   }
 
