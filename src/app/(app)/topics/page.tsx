@@ -72,6 +72,7 @@ export default function TopicPoolPage() {
   const [loading, setLoading] = useState(true);
   const [poolError, setPoolError] = useState<string | null>(null);
   const [topicsList, setTopicsList] = useState<TopicInfo[]>([]);
+  const [topicsError, setTopicsError] = useState<string | null>(null);
   
   // 筛选状态
   const [currentView, setCurrentView] = useState<"all" | "my_claims" | "my_created">("all");
@@ -84,6 +85,7 @@ export default function TopicPoolPage() {
   // 认领上限校验辅助
   // /api/topics/pool?view=my_claims 返回的是子题列表，不是认领记录
   const [myClaims, setMyClaims] = useState<SubTopicItem[]>([]);
+  const [claimsError, setClaimsError] = useState<string | null>(null);
   
   // 折叠母题 ID 集合
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<Set<string>>(new Set());
@@ -115,36 +117,40 @@ export default function TopicPoolPage() {
   }, []);
 
   // 加载母题分类（供顶部下拉筛选用）
-  useEffect(() => {
-    const fetchTopics = async () => {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("topics")
-          .select("id, name, sort_order")
-          .order("sort_order", { ascending: true });
+  const fetchTopics = useCallback(async () => {
+    setTopicsError(null);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("topics")
+        .select("id, name, sort_order")
+        .order("sort_order", { ascending: true });
 
-        if (error) throw error;
-        if (data) setTopicsList(data as TopicInfo[]);
-      } catch (err) {
-        console.error("加载母题过滤分类失败:", err);
-      }
-    };
-    void fetchTopics();
+      if (error) throw error;
+      setTopicsList((data ?? []) as TopicInfo[]);
+    } catch (err) {
+      console.error("加载母题过滤分类失败:", err);
+      setTopicsList([]);
+      setTopicsError(err instanceof Error ? err.message : "母题分类加载失败");
+    }
   }, []);
 
+  useEffect(() => {
+    void fetchTopics();
+  }, [fetchTopics]);
+
   // 加载我的认领，用于判断认领总数和是否已认领
-  const fetchMyClaims = async () => {
+  const fetchMyClaims = useCallback(async () => {
+    setClaimsError(null);
     try {
-      const res = await fetch("/api/topics/pool?view=my_claims");
-      if (res.ok) {
-        const json = await res.json();
-        setMyClaims(json.items || []);
-      }
+      const json = await fetchTopicPoolResponse("/api/topics/pool?view=my_claims");
+      setMyClaims(json.items || []);
     } catch (err) {
       console.error("我的认领状态拉取失败:", err);
+      setMyClaims([]);
+      setClaimsError(err instanceof Error ? err.message : "认领状态加载失败");
     }
-  };
+  }, []);
 
   // 加载选题池列表
   const fetchPoolData = useCallback(async (page: number, append = false) => {
@@ -190,7 +196,7 @@ export default function TopicPoolPage() {
   const loadAll = useCallback(async () => {
     setCurrentPage(1);
     await Promise.all([fetchPoolData(1, false), fetchMyClaims()]);
-  }, [fetchPoolData]);
+  }, [fetchMyClaims, fetchPoolData]);
 
   // 当筛选条件变化时，重新获取数据
   useEffect(() => {
@@ -334,6 +340,27 @@ export default function TopicPoolPage() {
           </Button>
         </div>
       </div>
+
+      {topicsError || claimsError ? (
+        <div className="space-y-2 rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/5 px-4 py-3 text-[12px] text-stone-600">
+          {topicsError ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>母题分类加载失败：{topicsError}</span>
+              <Button type="button" variant="outline" size="xs" onClick={() => void fetchTopics()}>
+                重新加载分类
+              </Button>
+            </div>
+          ) : null}
+          {claimsError ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>认领状态加载失败：{claimsError}</span>
+              <Button type="button" variant="outline" size="xs" onClick={() => void fetchMyClaims()}>
+                重新加载认领状态
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* 列表区 */}
       {loading ? (
