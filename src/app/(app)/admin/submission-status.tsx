@@ -247,7 +247,7 @@ export function SubmissionStatus({
         <div className="flex flex-wrap items-center justify-center gap-1">
           <Button variant="outline" size="sm" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="h-8 px-3 text-[12px] rounded-xl">上一页</Button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-[12px] rounded-xl ${p === page ? "bg-white border-[#D97757]/40 text-[#D97757] hover:bg-white hover:border-[#D97757]/60" : "bg-white border-stone-200 text-stone-700 hover:bg-stone-50"}`}>{p}</Button>
+            <Button key={p} size="sm" variant={p === page ? "default" : "outline"} onClick={() => onPageChange(p)} className={`h-8 w-8 p-0 text-[12px] rounded-xl ${p === page ? "bg-white border-[#D97757]/40 text-[#B4532F] hover:bg-white hover:border-[#D97757]/60" : "bg-white border-stone-200 text-stone-700 hover:bg-stone-50"}`}>{p}</Button>
           ))}
           <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="h-8 px-3 text-[12px] rounded-xl">下一页</Button>
         </div>
@@ -268,7 +268,7 @@ export function SubmissionStatus({
         </Card>
         <Card className="bg-white border-stone-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#6FAA7D]">已提交</p>
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#3F7A4E]">已提交</p>
             <p className="text-[18px] font-medium text-stone-900 tracking-tight mt-2 tabular-nums">
               <AnimatedNumber value={summary.submittedCount} />
             </p>
@@ -276,7 +276,7 @@ export function SubmissionStatus({
         </Card>
         <Card className="bg-white border-stone-200">
           <CardContent className="pt-6 pb-5">
-            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#D99E55]">待提交</p>
+            <p className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#8F641B]">待提交</p>
             <p className="text-[18px] font-medium text-stone-900 tracking-tight mt-2 tabular-nums">
               <AnimatedNumber value={summary.unsubmittedCount} />
             </p>

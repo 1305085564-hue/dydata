@@ -114,8 +114,8 @@ export function VideoTagReviewCard({ videoId, tags, onConfirmed, onConfirmFailed
                     variant="outline"
                     className={
                       reviewStatus === "可信"
-                        ? "border-stone-200 bg-white text-[#6FAA7D]"
-                        : "border-stone-200 bg-white text-[#D99E55]"
+                        ? "border-stone-200 bg-white text-[#3F7A4E]"
+                        : "border-stone-200 bg-white text-[#8F641B]"
                     }
                   >
                     <span

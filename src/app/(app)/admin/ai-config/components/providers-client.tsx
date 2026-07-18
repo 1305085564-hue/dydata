@@ -277,12 +277,12 @@ export default function ProvidersClient() {
                               <TableCell className="py-1 text-[13px] font-mono text-stone-500 text-left">{key.api_key_masked || "***"}</TableCell>
                               <TableCell className="py-1 text-left">
                                 {healthy ? (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#6FAA7D]/100/5 text-[#6FAA7D] border border-[#6FAA7D]/10">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#6FAA7D]/100/5 text-[#3F7A4E] border border-[#6FAA7D]/10">
                                     <span className="size-1 rounded-full bg-[#6FAA7D]/100" />
                                     正常
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#C9604D]/5 text-[#C9604D] border border-[#C9604D]/10">
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#C9604D]/5 text-[#B24E3E] border border-[#C9604D]/10">
                                     <span className="size-1 rounded-full bg-[#C9604D]" />
                                     异常/停用
                                   </span>
@@ -315,7 +315,7 @@ export default function ProvidersClient() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`为分组 ${key.label} 添加模型`}
-                                      className="size-7 text-stone-500 hover:text-[#D97757]"
+                                      className="size-7 text-stone-500 hover:text-[#B4532F]"
                                       onClick={() => setModelModal({ open: true, keyId: key.id, data: null })}
                                     >
                                       <Plus strokeWidth={1.5} className="size-3" />
@@ -324,7 +324,7 @@ export default function ProvidersClient() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`删除分组 ${key.label}`}
-                                      className="size-7 text-stone-500 hover:text-[#C9604D]"
+                                      className="size-7 text-stone-500 hover:text-[#B24E3E]"
                                       onClick={() => setDeleteConfirm({ open: true, entity: "key", id: key.id, title: `删除分组 ${key.label}` })}
                                     >
                                       <Trash2 strokeWidth={1.5} className="size-3" />
@@ -382,7 +382,7 @@ export default function ProvidersClient() {
               <div className="grid grid-cols-2 gap-4 bg-stone-50/50 p-3 rounded-lg border border-stone-100 text-[12px]">
                 <div>
                   <span className="text-stone-500">连续失败次数：</span>
-                  <span className={cn("font-medium", apiKey.consecutive_failures > 0 ? "text-[#C9604D]" : "text-stone-700")}>
+                  <span className={cn("font-medium", apiKey.consecutive_failures > 0 ? "text-[#B24E3E]" : "text-stone-700")}>
                     {apiKey.consecutive_failures}
                   </span>
                 </div>
@@ -393,7 +393,7 @@ export default function ProvidersClient() {
                   </span>
                 </div>
                 {apiKey.last_error_message && (
-                  <div className="col-span-2 text-[#C9604D] border-t border-stone-100 pt-1.5 mt-0.5">
+                  <div className="col-span-2 text-[#B24E3E] border-t border-stone-100 pt-1.5 mt-0.5">
                     <span className="font-medium text-[12px] uppercase tracking-wider">最近异常：</span>
                     {apiKey.last_error_message}
                   </div>
@@ -451,7 +451,7 @@ export default function ProvidersClient() {
                                     variant="ghost"
                                     size="icon"
                                     aria-label={`删除模型 ${model.display_name || model.model_id}`}
-                                    className="size-7 text-stone-500 hover:text-[#C9604D]"
+                                    className="size-7 text-stone-500 hover:text-[#B24E3E]"
                                     onClick={() => setDeleteConfirm({ open: true, entity: "model", id: model.id, title: `删除模型 ${model.display_name || model.model_id}` })}
                                   >
                                     <Trash2 strokeWidth={1.5} className="size-3" />

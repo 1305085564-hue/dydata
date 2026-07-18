@@ -41,13 +41,13 @@ interface VideoListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
-  abnormal: "border-stone-200 bg-stone-50 text-[#C9604D]",
-  正常: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
-  删稿: "border-stone-200 bg-stone-50 text-[#C9604D]",
-  限流: "border-stone-200 bg-stone-50 text-[#C9604D]",
-  投流: "border-stone-200 bg-stone-50 text-[#D99E55]",
-  活动干预: "border-stone-200 bg-stone-50 text-[#D99E55]",
+  normal: "border-stone-200 bg-stone-50 text-[#3F7A4E]",
+  abnormal: "border-stone-200 bg-stone-50 text-[#B24E3E]",
+  正常: "border-stone-200 bg-stone-50 text-[#3F7A4E]",
+  删稿: "border-stone-200 bg-stone-50 text-[#B24E3E]",
+  限流: "border-stone-200 bg-stone-50 text-[#B24E3E]",
+  投流: "border-stone-200 bg-stone-50 text-[#8F641B]",
+  活动干预: "border-stone-200 bg-stone-50 text-[#8F641B]",
   "未满24h": "border-stone-200 bg-stone-50 text-stone-500",
 };
 
@@ -319,7 +319,7 @@ export function VideoList({
                           <button
                             type="button"
                             onClick={() => setPatchingVideoId(video.id)}
-                            className="text-[12px] text-[#D97757] underline-offset-4 hover:underline"
+                            className="text-[12px] text-[#B4532F] underline-offset-4 hover:underline"
                           >
                             补录24h
                           </button>

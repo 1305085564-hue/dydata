@@ -22,7 +22,7 @@ export async function ApprovedListDataContainer({
 
   if (errorMessage) {
     return (
-      <div className="rounded-xl border border-stone-200 bg-stone-50 p-5 text-[13px] leading-[1.7] text-[#D99E55] flex flex-col items-start">
+      <div className="rounded-xl border border-stone-200 bg-stone-50 p-5 text-[13px] leading-[1.7] text-[#8F641B] flex flex-col items-start">
         <span>{errorMessage}</span>
         <ReloadButton />
       </div>
@@ -45,7 +45,7 @@ export async function ApprovedListDataContainer({
         <div className="mt-4 flex justify-center">
           <Link
             href="/video-review/submit"
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#D97757] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#B4532F] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#A84D2B] active:translate-y-0"
           >
             <FilePlus2 className="size-4 stroke-[1.75]" />
             上传待审稿

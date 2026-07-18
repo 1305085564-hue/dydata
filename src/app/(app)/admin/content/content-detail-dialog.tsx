@@ -123,10 +123,10 @@ type AllComparisonData = {
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
   normal: "border-stone-200 bg-white text-stone-700",
-  abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+  abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
   正常: "border-stone-200 bg-white text-stone-700",
-  删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
-  限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+  删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
+  限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
   投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
   活动干预: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#9c7437]",
   未满24h: "border-stone-200 bg-stone-100 text-stone-500",
@@ -231,7 +231,7 @@ function ComparisonTableRow({
             if (Number.isFinite(pct) && Math.abs(pct) >= 3) {
               diffStr = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
               const better = metric.higherIsBetter ? pct > 0 : pct < 0;
-              diffColor = better ? "text-[#C9604D]" : "text-[#6FAA7D]";
+              diffColor = better ? "text-[#B24E3E]" : "text-[#3F7A4E]";
             }
           }
         }
@@ -388,7 +388,7 @@ function SegmentedControl<T extends string>({
             className={cn(
               "active:translate-y-0 rounded-md px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
               active
-                ? "border border-stone-200 bg-white text-[#D97757]"
+                ? "border border-stone-200 bg-white text-[#B4532F]"
                 : "text-stone-500 hover:text-stone-700",
             )}
           >
@@ -974,7 +974,7 @@ export function ContentDetailDialog({
                       href={video.video_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#D97757] underline-offset-4 hover:underline"
+                      className="text-[#B4532F] underline-offset-4 hover:underline"
                     >
                       抖音原片
                     </a>
@@ -1003,7 +1003,7 @@ export function ContentDetailDialog({
                     className={cn(
                       "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] font-medium tabular-nums",
                       chip.tone === "red" &&
-                        "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+                        "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
                       chip.tone === "amber" &&
                         "border-[#B5651D]/30 bg-[#B5651D]/5 text-[#B5651D]",
                       chip.tone === "halve" &&
@@ -1068,7 +1068,7 @@ export function ContentDetailDialog({
                         {video.content.length > 80 && (
                           <button
                             type="button"
-                            className="shrink-0 text-[12px] text-[#D97757] hover:underline underline-offset-4"
+                            className="shrink-0 text-[12px] text-[#B4532F] hover:underline underline-offset-4"
                             onClick={() => setContentExpanded(true)}
                           >
                             展开
@@ -1170,7 +1170,7 @@ export function ContentDetailDialog({
                       {ruleHints.map((chip) => {
                         const statusTone =
                           chip.level === "high" || chip.level === "low"
-                            ? "text-[#C9604D]"
+                            ? "text-[#B24E3E]"
                             : chip.level === "weak"
                               ? "text-[#9c7437]"
                               : "text-[#3f6f4d]";
@@ -1321,7 +1321,7 @@ export function ContentDetailDialog({
                   <section className="space-y-2">
                     <div className="rounded-xl border border-stone-200 border-l-2 border-l-[#D97757] bg-stone-100/50 p-5">
                       <div className="flex items-center gap-1.5">
-                        <SparklesIcon className="size-3.5 stroke-[1.5] text-[#D97757]" />
+                        <SparklesIcon className="size-3.5 stroke-[1.5] text-[#B4532F]" />
                         <Eyebrow>AI 辅助分析</Eyebrow>
                       </div>
 
@@ -1406,7 +1406,7 @@ export function ContentDetailDialog({
                             <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
-                                className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
+                                className="h-9 rounded-lg bg-[#B4532F] px-4 text-[12px] text-white hover:bg-[#A84D2B]"
                                 onClick={handleQuoteAnalysisToFeedback}
                               >
                                 引用到反馈
@@ -1526,7 +1526,7 @@ export function ContentDetailDialog({
             {!isLocked && (
               <Button
                 size="sm"
-                className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
+                className="h-9 rounded-lg bg-[#B4532F] px-4 text-[12px] text-white hover:bg-[#A84D2B]"
                 onClick={handleConfirmAndSend}
                 disabled={!canConfirm}
               >

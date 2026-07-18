@@ -123,7 +123,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
               <div className="h-12 rounded-lg bg-stone-100" />
             </div>
           ) : error ? (
-            <div className="flex h-40 flex-col items-center justify-center gap-2 text-[13px] text-[#C9604D]">
+            <div className="flex h-40 flex-col items-center justify-center gap-2 text-[13px] text-[#B24E3E]">
               <XCircle className="size-5" />
               {error}
             </div>
@@ -176,7 +176,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                         </td>
                         <td className="px-4 py-2.5">
                           {log.is_exempted ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#8F641B]">
                               已豁免
                               {log.exempt_reason ? ` · ${log.exempt_reason}` : ""}
                             </span>

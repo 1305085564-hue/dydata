@@ -24,17 +24,17 @@ export type EventItem = {
 };
 
 const EVENT_TYPE_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
-  限流: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
-  警告: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
+  限流: { borderColor: "border-[#D99E55]/30", textColor: "text-[#8F641B]", dotColor: "#D99E55" },
+  警告: { borderColor: "border-[#D99E55]/30", textColor: "text-[#8F641B]", dotColor: "#D99E55" },
   删除视频: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
-  封号: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
+  封号: { borderColor: "border-[#C9604D]/30", textColor: "text-[#B24E3E]", dotColor: "#C9604D" },
   其他: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
 };
 
 const APPEAL_STATUS_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
-  申诉成功: { borderColor: "border-[#6FAA7D]/30", textColor: "text-[#6FAA7D]", dotColor: "#6FAA7D" },
-  申诉失败: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
-  申诉中: { borderColor: "border-[#8AA8C7]/30", textColor: "text-[#8AA8C7]", dotColor: "#8AA8C7" },
+  申诉成功: { borderColor: "border-[#6FAA7D]/30", textColor: "text-[#3F7A4E]", dotColor: "#6FAA7D" },
+  申诉失败: { borderColor: "border-[#C9604D]/30", textColor: "text-[#B24E3E]", dotColor: "#C9604D" },
+  申诉中: { borderColor: "border-[#8AA8C7]/30", textColor: "text-[#4E7194]", dotColor: "#8AA8C7" },
   未申诉: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
 };
 
@@ -271,7 +271,7 @@ export function EventList({ events }: { events: EventItem[] }) {
               ) : null}
 
               {event.recovered_at ? (
-                <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#6FAA7D]/30 px-2 py-0.5 text-[12px] font-normal text-[#6FAA7D]">
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[#6FAA7D]/30 px-2 py-0.5 text-[12px] font-normal text-[#3F7A4E]">
                   <RefreshCw className="size-3" strokeWidth={1.5} />
                   恢复于 {formatDateTime(event.recovered_at)}
                 </div>

@@ -112,7 +112,7 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
 function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
   if (tied) return <span className="text-[12px] text-stone-500">持平</span>;
   return leftLeads ? (
-    <span className="rounded-full bg-[#8AA8C7]/10 px-2 py-0.5 text-[12px] font-medium text-[#8AA8C7]">领先</span>
+    <span className="rounded-full bg-[#8AA8C7]/10 px-2 py-0.5 text-[12px] font-medium text-[#4E7194]">领先</span>
   ) : (
     <span className="rounded-full bg-[rgba(0,0,0,0.06)] px-2 py-0.5 text-[12px] font-medium text-stone-500">落后</span>
   );
@@ -175,8 +175,8 @@ export function PKBattle({
           </div>
           {total > 0 && (
             <div className="shrink-0 rounded-full bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
-              <div className="text-[13px] font-medium tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
-              <div className="text-[12px] text-[#8AA8C7]/70">项领先</div>
+              <div className="text-[13px] font-medium tabular-nums text-[#4E7194]">{winCount}/{total}</div>
+              <div className="text-[12px] text-[#4E7194]/70">项领先</div>
             </div>
           )}
         </div>

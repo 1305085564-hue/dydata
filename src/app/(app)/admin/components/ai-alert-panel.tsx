@@ -34,8 +34,8 @@ const SEVERITY_DOT: Record<SeverityKey, string> = {
 };
 
 const SEVERITY_TEXT: Record<SeverityKey, string> = {
-  critical: "text-[#C9604D]",
-  warning: "text-[#D99E55]",
+  critical: "text-[#B24E3E]",
+  warning: "text-[#8F641B]",
   info: "text-stone-500",
 };
 
@@ -442,7 +442,7 @@ export function AiAlertPanel({
                   consultAlert({ alertId: target.id, preview: target.title });
                 }
               }}
-              className="inline-flex h-6 items-center rounded-md border border-[#D97757]/40 bg-white px-2 text-[12px] text-[#D97757] transition hover:bg-[#D97757]/5"
+              className="inline-flex h-6 items-center rounded-md border border-[#D97757]/40 bg-white px-2 text-[12px] text-[#B4532F] transition hover:bg-[#D97757]/5"
             >
               <Sparkles className="mr-1 size-3" strokeWidth={1.75} />
               问 AI
@@ -473,7 +473,7 @@ export function AiAlertPanel({
         </div>
       ) : state.error ? (
         <div className="px-4 py-2 flex items-center gap-2">
-          <span className="text-[12px] text-[#C9604D]">告警服务暂时不可用（{state.error}）</span>
+          <span className="text-[12px] text-[#B24E3E]">告警服务暂时不可用（{state.error}）</span>
           <button
             type="button"
             onClick={() => void runFetch(true)}

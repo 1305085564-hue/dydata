@@ -137,7 +137,7 @@ export function FeedbackDetailDialog({
                     href={current.video.video_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-0.5 text-[#D97757] underline-offset-4 hover:underline"
+                    className="inline-flex items-center gap-0.5 text-[#B4532F] underline-offset-4 hover:underline"
                   >
                     在抖音查看
                     <ExternalLinkIcon className="size-3 stroke-[1.5]" />
@@ -216,7 +216,7 @@ export function FeedbackDetailDialog({
 
         <SheetFooter className="border-t border-stone-200">
           <Button
-            className="h-10 w-full rounded-lg bg-[#D97757] text-[13px] text-white hover:bg-[#C96442]"
+            className="h-10 w-full rounded-lg bg-[#B4532F] text-[13px] text-white hover:bg-[#A84D2B]"
             onClick={handleConfirm}
             disabled={confirming}
           >

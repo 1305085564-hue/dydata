@@ -127,7 +127,7 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
                 <item.icon
                   className={cn(
                     "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-colors",
-                    active ? "text-[#D97757]" : "text-stone-500"
+                    active ? "text-[#B4532F]" : "text-stone-500"
                   )}
                 />
                 <span className="whitespace-nowrap">{item.label}</span>
@@ -136,7 +136,7 @@ export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCen
                     className={cn(
                       "ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[12px] font-medium tabular-nums transition-colors duration-150",
                       active
-                        ? "bg-[#D97757] text-white"
+                        ? "bg-[#B4532F] text-white"
                         : "bg-stone-200/60 text-stone-500",
                     )}
                     aria-label={`${badgeValue} 项`}

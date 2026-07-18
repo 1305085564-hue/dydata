@@ -38,7 +38,7 @@ function roleLabel(role: string) {
 
 function roleBadgeClass(role: string) {
   if (role === "owner")
-    return "border-[#D97757]/40 text-[#D97757]";
+    return "border-[#D97757]/40 text-[#B4532F]";
   if (role === "admin")
     return "border-stone-200 text-stone-700";
   return "border-stone-200 text-stone-500";
@@ -288,7 +288,7 @@ export function ProfileEditDialog({
                       </>
                     ) : (
                       <>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D97757] text-[12px] font-medium text-white">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#B4532F] text-[12px] font-medium text-white">
                           {account.name.trim().slice(0, 1).toUpperCase() || "?"}
                         </div>
                         <div className="min-w-0 flex-1">

@@ -418,7 +418,7 @@ export function TeamGroupManager({
               </div>
               <Button
                 type="button"
-                className="mt-auto h-10 bg-[#D97757] text-white rounded-lg hover:bg-[#C96442] active:translate-y-0"
+                className="mt-auto h-10 bg-[#B4532F] text-white rounded-lg hover:bg-[#A84D2B] active:translate-y-0"
                 onClick={handleCreateGroup}
                 disabled={isPending || !newGroupName.trim() || !newLeaderId}
               >
@@ -493,7 +493,7 @@ export function TeamGroupManager({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="text-stone-500 hover:text-[#C9604D] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                              className="text-stone-500 hover:text-[#B24E3E] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                               onClick={() => handleRemoveMember(member.id)}
                               disabled={isPending}
                             >

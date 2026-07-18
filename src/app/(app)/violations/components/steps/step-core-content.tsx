@@ -55,7 +55,7 @@ export function StepCoreContent({
       {/* Script text */}
       <div className="space-y-2">
         <Label htmlFor="script_text" className="text-[12px] font-normal text-stone-500">
-          话术原文 <span className="text-[#C9604D]">*</span>
+          话术原文 <span className="text-[#B24E3E]">*</span>
         </Label>
         <Textarea
           id="script_text"

@@ -154,7 +154,7 @@ export function AnalyticsContent({
       <AnalyticsPageHeader preset={currentPreset} from={currentFrom} to={currentTo} onChange={handleRangeChange} />
 
       {error && !hasVisibleData ? (
-        <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] text-[#C9604D] border-l-[2px] border-l-[#C9604D]">
+        <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] text-[#B24E3E] border-l-[2px] border-l-[#C9604D]">
           加载失败：{error}
         </div>
       ) : null}

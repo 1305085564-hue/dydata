@@ -74,7 +74,7 @@ export function ConversionHubShell(props: HubShellProps) {
           </Link>
           <Link
             href="/violations/submit"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#B4532F] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#A84D2B] active:translate-y-0"
           >
             <FilePlus2 className="size-3.5 stroke-[1.5]" />
             代上传话术

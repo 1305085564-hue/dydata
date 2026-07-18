@@ -80,7 +80,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
         <div className="flex flex-col items-stretch gap-2 md:min-w-[200px]">
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#c56545] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B4532F] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#A84D2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             提交今日日报
             <ArrowRight className="h-4 w-4" />

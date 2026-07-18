@@ -188,7 +188,7 @@ export function StepReview({ data, accounts }: StepReviewProps) {
 
       {/* Warning */}
       <div className="flex items-start gap-2 rounded-lg border border-[#D99E55]/30 bg-stone-50/60 p-3">
-        <ClipboardCopy className="mt-0.5 size-4 shrink-0 text-[#D99E55]" />
+        <ClipboardCopy className="mt-0.5 size-4 shrink-0 text-[#8F641B]" />
         <p className="text-[12px] leading-5 text-stone-500">
           话术原文提交后不可修改，如需补充请在备注中追加。请确认以上信息无误后再提交。
         </p>

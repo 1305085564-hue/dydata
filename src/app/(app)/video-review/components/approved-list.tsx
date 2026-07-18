@@ -80,7 +80,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
               className={cn(
                 "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[12px] font-medium transition-colors active:scale-95",
                 onlyMine
-                  ? "border-[#8AA8C7] bg-[#8AA8C7]/10 text-[#8AA8C7]"
+                  ? "border-[#8AA8C7] bg-[#8AA8C7]/10 text-[#4E7194]"
                   : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700",
               )}
             >
@@ -118,7 +118,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
                 const btn = document.getElementById("workbench-upload-btn");
                 if (btn) btn.click();
               }}
-              className="mt-4 inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] px-4 text-[12px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-transform"
+              className="mt-4 inline-flex h-8 items-center justify-center rounded-lg bg-[#B4532F] px-4 text-[12px] font-medium text-white hover:bg-[#A84D2B] active:scale-95 transition-transform"
             >
               去上传凭证
             </button>

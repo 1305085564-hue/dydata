@@ -43,14 +43,14 @@ export function StatsBar({ stats }: StatsBarProps) {
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-normal tracking-wider text-stone-500 uppercase">连续未发人数</span>
             {stats.consecutiveMissingMembers > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] font-normal text-[#D99E55]">
+              <span className="inline-flex items-center gap-1 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] font-normal text-[#8F641B]">
                 需要关注
               </span>
             ) : null}
           </div>
           <div className="mt-4 flex items-baseline gap-2">
             <span className={`text-[18px] font-medium tabular-nums tracking-tight leading-none ${
-              stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-stone-900"
+              stats.consecutiveMissingMembers > 0 ? "text-[#8F641B]" : "text-stone-900"
             }`}>
               {stats.consecutiveMissingMembers}
             </span>
@@ -66,10 +66,10 @@ export function StatsBar({ stats }: StatsBarProps) {
             <span className="text-[12px] font-normal tracking-wider text-stone-500 uppercase">履约周期大盘</span>
             <span className={`text-[12px] font-medium tabular-nums ${
               stats.periodFulfillmentRate >= 80
-                ? "text-[#6FAA7D]"
+                ? "text-[#3F7A4E]"
                 : stats.periodFulfillmentRate >= 60
-                  ? "text-[#D99E55]"
-                  : "text-[#C9604D]"
+                  ? "text-[#8F641B]"
+                  : "text-[#B24E3E]"
             }`}>
               发布率 {stats.periodFulfillmentRate}%
             </span>

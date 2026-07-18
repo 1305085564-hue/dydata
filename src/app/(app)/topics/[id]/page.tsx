@@ -353,7 +353,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
     return (
       <div className="flex h-[400px] items-center justify-center">
         <div className="flex flex-col items-center gap-2">
-          <Loader2 className="size-6 animate-spin text-[#D97757]" />
+          <Loader2 className="size-6 animate-spin text-[#B4532F]" />
           <span className="text-[12.5px] text-stone-500">正在整理选题深度信息...</span>
         </div>
       </div>
@@ -369,7 +369,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
     }
     const isHigher = playCount >= averagePlay;
     return (
-      <span className={cn("font-semibold tabular-nums", isHigher ? "text-[#C9604D]" : "text-[#6FAA7D]")}>
+      <span className={cn("font-semibold tabular-nums", isHigher ? "text-[#B24E3E]" : "text-[#3F7A4E]")}>
         {playCount.toLocaleString()}
       </span>
     );
@@ -406,7 +406,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
           <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {detail.topics && (
-                <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-2 py-0.5 text-[11.5px] font-medium text-[#8AA8C7]">
+                <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-2 py-0.5 text-[11.5px] font-medium text-[#4E7194]">
                   母题：{detail.topics.name}
                 </span>
               )}
@@ -449,7 +449,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-stone-100 pb-3">
               <div className="space-y-0.5">
                 <h3 className="text-[14px] font-bold text-stone-900 flex items-center gap-2">
-                  <Video className="size-4 text-[#D97757]" />
+                  <Video className="size-4 text-[#B4532F]" />
                   <span>本题历史发布版本</span>
                   <span className="text-[12px] font-normal text-stone-400">
                     (共 {totalWorks} 个作品)
@@ -527,7 +527,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                                 <div className="h-5.5 w-px bg-stone-200" />
                                 <div className="flex flex-col items-end">
                                   <span className="text-[9.5px] text-stone-400 leading-none">转粉率</span>
-                                  <span className="mt-0.5 text-[#8AA8C7]">{(snap.follower_convert * 100).toFixed(2)}%</span>
+                                  <span className="mt-0.5 text-[#4E7194]">{(snap.follower_convert * 100).toFixed(2)}%</span>
                                 </div>
                               </>
                             )}
@@ -568,7 +568,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
           {/* 操作台卡片 */}
           <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-4">
             <h3 className="text-[13.5px] font-bold text-stone-900 border-b border-stone-100 pb-2 flex items-center gap-1.5">
-              <BookOpen className="size-4 text-[#D97757]" />
+              <BookOpen className="size-4 text-[#B4532F]" />
               <span>选题操作台</span>
             </h3>
 
@@ -588,7 +588,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                     )}
                   </Button>
                   {claimLimitReached && (
-                    <div className="flex items-start gap-1 text-[11px] text-[#C9604D] leading-relaxed bg-[#C9604D]/5 p-2 rounded-lg border border-[#C9604D]/15">
+                    <div className="flex items-start gap-1 text-[11px] text-[#B24E3E] leading-relaxed bg-[#C9604D]/5 p-2 rounded-lg border border-[#C9604D]/15">
                       <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
                       <span>已认领 5 条候选选题，请先去【选题池-我正在做的】放回部分选题以重新腾出空间。</span>
                     </div>
@@ -602,8 +602,8 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                       <span className={cn(
                         "font-semibold rounded-md px-2 py-0.5 text-[11.5px]",
                         myClaim.status === "scripting"
-                          ? "bg-[#8AA8C7]/15 text-[#8AA8C7]"
-                          : "bg-[#D97757]/10 text-[#D97757]"
+                          ? "bg-[#8AA8C7]/15 text-[#4E7194]"
+                          : "bg-[#D97757]/10 text-[#B4532F]"
                       )}>
                         {myClaim.status === "scripting" ? "脚本制作中" : "候选选题中"}
                       </span>
@@ -674,7 +674,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                         </span>
                         <span className={cn(
                           "text-[10px] px-1.5 py-0.5 rounded-md font-semibold",
-                          claim.status === "scripting" ? "bg-[#8AA8C7]/10 text-[#8AA8C7]" : "bg-stone-200 text-stone-500"
+                          claim.status === "scripting" ? "bg-[#8AA8C7]/10 text-[#4E7194]" : "bg-stone-200 text-stone-500"
                         )}>
                           {claim.status === "scripting" ? "脚本中" : "候选"}
                         </span>
@@ -690,7 +690,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
           {similarWorks.length > 0 && (
             <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-3">
               <h3 className="text-[13.5px] font-bold text-stone-900 border-b border-stone-100 pb-2 flex items-center gap-1.5">
-                <TrendingUp className="size-4 text-[#8AA8C7]" />
+                <TrendingUp className="size-4 text-[#4E7194]" />
                 <span>同类相近选题文案参考</span>
               </h3>
 

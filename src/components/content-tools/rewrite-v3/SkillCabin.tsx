@@ -93,7 +93,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                   : 'bg-white border-stone-200/60 text-stone-500 hover:bg-stone-100 hover:text-stone-900'
               )}
             >
-              <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#8AA8C7]' : 'text-stone-500')} />
+              <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#4E7194]' : 'text-stone-500')} />
               <span>{skill.name}</span>
             </button>
           );
@@ -159,7 +159,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 text-[12px] font-medium">
-                              <Sparkles className={cn('h-3 w-3 shrink-0', isActive ? 'text-[#8AA8C7]' : 'text-stone-500')} />
+                              <Sparkles className={cn('h-3 w-3 shrink-0', isActive ? 'text-[#4E7194]' : 'text-stone-500')} />
                               <span className="truncate">{skill.name}</span>
                             </div>
                             {skill.description && (
@@ -172,7 +172,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                             )}
                           </div>
                           {isActive && (
-                            <Check className="h-3.5 w-3.5 text-[#8AA8C7] shrink-0 ml-2 mt-0.5" />
+                            <Check className="h-3.5 w-3.5 text-[#4E7194] shrink-0 ml-2 mt-0.5" />
                           )}
                         </button>
                       );

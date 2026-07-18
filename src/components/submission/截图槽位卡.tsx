@@ -43,15 +43,15 @@ interface StatusVisual {
 
 function getStatusVisual(status: SubmissionSlotStatus, isWarning: boolean): StatusVisual {
   if (status === "uploading")
-    return { label: "上传中", dotClass: "bg-[#D97757]", textClass: "text-[#D97757]", borderClass: "border-[#D97757]" };
+    return { label: "上传中", dotClass: "bg-[#D97757]", textClass: "text-[#B4532F]", borderClass: "border-[#D97757]" };
   if (status === "recognizing")
-    return { label: "识别中", dotClass: "bg-[#D97757]", textClass: "text-[#D97757]", borderClass: "border-[#D97757]" };
+    return { label: "识别中", dotClass: "bg-[#D97757]", textClass: "text-[#B4532F]", borderClass: "border-[#D97757]" };
   if (status === "failed")
-    return { label: "识别失败", dotClass: "bg-[#C9604D]", textClass: "text-[#C9604D]", borderClass: "border-[#C9604D]/40" };
+    return { label: "识别失败", dotClass: "bg-[#C9604D]", textClass: "text-[#B24E3E]", borderClass: "border-[#C9604D]/40" };
   if (status === "confirmed" && !isWarning)
-    return { label: "已识别", dotClass: "bg-[#6FAA7D]", textClass: "text-[#6FAA7D]", borderClass: "border-[#6FAA7D]/40" };
+    return { label: "已识别", dotClass: "bg-[#6FAA7D]", textClass: "text-[#3F7A4E]", borderClass: "border-[#6FAA7D]/40" };
   if (isWarning || status === "pending_confirm")
-    return { label: "待确认", dotClass: "bg-[#D99E55]", textClass: "text-[#D99E55]", borderClass: "border-[#D99E55]/40" };
+    return { label: "待确认", dotClass: "bg-[#D99E55]", textClass: "text-[#8F641B]", borderClass: "border-[#D99E55]/40" };
   return { label: "待上传", dotClass: "bg-stone-300", textClass: "text-stone-700", borderClass: "border-stone-300" };
 }
 
@@ -216,8 +216,8 @@ export function SubmissionSlotCard({
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
             className={cn(
               "group/drop relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border bg-stone-100/60 text-stone-500 transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              !assetUrl && !isProcessing && !isDragOver && (isTouchDevice ? "border-solid border-stone-300 bg-white active:scale-[0.98]" : "border-dashed hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#D97757]"),
-              !assetUrl && isDragOver && "border-solid border-[#D97757] bg-[#FDF9F7] text-[#D97757] shadow-[0_0_20px_rgba(217,119,87,0.15)] ring-2 ring-[#D97757]/20",
+              !assetUrl && !isProcessing && !isDragOver && (isTouchDevice ? "border-solid border-stone-300 bg-white active:scale-[0.98]" : "border-dashed hover:border-[#D97757]/45 hover:bg-[#FDF9F7]/60 hover:text-[#B4532F]"),
+              !assetUrl && isDragOver && "border-solid border-[#D97757] bg-[#FDF9F7] text-[#B4532F] shadow-[0_0_20px_rgba(217,119,87,0.15)] ring-2 ring-[#D97757]/20",
               isProcessing && "bg-white border-stone-100",
               assetUrl && !isProcessing && "bg-white p-0 border-stone-300",
               isError && !assetUrl && "border-dashed border-[#C9604D]/40 bg-white",
@@ -262,7 +262,7 @@ export function SubmissionSlotCard({
                   transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                 />
               </div>
-              <span className="text-[12px] tabular-nums tracking-[0.1em] text-[#D97757]">
+              <span className="text-[12px] tabular-nums tracking-[0.1em] text-[#B4532F]">
                 {status === "uploading" ? "UPLOADING" : "AI READING"} · {Math.floor(Math.min(99, progress))}%
               </span>
             </div>
@@ -292,7 +292,7 @@ export function SubmissionSlotCard({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 360, damping: 22 }}
-                className="absolute right-2 top-2 z-20 flex size-6 items-center justify-center rounded-full bg-[#6FAA7D] text-white ring-2 ring-white"
+                className="absolute right-2 top-2 z-20 flex size-6 items-center justify-center rounded-full bg-[#3F7A4E] text-white ring-2 ring-white"
               >
                 <Check className="size-3.5" strokeWidth={2.5} />
               </motion.div>
@@ -333,7 +333,7 @@ export function SubmissionSlotCard({
             </div>
           ) : isError ? (
             <div className="rounded-xl border border-[#C9604D]/30 bg-white p-3">
-              <p className="flex items-start gap-1.5 text-[12px] font-medium text-[#C9604D]">
+              <p className="flex items-start gap-1.5 text-[12px] font-medium text-[#B24E3E]">
                 <span className="mt-1 size-1 shrink-0 rounded-full bg-[#C9604D]" />
                 <span>{errorCode ? resolveOcrErrorMessage(errorCode) : error || OCR_FAIL_MESSAGE}</span>
               </p>
@@ -342,7 +342,7 @@ export function SubmissionSlotCard({
                   <button
                     type="button"
                     onClick={onRetry}
-                    className="inline-flex h-7 items-center rounded-lg border border-[#C9604D]/35 bg-white px-2.5 text-[12px] font-medium text-[#C9604D] transition-[background-color,border-color] duration-150 hover:bg-[#C9604D] hover:text-white"
+                    className="inline-flex h-7 items-center rounded-lg border border-[#C9604D]/35 bg-white px-2.5 text-[12px] font-medium text-[#B24E3E] transition-[background-color,border-color] duration-150 hover:bg-[#B24E3E] hover:text-white"
                   >
                     {error === NETWORK_RETRY_MESSAGE ? "重试" : "重新识别"}
                   </button>
@@ -388,7 +388,7 @@ export function SubmissionSlotCard({
           type="button"
           onClick={onDelete}
           aria-label="删除截图"
-          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-stone-500 transition-[background-color,color] duration-150 hover:bg-stone-200 hover:text-[#C9604D]"
+          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-stone-500 transition-[background-color,color] duration-150 hover:bg-stone-200 hover:text-[#B24E3E]"
         >
           <Trash2 className="size-3.5 stroke-[1.6]" />
         </button>

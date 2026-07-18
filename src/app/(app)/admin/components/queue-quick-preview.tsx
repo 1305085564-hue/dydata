@@ -69,7 +69,7 @@ function PreviewShell({
   const primaryToneClass =
     primaryAction?.tone === "danger"
       ? "bg-stone-100 text-stone-700 hover:bg-stone-200"
-      : "bg-[#D97757] text-white hover:bg-[#C96442]";
+      : "bg-[#B4532F] text-white hover:bg-[#A84D2B]";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -188,7 +188,7 @@ export function VideoPreviewDialog({
           <span
             className={cn(
               "inline-flex items-center gap-1",
-              isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
+              isSurge ? "text-[#B24E3E]" : "text-[#3F7A4E]",
             )}
           >
             {isSurge ? "暴涨" : "腰斩"} {pctText}
@@ -262,7 +262,7 @@ export function SubmissionPreviewDialog({
               ? {
                   label: "距今",
                   value: (
-                    <span className={gapDays >= 2 ? "text-[#C9604D]" : "text-stone-700"}>
+                    <span className={gapDays >= 2 ? "text-[#B24E3E]" : "text-stone-700"}>
                       {gapDays} 天
                     </span>
                   ),
