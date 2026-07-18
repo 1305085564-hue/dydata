@@ -58,6 +58,16 @@ export async function requireOwnerOrAdminActor() {
   };
 }
 
+export function requireGlobalProductionActor(
+  auth: Awaited<ReturnType<typeof requireOwnerOrAdminActor>>,
+) {
+  if ("response" in auth) return auth.response;
+  if (auth.actor.businessRole !== "owner" && auth.actor.businessRole !== "team_admin") {
+    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
+  return null;
+}
+
 export function toTrimmedString(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, maxLength);

@@ -6,6 +6,7 @@ import {
   isValidDate,
   parseLimit,
   readJsonBody,
+  requireGlobalProductionActor,
   requireOwnerOrAdminActor,
   requireSignedInUser,
   toTrimmedString,
@@ -79,6 +80,8 @@ export async function POST(request: Request) {
 
   const auth = await requireOwnerOrAdminActor();
   if ("response" in auth) return auth.response;
+  const forbidden = requireGlobalProductionActor(auth);
+  if (forbidden) return forbidden;
 
   const { data, error } = await auth.supabase
     .from("daily_quota_config")
