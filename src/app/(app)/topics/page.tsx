@@ -44,6 +44,10 @@ export async function fetchTopicPoolResponse(
   return payload;
 }
 
+export function resolvePageAfterLoad(currentPage: number, succeeded: boolean) {
+  return succeeded ? currentPage + 1 : currentPage;
+}
+
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
   return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
@@ -167,6 +171,7 @@ export default function TopicPoolPage() {
         setItems(json.items || []);
       }
       setTotalItems(json.pagination?.totalItems || 0);
+      return true;
     } catch (err) {
       if (page === 1) {
         setItems([]);
@@ -175,6 +180,7 @@ export default function TopicPoolPage() {
       feedbackToast.error("加载选题池列表失败", {
         details: err instanceof Error ? err.message : String(err)
       });
+      return false;
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -201,10 +207,10 @@ export default function TopicPoolPage() {
   }, [loadAll]);
 
   // 处理加载更多
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
     const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    void fetchPoolData(nextPage, true);
+    const succeeded = await fetchPoolData(nextPage, true);
+    setCurrentPage((page) => resolvePageAfterLoad(page, succeeded));
   };
 
   // 从子题内的 sub_topic_claims 统计当前用户的 candidate 数量
@@ -423,7 +429,7 @@ export default function TopicPoolPage() {
               <Button
                 variant="outline"
                 disabled={loadingMore}
-                onClick={handleLoadMore}
+                onClick={() => void handleLoadMore()}
                 className="h-9 rounded-xl px-6 text-[12.5px] border-stone-200 hover:border-stone-300 font-medium text-stone-600 hover:text-stone-900"
               >
                 {loadingMore ? (
