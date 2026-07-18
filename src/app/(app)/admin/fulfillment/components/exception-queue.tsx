@@ -42,6 +42,10 @@ const ACTION_LABELS: Record<MarkAction, string> = {
   confirmed_published: "确认已发",
 };
 
+export function requiresQuickMarkConfirmation(action: MarkAction) {
+  return action === "absent";
+}
+
 function StatusBadge({ status }: { status: FulfillmentStatus }) {
   const config: Record<string, { label: string; dot: string }> = {
     published: { label: "已发布", dot: "bg-[#6FAA7D]" },
@@ -76,6 +80,11 @@ export function ExceptionQueue({
   const [batchReason, setBatchReason] = useState("");
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+  const [quickConfirm, setQuickConfirm] = useState<{
+    userId: string;
+    userName: string;
+    action: MarkAction;
+  } | null>(null);
 
   const allSelected = members.length > 0 && members.every((m) => selectedIds.has(m.userId));
   const someSelected = selectedIds.size > 0;
@@ -91,6 +100,23 @@ export function ExceptionQueue({
     },
     [onQuickMark]
   );
+
+  const requestQuickMark = useCallback(
+    (userId: string, userName: string, action: MarkAction) => {
+      if (requiresQuickMarkConfirmation(action)) {
+        setQuickConfirm({ userId, userName, action });
+        return;
+      }
+      void handleQuickMark(userId, action);
+    },
+    [handleQuickMark],
+  );
+
+  const handleQuickConfirm = useCallback(async () => {
+    if (!quickConfirm) return;
+    await handleQuickMark(quickConfirm.userId, quickConfirm.action);
+    setQuickConfirm(null);
+  }, [handleQuickMark, quickConfirm]);
 
   const handleBatchConfirm = useCallback(async () => {
     if (!batchAction || selectedIds.size === 0) return;
@@ -251,7 +277,7 @@ export function ExceptionQueue({
                           size="sm"
                           className="h-8 border-stone-200 text-stone-700 hover:bg-stone-50 hover:text-stone-900 font-medium"
                           disabled={isMarking}
-                          onClick={() => handleQuickMark(member.userId, "confirmed_published")}
+                          onClick={() => requestQuickMark(member.userId, member.userName, "confirmed_published")}
                         >
                           {isMarking && markingId === member.userId ? (
                             <span className="size-3 animate-spin rounded-full border-2 border-current border-t-transparent mr-1" />
@@ -268,19 +294,19 @@ export function ExceptionQueue({
                           />
                           <DropdownMenuContent align="end" className="w-32 bg-white">
                             <DropdownMenuItem
-                              onClick={() => handleQuickMark(member.userId, "leave")}
+                              onClick={() => requestQuickMark(member.userId, member.userName, "leave")}
                               className="text-stone-700 cursor-pointer hover:bg-stone-50"
                             >
                               请假
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleQuickMark(member.userId, "waived")}
+                              onClick={() => requestQuickMark(member.userId, member.userName, "waived")}
                               className="text-stone-700 cursor-pointer hover:bg-stone-50"
                             >
                               豁免
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleQuickMark(member.userId, "absent")}
+                              onClick={() => requestQuickMark(member.userId, member.userName, "absent")}
                               variant="destructive"
                               className="cursor-pointer hover:bg-red-50"
                             >
@@ -348,6 +374,30 @@ export function ExceptionQueue({
           </div>
         </div>
       )}
+
+      <Dialog
+        open={Boolean(quickConfirm)}
+        onOpenChange={(open) => {
+          if (!open && !markingId) setQuickConfirm(null);
+        }}
+      >
+        <DialogContent showCloseButton={!markingId} className="bg-white">
+          <DialogHeader>
+            <DialogTitle>确认标记缺勤</DialogTitle>
+            <DialogDescription>
+              将把 {quickConfirm?.userName ?? "该成员"} 标记为今日缺勤。此操作会影响履约统计，请确认后继续。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuickConfirm(null)} disabled={Boolean(markingId)}>
+              取消
+            </Button>
+            <Button variant="destructive" onClick={() => void handleQuickConfirm()} disabled={Boolean(markingId)}>
+              {markingId ? "处理中..." : "确认缺勤"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 批量确认弹窗 */}
       <Dialog open={batchConfirmOpen} onOpenChange={setBatchConfirmOpen}>
