@@ -667,13 +667,30 @@ export function ContentList({
                         ) : null}
                         <TableRow
                           data-video-id={video.id}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              if (window.getSelection()?.toString()) return;
+                              const target = e.target as HTMLElement;
+                              if (
+                                target.closest("button") ||
+                                target.closest("a") ||
+                                target.closest("input") ||
+                                target.closest("[role='checkbox']")
+                              ) {
+                                return;
+                              }
+                              onSelectVideoId(video.id);
+                            }
+                          }}
                           onClick={(e) => {
                             if (window.getSelection()?.toString()) return;
                             const target = e.target as HTMLElement;
                             if (
-                              target.closest("button") || 
-                              target.closest("a") || 
-                              target.closest("input") || 
+                              target.closest("button") ||
+                              target.closest("a") ||
+                              target.closest("input") ||
                               target.closest("[role='checkbox']")
                             ) {
                               return;

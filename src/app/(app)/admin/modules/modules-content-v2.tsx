@@ -595,6 +595,15 @@ export function AdminModulesContentV2({
                       : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-900"
                   )}
                   onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedTeamId(team.id);
+                      setSelectedGroupId(null);
+                    }
+                  }}
                 >
                   <span className="flex items-center gap-2 truncate">
                     <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#8AA8C7]" : "bg-stone-300")} />
@@ -824,6 +833,14 @@ export function AdminModulesContentV2({
                   <div
                     key={member.id}
                     onClick={() => handleSelectMember(member)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectMember(member);
+                      }
+                    }}
                     className={cn(
                       "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 cursor-pointer hover:border-stone-300 hover:shadow-sm",
                       isCurrentMemberActive
@@ -1056,6 +1073,14 @@ export function AdminModulesContentV2({
                           <div
                             key={key}
                             onClick={() => permissionManagerCapabilities.canEditPermissions && handleTogglePermission(key, !isChecked)}
+                            role="button"
+                            tabIndex={permissionManagerCapabilities.canEditPermissions ? 0 : undefined}
+                            onKeyDown={permissionManagerCapabilities.canEditPermissions ? (e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleTogglePermission(key, !isChecked);
+                              }
+                            } : undefined}
                             className={cn(
                               "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
@@ -1091,6 +1116,14 @@ export function AdminModulesContentV2({
                           <div
                             key={key}
                             onClick={() => permissionManagerCapabilities.canEditPermissions && handleTogglePermission(key, !isChecked)}
+                            role="button"
+                            tabIndex={permissionManagerCapabilities.canEditPermissions ? 0 : undefined}
+                            onKeyDown={permissionManagerCapabilities.canEditPermissions ? (e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleTogglePermission(key, !isChecked);
+                              }
+                            } : undefined}
                             className={cn(
                               "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked

@@ -39,6 +39,14 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
   return (
     <div
       onClick={() => onOpenDetail(item)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpenDetail(item);
+        }
+      }}
       className={cn(
         "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px cursor-pointer",
         isMine && "ring-1 ring-[#8AA8C7]/30 border-[#8AA8C7]/40"

@@ -39,6 +39,14 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
   return (
     <div
       onClick={onClick}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={isClickable ? (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
       className={cn(
         "relative overflow-hidden rounded-xl border border-stone-200 bg-white p-5 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
         isClickable && "cursor-pointer hover:shadow-sm hover:border-stone-300 group"
