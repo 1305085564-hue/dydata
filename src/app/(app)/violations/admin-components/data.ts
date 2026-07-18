@@ -55,6 +55,16 @@ export const PROCESSED_RPC_READY = true;
 
 export const VALID_TABS: HubTabKey[] = ["scripts", "violations", "weekly", "analytics", "advice"];
 
+export function assertRpcSuccess<T>(
+  result: { data: T; error: { message?: string } | null },
+  label: string,
+): T {
+  if (result.error) {
+    throw new Error(`${label}加载失败：${result.error.message || "数据库请求失败"}`);
+  }
+  return result.data;
+}
+
 export function getWeekStartDate(now = new Date()) {
   const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
   const day = date.getUTCDay() || 7;
@@ -82,8 +92,8 @@ export async function loadInboxData(userId: string): Promise<{ data: InboxData; 
     promotion_candidates: 0,
   };
 
-  const data = (inboxResult.data ?? empty) as Partial<InboxData>;
-  const counts = (countsResult.data ?? emptyCounts) as Partial<InboxCounts>;
+  const data = (assertRpcSuccess(inboxResult, "待审核队列") ?? empty) as Partial<InboxData>;
+  const counts = (assertRpcSuccess(countsResult, "待审核统计") ?? emptyCounts) as Partial<InboxCounts>;
 
   return {
     data: {
@@ -103,7 +113,8 @@ export async function loadInboxData(userId: string): Promise<{ data: InboxData; 
 
 export async function loadProcessedData(userId: string): Promise<ProcessedData> {
   const supabase = createAdminClient();
-  const { data } = await supabase.rpc("case_library_processed", { p_user_id: userId });
+  const result = await supabase.rpc("case_library_processed", { p_user_id: userId });
+  const data = assertRpcSuccess(result, "已处理记录");
   const payload = data as { processed?: ProcessedEntry[] } | null;
   return { processed: Array.isArray(payload?.processed) ? payload.processed : [] };
 }
