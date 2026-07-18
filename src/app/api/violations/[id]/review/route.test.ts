@@ -3,7 +3,12 @@ import assert from "node:assert/strict";
 
 import { NextRequest } from "next/server";
 
-import { buildReviewViolationResponse } from "./route";
+import { buildReviewViolationResponse, REVIEW_RESULT_SELECT } from "./route";
+
+test("违规复核响应使用固定字段白名单", () => {
+  assert.doesNotMatch(REVIEW_RESULT_SELECT, /\*/);
+  assert.match(REVIEW_RESULT_SELECT, /\bstatus\b/);
+});
 
 type CaseRow = {
   id: string;
@@ -77,7 +82,7 @@ function createReviewSupabase(rows: CaseRow[]) {
               return this;
             },
             select(query: string) {
-              assert.equal(query, "*");
+              assert.equal(query, REVIEW_RESULT_SELECT);
               return {
                 async single() {
                   const target = findTarget();

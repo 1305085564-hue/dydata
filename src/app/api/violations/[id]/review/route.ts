@@ -21,6 +21,8 @@ type ReviewSnapshot = {
 };
 
 const REVIEW_SNAPSHOT_SELECT = "id,status,usage_state,risk_level,admin_conclusion,suggested_action";
+export const REVIEW_RESULT_SELECT =
+  "id, created_at, submitted_by, script_text, is_violation, category, account_id, account_name_snapshot, team_id, scene_description, screenshot_paths, result, tags, pass_count, fail_count, status, risk_level, admin_conclusion, suggested_action, reviewed_by, reviewed_at, is_deleted, purpose, script_format, total_views, total_follows, usage_count, weighted_conversion_rate, platforms, guidance_method, promotion_level, usage_state, source_video_id, source_metadata, highlighted_sections";
 
 type MinimalReviewSelectQuery = {
   eq: (column: string, value: unknown) => MinimalReviewSelectQuery;
@@ -136,7 +138,7 @@ export async function buildReviewViolationResponse(
     })
     .eq("id", id)
     .eq("is_deleted", false)
-    .select("*")
+    .select(REVIEW_RESULT_SELECT)
     .single();
 
   if (error || !data) {
