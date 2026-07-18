@@ -8,6 +8,7 @@ import {
   isKeepLoggedInCookieValue,
   KEEP_LOGGED_IN_COOKIE_NAME,
 } from "@/lib/supabase/session-cookie";
+import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
 
 const SITE_CLEARED_COOKIE = "dydata-site-cleared";
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
@@ -98,6 +99,10 @@ export async function middleware(request: NextRequest) {
   const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isGrowthRoute || isViolationsRoute || isVideoReviewRoute || isContentToolsRoute;
   const hasClearedSiteData = request.cookies.get(SITE_CLEARED_COOKIE)?.value === "1";
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
+
+  if (isApiRoute && hasInvalidUuidPathParameter(pathname)) {
+    return NextResponse.json({ error: "路径参数格式不正确" }, { status: 400 });
+  }
 
   if (isUntrustedApiWriteRequest(request)) {
     return NextResponse.json({ error: "请求来源不可信" }, { status: 403 });

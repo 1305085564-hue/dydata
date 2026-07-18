@@ -45,3 +45,11 @@ test("API 路由纳入 middleware 匹配范围", async () => {
   const { config } = await import("./middleware");
   assert.ok(config.matcher.includes("/api/:path*"));
 });
+
+test("动态 API 的非法 UUID 在进入路由前被拒绝", async () => {
+  const response = await middleware(
+    new NextRequest("https://dydata.cc/api/notifications/not-an-id/read", { method: "PATCH" })
+  );
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { error: "路径参数格式不正确" });
+});
