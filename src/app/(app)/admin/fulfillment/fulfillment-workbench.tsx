@@ -32,6 +32,21 @@ export async function fetchFulfillmentAppeals(request: FulfillmentRequest = fetc
   return Array.isArray(payload.appeals) ? payload.appeals : [];
 }
 
+export async function fetchFulfillmentSettings(request: FulfillmentRequest = fetch): Promise<boolean> {
+  const response = await request("/api/admin/system/settings");
+  const payload = (await response.json()) as {
+    feishuFulfillmentReminderEnabled?: boolean;
+    error?: string;
+  };
+  if (!response.ok) {
+    throw new Error(payload.error || "设置读取失败");
+  }
+  if (typeof payload.feishuFulfillmentReminderEnabled !== "boolean") {
+    throw new Error("设置数据格式无效");
+  }
+  return payload.feishuFulfillmentReminderEnabled;
+}
+
 interface FulfillmentWorkbenchProps {
   initialData: FulfillmentCalendarData;
   initialRange: TimeRangePreset;
@@ -134,6 +149,8 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
   // 2. 飞书自动催交总开关状态
   const [feishuEnabled, setFeishuEnabled] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
   // 3. 申诉状态
@@ -170,21 +187,23 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
     }
   }, []);
 
-  useEffect(() => {
-    async function loadSettings() {
-      try {
-        const res = await fetch("/api/admin/system/settings");
-        if (res.ok) {
-          const val = await res.json();
-          setFeishuEnabled(val.feishuFulfillmentReminderEnabled);
-        }
-      } catch (err) {
-        console.error("加载飞书设置失败", err);
-      }
+  const loadSettings = useCallback(async () => {
+    setSettingsLoading(true);
+    setSettingsError(null);
+    try {
+      setFeishuEnabled(await fetchFulfillmentSettings());
+    } catch (err) {
+      console.error("加载飞书设置失败", err);
+      setSettingsError(err instanceof Error ? err.message : "设置读取失败");
+    } finally {
+      setSettingsLoading(false);
     }
-    loadSettings();
-    fetchAppeals();
-  }, [fetchAppeals]);
+  }, []);
+
+  useEffect(() => {
+    void loadSettings();
+    void fetchAppeals();
+  }, [fetchAppeals, loadSettings]);
 
   // 6. 飞书总开关变更处理
   const handleFeishuChange = async (checked: boolean) => {
@@ -565,7 +584,10 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
         onGroupChange={handleGroupChange}
         onPresetChange={handlePresetChange}
         feishuEnabled={feishuEnabled}
+        settingsLoading={settingsLoading}
+        settingsError={settingsError}
         isUpdatingSettings={isUpdatingSettings}
+        onRetrySettings={() => void loadSettings()}
         onFeishuChange={handleFeishuChange}
       />
 

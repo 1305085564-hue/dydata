@@ -23,7 +23,10 @@ interface FilterBarProps {
   onGroupChange: (group: string | null) => void;
   onPresetChange: (preset: TimeRangePreset, targetYear: number, targetMonth: number) => void;
   feishuEnabled: boolean;
+  settingsLoading: boolean;
+  settingsError: string | null;
   isUpdatingSettings: boolean;
+  onRetrySettings: () => void;
   onFeishuChange: (checked: boolean) => void;
 }
 
@@ -63,7 +66,10 @@ export function FilterBar({
   onGroupChange,
   onPresetChange,
   feishuEnabled,
+  settingsLoading,
+  settingsError,
   isUpdatingSettings,
+  onRetrySettings,
   onFeishuChange,
 }: FilterBarProps) {
   const teams = Array.from(
@@ -157,7 +163,16 @@ export function FilterBar({
         {/* 飞书催交总开关 */}
         <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 transition-colors duration-200">
           <span className="text-[12px] font-medium text-stone-700">飞书自动催交</span>
-          {isUpdatingSettings ? (
+          {settingsError ? (
+            <button
+              type="button"
+              onClick={onRetrySettings}
+              className="text-[12px] font-medium text-[#C9604D] underline-offset-2 hover:underline"
+              title={settingsError}
+            >
+              设置加载失败 · 重试
+            </button>
+          ) : settingsLoading || isUpdatingSettings ? (
             <div className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : (
             <Switch checked={feishuEnabled} onCheckedChange={onFeishuChange} />
