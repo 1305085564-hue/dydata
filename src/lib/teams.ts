@@ -38,7 +38,10 @@ export async function ensureDefaultTeam() {
 
 export async function getTeamOptions() {
   const adminSupabase = createAdminClient();
-  const defaultTeam = await ensureDefaultTeam();
+  return loadTeamOptions(adminSupabase);
+}
+
+export async function loadTeamOptions(adminSupabase: ReturnType<typeof createAdminClient>) {
   const { data, error } = await adminSupabase
     .from("teams")
     .select("id, name")
@@ -49,7 +52,7 @@ export async function getTeamOptions() {
   }
 
   const seen = new Set<string>();
-  const teams = [defaultTeam, ...((data ?? []) as TeamOption[])].filter((team) => {
+  const teams = ((data ?? []) as TeamOption[]).filter((team) => {
     if (seen.has(team.id)) return false;
     seen.add(team.id);
     return true;
