@@ -318,6 +318,7 @@ export function UnifiedCommandHub({
                 )}
                 <button
                   onClick={() => onOpenChange(false)}
+                  aria-label="关闭"
                   className="flex size-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-500 hover:text-stone-900 dark:hover:text-white transition-all duration-200"
                 >
                   <X className="size-4 stroke-[1.8]" />
@@ -420,6 +421,7 @@ export function UnifiedCommandHub({
                           <div className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
                             <Checkbox
                               checked={allSelected}
+                              aria-label="全选"
                               onCheckedChange={(checked) => {
                                 const nextChecked = Boolean(checked);
                                 setSelectedApprovalIds(nextChecked ? new Set(allApprovalIds) : new Set());
@@ -493,6 +495,7 @@ export function UnifiedCommandHub({
                             <div className="flex items-start gap-3">
                               <Checkbox
                                 checked={isSelected}
+                                aria-label={`选择 ${item.applicant_name || "未命名成员"}`}
                                 disabled={!requestId}
                                 onCheckedChange={(checked) => {
                                   if (!requestId) return;
@@ -638,6 +641,7 @@ export function UnifiedCommandHub({
                           >
                             <button
                               onClick={() => handleToggleTodo(todo)}
+                              aria-label={`标记完成：${todo.title}`}
                               className="mt-0.5 text-stone-500 hover:text-[#D97757] transition-colors shrink-0 outline-none"
                             >
                               <Circle className="size-4" />
@@ -824,6 +828,7 @@ export function UnifiedCommandHub({
                                       onClick={() => void markDone(notif.id, "ignored")}
                                       className="text-stone-500 hover:text-rose-500 transition-colors"
                                       title="忽略此条"
+                                      aria-label="忽略此条"
                                     >
                                       <Trash2 className="size-3" />
                                     </button>

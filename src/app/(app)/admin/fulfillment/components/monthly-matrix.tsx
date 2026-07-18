@@ -147,13 +147,13 @@ export function MonthlyMatrix({
           <div className="flex items-center gap-2">
             {expanded && (
               <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon-xs" onClick={handlePrevMonth}>
+                <Button variant="ghost" size="icon-xs" aria-label="上一月" onClick={handlePrevMonth}>
                   <ChevronLeft className="size-3.5" />
                 </Button>
                 <span className="min-w-[72px] text-center text-[12px] font-medium text-stone-700">
                   {year}年{month}月
                 </span>
-                <Button variant="ghost" size="icon-xs" onClick={handleNextMonth}>
+                <Button variant="ghost" size="icon-xs" aria-label="下一月" onClick={handleNextMonth}>
                   <ChevronRight className="size-3.5" />
                 </Button>
                 {!isCurrentMonth() && (

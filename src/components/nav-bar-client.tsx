@@ -353,6 +353,7 @@ export function NavBarClient({
                         "text-[#D97757] dark:text-[#D97757]"
                     )}
                     title="系统维护"
+                    aria-label="系统维护"
                   >
                     <Wrench className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[30deg] group-active:scale-90" />
                   </button>
@@ -421,6 +422,7 @@ export function NavBarClient({
                   commandHubOpen && "text-[#D97757] bg-white border border-[#D97757]/15 shadow-[0_2px_12px_-3px_rgba(217,119,87,0.15)]"
                 )}
                 title="待办与通知中心"
+                aria-label="待办与通知中心"
               >
                 <Bell className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[15deg] group-active:scale-90" />
                 {bellBadgeCount > 0 && (
@@ -436,6 +438,7 @@ export function NavBarClient({
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="flex size-8 items-center justify-center rounded-lg text-stone-500 hover:text-stone-700 active:scale-95 md:hidden group"
                 title="导航菜单"
+                aria-label="导航菜单"
               >
                 <div className="relative size-4">
                   <span className={cn(

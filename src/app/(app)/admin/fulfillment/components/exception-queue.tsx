@@ -179,6 +179,7 @@ export function ExceptionQueue({
               <tr className="border-b border-stone-200/50 bg-stone-50/50">
                 <th className="w-10 px-3 py-2.5 text-left">
                   <Checkbox
+                    aria-label="全选"
                     checked={allSelected}
                     onCheckedChange={() => onSelectAll(!allSelected)}
                   />
@@ -218,6 +219,7 @@ export function ExceptionQueue({
                     <td className="px-3 py-2.5">
                       <Checkbox
                         checked={isSelected}
+                        aria-label={`选择 ${member.userName}`}
                         onCheckedChange={() => onSelectToggle(member.userId)}
                       />
                     </td>

@@ -175,7 +175,7 @@ export function FilterBar({
           ) : settingsLoading || isUpdatingSettings ? (
             <div className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : (
-            <Switch checked={feishuEnabled} onCheckedChange={onFeishuChange} />
+            <Switch aria-label="飞书自动催交总开关" checked={feishuEnabled} onCheckedChange={onFeishuChange} />
           )}
         </div>
       </div>

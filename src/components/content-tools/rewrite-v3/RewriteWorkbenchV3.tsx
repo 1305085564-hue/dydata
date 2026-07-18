@@ -354,6 +354,7 @@ export function RewriteWorkbenchV3() {
               disabled={!state.historyState.canUndo || state.isSending}
               className="p-1 rounded-lg text-stone-900 opacity-40 hover:opacity-100 disabled:opacity-15 disabled:hover:bg-transparent hover:bg-stone-100 transition-all active:scale-90"
               title="撤销最近修改"
+              aria-label="撤销最近修改"
             >
               <Undo2 className="h-3 w-3" />
             </button>
@@ -362,6 +363,7 @@ export function RewriteWorkbenchV3() {
               disabled={!state.historyState.canRedo || state.isSending}
               className="p-1 rounded-lg text-stone-900 opacity-40 hover:opacity-100 disabled:opacity-15 disabled:hover:bg-transparent hover:bg-stone-100 transition-all active:scale-90"
               title="重做"
+              aria-label="重做"
             >
               <Redo2 className="h-3 w-3" />
             </button>

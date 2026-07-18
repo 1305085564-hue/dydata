@@ -267,7 +267,7 @@ export default function RewriteClient() {
       <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
         <div className="flex justify-between items-center px-2 py-1">
           <h2 className="text-[12px] font-normal text-stone-500 tracking-wider">模型视图</h2>
-          <Button variant="ghost" size="icon" className="size-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 bg-stone-50 rounded-md shrink-0" onClick={() => setViewModal({ open: true, data: null })}>
+          <Button variant="ghost" size="icon" aria-label="新建视图" className="size-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 bg-stone-50 rounded-md shrink-0" onClick={() => setViewModal({ open: true, data: null })}>
             <Plus strokeWidth={2} className="size-3.5" />
           </Button>
         </div>
@@ -303,6 +303,7 @@ export default function RewriteClient() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`编辑视图 ${v.label}`}
                       className="size-5 text-stone-500 hover:text-stone-700"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -343,6 +344,7 @@ export default function RewriteClient() {
                   <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
                     <span>{view.is_enabled ? "已启用" : "已禁用"}</span>
                     <Switch
+                      aria-label={`启用视图 ${view.label}`}
                       className="scale-75"
                       checked={view.is_enabled}
                       onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_view", { id: view.id, is_enabled: checked })}
@@ -402,6 +404,7 @@ export default function RewriteClient() {
                               </TableCell>
                               <TableCell className="py-1 text-left">
                                 <Switch
+                                  aria-label={`启用路由 ${route.actual_model}`}
                                   className="scale-75 origin-left"
                                   checked={route.is_enabled}
                                   onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_route", { id: route.id, is_enabled: checked })}
@@ -416,6 +419,7 @@ export default function RewriteClient() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      aria-label={`编辑路由 ${route.actual_model}`}
                                       className="size-7 text-stone-500 hover:text-stone-700"
                                       onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: route })}
                                     >
@@ -424,6 +428,7 @@ export default function RewriteClient() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      aria-label={`删除路由 ${route.actual_model}`}
                                       className="size-7 text-stone-500 hover:text-[#C9604D]"
                                       onClick={() => setDeleteTarget({ open: true, id: route.id, entity: "rewrite_model_route", title: `删除路由 ${route.actual_model}` })}
                                     >

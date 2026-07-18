@@ -1793,7 +1793,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">启用</span>
-                  <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
+                  <Switch aria-label="启用固定模式" checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
             </div>
@@ -1855,7 +1855,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 md:col-span-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">启用这个真实模型</span>
-                  <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
+                  <Switch aria-label="启用该真实模型" checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
             </div>
@@ -1886,11 +1886,11 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">设为默认</span>
-                  <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
+                  <Switch aria-label="设为默认模式" checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">启用</span>
-                  <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
+                  <Switch aria-label="启用该模式" checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
             </div>
@@ -1921,11 +1921,11 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">设为默认</span>
-                  <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
+                  <Switch aria-label="设为默认字数预设" checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">启用</span>
-                  <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
+                  <Switch aria-label="启用该字数预设" checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
             </div>
@@ -1952,11 +1952,11 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">设为默认</span>
-                  <Switch checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
+                  <Switch aria-label="设为默认流程" checked={boolField("is_default")} onCheckedChange={(value) => setField("is_default", value)} />
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">启用</span>
-                  <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
+                  <Switch aria-label="启用该流程" checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
             </div>
@@ -2026,7 +2026,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
               <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[13px] text-stone-900">启用</span>
-                  <Switch checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
+                  <Switch aria-label="启用该步骤" checked={boolField("is_enabled", true)} onCheckedChange={(value) => setField("is_enabled", value)} />
                 </div>
               </div>
             </div>

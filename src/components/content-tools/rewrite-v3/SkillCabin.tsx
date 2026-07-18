@@ -127,6 +127,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
             <span className="text-[12px] font-medium text-stone-900">全部技能舱</span>
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="关闭技能舱"
               className="p-1 rounded-full hover:bg-stone-100 text-stone-500 hover:text-stone-700"
             >
               <X className="h-3.5 w-3.5" />

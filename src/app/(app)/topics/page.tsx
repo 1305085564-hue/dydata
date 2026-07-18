@@ -335,6 +335,7 @@ export default function TopicPoolPage() {
             onClick={() => void loadAll()}
             className="size-8.5 rounded-xl text-stone-400 hover:text-stone-700 border-stone-200"
             title="刷新选题池"
+            aria-label="刷新选题池"
           >
             <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
           </Button>

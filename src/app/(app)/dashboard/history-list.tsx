@@ -129,6 +129,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="编辑该日报"
                     className="size-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -169,6 +170,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="编辑该日报"
                   className="size-7"
                   onClick={(event) => {
                     event.stopPropagation();
