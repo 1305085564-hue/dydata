@@ -896,7 +896,7 @@ export function VideoSubmitPanel({
       </motion.div>
 
       <Dialog open={isDataViewOpen} onOpenChange={setIsDataViewOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader>
             <DialogTitle>数据查看</DialogTitle>
           </DialogHeader>
@@ -1077,7 +1077,7 @@ export function VideoSubmitPanel({
 
 
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader>
             <DialogTitle>历史记录</DialogTitle>
           </DialogHeader>
@@ -1118,7 +1118,7 @@ export function VideoSubmitPanel({
       </Dialog>
 
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader>
             <DialogTitle>查看并修改当日数据</DialogTitle>
           </DialogHeader>

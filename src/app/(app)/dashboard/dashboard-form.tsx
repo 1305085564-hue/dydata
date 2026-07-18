@@ -182,7 +182,7 @@ export function DashboardForm({
                       <ScanSearch className="size-4 stroke-[1.5]" />
                       截图识别导入
                     </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+                    <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
                       <DialogHeader>
                         <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-700">截图识别导入</DialogTitle>
                         <DialogDescription className="text-[13px] leading-[1.7] text-stone-500">
