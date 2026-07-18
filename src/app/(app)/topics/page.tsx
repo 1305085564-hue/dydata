@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { SubTopicCard, type SubTopicItem, type SubTopicClaim } from "@/components/topics/sub-topic-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
@@ -24,6 +25,23 @@ interface TopicInfo {
   id: string;
   name: string;
   sort_order: number;
+}
+
+type TopicPoolRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function fetchTopicPoolResponse(
+  url: string,
+  request: TopicPoolRequest = fetch,
+) {
+  const response = await request(url);
+  const payload = await response.json();
+  if (!response.ok) {
+    const message = payload && typeof payload === "object" && "error" in payload
+      ? String((payload as { error?: unknown }).error || "获取选题池数据失败")
+      : "获取选题池数据失败";
+    throw new Error(message);
+  }
+  return payload;
 }
 
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
@@ -48,6 +66,7 @@ function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void
 export default function TopicPoolPage() {
   const [items, setItems] = useState<SubTopicItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [poolError, setPoolError] = useState<string | null>(null);
   const [topicsList, setTopicsList] = useState<TopicInfo[]>([]);
   
   // 筛选状态
@@ -127,6 +146,7 @@ export default function TopicPoolPage() {
   const fetchPoolData = useCallback(async (page: number, append = false) => {
     if (page === 1) setLoading(true);
     else setLoadingMore(true);
+    if (page === 1) setPoolError(null);
 
     try {
       const params = new URLSearchParams();
@@ -139,9 +159,7 @@ export default function TopicPoolPage() {
         params.append("topic_id", selectedTopicId);
       }
 
-      const res = await fetch(`/api/topics/pool?${params.toString()}`);
-      if (!res.ok) throw new Error("获取选题池数据失败");
-      const json = await res.json();
+      const json = await fetchTopicPoolResponse(`/api/topics/pool?${params.toString()}`);
 
       if (append) {
         setItems((prev) => [...prev, ...(json.items || [])]);
@@ -150,6 +168,10 @@ export default function TopicPoolPage() {
       }
       setTotalItems(json.pagination?.totalItems || 0);
     } catch (err) {
+      if (page === 1) {
+        setItems([]);
+        setPoolError(err instanceof Error ? err.message : "获取选题池数据失败");
+      }
       feedbackToast.error("加载选题池列表失败", {
         details: err instanceof Error ? err.message : String(err)
       });
@@ -315,6 +337,12 @@ export default function TopicPoolPage() {
             <span className="text-[12.5px] text-stone-500">正在整理选题列表，请稍候...</span>
           </div>
         </div>
+      ) : poolError ? (
+        <ErrorState
+          title="选题池加载失败"
+          description={poolError}
+          onRetry={() => void loadAll()}
+        />
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 border border-dashed border-stone-200 bg-white rounded-2xl">
           <EmptyState
