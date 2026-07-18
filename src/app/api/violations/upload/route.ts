@@ -11,6 +11,7 @@ import {
   sanitizeFilename,
   VIOLATION_SCREENSHOT_BUCKET,
 } from "@/lib/violations/api";
+import { hasMatchingImageSignature } from "@/lib/file-signatures";
 
 export async function POST(request: NextRequest) {
   const { user } = await getAuthenticatedContext();
@@ -38,6 +39,14 @@ export async function POST(request: NextRequest) {
   if (file.size > MAX_SCREENSHOT_SIZE) {
     return jsonBadRequest("截图不能超过 5MB");
   }
+  if (file.size <= 0) {
+    return jsonBadRequest("截图为空或已损坏");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (!hasMatchingImageSignature(buffer, file.type)) {
+    return jsonBadRequest("图片内容与文件类型不一致或文件已损坏");
+  }
 
   const now = new Date();
   const datePart = now.toISOString().slice(0, 10);
@@ -48,7 +57,7 @@ export async function POST(request: NextRequest) {
 
   const { error } = await adminClient.storage
     .from(VIOLATION_SCREENSHOT_BUCKET)
-    .upload(objectPath, file, {
+    .upload(objectPath, buffer, {
       contentType: file.type,
       cacheControl: "3600",
       upsert: false,

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { archivedFeatureResponse, isArchivedWriteEnabled } from "@/app/api/_archive";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getShanghaiDate, requireSignedInUser } from "@/app/api/production/_shared";
+import { hasMatchingImageSignature } from "@/lib/file-signatures";
 
 const BUCKET_NAME = "work-screenshots";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -53,6 +54,9 @@ export async function POST(request: NextRequest) {
   const date = getShanghaiDate();
   const storagePath = `${auth.user.id}/${date}/${crypto.randomUUID()}.${getExtension(file)}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!hasMatchingImageSignature(buffer, file.type)) {
+    return NextResponse.json({ error: "图片内容与文件类型不一致或文件已损坏" }, { status: 400 });
+  }
 
   const adminSupabase = createAdminClient();
   const { error } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, buffer, {

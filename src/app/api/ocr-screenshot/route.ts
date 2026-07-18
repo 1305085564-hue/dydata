@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { callAi } from "@/lib/ai/client";
 import type { AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
+import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
@@ -322,9 +323,13 @@ async function parseJsonPayload(
     if (!ACCEPTED_TYPES.has(mimeType)) {
       return { error: "仅支持 jpg、png、webp 图片" };
     }
-    const estimatedBytes = image.length * 0.75;
-    if (estimatedBytes > MAX_FILE_SIZE) {
+    const base64 = image.slice(image.indexOf(",") + 1);
+    const buffer = Buffer.from(base64, "base64");
+    if (buffer.length <= 0 || buffer.length > MAX_FILE_SIZE) {
       return { error: "图片不能超过 8MB" };
+    }
+    if (!hasMatchingImageSignature(buffer, mimeType)) {
+      return { error: "图片内容与文件类型不一致或文件已损坏" };
     }
     return {
       dataUrl: image,
@@ -350,6 +355,9 @@ async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error:
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!hasMatchingImageSignature(buffer, file.type)) {
+    return { error: "图片内容与文件类型不一致或文件已损坏" };
+  }
   return {
     dataUrl: `data:${file.type};base64,${buffer.toString("base64")}`,
   };
@@ -373,13 +381,14 @@ async function downloadImageFromStorage(
       return { error: "图片不能超过 8MB" };
     }
 
-    const mimeType = data.type || inferMimeTypeFromPath(path);
-    if (!ACCEPTED_TYPES.has(mimeType)) {
+    const detectedMimeType = detectImageMimeType(buffer);
+    const declaredMimeType = data.type || inferMimeTypeFromPath(path);
+    if (!detectedMimeType || !ACCEPTED_TYPES.has(declaredMimeType) || detectedMimeType !== declaredMimeType) {
       return { error: "仅支持 jpg、png、webp 图片" };
     }
 
     return {
-      dataUrl: `data:${mimeType};base64,${buffer.toString("base64")}`,
+      dataUrl: `data:${detectedMimeType};base64,${buffer.toString("base64")}`,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "读取存储图片失败";

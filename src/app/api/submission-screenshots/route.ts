@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { buildSubmissionScreenshotUrl } from "@/lib/submission-screenshot-access";
+import { hasMatchingImageSignature } from "@/lib/file-signatures";
 import type { SubmissionAssetRole } from "@/types";
 
 const BUCKET_NAME = "submission-screenshots";
@@ -91,6 +92,9 @@ export async function POST(request: NextRequest) {
   const adminSupabase = createAdminClient();
   const storagePath = buildStoragePath({ userId: user.id, accountId, assetRole, file });
   const buffer = Buffer.from(await file.arrayBuffer());
+  if (!hasMatchingImageSignature(buffer, file.type)) {
+    return NextResponse.json({ error: "图片内容与文件类型不一致或文件已损坏" }, { status: 400 });
+  }
 
   const { error: uploadError } = await adminSupabase.storage.from(BUCKET_NAME).upload(storagePath, buffer, {
     contentType: file.type,
