@@ -6,6 +6,7 @@ import {
   type BusinessRole,
 } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
 export type AccessLevel = 1 | 2 | 3 | 4;
 export type DataAccessScopeKind = "self" | "group" | "team" | "all";
@@ -83,7 +84,8 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
     .single();
 
   if (!isMissingAccessLevelColumn(primary.error)) {
-  return (primary.data as ScopeProfileInput | null) ?? null;
+    assertSupabaseQuerySucceeded(primary.error, "加载权限资料失败");
+    return (primary.data as ScopeProfileInput | null) ?? null;
   }
 
   const fallback = await adminSupabase
@@ -91,6 +93,8 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
     .select("id, role, permissions, team_id, group_id")
     .eq("id", userId)
     .single();
+
+  assertSupabaseQuerySucceeded(fallback.error, "加载权限资料失败");
 
   return (fallback.data as ScopeProfileInput | null) ?? null;
 }
@@ -104,16 +108,21 @@ export async function buildDataAccessScope(
   if (!profile) return null;
 
   const role = (profile.role ?? "member") as UserRole;
-  const ledGroups = profile.led_group_ids
-    ? profile.led_group_ids.map((id) => ({
+  let ledGroups: BusinessGroup[];
+  if (profile.led_group_ids) {
+    ledGroups = profile.led_group_ids.map((id) => ({
         id,
         team_id: profile.team_id,
         leader_user_id: userId,
-      })) as BusinessGroup[]
-    : ((await adminSupabase
-        .from("groups")
-        .select("id, team_id, leader_user_id")
-        .eq("leader_user_id", userId)).data ?? []) as BusinessGroup[];
+      })) as BusinessGroup[];
+  } else {
+    const groupsResult = await adminSupabase
+      .from("groups")
+      .select("id, team_id, leader_user_id")
+      .eq("leader_user_id", userId);
+    assertSupabaseQuerySucceeded(groupsResult.error, "加载用户领导小组失败");
+    ledGroups = (groupsResult.data ?? []) as BusinessGroup[];
+  }
   const businessRole = profile.business_role ?? resolveBusinessRole(
     {
       id: profile.id,
@@ -139,18 +148,21 @@ export async function buildDataAccessScope(
   let visibleUserIds: string[] = [userId];
 
   if (kind === "all") {
-    const { data } = await adminSupabase.from("profiles").select("id");
-    visibleUserIds = (data ?? []).map((item) => item.id).filter(Boolean);
+    const result = await adminSupabase.from("profiles").select("id");
+    assertSupabaseQuerySucceeded(result.error, "加载全公司可见成员失败");
+    visibleUserIds = (result.data ?? []).map((item) => item.id).filter(Boolean);
   } else if (kind === "team" && effectiveTeamId) {
-    const { data } = await adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId);
-    visibleUserIds = (data ?? []).map((item) => item.id).filter(Boolean);
+    const result = await adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId);
+    assertSupabaseQuerySucceeded(result.error, "加载团队可见成员失败");
+    visibleUserIds = (result.data ?? []).map((item) => item.id).filter(Boolean);
   } else if (kind === "group") {
     const ledGroupIds = ledGroups.map((group) => group.id);
     const visibleGroupIds = ledGroupIds.length > 0 ? ledGroupIds : profile.group_id ? [profile.group_id] : [];
-    const { data } = visibleGroupIds.length > 0
+    const result = visibleGroupIds.length > 0
       ? await adminSupabase.from("profiles").select("id").in("group_id", visibleGroupIds)
-      : { data: [] };
-    visibleUserIds = (data ?? []).map((item) => item.id).filter(Boolean);
+      : { data: [], error: null };
+    assertSupabaseQuerySucceeded(result.error, "加载小组可见成员失败");
+    visibleUserIds = (result.data ?? []).map((item) => item.id).filter(Boolean);
   }
 
   const shouldForceIncludeSelf =

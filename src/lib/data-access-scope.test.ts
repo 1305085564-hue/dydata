@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildDataAccessScope,
   canAccessOwner,
   filterRowsByDataScope,
   getScopeKind,
@@ -9,6 +10,57 @@ import {
   inferBusinessAccessLevel,
   type DataAccessScope,
 } from "./data-access-scope";
+
+const baseProfile = {
+  id: "user-1",
+  role: "admin" as const,
+  permissions: {},
+  team_id: "team-1",
+  group_id: "group-1",
+};
+
+test("buildDataAccessScope 查询领导小组失败时抛错，不把组长降为成员", async () => {
+  const failedGroupsQuery = {
+    select() { return failedGroupsQuery; },
+    eq() {
+      return Promise.resolve({ data: null, error: { message: "groups unavailable" } });
+    },
+  };
+
+  await assert.rejects(
+    buildDataAccessScope(
+      { from: () => failedGroupsQuery } as never,
+      "user-1",
+      { profile: baseProfile },
+    ),
+    /groups unavailable/,
+  );
+});
+
+test("buildDataAccessScope 查询可见成员失败时抛错，不退化成只有本人", async () => {
+  const failedProfilesQuery = {
+    select() { return failedProfilesQuery; },
+    then(resolve: (value: unknown) => void) {
+      return Promise.resolve({ data: null, error: { message: "profiles unavailable" } }).then(resolve);
+    },
+  };
+
+  await assert.rejects(
+    buildDataAccessScope(
+      { from: () => failedProfilesQuery } as never,
+      "user-1",
+      {
+        profile: {
+          ...baseProfile,
+          role: "owner",
+          led_group_ids: [],
+          business_role: "owner",
+        },
+      },
+    ),
+    /profiles unavailable/,
+  );
+});
 
 test("inferAccessLevel prefers explicit level and falls back to legacy role permissions", () => {
   assert.equal(inferAccessLevel("member", {}, 2), 2);

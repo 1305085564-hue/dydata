@@ -9,6 +9,7 @@ import {
 } from "@/lib/business-role";
 import { hasPermission, isAdminLevel } from "@/lib/permission-utils";
 import type { Permissions, UserRole } from "@/types";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
 export interface UserPermissionInfo {
   userId: string;
@@ -29,7 +30,9 @@ function isMissingAccessLevelColumn(error: { message?: string } | null | undefin
 
 const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const authResult = await supabase.auth.getUser();
+  assertSupabaseQuerySucceeded(authResult.error, "验证登录状态失败");
+  const { user } = authResult.data;
   if (!user) return null;
 
   const adminSupabase = createAdminClient();
@@ -38,8 +41,7 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
     .select("id, name, role, permissions, access_level, team_id, group_id")
     .eq("id", user.id)
     .single();
-  const profile = !isMissingAccessLevelColumn(primary.error)
-    ? (primary.data as {
+  let profile: {
         id: string;
         name: string | null;
         role: UserRole | null;
@@ -47,27 +49,28 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
         access_level?: number | string | null;
         team_id: string | null;
         group_id: string | null;
-      } | null)
-    : (await adminSupabase
+      } | null;
+  if (!isMissingAccessLevelColumn(primary.error)) {
+    assertSupabaseQuerySucceeded(primary.error, "加载用户权限失败");
+    profile = primary.data as typeof profile;
+  } else {
+    const fallback = await adminSupabase
         .from("profiles")
         .select("id, name, role, permissions, team_id, group_id")
         .eq("id", user.id)
-        .single()).data as {
-          id: string;
-          name: string | null;
-          role: UserRole | null;
-          permissions: Permissions | null;
-          access_level?: number | string | null;
-          team_id: string | null;
-          group_id: string | null;
-        } | null;
+        .single();
+    assertSupabaseQuerySucceeded(fallback.error, "加载用户权限失败");
+    profile = fallback.data as typeof profile;
+  }
 
   if (!profile) return null;
 
-  const { data: ledGroups } = await adminSupabase
+  const groupsResult = await adminSupabase
     .from("groups")
     .select("id, team_id, leader_user_id")
     .eq("leader_user_id", user.id);
+  assertSupabaseQuerySucceeded(groupsResult.error, "加载用户领导小组失败");
+  const ledGroups = groupsResult.data;
   const groups = (ledGroups ?? []) as BusinessGroup[];
   const role = profile.role as UserRole;
   const rawPermissions = (profile.permissions ?? {}) as Permissions;
