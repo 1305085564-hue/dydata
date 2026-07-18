@@ -28,6 +28,15 @@ test("authenticated 不能绕过 RPC 直接审核、写 grant 或改 profile 豁
   assert.match(sql, /guard_profile_exemption_projection/i);
   assert.match(sql, /dydata\.exemption_write_authorized/i);
   assert.match(sql, /auth\.role\(\)[\s\S]*service_role/i);
+  assert.match(sql, /revoke update, insert on table public\.profiles from authenticated/i);
+  assert.match(sql, /grant update \(name\) on table public\.profiles to authenticated/i);
+});
+
+test("豁免参数显式拒绝 NULL，拒绝申请不被过期团队快照卡死", () => {
+  assert.match(sql, /p_grant_type is null[\s\S]*p_grant_type not in/i);
+  assert.match(sql, /p_exemption_category is null[\s\S]*p_exemption_category not in/i);
+  assert.match(sql, /p_decision is null[\s\S]*p_decision not in/i);
+  assert.match(sql, /if p_decision = 'approved' then[\s\S]*v_request\.team_id is distinct from v_target\.team_id/i);
 });
 
 test("豁免 RPC 移除旧 14 参数签名且只授权 authenticated", () => {

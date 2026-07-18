@@ -9,6 +9,10 @@ drop function if exists public.approve_exemption_request_atomically(
   uuid, uuid, uuid, uuid, date, date, text, text, text, text, text, date, date, boolean
 );
 
+-- 用户会话只允许修改自己的显示名称；角色、权限、团队和豁免投影均由可信后端写入。
+revoke update, insert on table public.profiles from authenticated;
+grant update (name) on table public.profiles to authenticated;
+
 -- 同时收紧表级 RLS，避免绕过 RPC 直接走 PostgREST 跨团队写入。
 drop policy if exists "成员读取自己的豁免申请" on public.exemption_request;
 drop policy if exists "成员提交自己的豁免申请" on public.exemption_request;
@@ -163,11 +167,13 @@ begin
     raise exception using errcode = '42501', message = '不能跨团队管理豁免';
   end if;
 
-  if p_grant_type not in ('single', '3days', '4days', '5days', 'yesterday', 'range', 'permanent') then
+  if p_grant_type is null
+    or p_grant_type not in ('single', '3days', '4days', '5days', 'yesterday', 'range', 'permanent') then
     raise exception using errcode = '22023', message = '豁免类型不正确';
   end if;
 
-  if p_exemption_category not in ('waive', 'leave') then
+  if p_exemption_category is null
+    or p_exemption_category not in ('waive', 'leave') then
     raise exception using errcode = '22023', message = '豁免分类不正确';
   end if;
 
@@ -305,7 +311,7 @@ begin
     raise exception using errcode = '42501', message = '无权限审批豁免';
   end if;
 
-  if p_decision not in ('approved', 'rejected') then
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
     raise exception using errcode = '22023', message = '审核决定不正确';
   end if;
 
@@ -339,10 +345,6 @@ begin
     raise exception using errcode = 'P0002', message = '用户资料不存在';
   end if;
 
-  if v_request.team_id is distinct from v_target.team_id then
-    raise exception using errcode = 'P0001', message = '申请人与团队不一致';
-  end if;
-
   if not public.has_permission('manage_members') then
     raise exception using errcode = '42501', message = '无权限审批豁免';
   end if;
@@ -356,11 +358,17 @@ begin
   end if;
 
   if p_decision = 'approved' then
-    if v_request.exemption_type not in ('single', '3days', '4days', '5days', 'yesterday', 'range', 'permanent') then
+    if v_request.team_id is distinct from v_target.team_id then
+      raise exception using errcode = 'P0001', message = '申请人与团队不一致';
+    end if;
+
+    if v_request.exemption_type is null
+      or v_request.exemption_type not in ('single', '3days', '4days', '5days', 'yesterday', 'range', 'permanent') then
       raise exception using errcode = '22023', message = '豁免类型不正确';
     end if;
 
-    if v_request.exemption_category not in ('waive', 'leave') then
+    if v_request.exemption_category is null
+      or v_request.exemption_category not in ('waive', 'leave') then
       raise exception using errcode = '22023', message = '豁免分类不正确';
     end if;
 
