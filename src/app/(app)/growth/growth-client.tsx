@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Sparkles,
@@ -19,6 +19,7 @@ import { 断流横幅, 格式化为月日 } from "@/components/growth/断流横�
 import { 追赶条 } from "@/components/growth/追赶条";
 import { 锁定图占位 } from "@/components/growth/锁定图占位";
 import { AppShell } from "@/components/app-shell";
+import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/lib/utils";
 import {
   GROWTH_DIMENSION_RULES,
@@ -71,6 +72,41 @@ interface GrowthClientProps {
   contract: GrowthPageContract;
 }
 
+type GrowthRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+async function readGrowthResponse(url: string, request: GrowthRequest) {
+  const response = await request(url);
+  const payload = await response.json();
+  if (!response.ok) {
+    const message = payload && typeof payload === "object" && "error" in payload
+      ? String((payload as { error?: unknown }).error || "统计数据加载失败")
+      : "统计数据加载失败";
+    throw new Error(message);
+  }
+  return payload;
+}
+
+export async function fetchGrowthTrend(request: GrowthRequest = fetch) {
+  const payload = await readGrowthResponse("/api/dashboard/trend", request);
+  if (!payload?.trendData) throw new Error("趋势数据格式无效");
+  return payload.trendData as {
+    结果趋势: ResultTrendDatum[];
+    互动趋势: InteractionTrendDatum[];
+  };
+}
+
+export async function fetchGrowthLeaderboard(request: GrowthRequest = fetch) {
+  const payload = await readGrowthResponse("/api/dashboard/leaderboard", request);
+  if (!Array.isArray(payload?.leaderboardData)) throw new Error("排行榜数据格式无效");
+  return {
+    leaderboardData: payload.leaderboardData as AccountLeaderboardRow[],
+    accountIds: Array.isArray(payload.accountIds) ? payload.accountIds as string[] : [],
+    ownContentDirections: Array.isArray(payload.ownContentDirections)
+      ? payload.ownContentDirections as string[]
+      : [],
+  };
+}
+
 export function GrowthClient({ contract }: GrowthClientProps) {
   const [trendData, setTrendData] = useState<{
     结果趋势: ResultTrendDatum[];
@@ -81,6 +117,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   const [asyncOwnContentDirections, setAsyncOwnContentDirections] = useState<string[]>([]);
   const [loadingTrend, setLoadingTrend] = useState(true);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+  const [trendError, setTrendError] = useState<string | null>(null);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
   const todayStr = useMemo(() => {
     const d = new Date();
@@ -89,25 +127,39 @@ export function GrowthClient({ contract }: GrowthClientProps) {
     return localTime.toISOString().slice(0, 10);
   }, []);
 
-  useEffect(() => {
-    fetch("/api/dashboard/trend")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.trendData) setTrendData(data.trendData);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingTrend(false));
-
-    fetch("/api/dashboard/leaderboard")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.leaderboardData) setLeaderboardData(data.leaderboardData);
-        if (data.accountIds) setAsyncAccountIds(data.accountIds);
-        if (data.ownContentDirections) setAsyncOwnContentDirections(data.ownContentDirections);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingLeaderboard(false));
+  const loadTrend = useCallback(async () => {
+    setLoadingTrend(true);
+    setTrendError(null);
+    try {
+      setTrendData(await fetchGrowthTrend());
+    } catch (error) {
+      setTrendData(null);
+      setTrendError(error instanceof Error ? error.message : "趋势数据加载失败");
+    } finally {
+      setLoadingTrend(false);
+    }
   }, []);
+
+  const loadLeaderboard = useCallback(async () => {
+    setLoadingLeaderboard(true);
+    setLeaderboardError(null);
+    try {
+      const result = await fetchGrowthLeaderboard();
+      setLeaderboardData(result.leaderboardData);
+      setAsyncAccountIds(result.accountIds);
+      setAsyncOwnContentDirections(result.ownContentDirections);
+    } catch (error) {
+      setLeaderboardData(null);
+      setLeaderboardError(error instanceof Error ? error.message : "排行榜数据加载失败");
+    } finally {
+      setLoadingLeaderboard(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTrend();
+    void loadLeaderboard();
+  }, [loadLeaderboard, loadTrend]);
 
   // 1. 新人空数据状态（全历史也没有日报）
   if (contract.emptyState?.isEmpty) {
@@ -357,6 +409,10 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-100" />
             <div className="h-[320px] w-full animate-pulse rounded-2xl bg-stone-100" />
           </>
+        ) : trendError ? (
+          <div className="lg:col-span-2">
+            <ErrorState title="趋势数据加载失败" description={trendError} onRetry={() => void loadTrend()} />
+          </div>
         ) : (
           <>
             {trendData ? (
@@ -535,6 +591,12 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 <div className="h-10 w-56 animate-pulse rounded-xl bg-stone-50" />
                 <div className="h-[400px] w-full animate-pulse rounded-2xl bg-stone-50" />
               </div>
+            ) : leaderboardError ? (
+              <ErrorState
+                title="排行榜加载失败"
+                description={leaderboardError}
+                onRetry={() => void loadLeaderboard()}
+              />
             ) : leaderboardData ? (
               <Leaderboard
                 data={leaderboardData}
