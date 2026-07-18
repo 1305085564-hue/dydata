@@ -12,6 +12,7 @@ import {
   type GrantMode,
 } from "@/lib/豁免流程";
 import type { ExemptionCategory } from "@/types";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
@@ -151,7 +152,7 @@ export async function submitExemptionRequest(input: {
 
   if ((existing?.length ?? 0) > 0) return { error: "已有待审批申请" };
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = formatShanghaiDateOnly();
   const drafts =
     input.dates && input.dates.length > 0
       ? buildRequestDraftsForDates({

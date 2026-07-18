@@ -33,6 +33,7 @@ import {
   reviewExemptionRequestAtomically,
 } from "@/lib/exemption-review";
 import type { Permissions, UserRole } from "@/types";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import {
   buildMemberTeamTransferPatch,
   buildRemovedMemberProfilePatch,
@@ -171,7 +172,7 @@ async function applyGrantToProfile(
   const draft = buildGrantDraft({
     ...input,
     teamId: null,
-    today: input.today ?? new Date().toISOString().slice(0, 10),
+    today: input.today ?? formatShanghaiDateOnly(),
   });
 
   const shouldReplaceExisting =
@@ -213,7 +214,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       reason: values.reason,
       category: values.category,
       requestId: null,
-      today: new Date().toISOString().slice(0, 10),
+      today: formatShanghaiDateOnly(),
       startDate: values.mode === "range" ? values.startDate ?? null : values.date ?? null,
       endDate: values.mode === "range" ? values.endDate ?? null : values.date ?? null,
       replaceExisting: true,
@@ -282,7 +283,7 @@ export async function submitExemptionRequest(input: {
       mode: input.mode,
       category: input.category,
       reason: input.reason,
-      today: new Date().toISOString().slice(0, 10),
+      today: formatShanghaiDateOnly(),
       startDate: input.startDate,
       endDate: input.endDate,
     });

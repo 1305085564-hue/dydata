@@ -1,7 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildFulfillmentCalendarData, resolveFulfillmentDateRange } from "@/lib/loaders/fulfillment-page";
+import {
+  buildFulfillmentCalendarData,
+  resolveFulfillmentDateRange,
+  resolveFulfillmentTodayKey,
+} from "@/lib/loaders/fulfillment-page";
+
+test("北京时间凌晨使用上海当天日期，不回退到 UTC 前一天", () => {
+  assert.equal(
+    resolveFulfillmentTodayKey(new Date("2026-07-17T16:30:00.000Z")),
+    "2026-07-18",
+  );
+});
 
 test("发布管理日历按成员聚合并计算今日异常与统计", () => {
   const data = buildFulfillmentCalendarData({

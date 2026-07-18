@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import type {
   FulfillmentCalendarData,
   FulfillmentDayRecord,
@@ -50,8 +51,8 @@ const WAIVED_STATUSES = new Set<FulfillmentStatus>(["waived", "exempted"]);
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function formatTodayDateOnly() {
-  return new Date().toISOString().slice(0, 10);
+export function resolveFulfillmentTodayKey(date: Date = new Date()) {
+  return formatShanghaiDateOnly(date);
 }
 
 function parseDateKey(value: string | null | undefined) {
@@ -98,7 +99,7 @@ export function resolveFulfillmentDateRange(
     year?: number | null;
     month?: number | null;
   } = {},
-  todayKey = formatTodayDateOnly(),
+  todayKey = resolveFulfillmentTodayKey(),
 ): FulfillmentDateRange {
   const today = parseDateKey(todayKey) ?? new Date();
   const customStart = parseDateKey(input.startDate);
@@ -232,7 +233,7 @@ export function buildFulfillmentCalendarData({
   scope,
   filterOptions,
   rows,
-  today = formatTodayDateOnly(),
+  today = resolveFulfillmentTodayKey(),
 }: BuildFulfillmentCalendarInput): FulfillmentCalendarData {
   const memberMap = new Map<string, FulfillmentMemberSummary>();
 
