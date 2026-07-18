@@ -79,6 +79,20 @@ export async function fetchActiveTopicsResponse(
   return payload as ActiveData;
 }
 
+export async function fetchTodayClaimsResponse(
+  request: ActiveTopicsRequest = fetch,
+): Promise<SubTopicItem[]> {
+  const response = await request("/api/topics/pool?view=my_claims");
+  const payload = await response.json();
+  if (!response.ok) {
+    const message = payload && typeof payload === "object" && "error" in payload
+      ? String((payload as { error?: unknown }).error || "认领状态加载失败")
+      : "认领状态加载失败";
+    throw new Error(message);
+  }
+  return Array.isArray(payload?.items) ? payload.items : [];
+}
+
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
   return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
@@ -96,6 +110,7 @@ export default function TodayWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [activeError, setActiveError] = useState<string | null>(null);
   const [myClaims, setMyClaims] = useState<SubTopicItem[]>([]);
+  const [claimsError, setClaimsError] = useState<string | null>(null);
   const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set());
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -113,17 +128,16 @@ export default function TodayWorkspacePage() {
 
   // 获取当前用户的所有认领状态，以限制 5 条及展示“已认领”
   // /api/topics/pool?view=my_claims 返回的是子题列表，不是认领记录
-  const fetchMyClaims = async () => {
+  const fetchMyClaims = useCallback(async () => {
+    setClaimsError(null);
     try {
-      const res = await fetch("/api/topics/pool?view=my_claims");
-      if (res.ok) {
-        const json = await res.json();
-        setMyClaims(json.items || []);
-      }
+      setMyClaims(await fetchTodayClaimsResponse());
     } catch (err) {
       console.error("加载我的认领失败:", err);
+      setMyClaims([]);
+      setClaimsError(err instanceof Error ? err.message : "认领状态加载失败");
     }
-  };
+  }, []);
 
   const fetchActiveData = useCallback(async () => {
     setLoading(true);
@@ -143,7 +157,7 @@ export default function TodayWorkspacePage() {
 
   const loadAll = useCallback(async () => {
     await Promise.all([fetchActiveData(), fetchMyClaims()]);
-  }, [fetchActiveData]);
+  }, [fetchActiveData, fetchMyClaims]);
 
   useEffect(() => {
     void loadAll();
@@ -229,6 +243,16 @@ export default function TodayWorkspacePage() {
       data.recentlyWorked.length === 0 &&
       data.recentlyCreated.length === 0);
 
+  if (claimsError && hasNoData) {
+    return (
+      <ErrorState
+        title="认领状态加载失败"
+        description={claimsError}
+        onRetry={() => void fetchMyClaims()}
+      />
+    );
+  }
+
   if (hasNoData) {
     return (
       <div className="flex flex-col items-center justify-center p-8 border border-dashed border-stone-200 bg-white rounded-2xl">
@@ -257,6 +281,15 @@ export default function TodayWorkspacePage() {
 
   return (
     <div className="space-y-6">
+      {claimsError ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/5 px-4 py-3 text-[12px] text-stone-600">
+          <span>认领状态加载失败：{claimsError}</span>
+          <Button type="button" variant="outline" size="xs" onClick={() => void fetchMyClaims()}>
+            重新加载认领状态
+          </Button>
+        </div>
+      ) : null}
+
       {/* 认领上限状态提示栏 */}
       <div className="flex items-center justify-between rounded-xl bg-stone-100/80 px-4 py-2.5 border border-stone-200/50 text-[12.5px] text-stone-600">
         <div className="flex items-center gap-1.5">
@@ -349,11 +382,13 @@ export default function TodayWorkspacePage() {
                         <Button
                           size="xs"
                           variant={isLimitReached ? "secondary" : "default"}
-                          disabled={isLimitReached || isClaiming}
+                          disabled={Boolean(claimsError) || isLimitReached || isClaiming}
                           onClick={() => handleClaim(subTopic.id)}
                           className="h-6.5 rounded-md text-[11.5px]"
                         >
-                          {isClaiming ? (
+                          {claimsError ? (
+                            "状态不可用"
+                          ) : isClaiming ? (
                             <Loader2 className="size-3 animate-spin" />
                           ) : isLimitReached ? (
                             "已达上限"
@@ -437,11 +472,13 @@ export default function TodayWorkspacePage() {
                           <Button
                             size="xs"
                             variant={isLimitReached ? "secondary" : "default"}
-                            disabled={isLimitReached || isClaiming}
+                            disabled={Boolean(claimsError) || isLimitReached || isClaiming}
                             onClick={() => handleClaim(subTopic.id)}
                             className="h-6.5 rounded-md text-[11.5px]"
                           >
-                            {isClaiming ? (
+                            {claimsError ? (
+                              "状态不可用"
+                            ) : isClaiming ? (
                               <Loader2 className="size-3 animate-spin" />
                             ) : isLimitReached ? (
                               "已达上限"
@@ -522,11 +559,13 @@ export default function TodayWorkspacePage() {
                         <Button
                           size="xs"
                           variant={isLimitReached ? "secondary" : "default"}
-                          disabled={isLimitReached || isClaiming}
+                          disabled={Boolean(claimsError) || isLimitReached || isClaiming}
                           onClick={() => handleClaim(subTopic.id)}
                           className="h-6.5 rounded-md text-[11.5px]"
                         >
-                          {isClaiming ? (
+                          {claimsError ? (
+                            "状态不可用"
+                          ) : isClaiming ? (
                             <Loader2 className="size-3 animate-spin" />
                           ) : isLimitReached ? (
                             "已达上限"
