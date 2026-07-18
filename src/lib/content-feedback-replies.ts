@@ -21,64 +21,23 @@ export function buildFeedbackReplyMutation(input: {
 }
 
 export async function submitFeedbackReply(params: {
-  supabase: Pick<SupabaseClient, "from">;
+  supabase: Pick<SupabaseClient, "rpc">;
   cardId: string;
   actorUserId: string;
   replyStatus: ContentFeedbackReplyStatus;
   replyText: string;
-  selectClause: string;
 }): Promise<ContentFeedbackCard> {
-  const { supabase, cardId, actorUserId, replyStatus, replyText, selectClause } = params;
-  const { data: current, error } = await supabase
-    .from("content_feedback_cards")
-    .select(selectClause)
-    .eq("id", cardId)
-    .maybeSingle();
-
-  if (error || !current) {
-    throw new Error(error?.message || "反馈卡不存在");
-  }
-
-  const card = current as unknown as ContentFeedbackCard;
-  if (card.target_user_id !== actorUserId) {
-    throw new Error("无权限回复这张反馈卡");
-  }
-  if (card.card_status !== "sent" && card.card_status !== "viewed") {
-    throw new Error("反馈卡还未下发，暂不能回传复盘");
-  }
-
-  const now = new Date().toISOString();
-  const mutation = buildFeedbackReplyMutation({
-    currentStatus: card.card_status,
-    currentViewedAt: card.viewed_at,
-    replyStatus,
-    replyText,
-    actorUserId,
-    now,
+  const { supabase, cardId, actorUserId, replyStatus, replyText } = params;
+  const { data, error } = await supabase.rpc("submit_feedback_card_reply", {
+    p_card_id: cardId,
+    p_actor_user_id: actorUserId,
+    p_reply_status: replyStatus,
+    p_reply_text: replyText,
   });
 
-  const { error: replyInsertError } = await supabase
-    .from("feedback_card_replies")
-    .insert({
-      feedback_card_id: cardId,
-      reply_status: replyStatus,
-      reply_text: replyText,
-      replied_by: actorUserId,
-    });
-
-  if (replyInsertError) {
-    throw new Error(replyInsertError.message || "记录员工回传失败");
-  }
-
-  const { data: updated, error: updateError } = await supabase
-    .from("content_feedback_cards")
-    .update(mutation)
-    .eq("id", cardId)
-    .select(selectClause)
-    .single();
-
-  if (updateError || !updated) {
-    throw new Error(updateError?.message || "更新反馈卡回传状态失败");
+  const updated = Array.isArray(data) ? data[0] : data;
+  if (error || !updated) {
+    throw new Error(error?.message || "更新反馈卡回传状态失败");
   }
 
   return updated as unknown as ContentFeedbackCard;

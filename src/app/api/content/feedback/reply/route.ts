@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { buildContentFeedbackCardDetail, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
+import { buildContentFeedbackCardDetail } from "@/lib/content-feedback-cards";
 import { submitFeedbackReply } from "@/lib/content-feedback-replies";
 import type { ContentFeedbackCard, ContentFeedbackReplyStatus } from "@/types";
 
@@ -56,7 +56,6 @@ const defaultDeps: FeedbackReplyDeps = {
       actorUserId,
       replyStatus,
       replyText,
-      selectClause: CONTENT_FEEDBACK_CARD_SELECT,
     });
   },
 };
