@@ -58,6 +58,25 @@ interface VideoReviewWorkbenchProps {
   errorMsg?: string;
 }
 
+export function VideoReviewLoadError({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+      <AlertTriangle className="size-5 text-red-600" aria-hidden="true" />
+      <h2 className="text-[18px] font-medium text-stone-900">数据加载失败</h2>
+      <p className="max-w-md text-[13px] leading-6 text-stone-600">{message}</p>
+      <Button type="button" variant="outline" onClick={onRetry}>
+        重新加载
+      </Button>
+    </div>
+  );
+}
+
 export function VideoReviewWorkbench({
   isAdmin,
   userId,
@@ -131,18 +150,19 @@ export function VideoReviewWorkbench({
   // Workbench level Lightbox (for DashboardDialog zoom shots)
   const [workbenchLightbox, setWorkbenchLightbox] = useState<{ paths: string[]; index: number } | null>(null);
 
+  if (errorMsg) {
+    return (
+      <VideoReviewLoadError
+        message={errorMsg}
+        onRetry={() => {
+          startTransition(() => router.refresh());
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {errorMsg && (
-        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-[13px] text-red-800">
-          <AlertTriangle className="size-5 shrink-0 text-red-600" />
-          <div>
-            <span className="font-semibold">数据加载部分失败：</span>
-            <span>{errorMsg}</span>
-          </div>
-        </div>
-      )}
-
       {/* 归档提示 */}
       <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
         <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
