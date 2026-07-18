@@ -27,9 +27,10 @@ create policy "成员或范围管理员读取豁免申请"
       and exists (
         select 1
         from public.profiles actor
+        join public.profiles applicant on applicant.id = exemption_request.applicant_user_id
         where actor.id = auth.uid()
           and actor.team_id is not null
-          and actor.team_id = exemption_request.team_id
+          and actor.team_id = applicant.team_id
       )
     )
   );
@@ -45,55 +46,6 @@ create policy "成员提交自己的豁免申请"
       from public.profiles actor
       where actor.id = auth.uid()
         and actor.team_id is not distinct from exemption_request.team_id
-    )
-  );
-
-create policy "范围管理员审核豁免申请"
-  on public.exemption_request
-  for update
-  to authenticated
-  using (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_request.team_id
-      )
-    )
-  )
-  with check (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_request.team_id
-      )
-    )
-  );
-
-create policy "范围管理员删除豁免申请"
-  on public.exemption_request
-  for delete
-  to authenticated
-  using (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_request.team_id
-      )
     )
   );
 
@@ -114,79 +66,51 @@ create policy "成员或范围管理员读取豁免授予"
       and exists (
         select 1
         from public.profiles actor
+        join public.profiles recipient on recipient.id = exemption_grant.user_id
         where actor.id = auth.uid()
           and actor.team_id is not null
-          and actor.team_id = exemption_grant.team_id
+          and actor.team_id = recipient.team_id
       )
     )
   );
 
-create policy "范围管理员写入豁免授予"
-  on public.exemption_grant
-  for insert
-  to authenticated
-  with check (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_grant.team_id
-      )
-    )
-  );
+-- grant 写入、request 审核与删除不再给 authenticated 建 policy；
+-- 唯一入口是下方 SECURITY DEFINER RPC，service_role 仍由 Supabase 固有旁路处理。
 
-create policy "范围管理员更新豁免授予"
-  on public.exemption_grant
-  for update
-  to authenticated
-  using (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_grant.team_id
-      )
-    )
+create or replace function public.guard_profile_exemption_projection()
+returns trigger
+language plpgsql
+security invoker
+set search_path = pg_catalog, public
+as $$
+begin
+  if (
+    new.status is distinct from old.status
+    or new.exempt_type is distinct from old.exempt_type
+    or new.exempt_start_date is distinct from old.exempt_start_date
+    or new.exempt_end_date is distinct from old.exempt_end_date
+    or new.exempt_reason is distinct from old.exempt_reason
+    or new.exemption_category is distinct from old.exemption_category
   )
-  with check (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_grant.team_id
-      )
-    )
-  );
+    and coalesce(current_setting('dydata.exemption_write_authorized', true), '') <> '1'
+    and coalesce(auth.role(), '') <> 'service_role' then
+    raise exception using errcode = '42501', message = '豁免字段只能通过授权流程修改';
+  end if;
 
-create policy "范围管理员删除豁免授予"
-  on public.exemption_grant
-  for delete
-  to authenticated
-  using (
-    public.is_owner()
-    or (
-      public.has_permission('manage_members')
-      and exists (
-        select 1
-        from public.profiles actor
-        where actor.id = auth.uid()
-          and actor.team_id is not null
-          and actor.team_id = exemption_grant.team_id
-      )
-    )
-  );
+  return new;
+end;
+$$;
+
+drop trigger if exists guard_profile_exemption_projection on public.profiles;
+create trigger guard_profile_exemption_projection
+before update of status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category
+on public.profiles
+for each row
+execute function public.guard_profile_exemption_projection();
+
+revoke all on function public.guard_profile_exemption_projection() from public;
+revoke all on function public.guard_profile_exemption_projection() from anon;
+revoke all on function public.guard_profile_exemption_projection() from authenticated;
 
 create or replace function public.apply_exemption_grant_atomically(
   p_user_id uuid,
@@ -285,6 +209,7 @@ begin
   )
   returning id into v_grant_id;
 
+  perform set_config('dydata.exemption_write_authorized', '1', true);
   update public.profiles
   set
     status = case when p_grant_type = 'permanent' then 'exempt' else 'active' end,
@@ -346,6 +271,7 @@ begin
   where user_id = p_user_id
     and status = 'active';
 
+  perform set_config('dydata.exemption_write_authorized', '1', true);
   update public.profiles
   set
     status = 'active',
@@ -474,6 +400,7 @@ begin
     )
     returning id into v_grant_id;
 
+    perform set_config('dydata.exemption_write_authorized', '1', true);
     update public.profiles
     set
       status = case when v_request.exemption_type = 'permanent' then 'exempt' else 'active' end,

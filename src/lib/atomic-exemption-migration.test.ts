@@ -22,6 +22,14 @@ test("豁免审批锁定申请并一次完成授予、profile 投影和审核状
   assert.match(sql, /request_status\s*=\s*p_decision/i);
 });
 
+test("authenticated 不能绕过 RPC 直接审核、写 grant 或改 profile 豁免投影", () => {
+  assert.doesNotMatch(sql, /on public\.exemption_request[\s\S]{0,80}for update[\s\S]{0,80}to authenticated/i);
+  assert.doesNotMatch(sql, /on public\.exemption_grant[\s\S]{0,80}for (insert|update|delete)[\s\S]{0,80}to authenticated/i);
+  assert.match(sql, /guard_profile_exemption_projection/i);
+  assert.match(sql, /dydata\.exemption_write_authorized/i);
+  assert.match(sql, /auth\.role\(\)[\s\S]*service_role/i);
+});
+
 test("豁免 RPC 移除旧 14 参数签名且只授权 authenticated", () => {
   assert.match(sql, /drop function if exists public\.approve_exemption_request_atomically/i);
   assert.match(sql, /revoke all on function[\s\S]*from public/i);
