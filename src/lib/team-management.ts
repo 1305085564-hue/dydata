@@ -163,6 +163,17 @@ export function canUseLeaderCandidate(
   );
 }
 
+export function filterUsableLeaderCandidates(
+  access: TeamManagementAccess,
+  profiles: TeamManagementProfile[],
+) {
+  return profiles.filter(
+    (profile) =>
+      Boolean(profile.team_id) &&
+      canUseLeaderCandidate(access, profile, profile.team_id as string),
+  );
+}
+
 export function filterVisibleTeamManagementProfiles(
   access: TeamManagementAccess,
   profiles: TeamManagementProfile[],

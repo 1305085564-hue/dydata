@@ -15,7 +15,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   filterVisibleTeamManagementProfiles,
-  isIgnoredTeamManagementUser,
+  filterUsableLeaderCandidates,
   resolveTeamManagementAccess,
   type TeamManagementAccess,
   type TeamManagementGroup,
@@ -296,10 +296,10 @@ function buildAdminModulesTeamManagementPayload({
     if (teamManagementAccess.teamIds === null) return true;
     return Boolean(group.team_id && teamManagementAccess.teamIds.includes(group.team_id));
   });
-  const leaderCandidates = (normalizedHydratedProfiles as TeamManagementProfile[])
-    .filter((profile) => profile.role === "admin" && profile.permissions?.manage_members !== true)
-    .filter((profile) => Boolean(profile.team_id))
-    .filter((profile) => !isIgnoredTeamManagementUser(profile));
+  const leaderCandidates = filterUsableLeaderCandidates(
+    teamManagementAccess,
+    normalizedHydratedProfiles as TeamManagementProfile[],
+  );
 
   return {
     access: teamManagementAccess,

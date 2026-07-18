@@ -5,6 +5,7 @@ import {
   canAssignMemberToGroup,
   canManageGroup,
   canUseLeaderCandidate,
+  filterUsableLeaderCandidates,
   filterVisibleTeamManagementProfiles,
   isIgnoredTeamManagementUser,
   resolveTeamManagementAccess,
@@ -133,6 +134,29 @@ test("组长候选必须是同团队非负责人的 admin，并忽略 Codex 测�
     false,
   );
   assert.equal(isIgnoredTeamManagementUser({ name: "Codex?????", email: "x@qq.com" }), true);
+});
+
+test("团队管理响应不会泄露其他团队的组长候选人", () => {
+  const access = resolveTeamManagementAccess(
+    {
+      id: "admin-1",
+      name: "负责人甲",
+      role: "admin",
+      team_id: "team-1",
+      permissions: { manage_members: true },
+    },
+    groups,
+  );
+  const profiles: TeamManagementProfile[] = [
+    { id: "leader-1", name: "组长甲", role: "admin", team_id: "team-1", permissions: {} },
+    { id: "leader-2", name: "组长乙", role: "admin", team_id: "team-2", permissions: {} },
+    { id: "manager-2", name: "负责人乙", role: "admin", team_id: "team-1", permissions: { manage_members: true } },
+  ];
+
+  assert.deepEqual(
+    filterUsableLeaderCandidates(access, profiles).map((profile) => profile.id),
+    ["leader-1"],
+  );
 });
 
 test("普通组长只看到本组成员和本组组长", () => {
