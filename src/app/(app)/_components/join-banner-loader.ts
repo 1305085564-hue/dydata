@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserContext } from "@/lib/current-user-context";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { getMyPendingRequest } from "@/lib/team-join/service";
 
 export type JoinBannerData = {
@@ -16,9 +17,8 @@ export type JoinBannerData = {
 };
 
 export async function loadJoinBanner(): Promise<JoinBannerData> {
-  const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth?.user;
+  const { supabase, user, authError } = await getCurrentUserContext();
+  assertSupabaseQuerySucceeded(authError, "验证加入团队登录状态失败");
 
   if (!user) {
     return { shouldRender: false };

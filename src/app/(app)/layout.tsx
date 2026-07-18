@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { NavBar } from "@/components/nav-bar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
-import { getUserPermissions } from "@/lib/permissions";
 import { NotificationProvider } from "@/components/notifications/notification-store";
 import { FeedbackNotificationBridge } from "@/components/notifications/feedback-notification-bridge";
 import { PageViewTracker } from "@/components/usage-events/page-view-tracker";
@@ -21,17 +21,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const permissionInfo = await getUserPermissions();
-
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <NotificationProvider enabled={Boolean(permissionInfo)}>
+    <NotificationProvider enabled>
       <div className="app-shell">
         <PageViewTracker />
         <NetworkStatusBar />
-        <NavBar />
+        <Suspense
+          fallback={
+            <div
+              aria-hidden="true"
+              className="fixed inset-x-0 top-0 z-50 h-[var(--app-top-offset)] border-b border-stone-200/40 bg-stone-50/80 backdrop-blur-md"
+            />
+          }
+        >
+          <NavBar />
+        </Suspense>
         {/* JoinBanner 现在只往通知中心注册条目，无视觉占位 */}
-        <JoinBanner />
+        <Suspense fallback={null}>
+          <JoinBanner />
+        </Suspense>
         <main className="app-main w-full min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+1.25rem)] sm:px-6">
           {children}
         </main>
