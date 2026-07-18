@@ -130,7 +130,15 @@ export function SubmissionHistory({
                     {screenshotUrls.map((url, imgIdx) => (
                       <div
                         key={imgIdx}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setLightbox({ paths: screenshotUrls, index: imgIdx })}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setLightbox({ paths: screenshotUrls, index: imgIdx });
+                          }
+                        }}
                         className="size-11 relative rounded border border-stone-200 bg-stone-50 overflow-hidden cursor-zoom-in"
                       >
                         <img

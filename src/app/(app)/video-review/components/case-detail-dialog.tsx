@@ -66,6 +66,14 @@ export function CaseDetailDialog({
                   {/* 首张作为主图展示，高亮预览 */}
                   <div
                     onClick={() => handleViewScreenshot(0)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleViewScreenshot(0);
+                      }
+                    }}
                     className="group relative aspect-[10/16] w-full overflow-hidden rounded-xl bg-stone-50 border border-stone-200 cursor-pointer"
                   >
                     <img
@@ -84,7 +92,15 @@ export function CaseDetailDialog({
                       {item.screenshot_paths.map((path, idx) => (
                         <div
                           key={path}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => handleViewScreenshot(idx)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleViewScreenshot(idx);
+                            }
+                          }}
                           className="group relative aspect-square overflow-hidden rounded-md bg-stone-50 border border-stone-200 cursor-pointer"
                         >
                           <img

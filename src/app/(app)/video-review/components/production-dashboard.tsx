@@ -386,7 +386,15 @@ export function ProductionDashboard({
                       {sub.screenshot_items.map((item: any, sIdx: number) => (
                         <div 
                           key={sIdx}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => setLightbox({ paths: [item.signed_url], index: 0 })}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setLightbox({ paths: [item.signed_url], index: 0 });
+                            }
+                          }}
                           className="aspect-square relative rounded-lg border border-stone-200 bg-stone-50 overflow-hidden cursor-zoom-in group/img"
                         >
                           {item.signed_url ? (

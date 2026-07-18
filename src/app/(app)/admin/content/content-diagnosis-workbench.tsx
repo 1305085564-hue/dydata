@@ -919,6 +919,14 @@ export function ContentDiagnosisWorkbench({
                       <div
                         key={idx}
                         onClick={() => handleQuoteSegment(seg, idx)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleQuoteSegment(seg, idx);
+                          }
+                        }}
                         className={`group/seg flex items-start gap-3 px-4 py-3 cursor-pointer transition-all text-left ${
                           isQuoted 
                             ? "bg-[#6FAA7D]/5 hover:bg-[#6FAA7D]/10 border-l-2 border-[#6FAA7D]" 

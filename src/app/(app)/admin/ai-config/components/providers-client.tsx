@@ -127,6 +127,14 @@ export default function ProvidersClient() {
                       : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
                   )}
                   onClick={() => setActiveNode({ type: "provider", id: p.id })}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveNode({ type: "provider", id: p.id });
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div
@@ -134,6 +142,15 @@ export default function ProvidersClient() {
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleProvider(p.id);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleProvider(p.id);
+                        }
                       }}
                     >
                       {isExpanded ? (
@@ -183,6 +200,14 @@ export default function ProvidersClient() {
                                 : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
                             )}
                             onClick={() => setActiveNode({ type: "key", id: key.id })}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                setActiveNode({ type: "key", id: key.id });
+                              }
+                            }}
                           >
                             <div className="flex items-center gap-2 min-w-0">
                               {/* 极简健康状态点 */}

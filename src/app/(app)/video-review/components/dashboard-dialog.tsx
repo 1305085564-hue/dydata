@@ -296,6 +296,14 @@ export function DashboardDialog({
                   {/* 小组头折叠触发栏 */}
                   <div
                     onClick={() => toggleGroup(groupName)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleGroup(groupName);
+                      }
+                    }}
                     className="flex items-center justify-between cursor-pointer py-1.5"
                   >
                     <div className="flex items-center gap-2">
@@ -329,6 +337,14 @@ export function DashboardDialog({
                           >
                             <div
                               onClick={() => handleToggleUser(member.user_id, member.user_name)}
+                              role="button"
+                              tabIndex={0}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  handleToggleUser(member.user_id, member.user_name);
+                                }
+                              }}
                               className="flex items-center justify-between cursor-pointer"
                             >
                               {/* 组员基本信息 */}
@@ -414,12 +430,24 @@ export function DashboardDialog({
                                       (sub.screenshot_items ?? []).map((item: any, idx: number) => (
                                         <div
                                           key={item.path}
+                                          role="button"
+                                          tabIndex={0}
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             onOpenLightbox(
                                               sub.screenshot_items.map((i: any) => i.path),
                                               idx
                                             );
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              onOpenLightbox(
+                                                sub.screenshot_items.map((i: any) => i.path),
+                                                idx
+                                              );
+                                            }
                                           }}
                                           className="group relative aspect-[16/10] overflow-hidden rounded-lg border border-stone-200 bg-stone-50 cursor-pointer"
                                         >

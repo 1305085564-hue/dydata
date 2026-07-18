@@ -387,6 +387,13 @@ export function SubmissionStatus({
                         <TableRow
                           className="cursor-pointer hover:bg-stone-50"
                           onClick={() => setProfileSubmittedExpanded((v) => !v)}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setProfileSubmittedExpanded((v) => !v);
+                            }
+                          }}
                         >
                           <TableCell colSpan={7} className="py-2 text-[12px] text-stone-500 select-none">
                             已提交 {submittedProfileRowsList.length} 人 {profileSubmittedExpanded ? "▲" : "▼"}
@@ -617,6 +624,13 @@ export function SubmissionStatus({
                         <TableRow
                           className="cursor-pointer hover:bg-stone-50"
                           onClick={() => setAccountSubmittedExpanded((v) => !v)}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setAccountSubmittedExpanded((v) => !v);
+                            }
+                          }}
                         >
                           <TableCell colSpan={6} className="py-2 text-[12px] text-stone-500 select-none">
                             已提交 {submittedAccountRowsList.length} 个账号 {accountSubmittedExpanded ? "▲" : "▼"}

@@ -281,6 +281,14 @@ export default function RewriteClient() {
               return (
                 <div
                   key={v.id}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveViewId(v.id);
+                    }
+                  }}
                   className={cn(
                     "group flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all text-[13px]",
                     isViewActive
