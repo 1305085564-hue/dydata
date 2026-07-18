@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { buildLoginPath, sanitizeNextPath } from "@/lib/auth-password";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +70,8 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
 }
 
 export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
+  const searchParams = useSearchParams();
+  const loginHref = buildLoginPath(sanitizeNextPath(searchParams?.get("next"), ""));
   const [state, formAction] = useActionState(action, initialState);
   const [teams, setTeams] = useState(initialTeams);
   const [isLoadingTeams, setIsLoadingTeams] = useState(initialTeams.length === 0);
@@ -192,7 +196,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
 
           <p className="text-center text-[13px] text-stone-500">
             已有账号？
-            <Link className="ml-1 text-stone-700 underline underline-offset-4" href="/login">
+            <Link className="ml-1 text-stone-700 underline underline-offset-4" href={loginHref}>
               去登录
             </Link>
           </p>

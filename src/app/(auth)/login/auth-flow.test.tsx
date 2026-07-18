@@ -6,6 +6,7 @@ import { LoginForm } from "./login-form";
 import { getPostLoginRedirectPath } from "./post-login-redirect";
 import {
   FORGOT_PASSWORD_SUCCESS_MESSAGE,
+  getLoginErrorMessage,
   getLoginNotice,
   getResetPasswordErrorMessage,
 } from "@/lib/auth-password";
@@ -52,6 +53,11 @@ test("登录页提示文案会按 query 参数返回", () => {
   assert.equal(getLoginNotice({ reset: "success" }), "密码已重置，请重新登录");
   assert.equal(getLoginNotice({ reset: "expired" }), "重置链接已失效，请重新发送");
   assert.equal(getLoginNotice({}), null);
+});
+
+test("登录失败提示不会直接暴露认证服务原始错误", () => {
+  assert.equal(getLoginErrorMessage("Invalid login credentials"), "邮箱或密码不正确");
+  assert.equal(getLoginErrorMessage("unexpected backend detail"), "登录失败，请稍后重试");
 });
 
 test("忘记密码成功提示统一隐藏邮箱是否存在", () => {

@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { buildAuthPathWithNext, getLoginErrorMessage, sanitizeNextPath } from "@/lib/auth-password";
 
 import { AuthShell } from "../_components/auth-shell";
 
@@ -50,6 +51,9 @@ function SubmitButton() {
 export function LoginForm({ action, initialEmail = "", notice = null }: LoginFormProps) {
   const searchParams = useSearchParams();
   const isExpired = searchParams?.get("expired") === "1";
+  const next = sanitizeNextPath(searchParams?.get("next"), "");
+  const forgotPasswordHref = buildAuthPathWithNext("/forgot-password", next);
+  const registerHref = buildAuthPathWithNext("/register", next);
   const [showExpiredAlert, setShowExpiredAlert] = useState(isExpired);
 
   const [state, formAction] = useActionState(action, { ...initialState, email: initialEmail });
@@ -68,7 +72,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   useEffect(() => {
     if (state.error) {
       setPassword("");
-      feedbackToast.error(state.error);
+      feedbackToast.error(getLoginErrorMessage(state.error));
     }
   }, [state.error]);
 
@@ -124,7 +128,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
             />
             <Link
               className="absolute right-0 top-0 active:translate-y-0 text-[12px] text-stone-500 hover:text-stone-700"
-              href="/forgot-password"
+              href={forgotPasswordHref}
             >
               忘记密码
             </Link>
@@ -150,7 +154,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
 
         <p className="text-center text-[13px] text-stone-500">
           还没有账号？
-          <Link className="ml-1 text-stone-700 underline underline-offset-4" href="/register">
+          <Link className="ml-1 text-stone-700 underline underline-offset-4" href={registerHref}>
             去注册
           </Link>
         </p>

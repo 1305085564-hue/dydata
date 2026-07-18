@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
-import { getLoginNotice } from "@/lib/auth-password";
+import { getLoginErrorMessage, getLoginNotice } from "@/lib/auth-password";
 import { createClient } from "@/lib/supabase/server";
 import {
   KEEP_LOGGED_IN_COOKIE_NAME,
@@ -47,7 +47,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     });
 
     if (error || !data.user) {
-      return { error: error?.message ?? "登录失败，请检查邮箱和密码。", email };
+      return { error: getLoginErrorMessage(error?.message), email };
     }
 
     const { data: profile, error: profileError } = await supabase
