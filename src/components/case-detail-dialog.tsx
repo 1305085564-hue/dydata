@@ -92,6 +92,33 @@ type DetailRow = ViolationDetail & {
   revision_missing_fields?: string[] | null;
 };
 
+type DetailRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function fetchViolationDetail(
+  caseId: string,
+  request: DetailRequest = fetch,
+): Promise<DetailRow> {
+  const response = await request(`/api/violations/${caseId}`);
+  const payload = (await response.json().catch(() => null)) as {
+    case?: DetailRow;
+    data?: DetailRow;
+    error?: string;
+  } | null;
+
+  if (response.status === 404) {
+    throw new Error("未找到这条话术，可能已被下架");
+  }
+  if (!response.ok) {
+    throw new Error(payload?.error || "话术详情加载失败，请重试");
+  }
+
+  const detail = payload?.case ?? payload?.data ?? null;
+  if (!detail) {
+    throw new Error("未找到这条话术，可能已被下架");
+  }
+  return detail;
+}
+
 export function CaseDetailDialog({
   caseId,
   open,
@@ -105,6 +132,8 @@ export function CaseDetailDialog({
   const router = useRouter();
   const [data, setData] = useState<DetailRow | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
   const [copied, setCopied] = useState(false);
 
   // 编辑与删除的状态
@@ -156,15 +185,17 @@ export function CaseDetailDialog({
     if (!caseId || !open) return;
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/violations/${caseId}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((payload) => {
+    setLoadError(null);
+    fetchViolationDetail(caseId)
+      .then((detail) => {
         if (cancelled) return;
-        const detail = payload?.case ?? payload?.data ?? null;
-        setData(detail as DetailRow | null);
+        setData(detail);
       })
-      .catch(() => {
-        if (!cancelled) setData(null);
+      .catch((cause) => {
+        if (!cancelled) {
+          setData(null);
+          setLoadError(cause instanceof Error ? cause.message : "话术详情加载失败，请重试");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -172,11 +203,12 @@ export function CaseDetailDialog({
     return () => {
       cancelled = true;
     };
-  }, [caseId, open]);
+  }, [caseId, open, reloadToken]);
 
   useEffect(() => {
     if (!open) {
       setData(null);
+      setLoadError(null);
       setCopied(false);
       setIsEditing(false);
       setEditText("");
@@ -343,6 +375,18 @@ export function CaseDetailDialog({
                 <div className="h-14 rounded-lg bg-stone-100" />
               </div>
               <div className="h-20 rounded-xl bg-stone-100" />
+            </div>
+          ) : loadError ? (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <AlertTriangle className="size-5 text-[#C9604D]" aria-hidden="true" />
+              <p className="mt-3 text-[13px] font-medium text-stone-700">{loadError}</p>
+              <button
+                type="button"
+                onClick={() => setReloadToken((value) => value + 1)}
+                className="mt-4 inline-flex h-8 items-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 hover:bg-stone-50"
+              >
+                重新加载
+              </button>
             </div>
           ) : data ? (
             <>
@@ -723,11 +767,7 @@ export function CaseDetailDialog({
               </div>
             ) : null}
             </>
-          ) : (
-            <div className="py-10 text-center text-[13px] text-stone-500">
-              加载失败或案例不存在
-            </div>
-          )}
+          ) : null}
         </div>
       </DialogContent>
     </Dialog>
