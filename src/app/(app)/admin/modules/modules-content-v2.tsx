@@ -672,9 +672,10 @@ export function AdminModulesContentV2({
         {isOwner && (
           <div className="border-t border-stone-200/80 pt-4 space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">快捷新建团队</Label>
+              <Label htmlFor="quick-team-name" className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">快捷新建团队</Label>
               <div className="flex gap-1.5">
                 <Input
+                  id="quick-team-name"
                   value={newTeamName}
                   onChange={e => setNewTeamName(e.target.value)}
                   placeholder="如: 广州一部"
@@ -692,15 +693,17 @@ export function AdminModulesContentV2({
 
             {selectedTeamId !== "__all__" && canManageGroups && (
               <div className="space-y-2 border-t border-dashed border-stone-200 pt-3">
-                <Label className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">在当前团队建组</Label>
+                <Label htmlFor="quick-group-name" className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">在当前团队建组</Label>
                 <div className="space-y-1.5">
                   <Input
+                    id="quick-group-name"
                     value={newGroupName}
                     onChange={e => setNewGroupName(e.target.value)}
                     placeholder="组名，如: 财经二组"
                     className="h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 rounded-lg"
                   />
                   <select
+                    aria-label="组长"
                     value={newGroupLeaderId}
                     onChange={e => setNewGroupLeaderId(e.target.value)}
                     className="w-full h-8.5 text-[12px] bg-stone-100/60 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 rounded-lg px-2 text-stone-700 outline-none border"

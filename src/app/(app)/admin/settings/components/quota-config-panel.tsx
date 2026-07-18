@@ -150,10 +150,11 @@ export function QuotaConfigPanel({
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* 生效日期 */}
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-500">
+                  <label htmlFor="effective-date" className="text-[12px] font-medium text-stone-500">
                     生效日期
                   </label>
                   <input
+                    id="effective-date"
                     type="date"
                     value={effectiveDate}
                     onChange={(e) => setEffectiveDate(e.target.value)}
@@ -163,10 +164,11 @@ export function QuotaConfigPanel({
 
                 {/* 目标数 */}
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-500">
+                  <label htmlFor="daily-target" className="text-[12px] font-medium text-stone-500">
                     每日产量目标 (条/天)
                   </label>
                   <input
+                    id="daily-target"
                     type="number"
                     min="1"
                     max="50"
@@ -178,10 +180,11 @@ export function QuotaConfigPanel({
 
                 {/* 备注 */}
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-stone-500">
+                  <label htmlFor="quota-note" className="text-[12px] font-medium text-stone-500">
                     调整说明 / 备注
                   </label>
                   <input
+                    id="quota-note"
                     type="text"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}

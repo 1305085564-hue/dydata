@@ -1196,7 +1196,7 @@ export function ContentDetailDialog({
                   <div className="space-y-2.5">
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="space-y-1">
-                        <label className="text-[12px] text-stone-500">推流峰值</label>
+                        <label id="detail-traffic-peak-label" className="text-[12px] text-stone-500">推流峰值</label>
                         <Select
                           value={observation.traffic_peak_level}
                           onValueChange={(v) =>
@@ -1206,7 +1206,7 @@ export function ContentDetailDialog({
                             }))
                           }
                         >
-                          <SelectTrigger className="h-8 w-full text-[12px]">
+                          <SelectTrigger aria-labelledby="detail-traffic-peak-label" className="h-8 w-full text-[12px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1219,7 +1219,7 @@ export function ContentDetailDialog({
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[12px] text-stone-500">峰值后走势</label>
+                        <label id="detail-post-peak-trend-label" className="text-[12px] text-stone-500">峰值后走势</label>
                         <Select
                           value={observation.post_peak_trend}
                           onValueChange={(v) =>
@@ -1229,7 +1229,7 @@ export function ContentDetailDialog({
                             }))
                           }
                         >
-                          <SelectTrigger className="h-8 w-full text-[12px]">
+                          <SelectTrigger aria-labelledby="detail-post-peak-trend-label" className="h-8 w-full text-[12px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1242,7 +1242,7 @@ export function ContentDetailDialog({
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[12px] text-stone-500">流量承接</label>
+                        <label id="detail-traffic-retention-label" className="text-[12px] text-stone-500">流量承接</label>
                         <Select
                           value={observation.traffic_retention_quality}
                           onValueChange={(v) =>
@@ -1252,7 +1252,7 @@ export function ContentDetailDialog({
                             }))
                           }
                         >
-                          <SelectTrigger className="h-8 w-full text-[12px]">
+                          <SelectTrigger aria-labelledby="detail-traffic-retention-label" className="h-8 w-full text-[12px]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1291,6 +1291,7 @@ export function ContentDetailDialog({
                     </div>
 
                     <textarea
+                      aria-label="观察备注"
                       value={observation.note}
                       onChange={(event) =>
                         setObservation((prev) => ({ ...prev, note: event.target.value }))
@@ -1443,8 +1444,9 @@ export function ContentDetailDialog({
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-normal text-stone-500">主要问题</label>
+                  <label htmlFor="detail-main-issues" className="text-[12px] font-normal text-stone-500">主要问题</label>
                   <textarea
+                    id="detail-main-issues"
                     value={mainIssues}
                     onChange={(e) => setMainIssues(e.target.value)}
                     className="w-full resize-none rounded-xl border border-stone-200 bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
@@ -1455,8 +1457,9 @@ export function ContentDetailDialog({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-normal text-stone-500">改进反馈</label>
+                  <label htmlFor="detail-feedback" className="text-[12px] font-normal text-stone-500">改进反馈</label>
                   <textarea
+                    id="detail-feedback"
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     className="w-full resize-none rounded-xl border border-stone-200 bg-stone-100/70 p-3 text-[13px] leading-[1.7] text-stone-700 placeholder:text-stone-500 transition-[background-color,border-color,box-shadow] duration-150 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"

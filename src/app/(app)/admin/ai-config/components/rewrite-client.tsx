@@ -55,26 +55,26 @@ function RewriteViewDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Key</Label>
-            <Input value={formData.key || ""} onChange={(e) => setFormData({ ...formData, key: e.target.value })} disabled={!!view?.id} />
+            <Label htmlFor="view-key">Key</Label>
+            <Input id="view-key" value={formData.key || ""} onChange={(e) => setFormData({ ...formData, key: e.target.value })} disabled={!!view?.id} />
           </div>
           <div className="space-y-2">
-            <Label>名称</Label>
-            <Input value={formData.label || ""} onChange={(e) => setFormData({ ...formData, label: e.target.value })} />
+            <Label htmlFor="view-label">名称</Label>
+            <Input id="view-label" value={formData.label || ""} onChange={(e) => setFormData({ ...formData, label: e.target.value })} />
           </div>
           <div className="space-y-2">
-            <Label>描述</Label>
-            <Input value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+            <Label htmlFor="view-description">描述</Label>
+            <Input id="view-description" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>排序</Label>
-              <Input type="number" value={formData.sort_order ?? 100} onChange={(e) => setFormData({ ...formData, sort_order: Number.parseInt(e.target.value, 10) || 100 })} />
+              <Label htmlFor="view-sort-order">排序</Label>
+              <Input id="view-sort-order" type="number" value={formData.sort_order ?? 100} onChange={(e) => setFormData({ ...formData, sort_order: Number.parseInt(e.target.value, 10) || 100 })} />
             </div>
             <div className="flex items-end">
               <div className="flex w-full items-center justify-between rounded-md border border-stone-200 px-3 py-2">
                 <Label>启用</Label>
-                <Switch checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
+                <Switch aria-label="启用模型视图" checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
               </div>
             </div>
           </div>
@@ -135,8 +135,9 @@ function RewriteRouteDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>模型视图</Label>
+            <Label htmlFor="route-model-view">模型视图</Label>
             <select
+              id="route-model-view"
               className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-[13px]"
               value={formData.model_view_id || ""}
               onChange={(e) => setFormData({ ...formData, model_view_id: e.target.value })}
@@ -148,8 +149,9 @@ function RewriteRouteDialog({
             </select>
           </div>
           <div className="space-y-2">
-            <Label>物理映射 (渠道 / 分组 / 模型)</Label>
+            <Label htmlFor="route-provider-key-model">物理映射 (渠道 / 分组 / 模型)</Label>
             <select
+              id="route-provider-key-model"
               className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-[13px]"
               value={formData.provider_key_model_id || ""}
               onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
@@ -162,21 +164,21 @@ function RewriteRouteDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Priority (优先级)</Label>
-              <Input type="number" value={formData.priority ?? 100} onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 100 })} />
+              <Label htmlFor="route-priority">Priority (优先级)</Label>
+              <Input id="route-priority" type="number" value={formData.priority ?? 100} onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 100 })} />
             </div>
             <div className="space-y-2">
-              <Label>Weight (权重)</Label>
-              <Input type="number" value={formData.weight ?? 100} onChange={(e) => setFormData({ ...formData, weight: Number.parseInt(e.target.value, 10) || 100 })} />
+              <Label htmlFor="route-weight">Weight (权重)</Label>
+              <Input id="route-weight" type="number" value={formData.weight ?? 100} onChange={(e) => setFormData({ ...formData, weight: Number.parseInt(e.target.value, 10) || 100 })} />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>实际模型</Label>
-            <Input value={formData.actual_model || ""} onChange={(e) => setFormData({ ...formData, actual_model: e.target.value })} />
+            <Label htmlFor="route-actual-model">实际模型</Label>
+            <Input id="route-actual-model" value={formData.actual_model || ""} onChange={(e) => setFormData({ ...formData, actual_model: e.target.value })} />
           </div>
           <div className="flex items-center justify-between">
             <Label>启用</Label>
-            <Switch checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
+            <Switch aria-label="启用路由" checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
           </div>
         </div>
         <DialogFooter>
