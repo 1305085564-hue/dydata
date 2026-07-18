@@ -21,6 +21,16 @@ import { trackUsageEvent } from "@/lib/usage-events/client";
 
 type Source = "queue" | "matrix";
 type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
+type FulfillmentRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function fetchFulfillmentAppeals(request: FulfillmentRequest = fetch): Promise<any[]> {
+  const response = await request("/api/admin/fulfillment/appeals?limit=150");
+  const payload = (await response.json()) as { appeals?: any[]; error?: string };
+  if (!response.ok) {
+    throw new Error(payload.error || "申诉加载失败");
+  }
+  return Array.isArray(payload.appeals) ? payload.appeals : [];
+}
 
 interface FulfillmentWorkbenchProps {
   initialData: FulfillmentCalendarData;
@@ -128,6 +138,8 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
   // 3. 申诉状态
   const [appeals, setAppeals] = useState<any[]>([]);
+  const [appealsLoading, setAppealsLoading] = useState(true);
+  const [appealsError, setAppealsError] = useState<string | null>(null);
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
 
   // 4. 选择与抽屉状态
@@ -145,14 +157,16 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
   // 5. 初始化配置加载与申诉加载
   const fetchAppeals = useCallback(async () => {
+    setAppealsLoading(true);
+    setAppealsError(null);
     try {
-      const res = await fetch("/api/admin/fulfillment/appeals?limit=150");
-      if (res.ok) {
-        const result = await res.json();
-        setAppeals(result.appeals || []);
-      }
+      setAppeals(await fetchFulfillmentAppeals());
     } catch (err) {
       console.error("加载申诉失败", err);
+      setAppeals([]);
+      setAppealsError(err instanceof Error ? err.message : "申诉加载失败");
+    } finally {
+      setAppealsLoading(false);
     }
   }, []);
 
@@ -571,7 +585,9 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
               </TabsTrigger>
               <TabsTrigger value="appeals" className="text-[12px]">
                 待审核申诉
-                {pendingAppeals.length > 0 ? (
+                {appealsError ? (
+                  <span className="ml-1.5 rounded border border-[#C9604D]/20 bg-[#C9604D]/5 px-1.5 py-0.5 text-[#C9604D]">!</span>
+                ) : pendingAppeals.length > 0 ? (
                   <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-1.5 py-0.5 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium">
                     <span className="size-1 rounded-full bg-[#D99E55]" />
                     {pendingAppeals.length}
@@ -606,10 +622,18 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
           </TabsContent>
 
           <TabsContent value="appeals" className="mt-3">
-            {isSubmittingAppeal ? (
+            {appealsError ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+                <p className="text-[13px] font-medium text-stone-800">申诉数据加载失败</p>
+                <p className="mt-1 text-[12px] text-stone-500">{appealsError}</p>
+                <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => void fetchAppeals()}>
+                  重新加载
+                </Button>
+              </div>
+            ) : appealsLoading || isSubmittingAppeal ? (
               <div className="flex items-center justify-center py-12 rounded-2xl border border-stone-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-stone-500">正在处理申诉...</span>
+                <span className="text-[13px] text-stone-500">{isSubmittingAppeal ? "正在处理申诉..." : "正在加载申诉..."}</span>
               </div>
             ) : pendingAppeals.length === 0 ? (
               <div className="rounded-2xl border border-stone-200 bg-white py-12">
