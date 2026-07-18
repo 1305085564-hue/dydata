@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { shiftDateOnly } from "@/lib/loaders/shared";
 import { measureAsync } from "@/lib/perf";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { filterLeaderboardByVisibleUsers } from "@/lib/dashboard-data-scope";
 
 function buildConclusion(trendData: ReturnType<typeof build个人趋势数据>, leaderboardData: unknown[]) {
   const latest = trendData.结果趋势.at(-1);
@@ -28,6 +30,11 @@ export async function GET() {
   }
 
   const userId = user.id;
+  const permissionContext = await getCurrentPermissionContext();
+  if (!permissionContext) {
+    return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
+  }
+  const visibleUserIds = permissionContext.scope.visibleUserIds;
   const monthAgo = shiftDateOnly(new Date(), -30);
 
   try {
@@ -48,10 +55,12 @@ export async function GET() {
         supabase
           .from("daily_reports")
           .select("report_date, user_id, play_count, follower_gain, likes, comments, shares, favorites")
-          .gte("report_date", monthAgo),
+          .gte("report_date", monthAgo)
+          .in("user_id", visibleUserIds),
         supabase
           .from("profiles")
-          .select("id, status"),
+          .select("id, status")
+          .in("id", visibleUserIds),
         supabase.rpc("get_leaderboard_rows", { since_date: monthAgo }),
       ]));
 
@@ -89,7 +98,10 @@ export async function GET() {
     }));
 
     const trendData = build个人趋势数据(selfReports, teamReports, activeUserIds);
-    const leaderboardData = leaderboardResult.data ?? [];
+    const leaderboardData = filterLeaderboardByVisibleUsers(
+      leaderboardResult.data ?? [],
+      visibleUserIds
+    );
 
     return NextResponse.json({
       conclusion: buildConclusion(trendData, leaderboardData),

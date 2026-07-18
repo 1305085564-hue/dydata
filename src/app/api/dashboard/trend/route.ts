@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { build个人趋势数据 } from "@/lib/趋势图";
 import { shiftDateOnly } from "@/lib/loaders/shared";
 import { measureAsync } from "@/lib/perf";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 
 export async function GET() {
   const supabase = await createClient();
@@ -16,6 +17,11 @@ export async function GET() {
   }
 
   const userId = user.id;
+  const permissionContext = await getCurrentPermissionContext();
+  if (!permissionContext) {
+    return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
+  }
+  const visibleUserIds = permissionContext.scope.visibleUserIds;
   const monthAgo = shiftDateOnly(new Date(), -30);
 
   try {
@@ -40,10 +46,12 @@ export async function GET() {
           .select(
             "report_date, user_id, play_count, follower_gain, likes, comments, shares, favorites"
           )
-          .gte("report_date", monthAgo),
+          .gte("report_date", monthAgo)
+          .in("user_id", visibleUserIds),
         supabase
           .from("profiles")
-          .select("id, status"),
+          .select("id, status")
+          .in("id", visibleUserIds),
       ]));
 
     const accountIds = (accountsResult.data ?? []).map((a) => a.id);

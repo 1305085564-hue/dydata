@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { shiftDateOnly } from "@/lib/loaders/shared";
 import { measureAsync } from "@/lib/perf";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { filterLeaderboardByVisibleUsers } from "@/lib/dashboard-data-scope";
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,6 +17,10 @@ export async function GET() {
   }
 
   const userId = user.id;
+  const permissionContext = await getCurrentPermissionContext();
+  if (!permissionContext) {
+    return NextResponse.json({ error: "无法确定数据可见范围" }, { status: 403 });
+  }
   const monthAgo = shiftDateOnly(new Date(), -30);
 
   try {
@@ -37,7 +43,10 @@ export async function GET() {
     );
 
     return NextResponse.json({
-      leaderboardData: leaderboardResult.data ?? [],
+      leaderboardData: filterLeaderboardByVisibleUsers(
+        leaderboardResult.data ?? [],
+        permissionContext.scope.visibleUserIds
+      ),
       accountIds,
       ownContentDirections,
     });
