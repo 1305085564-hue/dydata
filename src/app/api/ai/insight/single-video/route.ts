@@ -1,18 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { UUID_PATTERN } from "@/app/api/production/_shared";
 import { runSingleVideoInsight } from "@/lib/ai/insight-single-video";
+import { userOwnsContentItem } from "@/lib/api-resource-access";
 import { createClient } from "@/lib/supabase/server";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
+type SingleVideoInsightDeps = {
+  createClient: typeof createClient;
+  userOwnsContentItem: typeof userOwnsContentItem;
+  runInsight: typeof runSingleVideoInsight;
+};
 
-export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+const defaultDeps: SingleVideoInsightDeps = {
+  createClient,
+  userOwnsContentItem,
+  runInsight: runSingleVideoInsight,
+};
+
+export async function buildSingleVideoInsightResponse(
+  request: NextRequest,
+  deps: SingleVideoInsightDeps = defaultDeps,
+) {
+  const supabase = await deps.createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -28,16 +41,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "请求体不是合法 JSON" }, { status: 400 });
   }
 
-  if (!isRecord(body) || !isNonEmptyString(body.video_id)) {
-    return NextResponse.json({ error: "缺少 video_id" }, { status: 400 });
+  const videoId = isRecord(body) && typeof body.video_id === "string" ? body.video_id.trim() : "";
+  if (!UUID_PATTERN.test(videoId)) {
+    return NextResponse.json({ error: "video_id 必须是 uuid" }, { status: 400 });
+  }
+
+  if (!await deps.userOwnsContentItem(supabase, videoId, user.id)) {
+    return NextResponse.json({ error: "内容不存在或无权限" }, { status: 403 });
   }
 
   try {
-    const result = await runSingleVideoInsight(supabase, body.video_id.trim());
+    const result = await deps.runInsight(supabase, videoId);
     return NextResponse.json(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "单视频洞察生成失败";
-    const status = message.includes("不存在") ? 404 : 500;
-    return NextResponse.json({ error: message }, { status });
+    const isNotFound = error instanceof Error && error.message.includes("不存在");
+    return NextResponse.json(
+      { error: isNotFound ? "内容不存在" : "单视频洞察生成失败" },
+      { status: isNotFound ? 404 : 500 },
+    );
   }
+}
+
+export async function POST(request: NextRequest) {
+  return buildSingleVideoInsightResponse(request);
 }
