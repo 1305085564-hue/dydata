@@ -122,7 +122,8 @@ export function parseLimit(value: string | null, fallback = 50, max = 200) {
 }
 
 export function escapeCsvCell(value: unknown) {
-  const text = value == null ? "" : String(value);
+  const rawText = value == null ? "" : String(value);
+  const text = /^[=+\-@]/.test(rawText) ? `'${rawText}` : rawText;
   if (/[",\r\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
 }

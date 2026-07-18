@@ -28,6 +28,13 @@ test("escapeCsvCell quotes commas, quotes, and line breaks", () => {
   assert.equal(escapeCsvCell("a\"b"), "\"a\"\"b\"");
 });
 
+test("escapeCsvCell 会中和表格公式前缀", () => {
+  assert.equal(escapeCsvCell("=2+2"), "'=2+2");
+  assert.equal(escapeCsvCell("+cmd"), "'+cmd");
+  assert.equal(escapeCsvCell("-10+20"), "'-10+20");
+  assert.equal(escapeCsvCell("@SUM(A1)"), "'@SUM(A1)");
+});
+
 test("parseLimit clamps list sizes", () => {
   assert.equal(parseLimit(null), 50);
   assert.equal(parseLimit("0"), 1);
