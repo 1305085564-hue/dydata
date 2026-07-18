@@ -217,6 +217,42 @@ async function insertUsageRecord(
   userId: string,
   payload: CreateUsageRecordPayload,
 ): Promise<ConversionHubResult<unknown>> {
+  const prepared = await prepareUsageRecord(supabase, userId, payload);
+  if (!prepared.ok) return prepared;
+
+  const { data, error } = await supabase
+    .from("script_usage_records")
+    .insert(prepared.data)
+    .select("*")
+    .single();
+
+  if (error || !data) {
+    return toServerError("创建话术使用记录失败");
+  }
+
+  return { ok: true, data };
+}
+
+type PreparedUsageRecord = {
+  case_id: string;
+  recorded_by: string;
+  account_id: string | null;
+  account_name_snapshot: string | null;
+  team_id: string | null;
+  used_at: string;
+  views: number;
+  follows: number;
+  source: CreateUsageRecordPayload["source"];
+  daily_report_id: string | null;
+  note: string | null;
+  result_flag: CreateUsageRecordPayload["result_flag"];
+};
+
+async function prepareUsageRecord(
+  supabase: SupabaseClient,
+  userId: string,
+  payload: CreateUsageRecordPayload,
+): Promise<ConversionHubResult<PreparedUsageRecord>> {
   const profile = await getProfile(supabase, userId);
   if (!profile.ok) return profile;
 
@@ -249,9 +285,9 @@ async function insertUsageRecord(
     return { ok: false, status: 422, code: "VALIDATION_ERROR", message: "case_id 或 script_text 至少提供一个" };
   }
 
-  const { data, error } = await supabase
-    .from("script_usage_records")
-    .insert({
+  return {
+    ok: true,
+    data: {
       case_id: caseId,
       recorded_by: userId,
       account_id: account.data?.id ?? null,
@@ -264,15 +300,8 @@ async function insertUsageRecord(
       daily_report_id: payload.daily_report_id,
       note: payload.note,
       result_flag: payload.result_flag,
-    })
-    .select("*")
-    .single();
-
-  if (error || !data) {
-    return toServerError("创建话术使用记录失败");
-  }
-
-  return { ok: true, data };
+    },
+  };
 }
 
 export async function createUsageRecordForUser(
@@ -292,35 +321,30 @@ export async function replaceDailyReportUsageRecord(
     return { ok: false as const, status: 422, code: "VALIDATION_ERROR" as const, message: "daily_report_id 为必填项" };
   }
 
-  const previous = await supabase
-    .from("script_usage_records")
-    .select("id, case_id, recorded_by, account_id, account_name_snapshot, team_id, used_at, views, follows, source, daily_report_id, note, result_flag, created_at, updated_at")
-    .eq("daily_report_id", payload.daily_report_id);
+  const prepared = await prepareUsageRecord(supabase, userId, payload);
+  if (!prepared.ok) return prepared;
 
-  if (previous.error) {
-    return toServerError("读取旧话术使用记录失败");
+  const { data, error } = await supabase.rpc("replace_daily_report_usage_record", {
+    p_daily_report_id: payload.daily_report_id,
+    p_case_id: prepared.data.case_id,
+    p_recorded_by: prepared.data.recorded_by,
+    p_account_id: prepared.data.account_id,
+    p_account_name_snapshot: prepared.data.account_name_snapshot,
+    p_team_id: prepared.data.team_id,
+    p_used_at: prepared.data.used_at,
+    p_views: prepared.data.views,
+    p_follows: prepared.data.follows,
+    p_source: prepared.data.source,
+    p_note: prepared.data.note,
+    p_result_flag: prepared.data.result_flag,
+  });
+
+  const replaced = Array.isArray(data) ? data[0] : data;
+  if (error || !replaced) {
+    return toServerError("替换话术使用记录失败");
   }
 
-  const deleteResult = await supabase
-    .from("script_usage_records")
-    .delete()
-    .eq("daily_report_id", payload.daily_report_id);
-
-  if (deleteResult.error) {
-    return toServerError("清理旧话术使用记录失败");
-  }
-
-  const inserted = await insertUsageRecord(supabase, userId, payload);
-  if (inserted.ok) {
-    return inserted;
-  }
-
-  const previousRows = previous.data ?? [];
-  if (previousRows.length > 0) {
-    await supabase.from("script_usage_records").insert(previousRows);
-  }
-
-  return inserted;
+  return { ok: true as const, data: replaced };
 }
 
 
