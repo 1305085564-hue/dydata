@@ -11,6 +11,24 @@ interface RateLimitEntry {
 const store = new Map<string, RateLimitEntry>();
 const WINDOW_MS = 10_000; // 10 秒
 const MAX_REQUESTS = 20;
+const MAX_STORE_SIZE = 10_000;
+
+function deleteOldestEntry() {
+  const oldest = store.keys().next();
+  if (!oldest.done) {
+    store.delete(oldest.value);
+  }
+}
+
+function pruneOneExpiredEntry(now: number) {
+  const oldest = store.keys().next();
+  if (oldest.done) return;
+
+  const entry = store.get(oldest.value);
+  if (entry && now >= entry.resetTime) {
+    store.delete(oldest.value);
+  }
+}
 
 /**
  * 检查 IP 是否超过速率限制
@@ -24,19 +42,34 @@ export function checkRateLimit(ip: string): { allowed: boolean; retryAfter: numb
   }
 
   const now = Date.now();
+  pruneOneExpiredEntry(now);
   const entry = store.get(ip);
 
-  if (!entry || now >= entry.resetTime) {
-    // 新窗口或窗口已过期，重置计数
-    store.set(ip, { count: 1, resetTime: now + WINDOW_MS });
+  if (entry && now < entry.resetTime) {
+    if (entry.count >= MAX_REQUESTS) {
+      return {
+        allowed: false,
+        retryAfter: Math.max(
+          1,
+          Math.min(Math.ceil((entry.resetTime - now) / 1_000), WINDOW_MS / 1_000),
+        ),
+      };
+    }
+
+    entry.count += 1;
     return { allowed: true, retryAfter: 0 };
   }
 
-  if (entry.count >= MAX_REQUESTS) {
-    return { allowed: false, retryAfter: Math.ceil((entry.resetTime - now) / 1000) };
+  // Map 覆盖已有 key 不会改变插入顺序；新窗口必须先删除再放到队尾。
+  if (entry) {
+    store.delete(ip);
   }
 
-  entry.count += 1;
+  if (store.size >= MAX_STORE_SIZE) {
+    deleteOldestEntry();
+  }
+
+  store.set(ip, { count: 1, resetTime: now + WINDOW_MS });
   return { allowed: true, retryAfter: 0 };
 }
 
@@ -58,3 +91,13 @@ export function isRateLimitExempt(pathname: string): boolean {
   }
   return false;
 }
+
+export const __internal = {
+  WINDOW_MS,
+  MAX_STORE_SIZE,
+  getStoreSize: () => store.size,
+  getEntry: (key: string) => store.get(key),
+  getKeys: () => Array.from(store.keys()),
+  hasKey: (key: string) => store.has(key),
+  resetStore: () => store.clear(),
+};
