@@ -6,6 +6,7 @@ import {
   isValidDate,
   requireOwnerOrAdminActor,
 } from "@/app/api/production/_shared";
+import type { DataAccessScope } from "@/lib/data-access-scope";
 
 type ProductionDashboardRow = {
   user_id: string;
@@ -20,6 +21,16 @@ type ProductionDashboardRow = {
   exemption_status: string;
   alert_level: string;
 };
+
+export function filterExportViolationRows(
+  scope: Pick<DataAccessScope, "kind" | "visibleUserIds">,
+  rows: ProductionDashboardRow[],
+) {
+  const visibleUserIds = scope.kind === "all" ? null : new Set(scope.visibleUserIds);
+  return rows.filter(
+    (row) => row.alert_level === "red" && (!visibleUserIds || visibleUserIds.has(row.user_id)),
+  );
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireOwnerOrAdminActor();
@@ -49,7 +60,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message || "导出红灯名单失败" }, { status: 500 });
   }
 
-  const rows = ((data ?? []) as ProductionDashboardRow[]).filter((row) => row.alert_level === "red");
+  const rows = filterExportViolationRows(auth.scope, (data ?? []) as ProductionDashboardRow[]);
   const header = ["日期", "成员", "团队", "小组", "目标", "已提交", "缺口", "豁免状态", "预警"];
   const lines = [
     header.map(escapeCsvCell).join(","),
