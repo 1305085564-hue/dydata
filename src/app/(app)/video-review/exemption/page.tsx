@@ -26,16 +26,19 @@ export default async function ExemptionPage() {
 
   const today = getShanghaiDate();
   let exemptionHistory: any[] = [];
+  let historyErrorMessage: string | null = null;
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("exemption_request")
       .select("id, exemption_type, start_date, end_date, reason, request_status, created_at, reviewed_at")
       .eq("applicant_user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);
+    if (error) throw error;
     exemptionHistory = data ?? [];
   } catch (err) {
     console.error("Failed to load exemption history:", err);
+    historyErrorMessage = "暂时无法取得申请历史，请稍后重试。";
   }
 
   return (
@@ -68,6 +71,7 @@ export default async function ExemptionPage() {
       <ExemptionWorkbench
         initialHistory={(exemptionHistory ?? []) as any[]}
         todayDate={today}
+        historyErrorMessage={historyErrorMessage}
       />
     </div>
   );

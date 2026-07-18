@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { trackUsageEvent } from "@/lib/usage-events/client";
+import { Button } from "@/components/ui/button";
 
 interface ExemptionRequest {
   id: string;
@@ -31,6 +32,28 @@ interface ExemptionRequest {
 interface ExemptionWorkbenchProps {
   initialHistory: ExemptionRequest[];
   todayDate: string;
+  historyErrorMessage?: string | null;
+}
+
+export function ExemptionHistoryError({
+  message,
+  onRetry,
+  pending,
+}: {
+  message: string;
+  onRetry: () => void;
+  pending: boolean;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+      <AlertTriangle className="size-5 text-red-600" aria-hidden="true" />
+      <p className="mt-3 text-[13px] font-medium text-stone-800">申请历史加载失败</p>
+      <p className="mt-1 text-[12px] text-stone-500">{message}</p>
+      <Button type="button" variant="outline" className="mt-4" disabled={pending} onClick={onRetry}>
+        {pending ? "正在加载..." : "重新加载"}
+      </Button>
+    </div>
+  );
 }
 
 const EXEMPTION_LABELS: Record<string, string> = {
@@ -46,8 +69,10 @@ const EXEMPTION_LABELS: Record<string, string> = {
 export function ExemptionWorkbench({
   initialHistory,
   todayDate,
+  historyErrorMessage,
 }: ExemptionWorkbenchProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [history, setHistory] = useState<ExemptionRequest[]>(initialHistory);
 
   // Form State
@@ -286,7 +311,13 @@ export function ExemptionWorkbench({
           </span>
         </div>
 
-        {history.length === 0 ? (
+        {historyErrorMessage ? (
+          <ExemptionHistoryError
+            message={historyErrorMessage}
+            pending={isPending}
+            onRetry={() => startTransition(() => router.refresh())}
+          />
+        ) : history.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
             <FileText className="size-10 text-stone-500 mb-3" />
             <p className="text-[13px] text-stone-500 mb-4">暂无历史申请记录</p>
