@@ -2028,9 +2028,11 @@ export function VideoSubmitForm({
                     onChange={(event) => updateMeta("videoTitle", event.target.value)}
                     placeholder="输入视频标题"
                     className="h-10 rounded-xl bg-stone-100/70 border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                    aria-invalid={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "true" : "false"}
+                    aria-describedby={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "video_title_error" : undefined}
                   />
                   {hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
-                    <p className="text-[12px] font-medium text-[#B24E3E]">必填，仍未填写视频标题</p>
+                    <p id="video_title_error" role="alert" className="text-[12px] font-medium text-[#B24E3E]">必填，仍未填写视频标题</p>
                   ) : null}
                 </div>
 
@@ -2052,9 +2054,11 @@ export function VideoSubmitForm({
                     onChange={(event) => updateMeta("content", event.target.value)}
                     placeholder="粘贴视频文案"
                     className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-stone-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-stone-700 placeholder:text-stone-500 outline-none focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                    aria-invalid={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "true" : "false"}
+                    aria-describedby={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "content_error" : undefined}
                   />
                   {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                    <p className="mt-1 text-[12px] font-medium text-[#B24E3E]">必填，仍未填写文案</p>
+                    <p id="content_error" role="alert" className="mt-1 text-[12px] font-medium text-[#B24E3E]">必填，仍未填写文案</p>
                   ) : null}
                 </div>
 
@@ -2261,7 +2265,12 @@ export function VideoSubmitForm({
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div ref={topicTagSectionRef} className="space-y-2 rounded-lg border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-stone-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
                           <Label className="text-[13px] font-medium text-stone-500">话题标签 <span className="text-[#B24E3E]">*</span></Label>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div
+                            role="group"
+                            aria-label="话题标签"
+                            aria-describedby={hasAttemptedSubmit && issueSummary.topicTagMissing ? "topic_tag_error" : undefined}
+                            className="grid grid-cols-2 gap-2"
+                          >
                             {(["干货", "复盘"] as const).map((tag) => (
                               <button
                                 key={tag}
@@ -2279,7 +2288,7 @@ export function VideoSubmitForm({
                             ))}
                           </div>
                           {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
-                            <p className="text-[12px] font-medium text-[#B24E3E]">必填，仍未选择话题标签</p>
+                            <p id="topic_tag_error" role="alert" className="text-[12px] font-medium text-[#B24E3E]">必填，仍未选择话题标签</p>
                           ) : null}
                         </div>
 

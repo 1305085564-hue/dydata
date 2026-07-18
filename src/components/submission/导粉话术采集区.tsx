@@ -55,6 +55,8 @@ export function ScriptCaptureSection({
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="粘贴本条视频中使用的导粉话术文案"
                 rows={4}
+                aria-invalid={showError ? "true" : "false"}
+                aria-describedby={showError ? "script_capture_error" : undefined}
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
                   "text-[13px] leading-[1.7] tracking-[0.005em] text-stone-900 placeholder:text-stone-500",
@@ -72,6 +74,8 @@ export function ScriptCaptureSection({
 
             {showError && (
               <motion.p
+                id="script_capture_error"
+                role="alert"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-2 flex items-center gap-2 text-[12px] font-medium text-[#B24E3E]"
