@@ -64,6 +64,7 @@ export function NavBarClient({
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const wrenchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wrenchButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const handleWrenchMouseEnter = useCallback(() => {
     if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
@@ -81,6 +82,18 @@ export function NavBarClient({
       if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!wrenchOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setWrenchOpen(false);
+        wrenchButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [wrenchOpen]);
   const [centerBadges, setCenterBadges] = useState<{
     cockpit: number;
     videos: number;
@@ -329,9 +342,22 @@ export function NavBarClient({
                   className="relative"
                   onMouseEnter={handleWrenchMouseEnter}
                   onMouseLeave={handleWrenchMouseLeave}
+                  onFocus={() => {
+                    if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
+                    setWrenchOpen(true);
+                  }}
+                  onBlur={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      setWrenchOpen(false);
+                    }
+                  }}
                 >
                   <button
+                    ref={wrenchButtonRef}
                     type="button"
+                    onClick={() => setWrenchOpen(v => !v)}
+                    aria-expanded={wrenchOpen}
+                    aria-haspopup="menu"
                     className={cn(
                       "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
                       "text-stone-500 hover:text-[#B4532F] active:scale-95",
