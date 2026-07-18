@@ -5,9 +5,6 @@
 @import "../styles/design-tokens.css";
 @import "../styles/tokens.css";
 @import "../styles/animations.css";
-@import "../styles/components/app-shell.css";
-@import "../styles/components/dashboard.css";
-@import "../styles/components/admin.css";
 
 @custom-variant dark (&:is(.dark *));
 

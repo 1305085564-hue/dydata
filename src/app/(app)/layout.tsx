@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import "@/styles/components/app-shell.css";
+// dashboard.css 仍包含 content-tools、growth、admin 与通用 skeleton 使用的共享类；
+// 只从公开首页剥离，不能缩到 /dashboard 子路由。
+import "@/styles/components/dashboard.css";
 import { NavBar } from "@/components/nav-bar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { NotificationProvider } from "@/components/notifications/notification-store";
