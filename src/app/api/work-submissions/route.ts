@@ -17,6 +17,27 @@ type WorkSubmissionPayload = {
   note: string | null;
 };
 
+export function filterOwnedWorkScreenshotPaths(userId: string, paths: string[]) {
+  const prefix = `${userId}/`;
+  return paths.filter((path) => path.startsWith(prefix) && !path.includes(".."));
+}
+
+export async function verifyOwnedWorkScreenshotPaths(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  paths: string[],
+) {
+  const ownedPaths = filterOwnedWorkScreenshotPaths(userId, paths);
+  if (ownedPaths.length !== paths.length) return false;
+  if (ownedPaths.length === 0) return true;
+
+  const { data, error } = await adminSupabase.storage
+    .from("work-screenshots")
+    .createSignedUrls(ownedPaths, 60);
+  if (error || !data || data.length !== ownedPaths.length) return false;
+  return data.every((item) => Boolean(item.signedUrl) && ownedPaths.includes(item.path));
+}
+
 function parseWorkSubmissionPayload(input: unknown): { data: WorkSubmissionPayload } | { response: NextResponse } {
   if (!isRecord(input)) {
     return { response: NextResponse.json({ error: "请求体必须是对象" }, { status: 400 }) };
@@ -41,9 +62,9 @@ function parseWorkSubmissionPayload(input: unknown): { data: WorkSubmissionPaylo
   return { data: { contentText, screenshotUrls, note } };
 }
 
-async function withSignedScreenshotUrls<T extends { screenshot_urls: string[] | null }>(record: T) {
-  const screenshotUrls = record.screenshot_urls ?? [];
-  if (screenshotUrls.length === 0) return { ...record, screenshot_items: [] };
+async function withSignedScreenshotUrls<T extends { screenshot_urls: string[] | null }>(record: T, userId: string) {
+  const screenshotUrls = filterOwnedWorkScreenshotPaths(userId, record.screenshot_urls ?? []);
+  if (screenshotUrls.length === 0) return { ...record, screenshot_urls: [], screenshot_items: [] };
 
   const { data } = await createAdminClient()
     .storage
@@ -53,6 +74,7 @@ async function withSignedScreenshotUrls<T extends { screenshot_urls: string[] | 
   const byPath = new Map((data ?? []).map((item) => [item.path, item.signedUrl]));
   return {
     ...record,
+    screenshot_urls: screenshotUrls,
     screenshot_items: screenshotUrls.map((path) => ({
       path,
       signed_url: byPath.get(path) ?? null,
@@ -81,7 +103,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message || "读取作品提交失败" }, { status: 500 });
   }
 
-  const rows = await Promise.all((data ?? []).map((item) => withSignedScreenshotUrls(item)));
+  const rows = await Promise.all((data ?? []).map((item) => withSignedScreenshotUrls(item, auth.user.id)));
   return NextResponse.json({ data: rows, date });
 }
 
@@ -98,6 +120,11 @@ export async function POST(request: Request) {
 
   const auth = await requireSignedInUser();
   if ("response" in auth) return auth.response;
+
+  const adminSupabase = createAdminClient();
+  if (!await verifyOwnedWorkScreenshotPaths(adminSupabase, auth.user.id, payload.data.screenshotUrls)) {
+    return NextResponse.json({ error: "截图不存在或无权限" }, { status: 403 });
+  }
 
   const { data: profile, error: profileError } = await auth.supabase
     .from("profiles")
@@ -126,5 +153,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message || "提交作品失败" }, { status: 500 });
   }
 
-  return NextResponse.json({ data: await withSignedScreenshotUrls(data) }, { status: 201 });
+  return NextResponse.json({ data: await withSignedScreenshotUrls(data, auth.user.id) }, { status: 201 });
 }
