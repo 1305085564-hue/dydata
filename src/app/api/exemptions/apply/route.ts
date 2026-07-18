@@ -79,7 +79,6 @@ export async function POST(request: Request) {
       start_date: payload.data.startDate,
       end_date: payload.data.endDate,
       reason: payload.data.reason,
-      request_status: "pending",
       exemption_category: "waive",
     })
     .select("id, applicant_user_id, team_id, exemption_type, start_date, end_date, reason, request_status, created_at")

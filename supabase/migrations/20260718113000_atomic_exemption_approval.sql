@@ -52,6 +52,9 @@ create policy "成员提交自己的豁免申请"
   to authenticated
   with check (
     applicant_user_id = auth.uid()
+    and request_status = 'pending'
+    and reviewed_by is null
+    and reviewed_at is null
     and exists (
       select 1
       from public.profiles actor
@@ -59,6 +62,18 @@ create policy "成员提交自己的豁免申请"
         and actor.team_id is not distinct from exemption_request.team_id
     )
   );
+
+-- 认证用户只能提交申请内容；审核状态、审核人、审核时间和创建时间只由数据库默认值/RPC 维护。
+revoke insert on table public.exemption_request from anon, authenticated;
+grant insert (
+  applicant_user_id,
+  team_id,
+  exemption_type,
+  start_date,
+  end_date,
+  reason,
+  exemption_category
+) on table public.exemption_request to authenticated;
 
 drop policy if exists "成员读取自己的豁免授予" on public.exemption_grant;
 drop policy if exists "仅管理员写入豁免授予" on public.exemption_grant;
@@ -356,20 +371,50 @@ begin
     raise exception using errcode = '22023', message = '审核决定不正确';
   end if;
 
-  select *
-  into v_request
-  from public.exemption_request
-  where id = p_request_id
-  for update;
+  -- 先做不触碰申请的通用资格检查，普通成员无法用 UUID 探测申请状态。
+  select * into v_actor
+  from public.profiles
+  where id = auth.uid();
+  if not found then
+    raise exception using errcode = '42501', message = '无权限审批豁免';
+  end if;
 
+  if v_actor.role <> 'owner'
+    and not public.has_permission('manage_members')
+    and not (
+      v_actor.role = 'admin'
+      and exists (
+        select 1
+        from public.groups managed_group
+        where managed_group.leader_user_id = v_actor.id
+      )
+    ) then
+    raise exception using errcode = '42501', message = '无权限审批豁免';
+  end if;
+
+  -- 只有通用审核权限通过后才读取申请；非 owner 也看不到其他团队的申请是否存在。
+  select request_row.*
+  into v_request
+  from public.exemption_request request_row
+  where request_row.id = p_request_id
+    and (
+      v_actor.role = 'owner'
+      or (
+        v_actor.team_id is not null
+        and exists (
+          select 1
+          from public.profiles scoped_target
+          where scoped_target.id = request_row.applicant_user_id
+            and scoped_target.team_id = v_actor.team_id
+        )
+      )
+    )
+  for update of request_row;
   if not found then
     raise exception using errcode = 'P0002', message = '申请不存在';
   end if;
 
-  if v_request.request_status <> 'pending' then
-    raise exception using errcode = 'P0001', message = '该申请已处理';
-  end if;
-
+  -- 按 UUID 固定顺序锁住操作人和申请人，避免两人互相操作时死锁。
   perform 1
   from public.profiles
   where id in (auth.uid(), v_request.applicant_user_id)
@@ -381,11 +426,14 @@ begin
     raise exception using errcode = '42501', message = '无权限审批豁免';
   end if;
 
-  select * into v_target from public.profiles where id = v_request.applicant_user_id;
+  select * into v_target
+  from public.profiles
+  where id = v_request.applicant_user_id;
   if not found then
     raise exception using errcode = 'P0002', message = '用户资料不存在';
   end if;
 
+  -- 锁定后重新校验，防止并发的角色、权限或团队变更造成越权。
   if v_actor.role <> 'owner'
     and not public.has_permission('manage_members')
     and not (
@@ -404,7 +452,11 @@ begin
       v_actor.team_id is null
       or v_target.team_id is distinct from v_actor.team_id
     ) then
-    raise exception using errcode = '42501', message = '不能跨团队审批豁免';
+    raise exception using errcode = 'P0002', message = '申请不存在';
+  end if;
+
+  if v_request.request_status <> 'pending' then
+    raise exception using errcode = 'P0001', message = '该申请已处理';
   end if;
 
   if p_decision = 'approved' then

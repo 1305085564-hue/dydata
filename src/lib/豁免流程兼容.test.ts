@@ -27,7 +27,6 @@ test("老库兼容 helper 会去掉 exemption_category 并识别缺字段报错"
     start_date: "2026-04-23",
     end_date: "2026-04-23",
     reason: "账号封禁",
-    request_status: "pending",
   });
 
   assert.equal(

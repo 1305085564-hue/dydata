@@ -176,15 +176,26 @@ export async function submitExemptionRequest(input: {
           }),
         ];
 
-  const { error } = await supabase.from("exemption_request").insert(drafts);
-  if (error) {
-    if (!isMissingExemptionRequestCategoryError(error)) return { error: error.message };
+  try {
+    const { error } = await supabase.from("exemption_request").insert(drafts);
+    if (error) {
+      if (!isMissingExemptionRequestCategoryError(error)) {
+        console.error("[exemptions] failed to submit dashboard request", error);
+        return { error: "提交豁免申请失败" };
+      }
 
-    const fallback = await supabase
-      .from("exemption_request")
-      .insert(drafts.map((draft) => stripExemptionCategoryFromRequestDraft(draft)));
+      const fallback = await supabase
+        .from("exemption_request")
+        .insert(drafts.map((draft) => stripExemptionCategoryFromRequestDraft(draft)));
 
-    if (fallback.error) return { error: fallback.error.message };
+      if (fallback.error) {
+        console.error("[exemptions] failed to submit legacy dashboard request", fallback.error);
+        return { error: "提交豁免申请失败" };
+      }
+    }
+  } catch (error) {
+    console.error("[exemptions] dashboard request threw", error);
+    return { error: "提交豁免申请失败" };
   }
 
   revalidatePath("/dashboard");

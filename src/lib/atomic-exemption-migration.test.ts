@@ -6,6 +6,18 @@ const sql = readFileSync(
   new URL("../../supabase/migrations/20260718113000_atomic_exemption_approval.sql", import.meta.url),
   "utf8",
 );
+const dashboardActions = readFileSync(
+  new URL("../app/(app)/dashboard/actions.ts", import.meta.url),
+  "utf8",
+);
+const adminActions = readFileSync(
+  new URL("../app/(app)/admin/actions.ts", import.meta.url),
+  "utf8",
+);
+const applyRoute = readFileSync(
+  new URL("../app/api/exemptions/apply/route.ts", import.meta.url),
+  "utf8",
+);
 
 test("豁免 RPC 只信任 auth.uid 并在数据库内校验 manage_members 与团队范围", () => {
   assert.match(sql, /auth\.uid\(\)/i);
@@ -43,6 +55,42 @@ test("authenticated 不能绕过 RPC 直接审核、写 grant 或改 profile 豁
   assert.match(sql, /auth\.role\(\)[\s\S]*service_role/i);
   assert.match(sql, /revoke update, insert on table public\.profiles from authenticated/i);
   assert.match(sql, /grant update \(name\) on table public\.profiles to authenticated/i);
+});
+
+test("成员直接插入豁免申请时不能伪造审核状态和时间", () => {
+  assert.match(sql, /request_status\s*=\s*'pending'/i);
+  assert.match(sql, /reviewed_by\s+is\s+null/i);
+  assert.match(sql, /reviewed_at\s+is\s+null/i);
+  assert.match(sql, /revoke insert on table public\.exemption_request from anon, authenticated/i);
+  assert.match(sql, /grant insert \([\s\S]*exemption_category[\s\S]*\) on table public\.exemption_request to authenticated/i);
+  assert.doesNotMatch(
+    sql.match(/grant insert \([\s\S]*?\) on table public\.exemption_request to authenticated/i)?.[0] ?? "",
+    /request_status|reviewed_by|reviewed_at|created_at/i,
+  );
+  assert.doesNotMatch(applyRoute, /request_status:\s*"pending"/i);
+});
+
+test("豁免申请写入失败不向浏览器返回数据库原文", () => {
+  const dashboardExemptionAction = dashboardActions.slice(
+    dashboardActions.indexOf("export async function submitExemptionRequest"),
+    dashboardActions.indexOf("export async function updateProfile"),
+  );
+  const adminExemptionAction = adminActions.slice(
+    adminActions.indexOf("export async function submitExemptionRequest"),
+    adminActions.indexOf("export async function reviewExemptionRequest"),
+  );
+  assert.doesNotMatch(dashboardExemptionAction, /return \{ error: (?:error|fallback\.error)\.message \}/i);
+  assert.doesNotMatch(adminExemptionAction, /return \{ error: (?:error|fallback\.error)\.message \}/i);
+  assert.match(dashboardExemptionAction, /return \{ error: "提交豁免申请失败" \}/i);
+  assert.match(adminExemptionAction, /return \{ error: "提交豁免申请失败" \}/i);
+});
+
+test("豁免审批在读取申请状态前先校验通用权限和团队范围", () => {
+  const reviewFunction = sql.slice(sql.indexOf("create or replace function public.review_exemption_request_atomically"));
+  assert.ok(reviewFunction.indexOf("v_actor.role <> 'owner'") < reviewFunction.indexOf("into v_request"));
+  assert.match(reviewFunction, /scoped_target[\s\S]*scoped_target\.team_id = v_actor\.team_id/i);
+  assert.match(reviewFunction, /where id in \(auth\.uid\(\), v_request\.applicant_user_id\)[\s\S]*order by id[\s\S]*for update/i);
+  assert.match(reviewFunction, /select \* into v_actor from public\.profiles where id = auth\.uid\(\)[\s\S]*has_permission\('manage_members'\)/i);
 });
 
 test("豁免参数显式拒绝 NULL，拒绝申请不被过期团队快照卡死", () => {

@@ -101,7 +101,7 @@ test("buildRequestDraft 生成申请时保留语义分类", async () => {
   assert.equal(request.start_date, "2026-03-25");
   assert.equal(request.end_date, "2026-03-28");
   assert.equal(request.reason, "家中有事");
-  assert.equal(request.request_status, "pending");
+  assert.equal("request_status" in request, false);
 });
 
 test("normalizeGrantMode 兼容旧模式", async () => {

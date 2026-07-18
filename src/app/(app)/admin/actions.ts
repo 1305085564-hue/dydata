@@ -27,6 +27,7 @@ import {
   type GrantMode,
   type ReviewDecision,
 } from "@/lib/豁免流程";
+
 import {
   applyExemptionGrantAtomically,
   clearExemptionGrantAtomically,
@@ -43,6 +44,13 @@ import {
   resolvePermissionUpdate,
   resolveMemberTeamTransfer,
 } from "./权限管理";
+
+const SAFE_EXEMPTION_REQUEST_INPUT_ERRORS = new Set([
+  "多日豁免必须填写开始和结束日期",
+  "开始日期不能晚于结束日期",
+  "豁免至少选择1天",
+  "永久豁免必须填写原因",
+]);
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -276,8 +284,9 @@ export async function submitExemptionRequest(input: {
   const supabase = await createClient();
   const teamId = await getProfileTeamId(supabase, perm.userId);
 
+  let draft: ReturnType<typeof buildRequestDraft>;
   try {
-    const draft = buildRequestDraft({
+    draft = buildRequestDraft({
       applicantUserId: perm.userId,
       teamId,
       mode: input.mode,
@@ -287,11 +296,24 @@ export async function submitExemptionRequest(input: {
       startDate: input.startDate,
       endDate: input.endDate,
     });
+  } catch (error) {
+    const message = error instanceof Error && SAFE_EXEMPTION_REQUEST_INPUT_ERRORS.has(error.message)
+      ? error.message
+      : "提交申请失败";
+    if (message === "提交申请失败") {
+      console.error("[exemptions] failed to build admin request", error);
+    }
+    return {
+      error: message,
+    };
+  }
 
+  try {
     const { error } = await supabase.from("exemption_request").insert(draft);
     if (error) {
       if (!isMissingExemptionRequestCategoryError(error)) {
-        return { error: error.message };
+        console.error("[exemptions] failed to submit admin request", error);
+        return { error: "提交豁免申请失败" };
       }
 
       const fallback = await supabase
@@ -299,13 +321,13 @@ export async function submitExemptionRequest(input: {
         .insert(stripExemptionCategoryFromRequestDraft(draft));
 
       if (fallback.error) {
-        return { error: fallback.error.message };
+        console.error("[exemptions] failed to submit legacy admin request", fallback.error);
+        return { error: "提交豁免申请失败" };
       }
     }
   } catch (error) {
-    return {
-      error: error instanceof Error ? error.message : "提交申请失败",
-    };
+    console.error("[exemptions] admin request threw", error);
+    return { error: "提交豁免申请失败" };
   }
 
   await writeAuditLog(

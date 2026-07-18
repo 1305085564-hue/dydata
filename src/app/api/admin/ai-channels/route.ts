@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { __internal as aiClientInternal } from "@/lib/ai/client";
 import { requireOwnerActor, normalizeBaseUrl, normalizeChannelRow, toBoolean, toNullableString, toPriority, toTrimmedString, type AiChannelRow } from "./_shared";
+import { aiChannelDatabaseFailure, isMissingRowError } from "./_errors";
 import { assertSafeExternalHttpsUrl } from "@/lib/server-url-security";
 
 function buildSelect() {
@@ -18,7 +19,7 @@ export async function GET() {
   const { data, error } = await supabase.from("ai_channels").select(buildSelect()).order("priority", { ascending: true }).order("created_at", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return aiChannelDatabaseFailure("读取 AI 渠道失败", error);
   }
 
   return NextResponse.json({
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: error?.message ?? "创建失败" }, { status: 500 });
+    return aiChannelDatabaseFailure("创建 AI 渠道失败", error ?? new Error("insert returned no row"));
   }
 
   aiClientInternal.resetCache();
@@ -157,7 +158,11 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (targetError || !target) {
-      return NextResponse.json({ error: targetError?.message ?? "渠道不存在" }, { status: 404 });
+      if (targetError && !isMissingRowError(targetError)) {
+        return aiChannelDatabaseFailure("读取 AI 渠道失败", targetError);
+      }
+      if (targetError) console.error("[ai-channels] channel not found", targetError);
+      return NextResponse.json({ error: "渠道不存在" }, { status: 404 });
     }
 
     if (target.is_enabled) {
@@ -167,7 +172,7 @@ export async function PUT(request: NextRequest) {
         .eq("is_enabled", true);
 
       if (countError) {
-        return NextResponse.json({ error: countError.message }, { status: 500 });
+        return aiChannelDatabaseFailure("读取 AI 渠道状态失败", countError);
       }
 
       if ((count ?? 0) <= 1) {
@@ -184,7 +189,7 @@ export async function PUT(request: NextRequest) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: error?.message ?? "更新失败" }, { status: 500 });
+    return aiChannelDatabaseFailure("更新 AI 渠道失败", error ?? new Error("update returned no row"));
   }
 
   aiClientInternal.resetCache();
@@ -213,7 +218,11 @@ export async function DELETE(request: NextRequest) {
     .single();
 
   if (targetError || !target) {
-    return NextResponse.json({ error: targetError?.message ?? "渠道不存在" }, { status: 404 });
+    if (targetError && !isMissingRowError(targetError)) {
+      return aiChannelDatabaseFailure("读取 AI 渠道失败", targetError);
+    }
+    if (targetError) console.error("[ai-channels] channel not found", targetError);
+    return NextResponse.json({ error: "渠道不存在" }, { status: 404 });
   }
 
   if (target.is_enabled) {
@@ -223,7 +232,7 @@ export async function DELETE(request: NextRequest) {
       .eq("is_enabled", true);
 
     if (countError) {
-      return NextResponse.json({ error: countError.message }, { status: 500 });
+      return aiChannelDatabaseFailure("读取 AI 渠道状态失败", countError);
     }
 
     if ((count ?? 0) <= 1) {
@@ -233,7 +242,7 @@ export async function DELETE(request: NextRequest) {
 
   const { error } = await supabase.from("ai_channels").delete().eq("id", id);
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return aiChannelDatabaseFailure("删除 AI 渠道失败", error);
   }
 
   aiClientInternal.resetCache();

@@ -63,7 +63,6 @@ interface ExemptionRequestDraft {
   start_date: string;
   end_date: string | null;
   reason: string | null;
-  request_status: "pending";
 }
 
 export type LegacyExemptionRequestDraft = Omit<ExemptionRequestDraft, "exemption_category">;
@@ -199,7 +198,6 @@ export function buildRequestDraft(input: BuildRequestDraftInput): ExemptionReque
     start_date: startDate,
     end_date: endDate,
     reason: normalizeReason(input.reason),
-    request_status: "pending",
   };
 }
 
@@ -236,7 +234,6 @@ export function stripExemptionCategoryFromRequestDraft(
     start_date: draft.start_date,
     end_date: draft.end_date,
     reason: draft.reason,
-    request_status: draft.request_status,
   };
 }
 
