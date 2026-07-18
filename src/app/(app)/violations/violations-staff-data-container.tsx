@@ -4,6 +4,7 @@ import { FilePlus2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import {
   loadViolationDashboardSummary,
   loadViolationsList,
@@ -130,8 +131,8 @@ export async function ViolationsStaffDataContainer({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-stone-200 bg-stone-50 p-5 text-[13px] leading-[1.7] text-[#D99E55]">
-        {error}
+      <div className="rounded-2xl border border-stone-200 bg-white p-5">
+        <ErrorState title="案例加载失败" description={error} />
       </div>
     );
   }
