@@ -11,6 +11,29 @@ import type { Permissions, UserRole } from "@/types";
 
 import { buildScriptHash, type CreateUsageRecordPayload, type CreateViolationEventPayload } from "./validation";
 
+const USAGE_RECORD_FIELDS = [
+  "id",
+  "case_id",
+  "recorded_by",
+  "account_id",
+  "account_name_snapshot",
+  "team_id",
+  "used_at",
+  "views",
+  "follows",
+  "conversion_rate",
+  "source",
+  "daily_report_id",
+  "note",
+  "result_flag",
+  "created_at",
+  "updated_at",
+] as const;
+
+export const USAGE_RECORD_SELECT = USAGE_RECORD_FIELDS.join(", ");
+export const VIOLATION_EVENT_SELECT =
+  "id, case_id, account_id, event_type, occurred_at, platform_notice, screenshot_paths, suspected_reason, appeal_status, appeal_result, recovered_at, reported_by, note, created_at";
+
 export type ConversionHubResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number; code: "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "VALIDATION_ERROR" | "SERVER_ERROR"; message: string };
@@ -20,6 +43,15 @@ type AccountRow = {
   name: string | null;
   profile_id: string;
 };
+
+export function pickUsageRecordFields(row: unknown) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) {
+    return null;
+  }
+
+  const record = row as Record<string, unknown>;
+  return Object.fromEntries(USAGE_RECORD_FIELDS.map((field) => [field, record[field]]));
+}
 
 type ProfileRow = {
   id: string;
@@ -223,7 +255,7 @@ async function insertUsageRecord(
   const { data, error } = await supabase
     .from("script_usage_records")
     .insert(prepared.data)
-    .select("*")
+    .select(USAGE_RECORD_SELECT)
     .single();
 
   if (error || !data) {
@@ -339,7 +371,7 @@ export async function replaceDailyReportUsageRecord(
     p_result_flag: prepared.data.result_flag,
   });
 
-  const replaced = Array.isArray(data) ? data[0] : data;
+  const replaced = pickUsageRecordFields(Array.isArray(data) ? data[0] : data);
   if (error || !replaced) {
     return toServerError("替换话术使用记录失败");
   }
@@ -388,7 +420,7 @@ export async function createViolationEventForUser(
       reported_by: userId,
       note: payload.note,
     })
-    .select("*")
+    .select(VIOLATION_EVENT_SELECT)
     .single();
 
   if (error || !data) {
