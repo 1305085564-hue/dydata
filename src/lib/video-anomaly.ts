@@ -7,7 +7,6 @@ export type VideoPunishType =
   | "campaign_intervention"
   | "other";
 
-export const VIDEO_NORMAL_STATUS_VALUES = ["normal", "正常"] as const;
 export const VIDEO_ABNORMAL_STATUS_VALUES = ["abnormal", "异常", "限流", "删稿", "投流", "活动干预"] as const;
 export const VIDEO_LEGACY_PUNISH_TYPE_BY_STATUS: Record<string, VideoPunishType> = {
   "限流": "limited",

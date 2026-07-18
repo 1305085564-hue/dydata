@@ -40,9 +40,3 @@ export function formatConversionRate(rate: number | null): string {
   if (rate === null) return "—";
   return `${(rate * 100).toFixed(2)}%`;
 }
-
-export function formatViews(views: number): string {
-  if (!Number.isFinite(views) || views < 0) return "0";
-  if (views >= 10_000) return `${(views / 10_000).toFixed(1)}万`;
-  return views.toLocaleString("zh-CN");
-}

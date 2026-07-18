@@ -40,12 +40,3 @@ export async function fetchWithTimeout(
     }
   }
 }
-
-export async function fetchWithTimeoutJSON<T>(
-  url: string,
-  options?: RequestInit,
-  timeoutMs = 30000,
-): Promise<T> {
-  const res = await fetchWithTimeout(url, options, timeoutMs);
-  return res.json() as Promise<T>;
-}

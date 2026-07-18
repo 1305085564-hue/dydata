@@ -323,26 +323,6 @@ export async function replaceDailyReportUsageRecord(
   return inserted;
 }
 
-export async function clearDailyReportUsageRecords(
-  supabase: SupabaseClient,
-  userId: string,
-  dailyReportId: string,
-) {
-  const reportAccountId = await getDailyReportAccountId(supabase, userId, dailyReportId);
-  if (!reportAccountId.ok) return reportAccountId;
-
-  const { error } = await supabase
-    .from("script_usage_records")
-    .delete()
-    .eq("daily_report_id", dailyReportId)
-    .eq("recorded_by", userId);
-
-  if (error) {
-    return toServerError("清理旧话术使用记录失败");
-  }
-
-  return { ok: true as const, data: null };
-}
 
 export async function createViolationEventForUser(
   supabase: SupabaseClient,

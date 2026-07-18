@@ -72,7 +72,3 @@ export function buildVideoAssetRecord(input: BuildVideoAssetRecordInput): VideoA
     asset_reviewed_by: input.assetReviewedBy ?? null,
   };
 }
-
-export function isVideoAssetReady(record: Pick<VideoAssetLibraryRecord, "library_status">) {
-  return record.library_status === "ready";
-}

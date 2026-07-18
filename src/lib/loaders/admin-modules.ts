@@ -48,15 +48,6 @@ export interface AdminModulesData {
   };
 }
 
-export interface AdminModulesFirstScreenData {
-  currentUserId: string;
-  queryDate: string;
-  perm: { role: UserRole; businessRole: BusinessRole; permissions: Permissions };
-  permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
-  allProfiles: AdminModuleMemberSummary[];
-  teams: Array<{ id: string; name: string }>;
-}
-
 export type AdminModulesTeamManagementData = AdminModulesData["teamManagement"];
 
 export {
@@ -308,35 +299,6 @@ function buildAdminModulesTeamManagementPayload({
     groups: visibleGroups,
     profiles: visibleTeamManagementProfiles,
     leaderCandidates,
-  };
-}
-
-export async function loadAdminModulesFirstScreenData({
-  supabase,
-  searchDate,
-}: {
-  supabase: AdminSupabase;
-  searchDate?: string;
-}): Promise<AdminModulesFirstScreenData | null> {
-  const context = await loadAdminModulesBaseContext({ supabase, searchDate });
-  if (!context) return null;
-
-  const [profiles, teams] = await Promise.all([
-    loadAdminModuleProfiles(context.adminSupabase),
-    getTeamOptions(),
-  ]);
-
-  return {
-    currentUserId: context.user.id,
-    queryDate: context.queryDate,
-    perm: {
-      role: context.perm.role,
-      businessRole: context.perm.businessRole,
-      permissions: context.perm.permissions,
-    },
-    permissionManagerCapabilities: context.permissionManagerCapabilities,
-    allProfiles: buildAdminModuleMemberSummaries(profiles, teams),
-    teams,
   };
 }
 

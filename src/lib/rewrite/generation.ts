@@ -164,42 +164,6 @@ export async function updateGenerationRunStatus(
   }
 }
 
-export async function getGenerationRunById(
-  service: MinimalClient,
-  runId: string,
-): Promise<GenerationRun | null> {
-  const { data, error } = await service
-    .from("rewrite_generation_runs")
-    .select(GENERATION_RUN_SELECT)
-    .eq("id", runId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data ? toGenerationRun(data as GenerationRunRow) : null;
-}
-
-export async function listGenerationRunsByConversationId(
-  service: MinimalClient,
-  conversationId: string,
-  limit = 20,
-): Promise<GenerationRun[]> {
-  const { data, error } = await service
-    .from("rewrite_generation_runs")
-    .select(GENERATION_RUN_SELECT)
-    .eq("conversation_id", conversationId)
-    .order("started_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return ((data ?? []) as GenerationRunRow[]).map(toGenerationRun);
-}
-
 type RewriteMessage = {
   id: string;
   role: "user" | "assistant";

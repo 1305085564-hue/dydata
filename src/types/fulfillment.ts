@@ -94,32 +94,6 @@ export interface FulfillmentCalendarData {
   };
 }
 
-export interface MarkFulfillmentInput {
-  userId: string;
-  recordDate: string;
-  status: Exclude<FulfillmentStatus, "published" | "exempted" | "unconfirmed">;
-  reason?: string;
-}
-
 // === 前端新增类型 ===
 
 export type TimeRangePreset = "today" | "last7days" | "thisMonth" | "lastMonth" | "custom";
-
-export interface FulfillmentFilters {
-  preset: TimeRangePreset;
-  fromDate?: string;
-  toDate?: string;
-  teamName?: string;
-  groupName?: string;
-}
-
-/** 批量标记输入 */
-export interface BatchMarkInput {
-  items: MarkFulfillmentInput[];
-}
-
-/** 批量标记结果 */
-export interface BatchMarkResult {
-  success: { userId: string; recordDate: string }[];
-  failed: { userId: string; recordDate: string; error: string }[];
-}

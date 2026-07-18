@@ -7,16 +7,6 @@ export type NotificationStatus = (typeof NOTIFICATION_STATUSES)[number];
 export const NOTIFICATION_SEVERITIES = ["info", "success", "warning", "critical"] as const;
 export type NotificationSeverity = (typeof NOTIFICATION_SEVERITIES)[number];
 
-export const NOTIFICATION_TYPES = {
-  draftVideoSubmit: "draft.video_submit",
-  teamInvite: "team.invite",
-  systemAnnouncement: "system.announcement",
-  reportRemind: "report.remind",
-  aiTaskDone: "ai.task_done",
-  mention: "mention",
-  alertPrefix: "alert.",
-} as const;
-
 export interface NotificationRow {
   id: string;
   user_id: string;

@@ -96,9 +96,3 @@ export async function buildGrowthInsightPromptAsync(bundle: Record<string, unkno
   const template = await loadFeaturePrompt("growth_insight", buildGrowthInsightBasePrompt());
   return buildGrowthInsightPromptFromTemplate(template, bundle);
 }
-
-export async function buildGrowthAdvicePromptAsync(input: GrowthAdvicePromptInput) {
-  const { loadFeaturePrompt } = await import("./load-feature-prompt");
-  const template = await loadFeaturePrompt("growth_advice", buildGrowthAdviceBasePrompt());
-  return buildGrowthAdvicePromptFromTemplate(template, input);
-}

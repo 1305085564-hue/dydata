@@ -31,8 +31,4 @@ export function canUseAiCopywriting(role: PermissionRole, permissions: Permissio
   return hasPermission(role, permissions, "use_ai_copywriting");
 }
 
-export function canUseAiManagement(role: PermissionRole, permissions: Permissions): boolean {
-  return hasPermission(role, permissions, "use_ai_management");
-}
-
 export { normalizePermissionsForBusinessRole };

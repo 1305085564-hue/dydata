@@ -16,12 +16,6 @@ type SubmissionReport = {
   report_date: string;
 };
 
-export type SubmissionMember = {
-  user_id: string;
-  name: string;
-  submitted: boolean;
-};
-
 function pad(value: number) {
   return String(value).padStart(2, "0");
 }

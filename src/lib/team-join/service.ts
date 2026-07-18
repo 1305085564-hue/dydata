@@ -100,8 +100,6 @@ const defaultFactories: ClientFactories = {
 
 let clientFactories = defaultFactories;
 
-export const getTeamJoinViewableTeamIds = getViewableTeamIds;
-
 export function setTeamJoinServiceClientsForTest(factories: ClientFactories): void {
   clientFactories = factories;
 }

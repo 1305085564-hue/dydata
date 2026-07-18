@@ -17,13 +17,6 @@ export interface FirstScreenObservationDeps {
 
 type PersistableSupabase = ReturnType<typeof createAdminClient>;
 
-export function shouldAlertForObservation(
-  observation: FirstScreenObservation,
-  warnTotalMs: number,
-) {
-  return observation.statusCode >= 500 || observation.metrics.total >= warnTotalMs;
-}
-
 export async function recordFirstScreenObservation(
   observation: FirstScreenObservation,
   supabase: PersistableSupabase = createAdminClient(),

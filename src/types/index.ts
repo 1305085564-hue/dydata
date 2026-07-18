@@ -27,8 +27,6 @@ export const PERMISSION_KEYS = [
   ...AI_PERMISSION_KEYS,
 ] as const;
 
-export type AdminPermissionKey = (typeof ADMIN_PERMISSION_KEYS)[number];
-export type AiPermissionKey = (typeof AI_PERMISSION_KEYS)[number];
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
 
 export type Permissions = Partial<Record<PermissionKey, boolean>>;
@@ -88,39 +86,6 @@ export interface Profile {
   created_at: string;
 }
 
-export interface InviteCode {
-  id: string;
-  code: string;
-  created_by: string | null;
-  used_by: string | null;
-  used_at: string | null;
-  expires_at: string | null;
-  created_at: string;
-}
-
-export interface DailyReport {
-  id: string;
-  user_id: string;
-  report_date: string;
-  title: string;
-  submitter: string;
-  play_count: number;
-  completion_rate: string | null;
-  avg_play_duration: string | null;
-  bounce_rate_2s: string | null;
-  completion_rate_5s: string | null;
-  likes: number;
-  comments: number;
-  shares: number;
-  favorites: number;
-  follower_gain: number;
-  follower_convert: number | null;
-  content: string | null;
-  published_at: string | null;
-  uploaded_at: string;
-  created_at: string;
-}
-
 export interface AccountLeaderboardRow {
   account_id: string;
   account_name: string;
@@ -174,10 +139,6 @@ export type TagDimension = "题材" | "表达形式" | "CTA类型" | "内容结�
 export type VideoTagReviewDimension = "题材" | "表达形式" | "CTA类型";
 export type TagSource = "ai" | "manual";
 export type MarketSentiment = "强" | "中" | "弱";
-export type AdviceSource = "ai" | "manager";
-export type AdviceStatus = "待查看" | "已查看" | "待执行" | "已执行" | "已忽略" | "已复核";
-export type ReviewResult = "有效" | "无效" | "不确定";
-export type AccountTargetMode = "起号" | "稳号" | "导粉";
 export type VideoAssetLevel = "S" | "A" | "B" | "C";
 export type VideoAssetCompletenessStatus = "missing" | "partial" | "complete";
 export type VideoAssetLibraryStatus = "pending" | "ready";
@@ -306,22 +267,6 @@ export interface MarketContextDaily {
   created_at: string;
 }
 
-export interface AdviceAction {
-  id: string;
-  target_user_id: string;
-  target_account_id: string | null;
-  advice_content: string;
-  evidence: string | null;
-  advice_source: AdviceSource;
-  status: AdviceStatus;
-  assigned_by: string | null;
-  executed_video_id: string | null;
-  review_result: ReviewResult | null;
-  reviewed_by: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 // === 违规话术系统 V1 ===
 
 export type ViolationCategory = "下粉" | "直播" | "短视频" | "其他";
@@ -365,100 +310,8 @@ export interface ViolationTestRecord {
 
 // === 阶段 3（migration 019-032）新增类型 ===
 
-export type SubmissionBatchStatus =
-  | "draft"
-  | "processing"
-  | "need_confirm"
-  | "ready_submit"
-  | "submitted"
-  | "returned"
-  | "deleted";
-
-export type PublishPrecision = "minute" | "hour" | "date" | "unknown";
-
-export type ScriptSegmentType = "hook" | "background" | "core_point" | "action_cta" | "closing";
-export type ScriptSegmentMappingStatus = "unmapped" | "estimated" | "confirmed";
-
-export type AiInsightScope = "single_video" | "member_week" | "member_month" | "team_week" | "team_month";
-export type AiDataQualityState = "sufficient" | "partial" | "insufficient";
-export type AiInsightType = "growth_edit" | "period_direction" | "next_day_review" | "content_analysis";
-
 export type ExemptionRequestType = "yesterday" | "range" | "permanent" | "single" | "3days" | "4days" | "5days";
 export type ExemptionRequestStatus = "pending" | "approved" | "rejected";
-
-export interface SubmissionBatch {
-  id: string;
-  org_id: string | null;
-  team_id: string | null;
-  submitter_user_id: string | null;
-  task_date: string;
-  batch_status: SubmissionBatchStatus;
-  idempotency_key: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ContentItem {
-  id: string;
-  batch_id: string | null;
-  org_id: string | null;
-  team_id: string | null;
-  account_id: string | null;
-  owner_user_id: string | null;
-  biz_date: string;
-  task_date: string | null;
-  publish_at: string | null;
-  publish_precision: PublishPrecision | null;
-  publish_time_text: string | null;
-  uploaded_at: string | null;
-  submitted_at: string | null;
-  content_status: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ScriptDocument {
-  id: string;
-  content_item_id: string;
-  raw_text: string | null;
-  structured_version: number | null;
-  word_count: number | null;
-  estimated_duration_sec: number | null;
-  created_at: string;
-}
-
-export interface ScriptSegment {
-  id: string;
-  script_document_id: string | null;
-  segment_type: ScriptSegmentType;
-  segment_order: number | null;
-  content: string | null;
-  start_sec: number | null;
-  end_sec: number | null;
-  mapping_status: ScriptSegmentMappingStatus | null;
-}
-
-export interface AiInputBundle {
-  id: string;
-  insight_scope: AiInsightScope;
-  scope_entity_id: string | null;
-  input_version: number | null;
-  data_quality_state: AiDataQualityState | null;
-  input_json: Record<string, unknown>;
-  generated_at: string;
-}
-
-export interface AiInsightResult {
-  id: string;
-  input_bundle_id: string | null;
-  insight_type: AiInsightType;
-  model_name: string | null;
-  prompt_version: string | null;
-  result_status: string | null;
-  result_json: Record<string, unknown> | null;
-  rendered_text: string | null;
-  created_at: string;
-}
 
 export interface ContentFeedbackCard {
   id: string;
@@ -528,19 +381,6 @@ export interface ExemptionRequest {
   request_status: ExemptionRequestStatus | null;
   reviewed_by: string | null;
   reviewed_at: string | null;
-  created_at: string;
-}
-
-export interface ExemptionGrant {
-  id: string;
-  request_id: string | null;
-  user_id: string | null;
-  team_id: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  grant_type: ExemptionRequestType | null;
-  exemption_category: ExemptionCategory | null;
-  status: string | null;
   created_at: string;
 }
 

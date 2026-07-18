@@ -14,17 +14,6 @@ export const CHART_COLORS = {
 } as const;
 
 /**
- * 多条线按顺序取色，超过 5 条循环使用
- */
-export const CHART_SERIES_COLORS = [
-  CHART_COLORS.primary,
-  CHART_COLORS.secondary,
-  CHART_COLORS.success,
-  CHART_COLORS.warning,
-  CHART_COLORS.danger,
-] as const;
-
-/**
  * 暖橙渐变（面积图/渐变填充用）
  */
 export const CHART_GRADIENT_PRIMARY = {

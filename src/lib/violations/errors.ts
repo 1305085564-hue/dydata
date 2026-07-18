@@ -1,11 +1,3 @@
-export type ApiErrorResponse = {
-  error?: {
-    code?: string;
-    message?: string;
-    details?: unknown;
-  } | string;
-};
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

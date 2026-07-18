@@ -34,15 +34,6 @@ export type AssistantDetails = {
   nextSteps?: string[];
 };
 
-export type AssistantDebug = {
-  toolName: string;
-  toolParams?: Record<string, unknown>;
-  rawData?: Record<string, unknown> | null;
-  backupSql?: string | null;
-  beforeSnapshot?: Record<string, unknown> | null;
-  afterSnapshot?: Record<string, unknown> | null;
-};
-
 export type AssistantPresentation = {
   answer: string;
   details?: AssistantDetails;

@@ -265,23 +265,6 @@ export async function deleteSkill(service: MinimalClient, skillId: string): Prom
   }
 }
 
-export async function getSkillVersionsBySkillId(
-  service: MinimalClient,
-  skillId: string,
-): Promise<SkillVersionRow[]> {
-  const { data, error } = await service
-    .from("rewrite_skill_versions")
-    .select("id, skill_id, version, system_prompt, meta, published_at, created_at")
-    .eq("skill_id", skillId)
-    .order("version", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as SkillVersionRow[];
-}
-
 export async function getLatestPublishedVersion(
   service: MinimalClient,
   skillId: string,
@@ -437,23 +420,4 @@ export async function listConversationSkills(
       injectedAt: row.injected_at,
     };
   });
-}
-
-export async function buildSkillStackPrompt(
-  service: MinimalClient,
-  conversationId: string,
-): Promise<string> {
-  const skills = await listConversationSkills(service, conversationId);
-  const activeSkills = skills.filter((s) => s.isActive);
-
-  if (activeSkills.length === 0) {
-    return "";
-  }
-
-  const prompts = activeSkills.map((s, index) => {
-    const header = `Skill ${index + 1}/${activeSkills.length}: ${s.skill.name}`;
-    return `${header}\n${s.version.systemPrompt}`;
-  });
-
-  return prompts.join("\n\n");
 }

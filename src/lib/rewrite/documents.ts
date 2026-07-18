@@ -444,23 +444,6 @@ export async function getParagraphsByRevisionId(
   return ((data ?? []) as DocumentParagraphRow[]).map(toDocumentParagraph);
 }
 
-export async function updateParagraphLockStatus(
-  service: MinimalClient,
-  revisionId: string,
-  paragraphId: string,
-  isLocked: boolean,
-): Promise<void> {
-  const { error } = await service
-    .from("rewrite_document_paragraphs")
-    .update({ is_locked: isLocked })
-    .eq("revision_id", revisionId)
-    .eq("paragraph_id", paragraphId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-}
-
 export async function getCurrentDocumentSnapshot(
   service: MinimalClient,
   conversationId: string,
