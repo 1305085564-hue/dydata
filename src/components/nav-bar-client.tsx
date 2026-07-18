@@ -487,7 +487,7 @@ export function NavBarClient({
               <button
                 type="button"
                 onClick={handleSettingsOpen}
-                className="flex items-center gap-2 text-left rounded-lg focus:outline-none group"
+                className="flex items-center gap-2 text-left rounded-lg focus-visible:ring-2 focus-visible:ring-[#B4532F]/40 focus-visible:ring-offset-1 group"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#4E7194]">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
