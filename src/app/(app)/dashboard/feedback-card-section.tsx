@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { ContentFeedbackCardView, NextDayReviewResult } from "@/types";
@@ -24,6 +25,19 @@ type FeedbackResponse = {
   items: FeedbackCardItem[];
   summary: { total: number; unread: number; viewed: number };
 };
+
+type FeedbackRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function fetchFeedbackCards(request: FeedbackRequest = fetch): Promise<FeedbackResponse> {
+  const response = await request("/api/dashboard/content-feedback-cards");
+  const payload = (await response.json()) as FeedbackResponse & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error || "复盘反馈加载失败");
+  }
+
+  return payload;
+}
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -280,17 +294,25 @@ function CardRow({
 export function FeedbackCardSection() {
   const [data, setData] = useState<FeedbackResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/dashboard/content-feedback-cards")
-      .then((res) => res.json())
-      .then((json: FeedbackResponse) => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+  const loadCards = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setData(await fetchFeedbackCards());
+    } catch (cause) {
+      setData(null);
+      setError(cause instanceof Error ? cause.message : "复盘反馈加载失败");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadCards();
+  }, [loadCards]);
 
   const handleMarkViewed = useCallback(
     (cardId: string) => {
@@ -331,22 +353,6 @@ export function FeedbackCardSection() {
     [data],
   );
 
-  if (loading) {
-    return (
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-4 w-px bg-[#D97757]" />
-          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
-        </div>
-        <FeedbackSkeleton />
-      </section>
-    );
-  }
-
-  if (!data || data.items.length === 0) return null;
-
-  const displayItems = data.items.slice(0, 8);
-
   const handleReplySubmitted = useCallback((cardId: string, replyStatus: 'acknowledged' | 'disputed', replyText: string) => {
     setData((prev) => {
       if (!prev) return null;
@@ -367,6 +373,34 @@ export function FeedbackCardSection() {
       };
     });
   }, []);
+
+  if (loading) {
+    return (
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-px bg-[#D97757]" />
+          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
+        </div>
+        <FeedbackSkeleton />
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-px bg-[#D97757]" />
+          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
+        </div>
+        <ErrorState description={error} onRetry={() => void loadCards()} />
+      </section>
+    );
+  }
+
+  if (!data || data.items.length === 0) return null;
+
+  const displayItems = data.items.slice(0, 8);
 
   return (
     <section className="space-y-3">
