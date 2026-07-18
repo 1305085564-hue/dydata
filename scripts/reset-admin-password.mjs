@@ -7,9 +7,17 @@ dotenv.config({ path: path.resolve('./.env.local') });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const email = process.env.DYDATA_RESET_EMAIL;
+const newPassword = process.env.DYDATA_RESET_PASSWORD;
+const OWNER_EMAIL = '1305085564@qq.com';
 
-if (!supabaseUrl || !serviceRoleKey) {
-  console.error("Missing SUPABASE env vars");
+if (!supabaseUrl || !serviceRoleKey || !email || !newPassword) {
+  console.error("Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DYDATA_RESET_EMAIL, DYDATA_RESET_PASSWORD");
+  process.exit(1);
+}
+
+if (email === OWNER_EMAIL && process.env.DYDATA_CONFIRM_OWNER_RESET !== 'YES') {
+  console.error("Refusing to reset owner password without DYDATA_CONFIRM_OWNER_RESET=YES");
   process.exit(1);
 }
 
@@ -21,7 +29,6 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 });
 
 async function run() {
-  const email = '1305085564@qq.com';
   const { data: { users }, error: listError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
   if (listError) {
     console.error("Error listing users:", listError);
@@ -36,15 +43,15 @@ async function run() {
 
   console.log(`Found user: ID=${user.id}, Email=${user.email}. Resetting password...`);
 
-  const { data: updatedUser, error: updateError } = await supabase.auth.admin.updateUserById(
+  const { error: updateError } = await supabase.auth.admin.updateUserById(
     user.id,
-    { password: 'dydata123456' }
+    { password: newPassword }
   );
 
   if (updateError) {
     console.error("Error resetting password:", updateError);
   } else {
-    console.log("Password successfully reset to: dydata123456");
+    console.log("Password successfully reset.");
   }
 }
 

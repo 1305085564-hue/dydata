@@ -1,10 +1,21 @@
 import { chromium } from 'playwright';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+
+dotenv.config({ path: path.resolve('./.env.ai-test.local') });
 
 const OUTPUT_DIR = path.resolve('/Users/mac/.gemini/antigravity/brain/c70087e5-acd9-4358-b5f1-063c5ea5d68a/screenshots');
 if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+}
+
+const loginEmail = process.env.DYDATA_TEST_EMAIL ?? process.env.DYDATA_AI_TEST_EMAIL;
+const loginPassword = process.env.DYDATA_TEST_PASSWORD ?? process.env.DYDATA_AI_TEST_PASSWORD;
+
+if (!loginEmail || !loginPassword) {
+  console.error('Missing required test account env vars');
+  process.exit(1);
 }
 
 async function run() {
@@ -43,9 +54,9 @@ async function run() {
 
     console.log("Filling login credentials...");
     await page.getByRole('textbox', { name: '邮箱' }).focus();
-    await page.keyboard.type('1305085564@qq.com');
+    await page.keyboard.type(loginEmail);
     await page.getByRole('textbox', { name: '密码' }).focus();
-    await page.keyboard.type('dydata123456');
+    await page.keyboard.type(loginPassword);
 
     // Screenshot before login click
     await page.screenshot({ path: path.join(OUTPUT_DIR, 'before_login_click.png') });
@@ -154,7 +165,7 @@ async function run() {
       await matrixBtn.click();
       await page.waitForTimeout(600);
       await page.screenshot({ path: path.join(OUTPUT_DIR, 'fulfillment_monthly_matrix_expanded.png') });
-    } catch (e) {
+    } catch {
       console.log("月度矩阵 section not found in the DOM or timed out.");
     }
 
@@ -172,7 +183,7 @@ async function run() {
       console.log("Closing member drawer...");
       await page.keyboard.press('Escape');
       await page.waitForTimeout(500);
-    } catch (e) {
+    } catch {
       console.log("No member row found in the exception queue or timed out.");
     }
 
