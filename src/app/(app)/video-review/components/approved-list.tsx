@@ -21,6 +21,22 @@ interface LightboxState {
   index: number;
 }
 
+export function ApprovedListEmptyState({ hasFilters }: { hasFilters: boolean }) {
+  return (
+    <div className="flex h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-white p-6 text-center">
+      <div className="flex size-10 items-center justify-center rounded-full bg-stone-50 text-stone-500">
+        <Search className="size-5 stroke-[1.5]" />
+      </div>
+      <p className="mt-3 text-[13px] font-medium text-stone-700">没有符合条件的已发案例</p>
+      <p className="mt-1 max-w-sm text-[12px] text-stone-500">
+        {hasFilters
+          ? "请调整搜索词或关闭「只看自己」后再查看。"
+          : "此页面仅保留历史记录，新的作品请前往数据台提交。"}
+      </p>
+    </div>
+  );
+}
+
 export function ApprovedList({ items, query, currentUserId }: ApprovedListProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -106,23 +122,7 @@ export function ApprovedList({ items, query, currentUserId }: ApprovedListProps)
 
         {/* 卡片网格瀑布流/网格布局 (L1 容器，bg-stone-100 上自然浮现，间距 24px/16px) */}
         {filteredItems.length === 0 ? (
-          <div className="flex h-56 flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-white p-6 text-center">
-            <div className="flex size-10 items-center justify-center rounded-full bg-stone-50 text-stone-500">
-              <Search className="size-5 stroke-[1.5]" />
-            </div>
-            <p className="mt-3 text-[13px] font-medium text-stone-700">没有符合条件的已发案例</p>
-            <p className="mt-1 text-[12px] text-stone-500">可能是查询条件有误，或者今日大家还没有登记过作品凭证</p>
-            <button
-              type="button"
-              onClick={() => {
-                const btn = document.getElementById("workbench-upload-btn");
-                if (btn) btn.click();
-              }}
-              className="mt-4 inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] px-4 text-[12px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-transform"
-            >
-              去上传凭证
-            </button>
-          </div>
+          <ApprovedListEmptyState hasFilters={Boolean(query.trim()) || onlyMine} />
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredItems.map((item) => (
