@@ -18,11 +18,15 @@ export async function loadContentToolsPageData({
   supabase: LoaderSupabase;
   userId: string;
 }): Promise<ContentToolsPageData> {
-  const { data: accounts } = await supabase
+  const { data: accounts, error } = await supabase
     .from("accounts")
     .select("id, name, content_direction")
-    .eq("user_id", userId)
+    .eq("profile_id", userId)
     .order("name", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message || "加载账号失败");
+  }
 
   const normalizedAccounts: ContentToolAccount[] = (accounts ?? []).map((account) => ({
     id: account.id,
