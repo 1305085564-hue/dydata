@@ -9,6 +9,11 @@ import { validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 import { syncAbnormalVideoCase } from "./abnormal-case";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
+import {
+  DAILY_REPORT_WRITE_SELECT,
+  SNAPSHOT_WRITE_SELECT,
+  VIDEO_SUBMIT_RESPONSE_SELECT,
+} from "./response-fields";
 
 type RollbackAction = () => Promise<void>;
 
@@ -187,8 +192,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: persistedVideo, error: videoError } = existingVideo
-    ? await supabase.from("videos").update(stripId(videoPayload)).eq("id", submissionVideoId).select("*").single()
-    : await supabase.from("videos").insert(videoPayload).select("*").single();
+    ? await supabase.from("videos").update(stripId(videoPayload)).eq("id", submissionVideoId).select(VIDEO_SUBMIT_RESPONSE_SELECT).single()
+    : await supabase.from("videos").insert(videoPayload).select(VIDEO_SUBMIT_RESPONSE_SELECT).single();
 
   if (videoError || !persistedVideo) {
     await rollbackSafely(rollbackActions);
@@ -276,8 +281,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: persistedSnapshot, error: snapshotError } = existingSnapshot
-    ? await supabase.from("video_metrics_snapshots").update(snapshotPayload).eq("id", existingSnapshot.id).select("*").single()
-    : await supabase.from("video_metrics_snapshots").insert(snapshotPayload).select("*").single();
+    ? await supabase.from("video_metrics_snapshots").update(snapshotPayload).eq("id", existingSnapshot.id).select(SNAPSHOT_WRITE_SELECT).single()
+    : await supabase.from("video_metrics_snapshots").insert(snapshotPayload).select(SNAPSHOT_WRITE_SELECT).single();
 
   if (snapshotError || !persistedSnapshot) {
     await rollbackSafely(rollbackActions);
@@ -337,8 +342,8 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: persistedReport, error: dailyReportError } = existingReport
-    ? await supabase.from("daily_reports").update(dailyReportPayload).eq("id", existingReport.id).select("*").single()
-    : await supabase.from("daily_reports").insert(dailyReportPayload).select("*").single();
+    ? await supabase.from("daily_reports").update(dailyReportPayload).eq("id", existingReport.id).select(DAILY_REPORT_WRITE_SELECT).single()
+    : await supabase.from("daily_reports").insert(dailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single();
 
   if (dailyReportError || !persistedReport) {
     await rollbackSafely(rollbackActions);
