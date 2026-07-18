@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
+import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { BusinessRole } from "@/lib/business-role";
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -48,14 +50,24 @@ export async function requireOwnerOrAdminActor() {
     return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
   }
 
-  if (auth.actor.role !== "owner" && auth.actor.role !== "admin") {
+  if (!isProductionManagerBusinessRole(auth.actor.businessRole)) {
     return { response: NextResponse.json({ error: "无权限" }, { status: 403 }) };
+  }
+
+  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  if (!permissionContext) {
+    return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
   }
 
   return {
     supabase: createAdminClient(),
     actor: auth.actor,
+    scope: permissionContext.scope,
   };
+}
+
+export function isProductionManagerBusinessRole(businessRole: BusinessRole) {
+  return businessRole === "owner" || businessRole === "team_admin" || businessRole === "group_leader";
 }
 
 export function requireGlobalProductionActor(

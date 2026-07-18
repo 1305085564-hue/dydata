@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     supabase: auth.supabase,
     statuses: ["approved", "rejected"],
     limit,
+    visibleUserIds: auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
   });
 
   if ("response" in result) return result.response;

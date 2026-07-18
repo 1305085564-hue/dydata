@@ -36,10 +36,16 @@ export async function loadAdminExemptionList(input: {
   supabase: SupabaseClient;
   statuses: string[];
   limit: number;
+  visibleUserIds: string[] | null;
 }) {
-  const { data, error } = await input.supabase
+  let query = input.supabase
     .from("exemption_request")
-    .select("id, applicant_user_id, team_id, exemption_type, start_date, end_date, reason, request_status, reviewed_by, reviewed_at, created_at")
+    .select("id, applicant_user_id, team_id, exemption_type, start_date, end_date, reason, request_status, reviewed_by, reviewed_at, created_at");
+  if (input.visibleUserIds !== null) {
+    query = query.in("applicant_user_id", input.visibleUserIds);
+  }
+
+  const { data, error } = await query
     .in("request_status", input.statuses)
     .order("created_at", { ascending: false })
     .limit(input.limit);

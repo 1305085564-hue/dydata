@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   UUID_PATTERN,
   escapeCsvCell,
+  isProductionManagerBusinessRole,
   isValidDate,
   parseLimit,
   requireGlobalProductionActor,
@@ -45,4 +46,11 @@ test("全局产量配置只允许 owner 和 team_admin", () => {
   assert.equal(requireGlobalProductionActor({
     actor: { role: "owner", businessRole: "owner" },
   } as never), null);
+});
+
+test("产量管理入口按业务角色放行，不看原始 admin 字段", () => {
+  assert.equal(isProductionManagerBusinessRole("owner"), true);
+  assert.equal(isProductionManagerBusinessRole("team_admin"), true);
+  assert.equal(isProductionManagerBusinessRole("group_leader"), true);
+  assert.equal(isProductionManagerBusinessRole("member"), false);
 });
