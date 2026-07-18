@@ -34,7 +34,7 @@ export function AiAlertRow({ alert, checked, onToggle }: AiAlertRowProps) {
       }}
       className="flex items-center"
     >
-      <Checkbox checked={checked} onCheckedChange={onToggle} />
+      <Checkbox checked={checked} onCheckedChange={onToggle} aria-label={`选择 ${primaryEntity?.name ?? alert.title}`} />
     </div>
   );
 

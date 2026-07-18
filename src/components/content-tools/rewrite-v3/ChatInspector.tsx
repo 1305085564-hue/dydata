@@ -172,6 +172,7 @@ export function ChatInspector({
                 onClick={onClearReferredText}
                 className="shrink-0 rounded-full p-0.5 hover:bg-stone-200 text-stone-500 hover:text-stone-700 transition-colors"
                 title="清除引用"
+                aria-label="清除引用"
               >
                 <X className="h-3 w-3" />
               </button>

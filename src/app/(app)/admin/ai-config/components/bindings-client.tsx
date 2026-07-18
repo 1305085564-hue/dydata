@@ -95,13 +95,13 @@ export default function BindingsClient() {
                     {binding.context_message_limit} 轮 / {binding.output_token_limit} tk
                   </TableCell>
                   <TableCell>
-                    <Switch checked={binding.is_enabled} onCheckedChange={(c) => toggleStatus(binding, c)} />
+                    <Switch aria-label={`启用绑定 ${binding.label}`} checked={binding.is_enabled} onCheckedChange={(c) => toggleStatus(binding, c)} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="size-8 text-stone-500 hover:text-stone-700" onClick={() => setBindingModal({ open: true, data: binding })}>
+                    <Button variant="ghost" size="icon" aria-label={`编辑绑定 ${binding.label}`} className="size-8 text-stone-500 hover:text-stone-700" onClick={() => setBindingModal({ open: true, data: binding })}>
                       <Pencil className="size-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-8 text-stone-500 hover:text-[#C9604D]" onClick={() => setDeleteConfirm({ open: true, id: binding.id, title: `删除功能绑定 ${binding.label}` })}>
+                    <Button variant="ghost" size="icon" aria-label={`删除绑定 ${binding.label}`} className="size-8 text-stone-500 hover:text-[#C9604D]" onClick={() => setDeleteConfirm({ open: true, id: binding.id, title: `删除功能绑定 ${binding.label}` })}>
                       <Trash2 className="size-4" />
                     </Button>
                   </TableCell>

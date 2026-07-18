@@ -105,7 +105,7 @@ export default function ProvidersClient() {
       <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
         <div className="flex justify-between items-center px-2 py-1">
           <h2 className="text-[12px] font-normal text-stone-500 tracking-wider">渠道与分组</h2>
-          <Button variant="ghost" size="icon" className="size-6 text-stone-500 hover:text-stone-700 rounded-md bg-stone-50 hover:bg-stone-100" onClick={() => setProviderModal({ open: true, data: null })}>
+          <Button variant="ghost" size="icon" aria-label="新建渠道" className="size-6 text-stone-500 hover:text-stone-700 rounded-md bg-stone-50 hover:bg-stone-100" onClick={() => setProviderModal({ open: true, data: null })}>
             <Plus strokeWidth={2} className="size-3.5" />
           </Button>
         </div>
@@ -151,6 +151,7 @@ export default function ProvidersClient() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`编辑渠道 ${p.name}`}
                       className="size-5 text-stone-500 hover:text-stone-700"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -192,6 +193,7 @@ export default function ProvidersClient() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label={`编辑分组 ${key.label}`}
                                 className="size-5 text-stone-500 hover:text-stone-700"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -231,6 +233,7 @@ export default function ProvidersClient() {
                   <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
                     <span>{provider.is_enabled ? "已启用" : "已禁用"}</span>
                     <Switch
+                      aria-label={`启用渠道 ${provider.name}`}
                       className="scale-75"
                       checked={provider.is_enabled}
                       onCheckedChange={(checked) => mutateEntity("update", "provider", { id: provider.id, is_enabled: checked })}
@@ -287,6 +290,7 @@ export default function ProvidersClient() {
                               </TableCell>
                               <TableCell className="py-1 text-left">
                                 <Switch
+                                  aria-label={`启用分组 ${key.label}`}
                                   className="scale-75 origin-left"
                                   checked={key.is_enabled}
                                   onCheckedChange={(checked) => mutateEntity("update", "key", { id: key.id, is_enabled: checked })}
@@ -301,6 +305,7 @@ export default function ProvidersClient() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      aria-label={`编辑分组 ${key.label}`}
                                       className="size-7 text-stone-500 hover:text-stone-700"
                                       onClick={() => setKeyModal({ open: true, providerId: provider.id, data: key })}
                                     >
@@ -309,6 +314,7 @@ export default function ProvidersClient() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      aria-label={`为分组 ${key.label} 添加模型`}
                                       className="size-7 text-stone-500 hover:text-[#D97757]"
                                       onClick={() => setModelModal({ open: true, keyId: key.id, data: null })}
                                     >
@@ -317,6 +323,7 @@ export default function ProvidersClient() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      aria-label={`删除分组 ${key.label}`}
                                       className="size-7 text-stone-500 hover:text-[#C9604D]"
                                       onClick={() => setDeleteConfirm({ open: true, entity: "key", id: key.id, title: `删除分组 ${key.label}` })}
                                     >
@@ -356,6 +363,7 @@ export default function ProvidersClient() {
                   <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
                     <span>{apiKey.is_enabled ? "已启用" : "已禁用"}</span>
                     <Switch
+                      aria-label={`启用分组 ${apiKey.label}`}
                       className="scale-75"
                       checked={apiKey.is_enabled}
                       onCheckedChange={(checked) => mutateEntity("update", "key", { id: apiKey.id, is_enabled: checked })}
@@ -418,6 +426,7 @@ export default function ProvidersClient() {
                             <TableCell className="py-1 text-[13px] font-medium text-stone-900 text-left">{model.display_name || model.model_id}</TableCell>
                             <TableCell className="py-1 text-left">
                               <Switch
+                                aria-label={`启用模型 ${model.display_name || model.model_id}`}
                                 className="scale-75 origin-left"
                                 checked={model.is_enabled}
                                 onCheckedChange={(checked) => mutateEntity("update", "model", { id: model.id, is_enabled: checked })}
@@ -432,6 +441,7 @@ export default function ProvidersClient() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label={`编辑模型 ${model.display_name || model.model_id}`}
                                     className="size-7 text-stone-500 hover:text-stone-700"
                                     onClick={() => setModelModal({ open: true, keyId: apiKey.id, data: model })}
                                   >
@@ -440,6 +450,7 @@ export default function ProvidersClient() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label={`删除模型 ${model.display_name || model.model_id}`}
                                     className="size-7 text-stone-500 hover:text-[#C9604D]"
                                     onClick={() => setDeleteConfirm({ open: true, entity: "model", id: model.id, title: `删除模型 ${model.display_name || model.model_id}` })}
                                   >

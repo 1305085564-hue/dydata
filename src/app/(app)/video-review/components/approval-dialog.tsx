@@ -350,6 +350,7 @@ export function ApprovalDialog({
               <div className="flex items-center justify-between py-2 border-b border-stone-100 mt-2">
                 <div className="flex items-center gap-2">
                   <Checkbox
+                    aria-label="全选"
                     checked={allSelected ? true : someSelected ? "indeterminate" : false}
                     onCheckedChange={(checked) => handleToggleSelectAll(Boolean(checked))}
                     className="rounded border-stone-300 data-[state=checked]:bg-[#8AA8C7] data-[state=checked]:border-[#8AA8C7] focus-visible:ring-[#8AA8C7]"
@@ -426,6 +427,7 @@ export function ApprovalDialog({
                     >
                       <Checkbox
                         checked={isSelected}
+                        aria-label={`选择 ${item.applicant_name}`}
                         onCheckedChange={(checked) => handleToggleSelect(item.id, Boolean(checked))}
                         className="mt-1 rounded border-stone-300 data-[state=checked]:bg-[#8AA8C7] data-[state=checked]:border-[#8AA8C7] focus-visible:ring-[#8AA8C7]"
                       />

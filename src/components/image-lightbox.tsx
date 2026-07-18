@@ -71,6 +71,7 @@ export function ImageLightbox({
       <button
         type="button"
         onClick={onClose}
+        aria-label="关闭图片预览"
         className="absolute top-4 right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
       >
         <X className="size-5" />
@@ -81,6 +82,7 @@ export function ImageLightbox({
         <button
           type="button"
           onClick={handlePrev}
+          aria-label="上一张"
           className="absolute left-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
         >
           <ChevronLeft className="size-5" />
@@ -100,6 +102,7 @@ export function ImageLightbox({
         <button
           type="button"
           onClick={handleNext}
+          aria-label="下一张"
           className="absolute right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
         >
           <ChevronRight className="size-5" />

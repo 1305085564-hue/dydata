@@ -683,6 +683,7 @@ export function AdminModulesContentV2({
                 />
                 <Button
                   onClick={handleCreateTeam}
+                  aria-label="新建团队"
                   disabled={isPending || !newTeamName.trim()}
                   className="h-8.5 px-3 bg-[#D97757] text-white hover:bg-[#C96442] active:scale-95 rounded-lg shrink-0"
                 >
@@ -1070,6 +1071,7 @@ export function AdminModulesContentV2({
                             </div>
                             <Checkbox
                               checked={isChecked}
+                              aria-label={PERMISSION_LABELS[key]}
                               disabled={!permissionManagerCapabilities.canEditPermissions || isSavingPermissions}
                               onCheckedChange={checked => handleTogglePermission(key, checked === true)}
                               className="mt-0.5 pointer-events-none"
@@ -1104,6 +1106,7 @@ export function AdminModulesContentV2({
                             </div>
                             <Checkbox
                               checked={isChecked}
+                              aria-label={PERMISSION_LABELS[key]}
                               disabled={!permissionManagerCapabilities.canEditPermissions || isSavingPermissions}
                               onCheckedChange={checked => handleTogglePermission(key, checked === true)}
                               className="mt-0.5 pointer-events-none"

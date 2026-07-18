@@ -560,6 +560,7 @@ export function AiAlertPanel({
 
                 <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-stone-100 bg-stone-50/90 px-3.5 py-1.5 backdrop-blur">
                   <Checkbox
+                    aria-label="全选"
                     checked={
                       selectedCount(activeGroup.groupKey) === activeGroup.count &&
                       activeGroup.count > 0
@@ -617,6 +618,7 @@ export function AiAlertPanel({
                               className="flex items-center"
                             >
                               <Checkbox
+                                aria-label={`选择 ${primaryEntity?.name ?? "该条告警"}`}
                                 checked={isSelected(activeGroup.groupKey, alert.id)}
                                 onCheckedChange={() =>
                                   toggleSelect(activeGroup.groupKey, alert.id)
@@ -651,6 +653,7 @@ export function AiAlertPanel({
                               className="flex items-center"
                             >
                               <Checkbox
+                                aria-label={`选择 ${primaryEntity?.name ?? "该条告警"}`}
                                 checked={isSelected(activeGroup.groupKey, alert.id)}
                                 onCheckedChange={() =>
                                   toggleSelect(activeGroup.groupKey, alert.id)

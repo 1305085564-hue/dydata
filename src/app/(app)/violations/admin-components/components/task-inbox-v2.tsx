@@ -520,6 +520,7 @@ function BulkActionBar({
         <button
           type="button"
           onClick={onClear}
+          aria-label="清除已选"
           className="flex size-7 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
         >
           <X className="size-3.5" />

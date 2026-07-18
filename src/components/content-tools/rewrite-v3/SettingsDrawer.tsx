@@ -127,6 +127,7 @@ export function SettingsDrawer({
         </div>
         <button
           onClick={onClose}
+          aria-label="关闭设置"
           className="p-1 rounded-full hover:bg-stone-100 text-stone-500 hover:text-stone-700"
         >
           <X className="h-4 w-4" />

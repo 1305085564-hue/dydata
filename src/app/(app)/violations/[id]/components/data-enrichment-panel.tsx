@@ -134,7 +134,7 @@ export function DataEnrichmentPanel({
           <FileCheck className="size-4.5 text-[#D97757]" />
           <h2 className="text-[18px] font-medium text-stone-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
         </div>
-        <button onClick={onClose} className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700">
+        <button onClick={onClose} aria-label="关闭知识沉淀台" className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700">
           <X className="size-4" />
         </button>
       </div>
