@@ -5,7 +5,7 @@ import type { AdminRequestRow } from "@/lib/team-join/service";
 import type { ExemptionRequestRow } from "./豁免申请列表";
 
 test("批改台首屏取数固定走管理员客户端", async () => {
-  const mod = await import(new URL("./content/page.tsx", import.meta.url).href);
+  const mod = await import(new URL("./content/content-data-container.tsx", import.meta.url).href);
 
   const adminClient = { kind: "admin-content-client" };
   let adminCallCount = 0;
@@ -22,7 +22,13 @@ test("批改台首屏取数固定走管理员客户端", async () => {
     visibleUserIds: ["user-1"],
   };
 
-  const result = await mod.loadAdminContentInitialData("pending", { perspective: "team", teamId: "team-1" }, {
+  const result = await mod.loadAdminContentInitialData({
+    view: "pending",
+    perspective: "team",
+    teamId: "team-1",
+    permissionInfo: undefined,
+    scope: permissionScope as never,
+  }, {
     createAdminClient: () => {
       adminCallCount += 1;
       return adminClient;
@@ -31,7 +37,7 @@ test("批改台首屏取数固定走管理员客户端", async () => {
       receivedArgs = args;
       return { ok: true, source: "content" };
     },
-  }, undefined, permissionScope as never);
+  } as never);
 
   assert.equal(adminCallCount, 1);
   assert.deepEqual(receivedArgs, {
@@ -46,28 +52,21 @@ test("批改台首屏取数固定走管理员客户端", async () => {
 });
 
 test("批改台页面首屏观测会落到 /admin/content 路由名下", async () => {
-  const mod = await import(new URL("./content/page.tsx", import.meta.url).href);
-  const observations: Array<Record<string, unknown>> = [];
-
-  await mod.recordAdminContentFirstScreenObservation({
+  const mod = await import(new URL("./content/content-data-container.tsx", import.meta.url).href);
+  const observation = mod.buildAdminContentFirstScreenObservation({
     actorUserId: "user-1",
     scopeKind: "team",
     metrics: { auth: 12, context: 18, data: 132, total: 162 },
-  }, {
-    recordObservation: async (observation: Record<string, unknown>) => {
-      observations.push(observation);
-    },
   });
 
-  assert.equal(observations.length, 1);
-  assert.equal(observations[0]?.route, "/admin/content");
-  assert.equal(observations[0]?.statusCode, 200);
-  assert.equal(observations[0]?.actorUserId, "user-1");
-  assert.equal(observations[0]?.scopeKind, "team");
+  assert.equal(observation.route, "/admin/content");
+  assert.equal(observation.statusCode, 200);
+  assert.equal(observation.actorUserId, "user-1");
+  assert.equal(observation.scopeKind, "team");
 });
 
 test("素材库首屏取数固定走管理员客户端", async () => {
-  const mod = await import(new URL("./videos/page.tsx", import.meta.url).href);
+  const mod = await import(new URL("./videos/videos-data-container.tsx", import.meta.url).href);
 
   const adminClient = { kind: "admin-video-client" };
   let adminCallCount = 0;
@@ -84,7 +83,13 @@ test("素材库首屏取数固定走管理员客户端", async () => {
     visibleUserIds: ["user-1"],
   };
 
-  const result = await mod.loadAdminVideosInitialData("all", { perspective: "company", teamId: null }, {
+  const result = await mod.loadAdminVideosInitialData({
+    view: "all",
+    perspective: "company",
+    teamId: null,
+    permissionInfo: undefined,
+    scope: permissionScope as never,
+  }, {
     createAdminClient: () => {
       adminCallCount += 1;
       return adminClient;
@@ -93,7 +98,7 @@ test("素材库首屏取数固定走管理员客户端", async () => {
       receivedArgs = args;
       return { ok: true, source: "videos" };
     },
-  }, undefined, permissionScope as never);
+  } as never);
 
   assert.equal(adminCallCount, 1);
   assert.deepEqual(receivedArgs, {
@@ -108,24 +113,17 @@ test("素材库首屏取数固定走管理员客户端", async () => {
 });
 
 test("素材库页面首屏观测会落到 /admin/videos 路由名下", async () => {
-  const mod = await import(new URL("./videos/page.tsx", import.meta.url).href);
-  const observations: Array<Record<string, unknown>> = [];
-
-  await mod.recordAdminVideosFirstScreenObservation({
+  const mod = await import(new URL("./videos/videos-data-container.tsx", import.meta.url).href);
+  const observation = mod.buildAdminVideosFirstScreenObservation({
     actorUserId: "owner-1",
     scopeKind: "all",
     metrics: { auth: 9, context: 11, data: 88, total: 108 },
-  }, {
-    recordObservation: async (observation: Record<string, unknown>) => {
-      observations.push(observation);
-    },
   });
 
-  assert.equal(observations.length, 1);
-  assert.equal(observations[0]?.route, "/admin/videos");
-  assert.equal(observations[0]?.statusCode, 200);
-  assert.equal(observations[0]?.actorUserId, "owner-1");
-  assert.equal(observations[0]?.scopeKind, "all");
+  assert.equal(observation.route, "/admin/videos");
+  assert.equal(observation.statusCode, 200);
+  assert.equal(observation.actorUserId, "owner-1");
+  assert.equal(observation.scopeKind, "all");
 });
 
 test("/admin 页面当前固定重定向到 /admin/content", async () => {

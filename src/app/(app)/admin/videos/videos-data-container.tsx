@@ -3,8 +3,9 @@ import { loadAdminVideosInitialData as loadAdminVideosFirstScreenData } from "@/
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
+import type { FirstScreenObservation } from "@/lib/admin-first-screen-observability";
+import type { UserPermissionInfo } from "@/lib/permissions";
 import type { TeamOption } from "@/lib/teams";
-import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { VideoPageClient } from "./video-page-client";
 
 type VideoView = "pending" | "all";
@@ -15,7 +16,7 @@ interface VideosDataContainerProps {
   requestedTeamId: string | null;
   canSwitchPerspective: boolean;
   teams: TeamOption[];
-  permissionInfo: any;
+  permissionInfo: UserPermissionInfo;
   initialAuthMs: number;
   totalStartMs: number;
 }
@@ -24,21 +25,34 @@ function nowMs() {
   return performance.now();
 }
 
-async function loadAdminVideosInitialData(
-  view: VideoView,
-  scope: { perspective: AdminDataPerspective; teamId: string | null },
-  permissionInfo?: any,
-  permissionScope?: any,
+type VideosInitialDataArgs = Parameters<typeof loadAdminVideosFirstScreenData>[0];
+
+interface VideosInitialDataDeps {
+  createAdminClient: () => VideosInitialDataArgs["supabase"];
+  loadAdminVideosPageData: typeof loadAdminVideosFirstScreenData;
+}
+
+export async function loadAdminVideosInitialData(
+  args: Omit<VideosInitialDataArgs, "supabase">,
+  deps: VideosInitialDataDeps = {
+    createAdminClient,
+    loadAdminVideosPageData: loadAdminVideosFirstScreenData,
+  },
 ) {
-  const supabase = createAdminClient();
-  return loadAdminVideosFirstScreenData({
-    supabase,
-    view,
-    perspective: scope.perspective,
-    teamId: scope.teamId,
-    permissionInfo,
-    scope: permissionScope,
+  return deps.loadAdminVideosPageData({
+    ...args,
+    supabase: deps.createAdminClient(),
   });
+}
+
+export function buildAdminVideosFirstScreenObservation(
+  input: Omit<FirstScreenObservation, "route" | "statusCode">,
+): FirstScreenObservation {
+  return {
+    ...input,
+    route: "/admin/videos",
+    statusCode: 200,
+  };
 }
 
 export async function VideosDataContainer({
@@ -71,18 +85,17 @@ export async function VideosDataContainer({
   }
 
   const dataStart = nowMs();
-  const data = await loadAdminVideosInitialData(
+  const data = await loadAdminVideosInitialData({
     view,
-    scope,
-    scopedPermissionContext.permissionInfo,
-    scopedPermissionContext.scope,
-  );
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+    permissionInfo: scopedPermissionContext.permissionInfo,
+    scope: scopedPermissionContext.scope,
+  });
   const dataMs = nowMs() - dataStart;
   const totalMs = nowMs() - totalStartMs;
 
-  queueFirstScreenObservation({
-    route: "/admin/videos",
-    statusCode: 200,
+  queueFirstScreenObservation(buildAdminVideosFirstScreenObservation({
     metrics: {
       auth: initialAuthMs,
       context: contextMs,
@@ -96,7 +109,7 @@ export async function VideosDataContainer({
       perspective: scope.perspective,
       teamId: scope.teamId,
     },
-  });
+  }));
 
   return (
     <VideoPageClient

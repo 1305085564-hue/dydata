@@ -3,8 +3,9 @@ import { loadAdminContentInitialData as loadAdminContentFirstScreenData } from "
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
+import type { FirstScreenObservation } from "@/lib/admin-first-screen-observability";
+import type { UserPermissionInfo } from "@/lib/permissions";
 import type { TeamOption } from "@/lib/teams";
-import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { ContentPageClient } from "./content-page-client";
 
 type ContentView = "pending" | "all";
@@ -15,7 +16,7 @@ interface ContentDataContainerProps {
   requestedTeamId: string | null;
   canSwitchPerspective: boolean;
   teams: TeamOption[];
-  permissionInfo: any;
+  permissionInfo: UserPermissionInfo;
   initialAuthMs: number;
   totalStartMs: number;
 }
@@ -24,21 +25,34 @@ function nowMs() {
   return performance.now();
 }
 
-async function loadAdminContentInitialData(
-  view: ContentView,
-  scope: { perspective: AdminDataPerspective; teamId: string | null },
-  permissionInfo?: any,
-  permissionScope?: any,
+type ContentInitialDataArgs = Parameters<typeof loadAdminContentFirstScreenData>[0];
+
+interface ContentInitialDataDeps {
+  createAdminClient: () => ContentInitialDataArgs["supabase"];
+  loadAdminContentPageData: typeof loadAdminContentFirstScreenData;
+}
+
+export async function loadAdminContentInitialData(
+  args: Omit<ContentInitialDataArgs, "supabase">,
+  deps: ContentInitialDataDeps = {
+    createAdminClient,
+    loadAdminContentPageData: loadAdminContentFirstScreenData,
+  },
 ) {
-  const supabase = createAdminClient();
-  return loadAdminContentFirstScreenData({
-    supabase,
-    view,
-    perspective: scope.perspective,
-    teamId: scope.teamId,
-    permissionInfo,
-    scope: permissionScope,
+  return deps.loadAdminContentPageData({
+    ...args,
+    supabase: deps.createAdminClient(),
   });
+}
+
+export function buildAdminContentFirstScreenObservation(
+  input: Omit<FirstScreenObservation, "route" | "statusCode">,
+): FirstScreenObservation {
+  return {
+    ...input,
+    route: "/admin/content",
+    statusCode: 200,
+  };
 }
 
 export async function ContentDataContainer({
@@ -71,18 +85,17 @@ export async function ContentDataContainer({
   }
 
   const dataStart = nowMs();
-  const data = await loadAdminContentInitialData(
+  const data = await loadAdminContentInitialData({
     view,
-    scope,
-    scopedPermissionContext.permissionInfo,
-    scopedPermissionContext.scope,
-  );
+    perspective: scope.perspective,
+    teamId: scope.teamId,
+    permissionInfo: scopedPermissionContext.permissionInfo,
+    scope: scopedPermissionContext.scope,
+  });
   const dataMs = nowMs() - dataStart;
   const totalMs = nowMs() - totalStartMs;
 
-  queueFirstScreenObservation({
-    route: "/admin/content",
-    statusCode: 200,
+  queueFirstScreenObservation(buildAdminContentFirstScreenObservation({
     metrics: {
       auth: initialAuthMs,
       context: contextMs,
@@ -96,7 +109,7 @@ export async function ContentDataContainer({
       perspective: scope.perspective,
       teamId: scope.teamId,
     },
-  });
+  }));
 
   return (
     <ContentPageClient
