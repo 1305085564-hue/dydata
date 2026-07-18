@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Loader2, ChevronRight, User, Video, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -62,6 +63,22 @@ interface ActiveData {
   recentlyCreated: SubTopicItem[];
 }
 
+type ActiveTopicsRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function fetchActiveTopicsResponse(
+  request: ActiveTopicsRequest = fetch,
+): Promise<ActiveData> {
+  const response = await request("/api/topics/active?limit=8");
+  const payload = await response.json();
+  if (!response.ok) {
+    const message = payload && typeof payload === "object" && "error" in payload
+      ? String((payload as { error?: unknown }).error || "获取活跃选题失败")
+      : "获取活跃选题失败";
+    throw new Error(message);
+  }
+  return payload as ActiveData;
+}
+
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
   return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
@@ -77,6 +94,7 @@ function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | n
 export default function TodayWorkspacePage() {
   const [data, setData] = useState<ActiveData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeError, setActiveError] = useState<string | null>(null);
   const [myClaims, setMyClaims] = useState<SubTopicItem[]>([]);
   const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set());
   const [currentUserId, setCurrentUserId] = useState<string>("");
@@ -107,25 +125,25 @@ export default function TodayWorkspacePage() {
     }
   };
 
-  const fetchActiveData = async () => {
+  const fetchActiveData = useCallback(async () => {
     setLoading(true);
+    setActiveError(null);
     try {
-      const res = await fetch("/api/topics/active?limit=8");
-      if (!res.ok) throw new Error("获取活跃选题失败");
-      const json = await res.json();
-      setData(json);
+      setData(await fetchActiveTopicsResponse());
     } catch (err) {
+      setData(null);
+      setActiveError(err instanceof Error ? err.message : "获取活跃选题失败");
       feedbackToast.error("加载最近活跃选题失败", {
         details: err instanceof Error ? err.message : String(err)
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const loadAll = useCallback(async () => {
     await Promise.all([fetchActiveData(), fetchMyClaims()]);
-  }, []);
+  }, [fetchActiveData]);
 
   useEffect(() => {
     void loadAll();
@@ -191,6 +209,16 @@ export default function TodayWorkspacePage() {
           <span className="text-[12.5px] text-stone-500">正在整理最近活跃的选题...</span>
         </div>
       </div>
+    );
+  }
+
+  if (activeError) {
+    return (
+      <ErrorState
+        title="今日选题加载失败"
+        description={activeError}
+        onRetry={() => void loadAll()}
+      />
     );
   }
 
