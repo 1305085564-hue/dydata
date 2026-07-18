@@ -4,6 +4,11 @@ import assert from "node:assert/strict";
 import { buildEnrichAndVerifyKnowledgeCaseResponse } from "./[id]/enrich-verify/route";
 import { buildRequestKnowledgeCaseSupplementResponse } from "./[id]/request-supplement/route";
 
+function unwrapSuccessfulRpc<T>(result: { data: T | null }) {
+  if (result.data === null) throw new Error("测试 RPC 未返回数据");
+  return { data: result.data };
+}
+
 test("enrich verify route 缺少 hook_text 时返回 400", async () => {
   const response = await buildEnrichAndVerifyKnowledgeCaseResponse("case-1", {
     admin_insight: "这条案例的高转化点在开头冲突。",
@@ -36,7 +41,7 @@ test("enrich verify route 调用 enrich_and_verify_case RPC", async () => {
           },
         },
       }) as never,
-      unwrapCaseLibraryRpc: (result: any) => ({ data: result.data ?? undefined }),
+      unwrapCaseLibraryRpc: unwrapSuccessfulRpc,
     },
   );
 
@@ -69,7 +74,7 @@ test("request supplement route 调用 request_case_supplement RPC", async () => 
           },
         },
       }) as never,
-      unwrapCaseLibraryRpc: (result: any) => ({ data: result.data ?? undefined }),
+      unwrapCaseLibraryRpc: unwrapSuccessfulRpc,
     },
   );
 

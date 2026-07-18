@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
 import { loadDraftById } from "@/lib/publish-drafts/read-model";
 import { SubmitForm } from "../components/submit-form";
-import type { VideoReviewAccount } from "../components/types";
+import type { FeedbackHistoryItem, VideoReviewAccount } from "../components/types";
 
 interface SubmitContainerProps {
   userId: string;
@@ -50,8 +50,8 @@ export async function SubmitContainer({ userId, userEmail, draftId }: SubmitCont
     accountId: string | null;
     scriptText: string;
     screenshotPaths: string[];
-    lastRejection: any;
-    history: any[];
+    lastRejection: FeedbackHistoryItem | null;
+    history: FeedbackHistoryItem[];
   };
 
   if (draftId) {

@@ -5,10 +5,24 @@ import { AlertTriangle, Check, CornerDownLeft, FileCheck, X } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
+import type { ViolationDetail } from "../../components/types";
+
+type EnrichmentCaseDetail = ViolationDetail & {
+  hook_text?: string | null;
+  admin_insight?: string | null;
+  body_text?: string | null;
+  cta_text?: string | null;
+  original_video_id?: string | null;
+  taxonomy?: {
+    emotion?: string[];
+    scenario?: string[];
+    product_category?: string[];
+  } | null;
+};
 
 interface DataEnrichmentPanelProps {
   caseId: string;
-  caseDetail: any;
+  caseDetail: EnrichmentCaseDetail;
   onProcessed: () => void;
   onClose: () => void;
 }

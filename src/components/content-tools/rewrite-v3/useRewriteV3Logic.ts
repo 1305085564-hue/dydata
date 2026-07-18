@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { BootstrapPayload, Conversation, Message } from '../types';
 import { trackUsageEvent } from '@/lib/usage-events/client';
+import type { Skill } from './SkillCabin';
+
+type ActiveSkill = Skill & { isActive: boolean };
 
 export interface DocumentParagraph {
   paragraphId: string;
@@ -69,8 +72,8 @@ export function useRewriteV3Logic() {
   const [selectedModelViewId, setSelectedModelViewId] = useState<string>('');
 
   // 4. 技能管理与参数抽屉
-  const [availableSkills, setAvailableSkills] = useState<any[]>([]);
-  const [activeSkills, setActiveSkills] = useState<any[]>([]);
+  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
+  const [activeSkills, setActiveSkills] = useState<Skill[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // 创意配置抽屉开关
   const [contextLimit, setContextLimit] = useState<number>(getStoredContextLimit); // 上下文剪枝轮数
 
@@ -134,8 +137,8 @@ export function useRewriteV3Logic() {
     try {
       const res = await fetch('/api/rewrite/skills', { cache: 'no-store' });
       if (res.ok) {
-        const data = await res.json();
-        setAvailableSkills(data.skills || []);
+        const data = (await res.json()) as { skills?: Skill[] };
+        setAvailableSkills(data.skills ?? []);
       }
     } catch (e) {
       console.warn('获取技能列表失败', e);
@@ -147,8 +150,8 @@ export function useRewriteV3Logic() {
     try {
       const res = await fetch(`/api/rewrite/conversations/${conversationId}/skills`, { cache: 'no-store' });
       if (res.ok) {
-        const data = await res.json();
-        const active = (data.skills || []).filter((s: any) => s.isActive);
+        const data = (await res.json()) as { skills?: ActiveSkill[] };
+        const active = (data.skills ?? []).filter((skill) => skill.isActive);
         setActiveSkills(active);
       }
     } catch (e) {
@@ -317,7 +320,7 @@ export function useRewriteV3Logic() {
 
   // 注入或切换技能激活状态
   const handleToggleSkill = useCallback(
-    async (skill: any) => {
+    async (skill: Skill) => {
       const conversationId = currentConversationIdRef.current;
       if (!conversationId) return;
 
@@ -602,8 +605,8 @@ export function useRewriteV3Logic() {
             }
           }
         }
-      } catch (err: any) {
-        if (err.name === 'AbortError') {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
           console.log('SSE 生成已由前端中断');
         } else {
           console.warn('生成异常', err);

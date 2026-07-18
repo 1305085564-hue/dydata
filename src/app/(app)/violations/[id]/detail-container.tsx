@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, TrendingUp, Eye, UserPlus, Repeat2, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PassRateBadge } from "../components/pass-rate-badge";
@@ -233,7 +234,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
   );
 }
 
-async function TestRecordFormLoader({ caseId, user }: { caseId: string, user: any }) {
+async function TestRecordFormLoader({ caseId, user }: { caseId: string; user: User }) {
   const supabase = await createClient();
 
   const { data: profile } = await supabase
@@ -435,7 +436,7 @@ async function CaseDetailBottom({
 
 interface DetailContainerProps {
   id: string;
-  user: any;
+  user: User;
   isOwner: boolean;
   canManageViolations: boolean;
 }
@@ -447,11 +448,10 @@ export async function DetailContainer({
   canManageViolations,
 }: DetailContainerProps) {
   let caseItem: DetailRow | null = null;
-  let loadError: string | null = null;
   try {
     caseItem = await loadCase(id);
-  } catch (err) {
-    loadError = err instanceof Error ? err.message : "加载案例失败";
+  } catch {
+    notFound();
   }
 
   if (!caseItem) {

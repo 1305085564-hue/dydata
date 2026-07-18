@@ -50,6 +50,8 @@ interface DashboardDialogProps {
   onOpenLightbox: (paths: string[], index: number) => void;
 }
 
+type UserSubmissions = Awaited<ReturnType<typeof getUserSubmissions>>;
+
 export function DashboardDialog({
   open,
   onOpenChange,
@@ -72,7 +74,7 @@ export function DashboardDialog({
 
   // Expanded member state for screenshot loading
   const [expandedUser, setExpandedUser] = useState<{ id: string; name: string } | null>(null);
-  const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
+  const [userSubmissions, setUserSubmissions] = useState<UserSubmissions>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [userSubmissionsError, setUserSubmissionsError] = useState<string | null>(null);
 
@@ -123,8 +125,8 @@ export function DashboardDialog({
     try {
       const data = await getUserSubmissions(user_id, date);
       setUserSubmissions(data);
-    } catch (err: any) {
-      const errMsg = err.message || "";
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "";
       if (errMsg.includes("无权") || errMsg.includes("权限")) {
         toast.error("权限不足", { description: "您没有权限执行此操作" });
         setUserSubmissionsError("权限不足，无法查看");
@@ -426,8 +428,8 @@ export function DashboardDialog({
                                   </p>
                                 ) : (
                                   <div className="grid grid-cols-4 gap-2">
-                                    {userSubmissions.flatMap((sub: any) =>
-                                      (sub.screenshot_items ?? []).map((item: any, idx: number) => (
+                                    {userSubmissions.flatMap((sub) =>
+                                      (sub.screenshot_items ?? []).map((item, idx) => (
                                         <div
                                           key={item.path}
                                           role="button"
@@ -435,7 +437,7 @@ export function DashboardDialog({
                                           onClick={(e) => {
                                             e.stopPropagation();
                                             onOpenLightbox(
-                                              sub.screenshot_items.map((i: any) => i.path),
+                                              sub.screenshot_items.map((i) => i.path),
                                               idx
                                             );
                                           }}
@@ -444,7 +446,7 @@ export function DashboardDialog({
                                               e.preventDefault();
                                               e.stopPropagation();
                                               onOpenLightbox(
-                                                sub.screenshot_items.map((i: any) => i.path),
+                                                sub.screenshot_items.map((i) => i.path),
                                                 idx
                                               );
                                             }

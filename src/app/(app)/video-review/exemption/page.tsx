@@ -12,6 +12,17 @@ export const metadata: Metadata = {
   description: "提交请假、故障或账号限流等产量豁免申请。",
 };
 
+type ExemptionHistoryRow = {
+  id: string;
+  exemption_type: string;
+  start_date: string;
+  end_date: string | null;
+  reason: string;
+  request_status: "pending" | "approved" | "rejected";
+  created_at: string;
+  reviewed_at: string | null;
+};
+
 export default async function ExemptionPage() {
   const supabase = await createClient();
   const {
@@ -25,7 +36,7 @@ export default async function ExemptionPage() {
   const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole);
 
   const today = getShanghaiDate();
-  let exemptionHistory: any[] = [];
+  let exemptionHistory: ExemptionHistoryRow[] = [];
   let historyErrorMessage: string | null = null;
   try {
     const { data, error } = await supabase
@@ -35,7 +46,7 @@ export default async function ExemptionPage() {
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw error;
-    exemptionHistory = data ?? [];
+    exemptionHistory = (data ?? []) as ExemptionHistoryRow[];
   } catch (err) {
     console.error("Failed to load exemption history:", err);
     historyErrorMessage = "暂时无法取得申请历史，请稍后重试。";
@@ -75,7 +86,7 @@ export default async function ExemptionPage() {
             .map((row) => `${row.id}:${row.request_status}:${row.reviewed_at ?? ""}`)
             .join(","),
         ].join("|")}
-        initialHistory={(exemptionHistory ?? []) as any[]}
+        initialHistory={exemptionHistory}
         todayDate={today}
         historyErrorMessage={historyErrorMessage}
       />

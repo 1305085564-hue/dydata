@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 
 import type {
+  FulfillmentAppeal,
   FulfillmentCalendarData,
   FulfillmentMemberSummary,
   FulfillmentStatus,
@@ -23,9 +24,14 @@ type Source = "queue" | "matrix";
 type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
 type FulfillmentRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
-export async function fetchFulfillmentAppeals(request: FulfillmentRequest = fetch): Promise<any[]> {
+export async function fetchFulfillmentAppeals(
+  request: FulfillmentRequest = fetch,
+): Promise<FulfillmentAppeal[]> {
   const response = await request("/api/admin/fulfillment/appeals?limit=150");
-  const payload = (await response.json()) as { appeals?: any[]; error?: string };
+  const payload = (await response.json()) as {
+    appeals?: FulfillmentAppeal[];
+    error?: string;
+  };
   if (!response.ok) {
     throw new Error(payload.error || "申诉加载失败");
   }
@@ -154,7 +160,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
   // 3. 申诉状态
-  const [appeals, setAppeals] = useState<any[]>([]);
+  const [appeals, setAppeals] = useState<FulfillmentAppeal[]>([]);
   const [appealsLoading, setAppealsLoading] = useState(true);
   const [appealsError, setAppealsError] = useState<string | null>(null);
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
@@ -475,8 +481,8 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
           const refreshResult = await refreshRes.json();
           setCalendarData(refreshResult.data);
         }
-      } catch (err: any) {
-        toast.error(err.message || "标记失败，已回滚");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "标记失败，已回滚");
         setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
     },
@@ -562,8 +568,8 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
           const refreshResult = await refreshRes.json();
           setCalendarData(refreshResult.data);
         }
-      } catch (err: any) {
-        toast.error(err.message || "批量标记失败，已回滚");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "批量标记失败，已回滚");
         setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
     },

@@ -4,7 +4,11 @@ import { useCallback, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
+import type {
+  FulfillmentAppeal,
+  FulfillmentMemberSummary,
+  FulfillmentStatus,
+} from "@/types/fulfillment";
 import {
   Sheet,
   SheetContent,
@@ -28,7 +32,7 @@ interface MemberDrawerProps {
   date: string | null;
   source: Source;
   onActionComplete: () => void;
-  appeals?: any[];
+  appeals?: FulfillmentAppeal[];
 }
 
 interface ActionConfig {
@@ -350,7 +354,7 @@ export function MemberDrawer({
                   员工发起申诉
                 </h4>
                 <div className="text-[13px] text-stone-700 bg-white border border-stone-200/60 p-2.5 rounded-lg italic">
-                  "{dateAppeal.reason}"
+                  “{dateAppeal.reason}”
                 </div>
                 <p className="text-[12px] text-stone-500">
                   提交时间: {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}

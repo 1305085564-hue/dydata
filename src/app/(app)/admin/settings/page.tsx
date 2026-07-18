@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, UsersRound, ShieldCheck } from "lucide-react";
+import { Sparkles, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +23,20 @@ interface SettingCardProps {
   description: string;
   icon: React.ReactNode;
 }
+
+interface QuotaRule {
+  id: string;
+  effective_date: string;
+  daily_target: number;
+  created_by: string;
+  note: string | null;
+  created_at: string;
+  profiles?: { name: string | null } | null;
+}
+
+type RawQuotaRule = Omit<QuotaRule, "profiles"> & {
+  profiles?: { name: string | null } | { name: string | null }[] | null;
+};
 
 function SettingCard({ href, title, description, icon }: SettingCardProps) {
   return (
@@ -73,7 +87,10 @@ export default async function AdminSettingsPage() {
     .order("effective_date", { ascending: false })
     .limit(30);
 
-  const rules = (rawRules ?? []) as any[];
+  const rules: QuotaRule[] = ((rawRules ?? []) as RawQuotaRule[]).map((rule) => ({
+    ...rule,
+    profiles: Array.isArray(rule.profiles) ? (rule.profiles[0] ?? null) : (rule.profiles ?? null),
+  }));
 
   return (
     <AdminWorkspaceLayout

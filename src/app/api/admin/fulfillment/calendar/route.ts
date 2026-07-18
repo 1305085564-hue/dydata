@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
   try {
     const data = await loadFulfillmentCalendar(year, month, auth.scope.visibleUserIds);
     return NextResponse.json({ data });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "加载日历失败" }, { status: 500 });
+  } catch (error) {
+    console.error("[fulfillment/calendar] failed to load calendar", error);
+    return NextResponse.json({ error: "加载日历失败" }, { status: 500 });
   }
 }

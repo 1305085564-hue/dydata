@@ -94,6 +94,21 @@ export interface FulfillmentCalendarData {
   };
 }
 
+export type FulfillmentAppealStatus = "pending" | "approved" | "rejected";
+
+export interface FulfillmentAppeal {
+  id: string;
+  user_id: string;
+  record_date: string;
+  reason: string;
+  status: FulfillmentAppealStatus;
+  handler_id: string | null;
+  handled_at: string | null;
+  created_at: string;
+  user_name: string | null;
+  handler_name: string | null;
+}
+
 // === 前端新增类型 ===
 
 export type TimeRangePreset = "today" | "last7days" | "thisMonth" | "lastMonth" | "custom";
