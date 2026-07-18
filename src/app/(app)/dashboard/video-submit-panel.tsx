@@ -53,6 +53,41 @@ type AsyncActivityData = {
   history: MonthReport[];
 };
 
+type ActivityRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export async function fetchDashboardActivity(
+  request: ActivityRequest = fetch,
+): Promise<AsyncActivityData> {
+  const response = await request("/api/dashboard/activity");
+  const payload = (await response.json()) as Partial<AsyncActivityData> & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error || "活动记录加载失败");
+  }
+  if (!Array.isArray(payload.monthReports) || !Array.isArray(payload.history)) {
+    throw new Error("活动记录格式无效");
+  }
+
+  return {
+    monthSubmittedDates: Array.isArray(payload.monthSubmittedDates) ? payload.monthSubmittedDates : [],
+    monthReports: payload.monthReports,
+    history: payload.history,
+  };
+}
+
+function DashboardActivityError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
+      <ShieldAlert className="size-5 text-[#C9604D]" aria-hidden="true" />
+      <p className="text-[13px] font-medium text-stone-700">记录加载失败</p>
+      <p className="max-w-sm text-[12px] text-stone-500">{message}</p>
+      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+        重新加载
+      </Button>
+    </div>
+  );
+}
+
 const formatDateTime = (isoString: string | null | undefined) => {
   if (!isoString) return "暂无";
   try {
@@ -179,6 +214,7 @@ export function VideoSubmitPanel({
   const [pendingBackfillDate, setPendingBackfillDate] = useState<string | null>(null);
   const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
+  const [activityError, setActivityError] = useState<string | null>(null);
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(() => {
     try {
       const raw = window.localStorage.getItem("dydata:dismissed-pending-exemption");
@@ -207,21 +243,20 @@ export function VideoSubmitPanel({
   );
 
 
+  const loadActivity = useCallback(async () => {
+    setActivityError(null);
+    try {
+      setActivityData(await fetchDashboardActivity());
+    } catch (cause) {
+      setActivityData(null);
+      setActivityError(cause instanceof Error ? cause.message : "活动记录加载失败");
+    }
+  }, []);
+
   useEffect(() => {
-    if ((!isDataViewOpen && !isHistoryOpen) || activityData) return;
-    fetch("/api/dashboard/activity")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data.monthReports) && Array.isArray(data.history)) {
-          setActivityData({
-            monthSubmittedDates: Array.isArray(data.monthSubmittedDates) ? data.monthSubmittedDates : [],
-            monthReports: data.monthReports,
-            history: data.history,
-          });
-        }
-      })
-      .catch(() => {});
-  }, [activityData, isDataViewOpen, isHistoryOpen]);
+    if ((!isDataViewOpen && !isHistoryOpen) || activityData || activityError) return;
+    void loadActivity();
+  }, [activityData, activityError, isDataViewOpen, isHistoryOpen, loadActivity]);
 
   useEffect(() => {
     if (!hasPendingExemption) {
@@ -331,7 +366,7 @@ export function VideoSubmitPanel({
     [mergedMonthReports, selectedAccountId],
   );
   const historyReports = activityData?.history ?? history;
-  const isActivityLoading = (isDataViewOpen || isHistoryOpen) && !activityData;
+  const isActivityLoading = (isDataViewOpen || isHistoryOpen) && !activityData && !activityError;
 
   const isTodayFlow = activeBizDate === today;
   const primarySummary = isTodayFlow ? selectedSummary : null;
@@ -866,7 +901,9 @@ export function VideoSubmitPanel({
             <DialogTitle>数据查看</DialogTitle>
           </DialogHeader>
 
-          {isActivityLoading ? (
+          {activityError ? (
+            <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
+          ) : isActivityLoading ? (
             <div className="flex h-40 items-center justify-center text-[13px] text-stone-500">
               加载填报记录...
             </div>
@@ -1044,7 +1081,9 @@ export function VideoSubmitPanel({
           <DialogHeader>
             <DialogTitle>历史记录</DialogTitle>
           </DialogHeader>
-          {isActivityLoading ? (
+          {activityError ? (
+            <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
+          ) : isActivityLoading ? (
             <div className="flex h-40 items-center justify-center text-[13px] text-stone-500">
               加载历史记录...
             </div>
