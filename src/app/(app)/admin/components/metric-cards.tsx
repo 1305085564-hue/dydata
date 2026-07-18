@@ -27,10 +27,10 @@ export interface MetricCardProps {
 export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "neutral" }: MetricCardProps) {
   const Icon = iconMap[icon] ?? Activity;
   const toneClasses = {
-    primary: "text-[#B4532F] bg-stone-50 border-stone-200",
-    warning: "text-[#8F641B] bg-stone-50 border-stone-200",
-    success: "text-[#3F7A4E] bg-stone-50 border-stone-200",
-    danger: "text-[#B24E3E] bg-stone-50 border-stone-200",
+    primary: "text-[#D97757] bg-stone-50 border-stone-200",
+    warning: "text-[#D99E55] bg-stone-50 border-stone-200",
+    success: "text-[#6FAA7D] bg-stone-50 border-stone-200",
+    danger: "text-[#C9604D] bg-stone-50 border-stone-200",
     neutral: "text-stone-500 bg-stone-50 border-stone-200",
   };
 
@@ -60,7 +60,7 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
             {trend && (
               <span className={cn(
                 "text-[12px] font-medium px-1.5 py-0.5 rounded-full",
-                trend.isPositive ? "text-[#3F7A4E] bg-[#6FAA7D]/10" : "text-[#B24E3E] bg-[#C9604D]/10"
+                trend.isPositive ? "text-[#6FAA7D] bg-[#6FAA7D]/10" : "text-[#C9604D] bg-[#C9604D]/10"
               )}>
                 {trend.isPositive ? "+" : ""}{trend.value}%
               </span>

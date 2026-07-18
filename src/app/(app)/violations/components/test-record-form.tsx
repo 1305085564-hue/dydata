@@ -190,7 +190,7 @@ export function TestRecordForm({
             <Button type="button" variant="outline" className="rounded-lg" onClick={() => setOpen(false)}>
               取消
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="rounded-lg bg-[#B4532F] text-white hover:bg-[#A84D2B] active:translate-y-0">
+            <Button type="submit" disabled={isSubmitting} className="rounded-lg bg-[#D97757] text-white hover:bg-[#C96442] active:translate-y-0">
               {isSubmitting ? "提交中..." : "保存记录"}
             </Button>
           </div>

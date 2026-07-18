@@ -123,7 +123,7 @@ export function VideoPageClient({
               ].join(" ")}
             >
               待处理
-              <span className="ml-1.5 text-[12px] tabular-nums text-[#B4532F]">
+              <span className="ml-1.5 text-[12px] tabular-nums text-[#D97757]">
                 {data.summary.pendingCount}
               </span>
             </button>
@@ -199,13 +199,13 @@ export function VideoPageClient({
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">
           <span>
             已入库
-            <span className="ml-0.5 tabular-nums text-[#3F7A4E]">
+            <span className="ml-0.5 tabular-nums text-[#6FAA7D]">
               {data.assetSummary.readyCount}
             </span>
           </span>
           <span>
             待整理
-            <span className="ml-0.5 tabular-nums text-[#8F641B]">
+            <span className="ml-0.5 tabular-nums text-[#D99E55]">
               {data.assetSummary.pendingLibraryCount}
             </span>
           </span>

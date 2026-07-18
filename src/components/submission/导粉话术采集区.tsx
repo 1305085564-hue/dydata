@@ -78,7 +78,7 @@ export function ScriptCaptureSection({
                 role="alert"
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 flex items-center gap-2 text-[12px] font-medium text-[#B24E3E]"
+                className="mt-2 flex items-center gap-2 text-[12px] font-medium text-[#C9604D]"
               >
                 <span className="inline-block h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
                 导粉数 &gt; 0 时，话术文案为必填

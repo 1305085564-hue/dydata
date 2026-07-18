@@ -167,7 +167,7 @@ export function DashboardDialog({
               <span className="text-[18px] font-medium tabular-nums text-stone-900">
                 {totalSubmitted} / {totalTarget}
               </span>
-              <span className="text-[12px] font-medium text-[#3F7A4E] tabular-nums">
+              <span className="text-[12px] font-medium text-[#6FAA7D] tabular-nums">
                 ({fulfillmentRate}%)
               </span>
             </div>
@@ -178,7 +178,7 @@ export function DashboardDialog({
               待审请假
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[18px] font-medium tabular-nums text-[#4E7194]">
+              <span className="text-[18px] font-medium tabular-nums text-[#8AA8C7]">
                 {pendingExemptionsCount}
               </span>
               <span className="text-[12px] text-stone-500">人申请请假</span>
@@ -192,7 +192,7 @@ export function DashboardDialog({
             <div className="flex items-baseline gap-2">
               <span className={cn(
                 "text-[24px] font-medium tabular-nums",
-                redAlertCount > 0 ? "text-[#B24E3E]" : "text-stone-900"
+                redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-900"
               )}>
                 {redAlertCount}
               </span>
@@ -263,7 +263,7 @@ export function DashboardDialog({
             className={cn(
               "h-8 w-full sm:w-auto rounded-lg border px-3 text-[12px] font-medium transition-colors active:scale-95",
               onlyRedAlert
-                ? "border-[#C9604D] text-[#B24E3E] bg-[#C9604D]/5"
+                ? "border-[#C9604D] text-[#C9604D] bg-[#C9604D]/5"
                 : "border-stone-200 text-stone-500 bg-white hover:border-stone-300 hover:bg-stone-50"
             )}
           >
@@ -406,7 +406,7 @@ export function DashboardDialog({
                                   </div>
                                 ) : userSubmissionsError ? (
                                   <div className="flex flex-col items-center justify-center py-3 text-stone-500 text-[12px] gap-2">
-                                    <span className="flex items-center gap-1 text-[#B4532F]">
+                                    <span className="flex items-center gap-1 text-[#D97757]">
                                       <AlertTriangle className="size-3.5" />
                                       {userSubmissionsError}
                                     </span>
@@ -417,7 +417,7 @@ export function DashboardDialog({
                                         e.stopPropagation();
                                         handleToggleUser(member.user_id, member.user_name, true);
                                       }}
-                                      className="h-7 rounded-lg border-[#D97757] text-[#B4532F] hover:bg-[#D97757]/5 text-[12px] font-medium"
+                                      className="h-7 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[12px] font-medium"
                                     >
                                       重新加载
                                     </Button>

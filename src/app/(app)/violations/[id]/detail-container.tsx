@@ -190,10 +190,10 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
           />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-lg bg-stone-50 px-3 py-2 text-[13px] font-medium text-[#3F7A4E]">
+          <div className="rounded-lg bg-stone-50 px-3 py-2 text-[13px] font-medium text-[#6FAA7D]">
             通过 {passCount}
           </div>
-          <div className="rounded-lg bg-stone-50 px-3 py-2 text-[13px] font-medium text-[#B24E3E]">
+          <div className="rounded-lg bg-stone-50 px-3 py-2 text-[13px] font-medium text-[#C9604D]">
             未通过 {failCount}
           </div>
         </div>

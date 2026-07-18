@@ -133,7 +133,7 @@ export function DataReportWizard({
             <div className="flex flex-wrap items-center gap-3">
               {leadingActionSlot}
               {status === "ready" ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#3F7A4E]">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[#6FAA7D] bg-white px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
                   {isLastStep ? "已就绪,可提交" : "本步已完成"}
                 </span>
@@ -143,7 +143,7 @@ export function DataReportWizard({
                     type="button"
                     onClick={() => setShowMissing((v) => !v)}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#8F641B] transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                      "inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#D99E55] transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                       showMissing ? "bg-stone-50" : "hover:bg-stone-50",
                     )}
                     aria-expanded={showMissing}
@@ -237,7 +237,7 @@ export function DataReportWizard({
                     "group relative h-11 overflow-hidden rounded-xl px-6 text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98]",
                     isSubmitting || !canSubmit
                       ? "cursor-not-allowed bg-stone-100 text-stone-500"
-                      : "bg-[#B4532F] text-white shadow-[0_4px_12px_rgba(217,119,87,0.25)] hover:shadow-[0_8px_24px_rgba(217,119,87,0.4)] hover:-translate-y-0.5"
+                      : "bg-[#D97757] text-white shadow-[0_4px_12px_rgba(217,119,87,0.25)] hover:shadow-[0_8px_24px_rgba(217,119,87,0.4)] hover:-translate-y-0.5"
                   )}
                 >
                   <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -255,7 +255,7 @@ export function DataReportWizard({
                   className={cn(
                     "group relative h-11 overflow-hidden rounded-xl px-6 text-[13px] font-medium transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.98]",
                     canGoNext
-                      ? "bg-[#B4532F] text-white shadow-[0_4px_12px_rgba(217,119,87,0.25)] hover:shadow-[0_8px_24px_rgba(217,119,87,0.4)] hover:-translate-y-0.5"
+                      ? "bg-[#D97757] text-white shadow-[0_4px_12px_rgba(217,119,87,0.25)] hover:shadow-[0_8px_24px_rgba(217,119,87,0.4)] hover:-translate-y-0.5"
                       : "cursor-not-allowed bg-stone-100 text-stone-500"
                   )}
                 >
@@ -323,8 +323,8 @@ function ProgressHeader({ visibleSteps, visibleStep, stepStateOverrides }: Progr
                 transition={{ type: "spring", stiffness: 360, damping: 26 }}
                 className={cn(
                   "flex size-9 items-center justify-center rounded-full text-[13px] font-medium transition-colors duration-150",
-                  isCurrent && "bg-[#B4532F] text-white shadow-[0_6px_18px_-6px_rgba(217,119,87,0.6)]",
-                  isCompleted && "bg-[#3F7A4E] text-white",
+                  isCurrent && "bg-[#D97757] text-white shadow-[0_6px_18px_-6px_rgba(217,119,87,0.6)]",
+                  isCompleted && "bg-[#6FAA7D] text-white",
                   isSkipped && "bg-stone-200 text-stone-500",
                   state === "upcoming" && "bg-stone-100 text-stone-500",
                 )}

@@ -31,9 +31,9 @@ export function buttonClass(variant: ButtonVariant = "default", size: ButtonSize
 export function badgeClass(color: BadgeColor = "neutral") {
   const semanticColorClass = {
     primary: "bg-primary text-primary-foreground",
-    success: "border-stone-200 bg-stone-50 text-[#3F7A4E] dark:border-stone-700 dark:bg-stone-900 dark:text-[#6FAA7D]",
-    warning: "border-stone-200 bg-stone-50 text-[#8F641B] dark:border-stone-700 dark:bg-stone-900 dark:text-[#D99E55]",
-    danger: "border-stone-200 bg-stone-50 text-[#B24E3E] dark:border-stone-700 dark:bg-stone-900 dark:text-[#D16A58]",
+    success: "border-stone-200 bg-stone-50 text-[#6FAA7D] dark:border-stone-700 dark:bg-stone-900 dark:text-[#6FAA7D]",
+    warning: "border-stone-200 bg-stone-50 text-[#D99E55] dark:border-stone-700 dark:bg-stone-900 dark:text-[#D99E55]",
+    danger: "border-stone-200 bg-stone-50 text-[#C9604D] dark:border-stone-700 dark:bg-stone-900 dark:text-[#C9604D]",
     neutral: "border-border text-foreground bg-background/80",
   } satisfies Record<BadgeColor, string>;
 

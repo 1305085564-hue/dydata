@@ -160,23 +160,23 @@ export function SubmissionCalendar({
       )}
 
       <div className={cn("flex flex-wrap gap-2 text-[12px] text-[var(--color-text-secondary)]", compact ? "mt-1" : "mt-4")}>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#6FAA7D]/10 px-3 py-1 text-[#3F7A4E]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#6FAA7D]/10 px-3 py-1 text-[#6FAA7D]">
           <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
           已交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#6FAA7D]/10 px-3 py-1 text-[#3F7A4E]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#6FAA7D]/10 px-3 py-1 text-[#6FAA7D]">
           <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
           免交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#D99E55]/10 px-3 py-1 text-[#8F641B]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#D99E55]/10 px-3 py-1 text-[#D99E55]">
           <span className="h-2 w-2 rounded-full bg-[#D99E55] ring-1 ring-white" />
           请假
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#C9604D]/10 px-3 py-1 text-[#B24E3E]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#C9604D]/10 px-3 py-1 text-[#C9604D]">
           <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
           未交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#C9604D]/10 px-3 py-1 text-[#B24E3E]">
+        <div className="inline-flex items-center gap-2 rounded-full bg-[#C9604D]/10 px-3 py-1 text-[#C9604D]">
           <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
           漏交
         </div>
@@ -201,11 +201,11 @@ export function SubmissionCalendar({
               className={cn(
                 "flex aspect-square flex-col items-center justify-center rounded-xl border text-[13px] font-medium shadow-[var(--shadow-light)] transition-colors sm:aspect-auto sm:min-h-[4rem]",
                 onDateSelect && "cursor-pointer",
-                cell.state === "submitted" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#3F7A4E]",
-                cell.state === "waive" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#3F7A4E]",
-                cell.state === "leave" && "border-[#D99E55]/30 bg-[#D99E55]/10 text-[#8F641B]",
-                cell.state === "missing" && "border-[#C9604D]/30 bg-[#C9604D]/10 text-[#B24E3E]",
-                cell.state === "unsubmitted" && "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#B24E3E] ring-1 ring-[#C9604D]/30",
+                cell.state === "submitted" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+                cell.state === "waive" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
+                cell.state === "leave" && "border-[#D99E55]/30 bg-[#D99E55]/10 text-[#D99E55]",
+                cell.state === "missing" && "border-[#C9604D]/30 bg-[#C9604D]/10 text-[#C9604D]",
+                cell.state === "unsubmitted" && "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D] ring-1 ring-[#C9604D]/30",
                 cell.state === "future" && "border-stone-200 bg-stone-50 text-stone-500",
                 cell.isToday && cell.state === "submitted" && "ring-1 ring-[#6FAA7D]/30",
                 cell.isToday && cell.state === "waive" && "ring-1 ring-[#6FAA7D]/30",

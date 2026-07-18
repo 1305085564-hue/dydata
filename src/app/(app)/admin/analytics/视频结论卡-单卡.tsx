@@ -62,7 +62,7 @@ export function 视频结论卡单卡({
 
         <div className="flex-1 space-y-4">
           <div className="flex items-center gap-4">
-            <div className="relative flex size-14 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-[#B4532F]">
+            <div className="relative flex size-14 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-[#D97757]">
               {card.insufficient ? (
                 <AlertCircle className="size-6 stroke-[1.5]" />
               ) : card.eyebrow === "Publish Window" ? (
@@ -94,7 +94,7 @@ export function 视频结论卡单卡({
             <p
               className={cn(
                 "text-[18px] font-medium tracking-tight tabular-nums",
-                secondaryMetrics[0]?.value.startsWith("+") ? "text-[#3F7A4E]" : "text-stone-700",
+                secondaryMetrics[0]?.value.startsWith("+") ? "text-[#6FAA7D]" : "text-stone-700",
               )}
             >
               {secondaryMetrics[0]?.value}
@@ -150,7 +150,7 @@ export function 干预结论单卡({
         <header className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="inline-block rounded-full bg-[#C9604D]/10 px-2.5 py-1 text-[12px] font-normal tracking-[0.12em] text-[#B24E3E]">
+              <span className="inline-block rounded-full bg-[#C9604D]/10 px-2.5 py-1 text-[12px] font-normal tracking-[0.12em] text-[#C9604D]">
                 {card.eyebrow}
               </span>
             </div>
@@ -202,7 +202,7 @@ export function 干预结论单卡({
                   className="group/item flex w-full items-center justify-between rounded-xl border border-stone-200 bg-white p-3 text-left transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:bg-stone-50"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-[#C9604D]/10 text-[#B24E3E]">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-[#C9604D]/10 text-[#C9604D]">
                       <TrendingDown className="size-4 stroke-[1.5]" />
                     </div>
                     <div>
@@ -211,7 +211,7 @@ export function 干预结论单卡({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[18px] font-medium tracking-tight tabular-nums text-[#B24E3E]">
+                    <p className="text-[18px] font-medium tracking-tight tabular-nums text-[#C9604D]">
                       {item.dropRatio !== null ? `-${Math.round(item.dropRatio * 100)}%` : "—"}
                     </p>
                     <p className="mt-1 text-[12px] text-stone-500">查看样本</p>

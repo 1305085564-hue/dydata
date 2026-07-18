@@ -291,14 +291,14 @@ export function JoinRequestReviewList({ rows }: Props) {
           <span className="text-[13px] text-stone-700">
             已同意 <span className="font-medium">{undoApproveItem.row.applicantName || undoApproveItem.row.applicantEmail || "未命名"}</span> 的入队申请
           </span>
-          <span className="ml-auto text-[13px] font-medium text-[#B4532F]">
+          <span className="ml-auto text-[13px] font-medium text-[#D97757]">
             {undoApproveCountdown}秒后可撤销
           </span>
           <Button
             size="sm"
             variant="outline"
             onClick={performApproveUndo}
-            className="h-7 border-[#D97757] text-[#B4532F] text-[12px] hover:bg-[#D97757]/5"
+            className="h-7 border-[#D97757] text-[#D97757] text-[12px] hover:bg-[#D97757]/5"
           >
             撤销
           </Button>
@@ -311,14 +311,14 @@ export function JoinRequestReviewList({ rows }: Props) {
           <span className="text-[13px] text-stone-700">
             已驳回 <span className="font-medium">{undoRejectItem.row.applicantName || undoRejectItem.row.applicantEmail || "未命名"}</span> 的入队申请
           </span>
-          <span className="ml-auto text-[13px] font-medium text-[#B4532F]">
+          <span className="ml-auto text-[13px] font-medium text-[#D97757]">
             {undoRejectCountdown}秒后可撤销
           </span>
           <Button
             size="sm"
             variant="outline"
             onClick={performRejectUndo}
-            className="h-7 border-[#D97757] text-[#B4532F] text-[12px] hover:bg-[#D97757]/5"
+            className="h-7 border-[#D97757] text-[#D97757] text-[12px] hover:bg-[#D97757]/5"
           >
             撤销
           </Button>
@@ -336,7 +336,7 @@ export function JoinRequestReviewList({ rows }: Props) {
               size="sm"
               onClick={handleBatchApprove}
               disabled={isPending}
-              className="h-7 bg-[#B4532F] text-white text-[12px] hover:bg-[#A84D2B]"
+              className="h-7 bg-[#D97757] text-white text-[12px] hover:bg-[#C96442]"
             >
               批量同意（{selectedIds.size}）
             </Button>
@@ -345,7 +345,7 @@ export function JoinRequestReviewList({ rows }: Props) {
               variant="outline"
               onClick={() => setBatchRejectOpen(true)}
               disabled={isPending}
-              className="h-7 border-[#C9604D] text-[#B24E3E] text-[12px] hover:bg-[#C9604D]/5"
+              className="h-7 border-[#C9604D] text-[#C9604D] text-[12px] hover:bg-[#C9604D]/5"
             >
               批量拒绝（{selectedIds.size}）
             </Button>

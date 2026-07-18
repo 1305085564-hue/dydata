@@ -219,7 +219,7 @@ export default function TodayWorkspacePage() {
     return (
       <div className="flex h-[350px] items-center justify-center">
         <div className="flex flex-col items-center gap-2">
-          <Loader2 className="size-6 animate-spin text-[#B4532F]" />
+          <Loader2 className="size-6 animate-spin text-[#D97757]" />
           <span className="text-[12.5px] text-stone-500">正在整理最近活跃的选题...</span>
         </div>
       </div>
@@ -296,7 +296,7 @@ export default function TodayWorkspacePage() {
           <span className="font-medium text-stone-900">我的候选上限：</span>
           <span className={cn(
             "font-semibold",
-            isLimitReached ? "text-[#B24E3E]" : "text-[#4E7194]"
+            isLimitReached ? "text-[#C9604D]" : "text-[#8AA8C7]"
           )}>
             {activeCandidateCount} / 5
           </span>
@@ -304,7 +304,7 @@ export default function TodayWorkspacePage() {
         </div>
         <Link
           href="/topics?view=my_claims"
-          className="text-[#B4532F] font-medium hover:underline inline-flex items-center gap-0.5"
+          className="text-[#D97757] font-medium hover:underline inline-flex items-center gap-0.5"
         >
           管理我的选题 <ChevronRight className="size-3.5" />
         </Link>
@@ -348,7 +348,7 @@ export default function TodayWorkspacePage() {
                       <div className="flex items-start justify-between gap-2">
                         <Link
                           href={`/topics/${subTopic.id}`}
-                          className="font-medium text-stone-900 hover:text-[#B4532F] line-clamp-1 text-[13px] leading-tight"
+                          className="font-medium text-stone-900 hover:text-[#D97757] line-clamp-1 text-[13px] leading-tight"
                         >
                           {subTopic.title}
                         </Link>
@@ -436,7 +436,7 @@ export default function TodayWorkspacePage() {
                       <div className="flex items-start justify-between gap-2">
                         <Link
                           href={`/topics/${subTopic.id}`}
-                          className="font-medium text-stone-900 hover:text-[#B4532F] line-clamp-1 text-[13px] leading-tight"
+                          className="font-medium text-stone-900 hover:text-[#D97757] line-clamp-1 text-[13px] leading-tight"
                         >
                           {subTopic.title}
                         </Link>
@@ -452,7 +452,7 @@ export default function TodayWorkspacePage() {
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2 border-t border-stone-100 pt-3">
-                      <div className="flex items-center gap-1 text-[11.5px] text-[#3F7A4E] font-medium bg-[#6FAA7D]/5 rounded-lg px-2 py-1">
+                      <div className="flex items-center gap-1 text-[11.5px] text-[#6FAA7D] font-medium bg-[#6FAA7D]/5 rounded-lg px-2 py-1">
                         <Video className="size-3" />
                         <span className="line-clamp-1">新片: {work.video_title}</span>
                       </div>
@@ -525,7 +525,7 @@ export default function TodayWorkspacePage() {
                       <div className="flex items-start justify-between gap-2">
                         <Link
                           href={`/topics/${subTopic.id}`}
-                          className="font-medium text-stone-900 hover:text-[#B4532F] line-clamp-1 text-[13px] leading-tight"
+                          className="font-medium text-stone-900 hover:text-[#D97757] line-clamp-1 text-[13px] leading-tight"
                         >
                           {subTopic.title}
                         </Link>

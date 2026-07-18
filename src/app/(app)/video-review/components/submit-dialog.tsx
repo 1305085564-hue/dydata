@@ -161,12 +161,12 @@ export function SubmitDialog({
               />
             </div>
             {isTargetMet ? (
-              <span className="flex items-center gap-1 text-[12px] font-medium text-[#3F7A4E] shrink-0">
+              <span className="flex items-center gap-1 text-[12px] font-medium text-[#6FAA7D] shrink-0">
                 <CheckCircle2 className="size-3.5 stroke-[2.5]" />
                 已达标 ({submittedCount}/{target})
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-[12px] font-medium text-[#B4532F] shrink-0">
+              <span className="flex items-center gap-1 text-[12px] font-medium text-[#D97757] shrink-0">
                 <AlertTriangle className="size-3.5" />
                 还差 {gap} 条 ({submittedCount}/{target})
               </span>

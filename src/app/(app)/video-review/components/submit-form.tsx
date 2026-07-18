@@ -320,7 +320,7 @@ function StartStep({
               ) : null}
             </div>
             {accountId === acc.id ? (
-              <Check className="size-4 stroke-[2] text-[#B4532F]" />
+              <Check className="size-4 stroke-[2] text-[#D97757]" />
             ) : null}
           </button>
         ))}
@@ -339,7 +339,7 @@ function StartStep({
             <p className="mt-0.5 text-[12px] text-stone-500">先提交话术，待定后再补账号</p>
           </div>
           {accountId === null ? (
-            <Check className="size-4 stroke-[2] text-[#B4532F]" />
+            <Check className="size-4 stroke-[2] text-[#D97757]" />
           ) : null}
         </button>
       </div>
@@ -374,7 +374,7 @@ function CoreStep({
     <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="script_text" className="text-[13px] font-medium text-stone-700">
-          话术原文 <span className="text-[#B24E3E]">*</span>
+          话术原文 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
           id="script_text"
@@ -531,7 +531,7 @@ function FeedbackBanner({
     <div className="rounded-2xl border border-[#D97757]/30 bg-[#D97757]/[0.04] p-5 mb-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[12px] font-medium text-[#B4532F]">
+          <p className="text-[12px] font-medium text-[#D97757]">
             第 {currentRound} 轮整改
           </p>
           <p className="mt-1 text-[13px] font-medium text-stone-700">
@@ -552,7 +552,7 @@ function FeedbackBanner({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#B4532F] hover:underline"
+            className="mt-3 inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:underline"
           >
             {expanded ? "收起历史" : `查看历史 ${history.length} 条`}
             <ArrowRight

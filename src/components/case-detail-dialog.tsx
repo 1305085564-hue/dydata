@@ -392,9 +392,9 @@ export function CaseDetailDialog({
             <>
               {data.status === "needs_revision" && (
                 <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-[12px] text-amber-800 flex items-start gap-2.5">
-                  <AlertTriangle className="size-4.5 text-[#8F641B] shrink-0 mt-0.5" />
+                  <AlertTriangle className="size-4.5 text-[#D99E55] shrink-0 mt-0.5" />
                   <div>
-                  <p className="text-[#8F641B]">缺失凭证打回中</p>
+                  <p className="text-[#D99E55]">缺失凭证打回中</p>
                     {data.revision_note && <p className="mt-1 text-stone-700">{data.revision_note}</p>}
                   </div>
                 </div>
@@ -440,7 +440,7 @@ export function CaseDetailDialog({
                           type="button"
                           disabled={saving}
                           onClick={handleSaveEdit}
-                          className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/10 px-2 text-[12px] font-medium text-[#3F7A4E] transition-all hover:bg-[#6FAA7D]/15 active:translate-y-0 disabled:opacity-60"
+                          className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/10 px-2 text-[12px] font-medium text-[#6FAA7D] transition-all hover:bg-[#6FAA7D]/15 active:translate-y-0 disabled:opacity-60"
                         >
                           {saving ? (
                             <Loader2 className="size-3 animate-spin" />
@@ -469,7 +469,7 @@ export function CaseDetailDialog({
                           className={cn(
                             "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[12px] transition-all active:translate-y-0",
                             copied
-                              ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#3F7A4E]"
+                              ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
                               : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:text-stone-900",
                           )}
                         >
@@ -502,7 +502,7 @@ export function CaseDetailDialog({
                               type="button"
                               disabled={deleting}
                               onClick={handleDelete}
-                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#C9604D]/25 bg-white px-2 text-[12px] text-[#B24E3E] transition-all hover:bg-[#C9604D]/5 active:translate-y-0 disabled:opacity-60"
+                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#C9604D]/25 bg-white px-2 text-[12px] text-[#C9604D] transition-all hover:bg-[#C9604D]/5 active:translate-y-0 disabled:opacity-60"
                             >
                               {deleting ? (
                                 <Loader2 className="size-3 animate-spin" />
@@ -616,7 +616,7 @@ export function CaseDetailDialog({
               {/* 管理员点评 */}
               {data.admin_conclusion ? (
                 <div className="rounded-xl border border-[#D97757]/15 bg-[#D97757]/[0.04] p-4">
-                  <p className="text-[12px] uppercase tracking-[0.25em] text-[#B4532F]">
+                  <p className="text-[12px] uppercase tracking-[0.25em] text-[#D97757]">
                     管理员点评
                   </p>
                   <p className="mt-2 text-[13px] leading-[1.7] text-stone-700">
@@ -796,7 +796,7 @@ function StatBlock({
       <p
         className={cn(
           "mt-0.5 text-[18px] font-medium tabular-nums",
-          accent ? "text-[#B4532F]" : "text-stone-900",
+          accent ? "text-[#D97757]" : "text-stone-900",
         )}
       >
         {value}

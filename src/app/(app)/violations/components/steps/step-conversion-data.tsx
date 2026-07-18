@@ -79,7 +79,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="conv_views" className="text-[12px] font-normal text-stone-500">
-            流量 <span className="text-[#B24E3E]">*</span>
+            流量 <span className="text-[#C9604D]">*</span>
             <span className="ml-1 text-[12px] font-normal text-stone-500">播放/曝光</span>
           </Label>
           <Input
@@ -97,7 +97,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
         </div>
         <div className="space-y-2">
           <Label htmlFor="conv_follows" className="text-[12px] font-normal text-stone-500">
-            导粉 <span className="text-[#B24E3E]">*</span>
+            导粉 <span className="text-[#C9604D]">*</span>
             <span className="ml-1 text-[12px] font-normal text-stone-500">没涨粉填 0</span>
           </Label>
           <Input
@@ -115,7 +115,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
             )}
           />
           {followsExceedsViews ? (
-            <p className="text-[12px] text-[#B24E3E]">导粉数不能大于流量</p>
+            <p className="text-[12px] text-[#C9604D]">导粉数不能大于流量</p>
           ) : null}
         </div>
       </div>
@@ -168,7 +168,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
       {/* Platforms */}
       <div className="space-y-2">
         <Label className="text-[12px] font-normal text-stone-500">
-          平台 <span className="text-[#B24E3E]">*</span>
+          平台 <span className="text-[#C9604D]">*</span>
           <span className="ml-2 text-[12px] font-normal text-stone-500">可多选 · 默认抖音</span>
         </Label>
         <div className="flex flex-wrap gap-2">
@@ -185,7 +185,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
                 className={cn(
                   "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors",
                   active
-                    ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#B4532F]"
+                    ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
                     : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700",
                 )}
               >

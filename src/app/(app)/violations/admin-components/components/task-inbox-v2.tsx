@@ -64,21 +64,21 @@ const TONE: Record<
 > = {
   danger: {
     bar: "bg-[#C9604D]",
-    iconText: "text-[#B24E3E]",
-    badge: "border-[#C9604D]/25 text-[#B24E3E]",
-    badgeText: "text-[#B24E3E]",
+    iconText: "text-[#C9604D]",
+    badge: "border-[#C9604D]/25 text-[#C9604D]",
+    badgeText: "text-[#C9604D]",
   },
   warm: {
     bar: "bg-[#D97757]",
-    iconText: "text-[#B4532F]",
-    badge: "border-[#D97757]/25 text-[#B4532F]",
-    badgeText: "text-[#B4532F]",
+    iconText: "text-[#D97757]",
+    badge: "border-[#D97757]/25 text-[#D97757]",
+    badgeText: "text-[#D97757]",
   },
   positive: {
     bar: "bg-[#6FAA7D]",
-    iconText: "text-[#3F7A4E]",
-    badge: "border-[#6FAA7D]/25 text-[#3F7A4E]",
-    badgeText: "text-[#3F7A4E]",
+    iconText: "text-[#6FAA7D]",
+    badge: "border-[#6FAA7D]/25 text-[#6FAA7D]",
+    badgeText: "text-[#6FAA7D]",
   },
   neutral: {
     bar: "bg-stone-400",
@@ -114,7 +114,7 @@ function formatTime(value: string | null | undefined) {
 function MissingBadge({ field }: { field: string }) {
   const label = MISSING_LABEL[field] ?? field;
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-[#D99E55]/20 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] text-[#8F641B]">
+    <span className="inline-flex items-center gap-1 rounded-md border border-[#D99E55]/20 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] text-[#D99E55]">
       <span className="size-1 rounded-full bg-[#D99E55]" />
       缺{label}
     </span>
@@ -165,7 +165,7 @@ function TaskRow({
         className={cn(
           "flex size-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300",
           selected
-            ? "border-[#D97757] bg-[#B4532F] text-white"
+            ? "border-[#D97757] bg-[#D97757] text-white"
             : "border-stone-300 bg-white hover:border-stone-400"
         )}
       >
@@ -228,7 +228,7 @@ function TaskRow({
           }}
           className={cn(
             "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-colors",
-            "text-stone-500 hover:bg-[#6FAA7D]/10 hover:text-[#3F7A4E]",
+            "text-stone-500 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
           title="通过"
@@ -247,7 +247,7 @@ function TaskRow({
           }}
           className={cn(
             "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-colors",
-            "text-stone-500 hover:bg-[#C9604D]/10 hover:text-[#B24E3E]",
+            "text-stone-500 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
           title="驳回"
@@ -496,14 +496,14 @@ function BulkActionBar({
         className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2.5 shadow-sm sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
       >
         <span className="whitespace-nowrap text-[13px] font-medium text-stone-900">
-          已选择 <span className="tabular-nums text-[#B4532F]">{count}</span> 项
+          已选择 <span className="tabular-nums text-[#D97757]">{count}</span> 项
         </span>
         <div className="h-4 w-px bg-stone-200" />
         <button
           type="button"
           disabled={busy !== null}
           onClick={onApprove}
-          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-stone-700 transition-colors hover:bg-[#6FAA7D]/10 hover:text-[#3F7A4E] disabled:cursor-wait disabled:opacity-60 sm:px-3"
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-stone-700 transition-colors hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
           {busy === "approve" ? <Loader2 className="size-3 animate-spin" /> : null}
           批量通过
@@ -512,7 +512,7 @@ function BulkActionBar({
           type="button"
           disabled={busy !== null}
           onClick={onReject}
-          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-stone-700 transition-colors hover:bg-[#C9604D]/10 hover:text-[#B24E3E] disabled:cursor-wait disabled:opacity-60 sm:px-3"
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-stone-700 transition-colors hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
           {busy === "reject" ? <Loader2 className="size-3 animate-spin" /> : null}
           批量驳回
@@ -910,12 +910,12 @@ export function TaskInbox({
         entries: inbox.high_risk_pending,
         emptyHint: "✓ 目前安全 · 无高风险踩雷话术待确认",
         headerTag: counts.high_risk_pending > 0 ? (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#B24E3E] leading-none">
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D] leading-none">
             <span className="size-1 rounded-full bg-[#C9604D]" />
             优先处理
           </span>
         ) : (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#3F7A4E] leading-none">
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#6FAA7D] leading-none">
             <span className="size-1 rounded-full bg-[#6FAA7D]" />
             目前安全
           </span>
@@ -1006,7 +1006,7 @@ export function TaskInbox({
               )}
             >
               <div className="mx-auto flex size-8 items-center justify-center rounded-full bg-white shadow-sm">
-                <Sparkles className="size-4 stroke-[1.75] text-[#3F7A4E]" />
+                <Sparkles className="size-4 stroke-[1.75] text-[#6FAA7D]" />
               </div>
               <p className="mt-3 text-[13px] font-medium text-stone-900">
                 {viewType === "main" ? "今天的审批已清空" : "无待补材料"}

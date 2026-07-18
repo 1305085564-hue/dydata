@@ -56,7 +56,7 @@ export function ReviewDetail({
           </h2>
           <span className="text-[12px] text-stone-500">{item.submitted_by_name}</span>
           {isAmend ? (
-            <span className="rounded bg-[#D99E55]/[0.06] px-2 py-0.5 text-[12px] font-medium text-[#8F641B]">
+            <span className="rounded bg-[#D99E55]/[0.06] px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
               二改 · 第 {item.current_round} 轮
             </span>
           ) : null}
@@ -180,7 +180,7 @@ export function ReviewDetail({
                 "inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-4 text-[13px] font-medium transition-colors active:translate-y-0",
                 isProcessing
                   ? "cursor-not-allowed text-stone-500/40"
-                  : "text-stone-700 hover:text-[#B24E3E] hover:bg-[#C9604D]/10 hover:border-[#C9604D]/20",
+                  : "text-stone-700 hover:text-[#C9604D] hover:bg-[#C9604D]/10 hover:border-[#C9604D]/20",
               )}
             >
               <X className="size-3.5 stroke-[1.75]" />

@@ -48,7 +48,7 @@ function SettingCard({ href, title, description, icon }: SettingCardProps) {
       )}
     >
       <div className="flex items-start gap-3">
-        <span className="flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#B4532F]">
+        <span className="flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
           {icon}
         </span>
         <span className="flex-1 pt-1 text-[18px] font-medium tracking-[-0.02em] text-stone-900">
@@ -106,14 +106,14 @@ export default async function AdminSettingsPage() {
             href="/admin/modules"
             title="成员管理"
             description="系统团队架构、分组归属维护、一键入团审批及成员精细化授权。"
-            icon={<UsersRound className="size-5 text-[#B4532F]" />}
+            icon={<UsersRound className="size-5 text-[#D97757]" />}
           />
           {isOwner ? (
             <SettingCard
               href="/admin/ai-config"
               title="AI 配置"
               description="模型渠道、功能绑定、文案改写和执行路线管理."
-              icon={<Sparkles className="size-5 text-[#B4532F]" />}
+              icon={<Sparkles className="size-5 text-[#D97757]" />}
             />
           ) : null}
         </div>

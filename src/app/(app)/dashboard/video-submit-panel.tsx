@@ -655,7 +655,7 @@ export function VideoSubmitPanel({
                       <span className="text-[24px] font-medium tabular-nums tracking-tight text-stone-900">
                         {activeBizDate}
                       </span>
-                      <CalendarDays className="size-5 stroke-[1.5] text-[#B4532F]" />
+                      <CalendarDays className="size-5 stroke-[1.5] text-[#D97757]" />
                     </button>
                     <input
                       ref={dateInputRef}
@@ -702,7 +702,7 @@ export function VideoSubmitPanel({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#8F641B]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#D99E55]">
                         <Clock className="size-3.5 stroke-[1.5]" />
                         申请审批中
                       </span>
@@ -737,7 +737,7 @@ export function VideoSubmitPanel({
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
                   <div className="space-y-4 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/30 bg-[#6FAA7D]/5 px-2.5 py-1 text-[12px] font-medium text-[#3F7A4E]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/30 bg-[#6FAA7D]/5 px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
                         <span className="relative flex h-2 w-2">
                           <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D]/60 motion-safe:animate-ping opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6FAA7D]" />
@@ -793,7 +793,7 @@ export function VideoSubmitPanel({
                   <div className="flex shrink-0 flex-col gap-3 lg:w-[200px]">
                     <Button
                       type="button"
-                      className="h-10 w-full rounded-xl bg-[#B4532F] hover:bg-[#A84D2B] text-white text-[13px] font-medium transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white text-[13px] font-medium transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                       onClick={handleGoToGrowth}
                     >
                       去查看我的成长与大盘数据 🚀
@@ -1009,7 +1009,7 @@ export function VideoSubmitPanel({
                     <p
                       className={cn(
                         "text-[13px] font-medium",
-                        activeDateStatus.state === "waive" ? "text-[#3F7A4E]" : "text-[#8F641B]",
+                        activeDateStatus.state === "waive" ? "text-[#6FAA7D]" : "text-[#D99E55]",
                       )}
                     >
                       这一天已标记为{activeDateStatus.label}
@@ -1038,7 +1038,7 @@ export function VideoSubmitPanel({
                 <div className="mt-4 rounded-2xl border border-stone-200 border-l-[2px] border-l-[#C9604D] bg-stone-50 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-1">
-                      <p className="text-[13px] font-medium text-[#B24E3E]">
+                      <p className="text-[13px] font-medium text-[#C9604D]">
                         {activeDateStatus.state === "unsubmitted" ? "今天还没有提交数据" : "这一天漏交了数据"}
                       </p>
                       <p className="text-[13px] leading-[1.7] text-stone-500">
@@ -1049,7 +1049,7 @@ export function VideoSubmitPanel({
                       <Button
                         type="button"
                         variant="outline"
-                        className="h-11 border-[#C9604D] text-[#B24E3E] hover:bg-[#C9604D]/5"
+                        className="h-11 border-[#C9604D] text-[#C9604D] hover:bg-[#C9604D]/5"
                         disabled={isExempting}
                         onClick={() => handleApplyExemption(activeBizDate)}
                       >

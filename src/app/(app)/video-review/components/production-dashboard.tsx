@@ -227,7 +227,7 @@ export function ProductionDashboard({
           <div className="flex items-baseline gap-1">
             <span className={cn(
               "text-[24px] font-medium tabular-nums",
-              redAlertCount > 0 ? "text-[#B24E3E]" : "text-stone-900"
+              redAlertCount > 0 ? "text-[#C9604D]" : "text-stone-900"
             )}>
               {redAlertCount}
             </span>
@@ -250,7 +250,7 @@ export function ProductionDashboard({
                 setGroupId("all");
                 handleFilterChange(selectedDate, "all", "all");
               }}
-              className="h-9 px-4 rounded-lg bg-[#B4532F] text-[13px] font-medium text-white hover:bg-[#A84D2B] active:scale-95 transition-all"
+              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-all"
             >
               重置筛选条件
             </button>
@@ -316,20 +316,20 @@ export function ProductionDashboard({
                         <div className="flex items-center gap-4">
                           {/* 豁免状态说明 */}
                           {member.exemption_status === "approved" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-medium text-[#3F7A4E]">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-medium text-[#6FAA7D]">
                               <UserCheck className="size-3" />
                               已豁免
                             </span>
                           )}
                           {member.exemption_status === "pending" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#8F641B]">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
                               豁免待审
                             </span>
                           )}
 
                           {/* 缺额警报 */}
                           {member.alert_level === "red" && member.gap > 0 && (
-                            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#B24E3E]">
+                            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#C9604D]">
                               <AlertCircle className="size-3.5" />
                               缺 <span className="tabular-nums">{member.gap}</span> 条
                             </span>
@@ -339,7 +339,7 @@ export function ProductionDashboard({
                           <button
                             type="button"
                             onClick={() => handleViewUser(member.user_id, member.user_name)}
-                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-500 transition-colors hover:border-[#D97757]/40 hover:text-[#B4532F] active:translate-y-0"
+                            className="inline-flex h-8 items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-500 transition-colors hover:border-[#D97757]/40 hover:text-[#D97757] active:translate-y-0"
                           >
                             作品记录
                             <ArrowRight className="size-3" />

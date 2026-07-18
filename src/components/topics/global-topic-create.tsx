@@ -147,7 +147,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
       <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[480px] p-5 md:p-6 rounded-2xl">
         <DialogHeader className="gap-1.5">
           <DialogTitle className="flex items-center gap-2 text-stone-900 font-semibold">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#B4532F]">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
               <Lightbulb className="size-4" />
             </div>
             <span>极速录入新选题</span>
@@ -191,7 +191,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               </div>
             ) : null}
             {!isLoadingTopics && topics.length === 0 && (
-              <div className="rounded-lg border border-[#C9604D]/15 bg-[#C9604D]/5 px-3 py-2 text-[12px] text-[#B24E3E]">
+              <div className="rounded-lg border border-[#C9604D]/15 bg-[#C9604D]/5 px-3 py-2 text-[12px] text-[#C9604D]">
                 母题加载失败，请刷新后重试
               </div>
             )}

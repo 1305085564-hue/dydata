@@ -41,7 +41,7 @@ export function ErrorState({
       </div>
       <div className="mt-2 space-y-1">
         <p className="flex items-center justify-center gap-1.5 text-[18px] font-medium text-stone-900">
-          <AlertCircle className="size-4 stroke-[1.5] text-[#B24E3E]" />
+          <AlertCircle className="size-4 stroke-[1.5] text-[#C9604D]" />
           {title}
         </p>
         {description && (

@@ -42,7 +42,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
       <div className="flex flex-col gap-4 border-b border-stone-200 pb-5 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <h1 className="text-[24px] font-semibold tracking-tight text-stone-900 flex items-center gap-2">
-            <Lightbulb className="size-6 text-[#B4532F] stroke-[1.8]" />
+            <Lightbulb className="size-6 text-[#D97757] stroke-[1.8]" />
             <span>选题库</span>
           </h1>
           <p className="text-[13px] text-stone-500">
@@ -66,7 +66,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
                       : "text-stone-500 hover:text-stone-850"
                   )}
                 >
-                  <TabIcon className={cn("size-3.5", tab.active ? "text-[#B4532F]" : "text-stone-400")} />
+                  <TabIcon className={cn("size-3.5", tab.active ? "text-[#D97757]" : "text-stone-400")} />
                   <span>{tab.label}</span>
                 </Link>
               );
@@ -76,8 +76,8 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
           <button
             onClick={() => triggerGlobalTopicCreate()}
             className={cn(
-              "flex h-8.5 items-center gap-1.5 rounded-xl border border-transparent bg-[#B4532F] px-4 text-[13px] font-medium text-white shadow-sm transition-all duration-200",
-              "hover:bg-[#A84D2B] hover:-translate-y-[1px] active:scale-[0.98] cursor-pointer"
+              "flex h-8.5 items-center gap-1.5 rounded-xl border border-transparent bg-[#D97757] px-4 text-[13px] font-medium text-white shadow-sm transition-all duration-200",
+              "hover:bg-[#C96442] hover:-translate-y-[1px] active:scale-[0.98] cursor-pointer"
             )}
           >
             <Plus className="size-3.5 stroke-[2]" />
@@ -100,7 +100,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
         onMouseEnter={() => setShowFloatingText(true)}
         onMouseLeave={() => setShowFloatingText(false)}
         className={cn(
-          "fixed bottom-6 right-6 z-40 flex h-12 items-center justify-center rounded-full bg-[#B4532F] text-white shadow-lg transition-colors hover:bg-[#A84D2B] cursor-pointer",
+          "fixed bottom-6 right-6 z-40 flex h-12 items-center justify-center rounded-full bg-[#D97757] text-white shadow-lg transition-colors hover:bg-[#C96442] cursor-pointer",
           showFloatingText ? "px-4 gap-1.5" : "w-12"
         )}
         initial={{ scale: 0.8, opacity: 0 }}

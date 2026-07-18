@@ -57,7 +57,7 @@ export function RiskSummaryStrip() {
         className="flex w-full items-center justify-between rounded-xl bg-stone-50 px-4 py-2.5 text-left transition-colors hover:bg-stone-100"
       >
         <span className="flex items-center gap-2 text-[13px] font-medium text-stone-700">
-          <AlertTriangle className="size-4 stroke-[1.5] text-[#B24E3E]" />
+          <AlertTriangle className="size-4 stroke-[1.5] text-[#C9604D]" />
           风险速览
         </span>
         <span className="text-[12px] text-stone-500">
@@ -74,7 +74,7 @@ export function RiskSummaryStrip() {
             </p>
             <div className="mt-2 flex items-baseline gap-4">
               <div>
-                <span className="text-[18px] font-medium tabular-nums text-[#B24E3E]">
+                <span className="text-[18px] font-medium tabular-nums text-[#C9604D]">
                   {data.weeklyStats.newViolations}
                 </span>
                 <span className="ml-1 text-[12px] text-stone-500">条违规</span>
@@ -91,7 +91,7 @@ export function RiskSummaryStrip() {
           {/* 最危险 */}
           {data.dangerousTop3.length > 0 && (
             <div className="rounded-xl border border-stone-200 border-l-[2px] border-l-[#C9604D] bg-white p-4">
-              <p className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#B24E3E]">
+              <p className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#C9604D]">
                 <TrendingDown className="size-3" />
                 最危险
               </p>
@@ -103,7 +103,7 @@ export function RiskSummaryStrip() {
                       className="flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-[12px] transition-colors hover:bg-stone-100"
                     >
                       <span className="truncate text-stone-700">{c.script_text}</span>
-                      <span className="shrink-0 font-medium tabular-nums text-[#B24E3E]">
+                      <span className="shrink-0 font-medium tabular-nums text-[#C9604D]">
                         {c.pass_rate ?? 0}%
                       </span>
                     </Link>
@@ -116,7 +116,7 @@ export function RiskSummaryStrip() {
           {/* 最安全 */}
           {data.safeTop3.length > 0 && (
             <div className="rounded-xl border border-stone-200 border-l-[2px] border-l-[#6FAA7D] bg-white p-4">
-              <p className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#3F7A4E]">
+              <p className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#6FAA7D]">
                 <Shield className="size-3" />
                 最安全
               </p>
@@ -128,7 +128,7 @@ export function RiskSummaryStrip() {
                       className="flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-[12px] transition-colors hover:bg-stone-100"
                     >
                       <span className="truncate text-stone-700">{c.script_text}</span>
-                      <span className="shrink-0 font-medium tabular-nums text-[#3F7A4E]">
+                      <span className="shrink-0 font-medium tabular-nums text-[#6FAA7D]">
                         {c.pass_rate}%
                       </span>
                     </Link>

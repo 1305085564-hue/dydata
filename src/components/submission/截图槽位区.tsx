@@ -119,8 +119,8 @@ export function SubmissionSlotsSection({
               }}
             />
             <div className="flex flex-col items-center gap-2">
-              <UploadCloud className="size-6 stroke-[1.5] text-[#B4532F] transition-colors" />
-              <p className="text-[13px] font-medium leading-snug text-[#B4532F]">
+              <UploadCloud className="size-6 stroke-[1.5] text-[#D97757] transition-colors" />
+              <p className="text-[13px] font-medium leading-snug text-[#D97757]">
                 {isDragOver ? "松开投放到此" : "拖入、选择多张截图，亦可在此 Ctrl+V 粘贴"}
               </p>
               <div className="flex flex-col gap-0.5 text-[12px] leading-relaxed text-stone-500">
@@ -158,7 +158,7 @@ export function SubmissionSlotsSection({
                         <FileText className="size-4.5 stroke-[1.5]" />
                       </div>
                     ) : isProcessing ? (
-                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-[#B4532F]">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-stone-100 text-[#D97757]">
                         <Loader2 className="size-4.5 animate-spin stroke-[1.6]" />
                       </div>
                     ) : slot.assetUrl ? (
@@ -195,10 +195,10 @@ export function SubmissionSlotsSection({
                         <span
                           className={cn(
                             "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] font-medium leading-none mt-1.5",
-                            isProcessing && "bg-[#D97757]/10 text-[#B4532F]",
-                            isSuccess && "bg-[#6FAA7D]/10 text-[#3F7A4E]",
-                            isWarning && "bg-[#D99E55]/10 text-[#8F641B]",
-                            isError && "bg-[#C9604D]/10 text-[#B24E3E]"
+                            isProcessing && "bg-[#D97757]/10 text-[#D97757]",
+                            isSuccess && "bg-[#6FAA7D]/10 text-[#6FAA7D]",
+                            isWarning && "bg-[#D99E55]/10 text-[#D99E55]",
+                            isError && "bg-[#C9604D]/10 text-[#C9604D]"
                           )}
                         >
                           {isProcessing ? "读取中" : isSuccess ? "已识别" : isWarning ? "待核对" : "失败"}
@@ -236,7 +236,7 @@ export function SubmissionSlotsSection({
                       <button
                         type="button"
                         onClick={() => onDelete(item.role)}
-                        className="inline-flex size-6 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 hover:text-[#B24E3E] transition-colors"
+                        className="inline-flex size-6 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-200 hover:text-[#C9604D] transition-colors"
                         title="删除"
                       >
                         <Trash2 className="size-3 stroke-[1.6]" />

@@ -616,7 +616,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
                 {appealsError ? (
                   <span className="ml-1.5 rounded border border-[#C9604D]/20 bg-[#C9604D]/5 px-1.5 py-0.5 text-[#C9604D]">!</span>
                 ) : pendingAppeals.length > 0 ? (
-                  <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-1.5 py-0.5 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#8F641B] font-medium">
+                  <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-1.5 py-0.5 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium">
                     <span className="size-1 rounded-full bg-[#D99E55]" />
                     {pendingAppeals.length}
                   </span>
@@ -696,7 +696,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 text-[#3F7A4E] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#3F7A4E] font-medium"
+                                className="h-8 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
                                 onClick={() => handleHandleAppeal(appeal.id, "approve")}
                               >
                                 同意并改判
@@ -704,7 +704,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 text-[#B24E3E] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#B24E3E] font-medium"
+                                className="h-8 text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D] font-medium"
                                 onClick={() => handleHandleAppeal(appeal.id, "reject")}
                               >
                                 驳回

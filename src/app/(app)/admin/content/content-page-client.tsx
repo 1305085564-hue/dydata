@@ -253,8 +253,8 @@ export function ContentPageClient({
                       </span>
                       <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-medium ${
                         v.anomaly_status === "限流" || v.anomaly_status === "删稿"
-                          ? "bg-[#C9604D]/0.04 text-[#B24E3E] border border-[#C9604D]/15"
-                          : "bg-[#D99E55]/0.04 text-[#8F641B] border border-[#D99E55]/15"
+                          ? "bg-[#C9604D]/0.04 text-[#C9604D] border border-[#C9604D]/15"
+                          : "bg-[#D99E55]/0.04 text-[#D99E55] border border-[#D99E55]/15"
                       }`}>
                         {v.anomaly_status === "正常" ? "限流异常" : v.anomaly_status}
                       </span>
@@ -274,7 +274,7 @@ export function ContentPageClient({
                     <Button
                       size="sm"
                       onClick={() => setSelectedVideoId(v.id)}
-                      className="h-6 rounded-lg bg-[#B4532F] px-2.5 text-[12px] text-white hover:bg-[#A84D2B] active:scale-[0.98] transition-all duration-155"
+                      className="h-6 rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white hover:bg-[#C96442] active:scale-[0.98] transition-all duration-155"
                     >
                       去诊断
                     </Button>
@@ -378,7 +378,7 @@ export function ContentPageClient({
           {data.workflowSummary.draft > 0 && (
             <span>
               待确认
-              <span className="ml-0.5 tabular-nums text-[#8F641B]">
+              <span className="ml-0.5 tabular-nums text-[#D99E55]">
                 {data.workflowSummary.draft}
               </span>
             </span>
@@ -386,7 +386,7 @@ export function ContentPageClient({
           {data.workflowSummary.confirmed > 0 && (
             <span>
               已确认未发
-              <span className="ml-0.5 tabular-nums text-[#B4532F]">
+              <span className="ml-0.5 tabular-nums text-[#D97757]">
                 {data.workflowSummary.confirmed}
               </span>
             </span>
@@ -394,7 +394,7 @@ export function ContentPageClient({
           {data.workflowSummary.sent > 0 && (
             <span>
               已下发
-              <span className="ml-0.5 tabular-nums text-[#B4532F]">
+              <span className="ml-0.5 tabular-nums text-[#D97757]">
                 {data.workflowSummary.sent}
               </span>
             </span>
@@ -402,7 +402,7 @@ export function ContentPageClient({
           {data.workflowSummary.viewed > 0 && (
             <span>
               员工已读
-              <span className="ml-0.5 tabular-nums text-[#3F7A4E]">
+              <span className="ml-0.5 tabular-nums text-[#6FAA7D]">
                 {data.workflowSummary.viewed}
               </span>
             </span>

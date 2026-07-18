@@ -81,7 +81,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           <div className="h-4 w-px bg-stone-200 mx-1" />
           <Button
             size="sm"
-            className="bg-[#B4532F] text-white px-5 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#A84D2B] hover:-translate-y-[1px] active:translate-y-0"
+            className="bg-[#D97757] text-white px-5 transition-[background-color,color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] hover:-translate-y-[1px] active:translate-y-0"
             onClick={generate}
             disabled={loading}
           >
@@ -139,12 +139,12 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
             {insight.best_direction && (
               <div className="rounded-xl border border-stone-200 border-l-[2px] border-l-[#6FAA7D] bg-white p-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-stone-50 text-[#3F7A4E]">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-stone-50 text-[#6FAA7D]">
                     <TrendingUp className="size-6 stroke-[1.5]" />
                   </div>
                   <div className="space-y-4 flex-1">
                     <div>
-                      <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#3F7A4E]">最佳验证方向</h4>
+                      <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#6FAA7D]">最佳验证方向</h4>
                       <div className="flex items-center gap-2">
                         <span className="text-[18px] font-medium tracking-tight text-stone-900">{insight.best_direction.tag}</span>
                       </div>
@@ -170,12 +170,12 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
             {insight.worst_direction && (
               <div className="rounded-xl border border-stone-200 border-l-[2px] border-l-[#C9604D] bg-white p-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-stone-50 text-[#B24E3E]">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-stone-50 text-[#C9604D]">
                     <TrendingDown className="size-6 stroke-[1.5]" />
                   </div>
                   <div className="space-y-4 flex-1">
                     <div>
-                      <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#B24E3E]">需规避方向</h4>
+                      <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#C9604D]">需规避方向</h4>
                       <div className="flex items-center gap-2">
                         <span className="text-[18px] font-medium tracking-tight text-stone-900">{insight.worst_direction.tag}</span>
                       </div>
@@ -202,7 +202,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
               <div className="md:col-span-2 rounded-2xl border border-stone-200 bg-white p-6 relative overflow-hidden">
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#B4532F]">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
                       <Target className="size-6 stroke-[1.5]" />
                     </div>
                     <div>
@@ -211,7 +211,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     </div>
                   </div>
 
-                  <Button className="shrink-0 rounded-lg bg-[#B4532F] text-white hover:bg-[#A84D2B] px-6 py-5 group whitespace-nowrap active:translate-y-0">
+                  <Button className="shrink-0 rounded-lg bg-[#D97757] text-white hover:bg-[#C96442] px-6 py-5 group whitespace-nowrap active:translate-y-0">
                     将其设为下期目标
                     <ArrowRight className="size-4 ml-2 stroke-[1.5] transition-transform group-hover:translate-x-1" />
                   </Button>
@@ -224,13 +224,13 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
               {insight.validated_experiments && insight.validated_experiments.length > 0 && (
                 <div className="rounded-xl border border-stone-200 bg-white p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <Lightbulb className="size-4 stroke-[1.5] text-[#8F641B]" />
+                    <Lightbulb className="size-4 stroke-[1.5] text-[#D99E55]" />
                     <h4 className="text-[13px] font-medium text-stone-900">已验证测试结论</h4>
                   </div>
                   <ul className="space-y-2">
                     {insight.validated_experiments.map((exp, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-[13px] leading-[1.7] text-stone-700">
-                        <span className="text-[#8F641B] mt-0.5">•</span>
+                        <span className="text-[#D99E55] mt-0.5">•</span>
                         <span>{exp}</span>
                       </li>
                     ))}
@@ -241,7 +241,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
               {insight.sample_warning && insight.sample_warning.length > 0 && (
                 <div className="rounded-xl border border-stone-200 border-l-[2px] border-l-[#D99E55] bg-white p-5">
                   <div className="flex items-center gap-2 mb-3">
-                    <AlertTriangle className="size-4 stroke-[1.5] text-[#8F641B]" />
+                    <AlertTriangle className="size-4 stroke-[1.5] text-[#D99E55]" />
                     <h4 className="text-[13px] font-medium text-stone-900">样本不足警告</h4>
                   </div>
                   <div className="flex flex-wrap gap-2">

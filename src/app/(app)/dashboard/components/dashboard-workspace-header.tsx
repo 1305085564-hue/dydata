@@ -118,9 +118,9 @@ export function DashboardWorkspaceHeader({
             className="group inline-flex h-10 items-center gap-2 rounded-lg border border-stone-200 bg-white px-3.5 text-[13px] font-medium tracking-tight text-stone-700 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/40 hover:bg-[#FDF9F7] hover:text-[#C96442] focus-visible:ring-1 focus-visible:ring-stone-900/5"
             aria-label="选择填报日期"
           >
-            <CalendarDays className="size-4 stroke-[1.6] text-stone-500 transition-colors duration-150 group-hover:text-[#B4532F]" />
+            <CalendarDays className="size-4 stroke-[1.6] text-stone-500 transition-colors duration-150 group-hover:text-[#D97757]" />
             <span className="tabular-nums">{activeBizDate}</span>
-            <ChevronDown className="size-3.5 stroke-[1.6] text-stone-500 transition-colors duration-150 group-hover:text-[#B4532F]" />
+            <ChevronDown className="size-3.5 stroke-[1.6] text-stone-500 transition-colors duration-150 group-hover:text-[#D97757]" />
           </button>
           <input
             ref={dateInputRef}

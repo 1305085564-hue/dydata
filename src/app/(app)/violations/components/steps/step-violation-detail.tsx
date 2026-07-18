@@ -49,7 +49,7 @@ export function StepViolationDetail({
       {/* Account */}
       <div className="space-y-2">
         <Label className="text-[12px] font-normal text-stone-500">
-          被处罚的账号 <span className="text-[#B24E3E]">*</span>
+          被处罚的账号 <span className="text-[#C9604D]">*</span>
         </Label>
         <Select
           value={data.accountId}
@@ -80,7 +80,7 @@ export function StepViolationDetail({
       {/* Event type */}
       <div className="space-y-2">
         <Label className="text-[12px] font-normal text-stone-500">
-          处罚类型 <span className="text-[#B24E3E]">*</span>
+          处罚类型 <span className="text-[#C9604D]">*</span>
         </Label>
         <div className="flex flex-wrap gap-2">
           {VIOLATION_EVENT_TYPES.map((type) => {
@@ -93,7 +93,7 @@ export function StepViolationDetail({
                 className={cn(
                   "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors active:translate-y-0",
                   active
-                    ? "border-[#D97757]/40 text-[#B4532F]"
+                    ? "border-[#D97757]/40 text-[#D97757]"
                     : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700",
                 )}
               >
@@ -108,7 +108,7 @@ export function StepViolationDetail({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="occurred_at" className="text-[12px] font-normal text-stone-500">
-            发生时间 <span className="text-[#B24E3E]">*</span>
+            发生时间 <span className="text-[#C9604D]">*</span>
           </Label>
           <Input
             id="occurred_at"
@@ -120,7 +120,7 @@ export function StepViolationDetail({
         </div>
         <div className="space-y-2">
           <Label className="text-[12px] font-normal text-stone-500">
-            申诉状态 <span className="text-[#B24E3E]">*</span>
+            申诉状态 <span className="text-[#C9604D]">*</span>
           </Label>
           <Select
             value={data.appealStatus}
@@ -155,7 +155,7 @@ export function StepViolationDetail({
           >
             <div className="space-y-2 pt-1">
               <Label htmlFor="appeal_text" className="text-[12px] font-normal text-stone-500">
-                申诉话术 <span className="text-[#B24E3E]">*</span>
+                申诉话术 <span className="text-[#C9604D]">*</span>
               </Label>
               <Textarea
                 id="appeal_text"
@@ -173,7 +173,7 @@ export function StepViolationDetail({
       {/* Platform notice */}
       <div className="space-y-2">
         <Label htmlFor="platform_notice" className="text-[12px] font-normal text-stone-500">
-          平台通知文本 <span className="text-[#B24E3E]">*</span>
+          平台通知文本 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
           id="platform_notice"

@@ -52,7 +52,7 @@ function formatRate(value: number | null | undefined, views?: number | null, fol
 function SourceChip({ source }: { source: string }) {
   if (source === "daily_report") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-lg border border-[#D97757]/30 px-2 py-0.5 text-[12px] font-normal text-[#B4532F]">
+      <span className="inline-flex items-center gap-1 rounded-lg border border-[#D97757]/30 px-2 py-0.5 text-[12px] font-normal text-[#D97757]">
         日报同步
       </span>
     );
@@ -173,13 +173,13 @@ function MetricCell({
   return (
     <div className="rounded-lg bg-stone-50 px-3 py-2">
       <div className="flex items-center gap-1 text-[12px] font-normal text-stone-500">
-        <span className={accent ? "text-[#3F7A4E]" : "text-stone-500"}>{icon}</span>
+        <span className={accent ? "text-[#6FAA7D]" : "text-stone-500"}>{icon}</span>
         {label}
       </div>
       <div
         className={
           accent
-            ? "mt-0.5 text-[13px] font-medium tracking-tight text-[#3F7A4E] tabular-nums"
+            ? "mt-0.5 text-[13px] font-medium tracking-tight text-[#6FAA7D] tabular-nums"
             : "mt-0.5 text-[13px] font-normal tracking-tight text-stone-700 tabular-nums"
         }
       >

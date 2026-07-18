@@ -15,16 +15,16 @@ const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; h
     hint: "text-stone-500",
   },
   positive: {
-    value: "text-[#3F7A4E]",
-    hint: "text-[#3F7A4E]/80",
+    value: "text-[#6FAA7D]",
+    hint: "text-[#6FAA7D]/80",
   },
   negative: {
-    value: "text-[#B24E3E]",
-    hint: "text-[#B24E3E]/80",
+    value: "text-[#C9604D]",
+    hint: "text-[#C9604D]/80",
   },
   accent: {
-    value: "text-[#B4532F]",
-    hint: "text-[#B4532F]/80",
+    value: "text-[#D97757]",
+    hint: "text-[#D97757]/80",
   },
 };
 

@@ -62,7 +62,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
-            <p className="text-[12px] font-normal tracking-[0.12em] text-[#B4532F]">
+            <p className="text-[12px] font-normal tracking-[0.12em] text-[#D97757]">
               Hit Spotlight
             </p>
             {scopeLabel ? (

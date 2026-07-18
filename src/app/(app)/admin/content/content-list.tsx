@@ -45,13 +45,13 @@ interface ContentListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#3F7A4E]",
-  abnormal: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#B24E3E]",
-  正常: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#3F7A4E]",
-  删稿: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#B24E3E]",
-  限流: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#B24E3E]",
-  投流: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#8F641B]",
-  活动干预: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#8F641B]",
+  normal: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
+  abnormal: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  正常: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
+  删稿: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  限流: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  投流: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  活动干预: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   "未满24h": "border-stone-200 bg-stone-100/50 text-stone-500",
 };
 
@@ -268,17 +268,17 @@ function MiniTimeline({
 
 const workflowStatusClass: Record<string, string> = {
   not_started: "border-stone-200 bg-stone-100/50 text-stone-500",
-  draft: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#8F641B]",
-  confirmed: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#8F641B]",
-  sent: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#3F7A4E]",
-  viewed: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#3F7A4E]",
+  draft: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  confirmed: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  sent: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
+  viewed: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
 };
 
 const readinessClass: Record<string, string> = {
   missing_snapshot: "border-stone-200 bg-stone-100/50 text-stone-500",
-  missing_content: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#B24E3E]",
-  missing_segments: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#8F641B]",
-  ready: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#3F7A4E]",
+  missing_content: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
+  missing_segments: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  ready: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
 };
 
 export function ContentList({
@@ -719,7 +719,7 @@ export function ContentList({
                                 return (
                                   <Button
                                     size="sm"
-                                    className="h-7 rounded-lg bg-[#B4532F] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#A84D2B] active:scale-[0.98] shadow-[0_2px_8px_rgba(217,119,87,0.12)]"
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] shadow-[0_2px_8px_rgba(217,119,87,0.12)]"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
                                     复盘
@@ -792,8 +792,8 @@ export function ContentList({
                                     variant="outline"
                                     className={`text-[12px] -translate-x-1 ${
                                       card.employee_reply_status === "acknowledged"
-                                        ? "border-[#6FAA7D]/15 bg-[#6FAA7D]/[0.04] text-[#3F7A4E] font-medium"
-                                        : "border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#8F641B] font-medium"
+                                        ? "border-[#6FAA7D]/15 bg-[#6FAA7D]/[0.04] text-[#6FAA7D] font-medium"
+                                        : "border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium"
                                     }`}
                                   >
                                     {card.employee_reply_status === "acknowledged" ? "已回传：采纳" : "已回传：申诉"}

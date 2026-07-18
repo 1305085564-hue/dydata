@@ -233,7 +233,7 @@ export function SettingsDrawer({
                 <button
                   onClick={handleSaveSkill}
                   disabled={isSubmitting || !skillName.trim() || !skillPrompt.trim()}
-                  className="flex-1 bg-[#B4532F] text-white hover:bg-[#A84D2B] disabled:opacity-50 font-medium py-2 rounded-lg text-[12px] shadow-sm shadow-[#D97757]/20 transition-all active:scale-[0.98]"
+                  className="flex-1 bg-[#D97757] text-white hover:bg-[#C96442] disabled:opacity-50 font-medium py-2 rounded-lg text-[12px] shadow-sm shadow-[#D97757]/20 transition-all active:scale-[0.98]"
                 >
                   {isSubmitting ? '保存中...' : '确认保存'}
                 </button>

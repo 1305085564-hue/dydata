@@ -270,7 +270,7 @@ export function PremiumSettingsModal({
                     : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
                 )}
               >
-                <User className="size-4 text-[#B4532F]" />
+                <User className="size-4 text-[#D97757]" />
                 个人资料
               </button>
 
@@ -365,8 +365,8 @@ export function PremiumSettingsModal({
                         className={cn(
                           "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-all duration-200 min-w-[80px]",
                           saveSuccess
-                            ? "bg-emerald-700"
-                            : "bg-[#B4532F] hover:bg-[#A84D2B]"
+                            ? "bg-emerald-500"
+                            : "bg-[#D97757] hover:bg-[#C96442]"
                         )}
                       >
                         {isPending ? (
@@ -401,7 +401,7 @@ export function PremiumSettingsModal({
                           主系统所有者 (Platform Owner)
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full border border-[#D97757]/30 bg-[#D97757]/5 px-2.5 py-0.5 text-[12px] font-medium uppercase tracking-wider text-[#B4532F]">
+                      <span className="shrink-0 rounded-full border border-[#D97757]/30 bg-[#D97757]/5 px-2.5 py-0.5 text-[12px] font-medium uppercase tracking-wider text-[#D97757]">
                         {roleLabel(profileRole)}
                       </span>
                     </div>
@@ -518,7 +518,7 @@ export function PremiumSettingsModal({
                         {/* Actions */}
                         <div className="flex items-center gap-3 shrink-0">
                           {isActive ? (
-                            <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-[#D97757]/10 text-[#B4532F] dark:bg-[#D97757]/20 px-2.5 py-1 rounded-lg">
+                            <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-[#D97757]/10 text-[#D97757] dark:bg-[#D97757]/20 px-2.5 py-1 rounded-lg">
                               当前活跃
                             </span>
                           ) : (
@@ -537,7 +537,7 @@ export function PremiumSettingsModal({
                             type="button"
                             onClick={() => handleRenameAccount(acc.id, acc.name)}
                             disabled={isRenamePending}
-                            className="text-[12px] font-medium text-[#B4532F] hover:opacity-85"
+                            className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
                           >
                             {isRenamePending ? "正在重命名..." : "修改账号名"}
                           </button>

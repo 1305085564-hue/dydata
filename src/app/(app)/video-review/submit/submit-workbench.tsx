@@ -222,7 +222,7 @@ export function SubmitWorkbench({
       <div className="lg:col-span-2 space-y-6">
         {/* 归档提示 */}
         <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
-          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#4E7194]" />
+          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
           <div className="leading-relaxed">
             <span className="font-medium text-stone-800">功能已归档：</span>
             该页面仅保留历史提交记录查看，不再接受新的作品凭证上传与提交。如需登记产量，请使用工作台日报入口。
@@ -246,7 +246,7 @@ export function SubmitWorkbench({
             <div className="flex items-baseline gap-1">
               <span className={cn(
                 "text-[18px] font-medium tabular-nums",
-                isTargetMet ? "text-[#3F7A4E]" : "text-stone-900"
+                isTargetMet ? "text-[#6FAA7D]" : "text-stone-900"
               )}>
                 {submittedCount}
               </span>
@@ -259,7 +259,7 @@ export function SubmitWorkbench({
             <div className="flex items-baseline gap-1">
               <span className={cn(
                 "text-[24px] font-medium tabular-nums",
-                gap > 0 ? "text-[#B24E3E]" : "text-[#3F7A4E]"
+                gap > 0 ? "text-[#C9604D]" : "text-[#6FAA7D]"
               )}>
                 {gap}
               </span>
@@ -273,10 +273,10 @@ export function SubmitWorkbench({
           <div className={cn(
             "rounded-xl border p-4 text-[13px] leading-[1.6]",
             hasApprovedExemption
-              ? "bg-[#6FAA7D]/5 border-[#6FAA7D]/20 text-[#3F7A4E] flex items-start gap-2"
+              ? "bg-[#6FAA7D]/5 border-[#6FAA7D]/20 text-[#6FAA7D] flex items-start gap-2"
               : hasPendingExemption
-              ? "bg-[#D99E55]/5 border-[#D99E55]/20 text-[#8F641B] flex items-start gap-2"
-              : "bg-[#C9604D]/5 border-[#C9604D]/20 text-[#B24E3E] flex items-start gap-2"
+              ? "bg-[#D99E55]/5 border-[#D99E55]/20 text-[#D99E55] flex items-start gap-2"
+              : "bg-[#C9604D]/5 border-[#C9604D]/20 text-[#C9604D] flex items-start gap-2"
           )}>
             <AlertTriangle className="size-4 mt-0.5 shrink-0" />
             <div>

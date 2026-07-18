@@ -69,8 +69,8 @@ export function RankBoard({
                   <span
                     className={
                       isViolation
-                        ? "shrink-0 text-[13px] font-medium text-[#B24E3E] tabular-nums"
-                        : "shrink-0 text-[13px] font-medium text-[#3F7A4E] tabular-nums"
+                        ? "shrink-0 text-[13px] font-medium text-[#C9604D] tabular-nums"
+                        : "shrink-0 text-[13px] font-medium text-[#6FAA7D] tabular-nums"
                     }
                   >
                     {item.metricValue}

@@ -261,7 +261,7 @@ function getStatusBadge(enabled: boolean, isDefault?: boolean) {
   }
 
   if (isDefault) {
-    return <Badge className="bg-[#3F7A4E] text-white hover:bg-[#6FAA7D]">默认启用</Badge>;
+    return <Badge className="bg-[#6FAA7D] text-white hover:bg-[#6FAA7D]">默认启用</Badge>;
   }
 
   return <Badge variant="secondary">已启用</Badge>;
@@ -1341,7 +1341,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 className={cn(
                   "group relative inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 pl-3.5 text-[12px] font-medium transition-colors duration-150 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60",
                   isActive
-                    ? "border-[#D97757]/40 bg-white text-[#B4532F]"
+                    ? "border-[#D97757]/40 bg-white text-[#D97757]"
                     : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50 hover:text-stone-900",
                 )}
               >
@@ -1358,7 +1358,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                   <span
                     className={cn(
                       "tabular-nums text-[12px]",
-                      isActive ? "text-[#B4532F]/70" : "text-stone-500",
+                      isActive ? "text-[#D97757]/70" : "text-stone-500",
                     )}
                   >
                     {section.chipCount}
@@ -1393,7 +1393,7 @@ export default function AIRewriteClient({ embedded = false }: AIRewriteClientPro
                 <div className="flex flex-col gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-[13px] font-medium tracking-tight text-stone-900">
-                      {ActiveSectionIcon ? <ActiveSectionIcon className="size-4 text-[#B4532F]" /> : null}
+                      {ActiveSectionIcon ? <ActiveSectionIcon className="size-4 text-[#D97757]" /> : null}
                       <span>{activeSectionMeta.label}</span>
                     </div>
                     <p className="text-[12px] text-stone-500">{activeSectionMeta.summary}</p>

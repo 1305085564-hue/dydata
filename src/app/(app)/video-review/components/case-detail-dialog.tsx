@@ -132,7 +132,7 @@ export function CaseDetailDialog({
                   >
                     {copied ? (
                       <>
-                        <Check className="mr-1 size-3.5 text-[#3F7A4E]" />
+                        <Check className="mr-1 size-3.5 text-[#6FAA7D]" />
                         已复制
                       </>
                     ) : (
@@ -163,7 +163,7 @@ export function CaseDetailDialog({
                   >
                     {copied ? (
                       <>
-                        <Check className="mr-1 size-3.5 text-[#3F7A4E]" />
+                        <Check className="mr-1 size-3.5 text-[#6FAA7D]" />
                         已复制
                       </>
                     ) : (

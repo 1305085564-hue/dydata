@@ -134,7 +134,7 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
           <span
             className={cn(
               "mt-1 block text-[13px] font-medium tabular-nums",
-              caseItem.purpose === "conversion" ? "text-[#3F7A4E]" : "text-stone-700",
+              caseItem.purpose === "conversion" ? "text-[#6FAA7D]" : "text-stone-700",
               accent.muted && "text-stone-500",
             )}
           >
@@ -152,7 +152,7 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
           "inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-all active:translate-y-0",
           "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:group-focus-within:opacity-100",
           copied
-            ? "bg-[#6FAA7D]/10 text-[#3F7A4E] opacity-100"
+            ? "bg-[#6FAA7D]/10 text-[#6FAA7D] opacity-100"
             : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
         )}
         aria-label="复制话术"

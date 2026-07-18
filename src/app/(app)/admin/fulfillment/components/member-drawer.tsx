@@ -255,7 +255,7 @@ export function MemberDrawer({
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
                   <p className="text-[12px] text-stone-500">实发天数</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#3F7A4E]">
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#6FAA7D]">
                     {member.publishedDays}
                   </p>
                 </div>
@@ -267,19 +267,19 @@ export function MemberDrawer({
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
                   <p className="text-[12px] text-stone-500">请假</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#4E7194]">
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#8AA8C7]">
                     {member.leaveDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
                   <p className="text-[12px] text-stone-500">豁免</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#4E7194]">
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#8AA8C7]">
                     {member.waivedDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-stone-200 bg-stone-100/50 p-3">
                   <p className="text-[12px] text-stone-500">缺勤</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#B24E3E]">
+                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#C9604D]">
                     {member.absentDays}
                   </p>
                 </div>
@@ -349,7 +349,7 @@ export function MemberDrawer({
             {/* 员工申诉状态 (新集成) */}
             {dateAppeal && (
               <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 space-y-3">
-                <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#8F641B]">
+                <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#D99E55]">
                   <span className="size-2 rounded-full bg-amber-400" />
                   员工发起申诉
                 </h4>
@@ -386,7 +386,7 @@ export function MemberDrawer({
                 {dateAppeal.status !== "pending" && (
                   <div className="text-[12px] font-medium pt-1 text-stone-700">
                     审批状态：
-                    <span className={dateAppeal.status === "approved" ? "text-[#3F7A4E]" : "text-[#B24E3E]"}>
+                    <span className={dateAppeal.status === "approved" ? "text-[#6FAA7D]" : "text-[#C9604D]"}>
                       {dateAppeal.status === "approved" ? "已同意改判" : "已驳回"}
                     </span>
                     {dateAppeal.handler_name && (

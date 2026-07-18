@@ -130,7 +130,7 @@ function SelectItem({
       </SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator
         render={
-          <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center text-[#B4532F]" />
+          <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center text-[#D97757]" />
         }
       >
         <CheckIcon className="pointer-events-none" />

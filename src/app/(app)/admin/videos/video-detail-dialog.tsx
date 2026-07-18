@@ -248,7 +248,7 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                         href={video.video_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="break-all text-[#B4532F] underline underline-offset-4"
+                        className="break-all text-[#D97757] underline underline-offset-4"
                       >
                         {video.video_url}
                       </a>

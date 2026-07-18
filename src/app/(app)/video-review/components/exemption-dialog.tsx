@@ -100,7 +100,7 @@ export function ExemptionDialog({
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-[18px] font-medium text-stone-900 flex items-center gap-2">
-                <CalendarDays className="size-5 text-[#B4532F]" />
+                <CalendarDays className="size-5 text-[#D97757]" />
                 申请产量豁免
               </DialogTitle>
               <p className="mt-1 text-[13px] text-stone-500 leading-[1.6]">

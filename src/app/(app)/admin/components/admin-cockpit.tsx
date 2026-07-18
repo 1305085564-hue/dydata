@@ -135,7 +135,7 @@ function ApproveButton({ onClick, busy }: { onClick: () => void; busy?: boolean 
         onClick();
       }}
       disabled={busy}
-      className="inline-flex h-7 items-center rounded-lg bg-[#B4532F] px-2.5 text-[12px] text-white transition-colors hover:bg-[#A84D2B] active:translate-y-0 disabled:opacity-50"
+      className="inline-flex h-7 items-center rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white transition-colors hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50"
     >
       批准
     </button>

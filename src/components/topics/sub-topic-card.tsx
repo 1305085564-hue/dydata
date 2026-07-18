@@ -184,7 +184,7 @@ export function SubTopicCard({
       <span
         className={cn(
           "font-semibold tabular-nums",
-          isHigher ? "text-[#B24E3E]" : "text-[#3F7A4E]" // 红涨绿跌
+          isHigher ? "text-[#C9604D]" : "text-[#6FAA7D]" // 红涨绿跌
         )}
       >
         {playCount.toLocaleString()}
@@ -214,7 +214,7 @@ export function SubTopicCard({
         <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             {item.topics && (
-              <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#4E7194]">
+              <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#8AA8C7]">
                 {item.topics.name}
               </span>
             )}
@@ -263,7 +263,7 @@ export function SubTopicCard({
           {/* 认领按钮/状态 */}
           <div className="flex items-center gap-2">
             {isClaimedByMe ? (
-              <span className="inline-flex h-6.5 items-center gap-0.5 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11.5px] font-medium text-[#3F7A4E]">
+              <span className="inline-flex h-6.5 items-center gap-0.5 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11.5px] font-medium text-[#6FAA7D]">
                 <Check className="size-3.5 stroke-[2.5]" />
                 已认领
               </span>
@@ -276,7 +276,7 @@ export function SubTopicCard({
                   "pointer-events-auto relative z-20 flex h-6.5 items-center justify-center rounded-lg border px-2.5 text-[11.5px] font-medium transition-all duration-200",
                   isLimitReached
                     ? "border-stone-200 bg-stone-50 text-stone-400 cursor-not-allowed"
-                    : "border-[#D97757]/20 bg-[#D97757]/5 text-[#B4532F] hover:bg-[#B4532F] hover:text-white"
+                    : "border-[#D97757]/20 bg-[#D97757]/5 text-[#D97757] hover:bg-[#D97757] hover:text-white"
                 )}
                 title={isLimitReached ? "候选选题已达 5 条上限" : "认领此选题"}
               >
@@ -318,7 +318,7 @@ export function SubTopicCard({
                   {best && (
                     <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-2.5">
                       <div className="flex items-center justify-between border-b border-stone-100 pb-1.5">
-                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#B4532F]">
+                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#D97757]">
                           <Award className="size-4" />
                           <span>最好版本</span>
                         </div>
@@ -344,7 +344,7 @@ export function SubTopicCard({
                   {latest && (
                     <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-2.5">
                       <div className="flex items-center justify-between border-b border-stone-100 pb-1.5">
-                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#4E7194]">
+                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#8AA8C7]">
                           <Clock className="size-4" />
                           <span>最近版本</span>
                         </div>

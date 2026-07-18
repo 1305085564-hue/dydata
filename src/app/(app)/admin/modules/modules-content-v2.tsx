@@ -621,7 +621,7 @@ export function AdminModulesContentV2({
                       type="button"
                       aria-label={`删除团队 ${team.name}`}
                       onClick={() => setDeleteTeamTarget(team)}
-                      className="ml-1 rounded-lg p-1 text-stone-500/60 opacity-100 transition-opacity hover:text-[#B24E3E] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                      className="ml-1 rounded-lg p-1 text-stone-500/60 opacity-100 transition-opacity hover:text-[#C9604D] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
@@ -696,7 +696,7 @@ export function AdminModulesContentV2({
                   onClick={handleCreateTeam}
                   aria-label="新建团队"
                   disabled={isPending || !newTeamName.trim()}
-                  className="h-8.5 px-3 bg-[#B4532F] text-white hover:bg-[#A84D2B] active:scale-95 rounded-lg shrink-0"
+                  className="h-8.5 px-3 bg-[#D97757] text-white hover:bg-[#C96442] active:scale-95 rounded-lg shrink-0"
                 >
                   <Plus className="size-3.5" />
                 </Button>
@@ -728,7 +728,7 @@ export function AdminModulesContentV2({
                   <Button
                     onClick={handleCreateGroup}
                     disabled={isPending || !newGroupName.trim() || !newGroupLeaderId}
-                    className="h-8.5 w-full bg-[#B4532F] text-white hover:bg-[#A84D2B] active:scale-95 rounded-lg text-[12px]"
+                    className="h-8.5 w-full bg-[#D97757] text-white hover:bg-[#C96442] active:scale-95 rounded-lg text-[12px]"
                   >
                     创建组
                   </Button>
@@ -773,7 +773,7 @@ export function AdminModulesContentV2({
                       variant="ghost"
                       onClick={() => handleReviewJoinRequest(req.id, "reject")}
                       disabled={isPending}
-                      className="h-7 px-3 text-[12px] text-[#B24E3E] hover:bg-[#C9604D]/5 rounded-lg"
+                      className="h-7 px-3 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/5 rounded-lg"
                     >
                       拒绝
                     </Button>
@@ -880,7 +880,7 @@ export function AdminModulesContentV2({
                           {member.team_name || "未分配团队"}
                         </span>
                         {groupAsLeader ? (
-                          <span className="inline-flex items-center rounded-lg bg-[#8AA8C7]/15 px-2 py-0.5 text-[12px] text-[#4E7194] font-medium">
+                          <span className="inline-flex items-center rounded-lg bg-[#8AA8C7]/15 px-2 py-0.5 text-[12px] text-[#8AA8C7] font-medium">
                             组长 : {groupAsLeader.name}
                           </span>
                         ) : member.group_id ? (
@@ -890,7 +890,7 @@ export function AdminModulesContentV2({
                         ) : null}
                         
                         {member.exempt_type && (
-                          <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#B24E3E] font-medium">
+                          <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
                             已豁免
                           </span>
                         )}
@@ -999,7 +999,7 @@ export function AdminModulesContentV2({
                     disabled={aiSuggestion?.loading}
                     className="h-8 text-[12px] rounded-lg border-stone-200 hover:bg-stone-50 flex items-center gap-1 px-2.5"
                   >
-                    <Sparkles className="size-3 text-[#B4532F] motion-safe:animate-pulse" />
+                    <Sparkles className="size-3 text-[#D97757] motion-safe:animate-pulse" />
                     AI 诊断
                   </Button>
                 )}
@@ -1031,8 +1031,8 @@ export function AdminModulesContentV2({
                         <span className={cn(
                           "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
                           aiSuggestion.status === "critical" 
-                            ? "bg-[#C9604D]/15 text-[#B24E3E]"
-                            : "bg-[#8AA8C7]/15 text-[#4E7194]"
+                            ? "bg-[#C9604D]/15 text-[#C9604D]" 
+                            : "bg-[#8AA8C7]/15 text-[#8AA8C7]"
                         )}>
                           {aiSuggestion.status === "critical" ? "安全警告" : "诊断建议"}
                         </span>
@@ -1174,7 +1174,7 @@ export function AdminModulesContentV2({
                   <Button
                     variant="outline"
                     onClick={() => setRemoveTarget(activeMember)}
-                    className="h-9 w-full rounded-xl border-[#C9604D]/35 hover:border-[#C9604D]/50 text-[#B24E3E] hover:bg-[#C9604D]/5 text-[12px]"
+                    className="h-9 w-full rounded-xl border-[#C9604D]/35 hover:border-[#C9604D]/50 text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
                   >
                     移出并封禁该成员
                   </Button>
@@ -1196,7 +1196,7 @@ export function AdminModulesContentV2({
                   <Button
                     onClick={handleSavePermissions}
                     disabled={isSavingPermissions || !permissionManagerCapabilities.canEditPermissions}
-                    className="h-8.5 px-4 bg-[#B4532F] hover:bg-[#A84D2B] text-white rounded-lg active:scale-95 text-[12px]"
+                    className="h-8.5 px-4 bg-[#D97757] hover:bg-[#C96442] text-white rounded-lg active:scale-95 text-[12px]"
                   >
                     {isSavingPermissions ? "保存中..." : "保存变更"}
                   </Button>
@@ -1271,7 +1271,7 @@ export function AdminModulesContentV2({
             <Button
               onClick={handleResetPassword}
               disabled={isPending}
-              className="h-9 bg-[#B4532F] text-white hover:bg-[#A84D2B] active:scale-95 rounded-lg text-[12px] px-4"
+              className="h-9 bg-[#D97757] text-white hover:bg-[#C96442] active:scale-95 rounded-lg text-[12px] px-4"
             >
               确认重置
             </Button>

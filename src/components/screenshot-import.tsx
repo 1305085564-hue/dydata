@@ -270,7 +270,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
             : "border-stone-200 bg-stone-50 hover:border-[#D97757]/60 hover:bg-stone-100"
         )}
       >
-        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#D97757]/[0.08] text-[#B4532F]">
+        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#D97757]/[0.08] text-[#D97757]">
           <Upload className="size-6" />
         </div>
         <div className="space-y-2">

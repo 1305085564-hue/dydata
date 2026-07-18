@@ -268,7 +268,7 @@ function CardRow({
                       type="button"
                       disabled={submitting || !replyText.trim()}
                       onClick={() => handleSubmitReply("acknowledged")}
-                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-green-700 px-4 text-[12px] font-medium text-white transition-colors hover:bg-green-800 disabled:opacity-50"
+                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-green-600 px-4 text-[12px] font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     >
                       {submitting ? "提交中..." : "认可并采纳"}
                     </button>
@@ -409,7 +409,7 @@ export function FeedbackCardSection() {
           <div className="h-4 w-px bg-[#D97757]" />
           <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
           {data.summary.unread > 0 && (
-            <span className="inline-flex items-center rounded-full bg-[#D97757]/6 px-2 py-0.5 text-[12px] font-medium text-[#B4532F]">
+            <span className="inline-flex items-center rounded-full bg-[#D97757]/6 px-2 py-0.5 text-[12px] font-medium text-[#D97757]">
               {data.summary.unread} 条未读
             </span>
           )}

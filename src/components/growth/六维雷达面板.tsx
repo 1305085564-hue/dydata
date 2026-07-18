@@ -315,7 +315,7 @@ export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedT
             </p>
             <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-stone-500">
               <span>我：</span>
-              <span className="font-medium text-[#B4532F] text-right">
+              <span className="font-medium text-[#D97757] text-right">
                 {formatMetricValue(radar[hoveredIndex].dimension, radar[hoveredIndex].self)}
               </span>
               <span>团队均值：</span>

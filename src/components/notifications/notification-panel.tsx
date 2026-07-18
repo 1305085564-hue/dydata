@@ -124,7 +124,7 @@ function NotificationCard({
                   row.primaryAction?.();
                   onClose();
                 }}
-                className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#B4532F] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#A84D2B]"
+                className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442]"
               >
                 {row.primaryActionLabel}
               </button>

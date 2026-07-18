@@ -176,7 +176,7 @@ function ExemptionModal({
               <p className="text-[13px] leading-[1.7] text-stone-500">
                 点击日历上的漏交、未交或未来日期，只会提交你点中的那些日期。
                 <br />
-                <span className="font-medium text-[#B4532F]">
+                <span className="font-medium text-[#D97757]">
                   注：不会再自动补成连续区间。
                 </span>
               </p>
@@ -225,7 +225,7 @@ function ExemptionModal({
                     className={cn(
                       "flex items-center gap-2 rounded-xl border px-4 py-3 text-[13px]",
                       remindCount > 2
-                        ? "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#8F641B]"
+                        ? "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55]"
                         : "border-stone-200 bg-stone-50 text-stone-500",
                     )}
                   >
@@ -268,7 +268,7 @@ function ExemptionModal({
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending}
-                  className="h-11 bg-[#B4532F] px-8 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#A84D2B] active:translate-y-0"
+                  className="h-11 bg-[#D97757] px-8 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
                 >
                   {isPending ? "提交中..." : "提交申请"}
                 </Button>

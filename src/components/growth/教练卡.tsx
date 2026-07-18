@@ -18,7 +18,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
   return (
     <section className="space-y-4 rounded-2xl border border-stone-200 bg-white p-5">
       <div className="flex items-center gap-2.5">
-        <Lightbulb className="h-5 w-5 stroke-[1.5] text-[#8F641B]" />
+        <Lightbulb className="h-5 w-5 stroke-[1.5] text-[#D99E55]" />
         <div>
           <h3 className="text-[18px] font-medium leading-tight text-stone-900">下一条视频 · 一个建议</h3>
           <p className="mt-1 text-[12px] text-stone-500">样本攒够之前不给诊断，只给团队验证过的写法。</p>

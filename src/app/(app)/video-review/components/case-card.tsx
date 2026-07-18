@@ -92,7 +92,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
             title="复制文案"
           >
             {copied ? (
-              <Check className="size-4 stroke-[2.5] text-[#3F7A4E]" />
+              <Check className="size-4 stroke-[2.5] text-[#6FAA7D]" />
             ) : (
               <Copy className="size-4 stroke-[2]" />
             )}

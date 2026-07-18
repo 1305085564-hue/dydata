@@ -35,7 +35,7 @@ export function SystemLogTicker({ logs }: SystemLogTickerProps) {
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-stone-200 px-4 py-2 text-[12px] flex justify-center overflow-hidden h-9">
       <div className="max-w-[80rem] w-full flex items-center justify-between">
         <div className="flex items-center gap-2 text-stone-500">
-          <Activity className="size-3.5 text-[#B4532F] stroke-[1.5]" />
+          <Activity className="size-3.5 text-[#D97757] stroke-[1.5]" />
           <span className="font-medium">全局动态流</span>
         </div>
 

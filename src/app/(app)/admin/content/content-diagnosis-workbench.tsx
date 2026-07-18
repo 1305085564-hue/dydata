@@ -176,11 +176,11 @@ function parseProblemTags(mainIssues: string): string[] {
 }
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
-  normal: "border-stone-200 bg-stone-50 text-[#3F7A4E]",
-  abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
-  正常: "border-stone-200 bg-stone-50 text-[#3F7A4E]",
-  删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
-  限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#B24E3E]",
+  normal: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
+  abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+  正常: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
+  删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
+  限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#C47A2B]",
   活动干预: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#C47A2B]",
   "未满24h": "border-stone-200 bg-stone-100 text-stone-500",
@@ -678,9 +678,9 @@ export function ContentDiagnosisWorkbench({
                 <span
                   key={chip.label}
                   className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[12px] font-medium tabular-nums ${
-                    chip.tone === "red" && "border-red-200 bg-red-50 text-[#B24E3E]"
+                    chip.tone === "red" && "border-red-200 bg-red-50 text-[#C9604D]"
                   } ${chip.tone === "amber" && "border-amber-200 bg-amber-50 text-[#C47A2B]"} ${
-                    chip.tone === "halve" && "border-green-200 bg-green-50 text-[#3F7A4E]"
+                    chip.tone === "halve" && "border-green-200 bg-green-50 text-[#6FAA7D]"
                   }`}
                 >
                   {chip.label} {chip.value}
@@ -818,7 +818,7 @@ export function ContentDiagnosisWorkbench({
                     </div>
                     <div className="px-3 py-2 text-[12px] text-stone-500 bg-white border-t border-stone-100 flex items-center justify-between">
                       <span>{item.label}</span>
-                      <span className="text-[#B4532F] font-medium opacity-0 group-hover:opacity-100 transition-opacity">查看大图</span>
+                      <span className="text-[#D97757] font-medium opacity-0 group-hover:opacity-100 transition-opacity">查看大图</span>
                     </div>
                   </button>
                 ))}
@@ -869,7 +869,7 @@ export function ContentDiagnosisWorkbench({
                     transition={{ duration: 0.15 }}
                     className="flex items-center gap-1.5"
                   >
-                    <Loader2 className="size-3 animate-spin text-[#8F641B]" />
+                    <Loader2 className="size-3 animate-spin text-[#D99E55]" />
                     <span>正在保存草稿...</span>
                   </motion.div>
                 ) : draftSavedAt ? (
@@ -905,7 +905,7 @@ export function ContentDiagnosisWorkbench({
                       href={video.video_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[12px] text-[#B4532F] font-normal hover:underline normal-case"
+                      className="text-[12px] text-[#D97757] font-normal hover:underline normal-case"
                     >
                       查看抖音原片
                     </a>
@@ -929,7 +929,7 @@ export function ContentDiagnosisWorkbench({
                               : "hover:bg-stone-50 border-l-2 border-transparent"
                         }`}
                       >
-                        <span className={`mt-1 w-4 shrink-0 text-[12px] tabular-nums ${isQuoted ? "text-[#3F7A4E] font-medium" : "text-stone-500"}`}>
+                        <span className={`mt-1 w-4 shrink-0 text-[12px] tabular-nums ${isQuoted ? "text-[#6FAA7D] font-medium" : "text-stone-500"}`}>
                           {idx + 1}
                         </span>
                         <span className={`text-[12px] leading-relaxed flex-1 ${
@@ -945,7 +945,7 @@ export function ContentDiagnosisWorkbench({
                           <span
                             aria-hidden="true"
                             title={isQuoted ? "取消引用" : "引用此句"}
-                            className={`rounded-md p-1 ${isQuoted ? "text-[#3F7A4E] hover:bg-[#6FAA7D]/10" : "text-stone-500 hover:bg-stone-100 hover:text-[#B4532F]"}`}
+                            className={`rounded-md p-1 ${isQuoted ? "text-[#6FAA7D] hover:bg-[#6FAA7D]/10" : "text-stone-500 hover:bg-stone-100 hover:text-[#D97757]"}`}
                           >
                             {isQuoted ? <FileCheck className="size-3.5" /> : <Quote className="size-3" />}
                           </span>
@@ -1086,7 +1086,7 @@ export function ContentDiagnosisWorkbench({
                 {/* Section: AI Analysis Results */}
                 {(isGeneratingAnalysis || analysisResult) && (
                   <div className="space-y-4 rounded-2xl border border-stone-200 border-l-2 border-l-[#D97757] bg-stone-100/50 p-5">
-                    <div className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#B4532F]">
+                    <div className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.12em] text-[#D97757]">
                       <Sparkles className="size-4" />
                       AI 智能诊断
                     </div>
@@ -1132,7 +1132,7 @@ export function ContentDiagnosisWorkbench({
                         <div className="flex flex-wrap gap-2 pt-2">
                           <Button
                             size="sm"
-                            className="h-8 rounded-lg bg-[#B4532F] px-3.5 text-[12px] text-white hover:bg-[#A84D2B]"
+                            className="h-8 rounded-lg bg-[#D97757] px-3.5 text-[12px] text-white hover:bg-[#C96442]"
                             onClick={handleQuoteAnalysisToFeedback}
                           >
                             应用到反馈草稿
@@ -1264,8 +1264,8 @@ export function ContentDiagnosisWorkbench({
                     size="sm"
                     className={`h-8 rounded-lg px-4 text-[12px] text-white transition-all duration-150 active:scale-[0.98] ${
                       showSendConfirm
-                        ? "bg-[#B24E3E] hover:bg-[#B54D3C] animate-shake"
-                        : "bg-[#B4532F] hover:bg-[#A84D2B]"
+                        ? "bg-[#C9604D] hover:bg-[#B54D3C] animate-shake"
+                        : "bg-[#D97757] hover:bg-[#C96442]"
                     }`}
                     onClick={() => {
                       if (!showSendConfirm) {
@@ -1365,7 +1365,7 @@ function MetricBarCard({ label, current, history, team, formatter, lowerIsBetter
       <div className="flex justify-between items-baseline">
         <span className="text-[12px] font-normal text-stone-500">{label}</span>
         <span className={`text-[12px] font-medium ${
-          showWarning ? "text-[#B24E3E]" : showSuccess ? "text-[#3F7A4E]" : "text-stone-700"
+          showWarning ? "text-[#C9604D]" : showSuccess ? "text-[#6FAA7D]" : "text-stone-700"
         }`}>
           {formatter(current)}
         </span>
@@ -1422,7 +1422,7 @@ function SegmentedControl<T extends string>({
             onClick={() => onChange(key)}
             className={`active:scale-[0.98] rounded-lg py-1.5 text-[12px] font-medium transition-all ${
               active
-                ? "border border-stone-200 bg-white text-[#B4532F]"
+                ? "border border-stone-200 bg-white text-[#D97757]"
                 : "text-stone-500 hover:text-stone-700"
             }`}
           >

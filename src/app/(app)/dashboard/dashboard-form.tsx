@@ -542,7 +542,7 @@ export function DashboardForm({
                     type="submit"
                     disabled={isPending}
                     data-success={showSuccess || undefined}
-                    className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#3F7A4E] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
+                    className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
                   >
                     {submitButtonLabel}
                   </Button>
@@ -556,7 +556,7 @@ export function DashboardForm({
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-12 w-full text-[13px] font-medium tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#3F7A4E] data-[success]:border data-[success]:border-stone-200"
+                  className="h-12 w-full text-[13px] font-medium tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200"
                 >
                   {submitButtonLabel}
                 </Button>
@@ -575,7 +575,7 @@ export function DashboardForm({
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#3F7A4E] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
+                  className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
                 >
                   {submitButtonLabel}
                 </Button>

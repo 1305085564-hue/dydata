@@ -780,7 +780,7 @@ export function PermissionManager({
                       className={cn(
                         "h-8 w-8 rounded-xl p-0 text-[12px]",
                         page === pmPage
-                          ? "border-[#D97757]/40 bg-white text-[#B4532F] hover:border-[#D97757]/60 hover:bg-white"
+                          ? "border-[#D97757]/40 bg-white text-[#D97757] hover:border-[#D97757]/60 hover:bg-white"
                           : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50",
                       )}
                     >
@@ -886,9 +886,9 @@ export function PermissionManager({
                           className={cn(
                             "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[12px] font-medium",
                             aiSuggestion.data.status === "critical"
-                              ? "bg-[#C9604D]/10 text-[#B24E3E]"
+                              ? "bg-[#C9604D]/10 text-[#C9604D]"
                               : aiSuggestion.data.status === "warning"
-                                ? "bg-[#D99E55]/10 text-[#8F641B]"
+                                ? "bg-[#D99E55]/10 text-[#D99E55]"
                                 : "bg-stone-100 text-stone-700",
                           )}
                         >
@@ -1135,7 +1135,7 @@ export function PermissionManager({
                           teamName: getTeamLabel(sheetMember.teamName),
                         })
                       }
-                      className="h-9 rounded-xl border-stone-200 text-[12px] text-[#B24E3E] hover:border-[#C9604D]/40 hover:bg-[#C9604D]/5"
+                      className="h-9 rounded-xl border-stone-200 text-[12px] text-[#C9604D] hover:border-[#C9604D]/40 hover:bg-[#C9604D]/5"
                     >
                       移出团队
                     </Button>
@@ -1172,7 +1172,7 @@ export function PermissionManager({
                     取消
                   </Button>
                   <Button
-                    className="h-9 rounded-lg bg-[#B4532F] px-4 text-[12px] text-white transition-[background-color] duration-150 hover:bg-[#A84D2B] active:translate-y-0"
+                    className="h-9 rounded-lg bg-[#D97757] px-4 text-[12px] text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
                     onClick={handleSaveSheet}
                     disabled={
                       !hasDraftChanges || !capabilities.canEditPermissions || actionDisabled
@@ -1257,7 +1257,7 @@ export function PermissionManager({
               取消
             </Button>
             <Button
-              className="rounded-lg bg-[#B4532F] text-white transition-[background-color] duration-150 hover:bg-[#A84D2B] active:translate-y-0"
+              className="rounded-lg bg-[#D97757] text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
               onClick={handleResetPassword}
               disabled={isResettingPassword}
             >
