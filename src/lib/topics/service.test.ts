@@ -5,11 +5,25 @@ import type { DataAccessScope } from "../data-access-scope";
 import {
   buildPoolQueryOptions,
   calculateTopicWorkSummary,
+  filterTopicClaimsByScope,
   loadTopicPool,
   matchTopicGroup,
   rankSuggestedSubTopics,
   validateCandidateClaimLimit,
 } from "./service";
+
+test("选题认领信息只返回当前业务可见成员", () => {
+  const claims = [
+    { id: "c1", user_id: "user-1", status: "candidate" },
+    { id: "c2", user_id: "user-2", status: "scripting" },
+  ];
+  const scope = {
+    kind: "self",
+    visibleUserIds: ["user-1"],
+  } as DataAccessScope;
+
+  assert.deepEqual(filterTopicClaimsByScope(claims, scope), [claims[0]]);
+});
 
 class FakeQuery {
   calls: Array<{ method: string; args: unknown[] }> = [];

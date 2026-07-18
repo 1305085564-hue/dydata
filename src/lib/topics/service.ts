@@ -476,6 +476,13 @@ function applyScope<T extends { user_id?: string | null }>(rows: T[], scope: Dat
   return rows.filter((row) => row.user_id && scope.visibleUserIds.includes(row.user_id));
 }
 
+export function filterTopicClaimsByScope<T extends { user_id?: string | null }>(
+  rows: T[],
+  scope: DataAccessScope
+) {
+  return applyScope(rows, scope);
+}
+
 export async function loadSubTopicDetail(supabase: TopicSupabase, id: string, scope: DataAccessScope): Promise<ApiResult<unknown>> {
   const { data: subTopic, error } = await supabase
     .from("sub_topics")
@@ -550,13 +557,20 @@ export async function loadTopicPool(
   return {
     ok: true,
     value: {
-      items: items.map((item) => ({
-        ...item,
-        summary: summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
-        claimCount: Array.isArray(item.sub_topic_claims)
-          ? (item.sub_topic_claims as Array<{ status?: string }>).filter((claim) => claim.status !== "returned").length
-          : 0,
-      })),
+      items: items.map((item) => {
+        const visibleClaims = Array.isArray(item.sub_topic_claims)
+          ? filterTopicClaimsByScope(
+              item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>,
+              scope
+            )
+          : [];
+        return {
+          ...item,
+          sub_topic_claims: visibleClaims,
+          summary: summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
+          claimCount: visibleClaims.filter((claim) => claim.status !== "returned").length,
+        };
+      }),
       pagination: {
         page: options.page,
         pageSize: options.pageSize,
@@ -598,12 +612,13 @@ export async function loadTopicSummaries(supabase: TopicSupabase, subTopicIds: s
 }
 
 export async function loadActiveTopics(supabase: TopicSupabase, scope: DataAccessScope, limit = 8): Promise<ApiResult<unknown>> {
-  const { data: claims, error: claimsError } = await supabase
+  let claimsQuery = supabase
     .from("sub_topic_claims")
     .select("*, sub_topics(id, title, hook, created_by, topics(id, name), topic_groups(id, name))")
     .neq("status", "returned")
-    .order("claimed_at", { ascending: false })
-    .limit(limit);
+    .order("claimed_at", { ascending: false });
+  if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
+  const { data: claims, error: claimsError } = await claimsQuery.limit(limit);
   if (claimsError) return { ok: false, status: 500, message: claimsError.message };
 
   let worksQuery = supabase
