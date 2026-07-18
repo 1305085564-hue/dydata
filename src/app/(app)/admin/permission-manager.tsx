@@ -155,7 +155,7 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "group grid w-full grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 rounded-xl px-4 py-3 text-left text-[13px]",
+        "group grid w-full grid-cols-[1fr_auto_44px_16px] lg:grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-4 lg:gap-x-6 rounded-xl px-4 py-3 text-left text-[13px]",
         "transition-[background-color,border-color] duration-150",
         "border border-transparent",
         isActive
@@ -167,7 +167,7 @@ function MemberRow({ member, isActive, disabled, onClick }: MemberRowProps) {
       <span className="truncate font-medium text-stone-900" title={member.name}>
         {member.name}
       </span>
-      <span className="truncate text-stone-500" title={currentTeamName}>
+      <span className="hidden lg:inline truncate text-stone-500" title={currentTeamName}>
         {currentTeamName}
       </span>
       <span className="flex justify-center">
@@ -730,16 +730,16 @@ export function PermissionManager({
       ) : (
         <>
           <div className="grid grid-cols-1 gap-x-[146px] px-4 pb-2 text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500 lg:grid-cols-2">
-            <div className="grid grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 border-b border-stone-200 pb-2">
+            <div className="grid grid-cols-[1fr_auto_44px_16px] lg:grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-4 lg:gap-x-6 border-b border-stone-200 pb-2">
               <span>姓名</span>
-              <span>团队</span>
+              <span className="hidden lg:inline">团队</span>
               <span className="text-center">角色</span>
               <span className="text-right">权限</span>
               <span aria-hidden />
             </div>
-            <div className="hidden grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-6 border-b border-stone-200 pb-2 lg:grid">
+            <div className="hidden grid-cols-[1fr_auto_44px_16px] lg:grid-cols-[1.4fr_1.4fr_1fr_44px_16px] items-center gap-x-4 lg:gap-x-6 border-b border-stone-200 pb-2 lg:grid">
               <span>姓名</span>
-              <span>团队</span>
+              <span className="hidden lg:inline">团队</span>
               <span className="text-center">角色</span>
               <span className="text-right">权限</span>
               <span aria-hidden />
