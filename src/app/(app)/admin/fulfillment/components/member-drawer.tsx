@@ -209,7 +209,7 @@ export function MemberDrawer({
   if (!member) {
     return (
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="w-[480px]">
+        <SheetContent side="right" className="w-full max-w-[480px]">
           <SheetHeader>
             <SheetTitle>成员详情</SheetTitle>
           </SheetHeader>
@@ -224,7 +224,7 @@ export function MemberDrawer({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="w-[480px] bg-white">
+        <SheetContent side="right" className="w-full max-w-[480px] bg-white">
           <SheetHeader>
             <div className="flex items-center gap-2">
               <SheetTitle>{member.userName}</SheetTitle>
