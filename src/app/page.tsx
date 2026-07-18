@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import {
   Zap,
   FileText,
@@ -9,8 +7,6 @@ import {
   Clock,
   TrendingUp,
 } from "lucide-react";
-import { hasSupabaseAuthCookie } from "@/lib/supabase-auth-cookie";
-
 export const metadata: Metadata = {
   title: "抖音数据日报平台",
   description: "让团队数据记录、运营分析和成长复盘更高效。",
@@ -19,16 +15,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function HomePage() {
-  const cookieStore = await cookies();
-  const hasAuthCookie = hasSupabaseAuthCookie(
-    cookieStore.getAll(),
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-  );
-
-  // 首页不再为了判断登录状态去请求 Supabase，避免每次首屏都卡在鉴权回源。
-  if (hasAuthCookie) redirect("/dashboard");
-
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-stone-50">
       <main className="mx-auto max-w-7xl px-6 lg:px-12 2xl:max-w-[88rem]">

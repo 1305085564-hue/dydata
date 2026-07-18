@@ -139,8 +139,9 @@ export async function middleware(request: NextRequest) {
 
   // AI 配置中心统一由 ai-config 承载
 
-  // 首页已改为落地页，不再自动跳转；已登录用户通过页面内逻辑跳转
-  // if (pathname === "/") { ... }
+  if (pathname === "/" && hasAuthCookie) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   if (!hasAuthCookie && isProtectedAppRoute) {
     const response = buildLoginRedirect(request, { expired: hasLegacySupabaseAuthCookie });
