@@ -21,7 +21,12 @@ test("team-management route 仅在按需加载时返回团队分组数据", asyn
   };
 
   const response = await buildAdminModuleTeamManagementResponse({
-    requireModuleAccess: async () => ({ ok: true, userId: "owner-1" }),
+    requireModuleAccess: async () => ({
+      ok: true,
+      userId: "owner-1",
+      visibleUserIds: ["owner-1", "member-1", "admin-2"],
+      canViewAllUsers: true,
+    }),
     loadTeamManagement: async () => {
       loaded = true;
       return payload;

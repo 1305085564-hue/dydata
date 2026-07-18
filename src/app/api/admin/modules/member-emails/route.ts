@@ -20,17 +20,21 @@ export async function buildAdminModuleMemberEmailsResponse(
     return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
-  const emails = await deps.loadMemberEmails();
+  const visibleUserIds = access.canViewAllUsers ? null : access.visibleUserIds;
+  const emails = await deps.loadMemberEmails(visibleUserIds);
   if (!emails) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
+  const visibleUserIdSet = visibleUserIds ? new Set(visibleUserIds) : null;
   return NextResponse.json({
     emails: Object.fromEntries(
-      Object.entries(emails).map(([userId, value]) => [
-        userId,
-        value && typeof value === "object" && "email" in value ? value.email : value,
-      ]),
+      Object.entries(emails)
+        .filter(([userId]) => !visibleUserIdSet || visibleUserIdSet.has(userId))
+        .map(([userId, value]) => [
+          userId,
+          value && typeof value === "object" && "email" in value ? value.email : value,
+        ]),
     ),
   });
 }

@@ -208,13 +208,21 @@ async function loadAdminModuleProfiles(
 async function loadAdminModuleMemberHydrationMap(
   adminSupabase: ReturnType<typeof createAdminClient>,
   teams: Array<{ id: string; name: string }>,
+  visibleUserIds: string[] | null = null,
 ): Promise<Record<string, AdminModuleMemberHydration>> {
-  const authUsersResult = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const authUsers = visibleUserIds === null
+    ? (await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 })).data?.users ?? []
+    : (await Promise.all(
+        visibleUserIds.map(async (userId) => {
+          const result = await adminSupabase.auth.admin.getUserById(userId);
+          return result.data?.user ?? null;
+        }),
+      )).filter((user): user is NonNullable<typeof user> => Boolean(user));
   const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
   const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
 
   return Object.fromEntries(
-    (authUsersResult.data?.users ?? []).map((authUser) => {
+    authUsers.map((authUser) => {
       const metadata = authUser.user_metadata ?? {};
       const metadataTeamName =
         typeof metadata.team_name === "string" && metadata.team_name.trim()
@@ -302,12 +310,14 @@ function buildAdminModulesTeamManagementPayload({
   };
 }
 
-export async function loadAdminModuleMemberEmailHydration(): Promise<Record<string, AdminModuleMemberHydration> | null> {
+export async function loadAdminModuleMemberEmailHydration(
+  visibleUserIds: string[] | null,
+): Promise<Record<string, AdminModuleMemberHydration> | null> {
   const perm = await getUserPermissions();
   if (!perm) return null;
   const adminSupabase = createAdminClient();
   const teams = await getTeamOptions();
-  return loadAdminModuleMemberHydrationMap(adminSupabase, teams);
+  return loadAdminModuleMemberHydrationMap(adminSupabase, teams, visibleUserIds);
 }
 
 export async function loadAdminModulesTeamManagementData(): Promise<AdminModulesTeamManagementData | null> {
