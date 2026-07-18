@@ -91,19 +91,31 @@ export function calculateAverageStats<Row>(
   return { avgByKey, dayCountByKey };
 }
 
-async function loadGovernanceAverages(supabase: AdminSupabase, queryDate: string) {
+async function loadGovernanceAverages(
+  supabase: AdminSupabase,
+  queryDate: string,
+  visibleUserIds: string[] | null,
+) {
   const sevenDaysAgo = shiftDateOnly(new Date(), -7);
+  let recentForAvgQuery = supabase
+    .from("daily_reports")
+    .select("submitter, play_count")
+    .gte("report_date", sevenDaysAgo)
+    .neq("report_date", queryDate);
+  let recentAccountAvgQuery = supabase
+    .from("daily_reports")
+    .select("account_id, play_count")
+    .gte("report_date", sevenDaysAgo)
+    .neq("report_date", queryDate);
+
+  if (visibleUserIds !== null) {
+    recentForAvgQuery = recentForAvgQuery.in("user_id", visibleUserIds);
+    recentAccountAvgQuery = recentAccountAvgQuery.in("user_id", visibleUserIds);
+  }
+
   const [{ data: recentForAvg }, { data: recentAccountAvg }] = await Promise.all([
-    supabase
-      .from("daily_reports")
-      .select("submitter, play_count")
-      .gte("report_date", sevenDaysAgo)
-      .neq("report_date", queryDate),
-    supabase
-      .from("daily_reports")
-      .select("account_id, play_count")
-      .gte("report_date", sevenDaysAgo)
-      .neq("report_date", queryDate),
+    recentForAvgQuery,
+    recentAccountAvgQuery,
   ]);
 
   const { avgByKey: avgPlayBySubmitter, dayCountByKey: dayCountBySubmitter } = calculateAverageStats(
@@ -128,23 +140,29 @@ async function loadGovernanceAverages(supabase: AdminSupabase, queryDate: string
 export async function loadAdminGovernanceData({
   supabase,
   searchDate,
+  visibleUserIds,
 }: {
   supabase: AdminSupabase;
   searchDate?: string;
+  visibleUserIds: string[] | null;
 }): Promise<AdminGovernanceData | null> {
   const perm = await getUserPermissions();
   if (!perm) return null;
 
   const queryDate = searchDate || new Date().toISOString().split("T")[0];
+  let fullReportsQuery = supabase
+    .from("daily_reports")
+    .select(
+      "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id, content_direction, presentation_format)"
+    )
+    .eq("report_date", queryDate);
+  if (visibleUserIds !== null) {
+    fullReportsQuery = fullReportsQuery.in("user_id", visibleUserIds);
+  }
+
   const [{ data: fullReports }, averages] = await Promise.all([
-    supabase
-      .from("daily_reports")
-      .select(
-        "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at, accounts(id, name, profile_id, content_direction, presentation_format)"
-      )
-      .eq("report_date", queryDate)
-      .order("uploaded_at", { ascending: false }),
-    loadGovernanceAverages(supabase, queryDate),
+    fullReportsQuery.order("uploaded_at", { ascending: false }),
+    loadGovernanceAverages(supabase, queryDate, visibleUserIds),
   ]);
 
   return {
