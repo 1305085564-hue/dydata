@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -109,7 +110,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
 
           <Button className="h-11" onClick={() => void loadSuggestions()} disabled={loading}>
             <Sparkles className="size-4" />
-            {loading ? "生成中" : "重新生成"}
+            {loading ? "生成中" : data ? "重新生成" : "生成选题建议"}
           </Button>
         </div>
       </div>
@@ -122,6 +123,16 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
         <div className="space-y-3">
           <Skeleton className="h-24 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
+        </div>
+      ) : null}
+
+      {!loading && !error && !data ? (
+        <div className="rounded-2xl border border-stone-200 bg-white py-8">
+          <EmptyState
+            title="选择账号范围和统计范围"
+            description="设置完成后生成选题建议，系统会同时给出参考依据。"
+            action={{ label: "生成选题建议", onClick: () => void loadSuggestions() }}
+          />
         </div>
       ) : null}
 
