@@ -85,13 +85,13 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
       <form action={formAction} className="space-y-5">
         {showExpiredAlert && (
           <div className="flex items-start gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5">
-            <span className="mt-0.5 text-[12px] font-medium text-[#D99E55]">
+            <span className="mt-0.5 text-[12px] font-medium text-[#8F641B] dark:text-[#D99E55]">
               登录会话已过期，请重新登录
             </span>
             <button
               type="button"
               onClick={() => setShowExpiredAlert(false)}
-              className="ml-auto mt-0.5 shrink-0 text-[#D99E55] transition-colors hover:text-[#B88448]"
+              className="ml-auto mt-0.5 shrink-0 text-[#8F641B] transition-colors hover:text-[#6F4D13] dark:text-[#D99E55] dark:hover:text-[#E2B46F]"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />

@@ -19,7 +19,7 @@ export function StatsBar({ stats }: StatsBarProps) {
             {hasPending ? (
               <span className="relative flex h-2 w-2">
                 <span 
-                  className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D99E55] opacity-75"
+                  className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D99E55] opacity-75"
                   style={{ animationDuration: "3s" }}
                 />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D99E55]" />

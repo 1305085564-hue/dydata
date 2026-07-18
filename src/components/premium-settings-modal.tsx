@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import { X, User, Shield, Check, Plus, Settings2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -40,6 +40,8 @@ export function PremiumSettingsModal({
   accounts,
   selectedAccountId,
 }: PremiumSettingsModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [activeTab, setActiveTab] = useState<"profile" | "accounts" | "system">("profile");
   const [editingName, setEditingName] = useState(profileName);
   const [isPending, startTransition] = useTransition();
@@ -55,6 +57,51 @@ export function PremiumSettingsModal({
   // Theme or toggle state
   const [pushEnabled, setPushEnabled] = useState(true);
   const [remindHour, setRemindHour] = useState("11:15");
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const focusFrame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onOpenChange(false);
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getClientRects().length > 0);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [onOpenChange, open]);
 
   if (!open) return null;
 
@@ -175,22 +222,31 @@ export function PremiumSettingsModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => onOpenChange(false)}
+          aria-hidden="true"
           className="absolute inset-0 bg-stone-950/60 backdrop-blur-md"
         />
 
         {/* Modal content */}
         <motion.div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="premium-settings-title"
+          tabIndex={-1}
           initial={{ scale: 0.95, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className={cn(
-            "relative flex h-[520px] w-full max-w-3xl overflow-hidden rounded-2xl border bg-white shadow-2xl",
+            "relative flex h-[min(620px,calc(100dvh-2rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl sm:h-[520px] sm:flex-row",
             "border-stone-300 dark:border-stone-800 dark:bg-stone-950"
           )}
         >
           {/* Close button */}
           <button
+            ref={closeButtonRef}
+            type="button"
+            aria-label="关闭设置"
             onClick={() => onOpenChange(false)}
             className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-stone-200 hover:bg-stone-200 dark:border-stone-800 dark:hover:bg-stone-800 text-stone-500 dark:text-[#E7E5E4] hover:text-stone-700 dark:hover:text-white transition-colors"
           >
@@ -198,16 +254,17 @@ export function PremiumSettingsModal({
           </button>
 
           {/* Left Sidebar Tab Navigation */}
-          <div className="w-52 shrink-0 border-r border-stone-300/60 dark:border-stone-800/80 bg-stone-100/50 dark:bg-stone-900/20 p-4 pt-12 flex flex-col justify-between">
-            <div className="space-y-1">
-              <div className="text-[12px] font-medium uppercase tracking-wider text-stone-500 dark:text-[#E7E5E4] px-3 mb-2">
+          <div className="w-full shrink-0 border-b border-stone-300/60 bg-stone-100/50 p-3 pt-11 dark:border-stone-800/80 dark:bg-stone-900/20 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
+            <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
+              <h2 id="premium-settings-title" className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-stone-500 sm:dark:text-[#E7E5E4]">
                 账号与设置
-              </div>
+              </h2>
               
               <button
+                type="button"
                 onClick={() => setActiveTab("profile")}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-200",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "profile"
                     ? "bg-stone-200 text-stone-900 dark:bg-stone-900 dark:text-white"
                     : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
@@ -218,9 +275,10 @@ export function PremiumSettingsModal({
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab("accounts")}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-200",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "accounts"
                     ? "bg-stone-200 text-stone-900 dark:bg-stone-900 dark:text-white"
                     : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
@@ -231,9 +289,10 @@ export function PremiumSettingsModal({
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab("system")}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-200",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "system"
                     ? "bg-stone-200 text-stone-900 dark:bg-stone-900 dark:text-white"
                     : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
@@ -244,7 +303,7 @@ export function PremiumSettingsModal({
               </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="mt-2 space-y-3 sm:mt-0">
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
@@ -254,14 +313,14 @@ export function PremiumSettingsModal({
                   退出当前系统
                 </button>
               </form>
-              <div className="text-[12px] text-stone-500 dark:text-[#E7E5E4] px-3">
+              <div className="hidden px-3 text-[12px] text-stone-500 dark:text-[#E7E5E4] sm:block">
                 DYData v2.1 • 企业授权
               </div>
             </div>
           </div>
 
           {/* Right Main Details Content */}
-          <div className="flex-1 p-6 pt-12 overflow-y-auto">
+          <div className="min-w-0 flex-1 overflow-y-auto p-4 pt-5 sm:p-6 sm:pt-12">
             
             {/* TAB 1: PROFILE */}
             {activeTab === "profile" && (

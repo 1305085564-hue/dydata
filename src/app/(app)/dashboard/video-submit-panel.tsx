@@ -739,7 +739,7 @@ export function VideoSubmitPanel({
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/30 bg-[#6FAA7D]/5 px-2.5 py-1 text-[12px] font-medium text-[#3F7A4E]">
                         <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D]/60 animate-ping opacity-75" />
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D]/60 motion-safe:animate-ping opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6FAA7D]" />
                         </span>
                         今日数据已提交

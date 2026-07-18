@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setDashboardAccount } from "@/lib/dashboard-store";
@@ -20,7 +20,9 @@ interface WorkspacePickerProps {
 export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const menuId = useId();
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -39,9 +41,19 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
     }
   }, [isOpen]);
 
@@ -61,7 +73,11 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
       onMouseLeave={handleMouseLeave}
     >
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        ref={triggerRef}
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={menuId}
+        onClick={() => setIsOpen((current) => !current)}
         className={cn(
           "flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-stone-900/20 outline-none",
           "text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-[#E7E5E4] active:scale-[0.98]",
@@ -70,7 +86,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0 flex items-center justify-center size-2.5">
-            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-[#6FAA7D]/60 animate-ping" />
+            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-[#6FAA7D]/60 motion-safe:animate-ping" />
             <div className="relative size-2 rounded-full bg-[#6FAA7D]" />
           </div>
           <div className="min-w-0 flex flex-col">
@@ -100,6 +116,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
 
       {isOpen && (
           <div
+            id={menuId}
             className={cn(
               "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute left-0 mt-2 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white p-2 shadow-xl duration-150",
               "border-stone-200/80 dark:border-stone-800/80 dark:bg-stone-950 backdrop-blur-xl bg-white/95 dark:bg-stone-950/95"
@@ -116,7 +133,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
             </div>
 
             {/* List */}
-            <div className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
+            <div role="group" aria-label="工作账号列表" className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
               {accounts.length === 0 ? (
                 <div className="py-6 text-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
                   没有找到匹配的账号
@@ -127,6 +144,8 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                   return (
                     <button
                       key={account.id}
+                      type="button"
+                      aria-pressed={isSelected}
                       onClick={() => {
                         setDashboardAccount(account.id);
                         setIsOpen(false);

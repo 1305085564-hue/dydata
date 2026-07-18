@@ -124,29 +124,28 @@ export function MonthlyMatrix({
     <TooltipProvider delay={100}>
       <div className="space-y-3">
         {/* 折叠头部 */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => setExpanded(!expanded)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              // Ensure key events on inner buttons don't double trigger expansion
-              if ((e.target as HTMLElement).closest("button")) return;
-              e.preventDefault();
-              setExpanded(!expanded);
-            }
-          }}
-          className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 cursor-pointer select-none hover:bg-stone-50/50"
-        >
-          <div className="flex items-center gap-3">
-            <h2 className="text-[18px] font-medium text-stone-900">月度矩阵</h2>
-            <span className="text-[12px] text-stone-500">
-              {year}年{month}月 · {members.length} 人
+        <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-stone-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 select-none hover:bg-stone-50/50">
+          <button
+            type="button"
+            aria-expanded={expanded}
+            aria-controls="monthly-matrix-panel"
+            onClick={() => setExpanded((current) => !current)}
+            className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="text-[18px] font-medium text-stone-900">月度矩阵</span>
+              <span className="truncate text-[12px] text-stone-500">
+                {year}年{month}月 · {members.length} 人
+              </span>
             </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {expanded && (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            {expanded ? (
+              <ChevronUp className="size-4 shrink-0 text-stone-500" />
+            ) : (
+              <ChevronDown className="size-4 shrink-0 text-stone-500" />
+            )}
+          </button>
+          {expanded && (
+            <div className="flex shrink-0 items-center gap-1">
                 <Button variant="ghost" size="icon-xs" aria-label="上一月" onClick={handlePrevMonth}>
                   <ChevronLeft className="size-3.5" />
                 </Button>
@@ -161,19 +160,13 @@ export function MonthlyMatrix({
                     当月
                   </Button>
                 )}
-              </div>
-            )}
-            {expanded ? (
-              <ChevronUp className="size-4 text-stone-500" />
-            ) : (
-              <ChevronDown className="size-4 text-stone-500" />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* 展开内容 */}
         {expanded && (
-          <div className="space-y-3">
+          <div id="monthly-matrix-panel" className="space-y-3">
             <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-white">
               <table className="w-full border-collapse">
                 <thead>

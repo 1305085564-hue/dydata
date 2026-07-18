@@ -882,7 +882,7 @@ export function ContentDiagnosisWorkbench({
                     className="flex items-center gap-1.5 text-stone-400"
                   >
                     <span className="relative flex size-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D] opacity-75"></span>
+                      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D] opacity-75"></span>
                       <span className="relative inline-flex rounded-full size-1.5 bg-[#6FAA7D]"></span>
                     </span>
                     <span>已自动保存</span>
@@ -916,18 +916,12 @@ export function ContentDiagnosisWorkbench({
                     const isHighlighted = highlightedSegmentIndex === idx;
                     const isQuoted = quotedIndices.has(idx);
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={idx}
                         onClick={() => handleQuoteSegment(seg, idx)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleQuoteSegment(seg, idx);
-                          }
-                        }}
-                        className={`group/seg flex items-start gap-3 px-4 py-3 cursor-pointer transition-all text-left ${
+                        aria-pressed={isQuoted}
+                        className={`group/seg flex w-full items-start gap-3 px-4 py-3 cursor-pointer transition-all text-left ${
                           isQuoted 
                             ? "bg-[#6FAA7D]/5 hover:bg-[#6FAA7D]/10 border-l-2 border-[#6FAA7D]" 
                             : isHighlighted 
@@ -938,7 +932,7 @@ export function ContentDiagnosisWorkbench({
                         <span className={`mt-1 w-4 shrink-0 text-[12px] tabular-nums ${isQuoted ? "text-[#3F7A4E] font-medium" : "text-stone-500"}`}>
                           {idx + 1}
                         </span>
-                        <p className={`text-[12px] leading-relaxed flex-1 ${
+                        <span className={`text-[12px] leading-relaxed flex-1 ${
                           isQuoted 
                             ? "text-stone-500 line-through decoration-stone-300/60" 
                             : isHighlighted 
@@ -946,17 +940,17 @@ export function ContentDiagnosisWorkbench({
                               : "text-stone-700"
                         }`}>
                           {seg}
-                        </p>
-                        <div className="opacity-0 group-hover/seg:opacity-100 transition-opacity shrink-0 flex items-center gap-1.5">
-                          <button
-                            type="button"
+                        </span>
+                        <span className="opacity-100 sm:opacity-0 sm:group-hover/seg:opacity-100 sm:group-focus-visible/seg:opacity-100 transition-opacity shrink-0 flex items-center gap-1.5">
+                          <span
+                            aria-hidden="true"
                             title={isQuoted ? "取消引用" : "引用此句"}
                             className={`rounded-md p-1 ${isQuoted ? "text-[#3F7A4E] hover:bg-[#6FAA7D]/10" : "text-stone-500 hover:bg-stone-100 hover:text-[#B4532F]"}`}
                           >
                             {isQuoted ? <FileCheck className="size-3.5" /> : <Quote className="size-3" />}
-                          </button>
-                        </div>
-                      </div>
+                          </span>
+                        </span>
+                      </button>
                     );
                   })}
                 </div>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   UsersRound, Plus, Trash2, ShieldAlert, Sparkles, X,
   Search, KeyRound, Settings, RefreshCw
@@ -14,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
@@ -121,8 +121,6 @@ interface TeamV2ContentProps {
   pendingRequests: PendingRequest[];
   defaultDate: string;
 }
-
-const springTransition = { type: "spring" as const, stiffness: 300, damping: 24 };
 
 type AiSuggestion = {
   label: string;
@@ -623,7 +621,7 @@ export function AdminModulesContentV2({
                       type="button"
                       aria-label={`删除团队 ${team.name}`}
                       onClick={() => setDeleteTeamTarget(team)}
-                      className="ml-1 rounded-lg p-1 text-stone-500/40 opacity-0 transition-opacity hover:text-[#B24E3E] group-hover:opacity-100 focus:opacity-100"
+                      className="ml-1 rounded-lg p-1 text-stone-500/60 opacity-100 transition-opacity hover:text-[#B24E3E] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
@@ -963,19 +961,22 @@ export function AdminModulesContentV2({
       </main>
 
       {/* 右侧属性抽屉 */}
-      <AnimatePresence>
-        {activeMember && (
-          <motion.div
-            initial={{ x: 380, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 380, opacity: 0 }}
-            transition={springTransition}
-            className="fixed top-0 right-0 h-screen w-full max-w-[420px] bg-white border-l border-stone-200 shadow-2xl z-40 flex flex-col justify-between"
-          >
+      <Sheet
+        open={activeMember !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveMemberId(null);
+            setAiSuggestion(null);
+          }
+        }}
+      >
+        <SheetContent side="right" showCloseButton={false} className="h-dvh w-full max-w-[420px] gap-0 p-0 shadow-2xl">
+          {activeMember ? (
+            <>
             <div className="flex items-start justify-between border-b border-stone-200 p-6">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-[18px] font-medium text-stone-900">{activeMember.name}</h3>
+                  <SheetTitle>{activeMember.name}</SheetTitle>
                   <span className={cn(
                     "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[12px] font-medium border",
                     activeMember.role === "admin"
@@ -985,9 +986,9 @@ export function AdminModulesContentV2({
                     {activeMember.role === "admin" ? "管理员" : "组员"}
                   </span>
                 </div>
-                <p className="text-[12px] text-stone-500 leading-none">
+                <SheetDescription className="leading-none">
                   {activeMember.team_name || "未分配团队"} · {activeMember.email || "邮箱同步中"}
-                </p>
+                </SheetDescription>
               </div>
 
               <div className="flex items-center gap-1">
@@ -998,13 +999,14 @@ export function AdminModulesContentV2({
                     disabled={aiSuggestion?.loading}
                     className="h-8 text-[12px] rounded-lg border-stone-200 hover:bg-stone-50 flex items-center gap-1 px-2.5"
                   >
-                    <Sparkles className="size-3 text-[#B4532F] animate-pulse" />
+                    <Sparkles className="size-3 text-[#B4532F] motion-safe:animate-pulse" />
                     AI 诊断
                   </Button>
                 )}
                 <button
                   type="button"
                   onClick={() => { setActiveMemberId(null); setAiSuggestion(null); }}
+                  aria-label="关闭成员权限详情"
                   className="rounded-lg p-1 text-stone-500 hover:bg-stone-100 hover:text-stone-700"
                 >
                   <X className="size-4.5" />
@@ -1201,9 +1203,10 @@ export function AdminModulesContentV2({
                 </div>
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       {/* 所有的模态对话框 */}
       <Dialog

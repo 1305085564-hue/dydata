@@ -74,6 +74,7 @@ export function NavBarClient({
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const wrenchButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!wrenchOpen) return;
@@ -86,6 +87,18 @@ export function NavBarClient({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [wrenchOpen]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setIsMobileMenuOpen(false);
+      mobileMenuButtonRef.current?.focus();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileMenuOpen]);
   const [centerBadges, setCenterBadges] = useState<{
     cockpit: number;
     videos: number;
@@ -280,6 +293,7 @@ export function NavBarClient({
                     <Link
                       key={item.href}
                       href={item.href}
+                      aria-current={active ? "page" : undefined}
                       prefetch={false}
                       onMouseEnter={() => prefetchOnHover(item.href)}
                       className={cn(primaryLinkClass(active), "group")}
@@ -430,7 +444,7 @@ export function NavBarClient({
               >
                 <Bell className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[15deg] group-active:scale-90" />
                 {bellBadgeCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[12px] font-medium text-white ring-2 ring-white tabular-nums animate-pulse">
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[12px] font-medium text-white ring-2 ring-white tabular-nums motion-safe:animate-pulse">
                     {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                   </span>
                 )}
@@ -438,8 +452,11 @@ export function NavBarClient({
 
               {/* Mobile Hamburger Menu Button */}
               <button
+                ref={mobileMenuButtonRef}
                 type="button"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                onClick={() => setIsMobileMenuOpen((current) => !current)}
+                aria-expanded={isMobileMenuOpen}
+                aria-controls="mobile-navigation-menu"
                 className="flex size-8 items-center justify-center rounded-lg text-stone-500 hover:text-stone-700 active:scale-95 md:hidden group"
                 title="导航菜单"
                 aria-label="导航菜单"
@@ -465,6 +482,7 @@ export function NavBarClient({
               <button
                 type="button"
                 onClick={handleSettingsOpen}
+                aria-label={`打开账号与设置：${name}`}
                 className="flex items-center gap-2 text-left rounded-lg focus-visible:ring-2 focus-visible:ring-[#B4532F]/40 focus-visible:ring-offset-1 group"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#4E7194]">
@@ -488,6 +506,7 @@ export function NavBarClient({
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
           <div
+            id="mobile-navigation-menu"
             className={cn(
               "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-lg flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset))] overflow-y-auto duration-200",
               "border-stone-200 backdrop-blur-xl"
@@ -511,6 +530,7 @@ export function NavBarClient({
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                       "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",

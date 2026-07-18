@@ -36,7 +36,7 @@ export function RankBoard({
       <div className="flex items-center gap-2">
         {isViolation ? (
           <span className="relative flex size-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#C9604D]/40 opacity-75" style={{ animationDuration: "3s" }}></span>
+            <span className="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-[#C9604D]/40 opacity-75" style={{ animationDuration: "3s" }}></span>
             <span className="relative inline-flex size-2 rounded-full bg-[#C9604D]"></span>
           </span>
         ) : (

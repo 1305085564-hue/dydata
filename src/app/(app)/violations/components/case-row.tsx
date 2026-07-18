@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useCallback, useState, type MouseEvent } from "react";
 import { Check, Copy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -65,16 +65,6 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
 
   const handleClick = useCallback(() => onOpenDetail(caseItem.id), [caseItem.id, onOpenDetail]);
 
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        handleClick();
-      }
-    },
-    [handleClick],
-  );
-
   const handleCopy = useCallback(
     async (e: MouseEvent) => {
       e.stopPropagation();
@@ -91,38 +81,39 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      onMouseEnter={() => {
-        import("@/components/case-detail-dialog");
-      }}
       className={cn(
-        "group relative flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors duration-150",
-        "hover:bg-stone-100 focus-visible:bg-stone-100 focus-visible:outline-none",
+        "group relative flex items-center gap-2 px-4 py-3 transition-colors duration-150",
+        "hover:bg-stone-100 focus-within:bg-stone-100",
         accent.muted && "bg-stone-50/40",
       )}
     >
-      {/* 左侧状态色点 */}
-      <span
-        className="size-1.5 shrink-0 rounded-full"
-        style={{ backgroundColor: accent.dotColor }}
-        aria-label={accent.label}
-      />
-
-      {/* 主体话术（单行截断） */}
-      <p
-        className={cn(
-          "min-w-0 flex-1 truncate text-[13px] leading-[1.6]",
-          accent.muted ? "text-stone-500" : "text-stone-700",
-        )}
+      <button
+        type="button"
+        onClick={handleClick}
+        onMouseEnter={() => {
+          import("@/components/case-detail-dialog");
+        }}
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
       >
-        {caseItem.script_text}
-      </p>
+        {/* 左侧状态色点 */}
+        <span
+          className="size-1.5 shrink-0 rounded-full"
+          style={{ backgroundColor: accent.dotColor }}
+          aria-label={accent.label}
+        />
 
-      {/* 右侧标签 + 指标 + 复制 */}
-      <div className="flex shrink-0 items-center gap-2">
+        {/* 主体话术（单行截断） */}
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-[13px] leading-[1.6]",
+            accent.muted ? "text-stone-500" : "text-stone-700",
+          )}
+        >
+          {caseItem.script_text}
+        </span>
+
+        {/* 右侧标签 + 指标 */}
+        <span className="flex shrink-0 items-center gap-2">
         {/* 类目 */}
         <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[12px] font-normal text-stone-500 sm:inline-flex">
           {caseItem.category || "其他"}
@@ -136,47 +127,48 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
         ) : null}
 
         {/* 指标（label 上方 / 数字下方，紧凑） */}
-        <div className="min-w-[68px] text-right leading-none">
-          <p className="text-[12px] tracking-[0.12em] text-stone-500">
+        <span className="min-w-[68px] text-right leading-none">
+          <span className="block text-[12px] tracking-[0.12em] text-stone-500">
             {metric.label}
-          </p>
-          <p
+          </span>
+          <span
             className={cn(
-              "mt-1 text-[13px] font-medium tabular-nums",
+              "mt-1 block text-[13px] font-medium tabular-nums",
               caseItem.purpose === "conversion" ? "text-[#3F7A4E]" : "text-stone-700",
               accent.muted && "text-stone-500",
             )}
           >
             {metric.value}
-          </p>
-        </div>
+          </span>
+        </span>
+        </span>
+      </button>
 
-        {/* 复制按钮 */}
-        <button
-          type="button"
-          onClick={handleCopy}
-          className={cn(
-            "inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-all active:translate-y-0",
-            "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-within:opacity-100",
-            copied
-              ? "bg-[#6FAA7D]/10 text-[#3F7A4E] opacity-100"
-              : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
-          )}
-          aria-label="复制话术"
-        >
-          {copied ? (
-            <>
-              <Check className="size-3 stroke-[2]" />
-              已复制
-            </>
-          ) : (
-            <>
-              <Copy className="size-3 stroke-[1.75]" />
-              <span className="hidden sm:inline">复制</span>
-            </>
-          )}
-        </button>
-      </div>
+      {/* 复制按钮 */}
+      <button
+        type="button"
+        onClick={handleCopy}
+        className={cn(
+          "inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[12px] font-medium transition-all active:translate-y-0",
+          "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:group-focus-within:opacity-100",
+          copied
+            ? "bg-[#6FAA7D]/10 text-[#3F7A4E] opacity-100"
+            : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
+        )}
+        aria-label="复制话术"
+      >
+        {copied ? (
+          <>
+            <Check className="size-3 stroke-[2]" />
+            已复制
+          </>
+        ) : (
+          <>
+            <Copy className="size-3 stroke-[1.75]" />
+            <span className="hidden sm:inline">复制</span>
+          </>
+        )}
+      </button>
     </div>
   );
 }

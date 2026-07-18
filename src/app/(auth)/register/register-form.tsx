@@ -32,11 +32,12 @@ const initialState: RegisterFormState = {
 const passwordStrengthConfig: Array<{
   label: string;
   level: PasswordStrengthLevel;
-  color: string;
+  barColor: string;
+  textColor: string;
 }> = [
-  { label: "弱", level: "weak", color: "#D99E55" },
-  { label: "中", level: "medium", color: "#8AA8C7" },
-  { label: "强", level: "strong", color: "#6FAA7D" },
+  { label: "弱", level: "weak", barColor: "#D99E55", textColor: "#8F641B" },
+  { label: "中", level: "medium", barColor: "#8AA8C7", textColor: "#4E7194" },
+  { label: "强", level: "strong", barColor: "#6FAA7D", textColor: "#3F7A4E" },
 ];
 
 function getPasswordStrengthLevel(password: string): PasswordStrengthLevel | null {
@@ -174,7 +175,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
                       className="h-[3px] flex-1 rounded-full bg-stone-100 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       style={
                         idx < passwordStrengthIndex
-                          ? { backgroundColor: activeConfig?.color }
+                          ? { backgroundColor: activeConfig?.barColor }
                           : undefined
                       }
                     />
@@ -182,7 +183,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
                 </div>
                 <span
                   className="text-[12px] font-medium tracking-tight"
-                  style={activeConfig ? { color: activeConfig.color } : undefined}
+                  style={activeConfig ? { color: activeConfig.textColor } : undefined}
                 >
                   {activeConfig?.label ?? ""}
                 </span>

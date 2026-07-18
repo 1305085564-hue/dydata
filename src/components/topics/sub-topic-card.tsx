@@ -77,13 +77,6 @@ interface WorkItem {
   }>;
 }
 
-function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void) {
-  if (event.target !== event.currentTarget) return;
-  if (event.key !== "Enter" && event.key !== " ") return;
-  event.preventDefault();
-  action();
-}
-
 export function SubTopicCard({
   item,
   isLimitReached,
@@ -209,14 +202,16 @@ export function SubTopicCard({
       )}
     >
       {/* 第一级：折叠态基本信息 */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={handleToggleExpand}
-        onKeyDown={(event) => handleKeyboardActivation(event, () => void handleToggleExpand())}
-        className="flex cursor-pointer items-start justify-between gap-4 p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-      >
-        <div className="space-y-1.5 min-w-0 flex-1">
+      <div className="relative flex items-start justify-between gap-4 p-4">
+        <button
+          type="button"
+          aria-expanded={isExpanded}
+          aria-controls={`sub-topic-details-${item.id}`}
+          aria-label={`${isExpanded ? "收起" : "展开"}选题：${item.title}`}
+          onClick={() => void handleToggleExpand()}
+          className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+        />
+        <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             {item.topics && (
               <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#4E7194]">
@@ -245,7 +240,7 @@ export function SubTopicCard({
         </div>
 
         {/* 右侧数据与操作 */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="pointer-events-none relative z-10 flex shrink-0 items-center gap-4">
           <div className="flex items-center gap-4 text-[12px]">
             {averagePlay !== null && (
               <div className="flex flex-col items-end">
@@ -278,7 +273,7 @@ export function SubTopicCard({
                 disabled={isLimitReached || isClaiming}
                 onClick={handleClaim}
                 className={cn(
-                  "flex h-6.5 items-center justify-center rounded-lg border px-2.5 text-[11.5px] font-medium transition-all duration-200",
+                  "pointer-events-auto relative z-20 flex h-6.5 items-center justify-center rounded-lg border px-2.5 text-[11.5px] font-medium transition-all duration-200",
                   isLimitReached
                     ? "border-stone-200 bg-stone-50 text-stone-400 cursor-not-allowed"
                     : "border-[#D97757]/20 bg-[#D97757]/5 text-[#B4532F] hover:bg-[#B4532F] hover:text-white"
@@ -289,7 +284,7 @@ export function SubTopicCard({
               </button>
             )}
 
-            <div className="text-stone-400 hover:text-stone-600 p-0.5">
+            <div className="p-0.5 text-stone-400">
               {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </div>
           </div>
@@ -300,6 +295,7 @@ export function SubTopicCard({
       <AnimatePresence>
         {isExpanded && (
           <motion.div
+            id={`sub-topic-details-${item.id}`}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
