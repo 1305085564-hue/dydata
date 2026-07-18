@@ -37,6 +37,7 @@ yarn-error.log*
 
 # playwright mcp logs
 .playwright-mcp/
+.playwright-cli/
 
 # temp screenshots (Claude Code debug)
 *.png
