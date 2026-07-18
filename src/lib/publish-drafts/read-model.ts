@@ -21,6 +21,9 @@ const defaultPublishDraftReadModelClientFactories: PublishDraftReadModelClientFa
 
 let publishDraftReadModelClientFactories = defaultPublishDraftReadModelClientFactories;
 
+export const PUBLISH_DRAFT_SELECT =
+  "id, submitted_by, account_id, account_name_snapshot, team_id, script_text, screenshot_paths, status, current_round, feedback_history, reviewed_by, reviewed_at, approved_at, is_deleted, created_at, updated_at";
+
 export type ReviewQueuePayload = {
   pending_count: number;
   queue: ReviewQueueItem[];
@@ -205,7 +208,7 @@ export async function loadDraftById(
 }> {
   const { data, error } = await supabase
     .from("publish_drafts")
-    .select("*")
+    .select(PUBLISH_DRAFT_SELECT)
     .eq("id", id)
     .eq("is_deleted", false)
     .maybeSingle();
@@ -235,7 +238,7 @@ export async function loadOwnDrafts(
 }> {
   const { data, error } = await supabase
     .from("publish_drafts")
-    .select("*")
+    .select(PUBLISH_DRAFT_SELECT)
     .eq("submitted_by", userId)
     .eq("is_deleted", false)
     .order("updated_at", { ascending: false });

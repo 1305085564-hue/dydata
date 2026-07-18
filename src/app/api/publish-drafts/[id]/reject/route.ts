@@ -11,7 +11,7 @@ import {
   jsonUnauthorized,
   jsonValidationError,
 } from "@/lib/publish-drafts/api";
-import { loadReviewQueue } from "@/lib/publish-drafts/read-model";
+import { loadReviewQueue, PUBLISH_DRAFT_SELECT } from "@/lib/publish-drafts/read-model";
 import { validateRejectPayload } from "@/lib/publish-drafts/validation";
 
 export async function POST(
@@ -94,7 +94,7 @@ export async function POST(
     .eq("id", id)
     .eq("is_deleted", false)
     .eq("status", "pending")
-    .select("*")
+    .select(PUBLISH_DRAFT_SELECT)
     .single();
 
   if (error || !data) {

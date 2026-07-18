@@ -12,7 +12,7 @@ import {
   jsonUnauthorized,
   jsonValidationError,
 } from "@/lib/publish-drafts/api";
-import { loadDraftById } from "@/lib/publish-drafts/read-model";
+import { loadDraftById, PUBLISH_DRAFT_SELECT } from "@/lib/publish-drafts/read-model";
 import { validateUpdateDraftPayload } from "@/lib/publish-drafts/validation";
 
 export async function GET(
@@ -116,7 +116,7 @@ export async function PATCH(
     .eq("submitted_by", user.id)
     .eq("status", "rejected")
     .eq("is_deleted", false)
-    .select("*")
+    .select(PUBLISH_DRAFT_SELECT)
     .single();
 
   if (error || !data) {

@@ -9,7 +9,7 @@ import {
   jsonUnauthorized,
   jsonValidationError,
 } from "@/lib/publish-drafts/api";
-import { loadOwnDrafts } from "@/lib/publish-drafts/read-model";
+import { loadOwnDrafts, PUBLISH_DRAFT_SELECT } from "@/lib/publish-drafts/read-model";
 import { isDraftStatus } from "@/lib/publish-drafts/types";
 import { validateCreateDraftPayload } from "@/lib/publish-drafts/validation";
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       current_round: 1,
       feedback_history: [],
     })
-    .select("*")
+    .select(PUBLISH_DRAFT_SELECT)
     .single();
 
   if (error || !data) {

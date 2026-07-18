@@ -2,10 +2,17 @@ import test, { afterEach } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  PUBLISH_DRAFT_SELECT,
   loadApprovedList,
   resetPublishDraftReadModelClientsForTest,
   setPublishDraftReadModelClientsForTest,
 } from "./read-model";
+
+test("稿件接口只查询固定响应字段", () => {
+  assert.doesNotMatch(PUBLISH_DRAFT_SELECT, /\*/);
+  assert.match(PUBLISH_DRAFT_SELECT, /\bsubmitted_by\b/);
+  assert.match(PUBLISH_DRAFT_SELECT, /\bfeedback_history\b/);
+});
 
 afterEach(() => {
   resetPublishDraftReadModelClientsForTest();
