@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { GripVertical, Plus, Pencil, Trash2, Server, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Star } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -196,25 +196,14 @@ export default function RewriteClient() {
   const [routeModal, setRouteModal] = useState<{ open: boolean; modelViewId: string | null; data: RouteDraft | null }>({ open: false, modelViewId: null, data: null });
   const [deleteTarget, setDeleteTarget] = useState<{ open: boolean; id: string | null; entity: "rewrite_model_view" | "rewrite_model_route" | null; title: string }>({ open: false, id: null, entity: null, title: "" });
 
-  const [activeViewId, setActiveViewId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (bundle && bundle.rewriteModelViews.length > 0 && !activeViewId) {
-      const sorted = [...bundle.rewriteModelViews].sort((a, b) => a.sort_order - b.sort_order);
-      setActiveViewId(sorted[0].id);
+  const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
+  const activeViewId = useMemo(() => {
+    if (!bundle) return selectedViewId;
+    if (selectedViewId && bundle.rewriteModelViews.some((view) => view.id === selectedViewId)) {
+      return selectedViewId;
     }
-  }, [bundle, activeViewId]);
-
-  useEffect(() => {
-    if (!bundle) return;
-    if (activeViewId) {
-      const exists = bundle.rewriteModelViews.some(v => v.id === activeViewId);
-      if (!exists && bundle.rewriteModelViews.length > 0) {
-        const sorted = [...bundle.rewriteModelViews].sort((a, b) => a.sort_order - b.sort_order);
-        setActiveViewId(sorted[0].id);
-      }
-    }
-  }, [bundle, activeViewId]);
+    return [...bundle.rewriteModelViews].sort((left, right) => left.sort_order - right.sort_order)[0]?.id ?? null;
+  }, [bundle, selectedViewId]);
 
   const modelOptions = useMemo(() => {
     if (!bundle) return [];
@@ -290,8 +279,9 @@ export default function RewriteClient() {
                 >
                   <button
                     type="button"
+                    aria-current={isViewActive ? "true" : undefined}
                     className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                    onClick={() => setActiveViewId(v.id)}
+                    onClick={() => setSelectedViewId(v.id)}
                   >
                     <span className="truncate">{v.label}</span>
                     <Badge variant="outline" className={cn("font-mono text-[12px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-stone-700 border-stone-300" : "text-stone-500 border-stone-200")}>{v.key}</Badge>
@@ -302,7 +292,7 @@ export default function RewriteClient() {
                       <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm shrink-0">停用</span>
                     )}
                   </button>
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
+                  <div className="flex shrink-0 items-center gap-1 pr-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -415,10 +405,10 @@ export default function RewriteClient() {
                               </TableCell>
                               <TableCell className="py-1 text-right pr-3">
                                 <div className="flex items-center justify-end relative h-7">
-                                  <div className="absolute right-1.5 opacity-30 group-hover:opacity-0 transition-opacity">
+                                  <div className="absolute right-1.5 opacity-0 transition-opacity sm:opacity-30 sm:group-hover:opacity-0 sm:group-focus-within:opacity-0">
                                     <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
                                   </div>
-                                  <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                                  <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                                     <Button
                                       variant="ghost"
                                       size="icon"

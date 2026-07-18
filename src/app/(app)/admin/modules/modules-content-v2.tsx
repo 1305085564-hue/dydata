@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useTransition, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  UsersRound, Plus, Trash2, ShieldAlert, Sparkles, X, 
-  ChevronRight, Search, KeyRound, UserMinus, Settings, 
-  CalendarDays, Lock, Clock, PencilLine, FilePenLine, RefreshCw
+  UsersRound, Plus, Trash2, ShieldAlert, Sparkles, X,
+  Search, KeyRound, Settings, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
-import { hasPermission } from "@/lib/permission-utils";
 
 import { 
   createTeam, 
@@ -35,8 +33,7 @@ import {
   resetMemberPassword, 
   updateMemberTeam, 
   removeMember,
-  createGroup, 
-  updateGroup, 
+  createGroup,
   assignMembersToGroup, 
   removeMemberFromGroup 
 } from "../actions";
@@ -49,7 +46,8 @@ import {
 import { ExemptionDialog } from "../豁免弹窗";
 
 import type { BusinessRole } from "@/lib/business-role";
-import type { PermissionKey, Permissions, UserRole } from "@/types";
+import type { ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
+import type { ExemptionType } from "@/lib/豁免";
 import { 
   ADMIN_PERMISSION_KEYS, 
   AI_PERMISSION_KEYS, 
@@ -117,27 +115,47 @@ interface TeamV2ContentProps {
     };
     teams: TeamOption[];
     groups: GroupOption[];
-    profiles: any[];
-    leaderCandidates: any[];
+    profiles: unknown[];
+    leaderCandidates: unknown[];
   };
   pendingRequests: PendingRequest[];
   defaultDate: string;
 }
 
-const activeScale = { active: { scale: 0.98 } };
 const springTransition = { type: "spring" as const, stiffness: 300, damping: 24 };
+
+type AiSuggestion = {
+  label: string;
+  description: string;
+  action: {
+    type: "execute_tool" | "navigate";
+    toolName?: string;
+    toolArgs?: Record<string, unknown>;
+    href?: string;
+  };
+};
+
+function normalizeUserStatus(value: string | null | undefined): UserStatus {
+  return value === "exempt" ? "exempt" : "active";
+}
+
+function normalizeExemptionType(value: string | null | undefined): ExemptionType | null {
+  return value === "permanent" || value === "temporary" ? value : null;
+}
+
+function normalizeExemptionCategory(value: string | null | undefined): ExemptionCategory | null {
+  return value === "waive" || value === "leave" ? value : null;
+}
 
 export function AdminModulesContentV2({
   currentUserId,
   currentUserRole,
   currentUserBusinessRole,
-  currentUserPermissions,
   permissionManagerCapabilities,
   allProfiles,
   teams: initialTeams,
   teamManagement,
   pendingRequests: initialPendingRequests,
-  defaultDate
 }: TeamV2ContentProps) {
   const router = useRouter();
   const [localTeams, setLocalTeams] = useState<TeamOption[]>(initialTeams);
@@ -165,16 +183,7 @@ export function AdminModulesContentV2({
   const [aiSuggestion, setAiSuggestion] = useState<{
     status: "normal" | "warning" | "critical";
     summary: string;
-    suggestions: Array<{
-      label: string;
-      description: string;
-      action: {
-        type: "execute_tool" | "navigate";
-        toolName?: string;
-        toolArgs?: Record<string, unknown>;
-        href?: string;
-      };
-    }>;
+    suggestions: AiSuggestion[];
     loading: boolean;
   } | null>(null);
   const [executingAiKey, setExecutingAiKey] = useState<string | null>(null);
@@ -201,7 +210,7 @@ export function AdminModulesContentV2({
             }))
           );
         }
-      } catch (e) {
+      } catch {
       }
     }
     void fetchEmails();
@@ -506,13 +515,13 @@ export function AdminModulesContentV2({
         suggestions: payload.suggestions || [],
         loading: false
       });
-    } catch (e) {
+    } catch {
       feedbackToast.error("获取 AI 建议失败");
       setAiSuggestion(null);
     }
   };
 
-  const handleExecuteAiSuggestion = async (suggestion: any, key: string) => {
+  const handleExecuteAiSuggestion = async (suggestion: AiSuggestion, key: string) => {
     if (executingAiKey) return;
     
     if (suggestion.action.type === "navigate" && suggestion.action.href) {
@@ -543,7 +552,7 @@ export function AdminModulesContentV2({
         void handleFetchAiSuggestion();
         router.refresh();
       }
-    } catch (e) {
+    } catch {
       feedbackToast.error("执行超时或网络异常");
     } finally {
       setExecutingAiKey(null);
@@ -597,6 +606,7 @@ export function AdminModulesContentV2({
                 >
                   <button
                     type="button"
+                    aria-current={isTeamSelected && !selectedGroupId ? "true" : undefined}
                     className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
                     onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
                   >
@@ -835,6 +845,7 @@ export function AdminModulesContentV2({
                   >
                     <button
                       type="button"
+                      aria-current={isCurrentMemberActive ? "true" : undefined}
                       className="space-y-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
                       onClick={() => handleSelectMember(member)}
                     >
@@ -888,7 +899,7 @@ export function AdminModulesContentV2({
                       </div>
                     </button>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+                    <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 opacity-100 transition-opacity pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto">
                       <div className="flex items-center gap-1.5">
                         {isOwner && member.id !== currentUserId && (
                           <select
@@ -1294,12 +1305,12 @@ export function AdminModulesContentV2({
           return target ? {
             id: target.id,
             name: target.name,
-            status: (target.status as any) || "active",
-            exempt_type: target.exempt_type as any || null,
+            status: normalizeUserStatus(target.status),
+            exempt_type: normalizeExemptionType(target.exempt_type),
             exempt_start_date: target.exempt_start_date || null,
             exempt_end_date: target.exempt_end_date || null,
             exempt_reason: target.exempt_reason || null,
-            exemption_category: target.exemption_category as any || null
+            exemption_category: normalizeExemptionCategory(target.exemption_category)
           } : null;
         })() : null}
         onOpenChange={(o) => {

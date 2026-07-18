@@ -24,7 +24,8 @@ export async function getUserSubmissions(targetUserId: string, date: string) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error(error.message || "读取作品提交失败");
+    console.error("[video-review] failed to load user submissions", error);
+    throw new Error("读取作品提交失败");
   }
 
   const rows = data ?? [];

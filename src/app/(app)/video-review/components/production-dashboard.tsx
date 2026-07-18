@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { 
   Calendar, 
   Users, 
-  CheckCircle2, 
   AlertCircle, 
   ArrowRight, 
   FileText,
@@ -36,6 +35,19 @@ interface TeamOrGroup {
   name: string;
 }
 
+interface SubmissionScreenshotItem {
+  path: string;
+  signed_url: string | null;
+}
+
+interface UserSubmission {
+  id: string;
+  content_text: string | null;
+  note: string | null;
+  created_at: string;
+  screenshot_items: SubmissionScreenshotItem[];
+}
+
 interface ProductionDashboardProps {
   initialData: DashboardRecord[];
   teams: TeamOrGroup[];
@@ -63,7 +75,7 @@ export function ProductionDashboard({
 
   // Dialog / Modal state
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
-  const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
+  const [userSubmissions, setUserSubmissions] = useState<UserSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [lightbox, setLightbox] = useState<{ paths: string[]; index: number } | null>(null);
 
@@ -99,9 +111,9 @@ export function ProductionDashboard({
     try {
       const data = await getUserSubmissions(user_id, date);
       setUserSubmissions(data);
-    } catch (err: any) {
+    } catch {
       toast.error("获取提交记录失败", {
-        description: err.message || "未知错误",
+        description: "请稍后重试。",
       });
       setSelectedUser(null);
     } finally {
@@ -383,7 +395,7 @@ export function ProductionDashboard({
                   {/* 截图展示 */}
                   {sub.screenshot_items && sub.screenshot_items.length > 0 && (
                     <div className="grid grid-cols-3 gap-2">
-                      {sub.screenshot_items.map((item: any, sIdx: number) => (
+                      {sub.screenshot_items.map((item, sIdx) => (
                         <button
                           type="button"
                           key={sIdx}

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { AiProvider, AiProviderKey, AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
-import { ChevronDown, ChevronRight, Server, Key as KeyIcon, Box, Plus, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ProviderDialog, KeyDialog, ModelDialog } from "./providers-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -14,33 +13,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 export default function ProvidersClient() {
   const { bundle, isLoading, mutateEntity } = useAiConfig();
   const [expandedProviders, setExpandedProviders] = useState<Record<string, boolean>>({});
-  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
 
   type ActiveNode = { type: "provider" | "key"; id: string };
-  const [activeNode, setActiveNode] = useState<ActiveNode | null>(null);
-
-  useEffect(() => {
-    if (bundle && bundle.providers.length > 0 && !activeNode) {
-      setActiveNode({ type: "provider", id: bundle.providers[0].id });
+  const [selectedNode, setSelectedNode] = useState<ActiveNode | null>(null);
+  const activeNode = useMemo<ActiveNode | null>(() => {
+    if (!bundle) return selectedNode;
+    if (selectedNode?.type === "provider" && bundle.providers.some((provider) => provider.id === selectedNode.id)) {
+      return selectedNode;
     }
-  }, [bundle, activeNode]);
-
-  useEffect(() => {
-    if (!bundle) return;
-    if (activeNode) {
-      if (activeNode.type === "provider") {
-        const exists = bundle.providers.some(p => p.id === activeNode.id);
-        if (!exists && bundle.providers.length > 0) {
-          setActiveNode({ type: "provider", id: bundle.providers[0].id });
-        }
-      } else if (activeNode.type === "key") {
-        const exists = bundle.keys.some(k => k.id === activeNode.id);
-        if (!exists && bundle.providers.length > 0) {
-          setActiveNode({ type: "provider", id: bundle.providers[0].id });
-        }
-      }
+    if (selectedNode?.type === "key" && bundle.keys.some((key) => key.id === selectedNode.id)) {
+      return selectedNode;
     }
-  }, [bundle, activeNode]);
+    const firstProvider = bundle.providers[0];
+    return firstProvider ? { type: "provider", id: firstProvider.id } : null;
+  }, [bundle, selectedNode]);
+  const [healthCheckTime] = useState(() => Date.now());
 
   const [providerModal, setProviderModal] = useState<{ open: boolean; data: Partial<AiProvider> | null }>({ open: false, data: null });
   const [keyModal, setKeyModal] = useState<{ open: boolean; providerId: string | null; data: Partial<AiProviderKey> | null }>({ open: false, providerId: null, data: null });
@@ -58,12 +45,14 @@ export default function ProvidersClient() {
     );
   }
 
-  const toggleProvider = (id: string) => setExpandedProviders((prev) => ({ ...prev, [id]: !prev[id] }));
-  const toggleKey = (id: string) => setExpandedKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleProvider = (id: string) => setExpandedProviders((prev) => ({
+    ...prev,
+    [id]: !(prev[id] !== false),
+  }));
 
   const isKeyHealthy = (key: AiProviderKey) => {
     if (!key.is_enabled) return false;
-    if (key.unhealthy_until && new Date(key.unhealthy_until).getTime() > Date.now()) {
+    if (key.unhealthy_until && new Date(key.unhealthy_until).getTime() > healthCheckTime) {
       return false;
     }
     return true;
@@ -143,8 +132,9 @@ export default function ProvidersClient() {
                     </button>
                     <button
                       type="button"
+                      aria-current={isProviderActive ? "true" : undefined}
                       className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                      onClick={() => setActiveNode({ type: "provider", id: p.id })}
+                      onClick={() => setSelectedNode({ type: "provider", id: p.id })}
                     >
                       <span className="truncate">{p.name}</span>
                       {!p.is_enabled && (
@@ -152,7 +142,7 @@ export default function ProvidersClient() {
                       )}
                     </button>
                   </div>
-                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
+                  <div className="flex shrink-0 items-center gap-1 pr-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -190,14 +180,15 @@ export default function ProvidersClient() {
                           >
                             <button
                               type="button"
+                              aria-current={isKeyActive ? "true" : undefined}
                               className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                              onClick={() => setActiveNode({ type: "key", id: key.id })}
+                              onClick={() => setSelectedNode({ type: "key", id: key.id })}
                             >
                               {/* 极简健康状态点 */}
                               <span className={cn("size-1.5 rounded-full shrink-0", healthy ? "bg-[#6FAA7D]" : "bg-[#C9604D]")} />
                               <span className="truncate">{key.label}</span>
                             </button>
-                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
+                            <div className="flex shrink-0 items-center gap-1 pr-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -306,10 +297,10 @@ export default function ProvidersClient() {
                               </TableCell>
                               <TableCell className="py-1 text-right pr-3">
                                 <div className="flex items-center justify-end relative h-7">
-                                  <div className="absolute right-1.5 opacity-30 group-hover:opacity-0 transition-opacity">
+                                  <div className="absolute right-1.5 opacity-0 transition-opacity sm:opacity-30 sm:group-hover:opacity-0 sm:group-focus-within:opacity-0">
                                     <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
                                   </div>
-                                  <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                                  <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -442,10 +433,10 @@ export default function ProvidersClient() {
                             </TableCell>
                             <TableCell className="py-1 text-right pr-3">
                               <div className="flex items-center justify-end relative h-7">
-                                <div className="absolute right-1.5 opacity-30 group-hover:opacity-0 transition-opacity">
+                                <div className="absolute right-1.5 opacity-0 transition-opacity sm:opacity-30 sm:group-hover:opacity-0 sm:group-focus-within:opacity-0">
                                   <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
                                 </div>
-                                <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                                <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                                   <Button
                                     variant="ghost"
                                     size="icon"
