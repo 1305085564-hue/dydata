@@ -21,7 +21,16 @@ export const triggerGlobalTopicCreate = (detail?: { title?: string }) => {
   }
 };
 
-export function GlobalTopicCreate() {
+export interface GlobalTopicCreateRequest {
+  id: number;
+  title?: string;
+}
+
+interface GlobalTopicCreateProps {
+  initialRequest?: GlobalTopicCreateRequest;
+}
+
+export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
@@ -44,6 +53,12 @@ export function GlobalTopicCreate() {
     window.addEventListener("open-global-topic-create", handleOpen);
     return () => window.removeEventListener("open-global-topic-create", handleOpen);
   }, []);
+
+  useEffect(() => {
+    if (!initialRequest) return;
+    setInputText(initialRequest.title ?? "");
+    setIsOpen(true);
+  }, [initialRequest]);
 
   // 当弹窗打开且未加载母题时，拉取母题列表
   useEffect(() => {

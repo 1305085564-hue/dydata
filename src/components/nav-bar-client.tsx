@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState, useRef, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, Wrench, Zap, UsersRound, Settings, Sparkles } from "lucide-react";
 import { getNavItems } from "@/components/nav-bar-items";
 import { WorkspacePicker } from "@/components/workspace-picker";
-import { UnifiedCommandHub } from "@/components/unified-command-hub";
-import { PremiumSettingsModal } from "@/components/premium-settings-modal";
 import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions } from "@/types";
@@ -19,6 +18,16 @@ import {
   subscribeDashboardStore,
 } from "@/lib/dashboard-store";
 import { getCommandHubDefaultTab } from "@/lib/exemption-approvals";
+
+const UnifiedCommandHub = dynamic(
+  () => import("@/components/unified-command-hub").then((module) => module.UnifiedCommandHub),
+  { ssr: false },
+);
+
+const PremiumSettingsModal = dynamic(
+  () => import("@/components/premium-settings-modal").then((module) => module.PremiumSettingsModal),
+  { ssr: false },
+);
 
 interface Account {
   id: string;
@@ -58,8 +67,10 @@ export function NavBarClient({
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [commandHubOpen, setCommandHubOpen] = useState(false);
+  const [commandHubLoaded, setCommandHubLoaded] = useState(false);
   const [commandHubTab, setCommandHubTab] = useState<"todos" | "approvals" | "notifications">("todos");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [wrenchOpen, setWrenchOpen] = useState(false);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -181,6 +192,7 @@ export function NavBarClient({
   );
 
   const handleCommandHubOpen = useCallback(async () => {
+    setCommandHubLoaded(true);
     let nextApprovalCount = approvalBadgeCount;
     const localTodoCount = allNotifications.filter(
       (row) => isLocalNotification(row) && row.category === "todo" && row.status === "unread",
@@ -212,6 +224,11 @@ export function NavBarClient({
     );
     setCommandHubOpen(true);
   }, [activate, activeTodos.length, allNotifications, approvalBadgeCount, isAdmin, loadPendingApprovalsCount]);
+
+  const handleSettingsOpen = useCallback(() => {
+    setSettingsLoaded(true);
+    setSettingsOpen(true);
+  }, []);
 
    const primaryLinkClass = (active: boolean) =>
     cn(
@@ -449,7 +466,7 @@ export function NavBarClient({
               <div className="h-5 w-px bg-stone-200" />
               <button
                 type="button"
-                onClick={() => setSettingsOpen(true)}
+                onClick={handleSettingsOpen}
                 className="flex items-center gap-2 text-left rounded-lg focus:outline-none group"
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#8AA8C7]">
@@ -527,24 +544,28 @@ export function NavBarClient({
       </AnimatePresence>
 
       {/* Global Unified Hubs Drawer and Modals */}
-      <UnifiedCommandHub
-        open={commandHubOpen}
-        onOpenChange={setCommandHubOpen}
-        activeTab={commandHubTab}
-        onTabChange={setCommandHubTab}
-        isAdmin={isAdmin}
-        pendingApprovalsCount={approvalBadgeCount}
-        onPendingCountChange={setPendingApprovalsCount}
-      />
+      {commandHubLoaded && (
+        <UnifiedCommandHub
+          open={commandHubOpen}
+          onOpenChange={setCommandHubOpen}
+          activeTab={commandHubTab}
+          onTabChange={setCommandHubTab}
+          isAdmin={isAdmin}
+          pendingApprovalsCount={approvalBadgeCount}
+          onPendingCountChange={setPendingApprovalsCount}
+        />
+      )}
 
-      <PremiumSettingsModal
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        profileName={name}
-        profileRole={role}
-        accounts={accounts}
-        selectedAccountId={selectedAccountId}
-      />
+      {settingsLoaded && (
+        <PremiumSettingsModal
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          profileName={name}
+          profileRole={role}
+          accounts={accounts}
+          selectedAccountId={selectedAccountId}
+        />
+      )}
     </>
   );
 }
