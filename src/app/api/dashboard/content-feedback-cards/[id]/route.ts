@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
 import type { ContentFeedbackCard } from "@/types";
+import { scopeFeedbackCardMutation } from "../access";
 
 type PatchBody = {
   action?: "viewed";
@@ -155,13 +156,13 @@ export async function PATCH(
     });
   }
 
-  const { data: updated, error: updateError } = await supabase
+  const updateQuery = supabase
     .from("content_feedback_cards")
     .update({
       card_status: "viewed",
       viewed_at: new Date().toISOString(),
-    })
-    .eq("id", id)
+    });
+  const { data: updated, error: updateError } = await scopeFeedbackCardMutation(updateQuery, id, user.id)
     .select(CONTENT_FEEDBACK_CARD_SELECT)
     .single();
 
