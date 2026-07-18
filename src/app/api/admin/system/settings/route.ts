@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import {
   readJsonBody,
   requireAdminServiceClient,
-  requireOwnerOrAdminRole,
+  requireOwnerOrTeamAdminRole,
 } from "../../fulfillment/_shared";
 
 export const FEISHU_FULFILLMENT_REMINDER_KEY = "feishu_fulfillment_reminder_enabled";
@@ -42,12 +42,12 @@ export function parseSystemSettingsPayload(
 
 type SettingsRouteDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
-  requireOwnerOrAdminRole: typeof requireOwnerOrAdminRole;
+  requireOwnerOrTeamAdminRole: typeof requireOwnerOrTeamAdminRole;
 };
 
 const defaultDeps: SettingsRouteDeps = {
   requireAdminServiceClient,
-  requireOwnerOrAdminRole,
+  requireOwnerOrTeamAdminRole,
 };
 
 function isMissingSystemSettingsTableError(error: { code?: string | null; message?: string | null } | null | undefined) {
@@ -57,7 +57,7 @@ function isMissingSystemSettingsTableError(error: { code?: string | null; messag
 
 export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDeps = defaultDeps) {
   const auth = await deps.requireAdminServiceClient();
-  const forbidden = deps.requireOwnerOrAdminRole(auth);
+  const forbidden = deps.requireOwnerOrTeamAdminRole(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
 
@@ -103,7 +103,7 @@ export async function buildAdminSystemSettingsPostResponse(
   if ("response" in payload) return payload.response;
 
   const auth = await deps.requireAdminServiceClient();
-  const forbidden = deps.requireOwnerOrAdminRole(auth);
+  const forbidden = deps.requireOwnerOrTeamAdminRole(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
 

@@ -33,9 +33,9 @@ test("admin system settings GET 返回当前履约飞书开关", async () => {
             }),
           }),
         },
-        actor: { role: "owner", userId: "owner-1" },
+        actor: { role: "owner", businessRole: "owner", userId: "owner-1" },
       }) as never,
-    requireOwnerOrAdminRole: () => null,
+    requireOwnerOrTeamAdminRole: () => null,
   });
 
   assert.ok(response);
@@ -78,9 +78,9 @@ test("admin system settings GET 在 system_settings 缺表时回退 ai_feature_c
             };
           },
         },
-        actor: { role: "owner", userId: "owner-1" },
+        actor: { role: "owner", businessRole: "owner", userId: "owner-1" },
       }) as never,
-    requireOwnerOrAdminRole: () => null,
+    requireOwnerOrTeamAdminRole: () => null,
   });
 
   assert.ok(response);
@@ -109,9 +109,9 @@ test("admin system settings POST 写入开关", async () => {
               },
             }),
           },
-          actor: { role: "admin", userId: "admin-1" },
+          actor: { role: "admin", businessRole: "team_admin", userId: "admin-1" },
         }) as never,
-      requireOwnerOrAdminRole: () => null,
+      requireOwnerOrTeamAdminRole: () => null,
     },
   );
 
@@ -156,9 +156,9 @@ test("admin system settings POST 在 system_settings 缺表时回退 ai_feature_
               },
             }),
           },
-          actor: { role: "admin", userId: "admin-1" },
+          actor: { role: "admin", businessRole: "team_admin", userId: "admin-1" },
         }) as never,
-      requireOwnerOrAdminRole: () => null,
+      requireOwnerOrTeamAdminRole: () => null,
     },
   );
 
