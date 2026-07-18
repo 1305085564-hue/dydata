@@ -25,6 +25,11 @@ import {
   parseTemplateCategories,
   parseTopicSuggestions,
 } from "./helpers";
+import { MARKET_CONTEXT_SELECT, SNAPSHOT_SELECT, VIDEO_TAG_SELECT } from "./data-fields";
+
+type ContentSnapshot = Pick<VideoMetricsSnapshot, "video_id" | "play_count">;
+type ContentVideoTag = Pick<VideoTag, "video_id" | "tag_dimension" | "tag_value">;
+type ContentMarketContext = Pick<MarketContextDaily, "context_date" | "market_change" | "market_sentiment" | "hot_sectors">;
 
 type VideoRow = {
   id: string;
@@ -69,7 +74,7 @@ type BreakoutSample = {
   publishedAt: string | null;
   playCount24h: number;
   breakoutValue: number;
-  tags: VideoTag[];
+  tags: ContentVideoTag[];
 };
 
 type PublishCandidate = {
@@ -110,7 +115,7 @@ function extractAccountMeta(accounts: VideoRow["accounts"]) {
   };
 }
 
-function buildTopicPrompt(samples: BreakoutSample[], market: MarketContextDaily | null, limit: number) {
+function buildTopicPrompt(samples: BreakoutSample[], market: ContentMarketContext | null, limit: number) {
   const evidence = samples.slice(0, 8).map((sample) => ({
     title: sample.title,
     accountName: sample.accountName,
@@ -192,45 +197,45 @@ async function loadScopedVideos(input: { userId: string; accountId?: string | nu
 }
 
 async function load24hSnapshots(videoIds: string[]) {
-  if (videoIds.length === 0) return [] as VideoMetricsSnapshot[];
+  if (videoIds.length === 0) return [] as ContentSnapshot[];
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from("video_metrics_snapshots")
-    .select("*")
+    .select(SNAPSHOT_SELECT)
     .in("video_id", videoIds)
     .eq("snapshot_type", "24h")
     .order("captured_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as VideoMetricsSnapshot[];
+  return (data ?? []) as ContentSnapshot[];
 }
 
 async function loadTags(videoIds: string[]) {
-  if (videoIds.length === 0) return [] as VideoTag[];
+  if (videoIds.length === 0) return [] as ContentVideoTag[];
   const supabase = createServiceClient();
-  const { data, error } = await supabase.from("video_tags").select("*").in("video_id", videoIds);
+  const { data, error } = await supabase.from("video_tags").select(VIDEO_TAG_SELECT).in("video_id", videoIds);
   if (error) throw new Error(error.message);
-  return (data ?? []) as VideoTag[];
+  return (data ?? []) as ContentVideoTag[];
 }
 
 async function loadLatestMarketContext() {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from("market_context_daily")
-    .select("*")
+    .select(MARKET_CONTEXT_SELECT)
     .order("context_date", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  return (data ?? null) as MarketContextDaily | null;
+  return (data ?? null) as ContentMarketContext | null;
 }
 
-function buildSnapshotMap(snapshots: VideoMetricsSnapshot[]) {
+function buildSnapshotMap(snapshots: ContentSnapshot[]) {
   return new Map(snapshots.map((snapshot) => [snapshot.video_id, snapshot]));
 }
 
-function buildTagMap(tags: VideoTag[]) {
-  return tags.reduce<Map<string, VideoTag[]>>((map, tag) => {
+function buildTagMap(tags: ContentVideoTag[]) {
+  return tags.reduce<Map<string, ContentVideoTag[]>>((map, tag) => {
     const current = map.get(tag.video_id) ?? [];
     current.push(tag);
     map.set(tag.video_id, current);
@@ -238,7 +243,7 @@ function buildTagMap(tags: VideoTag[]) {
   }, new Map());
 }
 
-function calculateBreakoutSamples(videos: VideoRow[], snapshots: VideoMetricsSnapshot[], tagMap: Map<string, VideoTag[]>) {
+function calculateBreakoutSamples(videos: VideoRow[], snapshots: ContentSnapshot[], tagMap: Map<string, ContentVideoTag[]>) {
   const snapshotMap = buildSnapshotMap(snapshots);
   const playCountsByAccount = videos.reduce<Map<string, number[]>>((map, video) => {
     if (!video.account_id) return map;
@@ -280,7 +285,7 @@ function calculateBreakoutSamples(videos: VideoRow[], snapshots: VideoMetricsSna
     .sort((a, b) => b.playCount24h - a.playCount24h);
 }
 
-function buildEvidenceSummary(samples: BreakoutSample[], market: MarketContextDaily | null) {
+function buildEvidenceSummary(samples: BreakoutSample[], market: ContentMarketContext | null) {
   const topicCount = new Map<string, number>();
   for (const sample of samples) {
     for (const tag of sample.tags) {
@@ -401,7 +406,7 @@ async function handleTemplateLibrary(
   };
 }
 
-function buildPublishCandidates(videos: VideoRow[], snapshots: VideoMetricsSnapshot[]) {
+function buildPublishCandidates(videos: VideoRow[], snapshots: ContentSnapshot[]) {
   const snapshotMap = buildSnapshotMap(snapshots);
   const playCountsByAccount = videos.reduce<Map<string, number[]>>((map, video) => {
     if (!video.account_id) return map;
