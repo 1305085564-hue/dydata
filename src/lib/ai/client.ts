@@ -10,7 +10,7 @@ import {
   markProviderKeySuccess,
   selectHealthyProviderKeyModel,
 } from "./provider-routing";
-import { assertSafeExternalHttpsUrl } from "@/lib/server-url-security";
+import { withPinnedExternalResponse } from "@/lib/server-url-security";
 
 type TextContent = string;
 type MultimodalBlock =
@@ -624,22 +624,59 @@ async function sendToChannel(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-  let response: Response;
   try {
-    const safeBaseUrl = await assertSafeExternalHttpsUrl(channel.baseUrl);
-    response = await fetch(buildUpstreamUrl(safeBaseUrl), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${channel.apiKey}`,
+    return await withPinnedExternalResponse(
+      buildUpstreamUrl(channel.baseUrl),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${channel.apiKey}`,
+        },
+        body: JSON.stringify(buildRequestBody(options, model)),
+        signal: controller.signal,
       },
-      body: JSON.stringify(buildRequestBody(options, model)),
-      signal: controller.signal,
-      redirect: "manual",
-    });
+      async (pinnedResponse) => {
+        const response = pinnedResponse as unknown as Response;
+        if (!response.ok) {
+          const text = await response.text().catch(() => "");
+          const retryable = isRetryableStatus(response.status);
+          throw new AiChannelError(
+            `AI 请求失败: ${response.status} ${text.slice(0, 200)}`.trim(),
+            `http_${response.status}`,
+            retryable,
+          );
+        }
+
+        const streamed = await parseChatCompletionSse(response, options);
+        const content = streamed.content || streamed.reasoningContent;
+        if (!content) {
+          throw new AiChannelError(
+            `${describeMissingResponseContent(streamed.diagnosticBody)}｜raw=${streamed.rawSnippet}`,
+            "empty_response",
+            true,
+          );
+        }
+
+        return {
+          content,
+          model: streamed.model || model,
+          channelName: channel.name,
+          channelId: channel.id ?? null,
+          providerKeyModelId: channel.providerKeyModelId ?? null,
+          providerKeyId: channel.providerKeyId ?? null,
+          promptTokens: streamed.usage.promptTokens,
+          completionTokens: streamed.usage.completionTokens,
+          totalTokens: streamed.usage.totalTokens,
+          elapsedMs: Date.now() - startedAt,
+        } satisfies AiResponse;
+      },
+    );
   } catch (error) {
-    clearTimeout(timeout);
     const elapsed = Date.now() - startedAt;
+    if (error instanceof AiChannelError) {
+      throw error;
+    }
     if (error instanceof Error && error.name === "AbortError") {
       throw new AiChannelError(`AI 请求超时（${elapsed}ms）`, "timeout", true);
     }
@@ -648,41 +685,9 @@ async function sendToChannel(
       "network",
       true,
     );
+  } finally {
+    clearTimeout(timeout);
   }
-  clearTimeout(timeout);
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    const retryable = isRetryableStatus(response.status);
-    throw new AiChannelError(
-      `AI 请求失败: ${response.status} ${text.slice(0, 200)}`.trim(),
-      `http_${response.status}`,
-      retryable,
-    );
-  }
-
-  const streamed = await parseChatCompletionSse(response, options);
-  const content = streamed.content || streamed.reasoningContent;
-  if (!content) {
-    throw new AiChannelError(
-      `${describeMissingResponseContent(streamed.diagnosticBody)}｜raw=${streamed.rawSnippet}`,
-      "empty_response",
-      true,
-    );
-  }
-
-  return {
-    content,
-    model: streamed.model || model,
-    channelName: channel.name,
-    channelId: channel.id ?? null,
-    providerKeyModelId: channel.providerKeyModelId ?? null,
-    providerKeyId: channel.providerKeyId ?? null,
-    promptTokens: streamed.usage.promptTokens,
-    completionTokens: streamed.usage.completionTokens,
-    totalTokens: streamed.usage.totalTokens,
-    elapsedMs: Date.now() - startedAt,
-  };
 }
 
 async function markChannelSuccess(channel: ChannelConfig) {

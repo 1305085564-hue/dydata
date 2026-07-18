@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { __internal as aiClientInternal, buildUpstreamUrl } from "@/lib/ai/client";
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
 import { requireAdminActor } from "../auth-helper";
-import { assertSafeExternalHttpsUrl, __internal as serverUrlSecurity } from "@/lib/server-url-security";
+import { __internal as serverUrlSecurity, withPinnedExternalResponse } from "@/lib/server-url-security";
 
 export { toBoolean, toTrimmedString };
 
@@ -113,71 +113,74 @@ export async function sendChannelTestRequest(input: {
 
   try {
     const isOcrMode = input.mode === "ocr";
-    const safeBaseUrl = await assertSafeExternalHttpsUrl(input.channel.base_url);
-    const response = await fetch(buildUpstreamUrl(safeBaseUrl), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${input.channel.api_key}`,
+    return await withPinnedExternalResponse(
+      buildUpstreamUrl(input.channel.base_url),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${input.channel.api_key}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: isOcrMode
+            ? [
+                {
+                  role: "user",
+                  content: [
+                    {
+                      type: "text",
+                      text: [
+                        "这是 OCR 能力测试。",
+                        "忽略图片内容，只返回 JSON：{\"ok\":true,\"mode\":\"ocr\"}",
+                        "不要输出其他内容。",
+                      ].join("\n"),
+                    },
+                    {
+                      type: "image_url",
+                      image_url: { url: OCR_TEST_IMAGE_DATA_URL },
+                    },
+                  ],
+                },
+              ]
+            : [{ role: "user", content: "回复 ok" }],
+          max_tokens: isOcrMode ? 120 : 16,
+          stream: true,
+          ...(isOcrMode ? { response_format: { type: "json_object" } } : {}),
+        }),
+        signal: controller.signal,
       },
-      body: JSON.stringify({
-        model,
-        messages: isOcrMode
-          ? [
-              {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: [
-                      "这是 OCR 能力测试。",
-                      "忽略图片内容，只返回 JSON：{\"ok\":true,\"mode\":\"ocr\"}",
-                      "不要输出其他内容。",
-                    ].join("\n"),
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: OCR_TEST_IMAGE_DATA_URL },
-                  },
-                ],
-              },
-            ]
-          : [{ role: "user", content: "回复 ok" }],
-        max_tokens: isOcrMode ? 120 : 16,
-        stream: true,
-        ...(isOcrMode ? { response_format: { type: "json_object" } } : {}),
-      }),
-      signal: controller.signal,
-      redirect: "manual",
-    });
+      async (pinnedResponse) => {
+        const response = pinnedResponse as unknown as Response;
+        const elapsedMs = Date.now() - startedAt;
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => "");
+          return {
+            ok: false,
+            elapsedMs,
+            error: `HTTP ${response.status}${errorText ? `：${errorText.slice(0, 200)}` : ""}`,
+          };
+        }
 
-    const elapsedMs = Date.now() - startedAt;
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      return {
-        ok: false,
-        elapsedMs,
-        error: `HTTP ${response.status}${errorText ? `：${errorText.slice(0, 200)}` : ""}`,
-      };
-    }
+        const streamed = await aiClientInternal.parseChatCompletionSse(response);
+        const responseText = streamed.content || streamed.reasoningContent;
 
-    const streamed = await aiClientInternal.parseChatCompletionSse(response);
-    const responseText = streamed.content || streamed.reasoningContent;
+        if (!responseText) {
+          const diag = aiClientInternal.describeMissingResponseContent(streamed.diagnosticBody);
+          return {
+            ok: false,
+            elapsedMs,
+            error: `${diag}｜raw=${streamed.rawSnippet}`,
+          };
+        }
 
-    if (!responseText) {
-      const diag = aiClientInternal.describeMissingResponseContent(streamed.diagnosticBody);
-      return {
-        ok: false,
-        elapsedMs,
-        error: `${diag}｜raw=${streamed.rawSnippet}`,
-      };
-    }
-
-    return {
-      ok: true,
-      elapsedMs,
-      text: responseText,
-    };
+        return {
+          ok: true,
+          elapsedMs,
+          text: responseText,
+        };
+      },
+    );
   } catch (error) {
     const elapsedMs = Date.now() - startedAt;
     if (error instanceof Error && error.name === "AbortError") {
