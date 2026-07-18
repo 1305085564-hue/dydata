@@ -14,8 +14,7 @@ import {
   normalizeSubmissionAssets,
   normalizeVideoIdLike,
 } from "./stability";
-
-const SUBMISSION_SCREENSHOT_BUCKET_PATH = "/storage/v1/object/public/submission-screenshots/";
+import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 
 export interface VideoSubmitValidationMetrics {
   play_count: number;
@@ -105,16 +104,6 @@ function normalizeScriptFormat(value: unknown): ScriptFormat {
 function validateSubmissionAssetUrls(value: unknown): string | null {
   if (!Array.isArray(value)) return null;
 
-  const configuredSupabaseHost = (() => {
-    const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!rawUrl) return null;
-    try {
-      return new URL(rawUrl).host;
-    } catch {
-      return null;
-    }
-  })();
-
   for (const item of value) {
     if (!item || typeof item !== "object") continue;
     const url = (item as { url?: unknown }).url;
@@ -135,12 +124,8 @@ function validateSubmissionAssetUrls(value: unknown): string | null {
       return "截图地址必须是线上可访问地址，请重新上传截图";
     }
 
-    if (!parsed.pathname.includes(SUBMISSION_SCREENSHOT_BUCKET_PATH)) {
+    if (!parseSubmissionScreenshotPath(parsed.toString())) {
       return "截图必须先上传到系统截图空间，请重新上传截图";
-    }
-
-    if (configuredSupabaseHost && parsed.host !== configuredSupabaseHost) {
-      return "截图地址不是当前项目的 Supabase 地址，请重新上传截图";
     }
   }
 

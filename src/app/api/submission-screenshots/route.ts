@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { buildSubmissionScreenshotUrl } from "@/lib/submission-screenshot-access";
 import type { SubmissionAssetRole } from "@/types";
 
 const BUCKET_NAME = "submission-screenshots";
@@ -100,13 +101,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: uploadError.message || "截图上传失败" }, { status: 500 });
   }
 
-  const { data: publicUrlData } = adminSupabase.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
-
   return NextResponse.json({
     data: {
       bucket: BUCKET_NAME,
       path: storagePath,
-      url: publicUrlData.publicUrl,
+      url: buildSubmissionScreenshotUrl(request.url, storagePath),
     },
   });
 }

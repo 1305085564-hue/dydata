@@ -8,6 +8,7 @@ import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 import { syncAbnormalVideoCase } from "./abnormal-case";
+import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
 
 type RollbackAction = () => Promise<void>;
 
@@ -107,6 +108,29 @@ export async function POST(request: NextRequest) {
 
   if (accountError || !account || account.profile_id !== user.id) {
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
+  }
+
+  const screenshotPaths = getOwnedSubmissionScreenshotPaths(
+    user.id,
+    normalized.assets.map((asset) => asset.url)
+  );
+  if (!screenshotPaths) {
+    return NextResponse.json({ error: "截图不存在或不属于当前用户，请重新上传" }, { status: 403 });
+  }
+
+  if (screenshotPaths.length > 0) {
+    const adminSupabase = createAdminClient();
+    const { data: signedScreenshots, error: signedScreenshotsError } = await adminSupabase.storage
+      .from("submission-screenshots")
+      .createSignedUrls(screenshotPaths, 60);
+    if (
+      signedScreenshotsError ||
+      !signedScreenshots ||
+      signedScreenshots.length !== screenshotPaths.length ||
+      signedScreenshots.some((item) => item.error || !item.signedUrl)
+    ) {
+      return NextResponse.json({ error: "截图不存在或无法读取，请重新上传" }, { status: 400 });
+    }
   }
 
   const { data: profile, error: profileError } = await supabase
