@@ -42,10 +42,10 @@ import {
   type SubmissionState,
 } from "@/components/submission/提交状态机";
 import {
-  NETWORK_RETRY_MESSAGE,
   OCR_FAIL_MESSAGE,
   resolveOcrErrorMessage,
-  toSlotUploadErrorMessage,
+  toOcrErrorMessage,
+  toScreenshotUploadErrorMessage,
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useNotifications } from "@/components/notifications/notification-store";
@@ -1160,6 +1160,7 @@ export function VideoSubmitForm({
       },
     }));
 
+    let phase: "upload" | "ocr" = "upload";
     try {
       const {
         data: { user },
@@ -1168,14 +1169,6 @@ export function VideoSubmitForm({
       if (!user && !userId) {
         throw new Error("登录状态已失效，请刷新页面后重试");
       }
-
-      setSlots((current) => ({
-        ...current,
-        [role]: {
-          ...current[role],
-          status: "recognizing",
-        },
-      }));
 
       const uploadStart = performance.now();
       const { url: assetUrl, bucket, path } = await uploadSubmissionScreenshot({
@@ -1186,6 +1179,15 @@ export function VideoSubmitForm({
       const uploadMs = Math.round(performance.now() - uploadStart);
       const previewUrl = URL.createObjectURL(file);
       blobUrlsRef.current.add(previewUrl);
+
+      phase = "ocr";
+      setSlots((current) => ({
+        ...current,
+        [role]: {
+          ...current[role],
+          status: "recognizing",
+        },
+      }));
 
       feedbackToast.success("截图已保存，正在识别", {
         duration: 2000,
@@ -1221,7 +1223,7 @@ export function VideoSubmitForm({
       });
 
       if (!response.ok || !payload.data) {
-        throw new Error(toSlotUploadErrorMessage(payload.error));
+        throw new Error(toOcrErrorMessage(payload.error));
       }
 
       const { data } = payload;
@@ -1231,7 +1233,7 @@ export function VideoSubmitForm({
       const resolvedError = data.error_code
         ? resolveOcrErrorMessage(data.error_code)
         : data.error
-          ? toSlotUploadErrorMessage(data.error)
+          ? toOcrErrorMessage(data.error)
           : null;
 
       // 智能对调逻辑：如果识别出的是流量数据，分流到 screenshot_1；若是留存完播数据，分流到 screenshot_2
@@ -1360,7 +1362,9 @@ export function VideoSubmitForm({
           "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
       });
     } catch (error) {
-      const message = toSlotUploadErrorMessage(error);
+      const message = phase === "upload"
+        ? toScreenshotUploadErrorMessage(error)
+        : toOcrErrorMessage(error);
       setSlots((current) => ({
         ...current,
         [role]: {

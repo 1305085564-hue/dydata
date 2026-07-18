@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (uploadError) {
-    return NextResponse.json({ error: uploadError.message || "截图上传失败" }, { status: 500 });
+    console.error("[submission-screenshots] storage upload failed", uploadError);
+    return NextResponse.json({ error: "截图上传失败，请稍后重试" }, { status: 500 });
   }
 
   return NextResponse.json({

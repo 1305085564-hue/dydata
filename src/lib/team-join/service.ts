@@ -1,6 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getViewableTeamIds } from "@/lib/team-scope";
 
 export type Result<T, E = string> = { ok: true; data: T } | { ok: false; error: E };
 
@@ -85,7 +84,14 @@ type ServerClient = RpcClient & {
 type AdminClient = {
   from(table: "team_join_requests"): AdminSelectBuilder;
   from(table: "profiles"): ProfileSelectBuilder;
-  auth: { admin: { listUsers(options: { perPage: number }): Promise<{ data: { users: UserEmailRow[] }; error: unknown }> } };
+  auth: {
+    admin: {
+      getUserById(userId: string): Promise<{
+        data: { user: UserEmailRow | null };
+        error: unknown;
+      }>;
+    };
+  };
 };
 
 type ClientFactories = {
@@ -99,6 +105,28 @@ const defaultFactories: ClientFactories = {
 };
 
 let clientFactories = defaultFactories;
+
+const AUTH_LOOKUP_CONCURRENCY = 5;
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await worker(items[index]);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
 
 export function setTeamJoinServiceClientsForTest(factories: ClientFactories): void {
   clientFactories = factories;
@@ -203,13 +231,27 @@ export async function listPendingRequestsForAdmin(): Promise<Result<AdminRequest
     }
   }
 
+  const emailEntries = await mapWithConcurrency(
+    applicantUserIds,
+    AUTH_LOOKUP_CONCURRENCY,
+    async (userId): Promise<readonly [string, string | null]> => {
+      const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(userId);
+      if (userError) {
+        console.error("[team-join] failed to load applicant email", { userId, error: userError });
+        return [userId, null];
+      }
+      return [userId, userResult.user?.email ?? null];
+    },
+  );
+  const emailByUserId = new Map(emailEntries);
+
   return {
     ok: true,
     data: (data ?? []).map((row) => ({
       id: row.id,
       applicantUserId: row.applicant_user_id,
       applicantName: nameByUserId.get(row.applicant_user_id) ?? "",
-      applicantEmail: null,
+      applicantEmail: emailByUserId.get(row.applicant_user_id) ?? null,
       targetTeamId: row.target_team_id,
       targetTeamName: row.teams?.name ?? "",
       createdAt: row.created_at,

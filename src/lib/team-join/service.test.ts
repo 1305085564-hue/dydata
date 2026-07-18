@@ -24,7 +24,7 @@ function createFactories(serverClient: ServerClient): ClientFactories {
     createServerClient: async () => serverClient,
     createServiceClient: () => ({
       from: () => createDefaultServiceFromBuilder(),
-      auth: { admin: { listUsers: async () => ({ data: { users: [] }, error: null }) } },
+      auth: { admin: { getUserById: async () => ({ data: { user: null }, error: null }) } },
     }),
   };
 }
@@ -51,6 +51,7 @@ function createAdminListFactories(params: {
   profiles: Array<{ id: string; name: string | null }>;
   users: Array<{ id: string; email?: string }>;
   requestSelects: string[];
+  authLookups?: string[];
 }): ClientFactories {
   return {
     createServerClient: async () => createInsertClient({ data: { id: "unused" }, error: null }),
@@ -75,7 +76,17 @@ function createAdminListFactories(params: {
           }),
         };
       },
-      auth: { admin: { listUsers: async () => ({ data: { users: params.users }, error: null }) } },
+      auth: {
+        admin: {
+          getUserById: async (userId: string) => {
+            params.authLookups?.push(userId);
+            return {
+              data: { user: params.users.find((user) => user.id === userId) ?? null },
+              error: null,
+            };
+          },
+        },
+      },
     }) as ClientFactories["createServiceClient"] extends () => infer T ? T : never,
   };
 }
@@ -179,6 +190,7 @@ test("reviewRequest RPC approved 返回 ok", async () => {
 
 test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的嵌套关系", async () => {
   const requestSelects: string[] = [];
+  const authLookups: string[] = [];
   setTeamJoinServiceClientsForTest(
     createAdminListFactories({
       requests: [
@@ -193,6 +205,7 @@ test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的�
       profiles: [{ id: "user-1", name: "小陈" }],
       users: [{ id: "user-1", email: "chen@example.com" }],
       requestSelects,
+      authLookups,
     }),
   );
 
@@ -213,4 +226,29 @@ test("listPendingRequestsForAdmin 不依赖 team_join_requests 到 profiles 的�
     ],
   });
   assert.equal(requestSelects[0].includes("profiles:applicant_user_id"), false);
+  assert.deepEqual(authLookups, ["user-1"]);
+});
+
+test("待审批人邮箱按去重后的申请人 ID 查询，不扫描全部 Auth 用户", async () => {
+  const authLookups: string[] = [];
+  setTeamJoinServiceClientsForTest(
+    createAdminListFactories({
+      requests: [
+        { id: "request-1", applicant_user_id: "user-1", target_team_id: "team-1", created_at: "2026-05-11", teams: null },
+        { id: "request-2", applicant_user_id: "user-1", target_team_id: "team-2", created_at: "2026-05-12", teams: null },
+        { id: "request-3", applicant_user_id: "user-2", target_team_id: "team-2", created_at: "2026-05-13", teams: null },
+      ],
+      profiles: [],
+      users: [
+        { id: "user-1", email: "one@example.com" },
+        { id: "user-2", email: "two@example.com" },
+      ],
+      requestSelects: [],
+      authLookups,
+    }),
+  );
+
+  const result = await listPendingRequestsForAdmin();
+  assert.equal(result.ok, true);
+  assert.deepEqual(authLookups.sort(), ["user-1", "user-2"]);
 });
