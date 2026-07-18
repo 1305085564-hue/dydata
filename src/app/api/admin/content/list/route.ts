@@ -5,7 +5,7 @@ import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
-import { loadAdminContentFullData } from "@/lib/loaders/admin-content-page";
+import { loadAdminContentFullData, type AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import { getTeamOptions } from "@/lib/teams";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -28,33 +28,7 @@ function formatServerTiming(parts: Array<{ name: string; duration: number }>) {
 }
 
 const ADMIN_CONTENT_LIST_CACHE_TTL_MS = 60_000;
-const adminContentListCache = new Map<string, { expiresAt: number; payload: Awaited<ReturnType<typeof buildContentPayloadShape>> }>();
-
-function buildContentPayloadShape() {
-  return {
-    videos: [],
-    snapshots: [],
-    profiles: [],
-    accounts: [],
-    reviewedVideoIds: [],
-    feedbackCards: {},
-    reviewReadiness: {},
-    summary: {
-      totalVideos: 0,
-      reviewedCount: 0,
-      snapshotCount: 0,
-      pendingReviewCount: 0,
-    },
-    workflowSummary: {
-      notStarted: 0,
-      draft: 0,
-      confirmed: 0,
-      sent: 0,
-      viewed: 0,
-      pendingDelivery: 0,
-    },
-  };
-}
+const adminContentListCache = new Map<string, { expiresAt: number; payload: AdminContentPageData }>();
 
 function buildAdminContentCacheKey(input: {
   view: "pending" | "all";

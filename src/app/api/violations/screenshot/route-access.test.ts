@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import type { User } from "@supabase/supabase-js";
 
 import { NextRequest } from "next/server";
 
@@ -85,7 +86,10 @@ test("screenshot route 允许已通过 publish_drafts 的历史截图", async ()
     createRequest(["shared-user", "publish-drafts", "shot.png"]),
     { params: Promise.resolve({ path: ["shared-user", "publish-drafts", "shot.png"] }) },
     {
-      getAuthenticatedContext: async () => ({ user: { id: "viewer-1" } }),
+      getAuthenticatedContext: async () => ({
+        supabase: {} as never,
+        user: { id: "viewer-1" } as User,
+      }),
       createAdminClient: () =>
         createSupabaseForScreenshotRoute({
           publishDraftRows: [
@@ -112,7 +116,10 @@ test("screenshot route 继续拒绝既不属于违规案例也不属于本人或
     createRequest(["other-user", "publish-drafts", "private.png"]),
     { params: Promise.resolve({ path: ["other-user", "publish-drafts", "private.png"] }) },
     {
-      getAuthenticatedContext: async () => ({ user: { id: "viewer-1" } }),
+      getAuthenticatedContext: async () => ({
+        supabase: {} as never,
+        user: { id: "viewer-1" } as User,
+      }),
       createAdminClient: () =>
         createSupabaseForScreenshotRoute({
           publishDraftRows: [

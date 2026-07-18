@@ -351,8 +351,9 @@ export function ApprovalDialog({
                 <div className="flex items-center gap-2">
                   <Checkbox
                     aria-label="全选"
-                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                    onCheckedChange={(checked) => handleToggleSelectAll(Boolean(checked))}
+                    checked={allSelected}
+                    indeterminate={someSelected}
+                    onCheckedChange={handleToggleSelectAll}
                     className="rounded border-stone-300 data-[state=checked]:bg-[#8AA8C7] data-[state=checked]:border-[#8AA8C7] focus-visible:ring-[#8AA8C7]"
                   />
                   <span className="text-[12px] text-stone-500 font-medium">
@@ -505,13 +506,8 @@ export function ApprovalDialog({
                 <p className="text-[13px] text-stone-500 mb-4">暂无历史审批处理记录</p>
                 <button
                   type="button"
-                  disabled={activeTab === "pending"}
-                  onClick={() => {
-                    if (activeTab !== "pending") {
-                      setActiveTab("pending");
-                    }
-                  }}
-                  className="h-9 px-4 rounded-lg bg-[#B4532F] text-[13px] font-medium text-white hover:bg-[#A84D2B] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setActiveTab("pending")}
+                  className="h-9 px-4 rounded-lg bg-[#B4532F] text-[13px] font-medium text-white hover:bg-[#A84D2B] active:scale-95 transition-all"
                 >
                   查看待处理申请
                 </button>

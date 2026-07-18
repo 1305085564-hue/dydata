@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { __internal, buildQueueOverviewResponse } from "./handler";
+import { __internal, buildQueueOverviewResponse, type QueueOverviewDeps } from "./handler";
 
 test("queue-overview 返回完整抽屉数据和底部指标", async () => {
   __internal.resetQueueOverviewCache();
@@ -149,7 +149,7 @@ test("queue-overview 同日期同 scope 60 秒内复用服务端缓存", async (
         caseLibraryPendingCount: 3,
       };
     },
-  } as const;
+  } satisfies QueueOverviewDeps;
 
   const first = await buildQueueOverviewResponse(
     { nextUrl: new URL("https://dydata.cc/api/admin/cockpit/queue-overview?date=2026-06-02") } as never,
@@ -160,6 +160,8 @@ test("queue-overview 同日期同 scope 60 秒内复用服务端缓存", async (
     deps,
   );
 
+  assert.ok(first);
+  assert.ok(second);
   assert.equal(first.status, 200);
   assert.equal(second.status, 200);
   assert.equal(firstScreenCalls, 1);

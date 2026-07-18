@@ -4,12 +4,20 @@ import test from "node:test";
 
 import { __internal, checkRateLimit, isRateLimitExempt } from "./rate-limit";
 
+function setNodeEnv(value: string | undefined) {
+  if (value === undefined) {
+    Reflect.deleteProperty(process.env, "NODE_ENV");
+    return;
+  }
+  Reflect.set(process.env, "NODE_ENV", value);
+}
+
 function withRateLimitClock(run: (setNow: (value: number) => void) => void) {
   const originalNow = Date.now;
   const originalNodeEnv = process.env.NODE_ENV;
   let now = 1_000;
   Date.now = () => now;
-  process.env.NODE_ENV = "test";
+  setNodeEnv("test");
   __internal.resetStore();
 
   try {
@@ -18,8 +26,7 @@ function withRateLimitClock(run: (setNow: (value: number) => void) => void) {
     });
   } finally {
     Date.now = originalNow;
-    if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = originalNodeEnv;
+    setNodeEnv(originalNodeEnv);
     __internal.resetStore();
   }
 }
@@ -94,13 +101,12 @@ test("容量满时已有 IP 继续访问不会触发淘汰", () => {
 test("开发模式旁路不写入内存 store", () => {
   const originalNodeEnv = process.env.NODE_ENV;
   __internal.resetStore();
-  process.env.NODE_ENV = "development";
+  setNodeEnv("development");
   try {
     assert.deepEqual(checkRateLimit("dev-ip"), { allowed: true, retryAfter: 0 });
     assert.equal(__internal.getStoreSize(), 0);
   } finally {
-    if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = originalNodeEnv;
+    setNodeEnv(originalNodeEnv);
     __internal.resetStore();
   }
 });
