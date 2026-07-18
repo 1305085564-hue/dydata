@@ -56,6 +56,16 @@ export function ExemptionHistoryError({
   );
 }
 
+export function ExemptionHistoryEmpty() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-white px-6 py-12 text-center">
+      <FileText className="mb-3 size-10 text-stone-400" aria-hidden="true" />
+      <p className="text-[13px] font-medium text-stone-700">暂无历史申请记录</p>
+      <p className="mt-1 text-[12px] text-stone-500">此页面仅保留历史记录，新的豁免申请请前往数据台办理。</p>
+    </div>
+  );
+}
+
 const EXEMPTION_LABELS: Record<string, string> = {
   single: "请假1天 (今天)",
   yesterday: "补昨日请假",
@@ -318,19 +328,7 @@ export function ExemptionWorkbench({
             onRetry={() => startTransition(() => router.refresh())}
           />
         ) : history.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 flex flex-col items-center justify-center text-center">
-            <FileText className="size-10 text-stone-500 mb-3" />
-            <p className="text-[13px] text-stone-500 mb-4">暂无历史申请记录</p>
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById("exemption-reason-input")?.focus();
-              }}
-              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-all"
-            >
-              新建申请记录
-            </button>
-          </div>
+          <ExemptionHistoryEmpty />
         ) : (
           <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
             {history.map((req, idx) => {
