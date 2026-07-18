@@ -1,15 +1,27 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ContentList } from "./content-list";
-import { ContentDiagnosisWorkbench } from "./content-diagnosis-workbench";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import type { ContentFeedbackCardView } from "@/types";
+
+const ContentDiagnosisWorkbench = dynamic(
+  () => import("./content-diagnosis-workbench").then((module) => module.ContentDiagnosisWorkbench),
+  {
+    ssr: false,
+    loading: () => (
+      <section className="flex min-h-[360px] items-center justify-center rounded-2xl border border-stone-200 bg-white text-sm text-stone-500">
+        正在加载诊断工作台…
+      </section>
+    ),
+  },
+);
 
 type ContentView = "pending" | "all";
 type AdminContentVideo = AdminContentPageData["videos"][number];
