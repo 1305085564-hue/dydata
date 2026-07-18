@@ -1,22 +1,18 @@
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { getCurrentUserContext } from "@/lib/current-user-context";
 import { loadDashboardPageData } from "@/lib/loaders/dashboard-page";
 import { measureAsync } from "@/lib/perf";
 import { DashboardContent } from "./dashboard-content";
 import { DashboardAnimatedSection } from "./dashboard-animated-section";
 
-interface DashboardDataContainerProps {
-  userId: string;
-}
-
-export async function DashboardDataContainer({
-  userId,
-}: DashboardDataContainerProps) {
-  const supabase = await createClient();
+export async function DashboardDataContainer() {
+  const { supabase, user } = await getCurrentUserContext();
+  if (!user) redirect("/login");
 
   const data = await measureAsync("dashboard.pageData", () =>
     loadDashboardPageData({
       supabase,
-      userId,
+      userId: user.id,
     }),
   );
 
