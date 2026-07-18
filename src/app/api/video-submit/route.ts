@@ -117,7 +117,8 @@ export async function POST(request: NextRequest) {
 
   const screenshotPaths = getOwnedSubmissionScreenshotPaths(
     user.id,
-    normalized.assets.map((asset) => asset.url)
+    normalized.assets.map((asset) => asset.url),
+    request.nextUrl.origin
   );
   if (!screenshotPaths) {
     return NextResponse.json({ error: "截图不存在或不属于当前用户，请重新上传" }, { status: 403 });

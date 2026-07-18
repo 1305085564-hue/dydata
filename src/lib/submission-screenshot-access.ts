@@ -28,11 +28,20 @@ export function parseSubmissionScreenshotPath(value: string) {
   return isSafeObjectPath(path) ? path : null;
 }
 
-export function getOwnedSubmissionScreenshotPaths(userId: string, urls: string[]) {
+export function getOwnedSubmissionScreenshotPaths(
+  userId: string,
+  urls: string[],
+  expectedOrigin: string
+) {
   const prefix = `${userId}/`;
   const paths: string[] = [];
 
   for (const url of urls) {
+    try {
+      if (new URL(url).origin !== expectedOrigin) return null;
+    } catch {
+      return null;
+    }
     const path = parseSubmissionScreenshotPath(url);
     if (!path || !path.startsWith(prefix)) return null;
     paths.push(path);

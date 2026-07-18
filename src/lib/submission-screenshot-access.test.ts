@@ -42,8 +42,16 @@ test("视频提交只接受当前登录用户自己的日报截图", () => {
   const owned = "https://dydata.cc/api/submission-screenshots/file?path=user-1%2Faccount-1%2Fscreenshot_1%2Fa.png";
   const foreign = "https://dydata.cc/api/submission-screenshots/file?path=user-2%2Faccount-1%2Fscreenshot_1%2Fb.png";
 
-  assert.deepEqual(getOwnedSubmissionScreenshotPaths("user-1", [owned]), [
+  assert.deepEqual(getOwnedSubmissionScreenshotPaths("user-1", [owned], "https://dydata.cc"), [
     "user-1/account-1/screenshot_1/a.png",
   ]);
-  assert.equal(getOwnedSubmissionScreenshotPaths("user-1", [owned, foreign]), null);
+  assert.equal(getOwnedSubmissionScreenshotPaths("user-1", [owned, foreign], "https://dydata.cc"), null);
+  assert.equal(
+    getOwnedSubmissionScreenshotPaths(
+      "user-1",
+      ["https://evil.example/api/submission-screenshots/file?path=user-1%2Faccount-1%2Fa.png"],
+      "https://dydata.cc"
+    ),
+    null
+  );
 });
