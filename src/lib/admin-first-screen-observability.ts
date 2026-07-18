@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { FirstScreenMetricSnapshot } from "@/lib/admin-first-screen-contract";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { after } from "next/server";
 
 export interface FirstScreenObservation {
@@ -21,7 +22,7 @@ export async function recordFirstScreenObservation(
   observation: FirstScreenObservation,
   supabase: PersistableSupabase = createAdminClient(),
 ) {
-  await supabase.from("admin_first_screen_perf_events").insert({
+  const { error } = await supabase.from("admin_first_screen_perf_events").insert({
     route: observation.route,
     status_code: observation.statusCode,
     auth_ms: Math.round(observation.metrics.auth),
@@ -32,6 +33,7 @@ export async function recordFirstScreenObservation(
     scope_kind: observation.scopeKind ?? null,
     metadata: observation.metadata ?? {},
   });
+  assertSupabaseQuerySucceeded(error, "记录后台首屏观测失败");
 }
 
 export function queueFirstScreenObservation(

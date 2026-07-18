@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { replaceDailyReportUsageRecord } from "./service";
+import { canSeeAllUsageRecords, replaceDailyReportUsageRecord } from "./service";
 
 type Action = "select" | "delete" | "insert";
 
@@ -56,7 +56,7 @@ test("replaceDailyReportUsageRecord 使用单个 RPC 替换旧记录，不先删
   const result = await replaceDailyReportUsageRecord(supabase as never, "user-1", {
     case_id: "case-1",
     script_text: null,
-    script_format: "口播",
+    script_format: "oral",
     account_id: "account-1",
     used_at: "2026-07-18",
     views: 100,
@@ -72,4 +72,22 @@ test("replaceDailyReportUsageRecord 使用单个 RPC 替换旧记录，不先删
   assert.deepEqual(operations.filter((item) => item.startsWith("rpc:")), [
     "rpc:replace_daily_report_usage_record",
   ]);
+});
+
+test("替换记录缺 daily_report_id 时返回校验错误", async () => {
+  const result = await replaceDailyReportUsageRecord({} as never, "user-1", {
+    daily_report_id: null,
+  } as never);
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.status, 422);
+});
+
+test("用户资料缺失时不能查看全部记录", async () => {
+  const query = {
+    select() { return this; },
+    eq() { return this; },
+    single: async () => ({ data: null, error: { message: "missing" } }),
+  };
+  const supabase = { from: () => query };
+  assert.equal(await canSeeAllUsageRecords(supabase as never, "user-1"), false);
 });
