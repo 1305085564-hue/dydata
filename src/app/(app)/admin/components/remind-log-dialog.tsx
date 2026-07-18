@@ -134,7 +134,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
             </div>
           ) : (
             <>
-              <div className="rounded-xl border border-stone-200 overflow-hidden">
+              <div className="rounded-xl border border-stone-200 overflow-x-auto">
                 <table className="w-full text-left text-[13px]">
                   <thead className="bg-stone-50">
                     <tr className="border-b border-stone-200">
