@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildFeedbackReplyMutation, submitFeedbackReply } from "./content-feedback-replies";
+import { buildFeedbackReplyMutation, FeedbackReplyFailure, submitFeedbackReply } from "./content-feedback-replies";
 
 test("submitFeedbackReply 通过单个 RPC 原子写入回复和反馈卡状态", async () => {
   const calls: Array<{ name: string; params: Record<string, unknown> }> = [];
@@ -37,6 +37,57 @@ test("submitFeedbackReply 通过单个 RPC 原子写入回复和反馈卡状态"
       p_reply_text: "收到，我会调整。",
     },
   }]);
+});
+
+test("submitFeedbackReply 只把白名单业务错误映射给浏览器", async () => {
+  const supabase = {
+    rpc() {
+      return Promise.resolve({ data: null, error: { message: "反馈卡还未下发，暂不能回传复盘" } });
+    },
+  };
+
+  await assert.rejects(
+    submitFeedbackReply({
+      supabase: supabase as never,
+      cardId: "card-1",
+      actorUserId: "user-1",
+      replyStatus: "acknowledged",
+      replyText: "收到。",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof FeedbackReplyFailure);
+      assert.equal(error.status, 409);
+      assert.equal(error.message, "反馈卡还未下发，暂不能回传复盘");
+      return true;
+    },
+  );
+});
+
+test("submitFeedbackReply 未知数据库错误保持脱敏且 cause 不可序列化", async () => {
+  const rawError = { message: "relation public.secret_reply does not exist" };
+  const supabase = {
+    rpc() {
+      return Promise.resolve({ data: null, error: rawError });
+    },
+  };
+
+  await assert.rejects(
+    submitFeedbackReply({
+      supabase: supabase as never,
+      cardId: "card-1",
+      actorUserId: "user-1",
+      replyStatus: "acknowledged",
+      replyText: "收到。",
+    }),
+    (error: unknown) => {
+      assert.ok(error instanceof FeedbackReplyFailure);
+      assert.equal(error.status, 500);
+      assert.equal(error.message, "提交员工复盘失败");
+      assert.equal(error.cause, rawError);
+      assert.doesNotMatch(JSON.stringify(error), /secret_reply/);
+      return true;
+    },
+  );
 });
 
 test("buildFeedbackReplyMutation 首次员工回传时补齐 viewed 并写入 acknowledge", () => {

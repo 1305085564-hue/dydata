@@ -4,15 +4,21 @@ import type { ContentFeedbackCard, ContentFeedbackReplyStatus } from "@/types";
 
 export class FeedbackReplyFailure extends Error {
   readonly status: number;
-  readonly cause: unknown;
 
   constructor(message: string, status: number, cause: unknown) {
-    super(message);
+    super(message, { cause });
     this.name = "FeedbackReplyFailure";
     this.status = status;
-    this.cause = cause;
   }
 }
+
+const SAFE_FEEDBACK_REPLY_FAILURES = new Map<string, { message: string; status: number }>([
+  ["回复状态不正确", { message: "回复状态不正确", status: 400 }],
+  ["回复内容不能为空", { message: "回复内容不能为空", status: 400 }],
+  ["反馈卡不存在", { message: "反馈卡不存在", status: 404 }],
+  ["无权限回复这张反馈卡", { message: "无权限回复这张反馈卡", status: 403 }],
+  ["反馈卡还未下发，暂不能回传复盘", { message: "反馈卡还未下发，暂不能回传复盘", status: 409 }],
+]);
 
 export function buildFeedbackReplyMutation(input: {
   currentStatus: ContentFeedbackCard["card_status"];
@@ -49,7 +55,12 @@ export async function submitFeedbackReply(params: {
 
   const updated = Array.isArray(data) ? data[0] : data;
   if (error || !updated) {
-    throw new FeedbackReplyFailure("提交员工复盘失败", 500, error);
+    const safeFailure = error?.message ? SAFE_FEEDBACK_REPLY_FAILURES.get(error.message) : null;
+    throw new FeedbackReplyFailure(
+      safeFailure?.message ?? "提交员工复盘失败",
+      safeFailure?.status ?? 500,
+      error,
+    );
   }
 
   return updated as unknown as ContentFeedbackCard;

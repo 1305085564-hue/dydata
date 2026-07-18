@@ -14,6 +14,7 @@ test("数据库查询失败只公开固定上下文，原始错误保留在 caus
       assert.equal(error.publicMessage, "加载账号失败");
       assert.equal(error.cause, databaseError);
       assert.doesNotMatch(error.message, /secret_table|42P01/);
+      assert.doesNotMatch(JSON.stringify(error), /secret_table|42P01/);
       return true;
     },
   );

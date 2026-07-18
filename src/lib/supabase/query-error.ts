@@ -4,13 +4,11 @@ type SupabaseErrorLike = {
 
 export class SupabaseQueryFailure extends Error {
   readonly publicMessage: string;
-  readonly cause: unknown;
 
   constructor(publicMessage: string, cause: unknown) {
-    super(publicMessage);
+    super(publicMessage, { cause });
     this.name = "SupabaseQueryFailure";
     this.publicMessage = publicMessage;
-    this.cause = cause;
   }
 }
 
