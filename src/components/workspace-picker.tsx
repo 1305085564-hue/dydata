@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
 import { setDashboardAccount } from "@/lib/dashboard-store";
 
 interface Account {
@@ -99,15 +98,10 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         />
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.96 }}
-            transition={{ duration: 0.15, ease: [0, 0, 0.2, 1] }}
+      {isOpen && (
+          <div
             className={cn(
-              "absolute left-0 mt-2 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white p-2 shadow-xl",
+              "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute left-0 mt-2 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white p-2 shadow-xl duration-150",
               "border-stone-200/80 dark:border-stone-800/80 dark:bg-stone-950 backdrop-blur-xl bg-white/95 dark:bg-stone-950/95"
             )}
           >
@@ -180,10 +174,8 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                 })
               )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
     </div>
   );
 }
-

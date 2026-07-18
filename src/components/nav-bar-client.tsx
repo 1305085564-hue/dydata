@@ -10,7 +10,6 @@ import { WorkspacePicker } from "@/components/workspace-picker";
 import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions } from "@/types";
-import { AnimatePresence, motion } from "framer-motion";
 import { isLocalNotification, useNotifications } from "@/components/notifications/notification-store";
 import {
   initDashboardStore,
@@ -238,7 +237,7 @@ export function NavBarClient({
 
   return (
     <>
-      <motion.nav
+      <nav
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
@@ -291,10 +290,8 @@ export function NavBarClient({
                       className={cn(primaryLinkClass(active), "group")}
                     >
                       {active && (
-                        <motion.div
-                          layoutId="activeNavIndicator"
+                        <div
                           className="absolute inset-0 bg-white border rounded-lg -z-10 shadow-[0_2px_12px_-3px_rgba(217,119,87,0.12)] border-[#D97757]/15"
-                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
                         />
                       )}
                       {!active && (
@@ -360,15 +357,10 @@ export function NavBarClient({
                     <Wrench className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[30deg] group-active:scale-90" />
                   </button>
 
-                  <AnimatePresence>
-                    {wrenchOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                        transition={{ duration: 0.15, ease: [0, 0, 0.2, 1] }}
+                  {wrenchOpen && (
+                      <div
                         className={cn(
-                          "absolute right-0 mt-2 z-50 w-56 origin-top-right overflow-hidden rounded-2xl border bg-white p-2 shadow-xl",
+                          "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-2 z-50 w-56 origin-top-right overflow-hidden rounded-2xl border bg-white p-2 shadow-xl duration-150",
                           "border-stone-200 bg-white/95 backdrop-blur-xl"
                         )}
                       >
@@ -414,9 +406,8 @@ export function NavBarClient({
                             </Link>
                           )}
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      </div>
+                  )}
                 </div>
               )}
 
@@ -485,18 +476,13 @@ export function NavBarClient({
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Menu Drawer */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+      {isMobileMenuOpen && (
+          <div
             className={cn(
-              "fixed inset-x-0 top-[var(--app-top-offset)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-lg flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset))] overflow-y-auto",
+              "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-lg flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset))] overflow-y-auto duration-200",
               "border-stone-200 backdrop-blur-xl"
             )}
           >
@@ -539,9 +525,8 @@ export function NavBarClient({
                 );
               })}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+      )}
 
       {/* Global Unified Hubs Drawer and Modals */}
       {commandHubLoaded && (
