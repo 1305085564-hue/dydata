@@ -145,3 +145,58 @@ test("analytics panel route 对超过 90 天的主区间直接返回 400", async
   assert.equal(response.status, 400);
   assert.match(JSON.stringify(await response.json()), /最多只支持 90 天/);
 });
+
+test("analytics panel route 不向浏览器暴露数据库原始错误", async () => {
+  const response = await buildAnalyticsPanelResponse(
+    buildRequest("https://dydata.cc/api/admin/panels/analytics?preset=30d"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "owner-1",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_analytics: true },
+          name: "阿禅",
+          accessLevel: 4,
+          teamId: null,
+          groupId: null,
+          ledGroupIds: [],
+        },
+      }),
+      getCurrentPermissionContext: async () => ({
+        permissionInfo: {
+          userId: "owner-1",
+          name: "阿禅",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_analytics: true },
+          accessLevel: 4,
+          teamId: null,
+          groupId: null,
+          ledGroupIds: [],
+        },
+        scope: {
+          userId: "owner-1",
+          role: "owner" as const,
+          businessRole: "owner" as const,
+          permissions: { view_analytics: true },
+          accessLevel: 4 as const,
+          teamId: null,
+          groupId: null,
+          kind: "all" as const,
+          visibleUserIds: ["owner-1"],
+        },
+      }),
+      loadAnalyticsPageData: async () => {
+        throw new Error("relation public.secret_metrics does not exist");
+      },
+      recordObservation: async () => undefined,
+    },
+  );
+
+  assert.equal(response.status, 500);
+  const body = JSON.stringify(await response.json());
+  assert.match(body, /加载经营分析失败/);
+  assert.doesNotMatch(body, /secret_metrics|relation public/);
+});

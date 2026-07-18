@@ -68,6 +68,6 @@ test("经营分析 RPC 与回退查询都失败时抛错，不返回零报表", 
       preset: "30d",
       scope: scope as never,
     }),
-    /analytics reports unavailable/,
+    /加载经营分析报表失败/,
   );
 });

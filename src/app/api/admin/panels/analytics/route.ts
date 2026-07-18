@@ -68,7 +68,7 @@ export async function buildAnalyticsPanelResponse(
     if (error instanceof AnalyticsRangeLimitError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    throw error;
+    return NextResponse.json({ error: "加载经营分析失败" }, { status: 500 });
   }
   const dataMs = nowMs() - dataStart;
   const totalMs = nowMs() - totalStart;
@@ -102,10 +102,7 @@ export async function buildAnalyticsPanelResponse(
 export async function GET(request: NextRequest) {
   try {
     return await buildAnalyticsPanelResponse(request);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "加载经营分析失败" },
-      { status: 500 },
-    );
+  } catch {
+    return NextResponse.json({ error: "加载经营分析失败" }, { status: 500 });
   }
 }

@@ -59,3 +59,24 @@ test("feedback reply route 回传成功时返回更新后的反馈卡", async ()
   assert.equal(json.feedback_card.employee_reply_status, "acknowledged");
   assert.equal(json.feedback_card.employee_reply_text, "收到，今晚改。");
 });
+
+test("feedback reply route 不向浏览器暴露数据库原始错误", async () => {
+  const response = await buildContentFeedbackReplyResponse(
+    {
+      cardId: "card-1",
+      replyStatus: "acknowledged",
+      replyText: "收到。",
+    },
+    {
+      requireAuthenticatedFeedbackUser: async () => ({ userId: "user-1" }),
+      submitFeedbackReply: async () => {
+        throw new Error("relation public.feedback_card_replies does not exist");
+      },
+    },
+  );
+
+  assert.equal(response.status, 500);
+  const body = JSON.stringify(await response.json());
+  assert.match(body, /提交员工复盘失败/);
+  assert.doesNotMatch(body, /feedback_card_replies|relation public/);
+});

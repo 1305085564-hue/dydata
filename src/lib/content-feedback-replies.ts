@@ -2,6 +2,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ContentFeedbackCard, ContentFeedbackReplyStatus } from "@/types";
 
+export class FeedbackReplyFailure extends Error {
+  readonly status: number;
+  readonly cause: unknown;
+
+  constructor(message: string, status: number, cause: unknown) {
+    super(message);
+    this.name = "FeedbackReplyFailure";
+    this.status = status;
+    this.cause = cause;
+  }
+}
+
 export function buildFeedbackReplyMutation(input: {
   currentStatus: ContentFeedbackCard["card_status"];
   currentViewedAt: string | null;
@@ -37,7 +49,7 @@ export async function submitFeedbackReply(params: {
 
   const updated = Array.isArray(data) ? data[0] : data;
   if (error || !updated) {
-    throw new Error(error?.message || "更新反馈卡回传状态失败");
+    throw new FeedbackReplyFailure("提交员工复盘失败", 500, error);
   }
 
   return updated as unknown as ContentFeedbackCard;

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ContentToolAccount } from "@/app/(app)/content-tools/types";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
 type LoaderSupabase = Pick<SupabaseClient, "from">;
 
@@ -24,9 +25,7 @@ export async function loadContentToolsPageData({
     .eq("profile_id", userId)
     .order("name", { ascending: true });
 
-  if (error) {
-    throw new Error(error.message || "加载账号失败");
-  }
+  assertSupabaseQuerySucceeded(error, "加载账号失败");
 
   const normalizedAccounts: ContentToolAccount[] = (accounts ?? []).map((account) => ({
     id: account.id,

@@ -20,8 +20,20 @@ function listMonthDates(referenceDate: string) {
   return dates;
 }
 
-export async function GET() {
-  const supabase = await createClient();
+type SubmissionCalendarDeps = {
+  createClient: typeof createClient;
+  loadDashboardPageData: typeof loadDashboardPageData;
+  loadDashboardActivityData: typeof loadDashboardActivityData;
+};
+
+const defaultDeps: SubmissionCalendarDeps = {
+  createClient,
+  loadDashboardPageData,
+  loadDashboardActivityData,
+};
+
+export async function buildSubmissionCalendarResponse(deps: SubmissionCalendarDeps = defaultDeps) {
+  const supabase = await deps.createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -32,8 +44,8 @@ export async function GET() {
 
   try {
     const [dashboard, activity] = await Promise.all([
-      loadDashboardPageData({ supabase, userId: user.id }),
-      loadDashboardActivityData({ supabase, userId: user.id }),
+      deps.loadDashboardPageData({ supabase, userId: user.id }),
+      deps.loadDashboardActivityData({ supabase, userId: user.id }),
     ]);
 
     const reportByDate = new Map(
@@ -85,10 +97,11 @@ export async function GET() {
         },
       },
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "加载本月提交状态失败" },
-      { status: 500 },
-    );
+  } catch {
+    return NextResponse.json({ error: "加载本月提交状态失败" }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return buildSubmissionCalendarResponse();
 }

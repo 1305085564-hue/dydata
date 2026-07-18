@@ -374,7 +374,7 @@ test("内容管理批量查询失败时抛错，不把失败批次当空数据",
       data: null,
       error: { message: "snapshot batch unavailable" },
     })),
-    /snapshot batch unavailable/,
+    /批量加载内容数据失败/,
   );
 });
 

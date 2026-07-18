@@ -132,7 +132,7 @@ test("成长页核心账号查询失败时抛错，不返回空指标", async ()
       mode: "initial",
       now: new Date("2026-07-18T02:00:00.000Z"),
     }),
-    /growth accounts unavailable/,
+    /加载成长页账号失败/,
   );
 });
 

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildContentFeedbackCardDetail } from "@/lib/content-feedback-cards";
-import { submitFeedbackReply } from "@/lib/content-feedback-replies";
+import { FeedbackReplyFailure, submitFeedbackReply } from "@/lib/content-feedback-replies";
 import type { ContentFeedbackCard, ContentFeedbackReplyStatus } from "@/types";
 
 type ReplyBody = {
@@ -100,14 +100,11 @@ export async function buildContentFeedbackReplyResponse(
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "提交员工复盘失败";
-    const status = /未登录/.test(message) ? 401
-      : /无权限/.test(message) ? 403
-        : /不存在/.test(message) ? 404
-          : /未下发/.test(message) ? 409
-            : 500;
+    if (error instanceof FeedbackReplyFailure) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
 
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: "提交员工复盘失败" }, { status: 500 });
   }
 }
 

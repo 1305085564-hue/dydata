@@ -127,7 +127,7 @@ test("loadDashboardPageData 账号查询失败时抛错，不伪装成无账号"
       supabase: supabase as never,
       userId: "user-1",
     }),
-    /accounts unavailable/,
+    /加载账号失败/,
   );
 });
 
