@@ -66,6 +66,7 @@ export async function POST(request: Request) {
     .single();
 
   if (profileError || !profile) {
+    if (profileError) console.error("[exemptions] failed to load applicant profile", profileError);
     return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
   }
 
@@ -85,7 +86,8 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message || "提交豁免申请失败" }, { status: 500 });
+    console.error("[exemptions] failed to create request", error);
+    return NextResponse.json({ error: "提交豁免申请失败" }, { status: 500 });
   }
 
   return NextResponse.json({ data }, { status: 201 });

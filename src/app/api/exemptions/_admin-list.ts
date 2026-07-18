@@ -32,6 +32,11 @@ type GroupRow = {
   name: string | null;
 };
 
+function databaseFailure(context: string, error: unknown) {
+  console.error(`[exemptions] ${context}`, error);
+  return { response: NextResponse.json({ error: context }, { status: 500 }) };
+}
+
 export async function loadAdminExemptionList(input: {
   supabase: SupabaseClient;
   statuses: string[];
@@ -51,7 +56,7 @@ export async function loadAdminExemptionList(input: {
     .limit(input.limit);
 
   if (error) {
-    return { response: NextResponse.json({ error: error.message || "读取豁免申请列表失败" }, { status: 500 }) };
+    return databaseFailure("读取豁免申请列表失败", error);
   }
 
   const rows = (data ?? []) as ExemptionRequestRow[];
@@ -64,7 +69,7 @@ export async function loadAdminExemptionList(input: {
     : { data: [] as ProfileRow[], error: null };
 
   if (profilesResult.error) {
-    return { response: NextResponse.json({ error: profilesResult.error.message || "读取成员信息失败" }, { status: 500 }) };
+    return databaseFailure("读取成员信息失败", profilesResult.error);
   }
 
   const profiles = ((profilesResult.data ?? []) as ProfileRow[]);
@@ -83,10 +88,10 @@ export async function loadAdminExemptionList(input: {
     : { data: [] as GroupRow[], error: null };
 
   if (teamsResult.error) {
-    return { response: NextResponse.json({ error: teamsResult.error.message || "读取团队信息失败" }, { status: 500 }) };
+    return databaseFailure("读取团队信息失败", teamsResult.error);
   }
   if (groupsResult.error) {
-    return { response: NextResponse.json({ error: groupsResult.error.message || "读取小组信息失败" }, { status: 500 }) };
+    return databaseFailure("读取小组信息失败", groupsResult.error);
   }
 
   const teamById = new Map(((teamsResult.data ?? []) as TeamRow[]).map((team) => [team.id, team]));

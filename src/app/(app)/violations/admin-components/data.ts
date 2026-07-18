@@ -1,5 +1,6 @@
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SupabaseQueryFailure } from "@/lib/supabase/query-error";
 
 import type { HubTabKey } from "./hub-shell";
 
@@ -60,7 +61,7 @@ export function assertRpcSuccess<T>(
   label: string,
 ): T {
   if (result.error) {
-    throw new Error(`${label}加载失败：${result.error.message || "数据库请求失败"}`);
+    throw new SupabaseQueryFailure(`${label}加载失败`, result.error);
   }
   return result.data;
 }

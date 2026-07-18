@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
     .limit(limit);
 
   if (error) {
-    return NextResponse.json({ error: error.message || "读取豁免申请失败" }, { status: 500 });
+    console.error("[exemptions] failed to load own requests", error);
+    return NextResponse.json({ error: "读取豁免申请失败" }, { status: 500 });
   }
 
   return NextResponse.json({ data: data ?? [] });
