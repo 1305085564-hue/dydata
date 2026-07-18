@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { createClient } from "@supabase/supabase-js";
+import { excelCellValueToScalar, excelSerialToDate } from "../src/lib/excel-values";
 
 type RawRow = Record<string, unknown>;
 
@@ -154,19 +155,28 @@ function assertRequiredColumns(rows: RawRow[]) {
   }
 }
 
-function parseWorkbook(filePath: string): RawRow[] {
-  const workbook = XLSX.readFile(filePath, { cellDates: true });
-  const firstSheetName = workbook.SheetNames[0];
+async function parseWorkbook(filePath: string): Promise<RawRow[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
+  const sheet = workbook.worksheets[0];
 
-  if (!firstSheetName) {
+  if (!sheet) {
     throw new Error("未找到工作表");
   }
 
-  const sheet = workbook.Sheets[firstSheetName];
-  return XLSX.utils.sheet_to_json<RawRow>(sheet, {
-    defval: null,
-    raw: true,
-  });
+  const headers = Array.from(
+    { length: sheet.columnCount },
+    (_, index) => normalizeText(excelCellValueToScalar(sheet.getRow(1).getCell(index + 1).value)) ?? "",
+  );
+  const rows: RawRow[] = [];
+  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
+    const values = headers.map((_, index) =>
+      excelCellValueToScalar(sheet.getRow(rowNumber).getCell(index + 1).value),
+    );
+    if (values.every((value) => value == null || value === "")) continue;
+    rows.push(Object.fromEntries(headers.map((header, index) => [header, values[index] ?? null])));
+  }
+  return rows;
 }
 
 function toDateString(value: unknown): string | null {
@@ -177,10 +187,7 @@ function toDateString(value: unknown): string | null {
   }
 
   if (typeof value === "number" && Number.isFinite(value)) {
-    const parsed = XLSX.SSF.parse_date_code(value);
-    if (parsed) {
-      return new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d)).toISOString().slice(0, 10);
-    }
+    return excelSerialToDate(value)?.toISOString().slice(0, 10) ?? null;
   }
 
   const text = normalizeText(value);
@@ -203,10 +210,7 @@ function toIsoDateTime(value: unknown): string | null {
   }
 
   if (typeof value === "number" && Number.isFinite(value)) {
-    const parsed = XLSX.SSF.parse_date_code(value);
-    if (parsed) {
-      return new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H, parsed.M, parsed.S)).toISOString();
-    }
+    return excelSerialToDate(value)?.toISOString() ?? null;
   }
 
   const text = normalizeText(value);
@@ -359,7 +363,7 @@ async function upsertReports(rows: PreparedRow[]) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const rawRows = parseWorkbook(args.filePath);
+  const rawRows = await parseWorkbook(args.filePath);
   assertRequiredColumns(rawRows);
 
   const { data: profiles, error: profilesError } = await supabase.from("profiles").select("id, name");

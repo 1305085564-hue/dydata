@@ -1,6 +1,27 @@
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
+import { excelCellValueToScalar, type ExcelScalar } from "@/lib/excel-values";
 import { isCasePlatform, normalizeOptionalText } from "./api";
+
+export const MAX_VIOLATION_IMPORT_ROWS = 5_000;
+export const MAX_VIOLATION_IMPORT_FILE_SIZE = 2 * 1024 * 1024;
+export const XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+export class ViolationImportWorkbookError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ViolationImportWorkbookError";
+  }
+}
+
+export function validateViolationImportFile(file: { name: string; type: string; size: number }): string | null {
+  if (!file.name.toLowerCase().endsWith(".xlsx")) return "仅支持 .xlsx 文件";
+  if (file.type !== XLSX_MIME_TYPE) return "文件 MIME 类型不是有效的 .xlsx 工作簿";
+  if (file.size <= 0 || file.size > MAX_VIOLATION_IMPORT_FILE_SIZE) {
+    return "Excel 文件必须大于 0 且不能超过 2MB";
+  }
+  return null;
+}
 
 export type ImportedViolationInsertRow = {
   submitted_by: string;
@@ -50,31 +71,34 @@ function normalizeBooleanCell(value: string) {
   return { ok: true as const, value: trimmed === "违规" };
 }
 
-export function parseViolationImportWorkbook(
+export async function parseViolationImportWorkbook(
   input: Buffer | ArrayBuffer,
   context: { submittedBy: string; teamId: string | null },
-): ParsedViolationImport {
-  const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input);
-  const workbook = XLSX.read(buffer, { type: "buffer" });
-  const firstSheetName = workbook.SheetNames[0];
+): Promise<ParsedViolationImport> {
+  const source = Buffer.isBuffer(input) ? input : new Uint8Array(input);
+  const buffer = new Uint8Array(source.byteLength);
+  buffer.set(source);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer.buffer);
+  const sheet = workbook.worksheets[0];
 
-  if (!firstSheetName) {
-    throw new Error("导入文件缺少工作表");
+  if (!sheet) {
+    throw new ViolationImportWorkbookError("导入文件缺少工作表");
   }
-
-  const sheet = workbook.Sheets[firstSheetName];
-  const rows = XLSX.utils.sheet_to_json<(string | number | null)[]>(sheet, {
-    header: 1,
-    raw: false,
-    defval: "",
-  });
+  if (Math.max(0, sheet.rowCount - 1) > MAX_VIOLATION_IMPORT_ROWS) {
+    throw new ViolationImportWorkbookError(`Excel 最多支持 ${MAX_VIOLATION_IMPORT_ROWS} 行数据`);
+  }
 
   const parsedRows: ImportedViolationInsertRow[] = [];
   const errors: ImportErrorItem[] = [];
 
-  for (let index = 1; index < rows.length; index += 1) {
-    const rowNumber = index + 1;
-    const row = rows[index] ?? [];
+  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber += 1) {
+    const worksheetRow = sheet.getRow(rowNumber);
+    const row: ExcelScalar[] = Array.from(
+      { length: Math.max(6, sheet.columnCount) },
+      (_, index) => excelCellValueToScalar(worksheetRow.getCell(index + 1).value),
+    );
+    if (row.every((value) => value == null || value === "")) continue;
     const scriptText = String(row[0] ?? "").trim();
     const violationCell = String(row[1] ?? "");
 

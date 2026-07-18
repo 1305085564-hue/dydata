@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 import { getUserPermissions } from "@/lib/permissions";
 import { hasPermission } from "@/lib/permission-utils";
 import { formatShanghaiDateTime } from "@/lib/日报";
+import {
+  buildDailyReportWorkbookBuffer,
+  type DailyReportExcelRow,
+} from "@/lib/daily-report-excel";
 
 const MAX_EXPORT_ROWS = 10_000;
 
@@ -52,7 +55,8 @@ export async function GET(request: NextRequest) {
   const { count, error: countError } = await countQuery;
 
   if (countError) {
-    return NextResponse.json({ error: countError.message }, { status: 500 });
+    console.error("[export] failed to count daily reports", countError);
+    return NextResponse.json({ error: "统计导出数据失败" }, { status: 500 });
   }
 
   const totalCount = count ?? 0;
@@ -70,7 +74,7 @@ export async function GET(request: NextRequest) {
 
   // 小数据量：分页流式读取，避免一次性加载全部到内存
   const PAGE_SIZE = 2000;
-  const allRows: Record<string, unknown>[] = [];
+  const allRows: DailyReportExcelRow[] = [];
 
   for (let offset = 0; offset < totalCount; offset += PAGE_SIZE) {
     let pageQuery = adminSupabase
@@ -94,7 +98,8 @@ export async function GET(request: NextRequest) {
     const { data: pageData, error: pageError } = await pageQuery;
 
     if (pageError) {
-      return NextResponse.json({ error: pageError.message }, { status: 500 });
+      console.error("[export] failed to load daily reports", pageError);
+      return NextResponse.json({ error: "读取导出数据失败" }, { status: 500 });
     }
 
     if (!pageData || pageData.length === 0) break;
@@ -122,32 +127,7 @@ export async function GET(request: NextRequest) {
     allRows.push(...pageRows);
   }
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(allRows);
-
-  ws["!cols"] = [
-    { wch: 12 },
-    { wch: 10 },
-    { wch: 30 },
-    { wch: 12 },
-    { wch: 10 },
-    { wch: 14 },
-    { wch: 10 },
-    { wch: 10 },
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 8 },
-    { wch: 40 },
-    { wch: 18 },
-    { wch: 18 },
-  ];
-
-  XLSX.utils.book_append_sheet(wb, ws, "数据日报");
-
-  const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+  const buf = await buildDailyReportWorkbookBuffer(allRows);
   const filename = `抖音数据日报${from ? `_${from}` : ""}${to ? `_至_${to}` : ""}.xlsx`;
 
   return new NextResponse(buf, {

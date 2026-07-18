@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { parseViolationImportWorkbook } from "@/lib/violations/import";
+import {
+  parseViolationImportWorkbook,
+  validateViolationImportFile,
+  ViolationImportWorkbookError,
+} from "@/lib/violations/import";
 import {
   getAuthenticatedContext,
   jsonBadRequest,
@@ -12,7 +16,6 @@ import {
 import { hasZipSignature } from "@/lib/file-signatures";
 
 export const runtime = "nodejs";
-const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
   const { supabase, user } = await getAuthenticatedContext();
@@ -33,12 +36,8 @@ export async function POST(request: NextRequest) {
     return jsonBadRequest("file 为必填项");
   }
 
-  if (!file.name.toLowerCase().endsWith(".xlsx")) {
-    return jsonBadRequest("仅支持 .xlsx 文件");
-  }
-  if (file.size <= 0 || file.size > MAX_IMPORT_FILE_SIZE) {
-    return jsonBadRequest("Excel 文件必须大于 0 且不能超过 10MB");
-  }
+  const fileValidationError = validateViolationImportFile(file);
+  if (fileValidationError) return jsonBadRequest(fileValidationError);
 
   const workbookBuffer = await file.arrayBuffer();
   if (!hasZipSignature(new Uint8Array(workbookBuffer))) {
@@ -47,11 +46,14 @@ export async function POST(request: NextRequest) {
 
   let parsed;
   try {
-    parsed = parseViolationImportWorkbook(workbookBuffer, {
+    parsed = await parseViolationImportWorkbook(workbookBuffer, {
       submittedBy: user.id,
       teamId: admin.profile.team_id,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof ViolationImportWorkbookError) {
+      return jsonBadRequest(error.message);
+    }
     return jsonBadRequest("解析 Excel 失败");
   }
 
