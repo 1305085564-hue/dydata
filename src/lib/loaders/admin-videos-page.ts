@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import { buildVideoAssetRecord } from "@/lib/video-asset-library";
 import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
@@ -123,11 +124,17 @@ export async function loadAdminVideosPageData({
     videosQuery = videosQuery.range(0, ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
-  const [{ data: videos }, { data: profiles }, { data: accounts }] = await Promise.all([
+  const [videosResult, profilesResult, accountsResult] = await Promise.all([
     videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
   ]);
+  assertSupabaseQuerySucceeded(videosResult.error, "加载视频列表失败");
+  assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
+  assertSupabaseQuerySucceeded(accountsResult.error, "加载账号列表失败");
+  const videos = videosResult.data;
+  const profiles = profilesResult.data;
+  const accounts = accountsResult.data;
 
   const normalizedRows = normalizeVideoRows((videos ?? []) as unknown as RawVideoRow[]);
   const normalizedVideos = resolvedScope
@@ -135,9 +142,11 @@ export async function loadAdminVideosPageData({
     : normalizedRows;
   const scopedVideoIdSet = new Set(normalizedVideos.map((video) => video.id));
   const scopedVideoIds = Array.from(scopedVideoIdSet);
-  const { data: tagIds } = scopedVideoIds.length > 0
+  const tagIdsResult = scopedVideoIds.length > 0
     ? await supabase.from("video_tags").select("video_id").in("video_id", scopedVideoIds)
-    : { data: [] };
+    : { data: [], error: null };
+  assertSupabaseQuerySucceeded(tagIdsResult.error, "加载视频标签失败");
+  const tagIds = tagIdsResult.data;
   const visibleProfileIds = new Set(resolvedScope?.visibleUserIds ?? normalizedVideos.map((video) => video.accounts?.profile_id ?? video.user_id));
   const taggedVideoIds = new Set(
     (tagIds ?? [])
@@ -153,23 +162,28 @@ export async function loadAdminVideosPageData({
       : normalizedVideos;
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
-  const [
-    { data: snapshotFlags },
-    { data: segmentRows },
-  ] =
+  const [snapshotFlagsResult, segmentRowsResult] =
     scopedVideoIds.length > 0
       ? await Promise.all([
           supabase.from("video_metrics_snapshots").select("video_id").eq("snapshot_type", "24h").in("video_id", scopedVideoIds),
           supabase.from("video_content_segments").select("video_id").in("video_id", scopedVideoIds),
         ])
-      : [{ data: [] }, { data: [] }];
-  const [{ data: snapshots }, { data: videoTags }] =
+      : [{ data: [], error: null }, { data: [], error: null }];
+  assertSupabaseQuerySucceeded(snapshotFlagsResult.error, "加载视频快照状态失败");
+  assertSupabaseQuerySucceeded(segmentRowsResult.error, "加载视频分段失败");
+  const snapshotFlags = snapshotFlagsResult.data;
+  const segmentRows = segmentRowsResult.data;
+  const [snapshotsResult, videoTagsResult] =
     visibleVideoIds.length > 0
       ? await Promise.all([
           supabase.from("video_metrics_snapshots").select(VIDEO_SNAPSHOT_SELECT).in("video_id", visibleVideoIds),
           supabase.from("video_tags").select("*").in("video_id", visibleVideoIds),
         ])
-      : [{ data: [] }, { data: [] }];
+      : [{ data: [], error: null }, { data: [], error: null }];
+  assertSupabaseQuerySucceeded(snapshotsResult.error, "加载视频快照失败");
+  assertSupabaseQuerySucceeded(videoTagsResult.error, "加载视频标签明细失败");
+  const snapshots = snapshotsResult.data;
+  const videoTags = videoTagsResult.data;
   const normalizedTags = (videoTags ?? []) as VideoTag[];
   const snapshot24hVideoIds = new Set((snapshotFlags ?? []).map((row) => row.video_id as string));
   const segmentCountMap = new Map<string, number>();

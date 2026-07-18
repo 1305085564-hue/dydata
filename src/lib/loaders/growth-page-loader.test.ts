@@ -112,6 +112,30 @@ function createReport(overrides: Record<string, unknown>) {
   };
 }
 
+test("成长页核心账号查询失败时抛错，不返回空指标", async () => {
+  const calls: QueryCall[] = [];
+  const supabase = createFakeSupabase((call) => {
+    if (call.table === "accounts") {
+      return { data: null, error: { message: "growth accounts unavailable" } };
+    }
+    if (call.table === "profiles" && call.single) {
+      return { data: { id: "user-1", name: "测试成员" }, error: null };
+    }
+    return { data: [], error: null };
+  }, calls);
+
+  await assert.rejects(
+    loadGrowthPageData({
+      supabase: supabase as never,
+      userId: "user-1",
+      userEmail: "user@example.com",
+      mode: "initial",
+      now: new Date("2026-07-18T02:00:00.000Z"),
+    }),
+    /growth accounts unavailable/,
+  );
+});
+
 test("成长页脚本字段缺失时不继续查询脚本文档和脚本分段", async () => {
   __internal.resetContentScriptSchemaCache();
   const calls: string[] = [];

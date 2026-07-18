@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { measureAsync } from "@/lib/perf";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import {
   buildGrowthDataContract,
   buildGrowthDimensionCards,
@@ -583,6 +584,10 @@ async function loadInitialGrowthPageData({
     ),
   ]);
 
+  assertSupabaseQuerySucceeded(profileResult.error, "加载成长页用户资料失败");
+  assertSupabaseQuerySucceeded(myAccountsResult.error, "加载成长页账号失败");
+  assertSupabaseQuerySucceeded(teamReportsResult.error, "加载成长页日报失败");
+
   const profile = profileResult.data as ProfileRow | null;
   const myAccounts = (myAccountsResult.data ?? []) as MetricsAccount[];
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
@@ -591,6 +596,7 @@ async function loadInitialGrowthPageData({
     teamUserIds.length > 0
       ? await measureAsync("growth.initial.teamProfiles", () => supabase.from("profiles").select("id, name").in("id", teamUserIds))
       : { data: [] as ProfileRow[], error: null };
+  assertSupabaseQuerySucceeded(profilesResult.error, "加载成长页成员资料失败");
   const profileNameMap = buildProfileNameMap((profilesResult.data ?? []) as ProfileRow[]);
   return buildGrowthPageResponse({
     mode: "initial",
@@ -649,6 +655,10 @@ async function loadFullGrowthPageData({
     ),
   ]);
 
+  assertSupabaseQuerySucceeded(allAccountsResult.error, "加载成长页账号失败");
+  assertSupabaseQuerySucceeded(teamReportsResult.error, "加载成长页日报失败");
+  assertSupabaseQuerySucceeded(lifetimeStatsResult.error, "加载成长阶段统计失败");
+
   const allAccounts = (allAccountsResult.data ?? []) as MetricsAccount[];
   const myAccounts = allAccounts.filter((account) => account.profile_id === userId);
   const teamReports = (teamReportsResult.data ?? []) as DailyReportRow[];
@@ -657,6 +667,7 @@ async function loadFullGrowthPageData({
     teamUserIds.length > 0
       ? await measureAsync("growth.full.teamProfiles", () => supabase.from("profiles").select("id, name").in("id", teamUserIds))
       : { data: [] as ProfileRow[], error: null };
+  assertSupabaseQuerySucceeded(profilesResult.error, "加载成长页成员资料失败");
   const profiles = (profilesResult.data ?? []) as ProfileRow[];
   const profileNameMap = buildProfileNameMap(profiles);
   const profile = profiles.find((item) => item.id === userId) ?? null;

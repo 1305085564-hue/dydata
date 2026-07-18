@@ -7,6 +7,7 @@ import {
   type ExemptionProfileLike,
 } from "@/lib/豁免";
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
 import type { UserRole } from "@/types";
 import { formatShanghaiDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
@@ -88,6 +89,8 @@ async function loadDashboardProfileWithoutCategory(
     .eq("id", userId)
     .single();
 
+  assertSupabaseQuerySucceeded(fallback.error, "加载用户资料失败");
+
   if (!fallback.data) return null;
 
   return {
@@ -110,13 +113,14 @@ async function loadDashboardProfile(
     .eq("id", userId)
     .single();
 
-  if (!isMissingProfileExemptionCategoryError(primary.error)) {
-    profileExemptionCategoryAvailable = true;
-    return (primary.data as ProfileWithExemptionRow | null) ?? null;
+  if (isMissingProfileExemptionCategoryError(primary.error)) {
+    profileExemptionCategoryAvailable = false;
+    return loadDashboardProfileWithoutCategory(supabase, userId);
   }
 
-  profileExemptionCategoryAvailable = false;
-  return loadDashboardProfileWithoutCategory(supabase, userId);
+  assertSupabaseQuerySucceeded(primary.error, "加载用户资料失败");
+  profileExemptionCategoryAvailable = true;
+  return (primary.data as ProfileWithExemptionRow | null) ?? null;
 }
 
 async function loadApprovedRequestGrantsFallback(
@@ -131,6 +135,7 @@ async function loadApprovedRequestGrantsFallback(
     .order("created_at", { ascending: false });
 
   if (!isMissingExemptionRequestCategoryError(primary.error)) {
+    assertSupabaseQuerySucceeded(primary.error, "加载已审批豁免失败");
     return ((primary.data ?? []) as ApprovedRequestGrantRow[]).map((request) => ({
       user_id: request.applicant_user_id,
       start_date: request.start_date,
@@ -148,6 +153,8 @@ async function loadApprovedRequestGrantsFallback(
     .eq("applicant_user_id", userId)
     .eq("request_status", "approved")
     .order("created_at", { ascending: false });
+
+  assertSupabaseQuerySucceeded(fallback.error, "加载已审批豁免失败");
 
   return ((fallback.data ?? []) as ApprovedRequestGrantRow[]).map((request) => ({
     user_id: request.applicant_user_id,
@@ -176,6 +183,7 @@ async function loadUserExemptionGrants(
     .order("created_at", { ascending: false });
 
   if (!isMissingExemptionGrantTableError(primary.error)) {
+    assertSupabaseQuerySucceeded(primary.error, "加载豁免记录失败");
     exemptionGrantTableAvailable = true;
     return (primary.data ?? []) as ExemptionGrantLike[];
   }
@@ -185,12 +193,14 @@ async function loadUserExemptionGrants(
 }
 
 async function loadHasPendingExemptionRequest(supabase: DashboardSupabase, userId: string): Promise<boolean> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("exemption_request")
     .select("id")
     .eq("applicant_user_id", userId)
     .eq("request_status", "pending")
     .limit(1);
+
+  assertSupabaseQuerySucceeded(error, "加载待审批豁免失败");
 
   return (data?.length ?? 0) > 0;
 }
@@ -210,6 +220,7 @@ async function loadLatestExemptionReviewNotice(
     .maybeSingle();
 
   if (!isMissingExemptionRequestCategoryError(primary.error)) {
+    assertSupabaseQuerySucceeded(primary.error, "加载豁免审批通知失败");
     return (primary.data as UserExemptionReviewNotice | null) ?? null;
   }
 
@@ -222,6 +233,8 @@ async function loadLatestExemptionReviewNotice(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  assertSupabaseQuerySucceeded(fallback.error, "加载豁免审批通知失败");
 
   if (!fallback.data) return null;
 
@@ -274,6 +287,7 @@ export async function loadDashboardPageData({
   ]);
 
   const accounts = accountsResult.data;
+  assertSupabaseQuerySucceeded(accountsResult.error, "加载账号失败");
   const userDisplayName = profile?.name?.trim() || "当前用户";
   const userRole = profile?.role ?? "member";
 
@@ -315,7 +329,7 @@ export async function loadDashboardPageData({
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
 
   const [
-    { data: rawTodayReports },
+    todayReportsResult,
     userExemptionGrants,
     hasPendingExemption,
     userExemptionReviewNotice,
@@ -329,11 +343,14 @@ export async function loadDashboardPageData({
           .in("account_id", accountIds)
           .eq("report_date", today)
           .order("uploaded_at", { ascending: false })
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadHasPendingExemptionRequest(supabase, userId),
     loadLatestExemptionReviewNotice(supabase, userId),
   ]);
+
+  assertSupabaseQuerySucceeded(todayReportsResult.error, "加载今日提交记录失败");
+  const rawTodayReports = todayReportsResult.data;
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",

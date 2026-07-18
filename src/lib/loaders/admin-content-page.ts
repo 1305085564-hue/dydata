@@ -5,6 +5,7 @@ import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-s
 import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { ContentFeedbackCard, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
@@ -96,13 +97,14 @@ function getVideoSortTimestamp(video: Pick<Video, "uploaded_at" | "created_at">)
 
 async function selectInBatches<Row>(
   ids: string[],
-  run: (batch: string[]) => Promise<{ data: unknown[] | null }>,
+  run: (batch: string[]) => Promise<{ data: unknown[] | null; error?: { message?: string } | null }>,
 ) {
   const rows: Row[] = [];
   for (let index = 0; index < ids.length; index += FULL_QUERY_BATCH_SIZE) {
     const batch = ids.slice(index, index + FULL_QUERY_BATCH_SIZE);
     if (batch.length === 0) continue;
-    const { data } = await run(batch);
+    const { data, error } = await run(batch);
+    assertSupabaseQuerySucceeded(error, "批量加载内容数据失败");
     if (data?.length) {
       rows.push(...(data as Row[]));
     }
@@ -320,6 +322,9 @@ async function loadPlayChangeSignals({
         .limit(1);
     }),
   );
+  for (const result of previousVideoResults) {
+    assertSupabaseQuerySucceeded(result.error, "加载上一条视频失败");
+  }
 
   const previousBoundaryVideos = previousVideoResults.flatMap((result) => (result.data ?? []) as PreviousVideoCandidateRow[]);
   const previousCandidates = [...relevantCandidateVideos, ...previousBoundaryVideos];
@@ -396,12 +401,7 @@ export async function loadAdminContentPageData({
     videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
-  const [
-    { data: videosRaw },
-    { data: profiles },
-    { data: accounts },
-    { data: reviewedResults },
-  ] = await Promise.all([
+  const [videosResult, profilesResult, accountsResult, reviewedResultsResult] = await Promise.all([
     videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
@@ -411,8 +411,17 @@ export async function loadAdminContentPageData({
           .select("result_json")
           .eq("insight_type", "next_day_review")
           .eq("result_status", "success")
-      : Promise.resolve({ data: [] }),
+      : Promise.resolve({ data: [], error: null }),
   ]);
+
+  assertSupabaseQuerySucceeded(videosResult.error, "加载内容视频失败");
+  assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
+  assertSupabaseQuerySucceeded(accountsResult.error, "加载账号列表失败");
+  assertSupabaseQuerySucceeded(reviewedResultsResult.error, "加载复盘结果失败");
+  const videosRaw = videosResult.data;
+  const profiles = profilesResult.data;
+  const accounts = accountsResult.data;
+  const reviewedResults = reviewedResultsResult.data;
 
   const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
     (left, right) => getVideoSortTimestamp(right) - getVideoSortTimestamp(left),

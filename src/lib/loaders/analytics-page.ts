@@ -6,6 +6,7 @@ import { ADMIN_FIRST_SCREEN_BUDGETS } from "@/lib/admin-first-screen-contract";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { UserPermissionInfo } from "@/lib/permissions";
 
 type AnalyticsSupabase = SupabaseClient;
@@ -184,15 +185,17 @@ export async function loadAnalyticsPageData({
     }
   }
 
-  const { data: reports } = await client
+  const reportsResult = await client
     .from("daily_reports")
     .select(ANALYTICS_REPORT_SELECT)
     .in("user_id", resolvedContext.scope.visibleUserIds)
     .gte("report_date", range.from)
     .lte("report_date", range.to)
     .order("report_date", { ascending: false });
+  assertSupabaseQuerySucceeded(reportsResult.error, "加载经营分析报表失败");
+  const reports = reportsResult.data;
 
-  const { data: previousPeriodReports } = shouldLoadPreviousPeriod
+  const previousPeriodResult = shouldLoadPreviousPeriod
     ? await client
         .from("daily_reports")
         .select(ANALYTICS_REPORT_SELECT)
@@ -200,7 +203,9 @@ export async function loadAnalyticsPageData({
         .gte("report_date", previousPeriodFrom)
         .lte("report_date", previousPeriodTo)
         .order("report_date", { ascending: false })
-    : { data: [] };
+    : { data: [], error: null };
+  assertSupabaseQuerySucceeded(previousPeriodResult.error, "加载经营分析对比报表失败");
+  const previousPeriodReports = previousPeriodResult.data;
 
   const filteredReports = ((reports ?? []) as AnalyticsPageData["filteredReports"]).map((report) => ({
     ...report,

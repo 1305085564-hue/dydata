@@ -12,10 +12,14 @@ type QueryCall = {
   limitCount: number | null;
 };
 
-function createSupabaseMock() {
+function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; error: { message: string } | null }>> = {}) {
   const calls: QueryCall[] = [];
 
   function resolve(call: QueryCall) {
+    if (overrides[call.table]) {
+      return overrides[call.table];
+    }
+
     if (call.table === "accounts") {
       return {
         data: [{ id: "account-1", name: "账号A", content_direction: "口播" }],
@@ -112,6 +116,20 @@ function createSupabaseMock() {
     },
   };
 }
+
+test("loadDashboardPageData 账号查询失败时抛错，不伪装成无账号", async () => {
+  const supabase = createSupabaseMock({
+    accounts: { data: null, error: { message: "accounts unavailable" } },
+  });
+
+  await assert.rejects(
+    loadDashboardPageData({
+      supabase: supabase as never,
+      userId: "user-1",
+    }),
+    /accounts unavailable/,
+  );
+});
 
 test("dashboard profile 查询合同包含 role 且不使用通配符", () => {
   assert.equal(__internal.DASHBOARD_PROFILE_SELECT.includes("*"), false);
