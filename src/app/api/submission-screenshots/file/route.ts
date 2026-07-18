@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { __internal as screenshotAccess } from "@/lib/submission-screenshot-access";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 
 const BUCKET_NAME = "submission-screenshots";
 
 interface FileRouteDependencies {
   getUser: () => Promise<{ id: string } | null>;
+  getVisibleUserIds: () => Promise<string[]>;
   createSignedUrl: (
     path: string,
     expiresIn: number
@@ -27,7 +29,9 @@ export async function buildSubmissionScreenshotFileResponse(
     return NextResponse.json({ error: "截图路径不正确" }, { status: 400 });
   }
 
-  if (!path.startsWith(`${user.id}/`)) {
+  const ownerUserId = path.split("/", 1)[0];
+  const visibleUserIds = await dependencies.getVisibleUserIds();
+  if (!ownerUserId || !visibleUserIds.includes(ownerUserId)) {
     return NextResponse.json({ error: "无权读取该截图" }, { status: 403 });
   }
 
@@ -51,6 +55,10 @@ export async function GET(request: Request) {
         data: { user },
       } = await supabase.auth.getUser();
       return user ? { id: user.id } : null;
+    },
+    getVisibleUserIds: async () => {
+      const permissionContext = await getCurrentPermissionContext();
+      return permissionContext?.scope.visibleUserIds ?? [];
     },
     createSignedUrl: async (path, expiresIn) => {
       const { data, error } = await adminSupabase.storage
