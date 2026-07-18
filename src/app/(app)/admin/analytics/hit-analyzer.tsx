@@ -546,21 +546,21 @@ export function HitAnalyzer({
       label: "高完播高播放",
       description: "最接近可复用爆款模板",
       count: scatterSummary?.distribution.lead ?? 0,
-      tone: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
+      tone: "border-stone-200 bg-stone-50 text-[#3F7A4E]",
     },
     {
       key: "breakout",
       label: "高播放待强化",
       description: "已有流量，但留存还有优化空间",
       count: scatterSummary?.distribution.breakout ?? 0,
-      tone: "border-stone-200 bg-stone-50 text-[#C9604D]",
+      tone: "border-stone-200 bg-stone-50 text-[#B24E3E]",
     },
     {
       key: "story",
       label: "高完播待放量",
       description: "内容承接不错，适合继续扩量测试",
       count: scatterSummary?.distribution.story ?? 0,
-      tone: "border-stone-200 bg-stone-50 text-[#D97757]",
+      tone: "border-stone-200 bg-stone-50 text-[#B4532F]",
     },
     {
       key: "backlog",
@@ -601,7 +601,7 @@ export function HitAnalyzer({
           <div className="mt-3 grid grid-cols-2 gap-2 pt-1">
             <div>
               <p className="text-[12px] font-normal text-stone-500">播放量</p>
-              <p className={cn("text-[13px] font-normal tabular-nums", datum.isHit ? "text-[#C9604D]" : "text-stone-700")}>{formatPlayCount(datum.play)}</p>
+              <p className={cn("text-[13px] font-normal tabular-nums", datum.isHit ? "text-[#B24E3E]" : "text-stone-700")}>{formatPlayCount(datum.play)}</p>
             </div>
             <div>
               <p className="text-[12px] font-normal text-stone-500">完播率</p>
@@ -777,7 +777,7 @@ export function HitAnalyzer({
                 className={cn(
                   "rounded-lg border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   activeFilter === filter.id
-                    ? "border-[#D97757]/40 bg-white text-[#D97757]"
+                    ? "border-[#D97757]/40 bg-white text-[#B4532F]"
                     : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50",
                 )}
               >
@@ -793,7 +793,7 @@ export function HitAnalyzer({
                   className={cn(
                     "rounded-lg border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     activeTimePreset === preset.id
-                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
+                      ? "border-[#D97757]/40 bg-white text-[#B4532F]"
                       : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50",
                   )}
                 >
@@ -831,7 +831,7 @@ export function HitAnalyzer({
                     >
                       上一页
                     </button>
-                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#D97757]/40 bg-white px-2 text-[12px] font-medium tabular-nums text-[#D97757]">
+                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#D97757]/40 bg-white px-2 text-[12px] font-medium tabular-nums text-[#B4532F]">
                       {safeSubmitterPage + 1}
                     </span>
                     <span className="text-[12px] tabular-nums text-stone-500">/ {submitterPageCount}</span>

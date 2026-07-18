@@ -388,7 +388,7 @@ export function ReviewDecisionPanel({
                 onChange={(event) => setPromote(event.target.checked)}
                 className="size-4 rounded border-stone-300 accent-[#D97757]"
               />
-              <Sparkles className="size-4 stroke-[1.5] text-[#6FAA7D]" />
+              <Sparkles className="size-4 stroke-[1.5] text-[#3F7A4E]" />
               <span className="font-medium">同时置顶推荐</span>
               <span className="text-[12px] text-stone-500">仅 Owner 可推广，会出现在员工推荐 banner</span>
             </label>
@@ -468,7 +468,7 @@ export function ReviewDecisionPanel({
                     className={cn(
                       "rounded-full border px-3 py-1 text-[12px] font-medium transition-colors active:translate-y-0",
                       active
-                        ? "border-[#D97757]/40 text-[#D97757]"
+                        ? "border-[#D97757]/40 text-[#B4532F]"
                         : "border-stone-200 text-stone-700 hover:border-stone-300 hover:text-stone-900",
                     )}
                   >
@@ -486,7 +486,7 @@ export function ReviewDecisionPanel({
           <label className="block">
             <span className="text-[12px] font-normal text-stone-500">
               {decision === "verify" ? "管理员结论" : "驳回原因"}
-              <span className="ml-1 text-[#C9604D]">*</span>
+              <span className="ml-1 text-[#B24E3E]">*</span>
             </span>
             <Textarea
               value={conclusion}
@@ -525,7 +525,7 @@ export function ReviewDecisionPanel({
             type="button"
             disabled={submitting || isLocked}
             onClick={submit}
-            className="rounded-lg bg-[#D97757] px-5 text-white hover:bg-[#C96442] active:translate-y-0"
+            className="rounded-lg bg-[#B4532F] px-5 text-white hover:bg-[#A84D2B] active:translate-y-0"
           >
             {submitting ? "保存中..." : decision === "verify" ? "保存并采纳" : "保存并驳回"}
           </Button>

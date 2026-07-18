@@ -162,7 +162,7 @@ export function ExceptionQueue({
     <div className="space-y-3">
       {/* 标题 */}
       <div className="flex items-center gap-2">
-        <AlertCircle className="size-4 text-[#D99E55]" />
+        <AlertCircle className="size-4 text-[#8F641B]" />
         <h2 className="text-[18px] font-medium text-stone-900">
           待处理异常
           <span className="ml-1.5 text-[12px] tabular-nums text-stone-500">
@@ -246,7 +246,7 @@ export function ExceptionQueue({
                     </td>
                     <td className="px-3 py-2.5">
                       {member.consecutiveMissing > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-[#C9604D]/15 bg-[#C9604D]/[0.04] px-2 py-0.5 text-[12px] font-normal text-[#C9604D]">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-[#C9604D]/15 bg-[#C9604D]/[0.04] px-2 py-0.5 text-[12px] font-normal text-[#B24E3E]">
                           <span className="size-1 rounded-full bg-[#C9604D]" />
                           {member.consecutiveMissing} 天
                         </span>
@@ -263,10 +263,10 @@ export function ExceptionQueue({
                       <span
                         className={`text-[12px] tabular-nums font-medium ${
                           member.fulfillmentRate >= 80
-                            ? "text-[#6FAA7D]"
+                            ? "text-[#3F7A4E]"
                             : member.fulfillmentRate >= 60
-                              ? "text-[#D99E55]"
-                              : "text-[#C9604D]"
+                              ? "text-[#8F641B]"
+                              : "text-[#B24E3E]"
                         }`}
                       >
                         {member.fulfillmentRate}%
@@ -331,7 +331,7 @@ export function ExceptionQueue({
         <div className="sticky bottom-4 z-30 flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-3 shadow-md">
           <div className="flex items-center gap-3">
             <span className="text-[13px] font-medium text-stone-700">
-              已选 <span className="font-medium tabular-nums text-[#D97757]">{selectedIds.size}</span> 人
+              已选 <span className="font-medium tabular-nums text-[#B4532F]">{selectedIds.size}</span> 人
             </span>
             <button
               type="button"

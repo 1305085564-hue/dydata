@@ -164,7 +164,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             ))}
           </div>
           {showInteractionWarning && (
-            <div className="mt-2 pl-1 text-[12px] font-medium text-[#D99E55] transition-opacity duration-150">
+            <div className="mt-2 pl-1 text-[12px] font-medium text-[#8F641B] transition-opacity duration-150">
               ⚠️ 互动数据总和已超过播放量，请核对输入
             </div>
           )}
@@ -184,7 +184,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             <button
               type="button"
               onClick={() => setIsRetentionExpanded(true)}
-              className="flex items-center gap-1.5 py-1 text-[12px] font-medium text-stone-500 hover:text-[#D97757] transition-colors focus:outline-none"
+              className="flex items-center gap-1.5 py-1 text-[12px] font-medium text-stone-500 hover:text-[#B4532F] transition-colors focus:outline-none"
             >
               <span>[+] 展开完播留存指标录入 (可选)</span>
             </button>

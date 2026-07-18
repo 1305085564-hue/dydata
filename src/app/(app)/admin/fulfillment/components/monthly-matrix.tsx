@@ -188,7 +188,7 @@ export function MonthlyMatrix({
                         <th
                           key={day}
                           className={`min-w-[28px] px-0.5 py-2 text-center text-[12px] font-normal tabular-nums ${
-                            isToday ? "text-[#D97757] font-medium" : "text-stone-500"
+                            isToday ? "text-[#B4532F] font-medium" : "text-stone-500"
                           }`}
                         >
                           {day}
@@ -281,10 +281,10 @@ export function MonthlyMatrix({
                         <span
                           className={`text-[12px] tabular-nums font-medium ${
                             member.publishedDays >= member.totalDays
-                              ? "text-[#6FAA7D]"
+                              ? "text-[#3F7A4E]"
                               : member.publishedDays / member.totalDays >= 0.6
                                 ? "text-stone-700"
-                                : "text-[#C9604D]"
+                                : "text-[#B24E3E]"
                           }`}
                         >
                           {member.publishedDays}

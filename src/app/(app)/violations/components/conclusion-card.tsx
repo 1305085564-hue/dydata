@@ -34,7 +34,7 @@ export function ConclusionCard({
             {reasonTags!.map((tag) => (
               <span
                 key={tag.id}
-                className="rounded-lg border border-[#C9604D]/30 px-2.5 py-0.5 text-[12px] font-medium text-[#C9604D]"
+                className="rounded-lg border border-[#C9604D]/30 px-2.5 py-0.5 text-[12px] font-medium text-[#B24E3E]"
               >
                 {tag.name}
               </span>

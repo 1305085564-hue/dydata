@@ -203,7 +203,7 @@ export function ChatInspector({
                 isSending
                   ? 'bg-stone-800 text-white hover:bg-stone-900'
                   : canSend
-                  ? 'bg-[#D97757] text-white hover:bg-[#C96442] shadow-sm shadow-[#D97757]/20'
+                  ? 'bg-[#B4532F] text-white hover:bg-[#A84D2B] shadow-sm shadow-[#D97757]/20'
                   : 'border border-stone-200/20 bg-stone-200/80 text-stone-500'
               )}
               title={isSending ? '中止当前生成' : '发送指令'}

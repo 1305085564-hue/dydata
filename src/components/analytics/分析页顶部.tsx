@@ -76,7 +76,7 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
                 className={cn(
                   "h-7 rounded-lg px-3 text-[12px]",
                   preset === option.value
-                    ? "border-transparent bg-[#D97757] text-white hover:bg-[#C96442]"
+                    ? "border-transparent bg-[#B4532F] text-white hover:bg-[#A84D2B]"
                     : "border-stone-200 bg-white text-stone-700",
                 )}
                 onClick={() => onChange(option.value)}
@@ -108,7 +108,7 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
             type="button"
             onClick={() => void handleExport()}
             disabled={isExporting}
-            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
+            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#B4532F] px-3 text-[12px] font-medium text-white transition-[background-color] duration-150 hover:bg-[#A84D2B] active:translate-y-0"
           >
             <Download className="size-3.5 stroke-[1.5]" />
             {isExporting ? "导出中..." : "导出"}

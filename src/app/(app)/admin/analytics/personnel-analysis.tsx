@@ -47,13 +47,13 @@ interface PersonStats {
 
 function getSuggestion(metrics: { hitRate: number; stability: number; trend: number; engagementRate: number }) {
   if (metrics.trend < -10) {
-    return { label: "重点关注", color: "text-[#C9604D]", bgColor: "bg-[#C9604D]/10", leftBorder: "border-l-[#C9604D]" };
+    return { label: "重点关注", color: "text-[#B24E3E]", bgColor: "bg-[#C9604D]/10", leftBorder: "border-l-[#C9604D]" };
   }
   if (metrics.hitRate >= 30 && metrics.trend >= 0) {
-    return { label: "继续放量", color: "text-[#6FAA7D]", bgColor: "bg-[#6FAA7D]/10", leftBorder: "border-l-[#6FAA7D]" };
+    return { label: "继续放量", color: "text-[#3F7A4E]", bgColor: "bg-[#6FAA7D]/10", leftBorder: "border-l-[#6FAA7D]" };
   }
   if (metrics.stability >= 15) {
-    return { label: "波动异常", color: "text-[#D99E55]", bgColor: "bg-[#D99E55]/10", leftBorder: "border-l-[#D99E55]" };
+    return { label: "波动异常", color: "text-[#8F641B]", bgColor: "bg-[#D99E55]/10", leftBorder: "border-l-[#D99E55]" };
   }
   return { label: "保持观察", color: "text-stone-700", bgColor: "bg-stone-100", leftBorder: "border-l-transparent" };
 }
@@ -363,9 +363,9 @@ function PersonRankCard({
 function TrendBadge({ trend }: { trend: number }) {
   const icon =
     trend > 0 ? (
-      <TrendingUp className="size-3.5 stroke-[1.5] text-[#6FAA7D]" />
+      <TrendingUp className="size-3.5 stroke-[1.5] text-[#3F7A4E]" />
     ) : trend < 0 ? (
-      <TrendingDown className="size-3.5 stroke-[1.5] text-[#C9604D]" />
+      <TrendingDown className="size-3.5 stroke-[1.5] text-[#B24E3E]" />
     ) : (
       <Minus className="size-3.5 stroke-[1.5] text-stone-500" />
     );

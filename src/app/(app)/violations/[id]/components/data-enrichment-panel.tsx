@@ -131,7 +131,7 @@ export function DataEnrichmentPanel({
       {/* Title */}
       <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FileCheck className="size-4.5 text-[#D97757]" />
+          <FileCheck className="size-4.5 text-[#B4532F]" />
           <h2 className="text-[18px] font-medium text-stone-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
         </div>
         <button onClick={onClose} aria-label="关闭知识沉淀台" className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700">
@@ -156,7 +156,7 @@ export function DataEnrichmentPanel({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-[12px] font-normal text-stone-500">
-                  钩子文案 (hook_text) <span className="text-[#C9604D]">*</span>
+                  钩子文案 (hook_text) <span className="text-[#B24E3E]">*</span>
                 </label>
                 <textarea
                   value={hookText}
@@ -168,7 +168,7 @@ export function DataEnrichmentPanel({
 
               <div className="space-y-1.5">
                 <label className="text-[12px] font-normal text-stone-500">
-                  系统级总结洞察 (admin_insight) <span className="text-[#C9604D]">*</span>
+                  系统级总结洞察 (admin_insight) <span className="text-[#B24E3E]">*</span>
                 </label>
                 <textarea
                   value={adminInsight}
@@ -227,7 +227,7 @@ export function DataEnrichmentPanel({
                         className={cn(
                           "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
-                            ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
+                            ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#B4532F]"
                             : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
                         )}
                       >
@@ -251,7 +251,7 @@ export function DataEnrichmentPanel({
                         className={cn(
                           "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
-                            ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
+                            ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#B4532F]"
                             : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
                         )}
                       >
@@ -275,7 +275,7 @@ export function DataEnrichmentPanel({
                         className={cn(
                           "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
-                            ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
+                            ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#B4532F]"
                             : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
                         )}
                       >
@@ -290,8 +290,8 @@ export function DataEnrichmentPanel({
         ) : (
           /* Request Supplement Panel */
           <div className="space-y-4 rounded-2xl border border-[#D99E55]/30 bg-[#D99E55]/[0.06] p-5">
-            <div className="flex items-start gap-2.5 text-[12px] font-medium tracking-[0.12em] text-[#D99E55]">
-              <AlertTriangle className="size-4.5 text-[#D99E55]" />
+            <div className="flex items-start gap-2.5 text-[12px] font-medium tracking-[0.12em] text-[#8F641B]">
+              <AlertTriangle className="size-4.5 text-[#8F641B]" />
               向员工索要凭证 / 退回修改
             </div>
 
@@ -316,7 +316,7 @@ export function DataEnrichmentPanel({
                       if (e.target.checked) setMissingFields([...missingFields, "screenshot"]);
                       else setMissingFields(missingFields.filter((f) => f !== "screenshot"));
                     }}
-                    className="rounded border-stone-300 text-[#D97757] focus:ring-[#D97757] size-3.5"
+                    className="rounded border-stone-300 text-[#B4532F] focus:ring-[#D97757] size-3.5"
                   />
                   完播/流量截图
                 </label>
@@ -328,7 +328,7 @@ export function DataEnrichmentPanel({
                       if (e.target.checked) setMissingFields([...missingFields, "usage_metrics"]);
                       else setMissingFields(missingFields.filter((f) => f !== "usage_metrics"));
                     }}
-                    className="rounded border-stone-300 text-[#D97757] focus:ring-[#D97757] size-3.5"
+                    className="rounded border-stone-300 text-[#B4532F] focus:ring-[#D97757] size-3.5"
                   />
                   转化数据凭证
                 </label>
@@ -363,7 +363,7 @@ export function DataEnrichmentPanel({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 rounded-lg border-[#D99E55]/30 bg-[#D99E55]/[0.06] text-[12px] text-[#D99E55] hover:bg-[#D99E55]/10"
+            className="h-8 rounded-lg border-[#D99E55]/30 bg-[#D99E55]/[0.06] text-[12px] text-[#8F641B] hover:bg-[#D99E55]/10"
             onClick={() => setShowSupplementForm(true)}
           >
             打回并索要凭证
@@ -382,7 +382,7 @@ export function DataEnrichmentPanel({
               size="sm"
               disabled={submitting}
               onClick={handleEnrichVerify}
-              className="h-8 rounded-lg bg-[#D97757] px-4 text-[12px] text-white hover:bg-[#C96442]"
+              className="h-8 rounded-lg bg-[#B4532F] px-4 text-[12px] text-white hover:bg-[#A84D2B]"
             >
               {submitting ? "高光升库中..." : "确认富化并高光入库"}
             </Button>

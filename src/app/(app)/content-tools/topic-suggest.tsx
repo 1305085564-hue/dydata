@@ -147,7 +147,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
                     样本 {data.sampleCount} 条 · 热点日期 {data.marketDate ?? "暂无"}
                   </div>
                 </div>
-                <div className="inline-flex items-center gap-1 rounded-full bg-stone-50 px-3 py-1 text-[12px] text-[#D97757] ring-1 ring-stone-200">
+                <div className="inline-flex items-center gap-1 rounded-full bg-stone-50 px-3 py-1 text-[12px] text-[#B4532F] ring-1 ring-stone-200">
                   <TrendingUp className="size-3.5" />
                   高播放样本
                 </div>

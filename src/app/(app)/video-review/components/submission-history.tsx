@@ -73,7 +73,7 @@ export function SubmissionHistory({
             <button
               type="button"
               onClick={onCtaClick}
-              className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/20"
+              className="h-9 px-4 rounded-lg bg-[#B4532F] text-[13px] font-medium text-white hover:bg-[#A84D2B] active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/20"
             >
               立即上传凭证
             </button>
@@ -104,8 +104,8 @@ export function SubmissionHistory({
                     className={cn(
                       "absolute top-3 right-3 text-[12px] font-medium flex items-center gap-1 transition-all rounded px-2 py-0.5",
                       confirmDeleteId === sub.id
-                        ? "text-[#C9604D] bg-[#C9604D]/10 border border-[#C9604D]/20 opacity-100"
-                        : "text-stone-500 hover:text-[#C9604D] opacity-0 group-hover:opacity-100"
+                        ? "text-[#B24E3E] bg-[#C9604D]/10 border border-[#C9604D]/20 opacity-100"
+                        : "text-stone-500 hover:text-[#B24E3E] opacity-0 group-hover:opacity-100"
                     )}
                     title={confirmDeleteId === sub.id ? "确认删除？" : "删除"}
                   >

@@ -181,7 +181,7 @@ export function MetricInputCard({
               "focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-950/5 focus:border-b-2 focus:border-b-[#D97757]",
               "h-10",
               field.source === "ocr"
-                ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#D97757]"
+                ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#B4532F]"
                 : ""
             )}
           />

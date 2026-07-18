@@ -50,7 +50,7 @@ export default function HomePage() {
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center rounded-lg bg-[#D97757] px-6 py-2.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
+                className="inline-flex items-center justify-center rounded-lg bg-[#B4532F] px-6 py-2.5 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
               >
                 登录工作台
               </Link>
@@ -118,7 +118,7 @@ export default function HomePage() {
             <div className="absolute -bottom-4 -left-4 hidden rounded-xl border border-stone-200 bg-white p-4 md:block">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#D97757]/10">
-                  <TrendingUp className="size-5 text-[#D97757]" />
+                  <TrendingUp className="size-5 text-[#B4532F]" />
                 </div>
                 <div>
                   <p className="text-[12px] font-medium text-stone-700">+240.5%</p>
@@ -141,7 +141,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 2xl:gap-8">
             {/* Card 1 */}
             <div className="group rounded-2xl border border-stone-200 bg-white p-8 transition-colors duration-150 hover:bg-stone-50">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-stone-200 bg-white text-[#D97757]">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-stone-200 bg-white text-[#B4532F]">
                 <FileText className="size-6 stroke-[1.5]" />
               </div>
               <h3 className="text-[18px] font-medium text-stone-900">日报填报</h3>
@@ -152,7 +152,7 @@ export default function HomePage() {
 
             {/* Card 2 */}
             <div className="group rounded-2xl border border-stone-200 bg-white p-8 transition-colors duration-150 hover:bg-stone-50">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-stone-200 bg-white text-[#D97757]">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-stone-200 bg-white text-[#B4532F]">
                 <PieChart className="size-6 stroke-[1.5]" />
               </div>
               <h3 className="text-[18px] font-medium text-stone-900">经营分析</h3>
@@ -163,7 +163,7 @@ export default function HomePage() {
 
             {/* Card 3 */}
             <div className="group rounded-2xl border border-stone-200 bg-white p-8 transition-colors duration-150 hover:bg-stone-50">
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-stone-200 bg-white text-[#D97757]">
+              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-stone-200 bg-white text-[#B4532F]">
                 <Clock className="size-6 stroke-[1.5]" />
               </div>
               <h3 className="text-[18px] font-medium text-stone-900">AI 助手</h3>
@@ -187,7 +187,7 @@ export default function HomePage() {
           </div>
           <a
             href="mailto:1305085564@qq.com"
-            className="text-[13px] text-stone-500 transition-colors hover:text-[#D97757]"
+            className="text-[13px] text-stone-500 transition-colors hover:text-[#B4532F]"
           >
             1305085564@qq.com
           </a>

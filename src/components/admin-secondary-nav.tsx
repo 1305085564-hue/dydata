@@ -155,7 +155,7 @@ export function AdminSecondaryNav({
         const content = (
           <>
             <div className="admin-subnav-link-head flex items-start gap-3">
-              <span className="admin-subnav-link-icon flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
+              <span className="admin-subnav-link-icon flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#B4532F]">
                 <Icon className="size-5" />
               </span>
               <span className="admin-subnav-link-title flex-1 pt-1 text-[18px] font-medium tracking-[-0.02em] text-stone-900">

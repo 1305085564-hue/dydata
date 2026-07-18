@@ -101,7 +101,7 @@ export function FilterBar() {
               onClick={() => toggleGuidanceMethod(method)}
               className={`rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-colors active:translate-y-0 ${
                 active
-                  ? "border-[#D97757]/40 text-[#D97757]"
+                  ? "border-[#D97757]/40 text-[#B4532F]"
                   : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700"
               }`}
             >

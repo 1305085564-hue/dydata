@@ -167,7 +167,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <AppShell width="wide" className="pb-12 pt-8">
         <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-2xl border border-stone-200 bg-white p-8 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-stone-50 border border-stone-200 text-stone-500 mb-5">
-            <Sparkles className="h-8 w-8 text-[#D97757]" />
+            <Sparkles className="h-8 w-8 text-[#B4532F]" />
           </div>
           <h2 className="text-[18px] font-medium text-stone-900 leading-[1.4]">
             开启内容成长体检
@@ -177,7 +177,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           </p>
           <Link
             href="/dashboard"
-            className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#c56545] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#B4532F] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#A84D2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             去提交日报
             <ArrowRight className="h-4 w-4" />
@@ -320,7 +320,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 VERDICT · 首屏体检焦点
               </span>
               <h2 className="text-[24px] font-medium text-stone-900 leading-[1.4]">
-                你现在最该补的是「<span className="text-[#D97757]">{verdict.weakestDimension}</span>」
+                你现在最该补的是「<span className="text-[#B4532F]">{verdict.weakestDimension}</span>」
               </h2>
               {phase === "observation" ? (
                 <p className="text-[12px] text-stone-500">
@@ -342,7 +342,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <div className="mt-5 grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-[12px] font-medium text-stone-500">
-                <Target className="h-4 w-4 text-[#D97757]" />
+                <Target className="h-4 w-4 text-[#B4532F]" />
                 诊断依据
               </div>
               <p className="text-[13px] font-medium text-stone-700 leading-[1.6]">
@@ -352,7 +352,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
 
             <div className="space-y-2 border-t border-stone-100 pt-4 md:border-t-0 md:pt-0 md:border-l md:border-stone-200 md:pl-6">
               <div className="flex items-center gap-1.5 text-[12px] font-medium text-stone-500">
-                <Award className="h-4 w-4 text-[#6FAA7D]" />
+                <Award className="h-4 w-4 text-[#3F7A4E]" />
                 下一条视频改法（药方）
               </div>
               <p className="text-[13px] font-medium text-stone-900 leading-[1.6] bg-stone-50/70 p-2.5 rounded-lg border border-stone-100">
@@ -375,7 +375,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           </p>
           <Link
             href="/dashboard"
-            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#c56545] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B4532F] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#A84D2B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             去同步今日数据
             <ArrowRight className="h-4 w-4" />
@@ -475,7 +475,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         {phase === "accumulation" ? (
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
             <div className="flex items-center gap-2.5 mb-4">
-              <Users className="h-5 w-5 stroke-[1.5] text-[#8AA8C7]" />
+              <Users className="h-5 w-5 stroke-[1.5] text-[#4E7194]" />
               <div>
                 <h4 className="text-[18px] font-medium text-stone-900 leading-tight">同伴 · 追赶视角</h4>
                 <p className="text-[12px] text-stone-500 mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
@@ -497,7 +497,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         ) : phase === "observation" ? (
           <div className="rounded-2xl border border-stone-200 bg-white p-5">
             <div className="flex items-center gap-2.5 mb-4">
-              <Users className="h-5 w-5 text-[#8AA8C7]" />
+              <Users className="h-5 w-5 text-[#4E7194]" />
               <div>
                 <h4 className="text-[18px] font-medium text-stone-900 leading-tight">该学谁 · 双人对比</h4>
                 <p className="text-[12px] text-stone-500 mt-1">对比同题材高表现同事，吸收实操经验。</p>
@@ -509,7 +509,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1 text-[13px] text-stone-700">
                     <div>对标同事：<span className="font-semibold text-stone-900">{benchmark.peer.name}</span></div>
-                    <div>指标数据：<span className="font-semibold text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
+                    <div>指标数据：<span className="font-semibold text-[#B4532F]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
                   </div>
 
                   {benchmark.peer.scriptSnippet ? (
@@ -569,7 +569,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   <span className="font-medium text-stone-900">{benchmark.peer.name}</span>
                   {verdict ? (
                     <span>
-                      {" "}· <span className="font-medium text-[#D97757]">{formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue)}</span>
+                      {" "}· <span className="font-medium text-[#B4532F]">{formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue)}</span>
                     </span>
                   ) : null}
                 </p>

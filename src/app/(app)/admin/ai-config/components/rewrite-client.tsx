@@ -293,7 +293,7 @@ export default function RewriteClient() {
                     <span className="truncate">{v.label}</span>
                     <Badge variant="outline" className={cn("font-mono text-[12px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-stone-700 border-stone-300" : "text-stone-500 border-stone-200")}>{v.key}</Badge>
                     {v.is_default && (
-                      <Star strokeWidth={1.5} className="size-3 text-[#D97757] fill-[#D97757] shrink-0" />
+                      <Star strokeWidth={1.5} className="size-3 text-[#B4532F] fill-[#D97757] shrink-0" />
                     )}
                     {!v.is_enabled && (
                       <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm shrink-0">停用</span>
@@ -334,7 +334,7 @@ export default function RewriteClient() {
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-[13px] leading-[1.5] text-stone-900">{view.label}</h3>
                     <Badge variant="outline" className="font-mono text-[12px] bg-stone-50">{view.key}</Badge>
-                    {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10">默认</Badge>}
+                    {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#3F7A4E] hover:bg-[#6FAA7D]/10">默认</Badge>}
                   </div>
                   {view.description && (
                     <div className="text-[12px] text-stone-500 mt-1">{view.description}</div>
@@ -429,7 +429,7 @@ export default function RewriteClient() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`删除路由 ${route.actual_model}`}
-                                      className="size-7 text-stone-500 hover:text-[#C9604D]"
+                                      className="size-7 text-stone-500 hover:text-[#B24E3E]"
                                       onClick={() => setDeleteTarget({ open: true, id: route.id, entity: "rewrite_model_route", title: `删除路由 ${route.actual_model}` })}
                                     >
                                       <Trash2 strokeWidth={1.5} className="size-3" />

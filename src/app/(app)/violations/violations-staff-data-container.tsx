@@ -155,7 +155,7 @@ export async function ViolationsStaffDataContainer({
         <div className="mt-4 flex justify-center">
           <Link
             href="/violations/submit"
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#D97757] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0"
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#B4532F] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#A84D2B] active:translate-y-0"
           >
             <FilePlus2 className="size-4 stroke-[1.75]" />
             上传新话术

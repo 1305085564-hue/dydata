@@ -232,7 +232,7 @@ export function NavBarClient({
    const primaryLinkClass = (active: boolean) =>
     cn(
       "relative inline-flex h-9 shrink-0 items-center rounded-lg px-2 md:px-1.5 lg:px-2.5 text-[12px] lg:text-[13px] font-medium tracking-tight transition-colors duration-200 ease-out z-10",
-      active ? "text-[#D97757]" : "text-stone-500 hover:text-stone-700",
+      active ? "text-[#B4532F]" : "text-stone-500 hover:text-stone-700",
     );
 
   return (
@@ -261,7 +261,7 @@ export function NavBarClient({
                 </div>
                 <div className="hidden sm:block">
                   <div className="text-[12px] font-medium tracking-tight text-stone-900 uppercase leading-none transition-colors duration-300 group-hover:text-stone-950">
-                    DYData <span className="text-[#D97757] font-medium text-[12px] transition-colors duration-300 group-hover:text-[#C9503B]">PREMIUM</span>
+                    DYData <span className="text-[#B4532F] font-medium text-[12px] transition-colors duration-300 group-hover:text-[#C9503B]">PREMIUM</span>
                   </div>
                   <div className="mt-1 text-[12px] font-normal tracking-[0.12em] text-stone-500 uppercase leading-none transition-colors duration-300 group-hover:text-stone-600">
                     短视频管理控制台
@@ -298,7 +298,7 @@ export function NavBarClient({
                         <span className="absolute inset-0 rounded-lg bg-stone-100/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10" />
                       )}
                       {Icon && (
-                        <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-all duration-300 ease-out group-hover:-translate-y-0.5", active ? "text-[#D97757]" : "text-stone-500")} />
+                        <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-all duration-300 ease-out group-hover:-translate-y-0.5", active ? "text-[#B4532F]" : "text-stone-500")} />
                       )}
                       <span className="whitespace-nowrap">{item.label}</span>
                       {badgeValue > 0 && (
@@ -306,7 +306,7 @@ export function NavBarClient({
                           className={cn(
                             "ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1 text-[11px] font-medium tabular-nums transition-colors duration-150",
                             active
-                              ? "bg-[#D97757] text-white"
+                              ? "bg-[#B4532F] text-white"
                               : "bg-stone-200/60 text-stone-500",
                           )}
                         >
@@ -348,9 +348,9 @@ export function NavBarClient({
                     type="button"
                     className={cn(
                       "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
-                      "text-stone-500 hover:text-[#D97757] active:scale-95",
+                      "text-stone-500 hover:text-[#B4532F] active:scale-95",
                       (wrenchOpen || pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/modules") || pathname.startsWith("/admin/ai-config")) &&
-                        "text-[#D97757] dark:text-[#D97757]"
+                        "text-[#B4532F] dark:text-[#B4532F]"
                     )}
                     title="系统维护"
                     aria-label="系统维护"
@@ -381,7 +381,7 @@ export function NavBarClient({
                             onClick={() => setWrenchOpen(false)}
                             className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                           >
-                            <UsersRound className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
+                            <UsersRound className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#B4532F] transition-colors" />
                             <span>成员管理</span>
                           </Link>
 
@@ -391,7 +391,7 @@ export function NavBarClient({
                             onClick={() => setWrenchOpen(false)}
                             className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                           >
-                            <Settings className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
+                            <Settings className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#B4532F] transition-colors" />
                             <span>系统维护</span>
                           </Link>
 
@@ -402,7 +402,7 @@ export function NavBarClient({
                               onClick={() => setWrenchOpen(false)}
                               className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] font-medium text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 group"
                             >
-                              <Sparkles className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#D97757] transition-colors" />
+                              <Sparkles className="size-4 stroke-[1.8] text-stone-400 group-hover:text-[#B4532F] transition-colors" />
                               <span>AI 配置</span>
                             </Link>
                           )}
@@ -419,7 +419,7 @@ export function NavBarClient({
                 className={cn(
                   "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
                   "text-stone-500 hover:text-stone-700 active:scale-95",
-                  commandHubOpen && "text-[#D97757] bg-white border border-[#D97757]/15 shadow-[0_2px_12px_-3px_rgba(217,119,87,0.15)]"
+                  commandHubOpen && "text-[#B4532F] bg-white border border-[#D97757]/15 shadow-[0_2px_12px_-3px_rgba(217,119,87,0.15)]"
                 )}
                 title="待办与通知中心"
                 aria-label="待办与通知中心"
@@ -463,14 +463,14 @@ export function NavBarClient({
                 onClick={handleSettingsOpen}
                 className="flex items-center gap-2 text-left rounded-lg focus:outline-none group"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#8AA8C7]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#4E7194]">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
                 </div>
                 <div className="hidden lg:flex flex-col transition-colors duration-200 group-hover:text-stone-900">
                   <span className="text-[12px] font-medium text-stone-700 leading-tight group-hover:text-stone-900">
                     {name.split(" ")[0]}
                   </span>
-                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase group-hover:text-[#8AA8C7]">
+                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase group-hover:text-[#4E7194]">
                     {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
                   </span>
                 </div>
@@ -511,16 +511,16 @@ export function NavBarClient({
                     className={cn(
                       "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",
                       active 
-                        ? "bg-[#D97757]/10 text-[#D97757]" 
+                        ? "bg-[#D97757]/10 text-[#B4532F]"
                         : "text-stone-600 hover:bg-stone-50 hover:text-stone-900"
                     )}
                   >
                     <div className="flex items-center gap-2.5">
-                      {Icon && <Icon className={cn("size-4 stroke-[1.8]", active ? "text-[#D97757]" : "text-stone-400")} />}
+                      {Icon && <Icon className={cn("size-4 stroke-[1.8]", active ? "text-[#B4532F]" : "text-stone-400")} />}
                       <span>{item.label}</span>
                     </div>
                     {badgeValue > 0 && (
-                      <span className="bg-[#D97757] text-white text-[11px] font-medium rounded-full px-2 py-0.5">
+                      <span className="bg-[#B4532F] text-white text-[11px] font-medium rounded-full px-2 py-0.5">
                         {badgeValue}
                       </span>
                     )}

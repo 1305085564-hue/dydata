@@ -57,7 +57,7 @@ export function StaffSearchHero({
         <button
           type="submit"
           disabled={isPending}
-          className="absolute right-2 top-1/2 inline-flex h-9 -translate-y-1/2 items-center gap-1 rounded-lg bg-[#D97757] px-4 text-[12px] font-medium text-white transition-colors hover:bg-[#C96442] active:translate-y-0 disabled:cursor-not-allowed disabled:border disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500/40 disabled:hover:bg-stone-100"
+          className="absolute right-2 top-1/2 inline-flex h-9 -translate-y-1/2 items-center gap-1 rounded-lg bg-[#B4532F] px-4 text-[12px] font-medium text-white transition-colors hover:bg-[#A84D2B] active:translate-y-0 disabled:cursor-not-allowed disabled:border disabled:border-stone-200 disabled:bg-stone-100 disabled:text-stone-500/40 disabled:hover:bg-stone-100"
         >
           {isPending ? (
             <>

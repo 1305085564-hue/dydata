@@ -167,7 +167,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                       </div>
                       
                       {isSelected && (
-                        <Check className="size-3.5 shrink-0 text-[#D97757] mt-0.5" />
+                        <Check className="size-3.5 shrink-0 text-[#B4532F] mt-0.5" />
                       )}
                     </button>
                   );

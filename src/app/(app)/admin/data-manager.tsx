@@ -544,7 +544,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDelete(report.id, report.submitter)}
-                className="h-7 text-[12px] text-stone-500 hover:text-[#C9604D]"
+                className="h-7 text-[12px] text-stone-500 hover:text-[#B24E3E]"
               >
                 删除
               </Button>
@@ -709,7 +709,7 @@ export function DataManager({
                 size="sm"
                 variant="ghost"
                 onClick={() => handleDelete(report.id, report.submitter)}
-                className="h-7 text-[12px] text-stone-500 hover:text-[#C9604D]"
+                className="h-7 text-[12px] text-stone-500 hover:text-[#B24E3E]"
               >
                 删除
               </Button>

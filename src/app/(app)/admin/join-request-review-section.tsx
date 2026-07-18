@@ -29,7 +29,7 @@ async function JoinRequestReviewContent({
           <UserPlus className="size-4 text-stone-500" strokeWidth={1.5} />
           <span className="text-[13px] font-medium text-stone-900">入团申请审核</span>
         </div>
-        <span className="text-[12px] text-[#C9604D]">加载失败，请刷新重试</span>
+        <span className="text-[12px] text-[#B24E3E]">加载失败，请刷新重试</span>
       </section>
     );
   }

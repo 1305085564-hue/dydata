@@ -64,8 +64,8 @@ function getIntensityClass(value: number | null, max: number) {
   }
 
   const ratio = value / max;
-  if (ratio > 0.85) return "border-[#D97757]/60 bg-[#D97757] text-white";
-  if (ratio > 0.65) return "border-[#D97757]/40 bg-[#D97757]/60 text-white";
+  if (ratio > 0.85) return "border-[#D97757]/60 bg-[#B4532F] text-white";
+  if (ratio > 0.65) return "border-[#D97757]/40 bg-[#D97757]/60 text-stone-900";
   if (ratio > 0.45) return "border-[#D97757]/30 bg-[#D97757]/25 text-stone-900";
   if (ratio > 0.2) return "border-[#D99E55]/30 bg-[#D99E55]/15 text-stone-900";
   return "border-stone-200 bg-stone-50 text-stone-700";
@@ -256,7 +256,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               <div
                 className={cn(
                   "flex size-9 items-center justify-center rounded-full shadow-inner",
-                  recommendationMeta.hasRecommendation ? "bg-[#D97757]/10 text-[#D97757]" : "bg-stone-100 text-stone-500",
+                  recommendationMeta.hasRecommendation ? "bg-[#D97757]/10 text-[#B4532F]" : "bg-stone-100 text-stone-500",
                 )}
               >
                 {recommendationMeta.hasRecommendation ? <Flame className="size-4" /> : <Clock3 className="size-4" />}
@@ -265,7 +265,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 <p
                   className={cn(
                     "text-[12px] font-normal tracking-[0.12em]",
-                    recommendationMeta.hasRecommendation ? "text-[#D97757]" : "text-stone-500",
+                    recommendationMeta.hasRecommendation ? "text-[#B4532F]" : "text-stone-500",
                   )}
                 >
                   {recommendationMeta.hasRecommendation ? "推荐发布时间窗口" : "推荐状态"}

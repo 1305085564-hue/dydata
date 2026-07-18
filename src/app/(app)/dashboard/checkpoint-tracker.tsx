@@ -41,9 +41,9 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
               <div
                 className={cn(
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-500 transition-colors",
-                  checkpoint.status === "done" && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
-                  checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#D99E55]",
-                  checkpoint.status === "late" && "border-[#C9604D] bg-[#C9604D] text-white",
+                  checkpoint.status === "done" && "border-[#6FAA7D] bg-[#3F7A4E] text-white",
+                  checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#8F641B]",
+                  checkpoint.status === "late" && "border-[#C9604D] bg-[#B24E3E] text-white",
                   checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-500",
                 )}
               >
@@ -89,9 +89,9 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
               <div
                 className={cn(
                   "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-500 transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                  checkpoint.status === "done" && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
-                  checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#D99E55]",
-                  checkpoint.status === "late" && "border-[#C9604D] bg-[#C9604D] text-white",
+                  checkpoint.status === "done" && "border-[#6FAA7D] bg-[#3F7A4E] text-white",
+                  checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#8F641B]",
+                  checkpoint.status === "late" && "border-[#C9604D] bg-[#B24E3E] text-white",
                   checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-500",
                   isActive && "ring-1 ring-stone-900/5",
                 )}

@@ -34,7 +34,7 @@ export async function ApprovedListDataContainer({
 
   if (errorMessage) {
     return (
-      <div className="rounded-xl border border-stone-200 bg-stone-50 p-5 text-[13px] leading-[1.7] text-[#D99E55] flex flex-col items-start">
+      <div className="rounded-xl border border-stone-200 bg-stone-50 p-5 text-[13px] leading-[1.7] text-[#8F641B] flex flex-col items-start">
         <span>{errorMessage}</span>
         <ReloadButton />
       </div>

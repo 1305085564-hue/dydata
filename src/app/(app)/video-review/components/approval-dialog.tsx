@@ -312,7 +312,7 @@ export function ApprovalDialog({
               className={cn(
                 "h-7 rounded-full px-3 text-[12px] font-medium transition-colors flex items-center gap-1.5",
                 activeTab === "pending"
-                  ? "bg-[#8AA8C7]/10 text-[#8AA8C7]"
+                  ? "bg-[#8AA8C7]/10 text-[#4E7194]"
                   : "text-stone-500 hover:text-stone-700 hover:bg-stone-50"
               )}
             >
@@ -329,7 +329,7 @@ export function ApprovalDialog({
               className={cn(
                 "h-7 rounded-full px-3 text-[12px] font-medium transition-colors flex items-center gap-1.5",
                 activeTab === "history"
-                  ? "bg-[#8AA8C7]/10 text-[#8AA8C7]"
+                  ? "bg-[#8AA8C7]/10 text-[#4E7194]"
                   : "text-stone-500 hover:text-stone-700 hover:bg-stone-50"
               )}
             >
@@ -367,7 +367,7 @@ export function ApprovalDialog({
                       variant="ghost"
                       disabled={batchProcessing || processingIds.size > 0}
                       onClick={() => handleBatchReview("rejected")}
-                      className="h-8 rounded-lg text-stone-500 hover:text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
+                      className="h-8 rounded-lg text-stone-500 hover:text-[#B24E3E] hover:bg-[#C9604D]/5 text-[12px]"
                     >
                       批量拒绝
                     </Button>
@@ -375,7 +375,7 @@ export function ApprovalDialog({
                       type="button"
                       disabled={batchProcessing || processingIds.size > 0}
                       onClick={() => handleBatchReview("approved")}
-                      className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12px] font-medium active:scale-95 transition-transform"
+                      className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#3F7A4E] hover:bg-[#6FAA7D]/20 text-[12px] font-medium active:scale-95 transition-transform"
                     >
                       {batchProcessing ? (
                         <Loader2 className="size-3 animate-spin mr-1" />
@@ -391,13 +391,13 @@ export function ApprovalDialog({
             <div className="mt-2 space-y-0">
               {loadError ? (
                 <div className="flex h-48 flex-col items-center justify-center text-[12px] text-stone-500">
-                  <AlertTriangle className="size-8 text-[#D97757] mb-1.5" />
+                  <AlertTriangle className="size-8 text-[#B4532F] mb-1.5" />
                   <span>{loadError}</span>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={refreshLists}
-                    className="mt-3 h-8 rounded-lg border-[#D97757] text-[#D97757] hover:bg-[#D97757]/5 text-[12px] font-medium"
+                    className="mt-3 h-8 rounded-lg border-[#D97757] text-[#B4532F] hover:bg-[#D97757]/5 text-[12px] font-medium"
                   >
                     重新加载
                   </Button>
@@ -408,7 +408,7 @@ export function ApprovalDialog({
                 </div>
               ) : visiblePending.length === 0 ? (
                 <div className="flex h-48 flex-col items-center justify-center text-[12px] text-stone-500">
-                  <CheckCircle2 className="size-8 text-[#6FAA7D] mb-1.5 stroke-[1.5]" />
+                  <CheckCircle2 className="size-8 text-[#3F7A4E] mb-1.5 stroke-[1.5]" />
                   太棒了！所有请假申请已审批完毕
                 </div>
               ) : (
@@ -473,7 +473,7 @@ export function ApprovalDialog({
                           size="sm"
                           disabled={processingIds.size > 0 || batchProcessing}
                           onClick={() => handleReview(item.id, "rejected")}
-                          className="h-8 rounded-lg text-stone-500 hover:text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px] px-2.5"
+                          className="h-8 rounded-lg text-stone-500 hover:text-[#B24E3E] hover:bg-[#C9604D]/5 text-[12px] px-2.5"
                         >
                           拒绝
                         </Button>
@@ -482,7 +482,7 @@ export function ApprovalDialog({
                           size="sm"
                           disabled={processingIds.size > 0 || batchProcessing}
                           onClick={() => handleReview(item.id, "approved")}
-                          className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12px] px-2.5 active:scale-95 font-medium"
+                          className="h-8 rounded-lg bg-[#6FAA7D]/10 text-[#3F7A4E] hover:bg-[#6FAA7D]/20 text-[12px] px-2.5 active:scale-95 font-medium"
                         >
                           {isProcessing ? (
                             <Loader2 className="size-3 animate-spin" />
@@ -511,7 +511,7 @@ export function ApprovalDialog({
                       setActiveTab("pending");
                     }
                   }}
-                  className="h-9 px-4 rounded-lg bg-[#D97757] text-[13px] font-medium text-white hover:bg-[#C96442] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-9 px-4 rounded-lg bg-[#B4532F] text-[13px] font-medium text-white hover:bg-[#A84D2B] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   查看待处理申请
                 </button>
@@ -535,11 +535,11 @@ export function ApprovalDialog({
                       </div>
                       
                       {item.request_status === "approved" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-medium text-[#6FAA7D]">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#6FAA7D]/10 px-2 py-0.5 text-[12px] font-medium text-[#3F7A4E]">
                           已通过
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#C9604D]/10 px-2 py-0.5 text-[12px] font-medium text-[#C9604D]">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#C9604D]/10 px-2 py-0.5 text-[12px] font-medium text-[#B24E3E]">
                           已拒绝
                         </span>
                       )}

@@ -189,7 +189,7 @@ export function FilterBar({
           {selectedGroup ? ` · ${selectedGroup}` : ""}
         </span>
         {(range === "last7days" || range === "custom") && (
-          <span className="rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[12px] font-normal text-[#D99E55]">
+          <span className="rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[12px] font-normal text-[#8F641B]">
             仅显示本月内数据
           </span>
         )}

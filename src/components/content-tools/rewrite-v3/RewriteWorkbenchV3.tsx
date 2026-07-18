@@ -175,7 +175,7 @@ export function RewriteWorkbenchV3() {
           <p className="text-[13px] text-stone-500 leading-relaxed">{state.errorState.message}</p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-[#D97757] text-white hover:bg-[#C96442] font-medium py-2 rounded-lg text-[12px] transition-all active:scale-[0.98]"
+            className="w-full bg-[#B4532F] text-white hover:bg-[#A84D2B] font-medium py-2 rounded-lg text-[12px] transition-all active:scale-[0.98]"
           >
             重试加载
           </button>
@@ -191,7 +191,7 @@ export function RewriteWorkbenchV3() {
         <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-stone-200 bg-white px-5">
           <div className="flex items-center gap-2">
             <span className="text-[13px] font-medium text-stone-900">定稿阅览室</span>
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[12px] font-medium text-emerald-600 uppercase tracking-wide">
+            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[12px] font-medium text-emerald-700 uppercase tracking-wide">
               沉浸模式
             </span>
           </div>
@@ -223,7 +223,7 @@ export function RewriteWorkbenchV3() {
             </button>
             <button
               onClick={() => setPresentationMode(false)}
-              className="inline-flex h-8 items-center justify-center rounded-lg bg-[#D97757] text-white px-4.5 text-[12px] font-medium hover:bg-[#C96442] transition-all active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg bg-[#B4532F] text-white px-4.5 text-[12px] font-medium hover:bg-[#A84D2B] transition-all active:scale-[0.98]"
             >
               退出阅览
             </button>
@@ -321,7 +321,7 @@ export function RewriteWorkbenchV3() {
                     )}
                   >
                     <span>自动推荐模型</span>
-                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#8AA8C7]" />}
+                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#4E7194]" />}
                   </button>
                   {state.bootstrap.modelViews.map((item) => (
                     <button
@@ -336,7 +336,7 @@ export function RewriteWorkbenchV3() {
                       title={item.description || item.label}
                     >
                       <span className="truncate pr-2">{item.label}</span>
-                      {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#8AA8C7] shrink-0" />}
+                      {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#4E7194] shrink-0" />}
                     </button>
                   ))}
                 </div>
@@ -401,7 +401,7 @@ export function RewriteWorkbenchV3() {
           {/* 定稿导出 (唯一主 CTA) */}
           <button
             onClick={() => setPresentationMode(true)}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#D97757] text-white hover:bg-[#C96442] px-3.5 py-0.5 text-[12px] font-medium active:scale-[0.98] transition-all"
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#B4532F] text-white hover:bg-[#A84D2B] px-3.5 py-0.5 text-[12px] font-medium active:scale-[0.98] transition-all"
             title="进入纯净全屏阅览室并支持导出"
           >
             <FileText className="h-3 w-3 text-white/90" />

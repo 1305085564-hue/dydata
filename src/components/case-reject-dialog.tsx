@@ -82,7 +82,7 @@ export function CaseRejectDialog({
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
                   reason === r
-                    ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D]"
+                    ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#B24E3E]"
                     : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700",
                 )}
               >

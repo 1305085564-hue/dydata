@@ -182,7 +182,7 @@ export function TimelineDiff({
         {!isViewingLatest && currentSelectedRevision && (
           <button
             onClick={() => onAdoptRevision(currentSelectedRevision.id, currentSelectedRevision.fullContent || '')}
-            className="inline-flex items-center gap-1 bg-[#D97757] text-white hover:bg-[#C96442] font-medium text-[12px] px-2.5 py-1 rounded-lg shadow-sm shadow-[#D97757]/20 transition-all duration-200 active:scale-[0.98]"
+            className="inline-flex items-center gap-1 bg-[#B4532F] text-white hover:bg-[#A84D2B] font-medium text-[12px] px-2.5 py-1 rounded-lg shadow-sm shadow-[#D97757]/20 transition-all duration-200 active:scale-[0.98]"
             title="以当前预览的历史版本文字为基准，拉出分支继续对话改写"
           >
             <RotateCcw className="h-3 w-3 shrink-0" />

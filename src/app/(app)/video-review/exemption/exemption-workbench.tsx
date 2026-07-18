@@ -201,7 +201,7 @@ export function ExemptionWorkbench({
       {/* 全宽归档提示 */}
       <div className="lg:col-span-3">
         <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
-          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
+          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#4E7194]" />
           <div className="leading-relaxed">
             <span className="font-medium text-stone-800">功能已归档：</span>
             该页面仅保留豁免申请历史查看，不再接受新的豁免申请。如需申请豁免，请使用工作台相关入口。
@@ -366,19 +366,19 @@ export function ExemptionWorkbench({
                   {/* 状态 Badge */}
                   <div className="shrink-0 flex items-center">
                     {req.request_status === "approved" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/10 px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/10 px-2.5 py-1 text-[12px] font-medium text-[#3F7A4E]">
                         <CheckCircle2 className="size-3.5" />
                         已通过
                       </span>
                     )}
                     {req.request_status === "rejected" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#C9604D]/10 px-2.5 py-1 text-[12px] font-medium text-[#C9604D]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#C9604D]/10 px-2.5 py-1 text-[12px] font-medium text-[#B24E3E]">
                         <XCircle className="size-3.5" />
                         已驳回
                       </span>
                     )}
                     {req.request_status === "pending" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2.5 py-1 text-[12px] font-medium text-[#D99E55]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-2.5 py-1 text-[12px] font-medium text-[#8F641B]">
                         <Clock className="size-3.5" />
                         审批中
                       </span>

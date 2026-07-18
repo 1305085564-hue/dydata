@@ -287,7 +287,7 @@ export default function TopicPoolPage() {
                     : "text-stone-500 hover:text-stone-850"
                 )}
               >
-                <ViewIcon className={cn("size-3.5", active ? "text-[#D97757]" : "text-stone-400")} />
+                <ViewIcon className={cn("size-3.5", active ? "text-[#B4532F]" : "text-stone-400")} />
                 <span>{view.label}</span>
               </button>
             );
@@ -367,7 +367,7 @@ export default function TopicPoolPage() {
       {loading ? (
         <div className="flex h-[300px] items-center justify-center">
           <div className="flex flex-col items-center gap-2">
-            <Loader2 className="size-6 animate-spin text-[#D97757]" />
+            <Loader2 className="size-6 animate-spin text-[#B4532F]" />
             <span className="text-[12.5px] text-stone-500">正在整理选题列表，请稍候...</span>
           </div>
         </div>

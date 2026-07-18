@@ -118,7 +118,7 @@ export function QuotaConfigPanel({
     <div className="border-t border-stone-200 pt-8 space-y-6">
       <div>
         <h2 className="text-[18px] font-medium tracking-[-0.02em] text-stone-900 flex items-center gap-2">
-          <Settings className="size-5 text-[#D97757]" />
+          <Settings className="size-5 text-[#B4532F]" />
           产量目标管理
         </h2>
         <p className="text-[13px] leading-6 text-stone-500 mt-1">
@@ -133,7 +133,7 @@ export function QuotaConfigPanel({
           <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[105px]">
             <span className="text-[13px] text-stone-500 font-medium">今日生效发片指标</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-[24px] font-medium tabular-nums text-[#D97757]">
+              <span className="text-[24px] font-medium tabular-nums text-[#B4532F]">
                 {currentTarget}
               </span>
               <span className="text-[12px] text-stone-500 ml-1">条 / 天</span>
@@ -197,7 +197,7 @@ export function QuotaConfigPanel({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-10 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-medium shadow-sm transition hover:bg-[#C96442] active:translate-y-0 disabled:opacity-50"
+                  className="w-full h-10 flex items-center justify-center gap-1.5 rounded-xl bg-[#B4532F] text-white text-[13px] font-medium shadow-sm transition hover:bg-[#A84D2B] active:translate-y-0 disabled:opacity-50"
                 >
                   {submitting ? (
                     <>
@@ -215,7 +215,7 @@ export function QuotaConfigPanel({
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50 p-4 text-[12px] text-stone-500 leading-[1.6]">
-              <AlertCircle className="size-4 text-[#D99E55] mb-1.5" />
+              <AlertCircle className="size-4 text-[#8F641B] mb-1.5" />
               只有系统 Owner 拥有添加及编辑每日发片指标规则的写入权限。Admin 角色仅供查阅规则历史。
             </div>
           )}
@@ -257,7 +257,7 @@ export function QuotaConfigPanel({
                           自 {rule.effective_date} 生效
                         </span>
                         {isEffectiveToday && (
-                          <span className="inline-flex items-center rounded-full bg-[#D97757]/10 px-2 py-0.5 text-[12px] font-medium text-[#D97757]">
+                          <span className="inline-flex items-center rounded-full bg-[#D97757]/10 px-2 py-0.5 text-[12px] font-medium text-[#B4532F]">
                             当前生效
                           </span>
                         )}

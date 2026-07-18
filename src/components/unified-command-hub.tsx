@@ -300,7 +300,7 @@ export function UnifiedCommandHub({
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b bg-white dark:bg-stone-900 px-5 py-4 border-stone-200 dark:border-stone-800">
               <div>
-                <div className="text-[12px] font-medium tracking-widest text-[#D97757] uppercase">
+                <div className="text-[12px] font-medium tracking-widest text-[#B4532F] uppercase">
                   Command Hub
                 </div>
                 <h2 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight mt-0.5">
@@ -337,7 +337,7 @@ export function UnifiedCommandHub({
               >
                 今日待办
                 {activeTodos.length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
+                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#B4532F] px-1.5 py-0.5 text-[12px] font-medium">
                     {activeTodos.length}
                   </span>
                 )}
@@ -359,7 +359,7 @@ export function UnifiedCommandHub({
                 >
                   豁免审批
                   {pendingApprovalsCount > 0 && (
-                    <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
+                    <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#B4532F] px-1.5 py-0.5 text-[12px] font-medium">
                       {pendingApprovalsCount}
                     </span>
                   )}
@@ -444,7 +444,7 @@ export function UnifiedCommandHub({
                               "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-medium transition-colors",
                               selectedApprovalIds.size === 0 || batchProcessing
                                 ? "cursor-not-allowed bg-stone-100 text-stone-500"
-                                : "bg-[#D97757] text-white hover:bg-[#C96442]"
+                                : "bg-[#B4532F] text-white hover:bg-[#A84D2B]"
                             )}
                           >
                             {batchProcessing ? (
@@ -461,12 +461,12 @@ export function UnifiedCommandHub({
 
                   {approvalsLoading && pendingApprovals.length === 0 ? (
                     <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-[12px] text-stone-500">
-                      <Loader2 className="size-4 animate-spin text-[#D97757]" />
+                      <Loader2 className="size-4 animate-spin text-[#B4532F]" />
                       正在加载待审批申请...
                     </div>
                   ) : pendingApprovals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-center">
-                      <CheckCircle2 className="mb-2 size-8 text-[#6FAA7D]" />
+                      <CheckCircle2 className="mb-2 size-8 text-[#3F7A4E]" />
                       <h3 className="text-[12px] font-medium text-stone-900">
                         暂无待审豁免
                       </h3>
@@ -511,7 +511,7 @@ export function UnifiedCommandHub({
                                       <span className="truncate text-[12px] font-medium text-stone-900">
                                         {item.applicant_name || "未命名成员"}
                                       </span>
-                                      <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
+                                      <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#8F641B]">
                                         {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
                                       </span>
                                     </div>
@@ -533,7 +533,7 @@ export function UnifiedCommandHub({
                                   原因：{item.reason?.trim() || "未填写原因"}
                                 </p>
                                 {!requestId ? (
-                                  <p className="mt-2 text-[12px] font-medium text-[#C9604D]">
+                                  <p className="mt-2 text-[12px] font-medium text-[#B24E3E]">
                                     申请编号异常，请刷新后再试
                                   </p>
                                 ) : null}
@@ -544,7 +544,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
                                   onClick={() => void handleReviewApproval(item, "approved")}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#3F7A4E] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
                                 >
                                   {isApproving ? (
                                     <Loader2 className="size-3.5 animate-spin" />
@@ -557,7 +557,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
                                   onClick={() => void handleReviewApproval(item, "rejected")}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#B24E3E] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
                                 >
                                   {isRejecting ? (
                                     <Loader2 className="size-3.5 animate-spin" />
@@ -582,8 +582,8 @@ export function UnifiedCommandHub({
                     <div className="rounded-xl border border-stone-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:border-stone-300">
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-[#D97757] dark:bg-amber-950/20">
-                            <CalendarDays className="size-4 text-[#D97757]" />
+                          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-[#B4532F] dark:bg-amber-950/20">
+                            <CalendarDays className="size-4 text-[#B4532F]" />
                           </div>
                           <div>
                             <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-100 leading-tight">日常发布管理</h4>
@@ -642,7 +642,7 @@ export function UnifiedCommandHub({
                             <button
                               onClick={() => handleToggleTodo(todo)}
                               aria-label={`标记完成：${todo.title}`}
-                              className="mt-0.5 text-stone-500 hover:text-[#D97757] transition-colors shrink-0 outline-none"
+                              className="mt-0.5 text-stone-500 hover:text-[#B4532F] transition-colors shrink-0 outline-none"
                             >
                               <Circle className="size-4" />
                             </button>
@@ -676,7 +676,7 @@ export function UnifiedCommandHub({
                                       if (todo.status === "unread") void markRead(todo.id);
                                       onOpenChange(false);
                                     }}
-                                    className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:opacity-85 transition-opacity"
+                                    className="inline-flex items-center gap-1 text-[12px] font-medium text-[#B4532F] hover:opacity-85 transition-opacity"
                                   >
                                     {todo.action_label || "立即处理"}
                                     <ArrowRight className="size-3" />
@@ -792,7 +792,7 @@ export function UnifiedCommandHub({
                                         <button
                                           type="button"
                                           onClick={() => void markRead(notif.id)}
-                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
+                                          className="text-[12px] font-medium text-[#B4532F] hover:opacity-85"
                                         >
                                           标为已读
                                         </button>
@@ -804,7 +804,7 @@ export function UnifiedCommandHub({
                                             if (isUnread) void markRead(notif.id);
                                             onOpenChange(false);
                                           }}
-                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85 inline-flex items-center gap-0.5"
+                                          className="text-[12px] font-medium text-[#B4532F] hover:opacity-85 inline-flex items-center gap-0.5"
                                         >
                                           {notif.action_label || "查看"}
                                           <ArrowRight className="size-2.5" />
@@ -817,7 +817,7 @@ export function UnifiedCommandHub({
                                             notif.primaryAction?.();
                                             onOpenChange(false);
                                           }}
-                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
+                                          className="text-[12px] font-medium text-[#B4532F] hover:opacity-85"
                                         >
                                           {notif.primaryActionLabel}
                                         </button>
