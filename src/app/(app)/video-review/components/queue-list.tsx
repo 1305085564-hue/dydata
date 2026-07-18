@@ -44,7 +44,7 @@ export function QueueList({
               {isActive ? (
                 <span
                   className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r"
-                  style={{ backgroundColor: "#8AA8C7" }}
+                  style={{ backgroundColor: "#5F82A8" }}
                   aria-hidden
                 />
               ) : null}

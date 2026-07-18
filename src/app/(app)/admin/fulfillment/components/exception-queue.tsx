@@ -50,9 +50,9 @@ function StatusBadge({ status }: { status: FulfillmentStatus }) {
   const config: Record<string, { label: string; dot: string }> = {
     published: { label: "已发布", dot: "bg-[#6FAA7D]" },
     confirmed_published: { label: "已确认", dot: "bg-[#6FAA7D]" },
-    leave: { label: "请假", dot: "bg-[#8AA8C7]" },
-    waived: { label: "豁免", dot: "bg-[#8AA8C7]" },
-    exempted: { label: "豁免期", dot: "bg-[#8AA8C7]/50" },
+    leave: { label: "请假", dot: "bg-[#5F82A8]" },
+    waived: { label: "豁免", dot: "bg-[#5F82A8]" },
+    exempted: { label: "豁免期", dot: "bg-[#5F82A8]/50" },
     absent: { label: "缺勤", dot: "bg-[#C9604D]" },
     unconfirmed: { label: "待确认", dot: "bg-stone-200" },
   };

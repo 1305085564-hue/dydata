@@ -316,12 +316,12 @@ export function RewriteWorkbenchV3() {
                     className={cn(
                       "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
                       !state.selectedModelViewId
-                        ? "bg-[#8AA8C7]/10 text-[#4c6785]"
+                        ? "bg-[#5F82A8]/10 text-[#4c6785]"
                         : "text-stone-700 hover:bg-stone-50"
                     )}
                   >
                     <span>自动推荐模型</span>
-                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#8AA8C7]" />}
+                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#5F82A8]" />}
                   </button>
                   {state.bootstrap.modelViews.map((item) => (
                     <button
@@ -330,13 +330,13 @@ export function RewriteWorkbenchV3() {
                       className={cn(
                         "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
                         state.selectedModelViewId === item.id
-                          ? "bg-[#8AA8C7]/10 text-[#4c6785]"
+                          ? "bg-[#5F82A8]/10 text-[#4c6785]"
                           : "text-stone-700 hover:bg-stone-50"
                       )}
                       title={item.description || item.label}
                     >
                       <span className="truncate pr-2">{item.label}</span>
-                      {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#8AA8C7] shrink-0" />}
+                      {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#5F82A8] shrink-0" />}
                     </button>
                   ))}
                 </div>
@@ -469,10 +469,10 @@ export function RewriteWorkbenchV3() {
           onDoubleClick={handleDoubleClick}
           className={cn(
             "w-[6px] cursor-col-resize shrink-0 transition-colors z-35 relative ml-[-3px] mr-[-3px] flex items-center justify-center group/splitter",
-            isResizing ? "bg-[#8AA8C7]/20" : "bg-transparent hover:bg-[#8AA8C7]/10"
+            isResizing ? "bg-[#5F82A8]/20" : "bg-transparent hover:bg-[#5F82A8]/10"
           )}
         >
-          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-[#8AA8C7]" : "bg-stone-200/80")} />
+          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-[#5F82A8]" : "bg-stone-200/80")} />
             <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-stone-900 text-white text-[12px] px-2 py-1 rounded-lg shadow-lg whitespace-nowrap font-sans font-medium">
             双击重置为 35%
           </div>

@@ -19,7 +19,7 @@ const badgeVariants = cva(
         danger: "bg-stone-50 text-[#C9604D] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#C9604D] before:inline-block",
         neutral: "bg-stone-50 text-stone-500 before:mr-1 before:size-1.5 before:rounded-full before:bg-stone-400 before:inline-block",
         warning: "bg-stone-50 text-[#D99E55] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#D99E55] before:inline-block",
-        accent: "bg-stone-50 text-[#8AA8C7] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#8AA8C7] before:inline-block",
+        accent: "bg-[#4F5E96]/[0.12] text-[#4F5E96] before:mr-1 before:size-1.5 before:rounded-full before:bg-[#4F5E96] before:inline-block",
       },
     },
     defaultVariants: {

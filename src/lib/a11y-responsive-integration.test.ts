@@ -128,7 +128,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   const forgot = readSource("src/app/(auth)/forgot-password/forgot-password-form.tsx");
   assert.match(login, /text-\[#8F641B\][^"]*dark:text-\[#D99E55\]/);
   assert.match(register, /barColor: "#D99E55", textColor: "#8F641B"/);
-  assert.match(register, /barColor: "#8AA8C7", textColor: "#4E7194"/);
+  assert.match(register, /barColor: "#5F82A8", textColor: "#4E7194"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
   assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#3F7A4E\]/);
 });

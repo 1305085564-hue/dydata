@@ -91,7 +91,7 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
     <div ref={ref} className="flex h-3 w-full overflow-hidden rounded-full bg-[rgba(0,0,0,0.07)]">
       <motion.div
         className="h-full rounded-l-full"
-        style={{ backgroundColor: leftLeads ? "#8AA8C7" : "#d1d5db" }}
+        style={{ backgroundColor: leftLeads ? "#5F82A8" : "#d1d5db" }}
         initial={{ width: 0 }}
         animate={inView ? { width: `${leftRatio * 100}%` } : { width: 0 }}
         transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
@@ -99,7 +99,7 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
       <div className="flex flex-1 justify-end">
         <motion.div
           className="h-full rounded-r-full"
-          style={{ backgroundColor: leftLeads ? "#d1d5db" : "#8AA8C7" }}
+          style={{ backgroundColor: leftLeads ? "#d1d5db" : "#5F82A8" }}
           initial={{ width: 0 }}
           animate={inView ? { width: `${rightRatio * 100}%` } : { width: 0 }}
           transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
@@ -112,7 +112,7 @@ function GapBar({ leftRatio, rightRatio, leftLeads }: { leftRatio: number; right
 function WinBadge({ leftLeads, tied }: { leftLeads: boolean; tied: boolean }) {
   if (tied) return <span className="text-[12px] text-stone-500">持平</span>;
   return leftLeads ? (
-    <span className="rounded-full bg-[#8AA8C7]/10 px-2 py-0.5 text-[12px] font-medium text-[#8AA8C7]">领先</span>
+    <span className="rounded-full bg-[#5F82A8]/10 px-2 py-0.5 text-[12px] font-medium text-[#5F82A8]">领先</span>
   ) : (
     <span className="rounded-full bg-[rgba(0,0,0,0.06)] px-2 py-0.5 text-[12px] font-medium text-stone-500">落后</span>
   );
@@ -174,9 +174,9 @@ export function PKBattle({
             </p>
           </div>
           {total > 0 && (
-            <div className="shrink-0 rounded-full bg-[#8AA8C7]/10 px-3 py-1.5 text-center">
-              <div className="text-[13px] font-medium tabular-nums text-[#8AA8C7]">{winCount}/{total}</div>
-              <div className="text-[12px] text-[#8AA8C7]/70">项领先</div>
+            <div className="shrink-0 rounded-full bg-[#5F82A8]/10 px-3 py-1.5 text-center">
+              <div className="text-[13px] font-medium tabular-nums text-[#5F82A8]">{winCount}/{total}</div>
+              <div className="text-[12px] text-[#5F82A8]/70">项领先</div>
             </div>
           )}
         </div>

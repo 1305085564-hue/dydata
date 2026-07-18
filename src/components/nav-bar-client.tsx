@@ -485,14 +485,14 @@ export function NavBarClient({
                 aria-label={`打开账号与设置：${name}`}
                 className="flex items-center gap-2 text-left rounded-lg focus-visible:ring-2 focus-visible:ring-[#B4532F]/40 focus-visible:ring-offset-1 group"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#8AA8C7] group-hover:bg-[#8AA8C7]/10 group-hover:text-[#8AA8C7]">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-[12px] font-medium text-stone-700 transition-all duration-200 group-hover:border-[#5F82A8] group-hover:bg-[#5F82A8]/10 group-hover:text-[#5F82A8]">
                   {name.trim().slice(0, 1).toUpperCase() || "?"}
                 </div>
                 <div className="hidden lg:flex flex-col transition-colors duration-200 group-hover:text-stone-900">
                   <span className="text-[12px] font-medium text-stone-700 leading-tight group-hover:text-stone-900">
                     {name.split(" ")[0]}
                   </span>
-                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase group-hover:text-[#8AA8C7]">
+                  <span className="mt-0.5 text-[12px] font-normal text-stone-500 leading-none tracking-wider uppercase group-hover:text-[#5F82A8]">
                     {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
                   </span>
                 </div>

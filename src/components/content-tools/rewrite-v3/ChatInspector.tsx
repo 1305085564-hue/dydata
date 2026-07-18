@@ -180,7 +180,7 @@ export function ChatInspector({
           )}
 
           {/* 核心输入框容器 */}
-          <div className="relative flex items-end gap-2 rounded-lg border border-transparent bg-stone-100/50 p-1.5 transition-all duration-200 focus-within:border-stone-300 focus-within:bg-white focus-within:shadow-md focus-within:ring-2 focus-within:ring-[#8AA8C7]/30">
+          <div className="relative flex items-end gap-2 rounded-lg border border-transparent bg-stone-100/50 p-1.5 transition-all duration-200 focus-within:border-stone-300 focus-within:bg-white focus-within:shadow-md focus-within:ring-2 focus-within:ring-[#5F82A8]/30">
             <textarea
               ref={textareaRef}
               value={inputText}

@@ -174,7 +174,7 @@ export default function ProvidersClient() {
                             className={cn(
                               "group flex items-center justify-between px-2 py-1.5 rounded-md transition-all text-[13px]",
                               isKeyActive
-                                ? "bg-[#8AA8C7]/10 text-stone-900 font-medium"
+                                ? "bg-[#5F82A8]/10 text-stone-900 font-medium"
                                 : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
                             )}
                           >

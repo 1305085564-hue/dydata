@@ -304,7 +304,7 @@ export function ApprovalDialog({
             </span>
           </div>
 
-          {/* 胶囊分段 Tab (石青色 #8AA8C7 选中态映射) */}
+          {/* 胶囊分段 Tab (石青色 #5F82A8 选中态映射) */}
           <div className="flex gap-1.5 mt-4 border-b border-stone-100 pb-3">
             <button
               type="button"
@@ -312,7 +312,7 @@ export function ApprovalDialog({
               className={cn(
                 "h-7 rounded-full px-3 text-[12px] font-medium transition-colors flex items-center gap-1.5",
                 activeTab === "pending"
-                  ? "bg-[#8AA8C7]/10 text-[#8AA8C7]"
+                  ? "bg-[#5F82A8]/10 text-[#5F82A8]"
                   : "text-stone-500 hover:text-stone-700 hover:bg-stone-50"
               )}
             >
@@ -329,7 +329,7 @@ export function ApprovalDialog({
               className={cn(
                 "h-7 rounded-full px-3 text-[12px] font-medium transition-colors flex items-center gap-1.5",
                 activeTab === "history"
-                  ? "bg-[#8AA8C7]/10 text-[#8AA8C7]"
+                  ? "bg-[#5F82A8]/10 text-[#5F82A8]"
                   : "text-stone-500 hover:text-stone-700 hover:bg-stone-50"
               )}
             >
@@ -354,7 +354,7 @@ export function ApprovalDialog({
                     checked={allSelected}
                     indeterminate={someSelected}
                     onCheckedChange={handleToggleSelectAll}
-                    className="rounded border-stone-300 data-[state=checked]:bg-[#8AA8C7] data-[state=checked]:border-[#8AA8C7] focus-visible:ring-[#8AA8C7]"
+                    className="rounded border-stone-300 data-[state=checked]:bg-[#5F82A8] data-[state=checked]:border-[#5F82A8] focus-visible:ring-[#5F82A8]"
                   />
                   <span className="text-[12px] text-stone-500 font-medium">
                     已选中 <span className="font-medium text-stone-700">{selectedIds.size}</span> 项
@@ -422,7 +422,7 @@ export function ApprovalDialog({
                       key={item.id}
                       className={cn(
                         "flex items-start gap-3 py-4 border-b border-stone-100 transition-all duration-200 px-1 hover:bg-stone-50/20",
-                        isSelected && "bg-[#8AA8C7]/10",
+                        isSelected && "bg-[#5F82A8]/10",
                         isProcessing && "opacity-40 scale-[0.98]"
                       )}
                     >
@@ -430,7 +430,7 @@ export function ApprovalDialog({
                         checked={isSelected}
                         aria-label={`选择 ${item.applicant_name}`}
                         onCheckedChange={(checked) => handleToggleSelect(item.id, Boolean(checked))}
-                        className="mt-1 rounded border-stone-300 data-[state=checked]:bg-[#8AA8C7] data-[state=checked]:border-[#8AA8C7] focus-visible:ring-[#8AA8C7]"
+                        className="mt-1 rounded border-stone-300 data-[state=checked]:bg-[#5F82A8] data-[state=checked]:border-[#5F82A8] focus-visible:ring-[#5F82A8]"
                       />
 
                       <div className="min-w-0 flex-1 space-y-1.5">

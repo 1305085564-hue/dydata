@@ -201,7 +201,7 @@ export function ExemptionWorkbench({
       {/* 全宽归档提示 */}
       <div className="lg:col-span-3">
         <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
-          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
+          <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#5F82A8]" />
           <div className="leading-relaxed">
             <span className="font-medium text-stone-800">功能已归档：</span>
             该页面仅保留豁免申请历史查看，不再接受新的豁免申请。如需申请豁免，请使用工作台相关入口。

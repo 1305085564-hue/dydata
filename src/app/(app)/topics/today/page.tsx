@@ -296,7 +296,7 @@ export default function TodayWorkspacePage() {
           <span className="font-medium text-stone-900">我的候选上限：</span>
           <span className={cn(
             "font-semibold",
-            isLimitReached ? "text-[#C9604D]" : "text-[#8AA8C7]"
+            isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]"
           )}>
             {activeCandidateCount} / 5
           </span>
@@ -320,7 +320,7 @@ export default function TodayWorkspacePage() {
         {/* 区块 1：最近被认领的选题 */}
         <div className="space-y-3">
           <h2 className="text-[14px] font-semibold text-stone-900 flex items-center gap-2 px-1">
-            <div className="h-2 w-2 rounded-full bg-[#8AA8C7]" />
+            <div className="h-2 w-2 rounded-full bg-[#5F82A8]" />
             <span>最近被认领的选题</span>
             <span className="text-[12px] font-normal text-stone-400">
               ({data.recentlyClaimed.length})

@@ -165,7 +165,7 @@ export function VideoReviewWorkbench({
     <div className="space-y-6">
       {/* 归档提示 */}
       <div className="flex items-start gap-2.5 rounded-xl border border-stone-200 bg-white p-3.5 text-[13px] text-stone-600 shadow-sm">
-        <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#8AA8C7]" />
+        <Info className="mt-0.5 size-4 shrink-0 stroke-[1.5] text-[#5F82A8]" />
         <div className="leading-relaxed">
           <span className="font-medium text-stone-800">功能已归档：</span>
           视频审核与产量对账仅保留历史记录查看，不再接受新的作品提交与豁免申请。如需提交日报或申请豁免，请使用工作台相关入口。

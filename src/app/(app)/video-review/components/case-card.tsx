@@ -40,7 +40,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
     <div
       className={cn(
         "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px",
-        isMine && "ring-1 ring-[#8AA8C7]/30 border-[#8AA8C7]/40"
+        isMine && "ring-1 ring-[#5F82A8]/30 border-[#5F82A8]/40"
       )}
     >
       {/* 截图区域 (16:10) */}

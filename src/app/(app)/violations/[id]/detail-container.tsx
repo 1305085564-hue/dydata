@@ -38,7 +38,7 @@ import type { UsageRecordItem } from "./components/usage-timeline";
 import type { EventItem } from "./components/event-list";
 
 const FORMAT_META: Record<string, { label: string; dotColor: string }> = {
-  oral: { label: "口播", dotColor: "#8AA8C7" },
+  oral: { label: "口播", dotColor: "#5F82A8" },
   visual: { label: "画面", dotColor: "#D97757" },
   mixed: { label: "混合", dotColor: "#6FAA7D" },
 };

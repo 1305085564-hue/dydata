@@ -20,10 +20,10 @@
   --ring: rgba(28, 25, 23, 0.1);
   /* 数据可视化色板 */
   --chart-1: #D97757;
-  --chart-2: #8AA8C7;
-  --chart-3: #E3B15C;
-  --chart-4: #7FA97E;
-  --chart-5: #B08BB8;
+  --chart-2: #7E5C99;
+  --chart-3: #A85A6B;
+  --chart-4: #3E8479;
+  --chart-5: #7A7A3E;
   --radius: 12px;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #44403C;
@@ -60,10 +60,10 @@
   --input: rgba(231, 229, 228, 0.15);
   --ring: rgba(231, 229, 228, 0.12);
   --chart-1: #D97757;
-  --chart-2: #8AA8C7;
-  --chart-3: #E3B15C;
-  --chart-4: #7FA97E;
-  --chart-5: #B08BB8;
+  --chart-2: #7E5C99;
+  --chart-3: #A85A6B;
+  --chart-4: #3E8479;
+  --chart-5: #7A7A3E;
   --sidebar: #1C1917;
   --sidebar-foreground: #E7E5E4;
   --sidebar-primary: #D97757;

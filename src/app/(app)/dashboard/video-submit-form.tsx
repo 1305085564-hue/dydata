@@ -2078,7 +2078,7 @@ export function VideoSubmitForm({
                         <button
                           type="button"
                           onClick={() => setSearchDialogOpen(true)}
-                          className="text-[12px] font-medium text-[#8AA8C7] hover:underline focus:outline-none cursor-pointer"
+                          className="text-[12px] font-medium text-[#5F82A8] hover:underline focus:outline-none cursor-pointer"
                         >
                           换一个
                         </button>
@@ -2108,10 +2108,10 @@ export function VideoSubmitForm({
                   </div>
 
                   {meta.topicId ? (
-                    <div className="flex items-center justify-between rounded-lg border border-[#8AA8C7]/20 bg-white p-3 shadow-[0_2px_8px_-3px_rgba(138,168,199,0.1)]">
+                    <div className="flex items-center justify-between rounded-lg border border-[#5F82A8]/20 bg-white p-3 shadow-[0_2px_8px_-3px_rgba(138,168,199,0.1)]">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         {selectedTopicCategory && (
-                          <span className="shrink-0 inline-flex items-center rounded-md bg-[#8AA8C7]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#8AA8C7]">
+                          <span className="shrink-0 inline-flex items-center rounded-md bg-[#4F5E96]/[0.12] px-1.5 py-0.5 text-[10px] font-semibold text-[#4F5E96]">
                             {selectedTopicCategory}
                           </span>
                         )}
@@ -2185,7 +2185,7 @@ export function VideoSubmitForm({
                                 isManuallySetRef.current = false;
                                 setIsManuallySet(false);
                               }}
-                              className="shrink-0 text-[11.5px] font-medium text-[#8AA8C7] hover:underline"
+                              className="shrink-0 text-[11.5px] font-medium text-[#5F82A8] hover:underline"
                             >
                               重新自动匹配
                             </button>

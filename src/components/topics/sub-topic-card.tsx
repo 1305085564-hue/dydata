@@ -214,7 +214,7 @@ export function SubTopicCard({
         <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             {item.topics && (
-              <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#8AA8C7]">
+              <span className="inline-flex items-center rounded-md bg-[#4F5E96]/[0.12] border border-[#4F5E96]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#4F5E96]">
                 {item.topics.name}
               </span>
             )}
@@ -344,7 +344,7 @@ export function SubTopicCard({
                   {latest && (
                     <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-2.5">
                       <div className="flex items-center justify-between border-b border-stone-100 pb-1.5">
-                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#8AA8C7]">
+                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#5F82A8]">
                           <Clock className="size-4" />
                           <span>最近版本</span>
                         </div>

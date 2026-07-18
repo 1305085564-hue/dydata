@@ -574,7 +574,7 @@ export function AdminModulesContentV2({
             className={cn(
               "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150 active:scale-[0.98]",
               selectedTeamId === "__all__"
-                ? "bg-[#8AA8C7]/10 border-stone-300 text-stone-900 font-medium"
+                ? "bg-[#5F82A8]/10 border-stone-300 text-stone-900 font-medium"
                 : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-900"
             )}
           >
@@ -598,7 +598,7 @@ export function AdminModulesContentV2({
                   className={cn(
                     "group flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150",
                     isTeamSelected && !selectedGroupId
-                      ? "bg-[#8AA8C7]/10 border-stone-300 text-stone-900 font-medium"
+                      ? "bg-[#5F82A8]/10 border-stone-300 text-stone-900 font-medium"
                       : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-900"
                   )}
                 >
@@ -609,7 +609,7 @@ export function AdminModulesContentV2({
                     onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
                   >
                     <span className="flex min-w-0 items-center gap-2 truncate">
-                      <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#8AA8C7]" : "bg-stone-300")} />
+                      <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#5F82A8]" : "bg-stone-300")} />
                       <span className="truncate font-medium">{team.name}</span>
                     </span>
                     <span className="rounded-full bg-stone-200/60 px-2 py-0.5 text-[12px] text-stone-700">
@@ -837,7 +837,7 @@ export function AdminModulesContentV2({
                     className={cn(
                       "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 hover:border-stone-300 hover:shadow-sm",
                       isCurrentMemberActive
-                        ? "border-[#8AA8C7] bg-[#8AA8C7]/5"
+                        ? "border-[#5F82A8] bg-[#5F82A8]/5"
                         : "border-stone-200 bg-white"
                     )}
                   >
@@ -880,7 +880,7 @@ export function AdminModulesContentV2({
                           {member.team_name || "未分配团队"}
                         </span>
                         {groupAsLeader ? (
-                          <span className="inline-flex items-center rounded-lg bg-[#8AA8C7]/15 px-2 py-0.5 text-[12px] text-[#8AA8C7] font-medium">
+                          <span className="inline-flex items-center rounded-lg bg-[#5F82A8]/15 px-2 py-0.5 text-[12px] text-[#5F82A8] font-medium">
                             组长 : {groupAsLeader.name}
                           </span>
                         ) : member.group_id ? (
@@ -1032,7 +1032,7 @@ export function AdminModulesContentV2({
                           "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
                           aiSuggestion.status === "critical" 
                             ? "bg-[#C9604D]/15 text-[#C9604D]" 
-                            : "bg-[#8AA8C7]/15 text-[#8AA8C7]"
+                            : "bg-[#5F82A8]/15 text-[#5F82A8]"
                         )}>
                           {aiSuggestion.status === "critical" ? "安全警告" : "诊断建议"}
                         </span>
@@ -1078,7 +1078,7 @@ export function AdminModulesContentV2({
                             className={cn(
                               "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
-                                ? "border-[#8AA8C7]/60 bg-[#8AA8C7]/8"
+                                ? "border-[#5F82A8]/60 bg-[#5F82A8]/8"
                                 : "border-stone-200 bg-white hover:bg-stone-50"
                             )}
                           >
@@ -1114,7 +1114,7 @@ export function AdminModulesContentV2({
                             className={cn(
                               "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
-                                ? "border-[#8AA8C7]/60 bg-[#8AA8C7]/8"
+                                ? "border-[#5F82A8]/60 bg-[#5F82A8]/8"
                                 : "border-stone-200 bg-white hover:bg-stone-50"
                             )}
                           >

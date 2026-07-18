@@ -43,10 +43,10 @@ function getStatusColor(status: FulfillmentStatus | undefined): string {
     case "confirmed_published":
       return "bg-[#6FAA7D] border-[#5d946a]";
     case "leave":
-      return "bg-[#8AA8C7] border-[#7a9ab8]";
+      return "bg-[#5F82A8] border-[#7a9ab8]";
     case "waived":
     case "exempted":
-      return "bg-[#8AA8C7]/30 border-[#8AA8C7]/20";
+      return "bg-[#5F82A8]/30 border-[#5F82A8]/20";
     case "absent":
       return "bg-[#C9604D] border-[#b5503e]";
     case "unconfirmed":
@@ -300,11 +300,11 @@ export function MonthlyMatrix({
                 已发布 / 已确认
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7] border border-[#7a9ab8]" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#5F82A8] border border-[#7a9ab8]" />
                 请假
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#8AA8C7]/30 border border-[#8AA8C7]/20" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#5F82A8]/30 border border-[#5F82A8]/20" />
                 豁免 / 豁免期
               </span>
               <span className="flex items-center gap-1.5">

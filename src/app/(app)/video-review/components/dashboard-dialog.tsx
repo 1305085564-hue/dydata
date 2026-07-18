@@ -178,7 +178,7 @@ export function DashboardDialog({
               待审请假
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-[18px] font-medium tabular-nums text-[#8AA8C7]">
+              <span className="text-[18px] font-medium tabular-nums text-[#5F82A8]">
                 {pendingExemptionsCount}
               </span>
               <span className="text-[12px] text-stone-500">人申请请假</span>

@@ -390,7 +390,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
         {/* 创作跳转辅助 */}
         {myClaim && (
           <Link href={`/dashboard?topicId=${detail.id}`} className="inline-block">
-            <Button size="sm" className="h-8 rounded-lg gap-1 font-medium bg-[#8AA8C7] hover:bg-[#7998b8]">
+            <Button size="sm" className="h-8 rounded-lg gap-1 font-medium bg-[#5F82A8] hover:bg-[#7998b8]">
               <span>使用此选题去创作/上传</span>
               <ExternalLink className="size-3.5" />
             </Button>
@@ -406,7 +406,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
           <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               {detail.topics && (
-                <span className="inline-flex items-center rounded-md bg-[#8AA8C7]/5 border border-[#8AA8C7]/15 px-2 py-0.5 text-[11.5px] font-medium text-[#8AA8C7]">
+                <span className="inline-flex items-center rounded-md bg-[#4F5E96]/[0.12] border border-[#4F5E96]/15 px-2 py-0.5 text-[11.5px] font-medium text-[#4F5E96]">
                   母题：{detail.topics.name}
                 </span>
               )}
@@ -527,7 +527,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                                 <div className="h-5.5 w-px bg-stone-200" />
                                 <div className="flex flex-col items-end">
                                   <span className="text-[9.5px] text-stone-400 leading-none">转粉率</span>
-                                  <span className="mt-0.5 text-[#8AA8C7]">{(snap.follower_convert * 100).toFixed(2)}%</span>
+                                  <span className="mt-0.5 text-[#5F82A8]">{(snap.follower_convert * 100).toFixed(2)}%</span>
                                 </div>
                               </>
                             )}
@@ -602,7 +602,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                       <span className={cn(
                         "font-semibold rounded-md px-2 py-0.5 text-[11.5px]",
                         myClaim.status === "scripting"
-                          ? "bg-[#8AA8C7]/15 text-[#8AA8C7]"
+                          ? "bg-[#5F82A8]/15 text-[#5F82A8]"
                           : "bg-[#D97757]/10 text-[#D97757]"
                       )}>
                         {myClaim.status === "scripting" ? "脚本制作中" : "候选选题中"}
@@ -617,7 +617,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                     <Button
                       disabled={actionLoading}
                       onClick={handleStartScripting}
-                      className="w-full h-9 rounded-xl font-medium bg-[#8AA8C7] hover:bg-[#7998b8]"
+                      className="w-full h-9 rounded-xl font-medium bg-[#5F82A8] hover:bg-[#7998b8]"
                     >
                       {actionLoading ? <Loader2 className="size-4 animate-spin" /> : "标记已写完脚本/制作中"}
                     </Button>
@@ -674,7 +674,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
                         </span>
                         <span className={cn(
                           "text-[10px] px-1.5 py-0.5 rounded-md font-semibold",
-                          claim.status === "scripting" ? "bg-[#8AA8C7]/10 text-[#8AA8C7]" : "bg-stone-200 text-stone-500"
+                          claim.status === "scripting" ? "bg-[#5F82A8]/10 text-[#5F82A8]" : "bg-stone-200 text-stone-500"
                         )}>
                           {claim.status === "scripting" ? "脚本中" : "候选"}
                         </span>
@@ -690,7 +690,7 @@ export default function TopicDetailPage({ params: paramsPromise }: { params: Pro
           {similarWorks.length > 0 && (
             <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-3">
               <h3 className="text-[13.5px] font-bold text-stone-900 border-b border-stone-100 pb-2 flex items-center gap-1.5">
-                <TrendingUp className="size-4 text-[#8AA8C7]" />
+                <TrendingUp className="size-4 text-[#5F82A8]" />
                 <span>同类相近选题文案参考</span>
               </h3>
 

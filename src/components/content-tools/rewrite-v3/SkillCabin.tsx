@@ -89,11 +89,11 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
               className={cn(
                 'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.98]',
                 isActive
-                  ? 'bg-[#8AA8C7]/15 border-[#8AA8C7]/30 text-[#4c6785] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
+                  ? 'bg-[#5F82A8]/15 border-[#5F82A8]/30 text-[#4c6785] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
                   : 'bg-white border-stone-200/60 text-stone-500 hover:bg-stone-100 hover:text-stone-900'
               )}
             >
-              <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#8AA8C7]' : 'text-stone-500')} />
+              <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#5F82A8]' : 'text-stone-500')} />
               <span>{skill.name}</span>
             </button>
           );
@@ -153,13 +153,13 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                           className={cn(
                             'group flex items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.98]',
                             isActive
-                              ? 'bg-[#8AA8C7]/15 border-[#8AA8C7]/30 text-[#4c6785]'
+                              ? 'bg-[#5F82A8]/15 border-[#5F82A8]/30 text-[#4c6785]'
                               : 'bg-white border-stone-200/50 text-stone-700 hover:border-stone-300 hover:bg-stone-50/85'
                           )}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 text-[12px] font-medium">
-                              <Sparkles className={cn('h-3 w-3 shrink-0', isActive ? 'text-[#8AA8C7]' : 'text-stone-500')} />
+                              <Sparkles className={cn('h-3 w-3 shrink-0', isActive ? 'text-[#5F82A8]' : 'text-stone-500')} />
                               <span className="truncate">{skill.name}</span>
                             </div>
                             {skill.description && (
@@ -172,7 +172,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                             )}
                           </div>
                           {isActive && (
-                            <Check className="h-3.5 w-3.5 text-[#8AA8C7] shrink-0 ml-2 mt-0.5" />
+                            <Check className="h-3.5 w-3.5 text-[#5F82A8] shrink-0 ml-2 mt-0.5" />
                           )}
                         </button>
                       );

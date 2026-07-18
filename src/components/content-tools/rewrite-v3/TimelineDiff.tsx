@@ -96,13 +96,13 @@ export function TimelineDiff({
                 <button
                   key={rev.id}
                   onClick={() => onSelectRevision(rev.id === latestRevision?.id ? null : rev.id)}
-                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8AA8C7]/40"
+                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F82A8]/40"
                 >
                   {/* 外围 2px 选中导轨 (Selected 状态) */}
                   <span
                     className={cn(
                       'h-4.5 w-4.5 rounded-full flex items-center justify-center border-2 transition-all duration-150 group-hover:scale-105',
-                      isSelected ? 'border-[#8AA8C7]' : 'border-transparent'
+                      isSelected ? 'border-[#5F82A8]' : 'border-transparent'
                     )}
                   >
                     {/* 内围核心圆点 (AI 实心、人手空心；选中统一石青，未选中统一灰阶) */}
@@ -114,14 +114,14 @@ export function TimelineDiff({
                             cn(
                               'h-2.5 w-2.5',
                               isSelected
-                                ? 'bg-[#8AA8C7]'
+                                ? 'bg-[#5F82A8]'
                                 : 'bg-stone-300 group-hover:bg-stone-400'
                             )
                           : // 人手版本：空心环形态
                             cn(
                               'h-2.5 w-2.5 border-2 bg-white',
                               isSelected
-                                ? 'border-[#8AA8C7]'
+                                ? 'border-[#5F82A8]'
                                 : 'border-stone-300 group-hover:border-stone-400'
                             )
                       )}

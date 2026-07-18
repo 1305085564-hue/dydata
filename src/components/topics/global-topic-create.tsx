@@ -180,7 +180,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                         "flex h-9 items-center justify-center rounded-lg border text-[12.5px] font-medium transition-all duration-200",
                         "hover:-translate-y-[1px] active:scale-[0.98]",
                         isSelected
-                          ? "border-[#8AA8C7] bg-[#8AA8C7]/5 text-stone-900 shadow-[0_2px_8px_-2px_rgba(138,168,199,0.2)] font-semibold"
+                          ? "border-[#5F82A8] bg-[#5F82A8]/5 text-stone-900 shadow-[0_2px_8px_-2px_rgba(138,168,199,0.2)] font-semibold"
                           : "border-stone-200 bg-white text-stone-600 hover:bg-stone-50 hover:text-stone-900"
                       )}
                     >
