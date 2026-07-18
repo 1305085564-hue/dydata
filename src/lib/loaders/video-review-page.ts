@@ -84,7 +84,9 @@ export async function attachSignedSubmissionScreenshots(
     }
 
     for (const item of data ?? []) {
-      signedUrlByPath.set(item.path, item.signedUrl ?? null);
+      if (typeof item.path === "string") {
+        signedUrlByPath.set(item.path, item.signedUrl ?? null);
+      }
     }
   }
 

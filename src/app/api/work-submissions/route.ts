@@ -35,7 +35,9 @@ export async function verifyOwnedWorkScreenshotPaths(
     .from("work-screenshots")
     .createSignedUrls(ownedPaths, 60);
   if (error || !data || data.length !== ownedPaths.length) return false;
-  return data.every((item) => Boolean(item.signedUrl) && ownedPaths.includes(item.path));
+  return data.every(
+    (item) => Boolean(item.signedUrl) && typeof item.path === "string" && ownedPaths.includes(item.path)
+  );
 }
 
 function parseWorkSubmissionPayload(input: unknown): { data: WorkSubmissionPayload } | { response: NextResponse } {

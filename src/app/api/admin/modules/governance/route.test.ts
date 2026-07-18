@@ -4,7 +4,7 @@ import test from "node:test";
 import { buildAdminGovernanceResponse } from "./route";
 
 test("admin governance 把可见成员范围传给日报加载器", async () => {
-  let loaderInput: Record<string, unknown> | null = null;
+  const loaderInputs: Array<Record<string, unknown>> = [];
   const response = await buildAdminGovernanceResponse(
     new Request("https://dydata.cc/api/admin/modules/governance?date=2026-07-18") as never,
     {
@@ -16,7 +16,7 @@ test("admin governance 把可见成员范围传给日报加载器", async () => 
       }),
       createClient: async () => ({}) as never,
       loadGovernance: async (input) => {
-        loaderInput = input as unknown as Record<string, unknown>;
+        loaderInputs.push(input as unknown as Record<string, unknown>);
         return {
           queryDate: "2026-07-18",
           fullReports: [],
@@ -30,8 +30,8 @@ test("admin governance 把可见成员范围传给日报加载器", async () => 
   );
 
   assert.equal(response.status, 200);
-  assert.deepEqual(loaderInput?.visibleUserIds, ["admin-1", "member-1"]);
-  assert.equal(loaderInput?.searchDate, "2026-07-18");
+  assert.deepEqual(loaderInputs[0]?.visibleUserIds, ["admin-1", "member-1"]);
+  assert.equal(loaderInputs[0]?.searchDate, "2026-07-18");
 });
 
 test("admin governance 无成员管理权时不查日报", async () => {

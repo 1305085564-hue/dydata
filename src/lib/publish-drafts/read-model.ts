@@ -11,6 +11,8 @@ import {
   type ReviewQueueItem,
 } from "./types";
 
+export type { ApprovedDraftItem } from "./types";
+
 type PublishDraftReadModelClientFactories = {
   createAdminClient: typeof createAdminClient;
 };
