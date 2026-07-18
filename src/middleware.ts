@@ -11,6 +11,26 @@ import {
 
 const SITE_CLEARED_COOKIE = "dydata-site-cleared";
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+export function isUntrustedApiWriteRequest(request: NextRequest) {
+  if (!request.nextUrl.pathname.startsWith("/api/") || !UNSAFE_METHODS.has(request.method.toUpperCase())) {
+    return false;
+  }
+
+  if (request.headers.get("sec-fetch-site")?.toLowerCase() === "cross-site") {
+    return true;
+  }
+
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+
+  try {
+    return new URL(origin).origin !== request.nextUrl.origin;
+  } catch {
+    return true;
+  }
+}
 
 function createClientFromRequest(request: NextRequest, response: NextResponse) {
   const keepLoggedIn = isKeepLoggedInCookieValue(request.cookies.get(KEEP_LOGGED_IN_COOKIE_NAME)?.value);
@@ -68,6 +88,7 @@ function buildLoginRedirect(request: NextRequest, options: { expired?: boolean }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isApiRoute = pathname.startsWith("/api/");
   const isDashboardRoute = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const isGrowthRoute = pathname === "/growth" || pathname.startsWith("/growth/");
@@ -78,14 +99,20 @@ export async function middleware(request: NextRequest) {
   const hasClearedSiteData = request.cookies.get(SITE_CLEARED_COOKIE)?.value === "1";
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
 
-  if (process.env.NODE_ENV === "development") {
+  if (isUntrustedApiWriteRequest(request)) {
+    return NextResponse.json({ error: "请求来源不可信" }, { status: 403 });
+  }
+
+  if (isApiRoute) {
+    // API 不参与浏览器缓存清理跳转；它只应用请求来源校验和后续请求头处理。
+  } else if (process.env.NODE_ENV === "development") {
     // 本地开发模式下免除 Clear-Site-Data 校验，避免 headless 浏览器下的重定向死循环
   } else if (!hasClearedSiteData && !isClearSiteDataPass) {
     return buildClearSiteDataResponse(request);
   }
 
   // 速率限制（登录注册和静态资源除外）
-  if (!isRateLimitExempt(pathname)) {
+  if (!isApiRoute && !isRateLimitExempt(pathname)) {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                request.headers.get("x-real-ip") ||
                "127.0.0.1";
@@ -160,6 +187,7 @@ export const config = {
     "/violations/:path*",
     "/video-review/:path*",
     "/content-tools/:path*",
+    "/api/:path*",
     "/login",
     "/register",
   ],
