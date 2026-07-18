@@ -21,14 +21,17 @@ import {
 import {
   buildGrantDraft,
   buildRequestDraft,
-  buildReviewPatch,
   isMissingExemptionRequestCategoryError,
-  normalizeGrantMode,
   stripExemptionCategoryFromRequestDraft,
   type AnyGrantMode,
   type GrantMode,
   type ReviewDecision,
 } from "@/lib/豁免流程";
+import {
+  applyExemptionGrantAtomically,
+  clearExemptionGrantAtomically,
+  reviewExemptionRequestAtomically,
+} from "@/lib/exemption-review";
 import type { Permissions, UserRole } from "@/types";
 import {
   buildMemberTeamTransferPatch,
@@ -151,119 +154,10 @@ async function loadTeamManagementContext(perm: { userId: string; role: UserRole;
   };
 }
 
-async function syncProfileExemptionProjection(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  fields: {
-    status: "active" | "exempt";
-    exempt_type: "permanent" | "temporary" | null;
-    exempt_start_date: string | null;
-    exempt_end_date: string | null;
-    exempt_reason: string | null;
-    exemption_category?: "waive" | "leave" | null;
-  }
-) {
-  return supabase
-    .from("profiles")
-    .update({
-      status: fields.status,
-      exempt_type: fields.exempt_type,
-      exempt_start_date: fields.exempt_start_date,
-      exempt_end_date: fields.exempt_end_date,
-      exempt_reason: fields.exempt_reason,
-      exemption_category: fields.exemption_category ?? null,
-    })
-    .eq("id", userId);
-}
-
-function isMissingProfileExemptionCategoryError(error: { message?: string } | null | undefined) {
-  return Boolean(
-    error?.message &&
-      (error.message.includes("profiles.exemption_category") ||
-        error.message.includes("column profiles.exemption_category does not exist") ||
-        error.message.includes("Could not find the 'exemption_category' column of 'profiles'")),
-  );
-}
-
-async function syncProfileExemptionProjectionCompat(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  fields: {
-    status: "active" | "exempt";
-    exempt_type: "permanent" | "temporary" | null;
-    exempt_start_date: string | null;
-    exempt_end_date: string | null;
-    exempt_reason: string | null;
-    exemption_category?: "waive" | "leave" | null;
-  }
-) {
-  const primary = await syncProfileExemptionProjection(supabase, userId, fields);
-
-  if (!isMissingProfileExemptionCategoryError(primary.error)) {
-    return primary;
-  }
-
-  return supabase
-    .from("profiles")
-    .update({
-      status: fields.status,
-      exempt_type: fields.exempt_type,
-      exempt_start_date: fields.exempt_start_date,
-      exempt_end_date: fields.exempt_end_date,
-      exempt_reason: fields.exempt_reason,
-    })
-    .eq("id", userId);
-}
-
-async function deactivateExistingGrants(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
-) {
-  // exemption_grant 表可能未建，失败不阻断主流程
-  await supabase
-    .from("exemption_grant")
-    .update({ status: "inactive" })
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .then(() => {}, () => {});
-}
-
-async function fetchExemptionRequestForReview(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  requestId: string
-) {
-  const primary = await supabase
-    .from("exemption_request")
-    .select("id, applicant_user_id, exemption_type, exemption_category, start_date, end_date, reason, request_status")
-    .eq("id", requestId)
-    .single();
-
-  if (!isMissingExemptionRequestCategoryError(primary.error)) {
-    return primary;
-  }
-
-  const fallback = await supabase
-    .from("exemption_request")
-    .select("id, applicant_user_id, exemption_type, start_date, end_date, reason, request_status")
-    .eq("id", requestId)
-    .single();
-
-  return {
-    data: fallback.data
-      ? {
-          ...fallback.data,
-          exemption_category: "waive" as const,
-        }
-      : null,
-    error: fallback.error,
-  };
-}
-
 async function applyGrantToProfile(
   supabase: Awaited<ReturnType<typeof createClient>>,
   input: {
     userId: string;
-    teamId: string | null;
     mode: AnyGrantMode;
     category?: "waive" | "leave" | null;
     reason?: string | null;
@@ -276,29 +170,18 @@ async function applyGrantToProfile(
 ) {
   const draft = buildGrantDraft({
     ...input,
+    teamId: null,
     today: input.today ?? new Date().toISOString().slice(0, 10),
   });
 
   const shouldReplaceExisting =
     input.replaceExisting === true || draft.profile.exempt_type === "permanent";
-
-  if (shouldReplaceExisting) {
-    await deactivateExistingGrants(supabase, input.userId);
-  }
-
-  // exemption_grant 表可能未建，insert 失败不阻断（profiles 才是关键）
-  await supabase.from("exemption_grant").insert(draft.grant).then(() => {}, () => {});
-
-  const { error: profileError } = await syncProfileExemptionProjectionCompat(
+  const result = await applyExemptionGrantAtomically({
     supabase,
-    input.userId,
-    draft.profile,
-  );
-  if (profileError) {
-    return { error: profileError.message };
-  }
-
-  return { error: undefined };
+    draft,
+    replaceExisting: shouldReplaceExisting,
+  });
+  return result.ok ? {} : { error: result.message };
 }
 
 export async function updateExemption(values: ExemptionFormValues): Promise<{ error?: string }> {
@@ -310,20 +193,11 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
 
   try {
     if (values.mode === "none") {
-      const { error: profileError } = await syncProfileExemptionProjectionCompat(supabase, values.userId, {
-        status: "active",
-        exempt_type: null,
-        exempt_start_date: null,
-        exempt_end_date: null,
-        exempt_reason: null,
-        exemption_category: null,
+      const result = await clearExemptionGrantAtomically({
+        supabase,
+        userId: values.userId,
       });
-
-      if (profileError) {
-        return { error: profileError.message };
-      }
-
-      await deactivateExistingGrants(supabase, values.userId);
+      if (!result.ok) return { error: result.message };
       await writeAuditLog(supabase, perm.userId, "clear_exempt", values.userId, "清除豁免");
       revalidatePath("/admin");
       revalidatePath("/admin/modules");
@@ -331,12 +205,10 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       return {};
     }
 
-    const teamId = await getProfileTeamId(supabase, values.userId);
     const mode: GrantMode = values.mode === "permanent" ? "permanent" : values.mode === "yesterday" ? "yesterday" : "range";
 
     const result = await applyGrantToProfile(supabase, {
       userId: values.userId,
-      teamId,
       mode,
       reason: values.reason,
       category: values.category,
@@ -376,21 +248,11 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
   if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   const supabase = await createClient();
-
-  await deactivateExistingGrants(supabase, userId);
-
-  const { error } = await syncProfileExemptionProjectionCompat(supabase, userId, {
-    status: "active",
-    exempt_type: null,
-    exempt_start_date: null,
-    exempt_end_date: null,
-    exempt_reason: null,
-    exemption_category: null,
+  const result = await clearExemptionGrantAtomically({
+    supabase,
+    userId,
   });
-
-  if (error) {
-    return { error: error.message };
-  }
+  if (!result.ok) return { error: result.message };
 
   await writeAuditLog(supabase, perm.userId, "clear_exempt", userId, "清除豁免");
 
@@ -466,49 +328,19 @@ export async function reviewExemptionRequest(input: {
   if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
 
   const supabase = await createClient();
-
-  const { data: request, error: fetchError } = await fetchExemptionRequestForReview(supabase, input.requestId);
-
-  if (fetchError || !request) return { error: "申请不存在" };
-  if (request.request_status !== "pending") return { error: "该申请已处理" };
-
-  if (input.decision === "approved") {
-    const teamId = await getProfileTeamId(supabase, request.applicant_user_id);
-    const result = await applyGrantToProfile(supabase, {
-      userId: request.applicant_user_id,
-      teamId,
-      mode: normalizeGrantMode(request.exemption_type as AnyGrantMode),
-      category: request.exemption_category,
-      reason: request.reason,
-      requestId: request.id,
-      today: new Date().toISOString().slice(0, 10),
-      startDate: request.start_date,
-      endDate: request.end_date,
-      replaceExisting: false,
-    });
-
-    if (result.error) {
-      return result;
-    }
-  }
-
-  const patch = buildReviewPatch({ reviewerId: perm.userId, decision: input.decision });
-
-  const { error: requestError } = await supabase
-    .from("exemption_request")
-    .update(patch)
-    .eq("id", input.requestId);
-
-  if (requestError) {
-    return { error: requestError.message };
-  }
+  const result = await reviewExemptionRequestAtomically({
+    supabase,
+    requestId: input.requestId,
+    decision: input.decision,
+  });
+  if (!result.ok) return { error: result.message };
 
   await writeAuditLog(
     supabase,
     perm.userId,
     input.decision === "approved" ? "approve_exemption_request" : "reject_exemption_request",
     input.requestId,
-    `${request.applicant_user_id}|${request.exemption_category}|${request.exemption_type}`
+    input.decision,
   );
 
   revalidatePath("/admin");
