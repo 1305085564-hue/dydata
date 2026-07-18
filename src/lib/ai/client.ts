@@ -10,6 +10,7 @@ import {
   markProviderKeySuccess,
   selectHealthyProviderKeyModel,
 } from "./provider-routing";
+import { assertSafeExternalHttpsUrl } from "@/lib/server-url-security";
 
 type TextContent = string;
 type MultimodalBlock =
@@ -625,7 +626,8 @@ async function sendToChannel(
 
   let response: Response;
   try {
-    response = await fetch(buildUpstreamUrl(channel.baseUrl), {
+    const safeBaseUrl = await assertSafeExternalHttpsUrl(channel.baseUrl);
+    response = await fetch(buildUpstreamUrl(safeBaseUrl), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -633,6 +635,7 @@ async function sendToChannel(
       },
       body: JSON.stringify(buildRequestBody(options, model)),
       signal: controller.signal,
+      redirect: "manual",
     });
   } catch (error) {
     clearTimeout(timeout);

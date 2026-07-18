@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { __internal as aiClientInternal, buildUpstreamUrl } from "@/lib/ai/client";
 import { toBoolean, toTrimmedString } from "@/lib/type-guards";
 import { requireAdminActor } from "../auth-helper";
+import { assertSafeExternalHttpsUrl, __internal as serverUrlSecurity } from "@/lib/server-url-security";
 
 export { toBoolean, toTrimmedString };
 
@@ -58,7 +59,7 @@ export function normalizeBaseUrl(value: unknown) {
   const baseUrl = toTrimmedString(value).replace(/\/+$/, "");
   if (!baseUrl) return null;
   try {
-    const url = new URL(baseUrl);
+    const url = serverUrlSecurity.parseExternalHttpsUrl(baseUrl);
     return url.toString().replace(/\/+$/, "");
   } catch {
     return null;
@@ -112,7 +113,8 @@ export async function sendChannelTestRequest(input: {
 
   try {
     const isOcrMode = input.mode === "ocr";
-    const response = await fetch(buildUpstreamUrl(input.channel.base_url), {
+    const safeBaseUrl = await assertSafeExternalHttpsUrl(input.channel.base_url);
+    const response = await fetch(buildUpstreamUrl(safeBaseUrl), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -146,6 +148,7 @@ export async function sendChannelTestRequest(input: {
         ...(isOcrMode ? { response_format: { type: "json_object" } } : {}),
       }),
       signal: controller.signal,
+      redirect: "manual",
     });
 
     const elapsedMs = Date.now() - startedAt;

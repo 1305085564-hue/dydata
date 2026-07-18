@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { __internal as aiClientInternal } from "@/lib/ai/client";
 import { requireOwnerActor, normalizeBaseUrl, normalizeChannelRow, toBoolean, toNullableString, toPriority, toTrimmedString, type AiChannelRow } from "./_shared";
+import { assertSafeExternalHttpsUrl } from "@/lib/server-url-security";
 
 function buildSelect() {
   return "id, name, base_url, api_key, model, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at";
@@ -52,6 +53,14 @@ export async function POST(request: NextRequest) {
   }
   if (!baseUrl) {
     return NextResponse.json({ error: "地址格式不正确" }, { status: 400 });
+  }
+  try {
+    await assertSafeExternalHttpsUrl(baseUrl);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "AI 渠道地址不安全" },
+      { status: 400 }
+    );
   }
   if (!apiKey) {
     return NextResponse.json({ error: "缺少密钥" }, { status: 400 });
@@ -111,6 +120,14 @@ export async function PUT(request: NextRequest) {
   }
   if (body.base_url !== undefined) {
     if (!baseUrl) return NextResponse.json({ error: "地址格式不正确" }, { status: 400 });
+    try {
+      await assertSafeExternalHttpsUrl(baseUrl);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "AI 渠道地址不安全" },
+        { status: 400 }
+      );
+    }
     patch.base_url = baseUrl;
   }
   if (body.api_key !== undefined) {
