@@ -80,6 +80,18 @@ export function requireGlobalProductionActor(
   return null;
 }
 
+export function requireVisibleProductionUser(
+  auth: Awaited<ReturnType<typeof requireOwnerOrAdminActor>>,
+  userId: string | null | undefined,
+) {
+  if ("response" in auth) return auth.response;
+  if (auth.scope.kind === "all") return null;
+  if (!userId || !auth.scope.visibleUserIds.includes(userId)) {
+    return NextResponse.json({ error: "不能操作当前管理范围外的成员" }, { status: 403 });
+  }
+  return null;
+}
+
 export function toTrimmedString(value: unknown, maxLength: number) {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, maxLength);

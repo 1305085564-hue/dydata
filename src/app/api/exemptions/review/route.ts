@@ -5,6 +5,7 @@ import {
   isRecord,
   readJsonBody,
   requireOwnerOrAdminActor,
+  requireVisibleProductionUser,
 } from "@/app/api/production/_shared";
 
 type ReviewExemptionPayload = {
@@ -49,6 +50,9 @@ export async function POST(request: Request) {
   if (loadError || !requestRow) {
     return NextResponse.json({ error: "豁免申请不存在" }, { status: 404 });
   }
+
+  const forbidden = requireVisibleProductionUser(auth, requestRow.applicant_user_id);
+  if (forbidden) return forbidden;
 
   const { data, error } = await auth.supabase
     .from("exemption_request")

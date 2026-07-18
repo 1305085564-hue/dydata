@@ -7,6 +7,7 @@ import {
   isProductionManagerBusinessRole,
   isValidDate,
   parseLimit,
+  requireVisibleProductionUser,
   requireGlobalProductionActor,
 } from "./_shared";
 
@@ -53,4 +54,15 @@ test("产量管理入口按业务角色放行，不看原始 admin 字段", () =
   assert.equal(isProductionManagerBusinessRole("team_admin"), true);
   assert.equal(isProductionManagerBusinessRole("group_leader"), true);
   assert.equal(isProductionManagerBusinessRole("member"), false);
+});
+
+test("产量管理写操作不能跨越当前可见成员范围", () => {
+  const scopedAuth = {
+    scope: { kind: "team", visibleUserIds: ["leader-1", "member-1"] },
+  } as never;
+  assert.equal(requireVisibleProductionUser(scopedAuth, "member-1"), null);
+  assert.equal(requireVisibleProductionUser(scopedAuth, "member-2")?.status, 403);
+
+  const ownerAuth = { scope: { kind: "all", visibleUserIds: [] } } as never;
+  assert.equal(requireVisibleProductionUser(ownerAuth, "member-2"), null);
 });
