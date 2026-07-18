@@ -384,18 +384,17 @@ export function ProductionDashboard({
                   {sub.screenshot_items && sub.screenshot_items.length > 0 && (
                     <div className="grid grid-cols-3 gap-2">
                       {sub.screenshot_items.map((item: any, sIdx: number) => (
-                        <div 
+                        <button
+                          type="button"
                           key={sIdx}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => setLightbox({ paths: [item.signed_url], index: 0 })}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
+                          disabled={!item.signed_url}
+                          aria-label={item.signed_url ? "查看提交截图" : "提交截图加载失败"}
+                          onClick={() => {
+                            if (typeof item.signed_url === "string" && item.signed_url) {
                               setLightbox({ paths: [item.signed_url], index: 0 });
                             }
                           }}
-                          className="aspect-square relative rounded-lg border border-stone-200 bg-stone-50 overflow-hidden cursor-zoom-in group/img"
+                          className="aspect-square relative rounded-lg border border-stone-200 bg-stone-50 overflow-hidden enabled:cursor-zoom-in group/img disabled:cursor-not-allowed"
                         >
                           {item.signed_url ? (
                             <img 
@@ -408,7 +407,7 @@ export function ProductionDashboard({
                               加载失败
                             </div>
                           )}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}

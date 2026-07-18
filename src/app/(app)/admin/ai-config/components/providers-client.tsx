@@ -121,48 +121,36 @@ export default function ProvidersClient() {
                 {/* 渠道节点 (顶级) */}
                 <div
                   className={cn(
-                    "group flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all text-[13px] relative",
+                    "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px] relative",
                     isProviderActive
                       ? "bg-stone-100/80 text-stone-900 font-medium"
                       : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
                   )}
-                  onClick={() => setActiveNode({ type: "provider", id: p.id })}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setActiveNode({ type: "provider", id: p.id });
-                    }
-                  }}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div
+                  <div className="flex min-w-0 flex-1 items-center gap-1">
+                    <button
+                      type="button"
+                      aria-label={`${isExpanded ? "收起" : "展开"}渠道 ${p.name}`}
+                      aria-expanded={isExpanded}
                       className="flex items-center justify-center size-5 rounded-md hover:bg-stone-200/50 text-stone-500 transition-colors shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleProvider(p.id);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleProvider(p.id);
-                        }
-                      }}
+                      onClick={() => toggleProvider(p.id)}
                     >
                       {isExpanded ? (
                         <ChevronDown strokeWidth={2} className="size-3.5" />
                       ) : (
                         <ChevronRight strokeWidth={2} className="size-3.5" />
                       )}
-                    </div>
-                    <span className="truncate">{p.name}</span>
-                    {!p.is_enabled && (
-                      <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm">停用</span>
-                    )}
+                    </button>
+                    <button
+                      type="button"
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                      onClick={() => setActiveNode({ type: "provider", id: p.id })}
+                    >
+                      <span className="truncate">{p.name}</span>
+                      {!p.is_enabled && (
+                        <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm">停用</span>
+                      )}
+                    </button>
                   </div>
                   <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
                     <Button
@@ -194,26 +182,21 @@ export default function ProvidersClient() {
                           <div
                             key={key.id}
                             className={cn(
-                              "group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition-all text-[13px]",
+                              "group flex items-center justify-between px-2 py-1.5 rounded-md transition-all text-[13px]",
                               isKeyActive
                                 ? "bg-[#8AA8C7]/10 text-stone-900 font-medium"
                                 : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
                             )}
-                            onClick={() => setActiveNode({ type: "key", id: key.id })}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                setActiveNode({ type: "key", id: key.id });
-                              }
-                            }}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
+                            <button
+                              type="button"
+                              className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                              onClick={() => setActiveNode({ type: "key", id: key.id })}
+                            >
                               {/* 极简健康状态点 */}
                               <span className={cn("size-1.5 rounded-full shrink-0", healthy ? "bg-[#6FAA7D]" : "bg-[#C9604D]")} />
                               <span className="truncate">{key.label}</span>
-                            </div>
+                            </button>
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
                               <Button
                                 variant="ghost"

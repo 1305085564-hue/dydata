@@ -281,23 +281,18 @@ export default function RewriteClient() {
               return (
                 <div
                   key={v.id}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setActiveViewId(v.id);
-                    }
-                  }}
                   className={cn(
-                    "group flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer transition-all text-[13px]",
+                    "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
                     isViewActive
                       ? "bg-stone-100/80 text-stone-900 font-medium"
                       : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
                   )}
-                  onClick={() => setActiveViewId(v.id)}
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                    onClick={() => setActiveViewId(v.id)}
+                  >
                     <span className="truncate">{v.label}</span>
                     <Badge variant="outline" className={cn("font-mono text-[12px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-stone-700 border-stone-300" : "text-stone-500 border-stone-200")}>{v.key}</Badge>
                     {v.is_default && (
@@ -306,7 +301,7 @@ export default function RewriteClient() {
                     {!v.is_enabled && (
                       <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm shrink-0">停用</span>
                     )}
-                  </div>
+                  </button>
                   <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1 shrink-0 pr-1">
                     <Button
                       variant="ghost"

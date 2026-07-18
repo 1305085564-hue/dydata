@@ -82,7 +82,7 @@ export default async function VideoReviewDashboardPage({
     groups = loaded.groups;
   } catch (err: unknown) {
     console.error("[video-review] SSR data loading failed:", err);
-    errorMsg = err instanceof Error ? err.message : String(err);
+    errorMsg = "视频复盘数据加载失败，请稍后重试。";
   }
 
   return (
@@ -103,6 +103,14 @@ export default async function VideoReviewDashboardPage({
       </div>
 
       <VideoReviewWorkbench
+        key={[
+          errorMsg ? "error" : "ready",
+          selectedDate,
+          selectedTeamId || "all",
+          selectedGroupId || "all",
+          searchQuery,
+          initialSubmissions.map((row) => row.id).join(","),
+        ].join("|")}
         isAdmin={isAdmin}
         userId={user.id}
         todayDate={selectedDate}

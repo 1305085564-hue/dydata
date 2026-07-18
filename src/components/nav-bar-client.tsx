@@ -73,25 +73,7 @@ export function NavBarClient({
   const [wrenchOpen, setWrenchOpen] = useState(false);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const wrenchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const wrenchButtonRef = useRef<HTMLButtonElement | null>(null);
-
-  const handleWrenchMouseEnter = useCallback(() => {
-    if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
-    setWrenchOpen(true);
-  }, []);
-
-  const handleWrenchMouseLeave = useCallback(() => {
-    wrenchTimeoutRef.current = setTimeout(() => {
-      setWrenchOpen(false);
-    }, 150);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     if (!wrenchOpen) return;
@@ -354,12 +336,6 @@ export function NavBarClient({
               {showSystemSettings && (
                 <div
                   className="relative"
-                  onMouseEnter={handleWrenchMouseEnter}
-                  onMouseLeave={handleWrenchMouseLeave}
-                  onFocus={() => {
-                    if (wrenchTimeoutRef.current) clearTimeout(wrenchTimeoutRef.current);
-                    setWrenchOpen(true);
-                  }}
                   onBlur={(e) => {
                     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                       setWrenchOpen(false);
@@ -371,7 +347,7 @@ export function NavBarClient({
                     type="button"
                     onClick={() => setWrenchOpen(v => !v)}
                     aria-expanded={wrenchOpen}
-                    aria-haspopup="menu"
+                    aria-controls="system-maintenance-panel"
                     className={cn(
                       "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group",
                       "text-stone-500 hover:text-[#B4532F] active:scale-95",
@@ -385,7 +361,9 @@ export function NavBarClient({
                   </button>
 
                   {wrenchOpen && (
-                      <div
+                      <nav
+                        id="system-maintenance-panel"
+                        aria-label="系统维护"
                         className={cn(
                           "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-2 z-50 w-56 origin-top-right overflow-hidden rounded-2xl border bg-white p-2 shadow-xl duration-150",
                           "border-stone-200 bg-white/95 backdrop-blur-xl"
@@ -433,7 +411,7 @@ export function NavBarClient({
                             </Link>
                           )}
                         </div>
-                      </div>
+                      </nav>
                   )}
                 </div>
               )}

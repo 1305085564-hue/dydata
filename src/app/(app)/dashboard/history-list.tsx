@@ -106,13 +106,6 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 key={report.id}
                 className={"group " + (onReportOpen ? "cursor-pointer" : "")}
                 onClick={onReportOpen ? () => onReportOpen(report) : undefined}
-                tabIndex={onReportOpen ? 0 : undefined}
-                onKeyDown={onReportOpen ? (e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onReportOpen(report);
-                  }
-                } : undefined}
               >
                 <TableCell className="whitespace-nowrap text-stone-500 tabular-nums">
                   {report.report_date?.slice(5)}
@@ -120,7 +113,20 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 <TableCell className="max-w-[120px] truncate text-stone-500">
                   {accountDisplayNameMap[report.account_id] ?? "-"}
                 </TableCell>
-                <TableCell className="max-w-[160px] truncate text-stone-700">{report.title}</TableCell>
+                <TableCell className="max-w-[160px] truncate text-stone-700">
+                  {onReportOpen ? (
+                    <button
+                      type="button"
+                      className="max-w-full truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onReportOpen(report);
+                      }}
+                    >
+                      {report.title}
+                    </button>
+                  ) : report.title}
+                </TableCell>
                 <TableCell className="text-right font-medium tabular-nums text-stone-700">
                   {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
                 </TableCell>
@@ -162,14 +168,6 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 : "space-y-2 rounded-xl border border-stone-200 bg-white p-4"
             }
             onClick={onReportOpen ? () => onReportOpen(report) : undefined}
-            role={onReportOpen ? "button" : undefined}
-            tabIndex={onReportOpen ? 0 : undefined}
-            onKeyDown={onReportOpen ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onReportOpen(report);
-              }
-            } : undefined}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -196,7 +194,20 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 </Button>
               </div>
             </div>
-            <p className="truncate text-[13px] text-stone-700">{report.title}</p>
+            {onReportOpen ? (
+              <button
+                type="button"
+                className="max-w-full truncate rounded text-left text-[13px] text-stone-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onReportOpen(report);
+                }}
+              >
+                {report.title}
+              </button>
+            ) : (
+              <p className="truncate text-[13px] text-stone-700">{report.title}</p>
+            )}
             <div className="grid grid-cols-4 gap-2 text-[12px]">
               <div>
                 <p className="text-stone-500">完播率</p>

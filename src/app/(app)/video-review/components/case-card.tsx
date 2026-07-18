@@ -38,17 +38,8 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
 
   return (
     <div
-      onClick={() => onOpenDetail(item)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpenDetail(item);
-        }
-      }}
       className={cn(
-        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px cursor-pointer",
+        "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-stone-200 bg-white transition-all duration-200 hover:-translate-y-px",
         isMine && "ring-1 ring-[#8AA8C7]/30 border-[#8AA8C7]/40"
       )}
     >
@@ -82,6 +73,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
             type="button"
             onClick={handleViewShots}
             disabled={screenshotCount === 0}
+            aria-label={screenshotCount > 0 ? "查看截图" : "无截图"}
             className={cn(
               "flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-700 transition-colors active:scale-95",
               screenshotCount === 0
@@ -95,6 +87,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
           <button
             type="button"
             onClick={handleCopy}
+            aria-label="复制文案"
             className="flex size-8 items-center justify-center rounded-lg bg-white/90 text-stone-700 transition-colors hover:bg-white active:scale-95"
             title="复制文案"
           >
@@ -108,7 +101,11 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
       </div>
 
       {/* 内容信息区域 */}
-      <div className="flex flex-1 flex-col justify-between p-3.5 space-y-3 bg-white">
+      <button
+        type="button"
+        onClick={() => onOpenDetail(item)}
+        className="flex flex-1 flex-col justify-between space-y-3 bg-white p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#B4532F]/40"
+      >
         <p className="line-clamp-2 text-[13px] font-medium leading-[1.5] text-stone-700">
           {item.script_text}
         </p>
@@ -126,7 +123,7 @@ export function CaseCard({ item, isMine, onOpenLightbox, onOpenDetail }: CaseCar
             {formatShortDate(item.approved_at)}
           </span>
         </div>
-      </div>
+      </button>
     </div>
   );
 }

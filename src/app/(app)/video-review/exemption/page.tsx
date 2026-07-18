@@ -69,6 +69,12 @@ export default async function ExemptionPage() {
       </header>
 
       <ExemptionWorkbench
+        key={[
+          historyErrorMessage ? "error" : "ready",
+          exemptionHistory
+            .map((row) => `${row.id}:${row.request_status}:${row.reviewed_at ?? ""}`)
+            .join(","),
+        ].join("|")}
         initialHistory={(exemptionHistory ?? []) as any[]}
         todayDate={today}
         historyErrorMessage={historyErrorMessage}

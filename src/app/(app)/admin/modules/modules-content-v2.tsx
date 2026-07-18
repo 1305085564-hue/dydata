@@ -589,41 +589,35 @@ export function AdminModulesContentV2({
               <div key={team.id} className="space-y-1">
                 <div
                   className={cn(
-                    "group flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150 cursor-pointer",
+                    "group flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150",
                     isTeamSelected && !selectedGroupId
                       ? "bg-[#8AA8C7]/10 border-stone-300 text-stone-900 font-medium"
                       : "border-transparent bg-transparent text-stone-700 hover:bg-stone-100/50 hover:text-stone-900"
                   )}
-                  onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSelectedTeamId(team.id);
-                      setSelectedGroupId(null);
-                    }
-                  }}
                 >
-                  <span className="flex items-center gap-2 truncate">
-                    <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#8AA8C7]" : "bg-stone-300")} />
-                    <span className="truncate font-medium">{team.name}</span>
-                  </span>
-                  
-                  <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                    onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
+                  >
+                    <span className="flex min-w-0 items-center gap-2 truncate">
+                      <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#8AA8C7]" : "bg-stone-300")} />
+                      <span className="truncate font-medium">{team.name}</span>
+                    </span>
                     <span className="rounded-full bg-stone-200/60 px-2 py-0.5 text-[12px] text-stone-700">
                       {teamMembers.length}
                     </span>
-                    {isOwner && teamMembers.length === 0 && teamGroups.length === 0 && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setDeleteTeamTarget(team); }}
-                        className="rounded-lg p-1 text-stone-500/40 opacity-0 transition-opacity hover:text-[#B24E3E] group-hover:opacity-100 focus-within:opacity-100"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
-                  </div>
+                  </button>
+                  {isOwner && teamMembers.length === 0 && teamGroups.length === 0 && (
+                    <button
+                      type="button"
+                      aria-label={`删除团队 ${team.name}`}
+                      onClick={() => setDeleteTeamTarget(team)}
+                      className="ml-1 rounded-lg p-1 text-stone-500/40 opacity-0 transition-opacity hover:text-[#B24E3E] group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 {isTeamSelected && (
@@ -832,23 +826,18 @@ export function AdminModulesContentV2({
                 return (
                   <div
                     key={member.id}
-                    onClick={() => handleSelectMember(member)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleSelectMember(member);
-                      }
-                    }}
                     className={cn(
-                      "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 cursor-pointer hover:border-stone-300 hover:shadow-sm",
+                      "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 hover:border-stone-300 hover:shadow-sm",
                       isCurrentMemberActive
                         ? "border-[#8AA8C7] bg-[#8AA8C7]/5"
                         : "border-stone-200 bg-white"
                     )}
                   >
-                    <div className="space-y-2">
+                    <button
+                      type="button"
+                      className="space-y-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                      onClick={() => handleSelectMember(member)}
+                    >
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="text-[13px] font-medium text-stone-900 flex items-center gap-1.5">
@@ -897,7 +886,7 @@ export function AdminModulesContentV2({
                           </span>
                         )}
                       </div>
-                    </div>
+                    </button>
 
                     <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
                       <div className="flex items-center gap-1.5">
@@ -1070,17 +1059,9 @@ export function AdminModulesContentV2({
                       {ADMIN_PERMISSION_KEYS.map(key => {
                         const isChecked = draftPermissions[key] === true;
                         return (
-                          <div
+                          <label
                             key={key}
-                            onClick={() => permissionManagerCapabilities.canEditPermissions && handleTogglePermission(key, !isChecked)}
-                            role="button"
-                            tabIndex={permissionManagerCapabilities.canEditPermissions ? 0 : undefined}
-                            onKeyDown={permissionManagerCapabilities.canEditPermissions ? (e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                handleTogglePermission(key, !isChecked);
-                              }
-                            } : undefined}
+                            htmlFor={`admin-permission-${key}`}
                             className={cn(
                               "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
@@ -1095,13 +1076,14 @@ export function AdminModulesContentV2({
                               </p>
                             </div>
                             <Checkbox
+                              id={`admin-permission-${key}`}
                               checked={isChecked}
                               aria-label={PERMISSION_LABELS[key]}
                               disabled={!permissionManagerCapabilities.canEditPermissions || isSavingPermissions}
                               onCheckedChange={checked => handleTogglePermission(key, checked === true)}
-                              className="mt-0.5 pointer-events-none"
+                              className="mt-0.5"
                             />
-                          </div>
+                          </label>
                         );
                       })}
                     </div>
@@ -1113,17 +1095,9 @@ export function AdminModulesContentV2({
                       {AI_PERMISSION_KEYS.map(key => {
                         const isChecked = draftPermissions[key] === true;
                         return (
-                          <div
+                          <label
                             key={key}
-                            onClick={() => permissionManagerCapabilities.canEditPermissions && handleTogglePermission(key, !isChecked)}
-                            role="button"
-                            tabIndex={permissionManagerCapabilities.canEditPermissions ? 0 : undefined}
-                            onKeyDown={permissionManagerCapabilities.canEditPermissions ? (e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                handleTogglePermission(key, !isChecked);
-                              }
-                            } : undefined}
+                            htmlFor={`ai-permission-${key}`}
                             className={cn(
                               "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
                               isChecked
@@ -1138,13 +1112,14 @@ export function AdminModulesContentV2({
                               </p>
                             </div>
                             <Checkbox
+                              id={`ai-permission-${key}`}
                               checked={isChecked}
                               aria-label={PERMISSION_LABELS[key]}
                               disabled={!permissionManagerCapabilities.canEditPermissions || isSavingPermissions}
                               onCheckedChange={checked => handleTogglePermission(key, checked === true)}
-                              className="mt-0.5 pointer-events-none"
+                              className="mt-0.5"
                             />
-                          </div>
+                          </label>
                         );
                       })}
                     </div>
