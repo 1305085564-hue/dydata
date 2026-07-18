@@ -440,10 +440,11 @@ export function MemberDrawer({
               {activeAction ? (
                 <div className="space-y-3">
                   <div className="rounded-xl border border-stone-200 bg-stone-50/50 p-3">
-                    <label className="mb-1.5 block text-[12px] font-normal text-stone-500">
+                    <label htmlFor="action-reason" className="mb-1.5 block text-[12px] font-normal text-stone-500">
                       {ACTION_CONFIG[activeAction].label}原因（可选）
                     </label>
                     <input
+                      id="action-reason"
                       type="text"
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}

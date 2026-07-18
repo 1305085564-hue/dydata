@@ -48,8 +48,9 @@ export function BindingDialog({
         </DialogHeader>
         <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-2">
-            <Label>功能标识 (Key)</Label>
+            <Label htmlFor="feature-key">功能标识 (Key)</Label>
             <Input
+              id="feature-key"
               value={formData.feature_key || ""}
               onChange={(e) => setFormData({ ...formData, feature_key: e.target.value })}
               placeholder="例如: video_diagnose"
@@ -57,16 +58,18 @@ export function BindingDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>功能名称</Label>
+            <Label htmlFor="feature-label">功能名称</Label>
             <Input
+              id="feature-label"
               value={formData.label || ""}
               onChange={(e) => setFormData({ ...formData, label: e.target.value })}
               placeholder="例如: 视频诊断"
             />
           </div>
           <div className="space-y-2">
-            <Label>绑定模型</Label>
+            <Label htmlFor="binding-model">绑定模型</Label>
             <select
+              id="binding-model"
               className="w-full h-9 rounded-md border border-stone-200 bg-white px-3 text-[13px]"
               value={formData.provider_key_model_id || ""}
               onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
@@ -85,8 +88,9 @@ export function BindingDialog({
             </select>
           </div>
           <div className="space-y-2">
-            <Label>System Prompt (可选)</Label>
+            <Label htmlFor="system-prompt">System Prompt (可选)</Label>
             <Textarea
+              id="system-prompt"
               className="min-h-[100px]"
               value={formData.system_prompt || ""}
               onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
@@ -95,16 +99,18 @@ export function BindingDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>上下文轮数限制</Label>
+              <Label htmlFor="context-message-limit">上下文轮数限制</Label>
               <Input
+                id="context-message-limit"
                 type="number"
                 value={formData.context_message_limit ?? 30}
                 onChange={(e) => setFormData({ ...formData, context_message_limit: Number.parseInt(e.target.value, 10) || 30 })}
               />
             </div>
             <div className="space-y-2">
-              <Label>输出 Token 限制</Label>
+              <Label htmlFor="output-token-limit">输出 Token 限制</Label>
               <Input
+                id="output-token-limit"
                 type="number"
                 value={formData.output_token_limit ?? 3600}
                 onChange={(e) => setFormData({ ...formData, output_token_limit: Number.parseInt(e.target.value, 10) || 3600 })}
@@ -114,6 +120,7 @@ export function BindingDialog({
           <div className="flex items-center justify-between pt-2">
             <Label>是否启用</Label>
             <Switch
+              aria-label="是否启用"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />

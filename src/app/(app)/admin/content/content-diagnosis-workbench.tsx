@@ -963,7 +963,7 @@ export function ContentDiagnosisWorkbench({
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[12px] font-normal text-stone-500">推流峰值</label>
+                      <label id="diagnosis-traffic-peak-label" className="text-[12px] font-normal text-stone-500">推流峰值</label>
                       <Select
                         value={observation.traffic_peak_level}
                         onValueChange={(v) =>
@@ -973,7 +973,7 @@ export function ContentDiagnosisWorkbench({
                           }))
                         }
                       >
-                        <SelectTrigger className="h-8 text-[12px] rounded-lg">
+                        <SelectTrigger aria-labelledby="diagnosis-traffic-peak-label" className="h-8 text-[12px] rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -987,7 +987,7 @@ export function ContentDiagnosisWorkbench({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[12px] font-normal text-stone-500">峰值后走势</label>
+                      <label id="diagnosis-post-peak-trend-label" className="text-[12px] font-normal text-stone-500">峰值后走势</label>
                       <Select
                         value={observation.post_peak_trend}
                         onValueChange={(v) =>
@@ -997,7 +997,7 @@ export function ContentDiagnosisWorkbench({
                           }))
                         }
                       >
-                        <SelectTrigger className="h-8 text-[12px] rounded-lg">
+                        <SelectTrigger aria-labelledby="diagnosis-post-peak-trend-label" className="h-8 text-[12px] rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1011,7 +1011,7 @@ export function ContentDiagnosisWorkbench({
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[12px] font-normal text-stone-500">流量承接</label>
+                      <label id="diagnosis-traffic-retention-label" className="text-[12px] font-normal text-stone-500">流量承接</label>
                       <Select
                         value={observation.traffic_retention_quality}
                         onValueChange={(v) =>
@@ -1021,7 +1021,7 @@ export function ContentDiagnosisWorkbench({
                           }))
                         }
                       >
-                        <SelectTrigger className="h-8 text-[12px] rounded-lg">
+                        <SelectTrigger aria-labelledby="diagnosis-traffic-retention-label" className="h-8 text-[12px] rounded-lg">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1056,8 +1056,9 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[12px] font-normal text-stone-500">观察备注</label>
+                    <label htmlFor="diagnosis-observation-note" className="text-[12px] font-normal text-stone-500">观察备注</label>
                     <textarea
+                      id="diagnosis-observation-note"
                       value={observation.note}
                       onChange={(e) => setObservation((prev) => ({ ...prev, note: e.target.value }))}
                       className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"
@@ -1167,8 +1168,9 @@ export function ContentDiagnosisWorkbench({
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-normal text-stone-500">主要问题诊断</label>
+                  <label htmlFor="diagnosis-main-issues" className="text-[12px] font-normal text-stone-500">主要问题诊断</label>
                   <textarea
+                    id="diagnosis-main-issues"
                     value={mainIssues}
                     onChange={(e) => setMainIssues(e.target.value)}
                     className={`w-full resize-none rounded-xl border p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5 transition-all duration-300 ${
@@ -1183,8 +1185,9 @@ export function ContentDiagnosisWorkbench({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[12px] font-normal text-stone-500">建议及改进反馈</label>
+                  <label htmlFor="diagnosis-feedback" className="text-[12px] font-normal text-stone-500">建议及改进反馈</label>
                   <textarea
+                    id="diagnosis-feedback"
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
                     className="w-full resize-none rounded-xl border border-stone-200 bg-stone-50 p-3 text-[12px] leading-[1.7] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:bg-white focus:shadow-sm focus:outline-none focus:ring-1 focus:ring-stone-900/5"

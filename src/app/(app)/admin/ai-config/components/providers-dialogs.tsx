@@ -49,24 +49,27 @@ export function ProviderDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>渠道名称</Label>
+            <Label htmlFor="provider-name">渠道名称</Label>
             <Input
+              id="provider-name"
               value={formData.name || ""}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="例如: api7"
             />
           </div>
           <div className="space-y-2">
-            <Label>Base URL</Label>
+            <Label htmlFor="provider-base-url">Base URL</Label>
             <Input
+              id="provider-base-url"
               value={formData.base_url || ""}
               onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
               placeholder="例如: https://api.openai.com/v1"
             />
           </div>
           <div className="space-y-2">
-            <Label>描述 (可选)</Label>
+            <Label htmlFor="provider-description">描述 (可选)</Label>
             <Textarea
+              id="provider-description"
               value={formData.description || ""}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
@@ -74,13 +77,15 @@ export function ProviderDialog({
           <div className="flex items-center justify-between">
             <Label>是否启用</Label>
             <Switch
+              aria-label="是否启用渠道"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
           <div className="space-y-2">
-            <Label>优先级 (数字越小越优先)</Label>
+            <Label htmlFor="provider-priority">优先级 (数字越小越优先)</Label>
             <Input
+              id="provider-priority"
               type="number"
               value={formData.priority ?? 50}
               onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
@@ -143,16 +148,18 @@ export function KeyDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>分组名称</Label>
+            <Label htmlFor="key-label">分组名称</Label>
             <Input
+              id="key-label"
               value={formData.label || ""}
               onChange={(e) => setFormData({ ...formData, label: e.target.value })}
               placeholder="例如: default"
             />
           </div>
           <div className="space-y-2">
-            <Label>API Key</Label>
+            <Label htmlFor="api-key">API Key</Label>
             <Input
+              id="api-key"
               type="password"
               value={apiKeyValue}
               onChange={(e) => setApiKeyValue(e.target.value)}
@@ -162,13 +169,15 @@ export function KeyDialog({
           <div className="flex items-center justify-between">
             <Label>是否启用</Label>
             <Switch
+              aria-label="是否启用分组"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
           <div className="space-y-2">
-            <Label>优先级</Label>
+            <Label htmlFor="key-priority">优先级</Label>
             <Input
+              id="key-priority"
               type="number"
               value={formData.priority ?? 50}
               onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
@@ -225,8 +234,9 @@ export function ModelDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>模型标识 (Model ID)</Label>
+            <Label htmlFor="model-id">模型标识 (Model ID)</Label>
             <Input
+              id="model-id"
               value={formData.model_id || ""}
               onChange={(e) => setFormData({ ...formData, model_id: e.target.value })}
               placeholder="例如: gpt-4"
@@ -234,8 +244,9 @@ export function ModelDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>展示名称 (可选)</Label>
+            <Label htmlFor="model-display-name">展示名称 (可选)</Label>
             <Input
+              id="model-display-name"
               value={formData.display_name || ""}
               onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
               placeholder="例如: GPT-4 Turbo"
@@ -244,6 +255,7 @@ export function ModelDialog({
           <div className="flex items-center justify-between">
             <Label>是否启用</Label>
             <Switch
+              aria-label="是否启用模型"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />

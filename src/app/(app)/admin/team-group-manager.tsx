@@ -394,9 +394,9 @@ export function TeamGroupManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>组长</Label>
+                <Label id="new-group-leader-label">组长</Label>
                 <Select value={newLeaderId} onValueChange={handleNewLeaderChange}>
-                  <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                  <SelectTrigger aria-labelledby="new-group-leader-label" className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                     <SelectValue placeholder="选择组长">
                       {newLeaderName ?? undefined}
                     </SelectValue>
@@ -442,9 +442,9 @@ export function TeamGroupManager({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>更换组长</Label>
+                    <Label id="edit-group-leader-label">更换组长</Label>
                     <Select value={editLeaderId} onValueChange={handleEditLeaderChange}>
-                      <SelectTrigger className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                      <SelectTrigger aria-labelledby="edit-group-leader-label" className="h-10 w-full bg-stone-50 border-transparent focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
                         <SelectValue placeholder="选择组长">
                           {editLeaderName ?? undefined}
                         </SelectValue>

@@ -363,16 +363,18 @@ export function DataManager({
             <div className="mb-3 text-[13px] font-medium text-stone-900">编辑数据</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-1.5 sm:col-span-2 lg:col-span-4">
-                <label className="text-[12px] font-normal text-stone-500">标题</label>
+                <label htmlFor="edit-title" className="text-[12px] font-normal text-stone-500">标题</label>
                 <Input
+                  id="edit-title"
                   value={editData.title ?? ""}
                   onChange={(e) => setEditData({ ...editData, title: e.target.value })}
                   className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">播放量（万）</label>
+                <label htmlFor="edit-play-count" className="text-[12px] font-normal text-stone-500">播放量（万）</label>
                 <Input
+                  id="edit-play-count"
                   type="number"
                   step="0.01"
                   value={editData.play_count != null ? (editData.play_count / 10000).toFixed(2) : ""}
@@ -383,8 +385,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">完播率</label>
+                <label htmlFor="edit-completion-rate" className="text-[12px] font-normal text-stone-500">完播率</label>
                 <Input
+                  id="edit-completion-rate"
                   value={stripSuffix(editData.completion_rate ?? null, "%")}
                   onChange={(e) =>
                     setEditData({
@@ -396,8 +399,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">涨粉</label>
+                <label htmlFor="edit-follower-gain" className="text-[12px] font-normal text-stone-500">涨粉</label>
                 <Input
+                  id="edit-follower-gain"
                   type="number"
                   value={editData.follower_gain ?? 0}
                   onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
@@ -405,8 +409,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">导粉</label>
+                <label htmlFor="edit-follower-convert" className="text-[12px] font-normal text-stone-500">导粉</label>
                 <Input
+                  id="edit-follower-convert"
                   type="number"
                   value={editData.follower_convert ?? ""}
                   onChange={(e) =>
@@ -419,8 +424,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">点赞</label>
+                <label htmlFor="edit-likes" className="text-[12px] font-normal text-stone-500">点赞</label>
                 <Input
+                  id="edit-likes"
                   type="number"
                   value={editData.likes ?? 0}
                   onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
@@ -428,8 +434,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">评论</label>
+                <label htmlFor="edit-comments" className="text-[12px] font-normal text-stone-500">评论</label>
                 <Input
+                  id="edit-comments"
                   type="number"
                   value={editData.comments ?? 0}
                   onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
@@ -437,8 +444,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">分享</label>
+                <label htmlFor="edit-shares" className="text-[12px] font-normal text-stone-500">分享</label>
                 <Input
+                  id="edit-shares"
                   type="number"
                   value={editData.shares ?? 0}
                   onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
@@ -446,8 +454,9 @@ export function DataManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">收藏</label>
+                <label htmlFor="edit-favorites" className="text-[12px] font-normal text-stone-500">收藏</label>
                 <Input
+                  id="edit-favorites"
                   type="number"
                   value={editData.favorites ?? 0}
                   onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}
@@ -551,8 +560,9 @@ export function DataManager({
       <div className="mt-2 space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-4">
         <div className="text-[13px] font-medium text-stone-900">编辑数据</div>
         <div className="space-y-1.5">
-          <label className="text-[12px] font-normal text-stone-500">标题</label>
+          <label htmlFor="m-edit-title" className="text-[12px] font-normal text-stone-500">标题</label>
           <Input
+            id="m-edit-title"
             value={editData.title ?? ""}
             onChange={(e) => setEditData({ ...editData, title: e.target.value })}
             className="h-8 bg-stone-50 border-transparent text-stone-900 focus:bg-white focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -560,8 +570,9 @@ export function DataManager({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">播放量（万）</label>
+            <label htmlFor="m-edit-play-count" className="text-[12px] font-normal text-stone-500">播放量（万）</label>
             <Input
+              id="m-edit-play-count"
               type="number"
               step="0.01"
               value={editData.play_count != null ? (editData.play_count / 10000).toFixed(2) : ""}
@@ -572,8 +583,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">完播率</label>
+            <label htmlFor="m-edit-completion-rate" className="text-[12px] font-normal text-stone-500">完播率</label>
             <Input
+              id="m-edit-completion-rate"
               value={stripSuffix(editData.completion_rate ?? null, "%")}
               onChange={(e) =>
                 setEditData({
@@ -585,8 +597,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">涨粉</label>
+            <label htmlFor="m-edit-follower-gain" className="text-[12px] font-normal text-stone-500">涨粉</label>
             <Input
+              id="m-edit-follower-gain"
               type="number"
               value={editData.follower_gain ?? 0}
               onChange={(e) => setEditData({ ...editData, follower_gain: Number(e.target.value) })}
@@ -594,8 +607,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">导粉</label>
+            <label htmlFor="m-edit-follower-convert" className="text-[12px] font-normal text-stone-500">导粉</label>
             <Input
+              id="m-edit-follower-convert"
               type="number"
               value={editData.follower_convert ?? ""}
               onChange={(e) =>
@@ -608,8 +622,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">点赞</label>
+            <label htmlFor="m-edit-likes" className="text-[12px] font-normal text-stone-500">点赞</label>
             <Input
+              id="m-edit-likes"
               type="number"
               value={editData.likes ?? 0}
               onChange={(e) => setEditData({ ...editData, likes: Number(e.target.value) })}
@@ -617,8 +632,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">评论</label>
+            <label htmlFor="m-edit-comments" className="text-[12px] font-normal text-stone-500">评论</label>
             <Input
+              id="m-edit-comments"
               type="number"
               value={editData.comments ?? 0}
               onChange={(e) => setEditData({ ...editData, comments: Number(e.target.value) })}
@@ -626,8 +642,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">分享</label>
+            <label htmlFor="m-edit-shares" className="text-[12px] font-normal text-stone-500">分享</label>
             <Input
+              id="m-edit-shares"
               type="number"
               value={editData.shares ?? 0}
               onChange={(e) => setEditData({ ...editData, shares: Number(e.target.value) })}
@@ -635,8 +652,9 @@ export function DataManager({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[12px] font-normal text-stone-500">收藏</label>
+            <label htmlFor="m-edit-favorites" className="text-[12px] font-normal text-stone-500">收藏</label>
             <Input
+              id="m-edit-favorites"
               type="number"
               value={editData.favorites ?? 0}
               onChange={(e) => setEditData({ ...editData, favorites: Number(e.target.value) })}

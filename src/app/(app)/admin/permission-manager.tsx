@@ -1050,7 +1050,7 @@ export function PermissionManager({
                   </p>
 
                   <div className="space-y-2">
-                    <Label className="text-[12px] text-stone-700">角色</Label>
+                    <Label id="member-role-label" className="text-[12px] text-stone-700">角色</Label>
                     <Select
                       value={sheetMember.role}
                       onValueChange={(value) =>
@@ -1062,7 +1062,7 @@ export function PermissionManager({
                       }
                       disabled={!sheetCanChangeRole || actionDisabled}
                     >
-                      <SelectTrigger className="h-9 border-stone-200 bg-white text-[13px]">
+                      <SelectTrigger aria-labelledby="member-role-label" className="h-9 border-stone-200 bg-white text-[13px]">
                         <SelectValue>
                           {sheetMember.role === "admin" ? "管理员" : "成员"}
                         </SelectValue>
@@ -1075,7 +1075,7 @@ export function PermissionManager({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[12px] text-stone-700">团队</Label>
+                    <Label id="member-team-label" className="text-[12px] text-stone-700">团队</Label>
                     <Select
                       value={sheetMember.teamId ?? "__none__"}
                       onValueChange={(value) => {
@@ -1094,7 +1094,7 @@ export function PermissionManager({
                       }}
                       disabled={sheetTeamOptions.length <= 1 || actionDisabled}
                     >
-                      <SelectTrigger className="h-9 border-stone-200 bg-white text-[13px]">
+                      <SelectTrigger aria-labelledby="member-team-label" className="h-9 border-stone-200 bg-white text-[13px]">
                         <SelectValue>{getTeamLabel(sheetMember.teamName)}</SelectValue>
                       </SelectTrigger>
                       <SelectContent>

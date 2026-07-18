@@ -411,10 +411,11 @@ export function ExceptionQueue({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <label className="block text-[12px] font-normal text-stone-500">
+            <label htmlFor="batch-reason" className="block text-[12px] font-normal text-stone-500">
               统一原因（可选）
             </label>
             <input
+              id="batch-reason"
               type="text"
               value={batchReason}
               onChange={(e) => setBatchReason(e.target.value)}
