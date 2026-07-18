@@ -27,7 +27,14 @@ create policy "成员或范围管理员读取豁免申请"
     applicant_user_id = auth.uid()
     or public.is_owner()
     or (
-      public.has_permission('manage_members')
+      (
+        public.has_permission('manage_members')
+        or exists (
+          select 1
+          from public.groups managed_group
+          where managed_group.leader_user_id = auth.uid()
+        )
+      )
       and exists (
         select 1
         from public.profiles actor
@@ -66,7 +73,14 @@ create policy "成员或范围管理员读取豁免授予"
     user_id = auth.uid()
     or public.is_owner()
     or (
-      public.has_permission('manage_members')
+      (
+        public.has_permission('manage_members')
+        or exists (
+          select 1
+          from public.groups managed_group
+          where managed_group.leader_user_id = auth.uid()
+        )
+      )
       and exists (
         select 1
         from public.profiles actor
@@ -80,6 +94,11 @@ create policy "成员或范围管理员读取豁免授予"
 
 -- grant 写入、request 审核与删除不再给 authenticated 建 policy；
 -- 唯一入口是下方 SECURITY DEFINER RPC，service_role 仍由 Supabase 固有旁路处理。
+
+-- 一份申请最多生成一条 grant；NULL request_id 的后台手工授权仍可有多条历史记录。
+create unique index if not exists exemption_grant_request_id_unique
+  on public.exemption_grant (request_id)
+  where request_id is not null;
 
 create or replace function public.guard_profile_exemption_projection()
 returns trigger
@@ -155,7 +174,16 @@ begin
     raise exception using errcode = 'P0002', message = '用户资料不存在';
   end if;
 
-  if not public.has_permission('manage_members') then
+  if v_actor.role <> 'owner'
+    and not public.has_permission('manage_members')
+    and not (
+      v_actor.role = 'admin'
+      and exists (
+        select 1
+        from public.groups managed_group
+        where managed_group.leader_user_id = v_actor.id
+      )
+    ) then
     raise exception using errcode = '42501', message = '无权限管理豁免';
   end if;
 
@@ -178,6 +206,10 @@ begin
   end if;
 
   if p_grant_type = 'permanent' then
+    if p_grant_start_date is null or p_grant_end_date is not null then
+      raise exception using errcode = '22023', message = '豁免日期不正确';
+    end if;
+
     if nullif(trim(p_reason), '') is null then
       raise exception using errcode = '22023', message = '永久豁免必须填写原因';
     end if;
@@ -260,7 +292,16 @@ begin
     raise exception using errcode = 'P0002', message = '用户资料不存在';
   end if;
 
-  if not public.has_permission('manage_members') then
+  if v_actor.role <> 'owner'
+    and not public.has_permission('manage_members')
+    and not (
+      v_actor.role = 'admin'
+      and exists (
+        select 1
+        from public.groups managed_group
+        where managed_group.leader_user_id = v_actor.id
+      )
+    ) then
     raise exception using errcode = '42501', message = '无权限管理豁免';
   end if;
 
@@ -345,7 +386,16 @@ begin
     raise exception using errcode = 'P0002', message = '用户资料不存在';
   end if;
 
-  if not public.has_permission('manage_members') then
+  if v_actor.role <> 'owner'
+    and not public.has_permission('manage_members')
+    and not (
+      v_actor.role = 'admin'
+      and exists (
+        select 1
+        from public.groups managed_group
+        where managed_group.leader_user_id = v_actor.id
+      )
+    ) then
     raise exception using errcode = '42501', message = '无权限审批豁免';
   end if;
 
@@ -373,6 +423,10 @@ begin
     end if;
 
     if v_request.exemption_type = 'permanent' then
+      if v_request.start_date is null or v_request.end_date is not null then
+        raise exception using errcode = '22023', message = '豁免日期不正确';
+      end if;
+
       if nullif(trim(v_request.reason), '') is null then
         raise exception using errcode = '22023', message = '永久豁免必须填写原因';
       end if;

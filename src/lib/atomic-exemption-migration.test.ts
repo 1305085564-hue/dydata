@@ -10,9 +10,22 @@ const sql = readFileSync(
 test("豁免 RPC 只信任 auth.uid 并在数据库内校验 manage_members 与团队范围", () => {
   assert.match(sql, /auth\.uid\(\)/i);
   assert.match(sql, /has_permission\('manage_members'\)/i);
+  assert.match(sql, /groups managed_group[\s\S]*leader_user_id = v_actor\.id/i);
   assert.match(sql, /team_id\s+is\s+distinct\s+from/i);
   assert.match(sql, /errcode\s*=\s*'42501'/i);
   assert.doesNotMatch(sql, /p_actor_user_id|p_reviewer_id|p_team_id|p_profile_status|p_profile_exempt_type/i);
+});
+
+test("永久豁免日期与申请授权保持数据库级不变量", () => {
+  assert.match(sql, /exemption_grant_request_id_unique[\s\S]*where request_id is not null/i);
+  assert.match(
+    sql,
+    /p_grant_type = 'permanent'[\s\S]*p_grant_start_date is null or p_grant_end_date is not null[\s\S]*豁免日期不正确/i,
+  );
+  assert.match(
+    sql,
+    /v_request\.exemption_type = 'permanent'[\s\S]*v_request\.start_date is null or v_request\.end_date is not null[\s\S]*豁免日期不正确/i,
+  );
 });
 
 test("豁免审批锁定申请并一次完成授予、profile 投影和审核状态", () => {
