@@ -820,7 +820,7 @@ export function PermissionManager({
           if (!open) closeSheet();
         }}
       >
-        <SheetContent side="right" className="w-[480px] sm:max-w-none">
+        <SheetContent side="right" className="w-full max-w-[480px] sm:max-w-none">
           {sheetMember ? (
             <>
               <SheetHeader>

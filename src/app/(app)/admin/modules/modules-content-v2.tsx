@@ -970,7 +970,7 @@ export function AdminModulesContentV2({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 380, opacity: 0 }}
             transition={springTransition}
-            className="fixed top-0 right-0 h-screen w-[420px] bg-white border-l border-stone-200 shadow-2xl z-40 flex flex-col justify-between"
+            className="fixed top-0 right-0 h-screen w-full max-w-[420px] bg-white border-l border-stone-200 shadow-2xl z-40 flex flex-col justify-between"
           >
             <div className="flex items-start justify-between border-b border-stone-200 p-6">
               <div className="space-y-1.5">
