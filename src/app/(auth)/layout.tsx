@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "账号服务",
+  description: "登录或管理 DYData 账号。",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="relative min-h-screen bg-stone-50 overflow-hidden flex flex-col justify-center">

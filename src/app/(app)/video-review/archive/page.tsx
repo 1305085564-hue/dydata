@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -8,6 +9,11 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 import { ApprovedListDataContainer } from "../approved-list-data-container";
 import { VideoReviewTabs } from "../components/video-review-tabs";
+
+export const metadata: Metadata = {
+  title: "已发案例",
+  description: "查看审核通过并已发布的视频案例。",
+};
 
 export default async function VideoReviewArchivePage({
   searchParams,

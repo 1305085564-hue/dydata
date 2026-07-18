@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { SubmitContainer } from "./submit-container";
+
+export const metadata: Metadata = {
+  title: "上传话术",
+  description: "提交处罚案例或高转化话术，等待管理员复核后进入案例库。",
+};
 
 export default async function SubmitViolationPage({
   searchParams,

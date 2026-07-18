@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
@@ -5,6 +6,11 @@ import { getShanghaiDate } from "@/app/api/production/_shared";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { VideoReviewTabs } from "../components/video-review-tabs";
 import { ExemptionWorkbench } from "./exemption-workbench";
+
+export const metadata: Metadata = {
+  title: "申请产量豁免",
+  description: "提交请假、故障或账号限流等产量豁免申请。",
+};
 
 export default async function ExemptionPage() {
   const supabase = await createClient();

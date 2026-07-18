@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,11 @@ import { getUserPermissions } from "@/lib/permissions";
 
 import { AdminModulesContentV2 } from "./modules-content-v2";
 import { TeamV2Skeleton } from "./modules-skeleton-v2";
+
+export const metadata: Metadata = {
+  title: "成员管理",
+  description: "维护团队架构、分组归属、成员权限与入团审批。",
+};
 
 interface AdminModulesPageProps {
   searchParams: Promise<{ date?: string; focus?: string }>;

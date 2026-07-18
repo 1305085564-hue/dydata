@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, UsersRound, ShieldCheck } from "lucide-react";
@@ -10,6 +11,11 @@ import { getShanghaiDate } from "@/app/api/production/_shared";
 
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { QuotaConfigPanel } from "./components/quota-config-panel";
+
+export const metadata: Metadata = {
+  title: "系统维护",
+  description: "维护 DYData 成员权限、团队分组与系统配置。",
+};
 
 interface SettingCardProps {
   href: string;

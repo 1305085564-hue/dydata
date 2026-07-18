@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { NavBar } from "@/components/nav-bar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { getUserPermissions } from "@/lib/permissions";
@@ -8,6 +9,17 @@ import { GlobalTopicCreate } from "@/components/topics/global-topic-create";
 
 import { JoinBanner } from "./_components/join-banner";
 import { NetworkStatusBar } from "@/components/network-status-bar";
+
+export const metadata: Metadata = {
+  title: "工作台",
+  description: "DYData 团队内部抖音数据工作台。",
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+  },
+};
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const permissionInfo = await getUserPermissions();

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -14,6 +15,11 @@ import { ViolationsHeaderStats } from "./violations-header-stats";
 import { ViolationsStaffDataContainer } from "./violations-staff-data-container";
 import { ViolationsManageDataContainer } from "./violations-manage-data-container";
 import ViolationsLoading from "./loading";
+
+export const metadata: Metadata = {
+  title: "避坑案例",
+  description: "查看团队沉淀的抖音话术案例、复盘结果与风险提醒。",
+};
 
 type SearchParamsShape = Record<string, string | string[] | undefined>;
 

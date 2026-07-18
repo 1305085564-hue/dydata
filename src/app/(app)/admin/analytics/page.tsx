@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -8,6 +9,11 @@ import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 
 import { AnalyticsDataContainer } from "./analytics-data-container";
 import AnalyticsLoading from "./loading";
+
+export const metadata: Metadata = {
+  title: "经营分析",
+  description: "查看团队经营数据、时间趋势与核心指标。",
+};
 
 interface AnalyticsPageProps {
   searchParams: Promise<{

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
@@ -15,6 +16,11 @@ import type {
 import { VideoReviewWorkbench } from "./components/video-review-workbench";
 import { loadVideoReviewDashboardData } from "@/lib/loaders/video-review-page";
 import { measureAsync } from "@/lib/perf";
+
+export const metadata: Metadata = {
+  title: "视频审核",
+  description: "核对视频产量、待审稿件与团队提交记录。",
+};
 
 export default async function VideoReviewDashboardPage({
   searchParams,

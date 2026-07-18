@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
@@ -11,6 +12,11 @@ import {
 
 import { LoginForm } from "./login-form";
 import { getPostLoginRedirectPath } from "./post-login-redirect";
+
+export const metadata: Metadata = {
+  title: "登录",
+  description: "登录 DYData，进入抖音数据日报工作台。",
+};
 
 type LoginFormState = {
   error: string | null;

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
@@ -6,6 +7,11 @@ import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { ContentDataContainer } from "./content-data-container";
+
+export const metadata: Metadata = {
+  title: "视频复盘",
+  description: "审核团队视频内容，沉淀复盘反馈与可复用案例。",
+};
 
 type ContentView = "pending" | "all";
 

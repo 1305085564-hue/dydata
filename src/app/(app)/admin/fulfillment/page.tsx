@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -9,6 +10,11 @@ import { TableSkeleton } from "@/components/ui/table-skeleton";
 import type { TimeRangePreset } from "@/types/fulfillment";
 
 import { FulfillmentWorkbench } from "./fulfillment-workbench";
+
+export const metadata: Metadata = {
+  title: "发布管理",
+  description: "管理团队发布计划、履约进度与异常申诉。",
+};
 
 interface FulfillmentPageProps {
   searchParams: Promise<{ year?: string; month?: string; range?: string }>;

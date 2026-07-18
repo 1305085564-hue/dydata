@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -7,6 +8,11 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 import { SubmitContainer } from "./submit-container";
 import { VideoReviewTabs } from "../components/video-review-tabs";
+
+export const metadata: Metadata = {
+  title: "上传待审稿",
+  description: "提交话术原文与截图，进入团队视频审核流程。",
+};
 
 export default async function SubmitVideoReviewPage({
   searchParams,

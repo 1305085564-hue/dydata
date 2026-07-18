@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -9,6 +10,14 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { hasSupabaseAuthCookie } from "@/lib/supabase-auth-cookie";
+
+export const metadata: Metadata = {
+  title: "抖音数据日报平台",
+  description: "让团队数据记录、运营分析和成长复盘更高效。",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const cookieStore = await cookies();

@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { RegisterForm } from "./register-form";
 import { registerUser } from "@/lib/auth-registration";
+
+export const metadata: Metadata = {
+  title: "注册",
+  description: "创建 DYData 账号，加入团队并开始记录抖音运营数据。",
+};
 
 type RegisterFormState = {
   error: string | null;

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { canAccessAdminPath } from "@/lib/analytics-access";
@@ -6,6 +7,11 @@ import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { VideosDataContainer } from "./videos-data-container";
+
+export const metadata: Metadata = {
+  title: "视频素材",
+  description: "管理团队视频素材、审核状态与归档记录。",
+};
 
 type VideoView = "pending" | "all";
 

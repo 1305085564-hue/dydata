@@ -7,9 +7,9 @@ import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
 
 export const metadata: Metadata = {
-  title: 'AI 文案改写 | 抖音数据平台',
-  description: '输入原文，一键改写成爆款文案。',
-}
+  title: "AI 文案改写",
+  description: "输入原文，使用团队配置的 AI 模型辅助改写抖音文案。",
+};
 
 export default async function RewritePage() {
   const supabase = await createClient();

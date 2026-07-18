@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +8,11 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { DetailContainer } from "./detail-container";
 import ViolationDetailLoading from "./loading";
+
+export const metadata: Metadata = {
+  title: "案例详情",
+  description: "查看抖音话术案例详情、复盘结论与风险提示。",
+};
 
 export default async function ViolationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
