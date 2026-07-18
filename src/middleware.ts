@@ -10,7 +10,6 @@ import {
 } from "@/lib/supabase/session-cookie";
 import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
 
-const SITE_CLEARED_COOKIE = "dydata-site-cleared";
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -58,16 +57,9 @@ function createClientFromRequest(request: NextRequest, response: NextResponse) {
 
 function buildClearSiteDataResponse(request: NextRequest) {
   const nextUrl = request.nextUrl.clone();
-  nextUrl.searchParams.set(CLEAR_SITE_DATA_QUERY, "1");
+  nextUrl.searchParams.delete(CLEAR_SITE_DATA_QUERY);
   const response = NextResponse.redirect(nextUrl);
   response.headers.set("Clear-Site-Data", "\"cache\", \"storage\"");
-  response.cookies.set(SITE_CLEARED_COOKIE, "1", {
-    path: "/",
-    httpOnly: false,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 7,
-  });
   return response;
 }
 
@@ -97,7 +89,6 @@ export async function middleware(request: NextRequest) {
   const isVideoReviewRoute = pathname === "/video-review" || pathname.startsWith("/video-review/");
   const isContentToolsRoute = pathname === "/content-tools" || pathname.startsWith("/content-tools/");
   const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isGrowthRoute || isViolationsRoute || isVideoReviewRoute || isContentToolsRoute;
-  const hasClearedSiteData = request.cookies.get(SITE_CLEARED_COOKIE)?.value === "1";
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
 
   if (isApiRoute && hasInvalidUuidPathParameter(pathname)) {
@@ -108,11 +99,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.json({ error: "请求来源不可信" }, { status: 403 });
   }
 
-  if (isApiRoute) {
-    // API 不参与浏览器缓存清理跳转；它只应用请求来源校验和后续请求头处理。
-  } else if (process.env.NODE_ENV === "development") {
-    // 本地开发模式下免除 Clear-Site-Data 校验，避免 headless 浏览器下的重定向死循环
-  } else if (!hasClearedSiteData && !isClearSiteDataPass) {
+  if (isClearSiteDataPass) {
     return buildClearSiteDataResponse(request);
   }
 
