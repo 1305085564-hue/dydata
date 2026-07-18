@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { callAi } from "@/lib/ai/client";
 import type { AiMessage } from "@/lib/ai/client";
+import { validateOcrStorageReference } from "./input";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
@@ -293,34 +294,16 @@ async function parseJsonPayload(
   const bucket = typeof body?.bucket === "string" ? body.bucket.trim() : "";
   const path = typeof body?.path === "string" ? body.path.trim() : "";
   if (bucket && path) {
-    if (!path.startsWith(`${userId}/`)) {
-      return { error: "无权限访问该图片" };
-    }
+    const reference = validateOcrStorageReference(userId, bucket, path);
+    if (!reference.ok) return { error: reference.error };
     const downloadStart = Date.now();
-    const downloaded = await downloadImageFromStorage(bucket, path);
+    const downloaded = await downloadImageFromStorage(reference.bucket, reference.path);
     const downloadMs = Date.now() - downloadStart;
     if ("error" in downloaded) {
       return downloaded;
     }
     return {
       ...downloaded,
-      downloadMs,
-      screenshotType: normalizeScreenshotType(body?.screenshot_type),
-      assetRole: normalizeAssetRole(body?.asset_role),
-    };
-  }
-
-  // 兼容公开 URL：{ url, asset_role, screenshot_type }
-  const url = typeof body?.url === "string" ? body.url.trim() : "";
-  if (url) {
-    const downloadStart = Date.now();
-    const fetched = await fetchImageAsDataUrl(url);
-    const downloadMs = Date.now() - downloadStart;
-    if ("error" in fetched) {
-      return fetched;
-    }
-    return {
-      ...fetched,
       downloadMs,
       screenshotType: normalizeScreenshotType(body?.screenshot_type),
       assetRole: normalizeAssetRole(body?.asset_role),
@@ -350,7 +333,7 @@ async function parseJsonPayload(
     };
   }
 
-  return { error: "JSON 请求需提供 bucket+path、url 或 data URL 格式图片" };
+  return { error: "JSON 请求需提供受保护的 bucket+path 或 data URL 格式图片" };
 }
 
 async function fileToDataUrl(file: File): Promise<{ dataUrl: string } | { error: string }> {
@@ -404,32 +387,6 @@ async function downloadImageFromStorage(
   }
 }
 
-async function fetchImageAsDataUrl(url: string): Promise<{ dataUrl: string } | { error: string }> {
-  try {
-    const response = await fetch(url, { method: "GET" });
-    if (!response.ok) {
-      return { error: `无法下载图片：${response.status}` };
-    }
-
-    const contentType = response.headers.get("content-type") || "";
-    if (!ACCEPTED_TYPES.has(contentType)) {
-      return { error: "仅支持 jpg、png、webp 图片" };
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    if (buffer.length > MAX_FILE_SIZE) {
-      return { error: "图片不能超过 8MB" };
-    }
-
-    return {
-      dataUrl: `data:${contentType};base64,${buffer.toString("base64")}`,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "下载图片失败";
-    return { error: message };
-  }
-}
 
 function inferMimeTypeFromPath(path: string): string {
   const ext = path.split(".").pop()?.toLowerCase();
