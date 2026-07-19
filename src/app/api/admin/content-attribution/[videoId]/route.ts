@@ -3,11 +3,10 @@ import { NextResponse } from "next/server";
 import { requireScopedAdminVideo } from "@/lib/admin-scoped-video";
 import {
   getCurrentMetricRow,
-  getLegacyComparisonData,
   getReferenceMetrics,
-  toComparisonMetricRow,
   type RefKey,
 } from "@/lib/content-comparison-reference";
+import { computeAttribution } from "@/lib/content-attribution";
 
 export async function GET(
   request: Request,
@@ -30,7 +29,7 @@ export async function GET(
   const supabase = access.supabase;
   const { video } = access;
 
-  const [currentRow, referenceResult, legacyResult] = await Promise.all([
+  const [currentRow, { reference, refLabel }] = await Promise.all([
     getCurrentMetricRow(supabase, videoId),
     getReferenceMetrics({
       supabase,
@@ -39,23 +38,9 @@ export async function GET(
       ref,
       refUserId,
     }),
-    getLegacyComparisonData({
-      supabase,
-      videoId,
-      video,
-      ref,
-    }),
   ]);
 
-  return NextResponse.json({
-    video_id: videoId,
-    ref,
-    ref_label: referenceResult.refLabel,
-    current: currentRow ? toComparisonMetricRow(currentRow) : null,
-    reference: referenceResult.reference ? toComparisonMetricRow(referenceResult.reference) : null,
-    ref_count: referenceResult.refCount,
-    // 旧字段兼容，待前端迁移后可删
-    previous: legacyResult.previous,
-    recent3: legacyResult.recent3,
-  });
+  const result = computeAttribution(videoId, currentRow, reference, ref, refLabel);
+
+  return NextResponse.json(result);
 }

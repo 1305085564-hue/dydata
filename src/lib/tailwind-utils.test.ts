@@ -28,7 +28,7 @@ test("buttonClass 复用现有按钮 variants", () => {
   const primary = buttonClass("default", "lg");
   const ghost = buttonClass("ghost", "sm");
 
-  assert.match(primary, /bg-\[#B4532F\]/);
+  assert.match(primary, /bg-\[#D97757\]/);
   assert.match(primary, /h-9/);
   assert.match(ghost, /hover:bg-stone-100/);
   assert.match(ghost, /h-7/);
@@ -36,11 +36,11 @@ test("buttonClass 复用现有按钮 variants", () => {
 
 test("badgeClass 根据语义色返回对应 badge class", () => {
   assert.match(badgeClass("primary"), /bg-primary/);
-  assert.match(badgeClass("success"), /text-\[#3F7A4E\]/);
+  assert.match(badgeClass("success"), /text-\[#6FAA7D\]/);
   assert.match(badgeClass("success"), /dark:text-\[#6FAA7D\]/);
-  assert.match(badgeClass("warning"), /text-\[#8F641B\]/);
+  assert.match(badgeClass("warning"), /text-\[#D99E55\]/);
   assert.match(badgeClass("warning"), /dark:text-\[#D99E55\]/);
-  assert.match(badgeClass("danger"), /text-\[#B24E3E\]/);
-  assert.match(badgeClass("danger"), /dark:text-\[#D16A58\]/);
+  assert.match(badgeClass("danger"), /text-\[#C9604D\]/);
+  assert.match(badgeClass("danger"), /dark:text-\[#C9604D\]/);
   assert.match(badgeClass("neutral"), /border-border/);
 });

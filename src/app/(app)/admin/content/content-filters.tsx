@@ -26,7 +26,7 @@ export interface ContentFilterValue {
   reviewed: "all" | "yes" | "no";
   feedbackStatus: "all" | "no_feedback" | "confirmed" | "sent" | "viewed";
   rankScope: "all" | "day" | "month";
-  sortMode: "priority" | "latest" | "play";
+  sortMode: "priority" | "latest" | "play" | "user";
 }
 
 interface ContentFiltersProps {

@@ -380,6 +380,13 @@ export function ContentList({
     handleFilter(defaultFilters);
   }, [handleFilter]);
 
+  const handleSortModeChange = useCallback((mode: ContentFilterValue["sortMode"]) => {
+    setFilters((prev) => ({ ...prev, sortMode: mode }));
+    setLoadedCount(PAGE_SIZE);
+    setNewBatchIds(new Set());
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const filtered = useMemo(() => {
     const rows = videos.filter((video) => {
       if (filters.profileId !== "all" && video.user_id !== filters.profileId) return false;
@@ -427,6 +434,13 @@ export function ContentList({
       if (filters.sortMode === "priority") {
         const scoreDiff = (priorityScoreMap.get(right.id) ?? 0) - (priorityScoreMap.get(left.id) ?? 0);
         if (scoreDiff !== 0) return scoreDiff;
+        return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
+      }
+      if (filters.sortMode === "user") {
+        const nameA = left.profiles?.name || "";
+        const nameB = right.profiles?.name || "";
+        const nameDiff = nameA.localeCompare(nameB, "zh");
+        if (nameDiff !== 0) return nameDiff;
         return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
       }
       if (filters.sortMode === "play") {
@@ -599,6 +613,45 @@ export function ContentList({
         </Button>
       </div>
 
+      {/* 快捷切换排序按钮组 */}
+      <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+        <div className="flex items-center gap-1 bg-stone-100/80 p-0.5 rounded-lg border border-stone-200">
+          <button
+            type="button"
+            onClick={() => handleSortModeChange("priority")}
+            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-all ${
+              filters.sortMode === "priority"
+                ? "bg-white text-stone-900 shadow-sm border border-stone-200/40"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            按最差排
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSortModeChange("user")}
+            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-all ${
+              filters.sortMode === "user"
+                ? "bg-white text-stone-900 shadow-sm border border-stone-200/40"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            按人
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSortModeChange("latest")}
+            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-all ${
+              filters.sortMode === "latest"
+                ? "bg-white text-stone-900 shadow-sm border border-stone-200/40"
+                : "text-stone-500 hover:text-stone-700"
+            }`}
+          >
+            按时间
+          </button>
+        </div>
+      </div>
+
       <div className="flex gap-4">
         {/* Table area */}
         <div className="flex-1 min-w-0">
@@ -611,22 +664,19 @@ export function ContentList({
               <TableHeader className="sticky top-0 z-10">
                 <TableRow className="border-b border-stone-200 bg-stone-100/50 hover:bg-stone-100/50">
                   <TableHead className="h-9 w-16 text-[12px] font-medium text-stone-500">排名</TableHead>
-                  <TableHead className="h-9 min-w-[200px] text-[12px] font-medium text-stone-500">标题</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500"></TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">人员</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
+                  <TableHead className="h-9 min-w-[220px] text-[12px] font-medium text-stone-500">视频标题</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">作者与账号</TableHead>
+                  <TableHead className="h-9 min-w-[250px] text-[12px] font-medium text-stone-500">归因指标与状态</TableHead>
+                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">播放量</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-stone-500">发布时间</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">播放</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">2s跳出</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">5s完播</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">异常状态</TableHead>
                   <TableHead className="h-9 text-[12px] font-medium text-stone-500">复盘状态</TableHead>
+                  <TableHead className="h-9 text-center text-[12px] font-medium text-stone-500 w-24">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={11} className="py-16 text-center">
+                    <TableCell colSpan={8} className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2.5">
                         <span className="text-[13px] text-stone-500">没有找到符合条件的视频</span>
                         <Button
@@ -657,7 +707,7 @@ export function ContentList({
                       <Fragment key={video.id}>
                         {showTodayDivider ? (
                           <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={11} className="px-4 py-2">
+                            <TableCell colSpan={8} className="px-4 py-2">
                               <div className="flex items-center gap-3 text-[12px] text-stone-500">
                                 <span className="shrink-0 tracking-[0.18em]">历史</span>
                                 <span className="h-px flex-1 bg-stone-200" />
@@ -692,7 +742,8 @@ export function ContentList({
                               : undefined
                           }
                         >
-                          <TableCell className="py-2 text-[13px] tabular-nums text-stone-500">
+                          {/* 排名 */}
+                          <TableCell className="py-3 text-[13px] tabular-nums text-stone-500">
                             <span className="inline-flex items-center gap-1.5">
                               {filters.sortMode === "priority" &&
                               (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
@@ -705,80 +756,89 @@ export function ContentList({
                               <span>{index + 1}</span>
                             </span>
                           </TableCell>
-                          <TableCell className="max-w-md py-2">
+                          
+                          {/* 视频信息标题 */}
+                          <TableCell className="max-w-md py-3">
                             <div className="line-clamp-2 text-[13px] font-medium text-stone-900" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                               {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            {(() => {
-                              const hasSignal = Boolean(video.play_change_signal);
-                              const sent = cardStatus === "sent" || cardStatus === "viewed";
-                              // 三档：异常未复盘 → 暖橙实色推到眼前（常态显示）；已下发 → outline 灰（常态半透明）；其他 → ghost 极淡（常态半透明）
-                              if (hasSignal && !sent) {
-                                return (
-                                  <Button
-                                    size="sm"
-                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-[#C96442] active:scale-[0.98] shadow-[0_2px_8px_rgba(217,119,87,0.12)]"
-                                    onClick={() => onSelectVideoId(video.id)}
-                                  >
-                                    复盘
-                                  </Button>
+                          
+                          {/* 作者与账号 */}
+                          <TableCell className="text-[13px] text-stone-700 py-3">
+                            <span className="font-medium">{video.profiles.name}</span>
+                            <span className="mx-1 text-stone-400">·</span>
+                            <span className="text-stone-500 text-[12px]">{video.accounts.name}</span>
+                          </TableCell>
+                          
+                          {/* 归因指标与状态 */}
+                          <TableCell className="py-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {(() => {
+                                const indicators: React.ReactNode[] = [];
+                                if (snap) {
+                                  if (snap.bounce_rate_2s != null) {
+                                    indicators.push(
+                                      <MetricIndicator
+                                        key="bounce_2s"
+                                        label="2s跳出"
+                                        value={formatRate(snap.bounce_rate_2s)}
+                                        isRed={snap.bounce_rate_2s >= 45}
+                                      />
+                                    );
+                                  }
+                                  if (snap.completion_rate_5s != null) {
+                                    indicators.push(
+                                      <MetricIndicator
+                                        key="comp_5s"
+                                        label="5s完播"
+                                        value={formatRate(snap.completion_rate_5s)}
+                                        isRed={snap.completion_rate_5s < 35}
+                                      />
+                                    );
+                                  }
+                                  if (snap.avg_play_duration != null) {
+                                    indicators.push(
+                                      <MetricIndicator
+                                        key="avg_dur"
+                                        label="均播"
+                                        value={`${snap.avg_play_duration.toFixed(1)}s`}
+                                        isRed={snap.avg_play_duration < 8}
+                                      />
+                                    );
+                                  }
+                                  if (snap.completion_rate != null) {
+                                    indicators.push(
+                                      <MetricIndicator
+                                        key="comp_rate"
+                                        label="完播"
+                                        value={formatRate(snap.completion_rate)}
+                                        isRed={snap.completion_rate < 18}
+                                      />
+                                    );
+                                  }
+                                }
+                                return indicators.length > 0 ? indicators : (
+                                  <span className="text-[12px] text-stone-400">缺24h快照</span>
                                 );
-                              }
-                              if (sent) {
-                                return (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-45 group-hover:opacity-100 focus-within:opacity-100"
-                                    onClick={() => onSelectVideoId(video.id)}
-                                  >
-                                    查看
-                                  </Button>
-                                );
-                              }
-                              return (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 rounded-lg px-3 text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700 active:scale-[0.98] transition-all duration-150 opacity-45 group-hover:opacity-100 focus-within:opacity-100"
-                                  onClick={() => onSelectVideoId(video.id)}
-                                >
-                                  复盘
-                                </Button>
-                              );
-                            })()}
+                              })()}
+                            </div>
                           </TableCell>
-                          <TableCell className="text-[13px] text-stone-500">
-                            {video.profiles.name}
-                          </TableCell>
-                          <TableCell className="text-[13px] text-stone-500">
-                            {video.accounts.name}
-                          </TableCell>
-                          <TableCell className="text-[13px] text-stone-500">
-                            {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
-                          </TableCell>
-                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700">
+                          
+                          {/* 播放量 */}
+                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700 py-3 font-medium">
                             {snap ? (
                               <PlayCountWithSignal video={video} playCount={snap.play_count} />
                             ) : "-"}
                           </TableCell>
-                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700">
-                            {snap ? formatRate(snap.bounce_rate_2s) : "-"}
+                          
+                          {/* 发布时间 */}
+                          <TableCell className="text-[13px] text-stone-500 py-3">
+                            {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                           </TableCell>
-                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700">
-                            {snap ? formatRate(snap.completion_rate_5s) : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`text-[12px] ${statusClassName[video.anomaly_status]}`}
-                            >
-                              {video.anomaly_status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
+                          
+                          {/* 复盘状态 */}
+                          <TableCell className="py-3">
                             {cardStatus !== "not_started" && card ? (
                               <div className="flex flex-col gap-1 items-start">
                                 <Badge
@@ -811,6 +871,34 @@ export function ContentList({
                               <span className="text-[12px] text-stone-500">未生成</span>
                             )}
                           </TableCell>
+
+                          {/* 操作 */}
+                          <TableCell className="text-center py-3">
+                            {(() => {
+                              const sent = cardStatus === "sent" || cardStatus === "viewed";
+                              if (sent) {
+                                return (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150"
+                                    onClick={() => onSelectVideoId(video.id)}
+                                  >
+                                    查看
+                                  </Button>
+                                );
+                              }
+                              return (
+                                <Button
+                                  size="sm"
+                                  className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 hover:bg-[#C96442] active:scale-[0.98]"
+                                  onClick={() => onSelectVideoId(video.id)}
+                                >
+                                  复盘
+                                </Button>
+                              );
+                            })()}
+                          </TableCell>
                         </TableRow>
                       </Fragment>
                     );
@@ -820,7 +908,7 @@ export function ContentList({
                 {/* Sentinel for auto-load */}
                 {hasMore && (
                   <TableRow>
-                    <TableCell colSpan={11} className="p-0">
+                    <TableCell colSpan={8} className="p-0">
                       <div ref={sentinelRef} className="h-4" />
                     </TableCell>
                   </TableRow>
@@ -922,5 +1010,29 @@ export function ContentList({
         }
       `}</style>
     </div>
+  );
+}
+
+// ===== MetricIndicator helper subcomponent =====
+function MetricIndicator({
+  label,
+  value,
+  isRed,
+}: {
+  label: string;
+  value: string;
+  isRed: boolean;
+}) {
+  const dotColor = isRed ? "bg-[#C9604D]" : "bg-[#6FAA7D]";
+  const dotPing = isRed ? "bg-[#C9604D]/40" : "bg-[#6FAA7D]/40";
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] text-stone-600 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded-lg shadow-sm">
+      <span className="text-stone-500">{label}</span>
+      <span className="font-semibold tabular-nums text-stone-800">{value}</span>
+      <span className="relative flex size-1.5">
+        {isRed && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotPing}`} />}
+        <span className={`relative inline-flex rounded-full size-1.5 ${dotColor}`} />
+      </span>
+    </span>
   );
 }

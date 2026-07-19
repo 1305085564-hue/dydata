@@ -5,8 +5,8 @@ import { useCallback, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { ContentList } from "./content-list";
+import { toast } from "sonner";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import type { ContentFeedbackCardView } from "@/types";
@@ -75,10 +75,7 @@ export function ContentPageClient({
     return score;
   }
 
-  function formatNumber(v: number | null | undefined) {
-    if (v == null) return "-";
-    return new Intl.NumberFormat("zh-CN").format(Math.round(v));
-  }
+
 
   const anomalyVideos = useMemo(() => {
     if (!data?.videos) return [];
@@ -208,6 +205,67 @@ export function ContentPageClient({
     });
   }, []);
 
+  // Compute anomaly counts for narrow alert bar
+  const { deletedCount, limitedCount, halvedCount } = useMemo(() => {
+    let deleted = 0;
+    let limited = 0;
+    let halved = 0;
+    if (data?.videos) {
+      for (const v of data.videos) {
+        if (v.anomaly_status === "删稿") {
+          deleted++;
+        } else if (v.anomaly_status === "限流") {
+          limited++;
+        }
+        if (v.play_change_signal === "halve") {
+          halved++;
+        }
+      }
+    }
+    return { deletedCount: deleted, limitedCount: limited, halvedCount: halved };
+  }, [data?.videos]);
+
+
+  // Direct Review handler
+  const handleDirectReview = useCallback(() => {
+    const targetVideo = data.videos.find((v) => {
+      const isAnomaly = v.anomaly_status === "删稿" || v.play_change_signal === "halve";
+      const card = data.feedbackCards[v.id];
+      const status = card?.workflow_status ?? "not_started";
+      return isAnomaly && status !== "sent" && status !== "viewed";
+    });
+    const fallbackVideo = targetVideo || data.videos.find((v) => {
+      const card = data.feedbackCards[v.id];
+      const status = card?.workflow_status ?? "not_started";
+      return status !== "sent" && status !== "viewed";
+    });
+    if (fallbackVideo) {
+      setSelectedVideoId(fallbackVideo.id);
+    } else {
+      toast.info("今日待复盘视频已全部完成！");
+    }
+  }, [data.videos, data.feedbackCards]);
+
+  // Transition to next video handler
+  const handleGoToNextVideo = useCallback((currentVideoId: string) => {
+    const currentIndex = data.videos.findIndex((v) => v.id === currentVideoId);
+    if (currentIndex === -1) {
+      setSelectedVideoId(null);
+      return;
+    }
+    const nextVideo = data.videos.slice(currentIndex + 1).find((v) => {
+      const card = data.feedbackCards[v.id];
+      const status = card?.workflow_status ?? "not_started";
+      return status !== "sent" && status !== "viewed";
+    });
+    if (nextVideo) {
+      setSelectedVideoId(nextVideo.id);
+    } else {
+      setSelectedVideoId(null);
+      toast.success("已下发，今日待复盘已清完！");
+    }
+  }, [data.videos, data.feedbackCards]);
+
   if (selectedVideoId) {
     const selectedVideo = data?.videos?.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = data?.snapshots?.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
@@ -215,12 +273,15 @@ export function ContentPageClient({
 
     return (
       <ContentDiagnosisWorkbench
-        videoId={selectedVideoId}
         video={selectedVideo}
         snapshot={selectedSnapshot}
         feedbackCard={selectedFeedbackCard}
         onFeedbackCardChanged={handleFeedbackCardChanged}
         onClose={() => setSelectedVideoId(null)}
+        profiles={data.profiles}
+        onGoToNextVideo={handleGoToNextVideo}
+        anomalyVideos={anomalyVideos}
+        onVideoSelect={setSelectedVideoId}
       />
     );
   }
@@ -231,58 +292,46 @@ export function ContentPageClient({
       className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-5"
     >
       {anomalyVideos.length > 0 && (
-        <div className="mb-2 space-y-2 border-b border-stone-100 pb-5">
-          <h2 className="text-[13px] font-medium text-stone-500 flex items-center gap-1.5">
-            <span className="relative flex size-2">
-              <span className="relative inline-flex size-2 rounded-full bg-[#C9604D]"></span>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-[11px] bg-[#FAFAF9] text-stone-600 border border-stone-200 rounded-xl mb-1 hover:border-stone-300 transition-colors">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="relative flex size-1.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9604D] opacity-75"></span>
+              <span className="relative inline-flex rounded-full size-1.5 bg-[#C9604D]"></span>
             </span>
-            异常预警雷达 (Anomaly Radar)
-          </h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 pt-1 -mx-5 px-5 scrollbar-thin scrollbar-thumb-stone-200">
-            {anomalyVideos.map((v) => {
-              const snap = data?.snapshots?.find((s) => s.video_id === v.id && s.snapshot_type === "24h");
-              return (
-                <div
-                  key={v.id}
-                  className="group relative flex flex-col justify-between w-[220px] shrink-0 rounded-xl border border-stone-200 bg-white p-4 transition-[border-color,box-shadow,transform] duration-150 hover:border-stone-300 hover:shadow-sm hover:-translate-y-px"
-                >
-                  <div className="space-y-1.5 text-left">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[12px] text-stone-500 font-medium truncate max-w-[120px]">
-                        {(v.profiles?.name || "未知")} · {(v.accounts?.name || "未知")}
-                      </span>
-                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[12px] font-medium ${
-                        v.anomaly_status === "限流" || v.anomaly_status === "删稿"
-                          ? "bg-[#C9604D]/0.04 text-[#C9604D] border border-[#C9604D]/15"
-                          : "bg-[#D99E55]/0.04 text-[#D99E55] border border-[#D99E55]/15"
-                      }`}>
-                        {v.anomaly_status === "正常" ? "限流异常" : v.anomaly_status}
-                      </span>
-                    </div>
-                    <h3 className="text-[12px] font-medium text-stone-900 line-clamp-2 leading-relaxed" title={v.video_title || v.content || undefined}>
-                      {v.video_title || v.content || "（无标题）"}
-                    </h3>
-                  </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-stone-100 flex items-center justify-between">
-                    <div className="flex flex-col text-left">
-                      <span className="text-[12px] text-stone-500">24h播放</span>
-                      <span className="text-[13px] font-medium tabular-nums text-stone-700">
-                        {snap ? formatNumber(snap.play_count) : "—"}
-                      </span>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => setSelectedVideoId(v.id)}
-                      className="h-6 rounded-lg bg-[#D97757] px-2.5 text-[12px] text-white hover:bg-[#C96442] active:scale-[0.98] transition-all duration-155"
-                    >
-                      去诊断
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+            <span className="font-semibold text-stone-850">
+              今日异常雷达
+            </span>
+            <span className="text-stone-300">|</span>
+            <span className="flex items-center gap-1 shrink-0">
+              <span>共 {anomalyVideos.length} 条待诊断 </span>
+              <span className="text-stone-300">/</span>
+              {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
+              {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
+              {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
+            </span>
+            <span className="text-stone-300 hidden md:inline">|</span>
+            <span className="text-stone-500 truncate max-w-[280px] hidden md:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+              最需关注：
+              {anomalyVideos.slice(0, 2).map((v, i) => (
+                <span key={v.id}>
+                  {i > 0 && "、"}
+                  <button
+                    onClick={() => setSelectedVideoId(v.id)}
+                    className="underline decoration-[#D97757]/30 hover:text-[#D97757] font-medium transition-colors"
+                  >
+                    {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
+                  </button>
+                </span>
+              ))}
+              {anomalyVideos.length > 2 && ` 等 ${anomalyVideos.length} 条`}
+            </span>
           </div>
+          <button
+            onClick={handleDirectReview}
+            className="text-[11px] font-semibold text-[#D97757] hover:text-[#C96442] hover:underline shrink-0"
+          >
+            直接去盘 →
+          </button>
         </div>
       )}
 

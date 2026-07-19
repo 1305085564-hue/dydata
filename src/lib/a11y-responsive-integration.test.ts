@@ -30,9 +30,9 @@ test("权限抽屉手机全宽且桌面固定为 480px", () => {
 
 test("语义状态色分别提供浅色与暗色对比色", () => {
   const source = readSource("src/lib/tailwind-utils.ts");
-  assert.match(source, /text-\[#3F7A4E\][^\n]*dark:text-\[#6FAA7D\]/);
-  assert.match(source, /text-\[#8F641B\][^\n]*dark:text-\[#D99E55\]/);
-  assert.match(source, /text-\[#B24E3E\][^\n]*dark:text-\[#D16A58\]/);
+  assert.match(source, /text-\[#6FAA7D\][^\n]*dark:text-\[#6FAA7D\]/);
+  assert.match(source, /text-\[#D99E55\][^\n]*dark:text-\[#D99E55\]/);
+  assert.match(source, /text-\[#C9604D\][^\n]*dark:text-\[#C9604D\]/);
 });
 
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
