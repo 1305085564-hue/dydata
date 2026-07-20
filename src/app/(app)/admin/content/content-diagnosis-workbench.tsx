@@ -38,6 +38,8 @@ interface ContentDiagnosisWorkbenchProps {
   feedbackCard: ContentFeedbackCardView | null;
   onFeedbackCardChanged: (videoId: string, card: ContentFeedbackCardView) => void;
   onClose: () => void;
+  canOperateLifecycle: boolean;
+  onLifecycleChanged: () => void;
   anomalyVideos?: VideoRow[];
   onVideoSelect?: (videoId: string) => void;
 }
@@ -118,6 +120,8 @@ export function ContentDiagnosisWorkbench({
   feedbackCard,
   onFeedbackCardChanged,
   onClose,
+  canOperateLifecycle,
+  onLifecycleChanged,
   profiles = [],
   onGoToNextVideo,
   anomalyVideos = [],
@@ -153,6 +157,7 @@ export function ContentDiagnosisWorkbench({
   const [feedback, setFeedback] = useState("");
   const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
+  const [isTrashing, setIsTrashing] = useState(false);
 
   const [isMarkingExperience, setIsMarkingExperience] = useState(false);
   const [highlightedSegmentIndex, setHighlightedSegmentIndex] = useState<number | null>(null);
@@ -177,6 +182,26 @@ export function ContentDiagnosisWorkbench({
   } | null>(null);
   const [previousFeedbackLoading, setPreviousFeedbackLoading] = useState(false);
   const [showPreviousFeedback, setShowPreviousFeedback] = useState(false);
+
+  const handleTrashAction = async () => {
+    if (!video) return;
+    setIsTrashing(true);
+    try {
+      const res = await fetch(`/api/admin/videos/${video.id}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trash" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
+      feedbackToast.success("作品已成功移入回收站");
+      onLifecycleChanged();
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "移入回收站失败");
+    } finally {
+      setIsTrashing(false);
+    }
+  };
 
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
@@ -561,11 +586,23 @@ export function ContentDiagnosisWorkbench({
           </div>
         </div>
 
-        {video && (
-          <Badge variant="outline" className={`h-6 text-[12px] ${statusBadgeClass[video.anomaly_status]}`}>
-            {video.anomaly_status}
-          </Badge>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {video && canOperateLifecycle && (video.lifecycle_state ?? "active") === "active" && (
+            <button
+              type="button"
+              onClick={handleTrashAction}
+              disabled={isTrashing}
+              className="inline-flex h-7 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
+            >
+              {isTrashing ? "正在回收..." : "移入回收站"}
+            </button>
+          )}
+          {video && (
+            <Badge variant="outline" className={`h-6 text-[12px] ${statusBadgeClass[video.anomaly_status]}`}>
+              {video.anomaly_status}
+            </Badge>
+          )}
+        </div>
       </header>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden min-h-0">
@@ -1424,4 +1461,3 @@ function ScreenshotPreview({
     </AnimatePresence>
   );
 }
-
