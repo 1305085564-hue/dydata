@@ -27,6 +27,7 @@ export async function GET(
   const { data: olderVideos } = await supabase
     .from("videos")
     .select("id, published_at")
+    .eq("lifecycle_state", "active")
     .eq("account_id", video.account_id)
     .neq("id", videoId)
     .lt("published_at", video.published_at)

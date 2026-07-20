@@ -405,6 +405,7 @@ export async function deleteSubTopic(supabase: TopicSupabase, userId: string, id
   const { count, error: worksError } = await supabase
     .from("videos")
     .select("id", { count: "exact", head: true })
+    .eq("lifecycle_state", "active")
     .eq("topic_id", id);
   if (worksError) return { ok: false, status: 500, message: worksError.message };
   if ((count ?? 0) > 0) {
@@ -587,6 +588,7 @@ export async function loadTopicSummaries(supabase: TopicSupabase, subTopicIds: s
   const { data, error } = await supabase
     .from("videos")
     .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
+    .eq("lifecycle_state", "active")
     .in("topic_id", subTopicIds);
   if (error) throw new Error(error.message);
 
@@ -624,6 +626,7 @@ export async function loadActiveTopics(supabase: TopicSupabase, scope: DataAcces
   let worksQuery = supabase
     .from("videos")
     .select("id, topic_id, user_id, video_title, content, uploaded_at, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name))")
+    .eq("lifecycle_state", "active")
     .not("topic_id", "is", null)
     .order("uploaded_at", { ascending: false })
     .limit(limit * 3);
@@ -665,8 +668,9 @@ export async function loadSubTopicWorks(
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
 
   let directQuery = supabase
-    .from("videos")
-    .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+      .from("videos")
+      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+      .eq("lifecycle_state", "active")
     .eq("topic_id", id);
   if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
   const { data: directRows, error: directError } = await directQuery;
@@ -688,6 +692,7 @@ export async function loadSubTopicWorks(
       let similarQuery = supabase
         .from("videos")
         .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, video_metrics_snapshots(play_count)")
+        .eq("lifecycle_state", "active")
         .in("topic_id", siblingIds);
       if (scope.kind !== "all") similarQuery = similarQuery.in("user_id", scope.visibleUserIds);
       const { data, error } = await similarQuery.limit(20);

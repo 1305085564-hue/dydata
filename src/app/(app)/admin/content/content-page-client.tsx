@@ -26,6 +26,8 @@ const ContentDiagnosisWorkbench = dynamic(
 type ContentView = "pending" | "all";
 type AdminContentVideo = AdminContentPageData["videos"][number];
 
+import type { UserPermissionInfo } from "@/lib/permissions";
+
 interface ContentPageClientProps {
   initialView: ContentView;
   initialData: AdminContentPageData;
@@ -33,6 +35,7 @@ interface ContentPageClientProps {
   initialTeamId: string | null;
   canSwitchPerspective: boolean;
   teams: TeamOption[];
+  permissionInfo: UserPermissionInfo;
 }
 
 function buildContentPageUrl(view: ContentView, perspective: AdminDataPerspective, teamId: string | null) {
@@ -54,6 +57,7 @@ export function ContentPageClient({
   initialTeamId,
   canSwitchPerspective,
   teams,
+  permissionInfo,
 }: ContentPageClientProps) {
   const [view, setView] = useState<ContentView>(initialView);
   const [data, setData] = useState<AdminContentPageData>(initialData);
@@ -475,6 +479,8 @@ export function ContentPageClient({
         onFeedbackCardsChanged={handleFeedbackCardsChanged}
         selectedVideoId={selectedVideoId}
         onSelectVideoId={setSelectedVideoId}
+        permissionInfo={permissionInfo}
+        onRefresh={() => loadData(view, perspective, teamId)}
       />
     </section>
   );

@@ -140,6 +140,7 @@ export type VideoTagReviewDimension = "题材" | "表达形式" | "CTA类型";
 export type TagSource = "ai" | "manual";
 export type MarketSentiment = "强" | "中" | "弱";
 export type VideoAssetLevel = "S" | "A" | "B" | "C";
+export type VideoLifecycleState = "active" | "trashed" | "purged";
 export type VideoAssetCompletenessStatus = "missing" | "partial" | "complete";
 export type VideoAssetLibraryStatus = "pending" | "ready";
 export type VideoAssetMissingField =
@@ -187,6 +188,12 @@ export interface Video {
   asset_note?: string | null;
   asset_reviewed_by?: string | null;
   asset_reviewed_at?: string | null;
+  lifecycle_state?: VideoLifecycleState;
+  trashed_at?: string | null;
+  trashed_by?: string | null;
+  trashed_by_name?: string | null;
+  purged_at?: string | null;
+  purged_by?: string | null;
   previous_play_count?: number | null;
   play_change_signal?: "surge" | "halve" | null;
   play_count_change_pct?: number | null;

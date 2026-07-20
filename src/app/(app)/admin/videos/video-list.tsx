@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import {
   Table,
   TableBody,
@@ -19,9 +20,12 @@ import { interactionRate } from "@/lib/video-metrics";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
 import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 
+import type { UserPermissionInfo } from "@/lib/permissions";
+
 type VideoRow = Video & {
   accounts: { name: string };
   profiles: { name: string };
+  trashed_by_name?: string | null;
 };
 
 type FilterOption = Pick<Profile, "id" | "name">;
@@ -38,6 +42,9 @@ interface VideoListProps {
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
+  permissionInfo: UserPermissionInfo;
+  view: "pending" | "all" | "trash";
+  onRefresh: () => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -89,6 +96,9 @@ export function VideoList({
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
+  permissionInfo,
+  view,
+  onRefresh,
 }: VideoListProps) {
   const [filters, setFilters] = useState<VideoFilterValue>({
     profileId: "all",
@@ -103,6 +113,62 @@ export function VideoList({
   const [snapshotRows, setSnapshotRows] = useState(snapshots);
   const [tagRows, setTagRows] = useState(videoTags);
   const [assetLibraryState, setAssetLibraryState] = useState(assetLibrary);
+  const [isOperating, setIsOperating] = useState<string | null>(null);
+  const [confirmPurgeVideoId, setConfirmPurgeVideoId] = useState<string | null>(null);
+
+  const handleRestore = async (videoId: string) => {
+    setIsOperating(videoId);
+    try {
+      const res = await fetch(`/api/admin/videos/${videoId}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restore" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "恢复失败");
+      feedbackToast.success("作品已成功恢复");
+      onRefresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "恢复失败");
+    } finally {
+      setIsOperating(null);
+    }
+  };
+
+  const handlePurge = async (videoId: string) => {
+    setIsOperating(videoId);
+    try {
+      const res = await fetch(`/api/admin/videos/${videoId}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "purge" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "永久删除失败");
+      feedbackToast.success("作品已永久删除");
+      setConfirmPurgeVideoId(null);
+      onRefresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "永久删除失败");
+    } finally {
+      setIsOperating(null);
+    }
+  };
+
+  const isPurgeEligible = (trashedAt: string | null | undefined) => {
+    if (!trashedAt) return false;
+    const diff = Date.now() - new Date(trashedAt).getTime();
+    return diff >= 30 * 24 * 60 * 60 * 1000;
+  };
+
+  const getPurgeTooltip = (trashedAt: string | null | undefined) => {
+    if (!trashedAt) return "";
+    const targetDate = new Date(new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000);
+    const diff = targetDate.getTime() - Date.now();
+    if (diff <= 0) return "";
+    const daysLeft = Math.ceil(diff / (24 * 60 * 60 * 1000));
+    return `未满 30 天（剩余约 ${daysLeft} 天，可于 ${targetDate.toLocaleString("zh-CN")} 后删除）`;
+  };
 
   useEffect(() => {
     setVideoRows(videos);
@@ -281,11 +347,19 @@ export function VideoList({
               <TableHead className="h-9 px-4 text-[12px] font-medium text-stone-500">视频标题</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-stone-500">负责人</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">发布时间</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">24h播放量</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">互动率(%)</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">涨粉</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">状态</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">
+                {view === "trash" ? "回收时间" : "发布时间"}
+              </TableHead>
+              {view !== "trash" && (
+                <>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">24h播放量</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">互动率(%)</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">涨粉</TableHead>
+                </>
+              )}
+              <TableHead className="h-9 text-[12px] font-medium text-stone-500">
+                {view === "trash" ? "操作者" : "状态"}
+              </TableHead>
               <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
             </TableRow>
           </TableHeader>
@@ -304,33 +378,73 @@ export function VideoList({
                     </TableCell>
                     <TableCell className="text-[12px] text-stone-500">{video.accounts.name}</TableCell>
                     <TableCell className="text-[12px] text-stone-500">{video.profiles.name}</TableCell>
-                    <TableCell className="text-[12px] text-stone-500">{formatDateTime(video.published_at)}</TableCell>
-                    <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
-                    <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                    <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                    <TableCell className="text-[12px] text-stone-500">
+                      {view === "trash" ? formatDateTime(video.trashed_at ?? null) : formatDateTime(video.published_at ?? null)}
+                    </TableCell>
+                    {view !== "trash" && (
+                      <>
+                        <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
+                        <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
+                        <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                      </>
+                    )}
                     <TableCell>
-                      <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
-                        {video.anomaly_status}
-                      </Badge>
+                      {view === "trash" ? (
+                        <span className="text-[12px] text-stone-700">{video.trashed_by_name || "-"}</span>
+                      ) : (
+                        <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
+                          {video.anomaly_status}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="px-4 text-right">
                       <div className="flex items-center justify-end gap-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
-                        {showPatchButton ? (
-                          <button
-                            type="button"
-                            onClick={() => setPatchingVideoId(video.id)}
-                            className="text-[12px] text-[#D97757] underline-offset-4 hover:underline"
-                          >
-                            补录24h
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedVideoId(video.id)}
-                          className="text-[12px] text-stone-700 underline-offset-4 hover:text-stone-900 hover:underline"
-                        >
-                          查看详情
-                        </button>
+                        {view === "trash" ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleRestore(video.id)}
+                              disabled={isOperating !== null}
+                              className="text-[12px] text-[#6FAA7D] underline-offset-4 hover:underline disabled:opacity-50"
+                            >
+                              恢复
+                            </button>
+                            {permissionInfo.businessRole === "owner" && (() => {
+                              const eligible = isPurgeEligible(video.trashed_at ?? null);
+                              const tooltip = getPurgeTooltip(video.trashed_at ?? null);
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmPurgeVideoId(video.id)}
+                                  disabled={!eligible || isOperating !== null}
+                                  title={tooltip || undefined}
+                                  className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-stone-400 disabled:no-underline disabled:cursor-not-allowed"
+                                >
+                                  永久删除
+                                </button>
+                              );
+                            })()}
+                          </>
+                        ) : (
+                          <>
+                            {showPatchButton ? (
+                              <button
+                                type="button"
+                                onClick={() => setPatchingVideoId(video.id)}
+                                className="text-[12px] text-[#D97757] underline-offset-4 hover:underline"
+                              >
+                                补录24h
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedVideoId(video.id)}
+                              className="text-[12px] text-stone-700 underline-offset-4 hover:text-stone-900 hover:underline"
+                            >
+                              查看详情
+                            </button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -338,7 +452,7 @@ export function VideoList({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="px-4 py-16 text-center text-[13px] text-stone-500">
+                <TableCell colSpan={view === "trash" ? 6 : 9} className="px-4 py-16 text-center text-[13px] text-stone-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>
@@ -347,7 +461,7 @@ export function VideoList({
             {/* Sentinel for auto-load */}
             {hasMore && (
               <TableRow>
-                <TableCell colSpan={9} className="p-0">
+                <TableCell colSpan={view === "trash" ? 6 : 9} className="p-0">
                   <div ref={sentinelRef} className="h-4" />
                 </TableCell>
               </TableRow>
@@ -418,6 +532,11 @@ export function VideoList({
         onAssetSaved={(videoId, record) => {
           setAssetLibraryState((current) => ({ ...current, [videoId]: record }));
         }}
+        permissionInfo={permissionInfo}
+        onLifecycleChanged={() => {
+          setSelectedVideoId(null);
+          onRefresh();
+        }}
       />
 
       <Patch24hDialog
@@ -431,6 +550,35 @@ export function VideoList({
         snapshot={patchingSnapshot}
         onSaved={handlePatchSaved}
       />
+
+      {confirmPurgeVideoId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/40 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-base font-semibold text-stone-900">永久删除确认</h3>
+            <p className="mt-2 text-sm text-stone-500 leading-relaxed">
+              将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="active:translate-y-0 h-9 rounded-xl border border-stone-200 px-4 text-stone-700 hover:bg-stone-50 text-[12px] font-medium transition-colors"
+                onClick={() => setConfirmPurgeVideoId(null)}
+                disabled={isOperating !== null}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="active:translate-y-0 h-9 rounded-xl bg-[#C9604D] hover:bg-[#B34F3C] text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50"
+                onClick={() => handlePurge(confirmPurgeVideoId)}
+                disabled={isOperating !== null}
+              >
+                {isOperating ? "正在删除..." : "确定永久删除"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

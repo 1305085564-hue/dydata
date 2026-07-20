@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useState, startTransition } from "react";
+import { useCallback, useState, startTransition, useEffect } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoList } from "./video-list";
 import type { AdminVideosPageData } from "@/lib/loaders/admin-videos-page";
+import type { UserPermissionInfo } from "@/lib/permissions";
 
-type VideoView = "pending" | "all";
+type VideoView = "pending" | "all" | "trash";
 
 interface VideoPageClientProps {
   initialView: VideoView;
@@ -16,6 +17,7 @@ interface VideoPageClientProps {
   initialTeamId: string | null;
   canSwitchPerspective: boolean;
   teams: TeamOption[];
+  permissionInfo: UserPermissionInfo;
 }
 
 function buildVideoPageUrl(view: VideoView, perspective: AdminDataPerspective, teamId: string | null) {
@@ -37,6 +39,7 @@ export function VideoPageClient({
   initialTeamId,
   canSwitchPerspective,
   teams,
+  permissionInfo,
 }: VideoPageClientProps) {
   const [view, setView] = useState<VideoView>(initialView);
   const [data, setData] = useState<AdminVideosPageData>(initialData);
@@ -45,6 +48,15 @@ export function VideoPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
+
+  const canAccessTrash = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+
+  useEffect(() => {
+    if (initialView === "trash" && !canAccessTrash) {
+      setView("pending");
+      window.history.replaceState({}, "", buildVideoPageUrl("pending", initialPerspective, initialTeamId));
+    }
+  }, [initialView, canAccessTrash, initialPerspective, initialTeamId]);
 
   const loadData = useCallback(async (
     nextView: VideoView,
@@ -143,6 +155,21 @@ export function VideoPageClient({
                 {data.summary.totalVideos}
               </span>
             </button>
+            {canAccessTrash && (
+              <button
+                type="button"
+                onClick={() => switchView("trash")}
+                disabled={isLoading}
+                className={[
+                  "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
+                  view === "trash"
+                    ? "border border-stone-200 bg-white text-stone-900"
+                    : "text-stone-500 hover:text-stone-700",
+                ].join(" ")}
+              >
+                回收站
+              </button>
+            )}
           </div>
 
           {canSwitchPerspective ? (
@@ -230,6 +257,9 @@ export function VideoPageClient({
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}
+        permissionInfo={permissionInfo}
+        view={view}
+        onRefresh={() => loadData(view, perspective, teamId)}
       />
     </section>
   );

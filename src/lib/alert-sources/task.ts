@@ -50,6 +50,7 @@ export async function detectTaskAlerts({ supabase, scope, now = new Date() }: Al
     supabase
       .from("videos")
       .select("id, user_id, video_title, uploaded_at, created_at")
+      .eq("lifecycle_state", "active")
       .in("user_id", scope.visibleUserIds)
       .gte("created_at", oneDayAgoIso)
       .lte("created_at", oneHourAgoIso),
@@ -75,7 +76,7 @@ export async function detectTaskAlerts({ supabase, scope, now = new Date() }: Al
     ),
   );
   const videoLookupResult = videoIdsFromBundles.length > 0
-    ? await supabase.from("videos").select("id, user_id, video_title, uploaded_at, created_at").in("id", videoIdsFromBundles)
+    ? await supabase.from("videos").select("id, user_id, video_title, uploaded_at, created_at").eq("lifecycle_state", "active").in("id", videoIdsFromBundles)
     : { data: [], error: null };
 
   if (videoLookupResult.error) throw new Error(videoLookupResult.error.message);

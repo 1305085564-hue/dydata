@@ -28,9 +28,12 @@ import {
 import { buildTagFilterState, getTagReviewStatus } from "@/lib/video-tags";
 import { TAG_ENUMS, VIDEO_TAG_REVIEW_DIMENSIONS, type Video, type VideoAssetLibraryRecord, type VideoAssetLevel, type VideoMetricsSnapshot, type VideoTag } from "@/types";
 
+import type { UserPermissionInfo } from "@/lib/permissions";
+
 type VideoRow = Video & {
   accounts: { name: string };
   profiles: { name: string };
+  trashed_by_name?: string | null;
 };
 
 interface VideoDetailDialogProps {
@@ -42,6 +45,8 @@ interface VideoDetailDialogProps {
   assetRecord: VideoAssetLibraryRecord | null;
   onTagsSaved: (tags: VideoTag[]) => void;
   onAssetSaved: (videoId: string, record: VideoAssetLibraryRecord) => void;
+  permissionInfo: UserPermissionInfo;
+  onLifecycleChanged: () => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -122,13 +127,67 @@ function renderSnapshotFields(snapshot: VideoMetricsSnapshot) {
   return fields.map((field) => <MetricCard key={field.label} label={field.label} value={field.value} />);
 }
 
-export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, assetRecord, onTagsSaved, onAssetSaved }: VideoDetailDialogProps) {
+export function VideoDetailDialog({
+  open,
+  onOpenChange,
+  video,
+  snapshot,
+  tags,
+  assetRecord,
+  onTagsSaved,
+  onAssetSaved,
+  permissionInfo,
+  onLifecycleChanged,
+}: VideoDetailDialogProps) {
   const supabase = useMemo(() => createClient(), []);
   const [selection, setSelection] = useState(() => buildTagFilterState(tags));
   const [isSaving, setIsSaving] = useState(false);
   const [isAssetSaving, setIsAssetSaving] = useState(false);
   const [assetLevel, setAssetLevel] = useState<VideoAssetLevel | null>(assetRecord?.asset_level ?? null);
   const [assetNote, setAssetNote] = useState(assetRecord?.asset_note ?? "");
+  const [isOperating, setIsOperating] = useState(false);
+  const [showConfirmPurge, setShowConfirmPurge] = useState(false);
+
+  const canOperate = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+  const isOwner = permissionInfo.businessRole === "owner";
+
+  const handleLifecycleAction = async (action: "trash" | "restore" | "purge") => {
+    if (!video) return;
+    setIsOperating(true);
+    try {
+      const res = await fetch(`/api/admin/videos/${video.id}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "操作失败");
+      }
+      feedbackToast.success(action === "trash" ? "已移入回收站" : action === "restore" ? "已成功恢复" : "已永久删除");
+      setShowConfirmPurge(false);
+      onLifecycleChanged();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "操作失败");
+    } finally {
+      setIsOperating(false);
+    }
+  };
+
+  const isPurgeEligible = (trashedAt: string | null | undefined) => {
+    if (!trashedAt) return false;
+    const diff = Date.now() - new Date(trashedAt).getTime();
+    return diff >= 30 * 24 * 60 * 60 * 1000;
+  };
+
+  const getPurgeTooltip = (trashedAt: string | null | undefined) => {
+    if (!trashedAt) return "";
+    const targetDate = new Date(new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000);
+    const diff = targetDate.getTime() - Date.now();
+    if (diff <= 0) return "";
+    const daysLeft = Math.ceil(diff / (24 * 60 * 60 * 1000));
+    return `未满 30 天（剩余约 ${daysLeft} 天，可于 ${targetDate.toLocaleString("zh-CN")} 后删除）`;
+  };
 
   useEffect(() => {
     setSelection(buildTagFilterState(tags));
@@ -223,6 +282,13 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
 
         {video ? (
           <div className="space-y-6">
+            {video.lifecycle_state === "trashed" && isOwner && !isPurgeEligible(video.trashed_at ?? null) && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 text-[12px] leading-relaxed text-[#B5651D]">
+                ⚠️ 本视频移入回收站未满 30 天，出于数据安全保护已处于锁定状态。
+                您可以于 <span className="font-semibold">{new Date(new Date(video.trashed_at!).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleString("zh-CN")}</span> 之后进行永久删除操作。
+              </div>
+            )}
+
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
@@ -233,13 +299,69 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
                     账号：{video.accounts.name} · 负责人：{video.profiles.name}
                   </div>
                 </div>
-                <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
-                  {video.anomaly_status}
-                </Badge>
+                <div className="flex flex-col items-end gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    {video.lifecycle_state === "trashed" && (
+                      <Badge variant="outline" className="border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55] text-[12px]">
+                        已在回收站
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
+                      {video.anomaly_status}
+                    </Badge>
+                  </div>
+                  {canOperate && (
+                    <div className="mt-1 flex gap-2">
+                      {video.lifecycle_state === "trashed" ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleLifecycleAction("restore")}
+                            disabled={isOperating}
+                            className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-stone-50 disabled:opacity-50"
+                          >
+                            恢复作品
+                          </button>
+                          {isOwner && (() => {
+                            const eligible = isPurgeEligible(video.trashed_at ?? null);
+                            const tooltip = getPurgeTooltip(video.trashed_at ?? null);
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPurge(true)}
+                                disabled={!eligible || isOperating}
+                                title={tooltip || undefined}
+                                className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-stone-50 disabled:text-stone-400 disabled:cursor-not-allowed"
+                              >
+                                永久删除
+                              </button>
+                            );
+                          })()}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleLifecycleAction("trash")}
+                          disabled={isOperating}
+                          className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
+                        >
+                          移入回收站
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid gap-2 sm:grid-cols-2">
-                <MetricCard label="发布时间" value={formatDateTime(video.published_at)} />
+                {video.lifecycle_state === "trashed" ? (
+                  <>
+                    <MetricCard label="回收时间" value={formatDateTime(video.trashed_at ?? null)} />
+                    <MetricCard label="回收操作者" value={video.trashed_by_name || "-"} />
+                  </>
+                ) : (
+                  <MetricCard label="发布时间" value={formatDateTime(video.published_at ?? null)} />
+                )}
                 <div className="rounded-xl border border-stone-200 bg-white p-4">
                   <div className="text-[12px] text-stone-500">视频链接</div>
                   <div className="mt-1 text-[13px]">
@@ -401,6 +523,35 @@ export function VideoDetailDialog({ open, onOpenChange, video, snapshot, tags, a
         ) : null}
       </SheetBody>
       </SheetContent>
+
+      {showConfirmPurge && video && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-stone-950/40 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-base font-semibold text-stone-900">永久删除确认</h3>
+            <p className="mt-2 text-sm text-stone-500 leading-relaxed">
+              将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="active:translate-y-0 h-9 rounded-xl border border-stone-200 px-4 text-stone-700 hover:bg-stone-50 text-[12px] font-medium transition-colors"
+                onClick={() => setShowConfirmPurge(false)}
+                disabled={isOperating}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="active:translate-y-0 h-9 rounded-xl bg-[#C9604D] hover:bg-[#B34F3C] text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50"
+                onClick={() => handleLifecycleAction("purge")}
+                disabled={isOperating}
+              >
+                {isOperating ? "正在删除..." : "确定永久删除"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sheet>
   );
 }

@@ -9,7 +9,7 @@ export async function retryContentBreakdown(params: Record<string, unknown>, dry
   if (!contentItemId) return { success: false, error: "缺少 contentItemId" };
 
   const service = createAdminClient();
-  const { data: video } = await service.from("videos").select("id, content").eq("id", contentItemId).single();
+  const { data: video } = await service.from("videos").select("id, content").eq("lifecycle_state", "active").eq("id", contentItemId).single();
   if (!video?.content?.trim()) return { success: false, error: "文案为空，无法重跑" };
 
   const paragraphs = splitContentIntoBusinessParagraphs(video.content);
@@ -60,6 +60,7 @@ export async function retryDailyReview(params: Record<string, unknown>, dryRun: 
     const { data: videos } = await service
       .from("videos")
       .select("id")
+      .eq("lifecycle_state", "active")
       .eq("user_id", userId)
       .gte("created_at", `${date}T00:00:00.000Z`)
       .lte("created_at", `${date}T23:59:59.999Z`)

@@ -117,6 +117,7 @@ export async function detectUploadAlerts({ supabase, scope, now = new Date() }: 
   const { data, error } = await supabase
     .from("videos")
     .select("id, user_id, uploaded_at, created_at, video_title")
+    .eq("lifecycle_state", "active")
     .in("user_id", scope.visibleUserIds)
     .gte("created_at", new Date(`${yesterday}T00:00:00+08:00`).toISOString())
     .lte("created_at", now.toISOString());

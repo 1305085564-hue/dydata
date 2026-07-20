@@ -11,7 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 function parseView(request: NextRequest) {
   const view = request.nextUrl.searchParams.get("view") ?? "pending";
-  return view === "all" || view === "pending" ? view : null;
+  return view === "all" || view === "pending" || view === "trash" ? view : null;
 }
 
 function parseMode(request: NextRequest) {
@@ -51,7 +51,7 @@ export async function buildAdminVideosListResponse(
 
   const view = parseView(request);
   if (!view) {
-    return NextResponse.json({ error: "view 只能是 pending 或 all" }, { status: 400 });
+    return NextResponse.json({ error: "view 只能是 pending、all 或 trash" }, { status: 400 });
   }
 
   const authStart = nowMs();
@@ -62,6 +62,9 @@ export async function buildAdminVideosListResponse(
   }
   if (!canAccessAdminPath("/admin/videos", auth.actor.businessRole, auth.actor.permissions)) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
+  if (view === "trash" && auth.actor.businessRole !== "owner" && auth.actor.businessRole !== "team_admin") {
+    return NextResponse.json({ error: "无回收站查看权限" }, { status: 403 });
   }
 
   const teams = auth.actor.businessRole === "owner" ? await deps.getTeamOptions() : [];

@@ -56,6 +56,8 @@ type VideoRow = Video & {
   profiles: { name: string };
 };
 
+import type { UserPermissionInfo } from "@/lib/permissions";
+
 interface ContentDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -64,6 +66,8 @@ interface ContentDetailDialogProps {
   feedbackCard: ContentFeedbackCardView | null;
   onFeedbackCardChanged: (videoId: string, view: ContentFeedbackCardView) => void;
   onNavigateToNext?: () => void;
+  permissionInfo: UserPermissionInfo;
+  onLifecycleChanged: () => void;
 }
 
 type DetailTab = "analysis" | "feedback";
@@ -515,10 +519,37 @@ export function ContentDetailDialog({
   feedbackCard: feedbackCardProp,
   onFeedbackCardChanged,
   onNavigateToNext,
+  permissionInfo,
+  onLifecycleChanged,
 }: ContentDetailDialogProps) {
   const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<DetailTab>("analysis");
   const [contentExpanded, setContentExpanded] = useState(false);
+  const [isOperating, setIsOperating] = useState(false);
+
+  const canOperate = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+
+  const handleTrashAction = async () => {
+    if (!video) return;
+    setIsOperating(true);
+    try {
+      const res = await fetch(`/api/admin/videos/${video.id}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trash" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "移入回收站失败");
+      }
+      feedbackToast.success("作品已成功移入回收站");
+      onLifecycleChanged();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "移入回收站失败");
+    } finally {
+      setIsOperating(false);
+    }
+  };
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [comparison, setComparison] = useState<AllComparisonData>({
     loading: false,
@@ -954,42 +985,55 @@ export function ContentDetailDialog({
         className="w-full max-w-4xl gap-0 sm:max-w-4xl"
       >
         <SheetHeader className="gap-3 px-6 pt-6 pb-4">
-          <div className="pr-10">
-            <SheetTitle className="text-[18px] font-medium tracking-tight">
-              {video?.video_title || "内容详情"}
-            </SheetTitle>
-            {video && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-stone-500">
-                <span className="text-stone-700">{video.profiles.name}</span>
-                <span className="text-stone-500">·</span>
-                <span>{video.accounts.name}</span>
-                <span className="text-stone-500">·</span>
-                <span>发布 {formatDateTime(video.published_at)}</span>
-                <span className="text-stone-500">·</span>
-                <span>上传 {formatDateTime(video.uploaded_at ?? video.created_at)}</span>
-                {video.video_url && (
-                  <>
-                    <span className="text-stone-500">·</span>
-                    <a
-                      href={video.video_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[#D97757] underline-offset-4 hover:underline"
-                    >
-                      抖音原片
-                    </a>
-                  </>
-                )}
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "h-5 rounded-md border px-1.5 text-[12px] font-medium",
-                    statusBadgeClass[video.anomaly_status],
+          <div className="flex items-start justify-between pr-10">
+            <div>
+              <SheetTitle className="text-[18px] font-medium tracking-tight">
+                {video?.video_title || "内容详情"}
+              </SheetTitle>
+              {video && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-stone-500">
+                  <span className="text-stone-700">{video.profiles.name}</span>
+                  <span className="text-stone-500">·</span>
+                  <span>{video.accounts.name}</span>
+                  <span className="text-stone-500">·</span>
+                  <span>发布 {formatDateTime(video.published_at)}</span>
+                  <span className="text-stone-500">·</span>
+                  <span>上传 {formatDateTime(video.uploaded_at ?? video.created_at)}</span>
+                  {video.video_url && (
+                    <>
+                      <span className="text-stone-500">·</span>
+                      <a
+                        href={video.video_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#D97757] underline-offset-4 hover:underline"
+                      >
+                        抖音原片
+                      </a>
+                    </>
                   )}
-                >
-                  {video.anomaly_status}
-                </Badge>
-              </div>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-5 rounded-md border px-1.5 text-[12px] font-medium",
+                      statusBadgeClass[video.anomaly_status],
+                    )}
+                  >
+                    {video.anomaly_status}
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            {video && canOperate && (
+              <button
+                type="button"
+                onClick={handleTrashAction}
+                disabled={isOperating}
+                className="active:translate-y-0 ml-4 inline-flex h-7 shrink-0 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
+              >
+                {isOperating ? "正在回收..." : "移入回收站"}
+              </button>
             )}
           </div>
 

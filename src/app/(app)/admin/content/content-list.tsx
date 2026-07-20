@@ -27,6 +27,8 @@ type VideoRow = Video & {
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
 
+import type { UserPermissionInfo } from "@/lib/permissions";
+
 interface ContentListProps {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
@@ -42,6 +44,8 @@ interface ContentListProps {
   onFeedbackCardsChanged?: (cards: Record<string, ContentFeedbackCardView>) => void;
   selectedVideoId: string | null;
   onSelectVideoId: (id: string | null) => void;
+  permissionInfo: UserPermissionInfo;
+  onRefresh: () => void;
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
@@ -296,6 +300,8 @@ export function ContentList({
   onFeedbackCardsChanged,
   selectedVideoId,
   onSelectVideoId,
+  permissionInfo,
+  onRefresh,
 }: ContentListProps) {
   const [filters, setFilters] = useState<ContentFilterValue>({
     profileId: "all",
@@ -994,6 +1000,11 @@ export function ContentList({
           onFeedbackCardChanged?.(videoId, card);
         }}
         onNavigateToNext={handleNavigateToNext}
+        permissionInfo={permissionInfo}
+        onLifecycleChanged={() => {
+          onSelectVideoId(null);
+          onRefresh();
+        }}
       />
 
       {/* Keyframe animation for new batch */}

@@ -70,13 +70,29 @@ function extractJsonFromContent(content: string): string | null {
 }
 
 async function rollbackSafely(actions: RollbackAction[]) {
+  const errors: Error[] = [];
   for (const action of [...actions].reverse()) {
     try {
       await action();
-    } catch {
-      // 回滚失败不覆盖主错误，尽量回收剩余已知状态。
+    } catch (error) {
+      errors.push(error instanceof Error ? error : new Error("回滚失败"));
     }
   }
+  if (errors.length) throw new Error(`提交失败后的回滚未完成：${errors.map((error) => error.message).join("；")}`);
+}
+
+export function assertVideoSubmissionRollbackResult(data: unknown, error: { message?: string } | null) {
+  if (error || (data !== "deleted" && data !== "trashed")) {
+    throw new Error(error?.message || "视频回滚未完成");
+  }
+}
+
+async function rollbackNewVideoSubmission(videoId: string, userId: string) {
+  const { data, error } = await createAdminClient().rpc("rollback_new_video_submission", {
+    p_video_id: videoId,
+    p_user_id: userId,
+  });
+  assertVideoSubmissionRollbackResult(data, error);
 }
 
 export async function POST(request: NextRequest) {
@@ -173,6 +189,7 @@ export async function POST(request: NextRequest) {
   const { data: existingVideo, error: existingVideoError } = await supabase
     .from("videos")
     .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, created_at")
+    .eq("lifecycle_state", "active")
     .eq("id", submissionVideoId)
     .maybeSingle();
 
@@ -187,8 +204,7 @@ export async function POST(request: NextRequest) {
     });
   } else {
     rollbackActions.push(async () => {
-      const { error } = await supabase.from("videos").delete().eq("id", submissionVideoId);
-      if (error) throw error;
+      await rollbackNewVideoSubmission(submissionVideoId, user.id);
     });
   }
 

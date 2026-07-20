@@ -236,6 +236,7 @@ export async function generateNextDayReviewForAccess(
   const { data: accountVideos } = await serviceClient
     .from("videos")
     .select("id")
+    .eq("lifecycle_state", "active")
     .eq("account_id", video.account_id)
     .neq("id", videoId)
     .gte("created_at", since.toISOString())

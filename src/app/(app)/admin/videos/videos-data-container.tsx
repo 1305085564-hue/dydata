@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { loadAdminVideosInitialData as loadAdminVideosFirstScreenData } from "@/lib/loaders/admin-videos-page";
+import { loadAdminVideosInitialData as loadAdminVideosFirstScreenData, type AdminVideosView } from "@/lib/loaders/admin-videos-page";
 import { buildPermissionContextFromPermissionInfo } from "@/lib/current-permission-context";
 import { resolveAdminDataPerspective } from "@/lib/admin-data-perspective";
 import { queueFirstScreenObservation } from "@/lib/admin-first-screen-observability";
@@ -8,7 +8,7 @@ import type { UserPermissionInfo } from "@/lib/permissions";
 import type { TeamOption } from "@/lib/teams";
 import { VideoPageClient } from "./video-page-client";
 
-type VideoView = "pending" | "all";
+type VideoView = AdminVideosView;
 
 interface VideosDataContainerProps {
   view: VideoView;
@@ -119,6 +119,7 @@ export async function VideosDataContainer({
       initialTeamId={scope.teamId}
       canSwitchPerspective={canSwitchPerspective}
       teams={teams}
+      permissionInfo={scopedPermissionContext.permissionInfo}
     />
   );
 }

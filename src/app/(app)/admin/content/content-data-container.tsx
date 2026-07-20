@@ -119,6 +119,7 @@ export async function ContentDataContainer({
       initialTeamId={scope.teamId}
       canSwitchPerspective={canSwitchPerspective}
       teams={teams}
+      permissionInfo={scopedPermissionContext.permissionInfo}
     />
   );
 }

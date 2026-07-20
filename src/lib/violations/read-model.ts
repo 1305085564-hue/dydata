@@ -554,6 +554,7 @@ async function runDetailLookup(
 async function runVideoDetailLookup(client: DetailClientLike, id: string) {
   const query = (client.from("videos") as MaybeSingleSelectable<VideoViolationListRow>)
     .select("id, content, anomaly_status, punish_type, platform_notice, appeal, uploaded_at, created_at")
+    .eq("lifecycle_state", "active")
     .eq("id", id)
     .in("anomaly_status", [...VIDEO_ABNORMAL_STATUS_VALUES]);
 

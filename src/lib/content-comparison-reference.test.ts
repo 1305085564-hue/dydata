@@ -146,10 +146,13 @@ function responseKey(config: {
   limitValue?: number;
   mode?: "many" | "maybeSingle";
 }) {
+  const filters = config.table === "videos" && !(config.filters ?? []).some((filter) => filter.type === "eq" && filter.column === "lifecycle_state")
+    ? [{ type: "eq", column: "lifecycle_state", value: "active" }, ...(config.filters ?? [])]
+    : config.filters;
   return serializeQuery({
     table: config.table,
     selected: config.selected,
-    filters: config.filters ?? [],
+    filters: filters ?? [],
     orderBy: config.orderBy,
     limitValue: config.limitValue,
     mode: config.mode ?? "many",

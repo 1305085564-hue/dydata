@@ -102,3 +102,29 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
   assert.match(response.headers.get("server-timing") ?? "", /data;dur=/);
   assert.match(response.headers.get("server-timing") ?? "", /total;dur=/);
 });
+
+test("trash 仅允许 owner/team_admin，并把 trash 传给加载器", async () => {
+  const adminClient = {} as never;
+  let receivedView: unknown = null;
+  const base = {
+    getTeamOptions: async () => [],
+    getCurrentPermissionContext: async () => ({ permissionInfo: { userId: "u1" }, scope: { visibleUserIds: ["u1"] } }),
+    createAdminClient: () => adminClient,
+    loadAdminVideosFullData: async (args: { view?: unknown }) => {
+      receivedView = args.view;
+      return buildVideosPayload();
+    },
+  };
+  const denied = await buildAdminVideosListResponse(buildRequest("https://dydata.cc/api/admin/videos/list?view=trash"), {
+    ...base,
+    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "admin", businessRole: "group_leader", permissions: {}, name: null } }),
+  } as never);
+  assert.equal(denied.status, 403);
+
+  const allowed = await buildAdminVideosListResponse(buildRequest("https://dydata.cc/api/admin/videos/list?view=trash"), {
+    ...base,
+    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "owner", businessRole: "owner", permissions: {}, name: null } }),
+  } as never);
+  assert.equal(allowed.status, 200);
+  assert.equal(receivedView, "trash");
+});

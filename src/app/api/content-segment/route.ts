@@ -88,6 +88,7 @@ export async function buildContentSegmentResponse(
     const { data: video, error } = await supabase
       .from("videos")
       .select("id, content")
+      .eq("lifecycle_state", "active")
       .eq("id", videoId)
       .eq("user_id", user.id)
       .single();

@@ -46,6 +46,7 @@ async function loadQueueMetricSummary(date: string, visibleUserIds: string[] | n
   let videoQuery = supabase
     .from("videos")
     .select("id", { count: "exact", head: true })
+    .eq("lifecycle_state", "active")
     .gte("created_at", dayStart)
     .lt("created_at", nextDayStart);
 

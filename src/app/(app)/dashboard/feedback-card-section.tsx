@@ -17,6 +17,8 @@ type FeedbackCardItem = {
     published_at: string | null;
     anomaly_status: string;
   } | null;
+  video_lifecycle?: string;
+  video_lifecycle_label?: string | null;
   account: { id: string; name: string | null } | null;
   feedback_card: ContentFeedbackCardView & { confirmed: NextDayReviewResult | null };
 };
@@ -145,13 +147,23 @@ function CardRow({
         </span>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
             <span className="truncate text-[13px] font-medium text-stone-700">
-              {item.video?.video_title || "（无标题）"}
+              {item.video?.video_title || (item.video_lifecycle_label ? "已回收或已删除作品" : "（无标题）")}
             </span>
             {item.video?.published_at && (
               <span className="shrink-0 text-[12px] text-stone-500">
                 {formatDate(item.video.published_at)}
+              </span>
+            )}
+            {item.video_lifecycle_label && (
+              <span className={cn(
+                "shrink-0 inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none",
+                item.video_lifecycle === "trashed"
+                  ? "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55]"
+                  : "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]"
+              )}>
+                {item.video_lifecycle_label}
               </span>
             )}
           </div>

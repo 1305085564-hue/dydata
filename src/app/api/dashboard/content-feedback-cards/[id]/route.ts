@@ -42,12 +42,12 @@ export async function GET(
 
   const { data: videoRow, error: videoError } = await supabase
     .from("videos")
-    .select("id, video_title, video_url, published_at, anomaly_status, account_id, accounts(id, name)")
+    .select("id, video_title, video_url, published_at, anomaly_status, lifecycle_state, account_id, accounts(id, name)")
     .eq("id", feedbackCard.video_id)
     .maybeSingle();
 
   if (videoError || !videoRow) {
-    return NextResponse.json({ error: videoError?.message || "视频不存在" }, { status: 404 });
+    return NextResponse.json({ error: videoError?.message || "原作品已永久删除" }, { status: 404 });
   }
 
   const { data: snapshotRow } = await supabase
@@ -73,6 +73,8 @@ export async function GET(
         video_url: videoRow.video_url ?? null,
         published_at: videoRow.published_at ?? null,
         anomaly_status: videoRow.anomaly_status,
+        lifecycle_state: videoRow.lifecycle_state ?? "active",
+        lifecycle_label: videoRow.lifecycle_state === "trashed" ? "原作品已进入回收站" : videoRow.lifecycle_state === "purged" ? "原作品已永久删除" : null,
         snapshot: snapshotRow
           ? {
               play_count: snapshotRow.play_count ?? null,

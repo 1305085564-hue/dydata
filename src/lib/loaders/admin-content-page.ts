@@ -316,6 +316,7 @@ async function loadPlayChangeSignals({
       return supabase
         .from("videos")
         .select(PREVIOUS_VIDEO_SELECT)
+        .eq("lifecycle_state", "active")
         .eq("account_id", accountId)
         .lt("published_at", new Date(oldestKnownPublishedAt).toISOString())
         .order("published_at", { ascending: false })
@@ -395,6 +396,7 @@ export async function loadAdminContentPageData({
   let videosQuery = supabase
     .from("videos")
     .select(CONTENT_VIDEO_SELECT)
+    .eq("lifecycle_state", "active")
     .order("uploaded_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false });
   if (mode === "initial") {

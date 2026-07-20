@@ -222,6 +222,7 @@ async function loadLinkedVideo(adminSupabase: ReturnType<typeof createAdminClien
   const exactQuery = await adminSupabase
     .from("videos")
     .select("id, anomaly_status, uploaded_at, created_at, video_title, content, published_at")
+    .eq("lifecycle_state", "active")
     .eq("account_id", report.account_id)
     .eq("user_id", report.user_id)
     .eq("uploaded_at", report.uploaded_at ?? "")
@@ -245,6 +246,7 @@ async function loadLinkedVideo(adminSupabase: ReturnType<typeof createAdminClien
   const fallbackQuery = await adminSupabase
     .from("videos")
     .select("id, anomaly_status, uploaded_at, created_at, video_title, content, published_at")
+    .eq("lifecycle_state", "active")
     .eq("account_id", report.account_id)
     .eq("user_id", report.user_id)
     .gte("uploaded_at", start)

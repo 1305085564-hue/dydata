@@ -36,7 +36,7 @@ export async function GET() {
     videoIds.length > 0
       ? supabase
           .from("videos")
-          .select("id, video_title, video_url, published_at, anomaly_status")
+          .select("id, video_title, video_url, published_at, anomaly_status, lifecycle_state")
           .in("id", videoIds)
       : Promise.resolve({ data: [] as Pick<Video, "id" | "video_title" | "video_url" | "published_at" | "anomaly_status">[] }),
     accountIds.length > 0
@@ -50,6 +50,11 @@ export async function GET() {
   return NextResponse.json({
     items: cardRows.map((card) => ({
       video: videoMap.get(card.video_id) ?? null,
+      video_lifecycle: (videoMap.get(card.video_id) as { lifecycle_state?: string } | undefined)?.lifecycle_state ?? "purged",
+      video_lifecycle_label: (() => {
+        const state = (videoMap.get(card.video_id) as { lifecycle_state?: string } | undefined)?.lifecycle_state;
+        return state === "trashed" ? "原作品已进入回收站" : state === "purged" || !state ? "原作品已永久删除" : null;
+      })(),
       account: card.target_account_id ? accountMap.get(card.target_account_id) ?? null : null,
       feedback_card: {
         ...buildContentFeedbackCardView(card.video_id, card),

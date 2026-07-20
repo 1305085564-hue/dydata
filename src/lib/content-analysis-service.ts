@@ -212,6 +212,7 @@ async function loadPreviousVideoAndSnapshot(
   const { data } = await supabase
     .from("videos")
     .select("id, video_title, content, published_at")
+    .eq("lifecycle_state", "active")
     .eq("account_id", params.accountId)
     .lt("published_at", params.publishedAt)
     .neq("id", params.videoId)
@@ -240,6 +241,7 @@ async function loadThirtyDayBaseline(
   const { data: videos } = await supabase
     .from("videos")
     .select("id")
+    .eq("lifecycle_state", "active")
     .eq("account_id", params.accountId)
     .neq("id", params.videoId)
     .gte("published_at", start.toISOString())

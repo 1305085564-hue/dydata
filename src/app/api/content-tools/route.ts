@@ -183,6 +183,7 @@ async function loadScopedVideos(input: { userId: string; accountId?: string | nu
   let query = supabase
     .from("videos")
     .select("id, user_id, account_id, video_title, content, published_at, created_at, accounts(name, content_direction)")
+    .eq("lifecycle_state", "active")
     .eq("user_id", input.userId)
     .gte("created_at", `${input.startDate}T00:00:00.000Z`)
     .order("published_at", { ascending: false, nullsFirst: false });

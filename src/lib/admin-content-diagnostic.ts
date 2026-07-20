@@ -219,6 +219,7 @@ export async function loadAdminContentDiagnostic(access: ScopedAdminVideoAccess)
   const { data: selfVideoRows, error: selfVideoError } = await supabase
     .from("videos")
     .select("id")
+    .eq("lifecycle_state", "active")
     .eq("account_id", video.account_id)
     .neq("id", video.id)
     .lt("published_at", video.published_at)
@@ -257,8 +258,9 @@ export async function loadAdminContentDiagnostic(access: ScopedAdminVideoAccess)
     if (teamUserIds.length) {
       const range = shanghaiDayRange(formatShanghaiDay(video.published_at));
       const { data: teamVideos, error: teamVideosError } = await supabase
-        .from("videos")
-        .select("id")
+      .from("videos")
+      .select("id")
+      .eq("lifecycle_state", "active")
         .in("user_id", teamUserIds)
         .neq("id", video.id)
         .gte("published_at", range.start)

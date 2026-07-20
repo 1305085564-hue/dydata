@@ -7,20 +7,21 @@ import { getTeamOptions, type TeamOption } from "@/lib/teams";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { VideosDataContainer } from "./videos-data-container";
+import type { AdminVideosView } from "@/lib/loaders/admin-videos-page";
 
 export const metadata: Metadata = {
   title: "视频素材",
   description: "管理团队视频素材、审核状态与归档记录。",
 };
 
-type VideoView = "pending" | "all";
+type VideoView = AdminVideosView;
 
 interface Props {
   searchParams: Promise<{ view?: string; scope?: string; teamId?: string }>;
 }
 
 function normalizeView(value: string | undefined): VideoView {
-  return value === "all" ? "all" : "pending";
+  return value === "all" || value === "trash" ? value : "pending";
 }
 
 function nowMs() {
@@ -40,6 +41,7 @@ export default async function AdminVideosPage({ searchParams }: Props) {
   if (!canAccessAdminPath("/admin/videos", perm.businessRole, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
+  if (view === "trash" && perm.businessRole !== "owner" && perm.businessRole !== "team_admin") redirect("/admin/videos");
   const canSwitchPerspective = perm.businessRole === "owner";
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
 

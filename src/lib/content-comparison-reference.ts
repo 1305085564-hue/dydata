@@ -197,6 +197,7 @@ export async function getLegacyComparisonData({
     supabase
       .from("videos")
       .select("id, video_title, published_at")
+      .eq("lifecycle_state", "active")
       .eq("account_id", video.account_id)
       .lt("published_at", video.published_at)
       .order("published_at", { ascending: false })
@@ -205,6 +206,7 @@ export async function getLegacyComparisonData({
     supabase
       .from("videos")
       .select("id, published_at")
+      .eq("lifecycle_state", "active")
       .eq("account_id", video.account_id)
       .neq("id", videoId)
       .lt("published_at", video.published_at)
@@ -266,6 +268,7 @@ async function getSelfReferenceRows(
   const { data: recentVideos } = await supabase
     .from("videos")
     .select("id")
+    .eq("lifecycle_state", "active")
     .eq("account_id", accountId)
     .neq("id", videoId)
     .lt("published_at", publishedAt)
@@ -290,6 +293,7 @@ async function getUserReferenceRows(
   const { data: recentVideos } = await supabase
     .from("videos")
     .select("id")
+    .eq("lifecycle_state", "active")
     .in("account_id", refAccountIds)
     .order("published_at", { ascending: false })
     .limit(3);
@@ -346,6 +350,7 @@ async function getTodayTeamVideoIds(
   const { data: teamVideos } = await supabase
     .from("videos")
     .select("id")
+    .eq("lifecycle_state", "active")
     .in("account_id", accountIds)
     .neq("id", videoId)
     .gte("published_at", getShanghaiTodayStartIso());

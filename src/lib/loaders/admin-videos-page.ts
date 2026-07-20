@@ -13,22 +13,25 @@ type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
 type VideoRow = Video & {
   accounts: { name: string; profile_id?: string | null };
   profiles: { name: string };
+  trashed_by_name?: string | null;
 };
 
 type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
   accounts: { name: string | null; profile_id?: string | null } | Array<{ name: string | null; profile_id?: string | null }> | null;
   profiles: { name: string | null } | Array<{ name: string | null }> | null;
+  trashed_by_profile?: { name: string | null } | Array<{ name: string | null }> | null;
 };
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
 type LoadMode = "initial" | "full";
+export type AdminVideosView = "pending" | "all" | "trash";
 
 export const ADMIN_VIDEOS_INITIAL_LIMIT = 30;
 const ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT = 60;
 const ADMIN_VIDEOS_FIRST_SCREEN_RPC = "admin_videos_first_screen";
 const VIDEO_ASSET_SELECT =
-  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
+  "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, lifecycle_state, trashed_at, trashed_by, purged_at, purged_by, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name), trashed_by_profile:profiles!videos_trashed_by_fkey(name)";
 const VIDEO_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, captured_at, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, fan_play_ratio, homepage_visits, follower_convert, cover_click_rate, avg_play_duration, completion_rate, bounce_rate_2s, completion_rate_5s, avg_play_ratio";
 
@@ -61,7 +64,7 @@ function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_VIDEOS_INITIAL_LIMIT) : rows;
 }
 
-function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"], fallback: string) {
+function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"] | RawVideoRow["trashed_by_profile"], fallback: string) {
   const row = Array.isArray(value) ? value[0] : value;
   return row?.name ?? fallback;
 }
@@ -79,6 +82,7 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
       profile_id: readJoinedProfileId(row.accounts),
     },
     profiles: { name: readJoinedName(row.profiles, "未命名成员") },
+    trashed_by_name: readJoinedName(row.trashed_by_profile ?? null, "-") || null,
   }));
 }
 
@@ -92,7 +96,7 @@ export async function loadAdminVideosPageData({
   scope,
 }: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all";
+  view?: AdminVideosView;
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   mode?: LoadMode;
@@ -116,10 +120,15 @@ export async function loadAdminVideosPageData({
           },
         })
       : null);
+  if (view === "trash" && (!resolvedScope || !["owner", "team_admin"].includes(resolvedScope.businessRole))) {
+    return emptyAdminVideosPageData(mode);
+  }
+
   let videosQuery = supabase
     .from("videos")
     .select(VIDEO_ASSET_SELECT)
-    .order("published_at", { ascending: false });
+    .eq("lifecycle_state", view === "trash" ? "trashed" : "active")
+    .order(view === "trash" ? "trashed_at" : "published_at", { ascending: false });
   if (mode === "initial") {
     videosQuery = videosQuery.range(0, ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT - 1);
   }
@@ -257,13 +266,13 @@ export async function loadAdminVideosPageData({
 
 export async function loadAdminVideosInitialData(args: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all";
+  view?: AdminVideosView;
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
   scope?: ScopeInput;
 }) {
-  if (!args.scope) {
+  if (!args.scope || args.view === "trash") {
     return loadAdminVideosPageData({
       ...args,
       mode: "initial",
@@ -289,7 +298,7 @@ export async function loadAdminVideosInitialData(args: {
 
 export async function loadAdminVideosFullData(args: {
   supabase: LoaderSupabase;
-  view?: "pending" | "all";
+  view?: AdminVideosView;
   perspective?: AdminDataPerspective;
   teamId?: string | null;
   permissionInfo?: UserPermissionInfo;
@@ -299,6 +308,15 @@ export async function loadAdminVideosFullData(args: {
     ...args,
     mode: "full",
   });
+}
+
+function emptyAdminVideosPageData(mode: LoadMode): AdminVideosPageData {
+  return {
+    videos: [], snapshots: [], profiles: [], accounts: [], videoTags: [], assetLibrary: {},
+    summary: { totalVideos: 0, taggedVideos: 0, snapshotCount: 0, abnormalCount: 0, pendingCount: 0 },
+    assetSummary: { readyCount: 0, pendingLibraryCount: 0, completeCount: 0, partialCount: 0, missingCount: 0, gradedCount: 0 },
+    isPartial: mode === "initial" ? false : undefined,
+  };
 }
 
 export const __internal = {
