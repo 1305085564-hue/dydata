@@ -9,8 +9,10 @@ import { getUserPermissions } from "@/lib/permissions";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getShanghaiDate } from "@/app/api/production/_shared";
 
+import { buildVideoReviewThresholdsGetResponse } from "@/app/api/admin/settings/thresholds/route";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { QuotaConfigPanel } from "./components/quota-config-panel";
+import { ThresholdsConfigPanel } from "./components/thresholds-config-panel";
 
 export const metadata: Metadata = {
   title: "系统维护",
@@ -65,9 +67,15 @@ export default async function AdminSettingsPage() {
   if (!permission) redirect("/login");
   if (!canAccessAdminPath("/admin/settings", permission.businessRole, permission.permissions)) redirect("/admin");
   const isOwner = permission.businessRole === "owner" || permission.role === "owner";
+  const canManageThresholds = isOwner || permission.businessRole === "team_admin";
 
   const supabase = await createClient();
   const today = getShanghaiDate();
+
+  // Fetch current thresholds
+  const thresholdsRes = await buildVideoReviewThresholdsGetResponse();
+  const thresholdsJson = await thresholdsRes.json();
+  const initialThresholds = thresholdsJson.thresholds;
 
   // Fetch current daily target
   const { data: currentQuotaVal } = await supabase.rpc("get_daily_quota", { p_date: today });
@@ -96,10 +104,10 @@ export default async function AdminSettingsPage() {
     <AdminWorkspaceLayout
       eyebrow="系统设置"
       title="系统维护"
-      description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置。"
+      description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置与业务阈值。"
       indexItems={[]}
     >
-      <div className="space-y-10">
+      <div className="space-y-8">
         {/* 系统设置大卡片区 */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <SettingCard
@@ -117,6 +125,12 @@ export default async function AdminSettingsPage() {
             />
           ) : null}
         </div>
+
+        {/* 异常阈值配置区块 */}
+        <ThresholdsConfigPanel
+          initialThresholds={initialThresholds}
+          canManage={canManageThresholds}
+        />
 
         {/* 产量目标配置区块 */}
         <QuotaConfigPanel

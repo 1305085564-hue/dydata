@@ -33,7 +33,10 @@ type VideoRow = Video & {
 };
 
 type FilterOption = Pick<Profile, "id" | "name">;
-type AccountOption = { id: string; name: string };
+import {
+  DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  type VideoReviewThresholds,
+} from "@/lib/video-review-thresholds";
 
 import type { UserPermissionInfo } from "@/lib/permissions";
 
@@ -336,6 +339,20 @@ export function ContentList({
   const [trashSingleVideo, setTrashSingleVideo] = useState<VideoRow | null>(null);
   const [showBatchTrashConfirm, setShowBatchTrashConfirm] = useState(false);
   const [isBatchTrashing, setIsBatchTrashing] = useState(false);
+  const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
+
+  useEffect(() => {
+    fetch("/api/admin/settings/thresholds")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.thresholds) {
+          setThresholds(data.thresholds);
+        }
+      })
+      .catch(() => {
+        // 保持兜底默认阈值
+      });
+  }, []);
 
   const canManageLifecycle = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
 
@@ -1025,7 +1042,7 @@ export function ContentList({
                             onSelectVideoId(video.id);
                           }}
                           className={[
-                            "group border-b border-stone-100 hover:bg-stone-50/80 cursor-pointer transition-colors duration-150",
+                            "group relative border-b border-stone-100 hover:bg-white hover:shadow-[0_4px_14px_-2px_rgba(0,0,0,0.06)] hover:z-10 cursor-pointer transition-all duration-200 ease-out",
                             isNewBatch && "animate-fade-in-up",
                           ].filter(Boolean).join(" ")}
                           style={
@@ -1057,37 +1074,50 @@ export function ContentList({
                           {/* 排名 */}
                           <TableCell className="py-3 text-center text-[13px] tabular-nums text-stone-500 w-12">
                             {filters.sortMode === "priority" && index === 0 ? (
-                              <span className="font-bold text-[#D99E55] text-[13px]">1</span>
+                              <span className="font-bold text-[#D99E55] text-[13px] drop-shadow-[0_1px_1px_rgba(217,158,85,0.15)]">1</span>
                             ) : filters.sortMode === "priority" && index === 1 ? (
-                              <span className="font-semibold text-stone-800 text-[13px]">2</span>
+                              <span className="font-bold text-stone-800 text-[13px]">2</span>
                             ) : filters.sortMode === "priority" && index === 2 ? (
-                              <span className="font-semibold text-[#B87333] text-[13px]">3</span>
+                              <span className="font-bold text-[#B87333] text-[13px]">3</span>
                             ) : (
-                              <span className="text-[12px] font-medium text-stone-500">{index + 1}</span>
+                              <span className="text-[12px] font-medium text-stone-400 group-hover:text-stone-700 transition-colors">{index + 1}</span>
                             )}
                           </TableCell>
                           
                           {/* 视频信息标题 */}
                           <TableCell className="w-[160px] max-w-[160px] py-3">
-                            <div className="line-clamp-2 text-[13px] font-medium text-stone-900 leading-tight" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                            <div className="line-clamp-2 text-[13px] font-medium text-stone-900 leading-tight group-hover:text-[#D97757] transition-colors" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                               {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                             </div>
                           </TableCell>
                           
                           {/* 作者与账号 */}
                           <TableCell className="text-[13px] text-stone-700 py-3">
-                            <span className="font-medium">{video.profiles.name}</span>
-                            <span className="mx-1 text-stone-400">·</span>
+                            <span className="font-medium text-stone-800">{video.profiles.name}</span>
+                            <span className="mx-1 text-stone-300">·</span>
                             <span className="text-stone-500 text-[12px]">{video.accounts.name}</span>
                           </TableCell>
 
                           {/* 2s跳出 */}
                           <TableCell className="py-3 text-right text-[13px] tabular-nums">
                             {snap?.bounce_rate_2s != null ? (
-                              <span className={snap.bounce_rate_2s >= 45 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
-                                {snap.bounce_rate_2s >= 45 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
-                                {formatRate(snap.bounce_rate_2s)}
-                              </span>
+                              snap.bounce_rate_2s > thresholds.bounce_rate_2s ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="cursor-default">
+                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
+                                        {formatRate(snap.bounce_rate_2s)}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="text-[12px]">
+                                      2s跳出率高达 {formatRate(snap.bounce_rate_2s)}（高于警戒线 {thresholds.bounce_rate_2s}%）
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-stone-700 font-medium">{formatRate(snap.bounce_rate_2s)}</span>
+                              )
                             ) : (
                               <span className="text-stone-300">-</span>
                             )}
@@ -1096,10 +1126,23 @@ export function ContentList({
                           {/* 5s完播 */}
                           <TableCell className="py-3 text-right text-[13px] tabular-nums">
                             {snap?.completion_rate_5s != null ? (
-                              <span className={snap.completion_rate_5s < 35 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
-                                {snap.completion_rate_5s < 35 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
-                                {formatRate(snap.completion_rate_5s)}
-                              </span>
+                              snap.completion_rate_5s < thresholds.completion_rate_5s ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="cursor-default">
+                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
+                                        {formatRate(snap.completion_rate_5s)}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="text-[12px]">
+                                      5s完播率仅 {formatRate(snap.completion_rate_5s)}（低于警戒线 {thresholds.completion_rate_5s}%）
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-stone-700 font-medium">{formatRate(snap.completion_rate_5s)}</span>
+                              )
                             ) : (
                               <span className="text-stone-300">-</span>
                             )}
@@ -1108,10 +1151,23 @@ export function ContentList({
                           {/* 均播 */}
                           <TableCell className="py-3 text-right text-[13px] tabular-nums">
                             {snap?.avg_play_duration != null ? (
-                              <span className={snap.avg_play_duration < 8 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
-                                {snap.avg_play_duration < 8 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
-                                {snap.avg_play_duration.toFixed(1)}s
-                              </span>
+                              snap.avg_play_duration < thresholds.avg_play_duration ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="cursor-default">
+                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
+                                        {snap.avg_play_duration.toFixed(1)}s
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="text-[12px]">
+                                      均播时长仅 {snap.avg_play_duration.toFixed(1)}s（低于警戒线 {thresholds.avg_play_duration}s）
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-stone-700 font-medium">{snap.avg_play_duration.toFixed(1)}s</span>
+                              )
                             ) : (
                               <span className="text-stone-300">-</span>
                             )}
@@ -1120,10 +1176,23 @@ export function ContentList({
                           {/* 完播 */}
                           <TableCell className="py-3 text-right text-[13px] tabular-nums">
                             {snap?.completion_rate != null ? (
-                              <span className={snap.completion_rate < 18 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
-                                {snap.completion_rate < 18 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
-                                {formatRate(snap.completion_rate)}
-                              </span>
+                              snap.completion_rate < thresholds.completion_rate ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="cursor-default">
+                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
+                                        {formatRate(snap.completion_rate)}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="text-[12px]">
+                                      完播率仅 {formatRate(snap.completion_rate)}（低于警戒线 {thresholds.completion_rate}%）
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <span className="text-stone-700 font-medium">{formatRate(snap.completion_rate)}</span>
+                              )
                             ) : (
                               <span className="text-stone-300">-</span>
                             )}
@@ -1132,12 +1201,28 @@ export function ContentList({
                           {/* 播放量 */}
                           <TableCell className="text-right text-[13px] tabular-nums text-stone-700 py-3 font-medium">
                             {snap ? (
-                              <PlayCountWithSignal video={video} playCount={snap.play_count} />
+                              snap.play_count != null && snap.play_count < thresholds.play_count ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger className="cursor-default">
+                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
+                                        <PlayCountWithSignal video={video} playCount={snap.play_count} />
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="text-[12px]">
+                                      播放量仅 {formatNumber(snap.play_count)}（低于警戒线 {thresholds.play_count}）
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : (
+                                <PlayCountWithSignal video={video} playCount={snap.play_count} />
+                              )
                             ) : "-"}
                           </TableCell>
                           
                           {/* 发布时间 */}
-                          <TableCell className="text-[13px] text-stone-500 py-3">
+                          <TableCell className="text-[12px] text-stone-500 py-3 font-normal">
                             {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                           </TableCell>
                           
@@ -1147,17 +1232,17 @@ export function ContentList({
                               <div className="flex flex-col gap-1 items-start">
                                 <Badge
                                   variant="outline"
-                                  className={`text-[12px] ${workflowStatusClass[cardStatus] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
+                                  className={`text-[12px] transition-all duration-150 ${workflowStatusClass[cardStatus] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
                                 >
                                   {card.workflow_label}
                                 </Badge>
                                 {card.employee_reply_status && card.employee_reply_status !== "pending" && (
                                   <Badge
                                     variant="outline"
-                                    className={`text-[12px] -translate-x-1 ${
+                                    className={`text-[11px] ${
                                       card.employee_reply_status === "acknowledged"
-                                        ? "border-[#6FAA7D]/15 bg-[#6FAA7D]/[0.04] text-[#6FAA7D] font-medium"
-                                        : "border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium"
+                                        ? "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.06] text-[#6FAA7D] font-medium"
+                                        : "border-[#D99E55]/20 bg-[#D99E55]/[0.06] text-[#D99E55] font-medium"
                                     }`}
                                   >
                                     {card.employee_reply_status === "acknowledged" ? "已回传：采纳" : "已回传：申诉"}
@@ -1167,12 +1252,12 @@ export function ContentList({
                             ) : readiness ? (
                               <Badge
                                 variant="outline"
-                                className={`text-[12px] ${readinessClass[readiness.status] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
+                                className={`text-[12px] transition-all duration-150 ${readinessClass[readiness.status] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
                               >
                                 {readiness.label}
                               </Badge>
                             ) : (
-                              <span className="text-[12px] text-stone-500">未生成</span>
+                              <span className="text-[12px] text-stone-400">未生成</span>
                             )}
                           </TableCell>
 
