@@ -16,21 +16,19 @@ import type {
   TopicSuggestionItem,
 } from "@/app/(app)/content-tools/types";
 import { callAiJson } from "@/lib/ai/client";
+import { generateTopicRecommendations } from "@/lib/topics/recommendations";
 import { breakoutCoefficient, getAccountBaseline } from "@/lib/video-metrics";
 import { createClient } from "@/lib/supabase/server";
-import type { MarketContextDaily, VideoMetricsSnapshot, VideoTag } from "@/types";
+import type { VideoMetricsSnapshot, VideoTag } from "@/types";
 
 import {
   isContentToolsAction,
   parseTemplateCategories,
-  parseTopicSuggestions,
 } from "./helpers";
-import { MARKET_CONTEXT_SELECT, SNAPSHOT_SELECT, VIDEO_TAG_SELECT } from "./data-fields";
+import { SNAPSHOT_SELECT, VIDEO_TAG_SELECT } from "./data-fields";
 
 type ContentSnapshot = Pick<VideoMetricsSnapshot, "video_id" | "play_count">;
 type ContentVideoTag = Pick<VideoTag, "video_id" | "tag_dimension" | "tag_value">;
-type ContentMarketContext = Pick<MarketContextDaily, "context_date" | "market_change" | "market_sentiment" | "hot_sectors">;
-
 type VideoRow = {
   id: string;
   user_id: string;
@@ -97,10 +95,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
 function extractAccountMeta(accounts: VideoRow["accounts"]) {
   if (Array.isArray(accounts)) {
     return {
@@ -113,34 +107,6 @@ function extractAccountMeta(accounts: VideoRow["accounts"]) {
     name: accounts?.name ?? null,
     contentDirection: accounts?.content_direction ?? null,
   };
-}
-
-function buildTopicPrompt(samples: BreakoutSample[], market: ContentMarketContext | null, limit: number) {
-  const evidence = samples.slice(0, 8).map((sample) => ({
-    title: sample.title,
-    accountName: sample.accountName,
-    contentDirection: sample.contentDirection,
-    playCount24h: sample.playCount24h,
-    breakoutCoefficient: Number(sample.breakoutValue.toFixed(2)),
-    tags: sample.tags.map((tag) => `${tag.tag_dimension}:${tag.tag_value}`),
-  }));
-
-  return [
-    "你是抖音金融内容选题策划。",
-    "任务：结合近期爆款视频标签分布和市场热点，输出 3-5 个短视频选题。",
-    "只输出 JSON，不要 Markdown，不要代码块，不要额外解释。",
-    '{"suggestions":[{"title":"...","category":"...","angle":"...","expectedPerformance":"...","evidence":"...","referenceVideos":[{"videoId":"...","title":"...","accountName":"...","playCount24h":12345,"breakoutCoefficient":2.1}]}]}',
-    "要求：1. 选题可直接拍。2. category 填题材，angle 填切入角度。3. expectedPerformance 用相对描述。4. evidence 必须引用样本分布或市场热点。",
-    `建议数量：${limit}`,
-    `最新市场环境：${market ? JSON.stringify({
-      date: market.context_date,
-      sentiment: market.market_sentiment,
-      hotSectors: market.hot_sectors,
-      marketChange: market.market_change,
-    }) : "无"}`,
-    "爆款样本：",
-    JSON.stringify(evidence, null, 2),
-  ].join("\n");
 }
 
 function buildTemplatePrompt(groupedSamples: Array<{ category: string; samples: BreakoutSample[] }>) {
@@ -219,18 +185,6 @@ async function loadTags(videoIds: string[]) {
   return (data ?? []) as ContentVideoTag[];
 }
 
-async function loadLatestMarketContext() {
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from("market_context_daily")
-    .select(MARKET_CONTEXT_SELECT)
-    .order("context_date", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return (data ?? null) as ContentMarketContext | null;
-}
-
 function buildSnapshotMap(snapshots: ContentSnapshot[]) {
   return new Map(snapshots.map((snapshot) => [snapshot.video_id, snapshot]));
 }
@@ -286,72 +240,18 @@ function calculateBreakoutSamples(videos: VideoRow[], snapshots: ContentSnapshot
     .sort((a, b) => b.playCount24h - a.playCount24h);
 }
 
-function buildEvidenceSummary(samples: BreakoutSample[], market: ContentMarketContext | null) {
-  const topicCount = new Map<string, number>();
-  for (const sample of samples) {
-    for (const tag of sample.tags) {
-      if (tag.tag_dimension !== "题材") continue;
-      topicCount.set(tag.tag_value, (topicCount.get(tag.tag_value) ?? 0) + 1);
-    }
-  }
-
-  const topTopics = [...topicCount.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([tag, count]) => `${tag} 标签在爆款样本中出现 ${count} 次`);
-
-  const topSamples = samples
-    .slice(0, 2)
-    .map((sample) => `${sample.accountName ?? "未知账号"}《${sample.title ?? "未命名视频"}》24h 播放 ${sample.playCount24h}`);
-
-  return [
-    ...topTopics,
-    ...topSamples,
-    market?.hot_sectors?.length ? `最新热点板块：${market.hot_sectors.join("、")}` : "暂无市场热点板块数据",
-  ].slice(0, 4);
-}
-
 async function handleTopicSuggest(
   userId: string,
   body: Extract<ContentToolsRequest, { action: "topic_suggest" }>,
 ): Promise<TopicSuggestResult> {
-  const today = new Date().toISOString().split("T")[0];
-  const startDate = getDateDaysAgo(today, body.days ?? 14);
-  const videos = await loadScopedVideos({ userId, accountId: body.accountId, startDate });
-  const videoIds = videos.map((video) => video.id);
-  const [snapshots, tags, market] = await Promise.all([
-    load24hSnapshots(videoIds),
-    loadTags(videoIds),
-    loadLatestMarketContext(),
-  ]);
-
-  const tagMap = buildTagMap(tags);
-  const breakoutSamples = calculateBreakoutSamples(videos, snapshots, tagMap)
-    .filter((sample) => sample.breakoutValue >= 1.2)
-    .slice(0, 12);
-
-  if (breakoutSamples.length === 0) {
-    return {
-      suggestions: [],
-      evidenceSummary: ["当前时间范围内暂无高播放样本，建议扩大时间范围后重试。"],
-      sampleCount: 0,
-      marketDate: market?.context_date ?? null,
-    };
-  }
-
-  const prompt = buildTopicPrompt(breakoutSamples, market, Math.min(body.limit ?? 4, 5));
-  const content = await generateAiJson(prompt);
-  const suggestions = parseTopicSuggestions(content);
-  if (!suggestions) {
-    throw new Error("AI 返回的选题建议解析失败");
-  }
-
-  return {
-    suggestions,
-    evidenceSummary: buildEvidenceSummary(breakoutSamples, market),
-    sampleCount: breakoutSamples.length,
-    marketDate: market?.context_date ?? null,
-  };
+  return generateTopicRecommendations({
+    supabase: createServiceClient(),
+    visibleUserIds: [userId],
+    days: body.days ?? 14,
+    accountId: body.accountId,
+    limit: body.limit,
+    dateColumn: "created_at",
+  });
 }
 
 function chooseCategory(sample: BreakoutSample) {

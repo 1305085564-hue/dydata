@@ -5,11 +5,13 @@ export const TOPIC_POOL_VIEWS = ["all", "my_claims", "my_created"] as const;
 export const TOPIC_TIME_RANGES = ["3d", "1w", "1m", "3m"] as const;
 export const TOPIC_CLAIM_STATUSES = ["candidate", "scripting", "returned"] as const;
 export const TOPIC_WORK_SORTS = ["best", "recent"] as const;
+export const TOPIC_COMPARISON_DIMENSIONS = ["topic", "account"] as const;
 
 export type TopicPoolView = (typeof TOPIC_POOL_VIEWS)[number];
 export type TopicTimeRange = (typeof TOPIC_TIME_RANGES)[number];
 export type TopicClaimStatus = (typeof TOPIC_CLAIM_STATUSES)[number];
 export type TopicWorkSort = (typeof TOPIC_WORK_SORTS)[number];
+export type TopicComparisonDimension = (typeof TOPIC_COMPARISON_DIMENSIONS)[number];
 
 type TopicSupabase = SupabaseClient;
 
@@ -49,6 +51,20 @@ export interface TopicPoolQueryOptions {
   topicId: string | null;
   page: number;
   pageSize: number;
+}
+
+export interface TopicComparisonQueryOptions {
+  dimension: TopicComparisonDimension;
+  days: number;
+  topicId: string | null;
+}
+
+export interface TopicComparisonInputRow {
+  topicId: string;
+  topicName: string;
+  accountId: string | null;
+  accountName: string | null;
+  playCount: number;
 }
 
 export type ApiFailure = {
@@ -225,6 +241,28 @@ export function buildWorksQueryOptions(searchParams: URLSearchParams):
   };
 }
 
+export function buildTopicComparisonQueryOptions(searchParams: URLSearchParams):
+  | { ok: true; options: TopicComparisonQueryOptions }
+  | ApiFailure {
+  const dimension = searchParams.get("dimension") ?? "topic";
+  if (!isOneOf(TOPIC_COMPARISON_DIMENSIONS, dimension)) {
+    return { ok: false, status: 400, message: "dimension 只能是 topic 或 account" };
+  }
+
+  const rawDays = searchParams.get("days");
+  const days = rawDays === null ? 30 : Number(rawDays);
+  if (!Number.isInteger(days) || days < 1 || days > 90) {
+    return { ok: false, status: 400, message: "days 必须是 1 到 90 之间的整数" };
+  }
+
+  const topicId = searchParams.get("topicId")?.trim() || null;
+  if (topicId && !isUuidLike(topicId)) {
+    return { ok: false, status: 400, message: "topicId 格式不正确" };
+  }
+
+  return { ok: true, options: { dimension, days, topicId } };
+}
+
 export function validateCandidateClaimLimit(input: { currentCandidateCount: number; alreadyCandidate: boolean }) {
   if (input.alreadyCandidate || input.currentCandidateCount < MAX_CANDIDATE_CLAIMS) {
     return { ok: true as const };
@@ -284,6 +322,104 @@ export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWo
     averagePlayCount: qualified.length ? Math.round(totalPlayCount / qualified.length) : null,
     bestCopy: best?.content ?? null,
     latestCopy: latest?.content ?? null,
+  };
+}
+
+export function buildClaimActivity(
+  rows: Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>,
+  scope: DataAccessScope,
+) {
+  const candidateCount = rows.filter((row) => row.status === "candidate").length;
+  const scriptingCount = rows.filter((row) => row.status === "scripting").length;
+  const claims = applyScope(rows, scope)
+    .filter((row) => row.status === "candidate" || row.status === "scripting")
+    .map((row) => {
+      const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+      const displayName = typeof (profile as { name?: unknown } | null)?.name === "string"
+        ? (profile as { name: string }).name
+        : "未命名成员";
+      return {
+        userId: String(row.user_id),
+        displayName,
+        status: row.status as Extract<TopicClaimStatus, "candidate" | "scripting">,
+        claimedAt: typeof row.claimed_at === "string" ? row.claimed_at : null,
+      };
+    })
+    .sort((a, b) => {
+      const statusOrder = Number(b.status === "scripting") - Number(a.status === "scripting");
+      if (statusOrder !== 0) return statusOrder;
+      return (Date.parse(b.claimedAt ?? "") || 0) - (Date.parse(a.claimedAt ?? "") || 0);
+    });
+
+  return { claims, candidateCount, scriptingCount };
+}
+
+export function buildTopicComparisonRows(rows: TopicComparisonInputRow[], dimension: TopicComparisonDimension) {
+  const aggregates = new Map<string, TopicComparisonInputRow[]>();
+  for (const row of rows) {
+    const key = dimension === "topic" ? row.topicId : `${row.topicId}:${row.accountId ?? "unassigned"}`;
+    const current = aggregates.get(key) ?? [];
+    current.push(row);
+    aggregates.set(key, current);
+  }
+
+  return [...aggregates.values()]
+    .map((items) => {
+      const first = items[0]!;
+      const workCount = items.length;
+      const qualifiedCount = items.filter((item) => item.playCount >= 1000).length;
+      const totalPlayCount = items.reduce((total, item) => total + item.playCount, 0);
+      const base = {
+        topicId: first.topicId,
+        topicName: first.topicName,
+        workCount,
+        qualifiedCount,
+        qualifiedRate: workCount ? qualifiedCount / workCount : 0,
+        avgPlayCount: workCount ? Math.round(totalPlayCount / workCount) : 0,
+        bestPlayCount: Math.max(...items.map((item) => item.playCount)),
+        lowConfidence: workCount < 3,
+      };
+      return dimension === "account"
+        ? { ...base, accountId: first.accountId, accountName: first.accountName }
+        : base;
+    })
+    .sort(
+      (a, b) =>
+        b.qualifiedRate - a.qualifiedRate ||
+        b.avgPlayCount - a.avgPlayCount ||
+        b.workCount - a.workCount ||
+        a.topicName.localeCompare(b.topicName, "zh-Hans-CN"),
+    );
+}
+
+export function buildWorthRedoingTopics(
+  rows: Array<Record<string, unknown> & { id?: string; title?: string; summary: TopicWorkSummary }>,
+) {
+  return rows
+    .filter((row) => row.summary.qualifiedWorkCount >= 1)
+    .sort((a, b) => (b.summary.averagePlayCount ?? 0) - (a.summary.averagePlayCount ?? 0));
+}
+
+export function validateRecommendationSubTopicInput(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return { ok: false as const, status: 400, message: "请求体格式不正确" };
+  }
+
+  const payload = body as Record<string, unknown>;
+  const title = normalizeText(payload.title, 120);
+  const hook = normalizeText(payload.angle, 500);
+  if (!title) return { ok: false as const, status: 400, message: "title 为必填项" };
+  if (!hook) return { ok: false as const, status: 400, message: "angle 为必填项" };
+
+  return {
+    ok: true as const,
+    value: {
+      title,
+      hook,
+      category: normalizeOptionalText(payload.category, 120),
+      emotionTag: normalizeOptionalText(payload.emotion_tag, 40),
+      audience: normalizeOptionalText(payload.audience, 80),
+    },
   };
 }
 
@@ -347,6 +483,37 @@ export async function createSubTopic(supabase: TopicSupabase, userId: string, bo
   const { data, error } = await supabase.from("sub_topics").insert(payload).select("*").single();
   if (error) return { ok: false, status: 500, message: error.message };
   return { ok: true, value: data };
+}
+
+export async function createSubTopicFromRecommendation(
+  supabase: TopicSupabase,
+  userId: string,
+  body: unknown,
+): Promise<ApiResult<unknown>> {
+  const validation = validateRecommendationSubTopicInput(body);
+  if (!validation.ok) return validation;
+  if (!validation.value.category) {
+    return { ok: false, status: 400, message: "category 未匹配到现有母题，不能采纳该建议" };
+  }
+
+  const { data: topic, error } = await supabase
+    .from("topics")
+    .select("id")
+    .eq("name", validation.value.category)
+    .maybeSingle();
+  if (error) return { ok: false, status: 500, message: "查询母题失败" };
+  if (!topic) {
+    return { ok: false, status: 400, message: "category 未匹配到现有母题，不能采纳该建议" };
+  }
+
+  return createSubTopic(supabase, userId, {
+    title: validation.value.title,
+    hook: validation.value.hook,
+    topic_id: (topic as { id: string }).id,
+    emotion_tag: validation.value.emotionTag,
+    audience: validation.value.audience,
+    source: "ai_recommendation",
+  });
 }
 
 export async function updateSubTopic(supabase: TopicSupabase, userId: string, id: string, body: unknown): Promise<ApiResult<unknown>> {
@@ -641,13 +808,123 @@ export async function loadActiveTopics(supabase: TopicSupabase, scope: DataAcces
     .limit(limit);
   if (createdError) return { ok: false, status: 500, message: createdError.message };
 
+  let worthRedoingQuery = supabase
+    .from("videos")
+    .select("topic_id, user_id, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name))")
+    .eq("lifecycle_state", "active")
+    .not("topic_id", "is", null);
+  if (scope.kind !== "all") worthRedoingQuery = worthRedoingQuery.in("user_id", scope.visibleUserIds);
+  const { data: worthRedoingWorks, error: worthRedoingError } = await worthRedoingQuery;
+  if (worthRedoingError) return { ok: false, status: 500, message: "加载值得再做选题失败" };
+
+  const subTopicsById = new Map<string, Record<string, unknown>>();
+  for (const work of (worthRedoingWorks ?? []) as Array<Record<string, unknown>>) {
+    const subTopic = Array.isArray(work.sub_topics) ? work.sub_topics[0] : work.sub_topics;
+    if (!subTopic || typeof (subTopic as { id?: unknown }).id !== "string") continue;
+    subTopicsById.set((subTopic as { id: string }).id, subTopic as Record<string, unknown>);
+  }
+
+  let worthRedoing: Array<Record<string, unknown>> = [];
+  try {
+    const summaries = await loadTopicSummaries(supabase, [...subTopicsById.keys()], scope);
+    worthRedoing = buildWorthRedoingTopics(
+      [...subTopicsById.values()].map((subTopic) => ({
+        ...subTopic,
+        summary: summaries.get(String(subTopic.id)) ?? calculateTopicWorkSummary([]),
+      })),
+    ).slice(0, limit);
+  } catch {
+    return { ok: false, status: 500, message: "加载值得再做选题失败" };
+  }
+
   return {
     ok: true,
     value: {
       recentlyClaimed: claims ?? [],
       recentlyWorked: (works ?? []).slice(0, limit),
       recentlyCreated: created ?? [],
+      worthRedoing,
     },
+  };
+}
+
+export async function loadSubTopicClaimActivity(
+  supabase: TopicSupabase,
+  subTopicId: string,
+  scope: DataAccessScope,
+): Promise<ApiResult<unknown>> {
+  const { data, error } = await supabase
+    .from("sub_topic_claims")
+    .select("user_id, status, claimed_at, profiles(name)")
+    .eq("sub_topic_id", subTopicId)
+    .neq("status", "returned");
+  if (error) return { ok: false, status: 500, message: "加载认领动态失败" };
+
+  return {
+    ok: true,
+    value: buildClaimActivity((data ?? []) as Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>, scope),
+  };
+}
+
+export async function loadTopicComparison(
+  supabase: TopicSupabase,
+  scope: DataAccessScope,
+  options: TopicComparisonQueryOptions,
+): Promise<ApiResult<unknown>> {
+  const since = new Date(Date.now() - options.days * 24 * 60 * 60 * 1000).toISOString();
+  let videosQuery = supabase
+    .from("videos")
+    .select("id, user_id, account_id, sub_topics!inner(topic_id, topics!inner(id, name)), accounts(id, name)")
+    .eq("lifecycle_state", "active")
+    .not("topic_id", "is", null)
+    .gte("uploaded_at", since);
+  if (scope.kind !== "all") videosQuery = videosQuery.in("user_id", scope.visibleUserIds);
+  if (options.topicId) videosQuery = videosQuery.eq("sub_topics.topic_id", options.topicId);
+
+  const { data: videos, error: videosError } = await videosQuery;
+  if (videosError) return { ok: false, status: 500, message: "加载对比作品失败" };
+  const videoRows = (videos ?? []) as Array<Record<string, unknown>>;
+  const videoIds = videoRows.map((row) => String(row.id)).filter(Boolean);
+  if (!videoIds.length) {
+    return { ok: true, value: { dimension: options.dimension, windowDays: options.days, rows: [], sampleTotal: 0 } };
+  }
+
+  const { data: snapshots, error: snapshotsError } = await supabase
+    .from("video_metrics_snapshots")
+    .select("video_id, play_count, captured_at")
+    .in("video_id", videoIds)
+    .eq("snapshot_type", "24h")
+    .order("captured_at", { ascending: false });
+  if (snapshotsError) return { ok: false, status: 500, message: "加载播放数据失败" };
+
+  const playCountByVideoId = new Map<string, number>();
+  for (const snapshot of (snapshots ?? []) as Array<{ video_id?: string | null; play_count?: number | null }>) {
+    if (!snapshot.video_id || playCountByVideoId.has(snapshot.video_id)) continue;
+    playCountByVideoId.set(snapshot.video_id, Number(snapshot.play_count ?? 0));
+  }
+
+  const comparisonInputs: TopicComparisonInputRow[] = [];
+  for (const video of videoRows) {
+    const subTopic = Array.isArray(video.sub_topics) ? video.sub_topics[0] : video.sub_topics;
+    const topic = Array.isArray((subTopic as { topics?: unknown } | null)?.topics)
+      ? ((subTopic as { topics: Array<Record<string, unknown>> }).topics[0] ?? null)
+      : (subTopic as { topics?: Record<string, unknown> | null } | null)?.topics ?? null;
+    const account = Array.isArray(video.accounts) ? video.accounts[0] : video.accounts;
+    const playCount = playCountByVideoId.get(String(video.id));
+    if (!topic || playCount === undefined) continue;
+    comparisonInputs.push({
+      topicId: String((topic as { id?: string }).id ?? ""),
+      topicName: String((topic as { name?: string }).name ?? "未分类"),
+      accountId: typeof (account as { id?: unknown } | null)?.id === "string" ? (account as { id: string }).id : null,
+      accountName: typeof (account as { name?: unknown } | null)?.name === "string" ? (account as { name: string }).name : null,
+      playCount,
+    });
+  }
+
+  const rows = buildTopicComparisonRows(comparisonInputs, options.dimension);
+  return {
+    ok: true,
+    value: { dimension: options.dimension, windowDays: options.days, rows, sampleTotal: comparisonInputs.length },
   };
 }
 

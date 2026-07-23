@@ -14,7 +14,7 @@ const UUID_PATH_RULES = [
   /^\/api\/rewrite\/documents\/([^/]+)(?:\/(?:history|paragraphs|revisions))?$/,
   /^\/api\/rewrite\/paragraphs\/([^/]+)\/undo$/,
   /^\/api\/rewrite\/skills\/([^/]+)$/,
-  /^\/api\/topics\/sub-topics\/((?!suggest$)[^/]+)(?:\/(?:claim|return|start-scripting|works))?$/,
+  /^\/api\/topics\/sub-topics\/((?!(?:suggest|from-recommendation)$)[^/]+)(?:\/(?:claim|claims|return|start-scripting|works))?$/,
   /^\/api\/violations\/((?!(?:batch-review|dashboard-summary|import|review|screenshot|upload|visual-tags)$)[^/]+)(?:\/(?:review|test|visual-tags))?$/,
   /^\/api\/violations\/visual-tags\/([^/]+)$/,
   /^\/api\/work-submissions\/([^/]+)$/,

@@ -3,12 +3,17 @@ import assert from "node:assert/strict";
 import type { DataAccessScope } from "../data-access-scope";
 
 import {
+  buildClaimActivity,
+  buildTopicComparisonQueryOptions,
+  buildTopicComparisonRows,
   buildPoolQueryOptions,
+  buildWorthRedoingTopics,
   calculateTopicWorkSummary,
   filterTopicClaimsByScope,
   loadTopicPool,
   matchTopicGroup,
   rankSuggestedSubTopics,
+  validateRecommendationSubTopicInput,
   validateCandidateClaimLimit,
 } from "./service";
 
@@ -224,4 +229,137 @@ test("子题汇总只统计播放量不低于 1000 的作品", () => {
   assert.equal(summary.averagePlayCount, 2000);
   assert.equal(summary.bestCopy, "更好文案");
   assert.equal(summary.latestCopy, "更好文案");
+});
+
+test("认领动态隐藏范围外身份但保留全量撞车计数和写稿优先排序", () => {
+  const result = buildClaimActivity(
+    [
+      { user_id: "user-1", status: "candidate", claimed_at: "2026-07-20T08:00:00.000Z", profiles: { name: "小王" } },
+      { user_id: "user-2", status: "scripting", claimed_at: "2026-07-21T08:00:00.000Z", profiles: { name: "小李" } },
+      { user_id: "user-3", status: "candidate", claimed_at: "2026-07-22T08:00:00.000Z", profiles: { name: "小周" } },
+    ],
+    { kind: "self", visibleUserIds: ["user-1", "user-2"] } as DataAccessScope,
+  );
+
+  assert.equal(result.candidateCount, 2);
+  assert.equal(result.scriptingCount, 1);
+  assert.deepEqual(result.claims, [
+    { userId: "user-2", displayName: "小李", status: "scripting", claimedAt: "2026-07-21T08:00:00.000Z" },
+    { userId: "user-1", displayName: "小王", status: "candidate", claimedAt: "2026-07-20T08:00:00.000Z" },
+  ]);
+});
+
+test("横向对比按账号和母题聚合，按达标率排序并标记小样本", () => {
+  const rows = buildTopicComparisonRows(
+    [
+      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 1000 },
+      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 3000 },
+      { topicId: "topic-1", topicName: "美妆", accountId: "account-2", accountName: "B号", playCount: 999 },
+      { topicId: "topic-2", topicName: "穿搭", accountId: "account-1", accountName: "A号", playCount: 2000 },
+    ],
+    "account",
+  );
+
+  assert.deepEqual(rows, [
+    {
+      topicId: "topic-1",
+      topicName: "美妆",
+      accountId: "account-1",
+      accountName: "A号",
+      workCount: 2,
+      qualifiedCount: 2,
+      qualifiedRate: 1,
+      avgPlayCount: 2000,
+      bestPlayCount: 3000,
+      lowConfidence: true,
+    },
+    {
+      topicId: "topic-2",
+      topicName: "穿搭",
+      accountId: "account-1",
+      accountName: "A号",
+      workCount: 1,
+      qualifiedCount: 1,
+      qualifiedRate: 1,
+      avgPlayCount: 2000,
+      bestPlayCount: 2000,
+      lowConfidence: true,
+    },
+    {
+      topicId: "topic-1",
+      topicName: "美妆",
+      accountId: "account-2",
+      accountName: "B号",
+      workCount: 1,
+      qualifiedCount: 0,
+      qualifiedRate: 0,
+      avgPlayCount: 999,
+      bestPlayCount: 999,
+      lowConfidence: true,
+    },
+  ]);
+});
+
+test("横向对比参数只接受两种维度、有效天数和合法母题 ID", () => {
+  assert.deepEqual(buildTopicComparisonQueryOptions(new URLSearchParams()), {
+    ok: true,
+    options: { dimension: "topic", days: 30, topicId: null },
+  });
+  assert.deepEqual(buildTopicComparisonQueryOptions(new URLSearchParams("dimension=video")), {
+    ok: false,
+    status: 400,
+    message: "dimension 只能是 topic 或 account",
+  });
+  assert.deepEqual(buildTopicComparisonQueryOptions(new URLSearchParams("days=0")), {
+    ok: false,
+    status: 400,
+    message: "days 必须是 1 到 90 之间的整数",
+  });
+});
+
+test("值得再做只保留有达标作品的子题并按平均播放倒序", () => {
+  const result = buildWorthRedoingTopics([
+    {
+      id: "sub-1",
+      title: "普通选题",
+      topics: { name: "母题一" },
+      topic_groups: { name: "分组一" },
+      summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestCopy: null, latestCopy: null },
+    },
+    {
+      id: "sub-2",
+      title: "值得复拍",
+      topics: { name: "母题二" },
+      topic_groups: { name: "分组二" },
+      summary: { qualifiedWorkCount: 1, averagePlayCount: 5000, bestCopy: "最佳文案", latestCopy: "最佳文案" },
+    },
+    {
+      id: "sub-3",
+      title: "更值得复拍",
+      topics: { name: "母题三" },
+      topic_groups: null,
+      summary: { qualifiedWorkCount: 2, averagePlayCount: 8000, bestCopy: "更佳文案", latestCopy: "新文案" },
+    },
+  ]);
+
+  assert.deepEqual(result.map((item) => item.id), ["sub-3", "sub-2"]);
+  assert.equal(result[0]?.summary.qualifiedWorkCount, 2);
+});
+
+test("采纳 AI 建议要求标题和切入角度，并保留可选分类和标签", () => {
+  assert.deepEqual(validateRecommendationSubTopicInput({ title: "AI 选题", angle: "从反差切入", category: "常规母题", emotion_tag: "紧迫", audience: "新手" }), {
+    ok: true,
+    value: {
+      title: "AI 选题",
+      hook: "从反差切入",
+      category: "常规母题",
+      emotionTag: "紧迫",
+      audience: "新手",
+    },
+  });
+  assert.deepEqual(validateRecommendationSubTopicInput({ title: "AI 选题" }), {
+    ok: false,
+    status: 400,
+    message: "angle 为必填项",
+  });
 });
