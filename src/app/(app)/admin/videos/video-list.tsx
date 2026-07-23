@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import {
   Table,
@@ -115,6 +123,15 @@ export function VideoList({
   const [assetLibraryState, setAssetLibraryState] = useState(assetLibrary);
   const [isOperating, setIsOperating] = useState<string | null>(null);
   const [confirmPurgeVideoId, setConfirmPurgeVideoId] = useState<string | null>(null);
+
+  /* Batch & Quick Recycle Bin state */
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [trashSingleVideo, setTrashSingleVideo] = useState<VideoRow | null>(null);
+  const [showBatchTrashConfirm, setShowBatchTrashConfirm] = useState(false);
+  const [showBatchRestoreConfirm, setShowBatchRestoreConfirm] = useState(false);
+  const [isBatchOperating, setIsBatchOperating] = useState(false);
+
+  const canManageLifecycle = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
 
   const handleRestore = async (videoId: string) => {
     setIsOperating(videoId);
@@ -253,6 +270,79 @@ export function VideoList({
   const hasMoreLocal = loadedCount < filteredVideos.length;
   const hasMore = hasMoreLocal || hasDeferredData;
 
+  const isAllSelected = useMemo(
+    () => visibleVideos.length > 0 && visibleVideos.every((v) => selectedIds.has(v.id)),
+    [visibleVideos, selectedIds]
+  );
+
+  const toggleSelectAll = useCallback(() => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(visibleVideos.map((v) => v.id)));
+    }
+  }, [isAllSelected, visibleVideos]);
+
+  const handleTrashSingle = useCallback(async () => {
+    if (!trashSingleVideo) return;
+    try {
+      const res = await fetch(`/api/admin/videos/${trashSingleVideo.id}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trash" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
+      feedbackToast.success(`已将作品“${trashSingleVideo.video_title?.trim() || "未命名"}”移入回收站`);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(trashSingleVideo.id);
+        return next;
+      });
+      setTrashSingleVideo(null);
+      onRefresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "移入回收站失败");
+    }
+  }, [trashSingleVideo, onRefresh]);
+
+  const handleBatchLifecycle = useCallback(async (action: "trash" | "restore") => {
+    if (selectedIds.size === 0) return;
+    setIsBatchOperating(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          fetch(`/api/admin/videos/${id}/lifecycle`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action }),
+          }).then(async (res) => {
+            const data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error ?? "操作失败");
+            return id;
+          })
+        )
+      );
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const failCount = results.filter((r) => r.status === "rejected").length;
+      const actionName = action === "trash" ? "移入回收站" : "恢复";
+      if (successCount > 0) {
+        feedbackToast.success(`已成功${actionName} ${successCount} 项视频${failCount > 0 ? `（${failCount} 项处理失败）` : ""}`);
+      } else {
+        feedbackToast.error(`批量${actionName}失败`);
+      }
+      setSelectedIds(new Set());
+      setShowBatchTrashConfirm(false);
+      setShowBatchRestoreConfirm(false);
+      onRefresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "批量操作失败");
+    } finally {
+      setIsBatchOperating(false);
+    }
+  }, [selectedIds, onRefresh]);
+
   const handleFilter = useCallback((value: VideoFilterValue) => {
     setFilters(value);
     setLoadedCount(PAGE_SIZE);
@@ -344,6 +434,15 @@ export function VideoList({
         <Table freezeFirst>
           <TableHeader className="sticky top-0 z-10">
             <TableRow className="border-b border-stone-200 bg-stone-50 hover:bg-stone-50">
+              {canManageLifecycle && (
+                <TableHead className="h-9 w-10 pl-4 pr-0">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="全选"
+                  />
+                </TableHead>
+              )}
               <TableHead className="h-9 px-4 text-[12px] font-medium text-stone-500">视频标题</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
               <TableHead className="h-9 text-[12px] font-medium text-stone-500">负责人</TableHead>
@@ -371,6 +470,22 @@ export function VideoList({
 
                 return (
                   <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-stone-50">
+                    {canManageLifecycle && (
+                      <TableCell className="py-3 pl-4 pr-0" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedIds.has(video.id)}
+                          onCheckedChange={(checked) => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (checked) next.add(video.id);
+                              else next.delete(video.id);
+                              return next;
+                            });
+                          }}
+                          aria-label={`选择 ${video.video_title || "视频"}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="max-w-[280px] whitespace-normal px-4 align-top">
                       <div className="line-clamp-2 text-[13px] font-medium text-stone-900">
                         {video.video_title?.trim() || "未命名视频"}
@@ -398,61 +513,79 @@ export function VideoList({
                       )}
                     </TableCell>
                     <TableCell className="px-4 text-right">
-                      <div className="flex items-center justify-end gap-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
-                        {view === "trash" ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleRestore(video.id)}
-                              disabled={isOperating !== null}
-                              className="text-[12px] text-[#6FAA7D] underline-offset-4 hover:underline disabled:opacity-50"
-                            >
-                              恢复
-                            </button>
-                            {permissionInfo.businessRole === "owner" && (() => {
-                              const eligible = isPurgeEligible(video.trashed_at ?? null);
-                              const tooltip = getPurgeTooltip(video.trashed_at ?? null);
-                              return (
-                                <button
-                                  type="button"
-                                  onClick={() => setConfirmPurgeVideoId(video.id)}
-                                  disabled={!eligible || isOperating !== null}
-                                  title={tooltip || undefined}
-                                  className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-stone-400 disabled:no-underline disabled:cursor-not-allowed"
-                                >
-                                  永久删除
-                                </button>
-                              );
-                            })()}
-                          </>
-                        ) : (
-                          <>
-                            {showPatchButton ? (
+                      {view === "trash" ? (
+                        <div className="flex items-center justify-end gap-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                          <button
+                            type="button"
+                            onClick={() => handleRestore(video.id)}
+                            disabled={isOperating !== null}
+                            className="text-[12px] text-[#6FAA7D] underline-offset-4 hover:underline disabled:opacity-50"
+                          >
+                            恢复
+                          </button>
+                          {permissionInfo.businessRole === "owner" && (() => {
+                            const eligible = isPurgeEligible(video.trashed_at ?? null);
+                            const tooltip = getPurgeTooltip(video.trashed_at ?? null);
+                            return (
                               <button
                                 type="button"
-                                onClick={() => setPatchingVideoId(video.id)}
-                                className="text-[12px] text-[#D97757] underline-offset-4 hover:underline"
+                                onClick={() => setConfirmPurgeVideoId(video.id)}
+                                disabled={!eligible || isOperating !== null}
+                                title={tooltip || undefined}
+                                className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-stone-400 disabled:no-underline disabled:cursor-not-allowed"
                               >
-                                补录24h
+                                永久删除
                               </button>
-                            ) : null}
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                          {showPatchButton ? (
                             <button
                               type="button"
-                              onClick={() => setSelectedVideoId(video.id)}
-                              className="text-[12px] text-stone-700 underline-offset-4 hover:text-stone-900 hover:underline"
+                              onClick={() => setPatchingVideoId(video.id)}
+                              className="text-[12px] text-[#D97757] underline-offset-4 hover:underline"
                             >
-                              查看详情
+                              补录24h
                             </button>
-                          </>
-                        )}
-                      </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVideoId(video.id)}
+                            className="text-[12px] text-stone-700 underline-offset-4 hover:text-stone-900 hover:underline"
+                          >
+                            查看详情
+                          </button>
+                          {canManageLifecycle && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                className="flex size-7 items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                                title="更多操作"
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  className="gap-2 cursor-pointer text-[12px]"
+                                  onClick={() => setTrashSingleVideo(video)}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                  移入回收站
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={view === "trash" ? 6 : 9} className="px-4 py-16 text-center text-[13px] text-stone-500">
+                <TableCell colSpan={view === "trash" ? (canManageLifecycle ? 7 : 6) : (canManageLifecycle ? 10 : 9)} className="px-4 py-16 text-center text-[13px] text-stone-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>
@@ -461,7 +594,7 @@ export function VideoList({
             {/* Sentinel for auto-load */}
             {hasMore && (
               <TableRow>
-                <TableCell colSpan={view === "trash" ? 6 : 9} className="p-0">
+                <TableCell colSpan={view === "trash" ? (canManageLifecycle ? 7 : 6) : (canManageLifecycle ? 10 : 9)} className="p-0">
                   <div ref={sentinelRef} className="h-4" />
                 </TableCell>
               </TableRow>
@@ -579,6 +712,80 @@ export function VideoList({
           </div>
         </div>
       )}
+
+      {/* 悬浮批量操作工具栏 */}
+      {canManageLifecycle && selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-stone-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
+          <span className="text-[13px] font-medium text-stone-700">
+            已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
+          </span>
+          <div className="h-4 w-px bg-stone-200" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-700 text-[12px]"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            取消选择
+          </Button>
+          {view === "trash" ? (
+            <Button
+              size="sm"
+              className="h-8 rounded-xl bg-[#6FAA7D] hover:bg-[#5F996C] text-white text-[12px] gap-1.5 px-3.5 shadow-xs"
+              onClick={() => setShowBatchRestoreConfirm(true)}
+            >
+              <RotateCcw className="size-3.5" />
+              批量恢复作品
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-8 rounded-xl bg-[#C9604D] hover:bg-[#B85340] text-white text-[12px] gap-1.5 px-3.5 shadow-xs"
+              onClick={() => setShowBatchTrashConfirm(true)}
+            >
+              <Trash2 className="size-3.5" />
+              批量移入回收站
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* 单条移入回收站确认弹窗 */}
+      <ConfirmDialog
+        open={trashSingleVideo !== null}
+        onOpenChange={(open) => {
+          if (!open) setTrashSingleVideo(null);
+        }}
+        title="移入回收站确认"
+        description={`确定将作品“${trashSingleVideo?.video_title?.trim() || "未命名"}”移入回收站吗？移入后该作品将在列表中隐藏，可在“回收站”Tab 中随时恢复。`}
+        confirmText="确认移入"
+        destructive
+        onConfirm={handleTrashSingle}
+      />
+
+      {/* 批量移入回收站确认弹窗 */}
+      <ConfirmDialog
+        open={showBatchTrashConfirm}
+        onOpenChange={setShowBatchTrashConfirm}
+        title="批量移入回收站确认"
+        description={`确定将选中的 ${selectedIds.size} 个作品移入回收站吗？移入后这些作品将在列表中隐藏，可在“回收站”Tab 中随时恢复。`}
+        confirmText={isBatchOperating ? "移入中..." : "确认批量移入"}
+        loading={isBatchOperating}
+        destructive
+        onConfirm={() => handleBatchLifecycle("trash")}
+      />
+
+      {/* 批量恢复确认弹窗 */}
+      <ConfirmDialog
+        open={showBatchRestoreConfirm}
+        onOpenChange={setShowBatchRestoreConfirm}
+        title="批量恢复作品确认"
+        description={`确定将选中的 ${selectedIds.size} 个作品从回收站恢复吗？`}
+        confirmText={isBatchOperating ? "恢复中..." : "确认批量恢复"}
+        loading={isBatchOperating}
+        onConfirm={() => handleBatchLifecycle("restore")}
+      />
     </div>
   );
 }

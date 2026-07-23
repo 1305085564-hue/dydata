@@ -300,51 +300,7 @@ export function ContentPageClient({
       id="content-review-list"
       className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-stone-200 bg-white p-5"
     >
-      {anomalyVideos.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 text-[11px] bg-[#FAFAF9] text-stone-600 border border-stone-200 rounded-xl mb-1 hover:border-stone-300 transition-colors">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="relative flex size-1.5 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9604D] opacity-75"></span>
-              <span className="relative inline-flex rounded-full size-1.5 bg-[#C9604D]"></span>
-            </span>
-            <span className="font-semibold text-stone-850">
-              今日异常雷达
-            </span>
-            <span className="text-stone-300">|</span>
-            <span className="flex items-center gap-1 shrink-0">
-              <span>共 {anomalyVideos.length} 条待诊断 </span>
-              <span className="text-stone-300">/</span>
-              {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
-              {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
-              {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
-            </span>
-            <span className="text-stone-300 hidden md:inline">|</span>
-            <span className="text-stone-500 truncate max-w-[280px] hidden md:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
-              最需关注：
-              {anomalyVideos.slice(0, 2).map((v, i) => (
-                <span key={v.id}>
-                  {i > 0 && "、"}
-                  <button
-                    onClick={() => setSelectedVideoId(v.id)}
-                    className="underline decoration-[#D97757]/30 hover:text-[#D97757] font-medium transition-colors"
-                  >
-                    {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
-                  </button>
-                </span>
-              ))}
-              {anomalyVideos.length > 2 && ` 等 ${anomalyVideos.length} 条`}
-            </span>
-          </div>
-          <button
-            onClick={handleDirectReview}
-            className="text-[11px] font-semibold text-[#D97757] hover:text-[#C96442] hover:underline shrink-0"
-          >
-            直接去盘 →
-          </button>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-50 p-0.5">
             <button
@@ -381,55 +337,76 @@ export function ContentPageClient({
             </button>
           </div>
 
-          {canSwitchPerspective ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-50 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => switchPerspective("company")}
-                  disabled={isLoading}
-                  className={[
-                    "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
-                    perspective === "company"
-                      ? "bg-white text-stone-900"
-                      : "text-stone-500 hover:text-stone-700",
-                  ].join(" ")}
-                >
-                  公司视角
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchPerspective("team")}
-                  disabled={isLoading}
-                  className={[
-                    "rounded-md px-3 py-1.5 text-[12px] tracking-tight transition-colors",
-                    perspective === "team"
-                      ? "bg-white text-stone-900"
-                      : "text-stone-500 hover:text-stone-700",
-                  ].join(" ")}
-                >
-                  团队视角
-                </button>
-              </div>
-
-              {perspective === "team" && teams.length > 0 ? (
-                <Select value={teamId ?? teams[0]?.id} onValueChange={switchTeam}>
-                  <SelectTrigger className="h-8 min-w-36 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700">
-                    <SelectValue placeholder="选择团队">
-                      {selectedTeamName ?? undefined}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : null}
-            </div>
+          {/* 团队/公司视角统一选择下拉框 */}
+          {teams.length > 0 || canSwitchPerspective ? (
+            <Select
+              value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
+              onValueChange={(val) => {
+                if (val === "all_company") {
+                  void switchPerspective("company");
+                } else {
+                  void switchTeam(val);
+                }
+              }}
+            >
+              <SelectTrigger className="h-8 min-w-36 rounded-lg border-stone-200 bg-white text-[12px] font-medium text-stone-700 hover:border-stone-300">
+                <SelectValue placeholder="选择范围">
+                  {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {canSwitchPerspective && (
+                  <SelectItem value="all_company" className="text-[12px] font-medium text-stone-900">
+                    全公司 (全部团队)
+                  </SelectItem>
+                )}
+                {teams.map((team) => (
+                  <SelectItem key={team.id} value={team.id} className="text-[12px]">
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ) : null}
+
+          {/* 今日异常雷达内联胶囊 */}
+          {anomalyVideos.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1 text-[11px] bg-[#FAFAF9] text-stone-600 border border-stone-200 rounded-lg hover:border-stone-300 transition-colors">
+              <span className="relative flex size-1.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9604D] opacity-75"></span>
+                <span className="relative inline-flex rounded-full size-1.5 bg-[#C9604D]"></span>
+              </span>
+              <span className="font-semibold text-stone-800">
+                今日异常({anomalyVideos.length})
+              </span>
+              <span className="text-stone-300">·</span>
+              <span className="flex items-center gap-1 shrink-0">
+                {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount}删稿</span>}
+                {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount}限流</span>}
+                {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount}腰斩</span>}
+              </span>
+              <span className="text-stone-300 hidden lg:inline">|</span>
+              <span className="text-stone-500 truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+                最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
+                  <span key={v.id}>
+                    {i > 0 && "、"}
+                    <button
+                      onClick={() => setSelectedVideoId(v.id)}
+                      className="underline decoration-[#D97757]/30 hover:text-[#D97757] font-medium transition-colors"
+                    >
+                      {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
+                    </button>
+                  </span>
+                ))}
+              </span>
+              <button
+                onClick={handleDirectReview}
+                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C96442] hover:underline shrink-0 ml-0.5"
+              >
+                直接去盘 →
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">

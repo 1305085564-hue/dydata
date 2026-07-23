@@ -3,6 +3,14 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -16,7 +24,7 @@ import { getShanghaiDateString } from "@/lib/remind-submission";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Sparkles, Trash2, ArrowDown, ArrowUp, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type VideoRow = Video & {
@@ -323,6 +331,14 @@ export function ContentList({
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [hasUserScrolledList, setHasUserScrolledList] = useState(false);
 
+  /* Batch & Quick Recycle Bin state */
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [trashSingleVideo, setTrashSingleVideo] = useState<VideoRow | null>(null);
+  const [showBatchTrashConfirm, setShowBatchTrashConfirm] = useState(false);
+  const [isBatchTrashing, setIsBatchTrashing] = useState(false);
+
+  const canManageLifecycle = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+
   const snapshotMap = useMemo(() => {
     const map = new Map<string, VideoMetricsSnapshot>();
     for (const s of snapshots) {
@@ -393,6 +409,37 @@ export function ContentList({
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const handleHeaderSortClick = useCallback(
+    (target: "priority" | "user" | "latest" | "play" | "bounce_2s" | "comp_5s" | "avg_dur" | "comp_rate") => {
+      setFilters((prev) => {
+        const current = prev.sortMode;
+        let nextMode: ContentFilterValue["sortMode"] = "priority";
+        if (target === "priority") {
+          nextMode = "priority";
+        } else if (target === "user") {
+          nextMode = current === "user" ? "user_desc" : current === "user_desc" ? "priority" : "user";
+        } else if (target === "play") {
+          nextMode = current === "play" ? "play_asc" : current === "play_asc" ? "priority" : "play";
+        } else if (target === "latest") {
+          nextMode = current === "latest" ? "oldest" : current === "oldest" ? "priority" : "latest";
+        } else if (target === "bounce_2s") {
+          nextMode = current === "bounce_2s" ? "bounce_2s_asc" : current === "bounce_2s_asc" ? "priority" : "bounce_2s";
+        } else if (target === "comp_5s") {
+          nextMode = current === "comp_5s" ? "comp_5s_asc" : current === "comp_5s_asc" ? "priority" : "comp_5s";
+        } else if (target === "avg_dur") {
+          nextMode = current === "avg_dur" ? "avg_dur_asc" : current === "avg_dur_asc" ? "priority" : "avg_dur";
+        } else if (target === "comp_rate") {
+          nextMode = current === "comp_rate" ? "comp_rate_asc" : current === "comp_rate_asc" ? "priority" : "comp_rate";
+        }
+        return { ...prev, sortMode: nextMode };
+      });
+      setLoadedCount(PAGE_SIZE);
+      setNewBatchIds(new Set());
+      tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [],
+  );
+
   const filtered = useMemo(() => {
     const rows = videos.filter((video) => {
       if (filters.profileId !== "all" && video.user_id !== filters.profileId) return false;
@@ -449,9 +496,63 @@ export function ContentList({
         if (nameDiff !== 0) return nameDiff;
         return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
       }
+      if (filters.sortMode === "user_desc") {
+        const nameA = left.profiles?.name || "";
+        const nameB = right.profiles?.name || "";
+        const nameDiff = nameB.localeCompare(nameA, "zh");
+        if (nameDiff !== 0) return nameDiff;
+        return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
+      }
       if (filters.sortMode === "play") {
         const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
         if (playDiff !== 0) return playDiff;
+      }
+      if (filters.sortMode === "play_asc") {
+        const playDiff = getSnapshotPlay(snapshotMap.get(left.id)) - getSnapshotPlay(snapshotMap.get(right.id));
+        if (playDiff !== 0) return playDiff;
+      }
+      if (filters.sortMode === "bounce_2s") {
+        const a = snapshotMap.get(right.id)?.bounce_rate_2s ?? -1;
+        const b = snapshotMap.get(left.id)?.bounce_rate_2s ?? -1;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "bounce_2s_asc") {
+        const a = snapshotMap.get(left.id)?.bounce_rate_2s ?? 999;
+        const b = snapshotMap.get(right.id)?.bounce_rate_2s ?? 999;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "comp_5s") {
+        const a = snapshotMap.get(right.id)?.completion_rate_5s ?? -1;
+        const b = snapshotMap.get(left.id)?.completion_rate_5s ?? -1;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "comp_5s_asc") {
+        const a = snapshotMap.get(left.id)?.completion_rate_5s ?? 999;
+        const b = snapshotMap.get(right.id)?.completion_rate_5s ?? 999;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "avg_dur") {
+        const a = snapshotMap.get(right.id)?.avg_play_duration ?? -1;
+        const b = snapshotMap.get(left.id)?.avg_play_duration ?? -1;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "avg_dur_asc") {
+        const a = snapshotMap.get(left.id)?.avg_play_duration ?? 999;
+        const b = snapshotMap.get(right.id)?.avg_play_duration ?? 999;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "comp_rate") {
+        const a = snapshotMap.get(right.id)?.completion_rate ?? -1;
+        const b = snapshotMap.get(left.id)?.completion_rate ?? -1;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "comp_rate_asc") {
+        const a = snapshotMap.get(left.id)?.completion_rate ?? 999;
+        const b = snapshotMap.get(right.id)?.completion_rate ?? 999;
+        if (a !== b) return a - b;
+      }
+      if (filters.sortMode === "oldest") {
+        return getVideoUploadTimestamp(left) - getVideoUploadTimestamp(right);
       }
       return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
     });
@@ -601,12 +702,95 @@ export function ContentList({
     }
   }, [batchCandidates, onFeedbackCardsChanged]);
 
+  const isAllSelected = useMemo(
+    () => visible.length > 0 && visible.every((v) => selectedIds.has(v.id)),
+    [visible, selectedIds]
+  );
+
+  const toggleSelectAll = useCallback(() => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(visible.map((v) => v.id)));
+    }
+  }, [isAllSelected, visible]);
+
+  const handleTrashSingle = useCallback(async () => {
+    if (!trashSingleVideo) return;
+    try {
+      const res = await fetch(`/api/admin/videos/${trashSingleVideo.id}/lifecycle`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "trash" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
+      feedbackToast.success(`已将作品“${trashSingleVideo.video_title?.trim() || "未命名"}”移入回收站`);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(trashSingleVideo.id);
+        return next;
+      });
+      setTrashSingleVideo(null);
+      onRefresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "移入回收站失败");
+    }
+  }, [trashSingleVideo, onRefresh]);
+
+  const handleBatchTrash = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    setIsBatchTrashing(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          fetch(`/api/admin/videos/${id}/lifecycle`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "trash" }),
+          }).then(async (res) => {
+            const data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
+            return id;
+          })
+        )
+      );
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const failCount = results.filter((r) => r.status === "rejected").length;
+      if (successCount > 0) {
+        feedbackToast.success(`已成功将 ${successCount} 项视频移入回收站${failCount > 0 ? `（${failCount} 项处理失败）` : ""}`);
+      } else {
+        feedbackToast.error("批量移入回收站失败");
+      }
+      setSelectedIds(new Set());
+      setShowBatchTrashConfirm(false);
+      onRefresh();
+    } catch (e) {
+      feedbackToast.error(e instanceof Error ? e.message : "批量移入回收站失败");
+    } finally {
+      setIsBatchTrashing(false);
+    }
+  }, [selectedIds, onRefresh]);
+
   return (
     <div className="flex flex-1 flex-col min-h-0 space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-0">
           <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
         </div>
+        {filters.sortMode !== "priority" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 shrink-0 gap-1 rounded-xl border-stone-200 bg-white text-[12px] text-[#D97757] hover:bg-stone-50 transition-colors"
+            onClick={() => handleSortModeChange("priority")}
+            title="恢复默认权重优先排序"
+          >
+            <RotateCcw className="size-3" />
+            重置排序
+          </Button>
+        )}
         <Button
           size="sm"
           variant="ghost"
@@ -617,45 +801,6 @@ export function ContentList({
           <Sparkles className="size-3.5" />
           {isBatchGenerating ? "生成中..." : `批量生成反馈草稿${batchCandidates.length > 0 ? ` · ${batchCandidates.length}` : ""}`}
         </Button>
-      </div>
-
-      {/* 快捷切换排序按钮组 */}
-      <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-        <div className="flex items-center gap-1 bg-stone-100/80 p-0.5 rounded-lg border border-stone-200">
-          <button
-            type="button"
-            onClick={() => handleSortModeChange("priority")}
-            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-all ${
-              filters.sortMode === "priority"
-                ? "bg-white text-stone-900 shadow-sm border border-stone-200/40"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            按最差排
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSortModeChange("user")}
-            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-all ${
-              filters.sortMode === "user"
-                ? "bg-white text-stone-900 shadow-sm border border-stone-200/40"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            按人
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSortModeChange("latest")}
-            className={`rounded-md px-3 py-1 text-[12px] font-medium transition-all ${
-              filters.sortMode === "latest"
-                ? "bg-white text-stone-900 shadow-sm border border-stone-200/40"
-                : "text-stone-500 hover:text-stone-700"
-            }`}
-          >
-            按时间
-          </button>
-        </div>
       </div>
 
       <div className="flex gap-4">
@@ -669,20 +814,163 @@ export function ContentList({
             <Table>
               <TableHeader className="sticky top-0 z-10">
                 <TableRow className="border-b border-stone-200 bg-stone-100/50 hover:bg-stone-100/50">
-                  <TableHead className="h-9 w-16 text-[12px] font-medium text-stone-500">排名</TableHead>
-                  <TableHead className="h-9 min-w-[220px] text-[12px] font-medium text-stone-500">视频标题</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">作者与账号</TableHead>
-                  <TableHead className="h-9 min-w-[250px] text-[12px] font-medium text-stone-500">归因指标与状态</TableHead>
-                  <TableHead className="h-9 text-right text-[12px] font-medium text-stone-500">播放量</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">发布时间</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">复盘状态</TableHead>
-                  <TableHead className="h-9 text-center text-[12px] font-medium text-stone-500 w-24">操作</TableHead>
+                  {canManageLifecycle && (
+                    <TableHead className="h-9 w-10 pl-4 pr-0">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="全选"
+                      />
+                    </TableHead>
+                  )}
+                  {/* 排名（优先级权重排序） */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("priority")}
+                    className="h-9 w-12 text-center text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按权重/最差优先排序"
+                  >
+                    <div className="flex items-center justify-center gap-0.5">
+                      <span>排名</span>
+                      {filters.sortMode === "priority" && (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 视频标题（精简控制在 160px） */}
+                  <TableHead className="h-9 w-[160px] max-w-[160px] text-[12px] font-medium text-stone-500">视频标题</TableHead>
+
+                  {/* 作者与账号排序 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("user")}
+                    className="h-9 w-[120px] text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按作者归类排序"
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>作者与账号</span>
+                      {filters.sortMode === "user" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 2s跳出 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("bounce_2s")}
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按2s跳出率排序（降序 ➔ 升序 ➔ 恢复默认）"
+                  >
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span>2s跳出</span>
+                      {filters.sortMode === "bounce_2s" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : filters.sortMode === "bounce_2s_asc" ? (
+                        <ArrowUp className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 5s完播 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("comp_5s")}
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按5s完播率排序（降序 ➔ 升序 ➔ 恢复默认）"
+                  >
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span>5s完播</span>
+                      {filters.sortMode === "comp_5s" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : filters.sortMode === "comp_5s_asc" ? (
+                        <ArrowUp className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 均播 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("avg_dur")}
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按均播时长排序（降序 ➔ 升序 ➔ 恢复默认）"
+                  >
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span>均播</span>
+                      {filters.sortMode === "avg_dur" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : filters.sortMode === "avg_dur_asc" ? (
+                        <ArrowUp className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 完播率 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("comp_rate")}
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按完播率排序（降序 ➔ 升序 ➔ 恢复默认）"
+                  >
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span>完播</span>
+                      {filters.sortMode === "comp_rate" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : filters.sortMode === "comp_rate_asc" ? (
+                        <ArrowUp className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 播放量排序 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("play")}
+                    className="h-9 w-[85px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按播放量排序（降序 ➔ 升序 ➔ 恢复默认）"
+                  >
+                    <div className="flex items-center justify-end gap-0.5">
+                      <span>播放量</span>
+                      {filters.sortMode === "play" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : filters.sortMode === "play_asc" ? (
+                        <ArrowUp className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+
+                  {/* 发布时间排序 */}
+                  <TableHead
+                    onClick={() => handleHeaderSortClick("latest")}
+                    className="h-9 w-[100px] text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    title="点击按发布时间排序（最新 ➔ 最早 ➔ 恢复默认）"
+                  >
+                    <div className="flex items-center gap-0.5">
+                      <span>发布时间</span>
+                      {filters.sortMode === "latest" ? (
+                        <ArrowDown className="size-3 text-[#D97757]" />
+                      ) : filters.sortMode === "oldest" ? (
+                        <ArrowUp className="size-3 text-[#D97757]" />
+                      ) : (
+                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                      )}
+                    </div>
+                  </TableHead>
+                  <TableHead className="h-9 w-[85px] text-[12px] font-medium text-stone-500">复盘状态</TableHead>
+                  <TableHead className="h-9 w-16 text-center text-[12px] font-medium text-stone-500">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {visible.length === 0 ? (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={8} className="py-16 text-center">
+                    <TableCell colSpan={canManageLifecycle ? 12 : 11} className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2.5">
                         <span className="text-[13px] text-stone-500">没有找到符合条件的视频</span>
                         <Button
@@ -713,7 +1001,7 @@ export function ContentList({
                       <Fragment key={video.id}>
                         {showTodayDivider ? (
                           <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={8} className="px-4 py-2">
+                            <TableCell colSpan={canManageLifecycle ? 12 : 11} className="px-4 py-2">
                               <div className="flex items-center gap-3 text-[12px] text-stone-500">
                                 <span className="shrink-0 tracking-[0.18em]">历史</span>
                                 <span className="h-px flex-1 bg-stone-200" />
@@ -748,24 +1036,40 @@ export function ContentList({
                               : undefined
                           }
                         >
+                          {/* 选择框 */}
+                          {canManageLifecycle && (
+                            <TableCell className="py-3 pl-4 pr-0" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selectedIds.has(video.id)}
+                                onCheckedChange={(checked) => {
+                                  setSelectedIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (checked) next.add(video.id);
+                                    else next.delete(video.id);
+                                    return next;
+                                  });
+                                }}
+                                aria-label={`选择 ${video.video_title || "视频"}`}
+                              />
+                            </TableCell>
+                          )}
+
                           {/* 排名 */}
-                          <TableCell className="py-3 text-[13px] tabular-nums text-stone-500">
-                            <span className="inline-flex items-center gap-1.5">
-                              {filters.sortMode === "priority" &&
-                              (priorityScoreMap.get(video.id) ?? 0) >= PRIORITY_HIGHLIGHT_THRESHOLD ? (
-                                <span
-                                  aria-hidden
-                                  className="size-2 shrink-0 rounded-full bg-[#D97757]"
-                                  title="该先复盘"
-                                />
-                              ) : null}
-                              <span>{index + 1}</span>
-                            </span>
+                          <TableCell className="py-3 text-center text-[13px] tabular-nums text-stone-500 w-12">
+                            {filters.sortMode === "priority" && index === 0 ? (
+                              <span className="font-bold text-[#D99E55] text-[13px]">1</span>
+                            ) : filters.sortMode === "priority" && index === 1 ? (
+                              <span className="font-semibold text-stone-800 text-[13px]">2</span>
+                            ) : filters.sortMode === "priority" && index === 2 ? (
+                              <span className="font-semibold text-[#B87333] text-[13px]">3</span>
+                            ) : (
+                              <span className="text-[12px] font-medium text-stone-500">{index + 1}</span>
+                            )}
                           </TableCell>
                           
                           {/* 视频信息标题 */}
-                          <TableCell className="max-w-md py-3">
-                            <div className="line-clamp-2 text-[13px] font-medium text-stone-900" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                          <TableCell className="w-[160px] max-w-[160px] py-3">
+                            <div className="line-clamp-2 text-[13px] font-medium text-stone-900 leading-tight" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                               {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                             </div>
                           </TableCell>
@@ -776,59 +1080,53 @@ export function ContentList({
                             <span className="mx-1 text-stone-400">·</span>
                             <span className="text-stone-500 text-[12px]">{video.accounts.name}</span>
                           </TableCell>
-                          
-                          {/* 归因指标与状态 */}
-                          <TableCell className="py-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              {(() => {
-                                const indicators: React.ReactNode[] = [];
-                                if (snap) {
-                                  if (snap.bounce_rate_2s != null) {
-                                    indicators.push(
-                                      <MetricIndicator
-                                        key="bounce_2s"
-                                        label="2s跳出"
-                                        value={formatRate(snap.bounce_rate_2s)}
-                                        isRed={snap.bounce_rate_2s >= 45}
-                                      />
-                                    );
-                                  }
-                                  if (snap.completion_rate_5s != null) {
-                                    indicators.push(
-                                      <MetricIndicator
-                                        key="comp_5s"
-                                        label="5s完播"
-                                        value={formatRate(snap.completion_rate_5s)}
-                                        isRed={snap.completion_rate_5s < 35}
-                                      />
-                                    );
-                                  }
-                                  if (snap.avg_play_duration != null) {
-                                    indicators.push(
-                                      <MetricIndicator
-                                        key="avg_dur"
-                                        label="均播"
-                                        value={`${snap.avg_play_duration.toFixed(1)}s`}
-                                        isRed={snap.avg_play_duration < 8}
-                                      />
-                                    );
-                                  }
-                                  if (snap.completion_rate != null) {
-                                    indicators.push(
-                                      <MetricIndicator
-                                        key="comp_rate"
-                                        label="完播"
-                                        value={formatRate(snap.completion_rate)}
-                                        isRed={snap.completion_rate < 18}
-                                      />
-                                    );
-                                  }
-                                }
-                                return indicators.length > 0 ? indicators : (
-                                  <span className="text-[12px] text-stone-400">缺24h快照</span>
-                                );
-                              })()}
-                            </div>
+
+                          {/* 2s跳出 */}
+                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
+                            {snap?.bounce_rate_2s != null ? (
+                              <span className={snap.bounce_rate_2s >= 45 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
+                                {snap.bounce_rate_2s >= 45 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
+                                {formatRate(snap.bounce_rate_2s)}
+                              </span>
+                            ) : (
+                              <span className="text-stone-300">-</span>
+                            )}
+                          </TableCell>
+
+                          {/* 5s完播 */}
+                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
+                            {snap?.completion_rate_5s != null ? (
+                              <span className={snap.completion_rate_5s < 35 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
+                                {snap.completion_rate_5s < 35 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
+                                {formatRate(snap.completion_rate_5s)}
+                              </span>
+                            ) : (
+                              <span className="text-stone-300">-</span>
+                            )}
+                          </TableCell>
+
+                          {/* 均播 */}
+                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
+                            {snap?.avg_play_duration != null ? (
+                              <span className={snap.avg_play_duration < 8 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
+                                {snap.avg_play_duration < 8 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
+                                {snap.avg_play_duration.toFixed(1)}s
+                              </span>
+                            ) : (
+                              <span className="text-stone-300">-</span>
+                            )}
+                          </TableCell>
+
+                          {/* 完播 */}
+                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
+                            {snap?.completion_rate != null ? (
+                              <span className={snap.completion_rate < 18 ? "font-semibold text-[#C9604D] inline-flex items-center justify-end gap-1" : "text-stone-700 font-medium"}>
+                                {snap.completion_rate < 18 && <span className="size-1.5 rounded-full bg-[#C9604D] shrink-0 inline-block" />}
+                                {formatRate(snap.completion_rate)}
+                              </span>
+                            ) : (
+                              <span className="text-stone-300">-</span>
+                            )}
                           </TableCell>
                           
                           {/* 播放量 */}
@@ -880,30 +1178,52 @@ export function ContentList({
 
                           {/* 操作 */}
                           <TableCell className="text-center py-3">
-                            {(() => {
-                              const sent = cardStatus === "sent" || cardStatus === "viewed";
-                              if (sent) {
+                            <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                              {(() => {
+                                const sent = cardStatus === "sent" || cardStatus === "viewed";
+                                if (sent) {
+                                  return (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150"
+                                      onClick={() => onSelectVideoId(video.id)}
+                                    >
+                                      查看
+                                    </Button>
+                                  );
+                                }
                                 return (
                                   <Button
-                                    variant="outline"
                                     size="sm"
-                                    className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150"
+                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 hover:bg-[#C96442] active:scale-[0.98]"
                                     onClick={() => onSelectVideoId(video.id)}
                                   >
-                                    查看
+                                    复盘
                                   </Button>
                                 );
-                              }
-                              return (
-                                <Button
-                                  size="sm"
-                                  className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 hover:bg-[#C96442] active:scale-[0.98]"
-                                  onClick={() => onSelectVideoId(video.id)}
-                                >
-                                  复盘
-                                </Button>
-                              );
-                            })()}
+                              })()}
+                              {canManageLifecycle && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger
+                                    className="flex size-7 items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                                    title="更多操作"
+                                  >
+                                    <MoreHorizontal className="size-4" />
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-36">
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      className="gap-2 cursor-pointer text-[12px]"
+                                      onClick={() => setTrashSingleVideo(video)}
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                      移入回收站
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       </Fragment>
@@ -914,7 +1234,7 @@ export function ContentList({
                 {/* Sentinel for auto-load */}
                 {hasMore && (
                   <TableRow>
-                    <TableCell colSpan={8} className="p-0">
+                    <TableCell colSpan={canManageLifecycle ? 9 : 8} className="p-0">
                       <div ref={sentinelRef} className="h-4" />
                     </TableCell>
                   </TableRow>
@@ -1007,6 +1327,58 @@ export function ContentList({
         }}
       />
 
+      {/* 悬浮批量操作工具栏 */}
+      {canManageLifecycle && selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-stone-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
+          <span className="text-[13px] font-medium text-stone-700">
+            已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
+          </span>
+          <div className="h-4 w-px bg-stone-200" />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-700 text-[12px]"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            取消选择
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            className="h-8 rounded-xl bg-[#C9604D] hover:bg-[#B85340] text-white text-[12px] gap-1.5 px-3.5 shadow-xs"
+            onClick={() => setShowBatchTrashConfirm(true)}
+          >
+            <Trash2 className="size-3.5" />
+            批量移入回收站
+          </Button>
+        </div>
+      )}
+
+      {/* 单条移入回收站确认弹窗 */}
+      <ConfirmDialog
+        open={trashSingleVideo !== null}
+        onOpenChange={(open) => {
+          if (!open) setTrashSingleVideo(null);
+        }}
+        title="移入回收站确认"
+        description={`确定将作品“${trashSingleVideo?.video_title?.trim() || "未命名"}”移入回收站吗？移入后该作品将在复盘列表中隐藏，可在“素材库 - 回收站”中随时恢复。`}
+        confirmText="确认移入"
+        destructive
+        onConfirm={handleTrashSingle}
+      />
+
+      {/* 批量移入回收站确认弹窗 */}
+      <ConfirmDialog
+        open={showBatchTrashConfirm}
+        onOpenChange={setShowBatchTrashConfirm}
+        title="批量移入回收站确认"
+        description={`确定将选中的 ${selectedIds.size} 个作品移入回收站吗？移入后这些作品将在复盘列表中隐藏，可在“素材库 - 回收站”中随时恢复。`}
+        confirmText={isBatchTrashing ? "移入中..." : "确认批量移入"}
+        loading={isBatchTrashing}
+        destructive
+        onConfirm={handleBatchTrash}
+      />
+
       {/* Keyframe animation for new batch */}
       <style jsx>{`
         @keyframes fadeInUp {
@@ -1021,29 +1393,5 @@ export function ContentList({
         }
       `}</style>
     </div>
-  );
-}
-
-// ===== MetricIndicator helper subcomponent =====
-function MetricIndicator({
-  label,
-  value,
-  isRed,
-}: {
-  label: string;
-  value: string;
-  isRed: boolean;
-}) {
-  const dotColor = isRed ? "bg-[#C9604D]" : "bg-[#6FAA7D]";
-  const dotPing = isRed ? "bg-[#C9604D]/40" : "bg-[#6FAA7D]/40";
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] text-stone-600 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded-lg shadow-sm">
-      <span className="text-stone-500">{label}</span>
-      <span className="font-semibold tabular-nums text-stone-800">{value}</span>
-      <span className="relative flex size-1.5">
-        {isRed && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dotPing}`} />}
-        <span className={`relative inline-flex rounded-full size-1.5 ${dotColor}`} />
-      </span>
-    </span>
   );
 }
