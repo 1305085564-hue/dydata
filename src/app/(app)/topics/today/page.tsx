@@ -235,23 +235,46 @@ export default function TodayWorkspacePage() {
         )}
       </AnimatePresence>
 
-      {/* 认领上限状态提示栏 */}
-      <div className="flex items-center justify-between rounded-xl bg-stone-100/80 px-4 py-2.5 border border-stone-200/50 text-[12.5px] text-stone-600">
-        <div className="flex items-center gap-1.5">
-          <span className="font-medium text-stone-900">我的候选上限：</span>
-          <span className={cn(
-            "font-semibold tabular-nums",
-            isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]"
-          )}>
-            {activeCandidateCount} / 5
+      {/* 5位动态点阵候选位状态栏 */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[12.5px] font-medium text-stone-700">我的候选选题</span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: 5 }).map((_, i) => {
+                const isFilled = i < activeCandidateCount;
+                return (
+                  <span
+                    key={i}
+                    className={cn(
+                      "size-2 rounded-full transition-all duration-300",
+                      isFilled
+                        ? isLimitReached
+                          ? "bg-[#C9604D] shadow-[0_0_6px_rgba(201,96,77,0.6)] animate-pulse"
+                          : "bg-[#5F82A8] shadow-[0_0_4px_rgba(95,130,168,0.4)]"
+                        : "bg-stone-300/60"
+                    )}
+                  />
+                );
+              })}
+            </div>
+            <span className={cn(
+              "text-[12px] font-semibold tabular-nums ml-0.5",
+              isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]"
+            )}>
+              {activeCandidateCount} / 5
+            </span>
+          </div>
+          <span className="text-[11.5px] text-stone-400 hidden sm:inline">
+            {isLimitReached ? "（候选已满，认领新题将触发替换）" : "（未满 5 条可直接认领）"}
           </span>
-          <span className="opacity-70 hidden sm:inline">（候选池满 5 条将自动唤起替换弹窗）</span>
         </div>
         <Link
           href="/topics?view=my_claims"
-          className="text-[#D97757] font-medium hover:underline inline-flex items-center gap-0.5"
+          className="text-[12px] text-[#D97757] font-medium hover:underline inline-flex items-center gap-1 cursor-pointer"
         >
-          管理我的选题 <ChevronRight className="size-3.5" />
+          <span>管理我的选题库</span>
+          <ChevronRight className="size-3.5" />
         </Link>
       </div>
 
@@ -342,25 +365,25 @@ export default function TodayWorkspacePage() {
                     return (
                       <div
                         key={topic.id}
-                        className="group relative flex flex-col justify-between rounded-xl border border-stone-200 bg-stone-50/30 p-4 transition-all duration-200 hover:border-stone-300 hover:bg-white hover:shadow-md"
+                        className="group relative flex flex-col justify-between rounded-xl border border-stone-200/90 bg-gradient-to-br from-white via-stone-50/40 to-stone-100/30 p-4 transition-all duration-200 hover:border-[#D97757]/40 hover:bg-white hover:shadow-xs"
                       >
-                        <div className="space-y-2">
+                        <div className="space-y-2.5">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-semibold text-stone-900 text-[14px] leading-snug line-clamp-1">
-                              <Link href={`/topics/${topic.id}`} className="hover:text-[#D97757]">
+                            <h3 className="font-semibold text-stone-900 text-[14px] leading-snug line-clamp-1 group-hover:text-[#D97757] transition-colors">
+                              <Link href={`/topics/${topic.id}`}>
                                 {topic.title}
                               </Link>
                             </h3>
                             {topic.topics && (
-                              <span className="shrink-0 rounded-md bg-[#4F5E96]/10 px-2 py-0.5 text-[11px] font-medium text-[#4F5E96]">
+                              <span className="shrink-0 rounded-md bg-[#4F5E96]/[0.10] border border-[#4F5E96]/15 px-2 py-0.5 text-[11px] font-medium text-[#4F5E96]">
                                 {topic.topics.name}
                               </span>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-3 text-[11.5px]">
+                          <div className="flex items-center gap-3.5 text-[11.5px]">
                             <span className="text-stone-500">
-                              达标作品: <strong className="text-stone-800 font-semibold">{qualifiedCount}</strong> 条
+                              达标作品: <strong className="text-stone-850 font-semibold tabular-nums">{qualifiedCount}</strong> 条
                             </span>
                             {averagePlay !== null && (
                               <span className="text-stone-500">
@@ -368,7 +391,7 @@ export default function TodayWorkspacePage() {
                                 <strong className={cn(
                                   "font-semibold tabular-nums",
                                   overallAvg === null
-                                    ? "text-stone-800"
+                                    ? "text-stone-850"
                                     : averagePlay >= overallAvg
                                       ? "text-[#C9604D]"
                                       : "text-[#6FAA7D]"
@@ -380,23 +403,24 @@ export default function TodayWorkspacePage() {
                           </div>
 
                           {bestCopyText && (
-                            <div className="rounded-lg bg-white p-2.5 border border-stone-200/80 text-[12px] text-stone-600 line-clamp-2 italic leading-relaxed">
+                            <div className="rounded-lg bg-stone-50/80 p-2.5 border border-stone-200/60 text-[12px] text-stone-600 line-clamp-2 italic leading-relaxed">
                               “{bestCopyText}”
                             </div>
                           )}
                         </div>
 
-                        <div className="mt-3 flex items-center justify-between border-t border-stone-155/60 pt-2.5">
+                        <div className="mt-3 flex items-center justify-between border-t border-stone-100 pt-2.5">
                           <Link
                             href={`/topics/${topic.id}`}
-                            className="text-[12px] text-stone-400 hover:text-stone-700 flex items-center gap-0.5"
+                            className="text-[12px] text-stone-400 hover:text-stone-700 flex items-center gap-0.5 transition-colors"
                           >
-                            看详情 <ChevronRight className="size-3" />
+                            <span>完整数据与历史</span>
+                            <ChevronRight className="size-3" />
                           </Link>
 
                           {isClaimed ? (
                             <Link href={`/dashboard?topicId=${topic.id}`}>
-                              <Button size="xs" variant="outline" className="h-7 rounded-lg text-[11.5px] border-stone-200">
+                              <Button size="xs" variant="outline" className="h-7 rounded-lg text-[11.5px] font-medium border-stone-200 hover:border-stone-300">
                                 去创作 <ChevronRight className="size-3" />
                               </Button>
                             </Link>
@@ -405,7 +429,7 @@ export default function TodayWorkspacePage() {
                               size="xs"
                               disabled={isClaiming}
                               onClick={() => void handleClaim(topic.id)}
-                              className="h-7 rounded-lg text-[11.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white"
+                              className="h-7 rounded-lg px-3 text-[11.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white active:scale-95 transition-all shadow-2xs"
                             >
                               {isClaiming ? <Loader2 className="size-3 animate-spin" /> : "认领此题"}
                             </Button>
