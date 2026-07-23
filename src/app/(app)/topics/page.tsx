@@ -446,124 +446,126 @@ export default function TopicPoolPage() {
         )}
       </AnimatePresence>
 
-      {/* 统一单层控制台 (Single-Row Flat Control Bar) */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-3 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* 单行平铺 segmented buttons */}
-          <div className="flex flex-wrap items-center gap-1 bg-stone-100/70 p-1 rounded-xl border border-stone-200/50">
-            <button
-              onClick={() => {
-                setActiveTab("pool");
-                setCurrentView("all");
-              }}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
-                activeTab === "pool" && currentView === "all"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800"
-              )}
-            >
-              <Compass className="size-4 text-[#D97757]" />
-              <span>全部选题</span>
-            </button>
+      {/* L1 工作区主面板 (Unified L1 White Workbench Panel) */}
+      <div className="rounded-2xl border border-stone-200/80 bg-white p-5 md:p-6 shadow-xs space-y-6">
+        {/* 单层控制台 (Single-Row Flat Control Bar) */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-200/70 pb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* 单行平铺 segmented buttons */}
+            <div className="flex flex-wrap items-center gap-1 bg-stone-100/70 p-1 rounded-xl border border-stone-200/50">
+              <button
+                onClick={() => {
+                  setActiveTab("pool");
+                  setCurrentView("all");
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                  activeTab === "pool" && currentView === "all"
+                    ? "bg-white text-stone-900 shadow-xs"
+                    : "text-stone-500 hover:text-stone-800"
+                )}
+              >
+                <Compass className="size-4 text-[#D97757]" />
+                <span>全部选题</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setActiveTab("pool");
-                setCurrentView("my_claims");
-              }}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
-                activeTab === "pool" && currentView === "my_claims"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800"
-              )}
-            >
-              <span>我正在做的</span>
-            </button>
+              <button
+                onClick={() => {
+                  setActiveTab("pool");
+                  setCurrentView("my_claims");
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                  activeTab === "pool" && currentView === "my_claims"
+                    ? "bg-white text-stone-900 shadow-xs"
+                    : "text-stone-500 hover:text-stone-800"
+                )}
+              >
+                <span>我正在做的</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setActiveTab("pool");
-                setCurrentView("my_created");
-              }}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
-                activeTab === "pool" && currentView === "my_created"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800"
-              )}
-            >
-              <span>我录入的</span>
-            </button>
+              <button
+                onClick={() => {
+                  setActiveTab("pool");
+                  setCurrentView("my_created");
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                  activeTab === "pool" && currentView === "my_created"
+                    ? "bg-white text-stone-900 shadow-xs"
+                    : "text-stone-500 hover:text-stone-800"
+                )}
+              >
+                <span>我录入的</span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("recommendations")}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer relative",
-                activeTab === "recommendations"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800"
-              )}
-            >
-              <Sparkles className="size-4 text-[#D97757]" />
-              <span>AI系统推荐</span>
-              {visibleSuggestions.length > 0 && (
-                <span className="ml-1 rounded-full bg-[#D97757] px-1.5 py-0.2 text-[10px] text-white">
-                  {visibleSuggestions.length}
-                </span>
-              )}
-            </button>
+              <button
+                onClick={() => setActiveTab("recommendations")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer relative",
+                  activeTab === "recommendations"
+                    ? "bg-white text-stone-900 shadow-xs"
+                    : "text-stone-500 hover:text-stone-800"
+                )}
+              >
+                <Sparkles className="size-4 text-[#D97757]" />
+                <span>AI系统推荐</span>
+                {visibleSuggestions.length > 0 && (
+                  <span className="ml-1 rounded-full bg-[#D97757] px-1.5 py-0.2 text-[10px] text-white">
+                    {visibleSuggestions.length}
+                  </span>
+                )}
+              </button>
 
-            <button
-              onClick={() => setActiveTab("comparison")}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
-                activeTab === "comparison"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800"
-              )}
-            >
-              <BarChart3 className="size-4 text-[#5F82A8]" />
-              <span>趋势与对比</span>
-            </button>
+              <button
+                onClick={() => setActiveTab("comparison")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                  activeTab === "comparison"
+                    ? "bg-white text-stone-900 shadow-xs"
+                    : "text-stone-500 hover:text-stone-800"
+                )}
+              >
+                <BarChart3 className="size-4 text-[#5F82A8]" />
+                <span>趋势与对比</span>
+              </button>
+            </div>
+
+            {/* 母题分类下拉只在 "pool" 视图出现 */}
+            {activeTab === "pool" && topicsList.length > 0 && (
+              <select
+                value={selectedTopicId}
+                onChange={(e) => setSelectedTopicId(e.target.value)}
+                className="h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-700 outline-none focus:border-[#D97757]"
+              >
+                <option value="__all__">全部分类母题</option>
+                {topicsList.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* 母题分类下拉只在 "pool" 视图出现 */}
-          {activeTab === "pool" && topicsList.length > 0 && (
-            <select
-              value={selectedTopicId}
-              onChange={(e) => setSelectedTopicId(e.target.value)}
-              className="h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-700 outline-none focus:border-[#D97757]"
+          {/* 控制栏右侧：候选位 + 录入选题按钮 */}
+          <div className="flex items-center gap-3">
+            {activeTab === "pool" && (
+              <div className="text-[12px] text-stone-500 flex items-center gap-2 pr-1">
+                <span>候选位：</span>
+                <span className={cn("font-bold tabular-nums", isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]")}>
+                  {activeCandidateCount} / 5
+                </span>
+              </div>
+            )}
+            <Button
+              size="sm"
+              onClick={() => triggerGlobalTopicCreate()}
+              className="h-8.5 rounded-xl px-4 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white gap-1 cursor-pointer"
             >
-              <option value="__all__">全部分类母题</option>
-              {topicsList.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
-          )}
+              <Plus className="size-4" />
+              <span>录入选题</span>
+            </Button>
+          </div>
         </div>
-
-        {/* 控制栏右侧：候选位 + 录入选题按钮 */}
-        <div className="flex items-center gap-3">
-          {activeTab === "pool" && (
-            <div className="text-[12px] text-stone-500 flex items-center gap-2 pr-1">
-              <span>候选位：</span>
-              <span className={cn("font-bold tabular-nums", isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]")}>
-                {activeCandidateCount} / 5
-              </span>
-            </div>
-          )}
-          <Button
-            size="sm"
-            onClick={() => triggerGlobalTopicCreate()}
-            className="h-8.5 rounded-xl px-4 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white gap-1 cursor-pointer"
-          >
-            <Plus className="size-4" />
-            <span>录入选题</span>
-          </Button>
-        </div>
-      </div>
 
       {/* 视图 1：选题池 View */}
       {activeTab === "pool" && (
@@ -610,7 +612,7 @@ export default function TopicPoolPage() {
                       </div>
 
                       {!isCollapsed && (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="space-y-3 w-full">
                           {group.items.map((subTopic) => (
                             <SubTopicCard
                               key={subTopic.id}
@@ -911,6 +913,7 @@ export default function TopicPoolPage() {
           </motion.div>
         </AnimatePresence>
       )}
+      </div>
 
       {/* 替换选择 (5/5 满额) Dialog (Item 4, 18 真正认领时间) */}
       <Dialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>

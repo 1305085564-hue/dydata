@@ -305,10 +305,10 @@ export function SubTopicCard({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-white transition-all duration-200",
+        "rounded-xl border transition-all duration-200",
         isExpanded
-          ? "border-stone-300 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.06)]"
-          : "border-stone-200 hover:border-stone-300 hover:shadow-[0_2px_10px_-4px_rgba(0,0,0,0.04)]"
+          ? "border-stone-300/80 bg-stone-50/70 shadow-xs"
+          : "border-stone-200/70 bg-stone-50/40 hover:border-stone-300 hover:bg-stone-50/70"
       )}
     >
       {/* 第一级：折叠态基本信息 */}
