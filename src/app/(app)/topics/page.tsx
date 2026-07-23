@@ -546,22 +546,48 @@ export default function TopicPoolPage() {
             )}
           </div>
 
-          {/* 控制栏右侧：候选位 + 录入选题按钮 */}
-          <div className="flex items-center gap-3">
+          {/* 控制栏右侧：5位动态点阵候选位 + 录入选题主 CTA */}
+          <div className="flex items-center gap-4">
             {activeTab === "pool" && (
-              <div className="text-[12px] text-stone-500 flex items-center gap-2 pr-1">
-                <span>候选位：</span>
-                <span className={cn("font-bold tabular-nums", isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]")}>
-                  {activeCandidateCount} / 5
+              <div
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-all duration-200",
+                  isLimitReached
+                    ? "border-[#C9604D]/30 bg-[#C9604D]/8 text-[#C9604D]"
+                    : "border-stone-200/80 bg-stone-50/60 text-stone-600"
+                )}
+                title={isLimitReached ? "候选位已满 (5/5)，点新选题将触发置换" : `当前候选选题 ${activeCandidateCount}/5`}
+              >
+                <span className="text-[11.5px] font-medium">候选位</span>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => {
+                    const isFilled = i < activeCandidateCount;
+                    return (
+                      <span
+                        key={i}
+                        className={cn(
+                          "size-2 rounded-full transition-all duration-300",
+                          isFilled
+                            ? isLimitReached
+                              ? "bg-[#C9604D] shadow-[0_0_6px_rgba(201,96,77,0.6)] animate-pulse"
+                              : "bg-[#5F82A8] shadow-[0_0_4px_rgba(95,130,168,0.4)]"
+                            : "bg-stone-300/60"
+                        )}
+                      />
+                    );
+                  })}
+                </div>
+                <span className="text-[11.5px] font-semibold tabular-nums ml-0.5">
+                  {activeCandidateCount}/5
                 </span>
               </div>
             )}
             <Button
               size="sm"
               onClick={() => triggerGlobalTopicCreate()}
-              className="h-8.5 rounded-xl px-4 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white gap-1 cursor-pointer"
+              className="h-8.5 rounded-xl px-4 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white gap-1.5 cursor-pointer shadow-sm hover:shadow-md active:scale-95 transition-all"
             >
-              <Plus className="size-4" />
+              <Plus className="size-4 stroke-[2.5]" />
               <span>录入选题</span>
             </Button>
           </div>
@@ -597,14 +623,16 @@ export default function TopicPoolPage() {
                 {groupedGroups.map((group) => {
                   const isCollapsed = collapsedTopicIds.has(group.topicId);
                   return (
-                    <div key={group.topicId} className="space-y-3">
+                    <div key={group.topicId} className="space-y-2.5">
                       <div
                         onClick={() => toggleCollapseGroup(group.topicId)}
-                        className="flex items-center justify-between cursor-pointer select-none border-b border-stone-200/60 pb-2 pt-1 px-1 hover:text-[#D97757] transition-colors"
+                        className="flex items-center justify-between cursor-pointer select-none rounded-xl px-3.5 py-2.5 bg-stone-100/70 hover:bg-stone-100 transition-colors"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-[13.5px] font-bold text-stone-900">{group.topicName}</span>
-                          <span className="text-[12px] text-stone-400 font-normal">({group.items.length} 条子题)</span>
+                          <span className="text-[13.5px] font-medium text-stone-900">{group.topicName}</span>
+                          <span className="inline-flex items-center rounded-md bg-stone-200/70 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+                            {group.items.length} 条子题
+                          </span>
                         </div>
                         <div className="text-stone-400">
                           {isCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
@@ -612,7 +640,7 @@ export default function TopicPoolPage() {
                       </div>
 
                       {!isCollapsed && (
-                        <div className="space-y-3 w-full">
+                        <div className="space-y-2.5 w-full pt-0.5">
                           {group.items.map((subTopic) => (
                             <SubTopicCard
                               key={subTopic.id}

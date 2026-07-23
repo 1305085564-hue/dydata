@@ -305,14 +305,14 @@ export function SubTopicCard({
   return (
     <div
       className={cn(
-        "rounded-xl border transition-all duration-200",
+        "group relative rounded-xl border transition-all duration-200",
         isExpanded
-          ? "border-stone-300/80 bg-stone-50/70 shadow-xs"
-          : "border-stone-200/70 bg-stone-50/40 hover:border-stone-300 hover:bg-stone-50/70"
+          ? "border-stone-300/80 bg-white shadow-xs"
+          : "border-stone-200/60 bg-stone-50/40 hover:border-stone-300 hover:bg-white hover:shadow-2xs"
       )}
     >
       {/* 第一级：折叠态基本信息 */}
-      <div className="relative flex items-start justify-between gap-4 p-4">
+      <div className="relative flex items-start justify-between gap-4 p-3.5 sm:p-4">
         <button
           type="button"
           aria-expanded={isExpanded}
@@ -322,50 +322,52 @@ export function SubTopicCard({
           className="absolute inset-0 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         />
         <div className="pointer-events-none relative z-10 min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {item.topics && (
-              <span className="inline-flex items-center rounded-md bg-[#4F5E96]/[0.12] border border-[#4F5E96]/15 px-1.5 py-0.5 text-[11px] font-medium text-[#4F5E96]">
+              <span className="inline-flex items-center rounded-md bg-[#4F5E96]/[0.10] border border-[#4F5E96]/15 px-2 py-0.5 text-[11px] font-medium text-[#4F5E96]">
                 {item.topics.name}
               </span>
             )}
             {item.topic_groups && (
-              <span className="inline-flex items-center rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-500">
+              <span className="inline-flex items-center rounded-md bg-stone-200/60 px-2 py-0.5 text-[11px] font-medium text-stone-600">
                 {item.topic_groups.name}
               </span>
             )}
             {item.emotion_tag && (
-              <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200/50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700">
+              <span className="inline-flex items-center rounded-md bg-[#D99E55]/[0.12] border border-[#D99E55]/20 px-2 py-0.5 text-[11px] font-medium text-[#B87D33]">
                 {item.emotion_tag}
               </span>
             )}
           </div>
 
-          <h3 className="text-[13.5px] font-semibold text-stone-900 leading-tight">
+          <h3 className="text-[14px] font-medium text-stone-900 leading-snug group-hover:text-stone-950 transition-colors">
             {item.title}
           </h3>
 
-          <p className="text-[12.5px] text-stone-500 line-clamp-1 leading-normal">
-            {item.hook}
-          </p>
+          {item.hook && (
+            <p className="text-[12.5px] text-stone-500 line-clamp-1 leading-normal">
+              {item.hook}
+            </p>
+          )}
         </div>
 
         {/* 右侧数据与操作 */}
-        <div className="pointer-events-none relative z-10 flex shrink-0 items-center gap-4">
-          <div className="flex items-center gap-4 text-[12px]">
+        <div className="pointer-events-none relative z-10 flex shrink-0 items-center gap-3.5 sm:gap-4">
+          <div className="flex items-center gap-3.5 text-[12px]">
             {averagePlay !== null && (
               <div className="flex flex-col items-end">
-                <span className="text-[10px] text-stone-400">平均播放</span>
-                <span className="font-semibold text-stone-900 tabular-nums">
+                <span className="text-[10px] text-stone-400 font-normal">平均播放</span>
+                <span className="font-medium text-stone-900 tabular-nums">
                   {averagePlay >= 10000 ? `${(averagePlay / 10000).toFixed(1)}w` : averagePlay.toLocaleString()}
                 </span>
               </div>
             )}
 
             <div className="flex flex-col items-end">
-              <span className="text-[10px] text-stone-400">认领人数</span>
-              <span className="font-semibold text-stone-850 flex items-center gap-0.5">
+              <span className="text-[10px] text-stone-400 font-normal">认领人数</span>
+              <span className="font-medium text-stone-700 flex items-center gap-1">
                 <User className="size-3 text-stone-400" />
-                {item.claimCount}
+                <span className="tabular-nums">{item.claimCount}</span>
               </span>
             </div>
           </div>
@@ -373,7 +375,7 @@ export function SubTopicCard({
           {/* 认领按钮/状态 */}
           <div className="flex items-center gap-2">
             {isClaimedByMe ? (
-              <span className="inline-flex h-6.5 items-center gap-0.5 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11.5px] font-medium text-[#6FAA7D]">
+              <span className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#6FAA7D]/12 border border-[#6FAA7D]/20 px-2.5 text-[11.5px] font-medium text-[#5B9668]">
                 <Check className="size-3.5 stroke-[2.5]" />
                 已认领
               </span>
@@ -383,10 +385,10 @@ export function SubTopicCard({
                 disabled={isClaiming}
                 onClick={handleClaim}
                 className={cn(
-                  "pointer-events-auto relative z-20 flex h-6.5 items-center justify-center rounded-lg border px-2.5 text-[11.5px] font-medium transition-all duration-200",
+                  "pointer-events-auto relative z-20 flex h-7 items-center justify-center rounded-lg border px-3 text-[11.5px] font-medium active:scale-95 transition-all duration-150 shadow-2xs",
                   isLimitReached
-                    ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
-                    : "border-[#D97757]/20 bg-[#D97757]/5 text-[#D97757] hover:bg-[#D97757] hover:text-white"
+                    ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white hover:shadow-xs"
+                    : "border-[#D97757]/20 bg-[#D97757]/8 text-[#D97757] hover:bg-[#D97757] hover:text-white hover:shadow-xs"
                 )}
                 title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
               >
@@ -394,7 +396,7 @@ export function SubTopicCard({
               </button>
             )}
 
-            <div className="p-0.5 text-stone-400">
+            <div className="p-1 text-stone-400 group-hover:text-stone-600 transition-colors">
               {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
             </div>
           </div>
