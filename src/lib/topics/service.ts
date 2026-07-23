@@ -435,7 +435,6 @@ export function validateSubTopicInput(body: unknown, mode: "create" | "update") 
 
   if (mode === "create") {
     if (!title) return { ok: false as const, status: 400, message: "title 为必填项" };
-    if (!hook) return { ok: false as const, status: 400, message: "hook 为必填项" };
     if (!topicId) return { ok: false as const, status: 400, message: "topic_id 为必填项" };
   }
 

@@ -15,6 +15,7 @@ import {
   rankSuggestedSubTopics,
   validateRecommendationSubTopicInput,
   validateCandidateClaimLimit,
+  validateSubTopicInput,
 } from "./service";
 
 test("选题认领信息只返回当前业务可见成员", () => {
@@ -109,6 +110,31 @@ test("候选上限最多允许 5 条，已有同一候选时保持幂等", () =>
     status: 409,
     message: "候选选题最多保留 5 条，请先放回一个选题",
   });
+});
+
+test("手动录入选题允许不填写钩子", () => {
+  assert.deepEqual(
+    validateSubTopicInput(
+      {
+        title: "只填标题也能录入",
+        hook: null,
+        topic_id: "123e4567-e89b-12d3-a456-426614174001",
+        source: "manual",
+      },
+      "create",
+    ),
+    {
+      ok: true,
+      value: {
+        title: "只填标题也能录入",
+        hook: null,
+        topicId: "123e4567-e89b-12d3-a456-426614174001",
+        emotionTag: null,
+        source: "manual",
+        audience: null,
+      },
+    },
+  );
 });
 
 test("分组自动归类优先匹配分组名和关键词", () => {
