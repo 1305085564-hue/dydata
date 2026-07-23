@@ -623,30 +623,30 @@ export default function TopicPoolPage() {
                 {groupedGroups.map((group) => {
                   const isCollapsed = collapsedTopicIds.has(group.topicId);
                   return (
-                    <div key={group.topicId} className="space-y-3">
-                      {/* 强层级母题大 Header */}
+                    <div key={group.topicId} className="space-y-2.5 pt-1">
+                      {/* 清爽带线的母题分类 Header (Flat Print Anchor) */}
                       <div
                         onClick={() => toggleCollapseGroup(group.topicId)}
-                        className="flex items-center justify-between cursor-pointer select-none rounded-xl px-4 py-3 bg-stone-100/90 hover:bg-stone-200/60 border border-stone-200/60 transition-all shadow-2xs group"
+                        className="flex items-center justify-between cursor-pointer select-none py-1 px-0.5 group transition-colors"
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex size-7 items-center justify-center rounded-lg bg-[#5F82A8]/12 text-[#5F82A8] group-hover:bg-[#5F82A8] group-hover:text-white transition-colors">
-                            <Compass className="size-4" />
-                          </div>
-                          <span className="text-[15px] font-bold text-stone-900 group-hover:text-stone-950">{group.topicName}</span>
-                          <span className="inline-flex items-center rounded-lg bg-white px-2.5 py-0.5 text-[11.5px] font-semibold text-stone-600 border border-stone-200/70 shadow-2xs">
-                            {group.items.length} 条选题
+                        <div className="flex items-center gap-2">
+                          <span className="h-3.5 w-1 rounded-full bg-[#D97757] shrink-0" />
+                          <span className="text-[14px] font-semibold text-stone-800 group-hover:text-stone-950 transition-colors">
+                            {group.topicName}
+                          </span>
+                          <span className="text-[11.5px] text-stone-400 font-normal tabular-nums">
+                            ({group.items.length})
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-stone-400 group-hover:text-stone-700">
-                          <span className="text-[12px] font-medium hidden sm:inline">{isCollapsed ? "展开分类" : "收起分类"}</span>
-                          {isCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                        <div className="flex items-center gap-1 text-[11.5px] text-stone-400 group-hover:text-stone-600 transition-colors">
+                          <span className="hidden sm:inline">{isCollapsed ? "展开" : "收起"}</span>
+                          {isCollapsed ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
                         </div>
                       </div>
 
-                      {/* 子题 2 列 Grid 布局（提升信息吞吐量） */}
+                      {/* 子题 2 列 Grid 布局（主角实体） */}
                       {!isCollapsed && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full pt-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full">
                           {group.items.map((subTopic) => (
                             <SubTopicCard
                               key={subTopic.id}

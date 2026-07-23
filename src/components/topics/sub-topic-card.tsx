@@ -324,11 +324,6 @@ export function SubTopicCard({
 
         <div className="pointer-events-none relative z-10 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
-            {item.topics && (
-              <span className="inline-flex items-center rounded-md bg-[#4F5E96]/[0.10] border border-[#4F5E96]/15 px-2 py-0.5 text-[11px] font-medium text-[#4F5E96]">
-                {item.topics.name}
-              </span>
-            )}
             {item.topic_groups && (
               <span className="inline-flex items-center rounded-md bg-stone-200/60 px-2 py-0.5 text-[11px] font-medium text-stone-600">
                 {item.topic_groups.name}
@@ -345,7 +340,7 @@ export function SubTopicCard({
           </div>
         </div>
 
-        <h3 className="pointer-events-none relative z-10 text-[14px] font-semibold text-stone-900 leading-snug line-clamp-2 group-hover:text-stone-950 transition-colors">
+        <h3 className="pointer-events-none relative z-10 text-[14.5px] font-semibold text-stone-950 leading-snug line-clamp-2 group-hover:text-[#D97757] transition-colors">
           {item.title}
         </h3>
 
