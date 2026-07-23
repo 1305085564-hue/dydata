@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, Loader2 } from "lucide-react";
+import { Lightbulb, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TopicItem {
   id: string;
@@ -35,6 +36,11 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [inputText, setInputText] = useState("");
+  const [hookText, setHookText] = useState("");
+  const [emotionTag, setEmotionTag] = useState("");
+  const [audience, setAudience] = useState("");
+  const [showMore, setShowMore] = useState(false);
+
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,6 +53,10 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
       } else {
         setInputText("");
       }
+      setHookText("");
+      setEmotionTag("");
+      setAudience("");
+      setShowMore(false);
       setIsOpen(true);
     };
 
@@ -105,7 +115,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
       return;
     }
     if (!inputText.trim()) {
-      feedbackToast.warning("请输入选题想法");
+      feedbackToast.warning("请输入选题标题");
       return;
     }
 
@@ -116,8 +126,11 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: inputText.trim(),
-          hook: inputText.trim(),
-          topic_id: selectedTopicId
+          hook: hookText.trim() || null,
+          emotion_tag: emotionTag.trim() || null,
+          audience: audience.trim() || null,
+          topic_id: selectedTopicId,
+          source: "manual"
         })
       });
 
@@ -129,6 +142,10 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
       feedbackToast.success("新选题录入成功");
       // 重置并收起
       setInputText("");
+      setHookText("");
+      setEmotionTag("");
+      setAudience("");
+      setShowMore(false);
       setIsOpen(false);
       
       // 触发一个刷新事件，让数据台或选题池页面能监听到刷新
@@ -153,7 +170,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
             <span>极速录入新选题</span>
           </DialogTitle>
           <DialogDescription className="text-stone-500 text-[12.5px] leading-relaxed">
-            写下您的灵感与一句话选题，并归入对应的母题。
+            写下您的选题标题与钩子灵感，并归入对应的母题。
           </DialogDescription>
         </DialogHeader>
 
@@ -197,23 +214,88 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
             )}
           </div>
 
-          {/* 一句话选题 */}
-          <div className="space-y-2">
-            <label htmlFor="topic-hook" className="text-[12.5px] font-medium text-stone-700 block">
-              一句话选题想法 <span className="text-red-500">*</span>
+          {/* 选题标题 */}
+          <div className="space-y-1.5">
+            <label htmlFor="topic-title" className="text-[12.5px] font-medium text-stone-700 block">
+              选题标题 <span className="text-red-500">*</span>
             </label>
-            <textarea
-              id="topic-hook"
-              rows={3}
+            <input
+              id="topic-title"
+              type="text"
               required
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="写下你的选题想法，例如：揭秘庄家吸筹的三种常见假象..."
+              placeholder="例如：揭秘庄家吸筹的三种常见假象"
               className={cn(
-                "w-full rounded-xl border border-stone-200 bg-white p-3 text-[13px] text-stone-900 placeholder-stone-400 outline-none leading-relaxed",
-                "transition-all duration-200 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20 focus:shadow-[0_2px_8px_rgba(217,119,87,0.03)]"
+                "w-full h-9 rounded-xl border border-stone-200 bg-white px-3 text-[13px] text-stone-900 placeholder-stone-400 outline-none",
+                "transition-all duration-200 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20"
               )}
             />
+          </div>
+
+          {/* 一句话钩子（选填） */}
+          <div className="space-y-1.5">
+            <label htmlFor="topic-hook" className="text-[12.5px] font-medium text-stone-700 block">
+              一句话钩子 <span className="text-stone-400 font-normal">(选填)</span>
+            </label>
+            <textarea
+              id="topic-hook"
+              rows={2}
+              value={hookText}
+              onChange={(e) => setHookText(e.target.value)}
+              placeholder="选填，例如：为什么散户总在底部割肉？因为主力用了这招..."
+              className={cn(
+                "w-full rounded-xl border border-stone-200 bg-white p-2.5 text-[13px] text-stone-900 placeholder-stone-400 outline-none leading-relaxed",
+                "transition-all duration-200 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20"
+              )}
+            />
+          </div>
+
+          {/* 选填折叠区 */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowMore((prev) => !prev)}
+              className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:underline cursor-pointer"
+            >
+              <span>{showMore ? "收起更多选项" : "添加更多（情绪/受众）"}</span>
+              {showMore ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+            </button>
+
+            <AnimatePresence>
+              {showMore && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden space-y-3 pt-3"
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[12px] text-stone-600 block font-medium">情绪标签 (选填)</label>
+                      <input
+                        type="text"
+                        value={emotionTag}
+                        onChange={(e) => setEmotionTag(e.target.value)}
+                        placeholder="如：焦虑 / 好奇 / 避坑"
+                        className="w-full h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-800 outline-none focus:border-[#D97757]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[12px] text-stone-600 block font-medium">目标受众 (选填)</label>
+                      <input
+                        type="text"
+                        value={audience}
+                        onChange={(e) => setAudience(e.target.value)}
+                        placeholder="如：小白投资者 / 职场新人"
+                        className="w-full h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-800 outline-none focus:border-[#D97757]"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* 操作 */}

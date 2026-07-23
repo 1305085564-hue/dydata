@@ -62,7 +62,6 @@ import {
   sanitizeTopicSearchKeyword,
   shouldAutoBindNewTopic,
   shouldAutoRedirectToGrowthAfterSubmit,
-  shouldAutoSelectSuggestedTopic,
 } from "./video-submit-form-state";
 
 import type {
@@ -660,21 +659,7 @@ export function VideoSubmitForm({
         const data = await res.json();
         if (seq !== suggestSeqRef.current) return;
         setSuggestions(data || []);
-        if (data && data.length > 0) {
-          setMeta((current) => {
-            if (
-              !shouldAutoSelectSuggestedTopic({
-                urlLocked: urlLockedRef.current,
-                isManuallySet: isManuallySetRef.current,
-                currentTopicId: current.topicId,
-              })
-            ) {
-              return current;
-            }
-            topicIdRef.current = data[0].id;
-            return { ...current, topicId: data[0].id };
-          });
-        }
+        // 注意：按 item 2 规格，“给候选不预选”，绝不自动为用户写 topicId，待用户手动点击候选按钮后方才绑定。
       } catch (err) {
         if (seq !== suggestSeqRef.current) return;
         console.error("推荐获取失败:", err);
@@ -1136,7 +1121,7 @@ export function VideoSubmitForm({
     });
   }
 
-  async function handleSlotUpload(role: SubmissionSlotRole, file: File) {
+  const handleSlotUpload = useCallback(async (role: SubmissionSlotRole, file: File) => {
     if (!account) {
       feedbackToast.error("请先选择提交账号");
       return;
@@ -1375,9 +1360,9 @@ export function VideoSubmitForm({
           error: message,
         },
       }));
-      feedbackToast.error(message);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account, slots]);
 
   function handleSlotRetry(role: SubmissionSlotRole) {
     const slot = slots[role];
@@ -2191,10 +2176,10 @@ export function VideoSubmitForm({
                             </button>
                           </div>
                         ) : suggestions.length > 0 ? (
-                          <div className="space-y-1.5">
-                            <span className="block text-[11px] font-medium text-stone-400">系统根据标题/文案推荐选题：</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {suggestions.slice(0, 2).map((s) => (
+                          <div className="space-y-2">
+                            <span className="block text-[11px] font-medium text-stone-400">系统根据标题/文案推荐选题（点击下方按钮完成关联）：</span>
+                            <div className="flex flex-wrap gap-2">
+                              {suggestions.slice(0, 3).map((s) => (
                                 <button
                                   key={s.id}
                                   type="button"
@@ -2203,9 +2188,17 @@ export function VideoSubmitForm({
                                     isManuallySetRef.current = true;
                                     setIsManuallySet(true);
                                   }}
-                                  className="inline-flex items-center rounded-lg border border-stone-200 bg-white hover:border-stone-300 px-2 py-1 text-[11px] font-medium text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+                                  className="flex flex-col items-start rounded-xl border border-stone-200 bg-white hover:border-[#D97757]/40 hover:bg-[#D97757]/5 p-2 transition-all duration-150 cursor-pointer text-left shadow-xs"
                                 >
-                                  {s.title}
+                                  <span className="text-[12px] font-medium text-stone-800 line-clamp-1">
+                                    {s.title}
+                                  </span>
+                                  <span className="text-[10px] text-stone-400 mt-0.5">
+                                    {(() => {
+                                      const topicName = Array.isArray(s.topics) ? (s.topics as Array<{ name: string }>)[0]?.name : (s.topics as { name?: string })?.name;
+                                      return topicName ? `${topicName} · 系统按标题匹配` : "系统基于文本深度匹配";
+                                    })()}
+                                  </span>
                                 </button>
                               ))}
                             </div>

@@ -7,16 +7,31 @@ import { SubTopicCard, type SubTopicItem, type SubTopicClaim } from "@/component
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
+import {
+  fetchTopicPoolResponse,
+  resolvePageAfterLoad,
+  getRecommendationKey,
+  type RecommendationSuggestion,
+  type RecommendationResponse,
+  type ComparisonRow
+} from "./topic-helpers";
 import {
   Loader2,
   ChevronDown,
   ChevronUp,
-  Filter,
-  Calendar,
-  Layers,
   Compass,
-  CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
+  BarChart3,
+  ArrowRightLeft,
+  Check,
+  Plus,
+  Info,
+  Calendar,
+  AlertTriangle,
+  Film
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,27 +40,6 @@ interface TopicInfo {
   id: string;
   name: string;
   sort_order: number;
-}
-
-type TopicPoolRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
-
-export async function fetchTopicPoolResponse(
-  url: string,
-  request: TopicPoolRequest = fetch,
-) {
-  const response = await request(url);
-  const payload = await response.json();
-  if (!response.ok) {
-    const message = payload && typeof payload === "object" && "error" in payload
-      ? String((payload as { error?: unknown }).error || "获取选题池数据失败")
-      : "获取选题池数据失败";
-    throw new Error(message);
-  }
-  return payload;
-}
-
-export function resolvePageAfterLoad(currentPage: number, succeeded: boolean) {
-  return succeeded ? currentPage + 1 : currentPage;
 }
 
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
@@ -60,11 +54,23 @@ function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | n
   return items.filter((item) => getMyClaim(item, currentUserId)?.status === "candidate").length;
 }
 
-function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void) {
-  if (event.target !== event.currentTarget) return;
-  if (event.key !== "Enter" && event.key !== " ") return;
-  event.preventDefault();
-  action();
+// 骨架屏组件
+function TopicPoolSkeleton() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="animate-pulse space-y-4"
+    >
+      <div className="h-10 w-full rounded-xl bg-stone-200/60" />
+      <div className="space-y-3">
+        <div className="h-28 w-full rounded-xl bg-stone-200/50" />
+        <div className="h-28 w-full rounded-xl bg-stone-200/50" />
+        <div className="h-28 w-full rounded-xl bg-stone-200/50" />
+      </div>
+    </motion.div>
+  );
 }
 
 export default function TopicPoolPage() {
@@ -73,29 +79,44 @@ export default function TopicPoolPage() {
   const [poolError, setPoolError] = useState<string | null>(null);
   const [topicsList, setTopicsList] = useState<TopicInfo[]>([]);
   const [topicsError, setTopicsError] = useState<string | null>(null);
+
+  // 主页视图 Tab: "pool" 选题池 | "recommendations" 系统推荐 | "comparison" 横向对比
+  const [activeTab, setActiveTab] = useState<"pool" | "comparison" | "recommendations">("pool");
   
   // 筛选状态
   const [currentView, setCurrentView] = useState<"all" | "my_claims" | "my_created">("all");
-  const [timeRange, setTimeRange] = useState<"3d" | "1w" | "1m" | "3m">("1m");
   const [selectedTopicId, setSelectedTopicId] = useState<string>("__all__");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // 认领上限校验辅助
-  // /api/topics/pool?view=my_claims 返回的是子题列表，不是认领记录
+  // 认领上限与替换弹窗 state
   const [myClaims, setMyClaims] = useState<SubTopicItem[]>([]);
   const [claimsError, setClaimsError] = useState<string | null>(null);
-  
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(false);
+  const [targetClaimId, setTargetClaimId] = useState<string | null>(null);
+  const [selectedReturnId, setSelectedReturnId] = useState<string | null>(null);
+  const [isReplacing, setIsReplacing] = useState(false);
+
   // 折叠母题 ID 集合
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<Set<string>>(new Set());
-
-  // 用户权限与身份
   const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  // 系统推荐 (Item 1, 2, 3, 4) state
+  const [recData, setRecData] = useState<RecommendationResponse | null>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [ignoredRecKeys, setIgnoredRecKeys] = useState<Set<string>>(new Set());
+  const [adoptingRecKey, setAdoptingRecKey] = useState<string | null>(null);
+
+  // 横向对比 (Item 5, 6, 7, 8) state
+  const [comparisonDimension, setComparisonDimension] = useState<"topic" | "account">("topic");
+  const [comparisonDays, setComparisonDays] = useState<number>(30); // 7, 14, 30 天
+  const [comparisonTopicId, setComparisonTopicId] = useState<string>(""); // 账号维度下需选母题
+  const [comparisonRows, setComparisonRows] = useState<ComparisonRow[]>([]);
+  const [loadingComparison, setLoadingComparison] = useState(false);
 
   const pageSize = 50;
 
-  // 获取当前用户 ID
   useEffect(() => {
     const getUserId = async () => {
       const supabase = createClient();
@@ -107,7 +128,6 @@ export default function TopicPoolPage() {
     void getUserId();
   }, []);
 
-  // 支持从其他页面带参跳转（如今日工作台"管理我的选题" → /topics?view=my_claims）
   useEffect(() => {
     if (typeof window === "undefined") return;
     const urlView = new URLSearchParams(window.location.search).get("view");
@@ -116,7 +136,7 @@ export default function TopicPoolPage() {
     }
   }, []);
 
-  // 加载母题分类（供顶部下拉筛选用）
+  // 加载母题分类
   const fetchTopics = useCallback(async () => {
     setTopicsError(null);
     try {
@@ -127,19 +147,23 @@ export default function TopicPoolPage() {
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
-      setTopicsList((data ?? []) as TopicInfo[]);
+      const list = (data ?? []) as TopicInfo[];
+      setTopicsList(list);
+      if (list.length > 0 && !comparisonTopicId) {
+        setComparisonTopicId(list[0].id);
+      }
     } catch (err) {
       console.error("加载母题过滤分类失败:", err);
       setTopicsList([]);
       setTopicsError(err instanceof Error ? err.message : "母题分类加载失败");
     }
-  }, []);
+  }, [comparisonTopicId]);
 
   useEffect(() => {
     void fetchTopics();
   }, [fetchTopics]);
 
-  // 加载我的认领，用于判断认领总数和是否已认领
+  // 加载我的认领
   const fetchMyClaims = useCallback(async () => {
     setClaimsError(null);
     try {
@@ -161,7 +185,7 @@ export default function TopicPoolPage() {
     try {
       const params = new URLSearchParams();
       params.append("view", currentView);
-      params.append("time_range", timeRange);
+      params.append("time_range", "1m");
       params.append("page", String(page));
       params.append("page_size", String(pageSize));
 
@@ -191,19 +215,66 @@ export default function TopicPoolPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [currentView, selectedTopicId, timeRange]);
+  }, [currentView, selectedTopicId]);
+
+  // 加载系统推荐 (Item 1, 3) -> 实际读取 suggestions, evidenceSummary, sampleCount, marketDate
+  const fetchRecommendations = useCallback(async () => {
+    setLoadingRecommendations(true);
+    try {
+      const res = await fetch("/api/topics/recommendations");
+      if (!res.ok) throw new Error("获取系统推荐失败");
+      const json = await res.json();
+      setRecData({
+        evidenceSummary: json.evidenceSummary || null,
+        sampleCount: json.sampleCount ?? 0,
+        marketDate: json.marketDate || null,
+        suggestions: Array.isArray(json.suggestions) ? json.suggestions : []
+      });
+    } catch (err) {
+      console.error("系统推荐拉取失败:", err);
+      setRecData(null);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  }, []);
+
+  // 加载横向对比 (Item 5, 6, 7) -> 读取 rows，传递 days，账号维度带 topicId
+  const fetchComparison = useCallback(async () => {
+    setLoadingComparison(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("dimension", comparisonDimension);
+      params.append("days", String(comparisonDays));
+      if (comparisonDimension === "account" && comparisonTopicId) {
+        params.append("topicId", comparisonTopicId);
+      }
+
+      const res = await fetch(`/api/topics/comparison?${params.toString()}`);
+      if (!res.ok) throw new Error("获取对比数据失败");
+      const json = await res.json();
+      setComparisonRows(json.rows || []);
+    } catch (err) {
+      console.error("对比数据获取失败:", err);
+      setComparisonRows([]);
+    } finally {
+      setLoadingComparison(false);
+    }
+  }, [comparisonDimension, comparisonDays, comparisonTopicId]);
 
   const loadAll = useCallback(async () => {
     setCurrentPage(1);
-    await Promise.all([fetchPoolData(1, false), fetchMyClaims()]);
-  }, [fetchMyClaims, fetchPoolData]);
+    await Promise.all([
+      fetchPoolData(1, false),
+      fetchMyClaims(),
+      fetchRecommendations(),
+      fetchComparison()
+    ]);
+  }, [fetchMyClaims, fetchPoolData, fetchRecommendations, fetchComparison]);
 
-  // 当筛选条件变化时，重新获取数据
   useEffect(() => {
     void loadAll();
   }, [loadAll]);
 
-  // 监听录入成功事件，随时刷新选题池
   useEffect(() => {
     const handleRefresh = () => {
       void loadAll();
@@ -212,18 +283,81 @@ export default function TopicPoolPage() {
     return () => window.removeEventListener("refresh-topics", handleRefresh);
   }, [loadAll]);
 
-  // 处理加载更多
+  // 触发 5/5 认领上限替换弹窗
+  const handleTriggerReplaceModal = (subTopicId?: string) => {
+    const candidateClaims = myClaims.filter(
+      (item) => getMyClaim(item, currentUserId)?.status === "candidate"
+    );
+    if (subTopicId) setTargetClaimId(subTopicId);
+    setSelectedReturnId(candidateClaims[0]?.id || null);
+    setReplaceDialogOpen(true);
+  };
+
+  // 执行替换认领
+  const handleConfirmReplace = async () => {
+    if (!selectedReturnId || !targetClaimId || isReplacing) return;
+    setIsReplacing(true);
+    try {
+      const returnRes = await fetch(`/api/topics/sub-topics/${selectedReturnId}/return`, { method: "POST" });
+      if (!returnRes.ok) throw new Error("放回旧选题失败");
+
+      const claimRes = await fetch(`/api/topics/sub-topics/${targetClaimId}/claim`, { method: "POST" });
+      if (!claimRes.ok) throw new Error("认领新选题失败");
+
+      feedbackToast.success("已替换旧选题并成功认领！");
+      setReplaceDialogOpen(false);
+      setTargetClaimId(null);
+      setSelectedReturnId(null);
+      void loadAll();
+    } catch (err) {
+      feedbackToast.error("替换失败", { details: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setIsReplacing(false);
+    }
+  };
+
+  // 采纳 AI 建议入库 (Item 4): 发送 title, angle, category，错误抛原文
+  const handleAdoptRecommendation = async (rec: RecommendationSuggestion, key: string) => {
+    setAdoptingRecKey(key);
+    try {
+      const res = await fetch("/api/topics/sub-topics/from-recommendation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: rec.title,
+          angle: rec.angle || null,
+          category: rec.category
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "采纳入库失败");
+      }
+      feedbackToast.success(`成功采纳并存入选题池：“${rec.title}”`);
+      setIgnoredRecKeys((prev) => new Set(prev).add(key));
+      void loadAll();
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      feedbackToast.error("采纳失败", { details: errMsg });
+    } finally {
+      setAdoptingRecKey(null);
+    }
+  };
+
   const handleLoadMore = async () => {
     const nextPage = currentPage + 1;
     const succeeded = await fetchPoolData(nextPage, true);
     setCurrentPage((page) => resolvePageAfterLoad(page, succeeded));
   };
 
-  // 从子题内的 sub_topic_claims 统计当前用户的 candidate 数量
   const activeCandidateCount = countMyCandidates(myClaims, currentUserId);
   const isLimitReached = activeCandidateCount >= 5;
 
-  // 根据母题进行前端分组聚合
+  const candidateClaims = myClaims.filter(
+    (item) => getMyClaim(item, currentUserId)?.status === "candidate"
+  );
+
+  // 母题分组聚合
   const groupedGroups = useMemo(() => {
     const groups: Record<string, { topicId: string; topicName: string; sortOrder: number; items: SubTopicItem[] }> = {};
 
@@ -246,233 +380,595 @@ export default function TopicPoolPage() {
     return Object.values(groups).sort((a, b) => a.sortOrder - b.sortOrder);
   }, [items]);
 
-  // 展开/收起大分组
   const toggleCollapseGroup = (topicId: string) => {
     setCollapsedTopicIds((prev) => {
       const next = new Set(prev);
-      if (next.has(topicId)) {
-        next.delete(topicId);
-      } else {
-        next.add(topicId);
-      }
+      if (next.has(topicId)) next.delete(topicId);
+      else next.add(topicId);
       return next;
     });
   };
 
-  const hasMore = items.length < totalItems;
+  // 横向对比中位数计算 (Item 8)
+  const comparisonMedians = useMemo(() => {
+    if (comparisonRows.length === 0) return { qualifiedRateMedian: 0, avgPlayMedian: 0 };
+    const rates = comparisonRows.map((r) => r.qualifiedRate).sort((a, b) => a - b);
+    const plays = comparisonRows.map((r) => r.avgPlayCount).sort((a, b) => a - b);
+    const mid = Math.floor(rates.length / 2);
+    return {
+      qualifiedRateMedian: rates.length % 2 !== 0 ? rates[mid] : (rates[mid - 1] + rates[mid]) / 2,
+      avgPlayMedian: plays.length % 2 !== 0 ? plays[mid] : (plays[mid - 1] + plays[mid]) / 2
+    };
+  }, [comparisonRows]);
+
+  const rawSuggestions = recData?.suggestions || [];
+  const visibleSuggestions = rawSuggestions.filter(
+    (s) => !ignoredRecKeys.has(getRecommendationKey(s))
+  );
 
   return (
     <div className="space-y-6">
-      {/* 顶部控制面板 */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 md:flex-row md:items-center md:justify-between shadow-sm">
-        {/* 视图切换 Tabs */}
-        <div className="flex items-center gap-1 rounded-xl bg-stone-100 p-0.5 border border-stone-200/40 w-fit shrink-0">
-          {(
-            [
-              { id: "all", label: "全部选题", icon: Compass },
-              { id: "my_claims", label: "我正在做的", icon: CheckCircle },
-              { id: "my_created", label: "我提交的", icon: Layers }
-            ] as const
-          ).map((view) => {
-            const ViewIcon = view.icon;
-            const active = currentView === view.id;
-            return (
-              <button
-                key={view.id}
-                onClick={() => setCurrentView(view.id)}
-                className={cn(
-                  "relative flex h-8 items-center gap-1.5 rounded-lg px-4 text-[12.5px] font-medium transition-all duration-200 cursor-pointer",
-                  active
-                    ? "bg-white text-stone-900 shadow-sm font-semibold"
-                    : "text-stone-500 hover:text-stone-850"
-                )}
-              >
-                <ViewIcon className={cn("size-3.5", active ? "text-[#D97757]" : "text-stone-400")} />
-                <span>{view.label}</span>
-              </button>
-            );
-          })}
-        </div>
+      {/* 分类 / 认领失败独立重试提示栏 (Item 20) */}
+      <AnimatePresence>
+        {topicsError && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="flex items-center justify-between rounded-xl border border-[#C9604D]/25 bg-[#C9604D]/5 px-4 py-2.5 text-[12.5px] text-[#C9604D]"
+          >
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="size-4 shrink-0" />
+              <span>分类加载失败：{topicsError}</span>
+            </div>
+            <Button size="xs" variant="outline" onClick={() => void fetchTopics()} className="h-7 text-[12px]">
+              <RefreshCw className="size-3 mr-1" />
+              重新加载分类
+            </Button>
+          </motion.div>
+        )}
+        {claimsError && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="flex items-center justify-between rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/5 px-4 py-2.5 text-[12.5px] text-stone-700"
+          >
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="size-4 shrink-0 text-[#D99E55]" />
+              <span>认领状态加载失败：{claimsError}</span>
+            </div>
+            <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px]">
+              <RefreshCw className="size-3 mr-1" />
+              重新加载认领状态
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* 筛选参数：时间 & 母题 */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* 母题筛选下拉 */}
-          <div className="flex items-center gap-1.5">
-            <Filter className="size-3.5 text-stone-400" />
+      {/* 统一单层控制台 (Single-Row Flat Control Bar) */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-3 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 单行平铺 segmented buttons */}
+          <div className="flex flex-wrap items-center gap-1 bg-stone-100/70 p-1 rounded-xl border border-stone-200/50">
+            <button
+              onClick={() => {
+                setActiveTab("pool");
+                setCurrentView("all");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                activeTab === "pool" && currentView === "all"
+                  ? "bg-white text-stone-900 shadow-xs"
+                  : "text-stone-500 hover:text-stone-800"
+              )}
+            >
+              <Compass className="size-4 text-[#D97757]" />
+              <span>全部选题</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("pool");
+                setCurrentView("my_claims");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                activeTab === "pool" && currentView === "my_claims"
+                  ? "bg-white text-stone-900 shadow-xs"
+                  : "text-stone-500 hover:text-stone-800"
+              )}
+            >
+              <span>我正在做的</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setActiveTab("pool");
+                setCurrentView("my_created");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                activeTab === "pool" && currentView === "my_created"
+                  ? "bg-white text-stone-900 shadow-xs"
+                  : "text-stone-500 hover:text-stone-800"
+              )}
+            >
+              <span>我录入的</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("recommendations")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer relative",
+                activeTab === "recommendations"
+                  ? "bg-white text-stone-900 shadow-xs"
+                  : "text-stone-500 hover:text-stone-800"
+              )}
+            >
+              <Sparkles className="size-4 text-[#D97757]" />
+              <span>AI系统推荐</span>
+              {visibleSuggestions.length > 0 && (
+                <span className="ml-1 rounded-full bg-[#D97757] px-1.5 py-0.2 text-[10px] text-white">
+                  {visibleSuggestions.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => setActiveTab("comparison")}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-all duration-200 cursor-pointer",
+                activeTab === "comparison"
+                  ? "bg-white text-stone-900 shadow-xs"
+                  : "text-stone-500 hover:text-stone-800"
+              )}
+            >
+              <BarChart3 className="size-4 text-[#5F82A8]" />
+              <span>趋势与对比</span>
+            </button>
+          </div>
+
+          {/* 母题分类下拉只在 "pool" 视图出现 */}
+          {activeTab === "pool" && topicsList.length > 0 && (
             <select
               value={selectedTopicId}
               onChange={(e) => setSelectedTopicId(e.target.value)}
-              className="h-8.5 rounded-xl border border-stone-200 bg-white px-3 py-1 text-[12.5px] text-stone-700 outline-none hover:border-stone-300 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20"
+              className="h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-700 outline-none focus:border-[#D97757]"
             >
-              <option value="__all__">所有母题分类</option>
+              <option value="__all__">全部分类母题</option>
               {topicsList.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
+                <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
-          </div>
+          )}
+        </div>
 
-          {/* 时间范围筛选 */}
-          <div className="flex items-center gap-1.5">
-            <Calendar className="size-3.5 text-stone-400" />
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as "3d" | "1w" | "1m" | "3m")}
-              className="h-8.5 rounded-xl border border-stone-200 bg-white px-3 py-1 text-[12.5px] text-stone-700 outline-none hover:border-stone-300 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20"
-            >
-              <option value="3d">近 3 天</option>
-              <option value="1w">本周</option>
-              <option value="1m">本月</option>
-              <option value="3m">近 3 个月</option>
-            </select>
-          </div>
-
-          {/* 刷新按钮 */}
+        {/* 控制栏右侧：候选位 + 录入选题按钮 */}
+        <div className="flex items-center gap-3">
+          {activeTab === "pool" && (
+            <div className="text-[12px] text-stone-500 flex items-center gap-2 pr-1">
+              <span>候选位：</span>
+              <span className={cn("font-bold tabular-nums", isLimitReached ? "text-[#C9604D]" : "text-[#5F82A8]")}>
+                {activeCandidateCount} / 5
+              </span>
+            </div>
+          )}
           <Button
-            variant="outline"
-            size="icon-sm"
-            onClick={() => void loadAll()}
-            className="size-8.5 rounded-xl text-stone-400 hover:text-stone-700 border-stone-200"
-            title="刷新选题池"
-            aria-label="刷新选题池"
+            size="sm"
+            onClick={() => triggerGlobalTopicCreate()}
+            className="h-8.5 rounded-xl px-4 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white gap-1 cursor-pointer"
           >
-            <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
+            <Plus className="size-4" />
+            <span>录入选题</span>
           </Button>
         </div>
       </div>
 
-      {topicsError || claimsError ? (
-        <div className="space-y-2 rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/5 px-4 py-3 text-[12px] text-stone-600">
-          {topicsError ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span>母题分类加载失败：{topicsError}</span>
-              <Button type="button" variant="outline" size="xs" onClick={() => void fetchTopics()}>
-                重新加载分类
-              </Button>
-            </div>
-          ) : null}
-          {claimsError ? (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span>认领状态加载失败：{claimsError}</span>
-              <Button type="button" variant="outline" size="xs" onClick={() => void fetchMyClaims()}>
-                重新加载认领状态
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {/* 列表区 */}
-      {loading ? (
-        <div className="flex h-[300px] items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="size-6 animate-spin text-[#D97757]" />
-            <span className="text-[12.5px] text-stone-500">正在整理选题列表，请稍候...</span>
-          </div>
-        </div>
-      ) : poolError ? (
-        <ErrorState
-          title="选题池加载失败"
-          description={poolError}
-          onRetry={() => void loadAll()}
-        />
-      ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 border border-dashed border-stone-200 bg-white rounded-2xl">
-          <EmptyState
-            title="暂无对应选题"
-            description="未找到符合筛选条件的选题，您可以换个视图条件或点击上方新建选题。"
-          />
-        </div>
-      ) : (
+      {/* 视图 1：选题池 View */}
+      {activeTab === "pool" && (
         <div className="space-y-6">
-          {groupedGroups.map((group) => {
-            const isCollapsed = collapsedTopicIds.has(group.topicId);
-            return (
-              <div
-                key={group.topicId}
-                className="space-y-3 rounded-2xl border border-stone-200/60 bg-stone-50/40 p-4 transition-all"
+          {/* 列表 / 骨架屏 / 空态 (带淡入淡出动效 Item 19) */}
+          <AnimatePresence mode="wait">
+            {loading && items.length === 0 ? (
+              <TopicPoolSkeleton key="skeleton" />
+            ) : poolError ? (
+              <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <ErrorState title="获取选题数据失败" description={poolError} onRetry={() => void loadAll()} />
+              </motion.div>
+            ) : items.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center p-12 border border-dashed border-stone-200 bg-white rounded-2xl space-y-3 text-center"
               >
-                {/* 分组头部：点击折叠 */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => toggleCollapseGroup(group.topicId)}
-                  onKeyDown={(event) => handleKeyboardActivation(event, () => toggleCollapseGroup(group.topicId))}
-                  className="flex cursor-pointer items-center justify-between border-b border-stone-250 pb-2 hover:opacity-80 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-50"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13.5px] font-bold text-stone-900">
-                      {group.topicName}
-                    </span>
-                    <span className="inline-flex items-center justify-center rounded-full bg-stone-200/70 px-2 py-0.5 text-[11px] font-semibold text-stone-600">
-                      {group.items.length}
-                    </span>
-                  </div>
-                  <div className="text-stone-400">
-                    {isCollapsed ? (
-                      <div className="flex items-center gap-1 text-[11.5px] text-stone-400 font-medium">
-                        <span>展开</span>
-                        <ChevronDown className="size-4" />
+                <EmptyState title="暂无相关选题" description="当前筛选条件下没有查找到符合要求的选题。" />
+                <Button size="sm" onClick={() => triggerGlobalTopicCreate()} className="bg-[#D97757] text-white">
+                  <Plus className="size-4 mr-1" />
+                  立即新建选题
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                {groupedGroups.map((group) => {
+                  const isCollapsed = collapsedTopicIds.has(group.topicId);
+                  return (
+                    <div key={group.topicId} className="space-y-3">
+                      <div
+                        onClick={() => toggleCollapseGroup(group.topicId)}
+                        className="flex items-center justify-between cursor-pointer select-none border-b border-stone-200/60 pb-2 pt-1 px-1 hover:text-[#D97757] transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13.5px] font-bold text-stone-900">{group.topicName}</span>
+                          <span className="text-[12px] text-stone-400 font-normal">({group.items.length} 条子题)</span>
+                        </div>
+                        <div className="text-stone-400">
+                          {isCollapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-[11.5px] text-stone-400 font-medium">
-                        <span>折叠</span>
-                        <ChevronUp className="size-4" />
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                {/* 分组子项卡片 */}
-                <AnimatePresence initial={false}>
-                  {!isCollapsed && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden space-y-3"
+                      {!isCollapsed && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          {group.items.map((subTopic) => (
+                            <SubTopicCard
+                              key={subTopic.id}
+                              item={subTopic}
+                              currentUserId={currentUserId}
+                              isLimitReached={isLimitReached}
+                              isClaimedByMe={isClaimedByMe(subTopic, currentUserId)}
+                              onClaimSuccess={() => void loadAll()}
+                              onLimitReached409={() => handleTriggerReplaceModal(subTopic.id)}
+                              onRefresh={() => void loadAll()}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {items.length < totalItems && (
+                  <div className="flex justify-center pt-4">
+                    <Button
+                      variant="outline"
+                      disabled={loadingMore}
+                      onClick={() => void handleLoadMore()}
+                      className="h-9 px-6 rounded-xl border-stone-200 text-[13px] font-medium"
                     >
-                      {group.items.map((subTopic) => (
-                        <SubTopicCard
-                          key={subTopic.id}
-                          item={subTopic}
-                          currentUserId={currentUserId}
-                          isLimitReached={isLimitReached}
-                          isClaimedByMe={isClaimedByMe(subTopic, currentUserId)}
-                          onClaimSuccess={fetchMyClaims}
-                        />
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-
-          {/* 加载更多按钮 */}
-          {hasMore && (
-            <div className="flex justify-center pt-4">
-              <Button
-                variant="outline"
-                disabled={loadingMore}
-                onClick={() => void handleLoadMore()}
-                className="h-9 rounded-xl px-6 text-[12.5px] border-stone-200 hover:border-stone-300 font-medium text-stone-600 hover:text-stone-900"
-              >
-                {loadingMore ? (
-                  <>
-                    <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                    正在拼命加载中...
-                  </>
-                ) : (
-                  "加载更多选题"
+                      {loadingMore ? <Loader2 className="size-4 animate-spin mr-1.5" /> : null}
+                      加载更多选题（已加载 {items.length} / {totalItems}）
+                    </Button>
+                  </div>
                 )}
-              </Button>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
+
+      {/* 视图 2：系统推荐 (Item 1, 2, 3, 4) View */}
+      {activeTab === "recommendations" && (
+        <AnimatePresence mode="wait">
+          <motion.div key="rec-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+            {/* 顶栏全局依据展示 (Item 3) */}
+            <div className="rounded-2xl border border-[#D97757]/30 bg-gradient-to-r from-[#D97757]/5 to-amber-50/40 p-5 space-y-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-5 text-[#D97757]" />
+                  <h2 className="text-[15px] font-bold text-stone-900">AI 爆款选题推荐</h2>
+                </div>
+                {recData && (
+                  <div className="flex items-center gap-3 text-[11.5px] text-stone-500 font-medium">
+                    {typeof recData.sampleCount === "number" && recData.sampleCount > 0 && <span>样本数：{recData.sampleCount} 条</span>}
+                    {recData.marketDate && <span>热点日期：{recData.marketDate}</span>}
+                  </div>
+                )}
+              </div>
+              {recData?.evidenceSummary ? (
+                <p className="text-[12.5px] text-stone-600 leading-relaxed">
+                  推荐依据：{recData.evidenceSummary}
+                </p>
+              ) : (
+                <p className="text-[12.5px] text-stone-600 leading-relaxed">
+                  基于团队全网爆款视频样本与数据趋势生成的选题提炼。采纳后将自动转换为正式子题放入选题池。
+                </p>
+              )}
+            </div>
+
+            {loadingRecommendations ? (
+              <TopicPoolSkeleton />
+            ) : visibleSuggestions.length === 0 ? (
+              <div className="py-12 text-center border border-dashed border-stone-200 rounded-2xl bg-white space-y-2">
+                <EmptyState title="暂无推荐选题" description="先积累更多作品数据，AI 将持续学习并自动生成复刻建议。" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {visibleSuggestions.map((rec) => {
+                  const key = getRecommendationKey(rec);
+                  const isAdopting = adoptingRecKey === key;
+                  return (
+                    <div
+                      key={key}
+                      className="flex flex-col justify-between rounded-2xl border border-[#D97757]/25 bg-white p-5 shadow-2xs hover:border-[#D97757]/45 transition-all"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="rounded-md bg-[#D97757]/10 px-2 py-0.5 text-[11px] font-semibold text-[#D97757]">
+                            {rec.category || "爆款推荐"}
+                          </span>
+                          {rec.expectedPerformance && (
+                            <span className="text-[11px] font-medium text-[#5F82A8] bg-[#5F82A8]/10 px-2 py-0.5 rounded-md">
+                              预期表现: {rec.expectedPerformance}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-[15px] font-bold text-stone-900 leading-snug">{rec.title}</h3>
+
+                        {rec.angle && (
+                          <div className="rounded-xl bg-stone-50 p-3 border border-stone-150 text-[12.5px] text-stone-700 leading-relaxed">
+                            <span className="font-semibold text-stone-850 block mb-0.5">切入角度：</span>
+                            “{rec.angle}”
+                          </div>
+                        )}
+
+                        {rec.evidence && (
+                          <div className="text-[11.5px] text-stone-500 flex items-start gap-1">
+                            <Info className="size-3.5 text-[#5F82A8] shrink-0 mt-0.5" />
+                            <span>依据：{rec.evidence}</span>
+                          </div>
+                        )}
+
+                        {rec.referenceVideos && rec.referenceVideos.length > 0 && (
+                          <div className="space-y-1 pt-1 border-t border-stone-100">
+                            <span className="text-[11px] font-medium text-stone-400 block flex items-center gap-1">
+                              <Film className="size-3 text-stone-400" />
+                              参考视频 ({rec.referenceVideos.length})
+                            </span>
+                            <div className="space-y-1">
+                              {rec.referenceVideos.slice(0, 2).map((vid, idx) => {
+                                const playVal = vid.playCount24h ?? vid.playCount;
+                                return (
+                                  <div key={idx} className="flex items-center justify-between text-[11px] text-stone-600 bg-stone-50 px-2 py-1 rounded-md">
+                                    <span className="truncate max-w-[200px]">{vid.title || "爆款原片"}</span>
+                                    {playVal !== undefined && (
+                                      <span className="text-stone-400 tabular-nums">
+                                        {playVal >= 10000 ? `${(playVal / 10000).toFixed(1)}w` : playVal}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-end gap-2 border-t border-stone-100 pt-3">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => setIgnoredRecKeys((prev) => new Set(prev).add(key))}
+                          className="h-7.5 text-stone-400 hover:text-stone-600"
+                        >
+                          忽略
+                        </Button>
+                        <Button
+                          size="xs"
+                          disabled={isAdopting}
+                          onClick={() => void handleAdoptRecommendation(rec, key)}
+                          className="h-7.5 px-3.5 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-medium rounded-lg"
+                        >
+                          {isAdopting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+                          采纳进库
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {/* 视图 3：横向对比 (Item 5, 6, 7, 8) View */}
+      {activeTab === "comparison" && (
+        <AnimatePresence mode="wait">
+          <motion.div key="comp-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white p-3.5 shadow-2xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg border border-stone-200/50">
+                  <button
+                    onClick={() => setComparisonDimension("topic")}
+                    className={cn(
+                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
+                      comparisonDimension === "topic" ? "bg-white text-stone-900 font-semibold shadow-2xs" : "text-stone-500"
+                    )}
+                  >
+                    母题维度
+                  </button>
+                  <button
+                    onClick={() => setComparisonDimension("account")}
+                    className={cn(
+                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
+                      comparisonDimension === "account" ? "bg-white text-stone-900 font-semibold shadow-2xs" : "text-stone-500"
+                    )}
+                  >
+                    账号维度
+                  </button>
+                </div>
+
+                {/* 账号维度下强制选择对比母题 (Item 7) */}
+                {comparisonDimension === "account" && topicsList.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-[12px]">
+                    <span className="text-stone-500 font-medium">对比母题：</span>
+                    <select
+                      value={comparisonTopicId}
+                      onChange={(e) => setComparisonTopicId(e.target.value)}
+                      className="h-7.5 rounded-lg border border-stone-200 bg-white px-2 text-[12px] text-stone-800 outline-none focus:border-[#5F82A8]"
+                    >
+                      {topicsList.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* 时间筛选传递 days (Item 6) */}
+              <div className="flex items-center gap-1.5 text-[12px]">
+                <Calendar className="size-3.5 text-stone-400" />
+                <span className="text-stone-500 font-medium">时间筛选：</span>
+                <select
+                  value={comparisonDays}
+                  onChange={(e) => setComparisonDays(Number(e.target.value))}
+                  className="h-7.5 rounded-lg border border-stone-200 bg-white px-2 text-[12px] outline-none"
+                >
+                  <option value={7}>近 7 天</option>
+                  <option value={14}>近 14 天</option>
+                  <option value={30}>近 30 天</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 基于中位数的红涨绿跌人话解读 (Item 8) */}
+            {comparisonRows.length > 0 && (
+              <div className="rounded-xl bg-stone-100/70 p-3 border border-stone-200/50 text-[12px] text-stone-700 flex items-center gap-1.5">
+                <Info className="size-4 text-[#5F82A8] shrink-0" />
+                <span>
+                  对比数据解读：基于当前列表分布中位数（达标率中位数：{(comparisonMedians.qualifiedRateMedian * 100).toFixed(1)}%，均播中位数：{comparisonMedians.avgPlayMedian.toLocaleString()}）。低于中位数标绿，高于中位数标红。
+                </span>
+              </div>
+            )}
+
+            {loadingComparison ? (
+              <TopicPoolSkeleton />
+            ) : comparisonRows.length === 0 ? (
+              <div className="py-12 text-center border border-dashed border-stone-200 rounded-2xl bg-white space-y-2">
+                <EmptyState title="暂无对比样本" description="当前筛选条件下缺少足够的作品发布样本。" />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-stone-200 bg-white overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[12.5px]">
+                    <thead className="bg-stone-50 border-b border-stone-200 text-stone-500 font-medium">
+                      <tr>
+                        <th className="py-3 px-4">{comparisonDimension === "topic" ? "母题分类" : "账号名称"}</th>
+                        <th className="py-3 px-4">作品样本数</th>
+                        <th className="py-3 px-4">爆款达标率</th>
+                        <th className="py-3 px-4">平均播放量</th>
+                        <th className="py-3 px-4">最高播放量</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-stone-100">
+                      {comparisonRows.map((row, idx) => {
+                        const name = comparisonDimension === "account"
+                          ? (row.accountName || row.topicName || `账号 ${idx + 1}`)
+                          : (row.topicName || row.accountName || `母题 ${idx + 1}`);
+                        const rowKey = comparisonDimension === "account"
+                          ? `acc-${row.accountId || idx}-${idx}`
+                          : `top-${row.topicId || idx}-${idx}`;
+
+                        const isLowConfidence = row.lowConfidence || row.workCount < 3;
+                        const isRateHigher = row.qualifiedRate >= comparisonMedians.qualifiedRateMedian;
+                        const isPlayHigher = row.avgPlayCount >= comparisonMedians.avgPlayMedian;
+
+                        return (
+                          <tr key={rowKey} className={cn("hover:bg-stone-50/60", isLowConfidence && "opacity-70 bg-stone-50/30")}>
+                            <td className="py-3 px-4 font-semibold text-stone-900 flex items-center gap-1.5">
+                              <span className={cn(isLowConfidence && "text-stone-500")}>{name}</span>
+                              {isLowConfidence && (
+                                <span className="rounded bg-stone-200 px-1.5 py-0.2 text-[10px] text-stone-500 font-normal shrink-0">
+                                  样本少仅供参考
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 tabular-nums text-stone-700">{row.workCount} 条</td>
+                            <td className="py-3 px-4 font-semibold tabular-nums">
+                              <span className={isRateHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
+                                {(row.qualifiedRate * 100).toFixed(1)}%
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 font-semibold tabular-nums">
+                              <span className={isPlayHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
+                                {row.avgPlayCount >= 10000 ? `${(row.avgPlayCount / 10000).toFixed(1)}w` : row.avgPlayCount.toLocaleString()}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 tabular-nums text-stone-800">
+                              {row.bestPlayCount >= 10000 ? `${(row.bestPlayCount / 10000).toFixed(1)}w` : row.bestPlayCount.toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {/* 替换选择 (5/5 满额) Dialog (Item 4, 18 真正认领时间) */}
+      <Dialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
+        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-900 text-[15px] font-semibold flex items-center gap-2">
+              <ArrowRightLeft className="size-4 text-[#D97757]" />
+              <span>候选位已满 (5/5) · 请选择替换</span>
+            </DialogTitle>
+            <DialogDescription className="text-stone-500 text-[12.5px]">
+              您的候选选题库已达 5 条上限。请选择一条放回选题池，以便腾出空间认领新题。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2 space-y-2 max-h-[220px] overflow-y-auto pr-1">
+            {candidateClaims.map((item) => {
+              const isSelected = selectedReturnId === item.id;
+              const myClaimObj = getMyClaim(item, currentUserId);
+              const claimedAtTime = myClaimObj?.claimed_at || item.created_at;
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedReturnId(item.id)}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-150",
+                    isSelected ? "border-[#D97757] bg-[#D97757]/5 shadow-xs" : "border-stone-200 bg-white hover:bg-stone-50"
+                  )}
+                >
+                  <div className="space-y-0.5 min-w-0 pr-2">
+                    <div className="text-[13px] font-medium text-stone-900 truncate">{item.title}</div>
+                    <div className="text-[11px] text-stone-400">
+                      认领时间: {new Date(claimedAtTime).toLocaleString()}
+                    </div>
+                  </div>
+                  {isSelected && <Check className="size-4 text-[#D97757] shrink-0" />}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
+            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)}>
+              取消
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={!selectedReturnId || isReplacing}
+              onClick={() => void handleConfirmReplace()}
+              className="bg-[#D97757] text-white hover:bg-[#D97757]/90"
+            >
+              {isReplacing ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+              确认替换并认领
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

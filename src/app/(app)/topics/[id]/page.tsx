@@ -1,94 +1,54 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
+import { useEffect, useState, useCallback, use, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  Loader2,
+  parseSubTopicDetailResponse,
+  parseSubTopicWorksResponse,
+  resolveWorkLikes,
+  calculateTotalInFlight,
+  DETAIL_PAGE_SIZE,
+  type SubTopicDetail,
+  type WorkItem,
+  type ReferenceWork
+} from "../topic-helpers";
+import {
   ChevronLeft,
-  ChevronUp,
-  ChevronDown,
-  Calendar,
-  Award,
-  Video,
   User,
+  Check,
+  Plus,
+  Loader2,
   AlertTriangle,
-  ExternalLink,
-  BookOpen,
-  TrendingUp
+  Video,
+  Edit2,
+  Trash2,
+  ArrowRightLeft,
+  RefreshCw,
+  FileText,
+  RotateCcw,
+  Film
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface TopicDetail {
-  id: string;
-  title: string;
-  hook: string;
-  topic_id: string;
-  group_id: string | null;
-  emotion_tag: string | null;
-  source: string | null;
-  audience: string | null;
-  created_by: string;
-  created_at: string;
-  topics: {
-    id: string;
-    name: string;
-  } | null;
-  topic_groups: {
-    id: string;
-    name: string;
-  } | null;
-}
-
-interface WorkItem {
-  id: string;
-  video_title: string;
-  content: string | null;
-  uploaded_at: string | null;
-  referenceType: "direct" | "similar";
-  video_metrics_snapshots?: Array<{
-    play_count: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    favorites: number;
-    follower_gain?: number;
-    follower_convert?: number;
-  }>;
-}
-
-interface WorksSummary {
-  qualifiedWorkCount: number;
-  averagePlayCount: number | null;
-  bestCopy: string | null;
-  latestCopy: string | null;
-}
-
 interface ClaimInfo {
-  id: string;
-  sub_topic_id: string;
-  user_id: string;
+  userId: string;
+  displayName: string;
+  claimedAt: string;
   status: "candidate" | "scripting" | "returned";
-  claimed_at: string;
-  returned_at?: string | null;
-  notes?: string | null;
 }
 
-interface AllClaimsRecord {
-  id: string;
-  sub_topic_id: string;
-  user_id: string;
-  status: "candidate" | "scripting" | "returned";
-  claimed_at: string;
-  profiles: {
-    display_name: string | null;
-    name: string;
-    role: string;
-  } | null;
+interface ClaimsApiResponse {
+  claims: ClaimInfo[];
+  candidateCount: number;
+  scriptingCount: number;
 }
+
+
 
 interface SubTopicClaim {
   id: string;
@@ -97,631 +57,902 @@ interface SubTopicClaim {
   claimed_at: string;
 }
 
-interface SubTopicItemWithClaims {
+interface MyClaimSubTopicItem {
   id: string;
+  title: string;
+  hook?: string | null;
   sub_topic_claims?: SubTopicClaim[];
 }
 
-function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
-  return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
-}
-
-function handleKeyboardActivation(event: React.KeyboardEvent, action: () => void) {
-  if (event.target !== event.currentTarget) return;
-  if (event.key !== "Enter" && event.key !== " ") return;
-  event.preventDefault();
-  action();
-}
-
-export default function TopicDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
-  const params = use(paramsPromise);
+export default function SubTopicDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const subTopicId = resolvedParams.id;
   const router = useRouter();
-  const id = params.id;
 
-  const [detail, setDetail] = useState<TopicDetail | null>(null);
-  const [works, setWorks] = useState<WorkItem[]>([]);
-  const [similarWorks, setSimilarWorks] = useState<WorkItem[]>([]);
-  const [summary, setSummary] = useState<WorksSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [detail, setDetail] = useState<SubTopicDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(true);
 
-  // 排序与分页
-  const [sortType, setSortType] = useState<"best" | "recent">("best");
-  const [totalWorks, setTotalWorks] = useState(0);
-  const [loadingWorks, setLoadingWorks] = useState(false);
-  const [worksPage, setWorksPage] = useState(1);
+  // 撞车动态
+  const [claimsData, setClaimsData] = useState<ClaimsApiResponse>({
+    claims: [],
+    candidateCount: 0,
+    scriptingCount: 0
+  });
+  const [claimsError, setClaimsError] = useState<string | null>(null);
 
-  // 认领状态
-  const [myClaim, setMyClaim] = useState<ClaimInfo | null>(null);
+  // 我的认领
+  const [myClaims, setMyClaims] = useState<MyClaimSubTopicItem[]>([]);
+  const [myClaimsError, setMyClaimsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [allClaims, setAllClaims] = useState<AllClaimsRecord[]>([]); // 全局认领记录 (低频展开看)
-  const [showAllClaims, setShowAllClaims] = useState(false);
-  const [claimsLoadFailed, setClaimsLoadFailed] = useState(false);
-  
-  const [actionLoading, setActionLoading] = useState(false);
-  const [claimLimitReached, setClaimLimitReached] = useState(false);
 
-  // 获取当前用户及管理员属性
+  // 认领与状态流转操作 Loading
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [isUpdatingClaim, setIsUpdatingClaim] = useState(false);
+
+  // 作品列表、排序与分页 (问题 3)
+  const [works, setWorks] = useState<WorkItem[]>([]);
+  const [similarReferences, setSimilarReferences] = useState<ReferenceWork[]>([]);
+  const [worksTotal, setWorksTotal] = useState(0);
+  const [worksPage, setWorksPage] = useState(1);
+  const [worksPageSize, setWorksPageSize] = useState(DETAIL_PAGE_SIZE);
+  const [worksSort, setWorksSort] = useState<"best" | "recent">("best");
+  const [loadingWorks, setLoadingWorks] = useState(false);
+  const hasLoadedWorksRef = useRef(false);
+
+  // 编辑 Modal
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editHook, setEditHook] = useState("");
+  const [editEmotionTag, setEditEmotionTag] = useState("");
+  const [editAudience, setEditAudience] = useState("");
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  // 删除 Dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
+
+  // 替换 5/5 认领 Dialog
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(false);
+  const [selectedReturnId, setSelectedReturnId] = useState<string | null>(null);
+  const [isReplacing, setIsReplacing] = useState(false);
+
+  // 获取当前登录用户 ID
   useEffect(() => {
-    const checkUser = async () => {
+    const getUserId = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
       }
     };
-    void checkUser();
+    void getUserId();
   }, []);
 
-  // 加载认领上限校验
-  // /api/topics/pool?view=my_claims 返回的是子题列表，需从每个子题的 sub_topic_claims 中匹配当前用户
-  const checkClaimLimit = useCallback(async () => {
-    if (!currentUserId) return;
+  // 加载“我的认领”状态列表 (含错误显露与重试 问题 5)
+  const fetchMyClaims = useCallback(async () => {
+    setMyClaimsError(null);
     try {
       const res = await fetch("/api/topics/pool?view=my_claims");
-      if (res.ok) {
-        const json = await res.json();
-        const activeItems: SubTopicItemWithClaims[] = json.items || [];
-        const activeCandidateCount = activeItems.filter(
-          (item) => getMyClaim(item, currentUserId)?.status === "candidate"
-        ).length;
-        setClaimLimitReached(activeCandidateCount >= 5);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "获取我的认领状态失败");
       }
+      const data = await res.json();
+      setMyClaims(data.items || []);
     } catch (err) {
-      console.error("上限检查失败:", err);
+      console.error("加载我的认领状态失败:", err);
+      setMyClaimsError(err instanceof Error ? err.message : "获取我的认领状态失败");
     }
-  }, [currentUserId]);
+  }, []);
 
-  // 加载当前用户的本题认领记录
-  const fetchMyClaim = useCallback(async () => {
-    if (!currentUserId) return;
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("sub_topic_claims")
-        .select("*")
-        .eq("sub_topic_id", id)
-        .eq("user_id", currentUserId)
-        .neq("status", "returned")
-        .maybeSingle();
-
-      if (!error) {
-        setMyClaim(data);
-      }
-    } catch (err) {
-      console.error("获取认领失败:", err);
-    }
-  }, [id, currentUserId]);
-
-  // 拉取其他人的认领记录 (非 returned)，需要 RLS 或管理员权限支持
-  const fetchAllClaims = useCallback(async () => {
-    try {
-      const supabase = createClient();
-      // 普通用户若没有 RLS 权限会返回报错，标记加载失败以展示兜底文案
-      const { data, error } = await supabase
-        .from("sub_topic_claims")
-        .select("*, profiles:user_id(display_name, name, role)")
-        .eq("sub_topic_id", id)
-        .neq("status", "returned");
-
-      if (error) {
-        setClaimsLoadFailed(true);
-        return;
-      }
-      if (data) {
-        setAllClaims(data);
-        setClaimsLoadFailed(false);
-      }
-    } catch (err) {
-      console.log("无法获取其他人的认领详情:", err);
-      setClaimsLoadFailed(true);
-    }
-  }, [id]);
-
-  // 加载作品列表（支持排序与分页，append=true 时追加到现有列表）
-  const fetchWorks = useCallback(async (page: number, sort: "best" | "recent", append = false) => {
+  // 加载作品列表 (包含后端真正 total、分页与同类参考作品 问题 3)
+  const fetchWorks = useCallback(async (page = 1, sort: "best" | "recent" = "best") => {
     setLoadingWorks(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${id}/works?sort=${sort}&page=${page}&page_size=15`);
-      if (!res.ok) throw new Error("加载作品列表失败");
-      const json = await res.json();
-      setWorks((prev) => (append ? [...prev, ...(json.items || [])] : json.items || []));
-      setSimilarWorks(json.similarReferences || []);
-      setSummary(json.summary || null);
-      setTotalWorks(json.pagination?.totalItems || 0);
-      setWorksPage(page);
+      const res = await fetch(
+        `/api/topics/sub-topics/${subTopicId}/works?page=${page}&page_size=${DETAIL_PAGE_SIZE}&sort=${sort}`
+      );
+      if (!res.ok) throw new Error("获取作品失败");
+      const data = await res.json();
+      const parsed = parseSubTopicWorksResponse(data);
+      setWorks(parsed.items);
+      setSimilarReferences(parsed.similarReferences);
+      setWorksTotal(parsed.total);
+      setWorksPage(parsed.page);
+      setWorksPageSize(parsed.pageSize);
     } catch (err) {
-      console.error("加载作品列表失败:", err);
-      feedbackToast.error("加载作品列表失败");
+      console.error("加载作品数据失败:", err);
     } finally {
       setLoadingWorks(false);
     }
-  }, [id]);
+  }, [subTopicId]);
 
-  // 初始化详情数据（作品列表由下方独立 effect 按 sortType 加载，避免整页重载）
-  const loadDetail = useCallback(async () => {
-    setLoading(true);
+  // 加载详情接口 (适配错层并消除冗余作品请求 问题 7)
+  const fetchDetail = useCallback(async () => {
+    setLoadingDetail(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${id}`);
-      if (!res.ok) {
-        if (res.status === 404) {
-          feedbackToast.error("该选题不存在或已被删除");
-          router.push("/topics");
-          return;
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}`);
+      if (!res.ok) throw new Error("选题不存在或已被删除");
+      const data = await res.json();
+
+      const parsed = parseSubTopicDetailResponse(data);
+      setDetail(parsed.subTopic);
+      setEditTitle(parsed.subTopic?.title || "");
+      setEditHook(parsed.subTopic?.hook || "");
+      setEditEmotionTag(parsed.subTopic?.emotion_tag || "");
+      setEditAudience(parsed.subTopic?.audience || "");
+
+      if (!hasLoadedWorksRef.current) {
+        if (parsed.worksItems && parsed.worksItems.length > 0) {
+          setWorks(parsed.worksItems);
+          setWorksTotal(parsed.worksTotal);
+          hasLoadedWorksRef.current = true;
+        } else {
+          void fetchWorks(1, "best");
+          hasLoadedWorksRef.current = true;
         }
-        throw new Error("加载选题详情失败");
       }
-      const json = await res.json();
-      setDetail(json.subTopic);
-    } catch {
-      feedbackToast.error("加载选题详情出错");
+    } catch (err) {
+      feedbackToast.error("加载详情失败", {
+        details: err instanceof Error ? err.message : String(err)
+      });
+      setDetail(null);
     } finally {
-      setLoading(false);
+      setLoadingDetail(false);
     }
-  }, [id, router]);
+  }, [subTopicId, fetchWorks]);
 
-  useEffect(() => {
-    void loadDetail();
-  }, [loadDetail]);
-
-  // 进页及切换排序时，重新加载第一页作品
-  useEffect(() => {
-    void fetchWorks(1, sortType);
-  }, [fetchWorks, sortType]);
-
-  useEffect(() => {
-    if (currentUserId) {
-      void fetchMyClaim();
-      void checkClaimLimit();
-      void fetchAllClaims();
-    }
-  }, [currentUserId, fetchMyClaim, checkClaimLimit, fetchAllClaims]);
-
-  // 当切换排序时重新拉取作品（由上方 effect 监听 sortType 统一处理）
-  const handleSortChange = (type: "best" | "recent") => {
-    if (type === sortType) return;
-    setSortType(type);
-  };
-
-  // 加载更多历史作品
-  const handleLoadMoreWorks = () => {
-    if (loadingWorks) return;
-    void fetchWorks(worksPage + 1, sortType, true);
-  };
-
-  // 处理认领操作
-  const handleClaim = async () => {
-    if (actionLoading || claimLimitReached) return;
-    setActionLoading(true);
+  // 加载撞车动态
+  const fetchClaims = useCallback(async () => {
+    setClaimsError(null);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${id}/claim`, { method: "POST" });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "认领选题失败");
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claims`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "获取撞车动态失败");
+      }
+      const data = await res.json();
+      setClaimsData({
+        claims: Array.isArray(data.claims) ? data.claims : [],
+        candidateCount: data.candidateCount ?? 0,
+        scriptingCount: data.scriptingCount ?? 0
+      });
+    } catch (err) {
+      console.error("加载撞车动态失败:", err);
+      setClaimsError(err instanceof Error ? err.message : "获取撞车动态失败");
+    }
+  }, [subTopicId]);
 
-      feedbackToast.success("成功认领选题至您的候选库");
-      await Promise.all([fetchMyClaim(), checkClaimLimit(), fetchAllClaims()]);
+  const loadAllData = useCallback(async () => {
+    await Promise.all([fetchDetail(), fetchClaims(), fetchMyClaims()]);
+  }, [fetchDetail, fetchClaims, fetchMyClaims]);
+
+  useEffect(() => {
+    void loadAllData();
+  }, [loadAllData]);
+
+  const isOwner = Boolean(currentUserId && detail?.created_by === currentUserId);
+
+  // 解析当前用户认领状态 (问题 2)
+  const currentSubTopicItem = myClaims.find((item) => item.id === subTopicId);
+  const myClaimRecord = currentSubTopicItem?.sub_topic_claims?.find(
+    (c) => c.user_id === currentUserId && c.status !== "returned"
+  );
+  const isClaimedByMe = !!myClaimRecord;
+
+  // 整理出所有 candidate 选项用于替换弹窗
+  const activeCandidateItems = myClaims.filter((item) => {
+    const claim = item.sub_topic_claims?.find((c) => c.user_id === currentUserId);
+    return claim?.status === "candidate";
+  });
+  const isLimitReached = activeCandidateItems.length >= 5;
+
+  // 全量撞车人数
+  const totalInFlightCount = calculateTotalInFlight(claimsData);
+
+  // 1. 触发认领
+  const handleClaim = async () => {
+    if (isClaiming || isClaimedByMe) return;
+
+    if (isLimitReached) {
+      setSelectedReturnId(activeCandidateItems[0]?.id || null);
+      setReplaceDialogOpen(true);
+      return;
+    }
+
+    setIsClaiming(true);
+    try {
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
+        method: "POST"
+      });
+      const data = await res.json();
+
+      if (res.status === 409) {
+        setSelectedReturnId(activeCandidateItems[0]?.id || null);
+        setReplaceDialogOpen(true);
+        return;
+      }
+
+      if (!res.ok) throw new Error(data.error || "认领失败");
+
+      feedbackToast.success("认领选题成功！");
+      await loadAllData();
     } catch (err) {
       feedbackToast.error("认领失败", {
         details: err instanceof Error ? err.message : String(err)
       });
     } finally {
-      setActionLoading(false);
+      setIsClaiming(false);
     }
   };
 
-  // 处理标记脚本中操作
+  // 2. 推进至「标记脚本中」(问题 2)
   const handleStartScripting = async () => {
-    if (actionLoading) return;
-    setActionLoading(true);
+    if (isUpdatingClaim) return;
+    setIsUpdatingClaim(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${id}/start-scripting`, { method: "POST" });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "操作失败");
-
-      feedbackToast.success("已标记为脚本制作中");
-      await fetchMyClaim();
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/start-scripting`, {
+        method: "POST"
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "标记脚本中失败");
+      }
+      feedbackToast.success("已成功标记为「脚本写作中」！");
+      await loadAllData();
     } catch (err) {
-      feedbackToast.error("标记失败", {
+      feedbackToast.error("更新状态失败", {
         details: err instanceof Error ? err.message : String(err)
       });
     } finally {
-      setActionLoading(false);
+      setIsUpdatingClaim(false);
     }
   };
 
-  // 处理放回选题池操作
-  const handleReturn = async () => {
-    if (actionLoading) return;
-    setActionLoading(true);
+  // 3. 放回选题池/放弃认领 (问题 2)
+  const handleReturnClaim = async () => {
+    if (isUpdatingClaim) return;
+    setIsUpdatingClaim(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${id}/return`, { method: "POST" });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || "放回失败");
-
-      feedbackToast.success("已成功从我的选题库移出，放回选题池");
-      setMyClaim(null);
-      await Promise.all([fetchMyClaim(), checkClaimLimit(), fetchAllClaims()]);
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/return`, {
+        method: "POST"
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "放回选题池失败");
+      }
+      feedbackToast.success("已顺利放回选题池");
+      await loadAllData();
     } catch (err) {
       feedbackToast.error("放回失败", {
         details: err instanceof Error ? err.message : String(err)
       });
     } finally {
-      setActionLoading(false);
+      setIsUpdatingClaim(false);
     }
   };
 
-  if (loading || !detail) {
+  // 替换确认
+  const handleConfirmReplace = async () => {
+    if (!selectedReturnId || isReplacing) return;
+    setIsReplacing(true);
+
+    try {
+      const returnRes = await fetch(`/api/topics/sub-topics/${selectedReturnId}/return`, {
+        method: "POST"
+      });
+      if (!returnRes.ok) throw new Error("放回旧选题失败");
+
+      const claimRes = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
+        method: "POST"
+      });
+      if (!claimRes.ok) throw new Error("认领新选题失败");
+
+      feedbackToast.success("已替换旧选题并成功认领！");
+      setReplaceDialogOpen(false);
+      await loadAllData();
+    } catch (err) {
+      feedbackToast.error("替换失败", {
+        details: err instanceof Error ? err.message : String(err)
+      });
+    } finally {
+      setIsReplacing(false);
+    }
+  };
+
+  // 编辑提交
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTitle.trim()) {
+      feedbackToast.warning("选题标题不能为空");
+      return;
+    }
+    setIsSubmittingEdit(true);
+    try {
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          hook: editHook.trim() || null,
+          emotion_tag: editEmotionTag.trim() || null,
+          audience: editAudience.trim() || null
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "修改失败");
+      feedbackToast.success("选题更新成功");
+      setEditDialogOpen(false);
+      await loadAllData();
+    } catch (err) {
+      feedbackToast.error("修改失败", {
+        details: err instanceof Error ? err.message : String(err)
+      });
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  // 删除提交
+  const handleDeleteSubmit = async () => {
+    setIsDeleting(true);
+    setDeleteErrorMsg(null);
+    try {
+      const res = await fetch(`/api/topics/sub-topics/${subTopicId}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (res.status === 409) {
+        const count = data.work_count ?? data.worksCount;
+        setDeleteErrorMsg(
+          count
+            ? `该选题已有 ${count} 条作品关联，删除会切断数据回流。请先处理关联作品。`
+            : `该选题已有关联作品，删除会切断数据回流。请先处理关联作品。`
+        );
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || "删除失败");
+
+      feedbackToast.success("选题已顺利删除");
+      router.push("/topics");
+    } catch (err) {
+      feedbackToast.error("删除失败", {
+        details: err instanceof Error ? err.message : String(err)
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // 分页与排序切换 (问题 3)
+  const handleSortChange = (newSort: "best" | "recent") => {
+    setWorksSort(newSort);
+    void fetchWorks(1, newSort);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    void fetchWorks(newPage, worksSort);
+  };
+
+  if (loadingDetail) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="size-6 animate-spin text-[#D97757]" />
-          <span className="text-[12.5px] text-stone-500">正在整理选题深度信息...</span>
-        </div>
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-[#D97757]" />
       </div>
     );
   }
 
-  const averagePlay = summary?.averagePlayCount || null;
-
-  // 红涨绿跌色彩渲染逻辑
-  const renderPlayCount = (playCount: number) => {
-    if (averagePlay === null) {
-      return <span className="text-stone-700 font-medium tabular-nums">{playCount.toLocaleString()}</span>;
-    }
-    const isHigher = playCount >= averagePlay;
+  if (!detail) {
     return (
-      <span className={cn("font-semibold tabular-nums", isHigher ? "text-[#C9604D]" : "text-[#6FAA7D]")}>
-        {playCount.toLocaleString()}
-      </span>
+      <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
+        <p className="text-[14px] text-stone-500">无法显示选题信息，该选题可能已被删除。</p>
+        <Link href="/topics">
+          <Button variant="outline" size="sm">
+            返回选题池
+          </Button>
+        </Link>
+      </div>
     );
-  };
+  }
+
+  const totalPages = Math.ceil(worksTotal / worksPageSize) || 1;
 
   return (
-    <div className="space-y-6">
-      {/* 头部导航与返回 */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/topics"
-          className="inline-flex items-center gap-1 text-[13px] text-stone-500 hover:text-stone-800 transition-colors"
-        >
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* 顶栏与门控按钮 */}
+      <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+        <Link href="/topics" className="inline-flex items-center gap-1 text-[13px] font-medium text-stone-500 hover:text-stone-900">
           <ChevronLeft className="size-4" />
-          <span>返回选题池</span>
+          返回选题池
         </Link>
 
-        {/* 创作跳转辅助 */}
-        {myClaim && (
-          <Link href={`/dashboard?topicId=${detail.id}`} className="inline-block">
-            <Button size="sm" className="h-8 rounded-lg gap-1 font-medium bg-[#5F82A8] hover:bg-[#7998b8]">
-              <span>使用此选题去创作/上传</span>
-              <ExternalLink className="size-3.5" />
+        {isOwner && (
+          <div className="flex items-center gap-2">
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setEditDialogOpen(true)}
+              className="h-8 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-50 gap-1 text-[12px]"
+            >
+              <Edit2 className="size-3.5 text-stone-500" />
+              <span>编辑选题</span>
             </Button>
-          </Link>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(true)}
+              className="h-8 rounded-lg border-stone-200 text-[#C9604D] hover:bg-[#C9604D]/5 gap-1 text-[12px]"
+            >
+              <Trash2 className="size-3.5 text-[#C9604D]" />
+              <span>删除选题</span>
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* 子题卡详细大面板 */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* 左侧及中栏：基础信息与历史文案列表 */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* 基本信息区块 */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              {detail.topics && (
-                <span className="inline-flex items-center rounded-md bg-[#4F5E96]/[0.12] border border-[#4F5E96]/15 px-2 py-0.5 text-[11.5px] font-medium text-[#4F5E96]">
-                  母题：{detail.topics.name}
-                </span>
-              )}
-              {detail.topic_groups && (
-                <span className="inline-flex items-center rounded-md bg-stone-100 px-2 py-0.5 text-[11.5px] font-medium text-stone-600">
-                  分组：{detail.topic_groups.name}
-                </span>
-              )}
-              {detail.emotion_tag && (
-                <span className="inline-flex items-center rounded-md bg-amber-50 border border-amber-200/50 px-2 py-0.5 text-[11.5px] font-medium text-amber-700">
-                  情绪：{detail.emotion_tag}
-                </span>
-              )}
-              {detail.audience && (
-                <span className="inline-flex items-center rounded-md bg-stone-100 px-2 py-0.5 text-[11.5px] font-medium text-stone-500">
-                  目标受众：{detail.audience}
-                </span>
-              )}
-            </div>
+      {/* 我的认领状态请求异常告警 (问题 5) */}
+      {myClaimsError && (
+        <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/30 bg-[#D99E55]/5 px-4 py-3 text-[12.5px] text-stone-700">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="size-4 text-[#D99E55] shrink-0" />
+            <span>我的认领状态加载失败：{myClaimsError}</span>
+          </div>
+          <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px]">
+            <RefreshCw className="size-3 mr-1" />
+            重新加载认领状态
+          </Button>
+        </div>
+      )}
 
-            <div className="space-y-2">
-              <h2 className="text-[18px] font-bold text-stone-900 leading-tight">
-                {detail.title}
-              </h2>
-              <div className="rounded-xl bg-stone-50 p-4 border border-stone-150 text-[13px] text-stone-700 leading-relaxed italic">
-                “{detail.hook}”
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4 text-[12px] text-stone-400">
-              <span className="flex items-center gap-1">
-                <Calendar className="size-3.5" />
-                录入于 {new Date(detail.created_at).toLocaleDateString()}
+      {/* 主信息卡 */}
+      <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1.5 flex-1">
+            {detail.topics && (
+              <span className="inline-flex items-center rounded-md bg-[#4F5E96]/10 px-2.5 py-0.5 text-[11.5px] font-semibold text-[#4F5E96]">
+                {detail.topics.name}
               </span>
-            </div>
+            )}
+            <h1 className="text-[20px] font-bold text-stone-900 leading-snug">{detail.title}</h1>
           </div>
 
-          {/* 历史文案列表区块 */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-stone-100 pb-3">
-              <div className="space-y-0.5">
-                <h3 className="text-[14px] font-bold text-stone-900 flex items-center gap-2">
-                  <Video className="size-4 text-[#D97757]" />
-                  <span>本题历史发布版本</span>
-                  <span className="text-[12px] font-normal text-stone-400">
-                    (共 {totalWorks} 个作品)
-                  </span>
-                </h3>
-              </div>
-
-              {/* 排序切换 */}
-              <div className="flex items-center rounded-lg bg-stone-100 p-0.5 border border-stone-200/40 w-fit">
-                <button
-                  onClick={() => handleSortChange("best")}
-                  className={cn(
-                    "flex h-7 items-center gap-1 rounded-md px-3 text-[12px] font-medium transition-all duration-200 cursor-pointer",
-                    sortType === "best" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-850"
-                  )}
-                >
-                  <Award className="size-3" />
-                  <span>爆款优先</span>
-                </button>
-                <button
-                  onClick={() => handleSortChange("recent")}
-                  className={cn(
-                    "flex h-7 items-center gap-1 rounded-md px-3 text-[12px] font-medium transition-all duration-200 cursor-pointer",
-                    sortType === "recent" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-850"
-                  )}
-                >
-                  <Calendar className="size-3" />
-                  <span>最新发布</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 列表渲染 */}
-            {loadingWorks ? (
-              <div className="flex h-32 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-stone-400" />
-              </div>
-            ) : works.length === 0 ? (
-              <div className="py-12 text-center text-[13px] text-stone-400 border border-dashed border-stone-200 rounded-xl bg-stone-50/20">
-                暂无关联发布作品，快来发布第一版吧！
+          {/* 认领流转按钮区 (问题 2) */}
+          <div className="flex items-center gap-2">
+            {isClaimedByMe ? (
+              <div className="flex items-center gap-2">
+                {myClaimRecord?.status === "candidate" ? (
+                  <>
+                    <Button
+                      size="sm"
+                      disabled={isUpdatingClaim}
+                      onClick={() => void handleStartScripting()}
+                      className="h-9 px-3.5 rounded-xl bg-[#5F82A8] hover:bg-[#5F82A8]/90 text-white text-[12.5px] font-medium"
+                    >
+                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <FileText className="size-3.5 mr-1" />}
+                      标记脚本中
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isUpdatingClaim}
+                      onClick={() => void handleReturnClaim()}
+                      className="h-9 px-3 rounded-xl border-stone-200 text-stone-600 hover:bg-stone-50 text-[12.5px]"
+                    >
+                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <RotateCcw className="size-3.5 mr-1" />}
+                      放回选题池
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#C9604D]/10 px-3.5 text-[12.5px] font-semibold text-[#C9604D]">
+                      <FileText className="size-3.5" />
+                      ⚠️ 脚本写作中
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isUpdatingClaim}
+                      onClick={() => void handleReturnClaim()}
+                      className="h-9 px-3 rounded-xl border-stone-200 text-stone-600 hover:bg-stone-50 text-[12.5px]"
+                    >
+                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <RotateCcw className="size-3.5 mr-1" />}
+                      放回选题池
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
-              <div className="space-y-4">
-                {works.map((work) => {
-                  const snap = work.video_metrics_snapshots?.[0];
-                  return (
-                    <div
-                      key={work.id}
-                      className="rounded-xl border border-stone-200/70 p-4 space-y-3 hover:border-stone-300 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <div className="font-semibold text-stone-850 text-[13px] leading-tight">
-                            {work.video_title}
-                          </div>
-                          <span className="text-[11px] text-stone-400 block">
-                            上传时间：{work.uploaded_at ? new Date(work.uploaded_at).toLocaleString() : "未知"}
-                          </span>
-                        </div>
-
-                        {/* 数据指标 */}
-                        {snap && (
-                          <div className="flex flex-wrap items-center gap-3 text-[12px] text-stone-500 shrink-0 font-medium bg-stone-50 border border-stone-150 rounded-lg px-2.5 py-1">
-                            <div className="flex flex-col items-end">
-                              <span className="text-[9.5px] text-stone-400 leading-none">播放量</span>
-                              <span className="mt-0.5">{renderPlayCount(snap.play_count)}</span>
-                            </div>
-                            <div className="h-5.5 w-px bg-stone-200" />
-                            <div className="flex flex-col items-end">
-                              <span className="text-[9.5px] text-stone-400 leading-none">点赞数</span>
-                              <span className="mt-0.5 text-stone-700">{snap.likes.toLocaleString()}</span>
-                            </div>
-                            {snap.follower_convert !== undefined && (
-                              <>
-                                <div className="h-5.5 w-px bg-stone-200" />
-                                <div className="flex flex-col items-end">
-                                  <span className="text-[9.5px] text-stone-400 leading-none">转粉率</span>
-                                  <span className="mt-0.5 text-[#5F82A8]">{(snap.follower_convert * 100).toFixed(2)}%</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 文案展示 */}
-                      {work.content && (
-                        <div className="rounded-lg bg-stone-50/70 border border-stone-150/40 p-3 text-[12.5px] text-stone-700 leading-relaxed italic whitespace-pre-wrap">
-                          “{work.content}”
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* 加载更多历史作品 */}
-            {!loadingWorks && works.length > 0 && works.length < totalWorks && (
-              <div className="flex justify-center pt-2">
-                <Button
-                  variant="outline"
-                  disabled={loadingWorks}
-                  onClick={handleLoadMoreWorks}
-                  className="h-8.5 rounded-xl px-5 text-[12.5px] border-stone-200 hover:border-stone-300 font-medium text-stone-600 hover:text-stone-900"
-                >
-                  加载更多历史版本（已看 {works.length} / {totalWorks}）
-                </Button>
-              </div>
+              <Button
+                disabled={isClaiming}
+                onClick={() => void handleClaim()}
+                className={cn(
+                  "h-9 px-5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all",
+                  isLimitReached ? "bg-[#D97757]/80 hover:bg-[#D97757]" : "bg-[#D97757] hover:bg-[#D97757]/90"
+                )}
+              >
+                {isClaiming ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}
+                {isLimitReached ? "认领此题 (选替换)" : "认领此选题"}
+              </Button>
             )}
           </div>
         </div>
 
-        {/* 右侧边栏：状态控制与相近参考 */}
-        <div className="space-y-6">
-          {/* 操作台卡片 */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-4">
-            <h3 className="text-[13.5px] font-bold text-stone-900 border-b border-stone-100 pb-2 flex items-center gap-1.5">
-              <BookOpen className="size-4 text-[#D97757]" />
-              <span>选题操作台</span>
-            </h3>
-
-            <div className="space-y-3">
-              {/* 根据当前认领状态渲染按钮 */}
-              {!myClaim ? (
-                <div className="space-y-2">
-                  <Button
-                    disabled={actionLoading || claimLimitReached}
-                    onClick={handleClaim}
-                    className="w-full h-9 rounded-xl font-medium"
-                  >
-                    {actionLoading ? (
-                      <Loader2 className="size-4 animate-spin mr-1.5" />
-                    ) : (
-                      "认领选题"
-                    )}
-                  </Button>
-                  {claimLimitReached && (
-                    <div className="flex items-start gap-1 text-[11px] text-[#C9604D] leading-relaxed bg-[#C9604D]/5 p-2 rounded-lg border border-[#C9604D]/15">
-                      <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
-                      <span>已认领 5 条候选选题，请先去【选题池-我正在做的】放回部分选题以重新腾出空间。</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="rounded-xl bg-stone-50 border border-stone-150 p-3 text-[12.5px]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-stone-500 font-medium">当前认领状态：</span>
-                      <span className={cn(
-                        "font-semibold rounded-md px-2 py-0.5 text-[11.5px]",
-                        myClaim.status === "scripting"
-                          ? "bg-[#5F82A8]/15 text-[#5F82A8]"
-                          : "bg-[#D97757]/10 text-[#D97757]"
-                      )}>
-                        {myClaim.status === "scripting" ? "脚本制作中" : "候选选题中"}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-stone-400 block mt-1">
-                      认领时间：{new Date(myClaim.claimed_at).toLocaleString()}
-                    </span>
-                  </div>
-
-                  {myClaim.status === "candidate" && (
-                    <Button
-                      disabled={actionLoading}
-                      onClick={handleStartScripting}
-                      className="w-full h-9 rounded-xl font-medium bg-[#5F82A8] hover:bg-[#7998b8]"
-                    >
-                      {actionLoading ? <Loader2 className="size-4 animate-spin" /> : "标记已写完脚本/制作中"}
-                    </Button>
-                  )}
-
-                  <Button
-                    disabled={actionLoading}
-                    variant="outline"
-                    onClick={handleReturn}
-                    className="w-full h-9 rounded-xl font-medium border-stone-200 text-stone-600 hover:text-stone-900"
-                  >
-                    {actionLoading ? <Loader2 className="size-4 animate-spin" /> : "放弃认领，放回选题池"}
-                  </Button>
-                </div>
-              )}
-            </div>
+        {detail.hook && (
+          <div className="rounded-xl bg-stone-50 p-4 border border-stone-150 text-[13px] text-stone-700 leading-relaxed">
+            <span className="font-semibold text-stone-900 block mb-1">一句话钩子：</span>
+            “{detail.hook}”
           </div>
+        )}
 
-          {/* 认领动态区 (低频折叠) */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-3">
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => setShowAllClaims((prev) => !prev)}
-              onKeyDown={(event) => handleKeyboardActivation(event, () => setShowAllClaims((prev) => !prev))}
-              className="flex items-center justify-between cursor-pointer select-none hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
-            >
-              <div className="flex items-center gap-1.5">
-                <User className="size-4 text-stone-400" />
-                <span className="text-[13px] font-bold text-stone-800">
-                  当前认领动态 ({allClaims.length}人)
+        <div className="flex flex-wrap items-center gap-4 text-[12px] text-stone-400 pt-2 border-t border-stone-100">
+          {detail.emotion_tag && <span>情绪标签: <strong className="text-stone-700 font-medium">{detail.emotion_tag}</strong></span>}
+          {detail.audience && <span>目标受众: <strong className="text-stone-700 font-medium">{detail.audience}</strong></span>}
+          <span>录入时间: {new Date(detail.created_at).toLocaleDateString()}</span>
+        </div>
+      </div>
+
+      {/* 撞车动态 */}
+      <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="flex items-center gap-2">
+            <User className="size-4 text-[#D97757]" />
+            <h2 className="text-[14px] font-bold text-stone-900">
+              认领撞车动态
+            </h2>
+          </div>
+          {!claimsError && (
+            <span className="text-[12.5px] font-semibold text-stone-700">
+              已有 <strong className="text-[#D97757] tabular-nums">{totalInFlightCount}</strong> 人在做
+              {claimsData.scriptingCount > 0 && (
+                <span className="text-[#C9604D] font-normal ml-1">
+                  （含 {claimsData.scriptingCount} 人脚本中）
                 </span>
-              </div>
-              <div className="text-stone-400">
-                {showAllClaims ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-              </div>
-            </div>
+              )}
+            </span>
+          )}
+        </div>
 
-            {showAllClaims && (
-              <div className="pt-2 border-t border-stone-100 space-y-2">
-                {claimsLoadFailed ? (
-                  <span className="text-[11.5px] text-stone-400 block py-1">认领动态加载失败（可能没有查看权限）。</span>
-                ) : allClaims.length === 0 ? (
-                  <span className="text-[11.5px] text-stone-400 block py-1">当前没有其他用户认领。</span>
-                ) : (
-                  <div className="max-h-[150px] overflow-y-auto space-y-2 pr-1">
-                    {allClaims.map((claim) => (
-                      <div
-                        key={claim.id}
-                        className="flex items-center justify-between text-[12px] bg-stone-50/50 p-2 rounded-lg border border-stone-150/40"
-                      >
-                        <span className="font-medium text-stone-700">
-                          {claim.profiles?.display_name || claim.profiles?.name || "未知成员"}
-                        </span>
-                        <span className={cn(
-                          "text-[10px] px-1.5 py-0.5 rounded-md font-semibold",
-                          claim.status === "scripting" ? "bg-[#5F82A8]/10 text-[#5F82A8]" : "bg-stone-200 text-stone-500"
-                        )}>
-                          {claim.status === "scripting" ? "脚本中" : "候选"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+        {claimsError ? (
+          <div className="flex items-center justify-between rounded-xl bg-[#C9604D]/5 p-3.5 border border-[#C9604D]/20 text-[12.5px] text-[#C9604D]">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="size-4 shrink-0" />
+              <span>撞车动态加载失败：{claimsError}</span>
+            </div>
+            <Button size="xs" variant="outline" onClick={() => void fetchClaims()} className="h-7 text-[12px]">
+              <RefreshCw className="size-3 mr-1" />
+              重新加载撞车动态
+            </Button>
+          </div>
+        ) : claimsData.claims.length === 0 ? (
+          <p className="text-[12.5px] text-stone-400 py-3 italic text-center">
+            暂无其他人认领此选题，抢先创作成就爆款！
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {claimsData.claims.map((c, idx) => (
+              <div
+                key={c.userId || idx}
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-xl border text-[12.5px]",
+                  c.status === "scripting"
+                    ? "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]"
+                    : "border-stone-200 bg-stone-50/50 text-stone-700"
                 )}
+              >
+                <div className="flex items-center gap-2 font-medium">
+                  <User className="size-3.5 opacity-60" />
+                  <span>{c.displayName || c.userId || "未知成员"}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] opacity-80">
+                  <span className="font-semibold">
+                    {c.status === "scripting" ? "⚠️ 脚本写作中" : "候选思考中"}
+                  </span>
+                  <span>{new Date(c.claimedAt).toLocaleDateString()}</span>
+                </div>
               </div>
-            )}
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 作品回流记录 (含排序、真正 total、分页与同类参考视频 问题 3) */}
+      <div id="associated-works-section" className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs space-y-4 scroll-mt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-stone-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Video className="size-4 text-[#5F82A8]" />
+            <h2 className="text-[14px] font-bold text-stone-900">
+              已关联创作作品 ({worksTotal})
+            </h2>
           </div>
 
-          {/* 相近选题参考区块 */}
-          {similarWorks.length > 0 && (
-            <div className="rounded-2xl border border-stone-200 bg-white p-5 md:p-6 shadow-sm space-y-3">
-              <h3 className="text-[13.5px] font-bold text-stone-900 border-b border-stone-100 pb-2 flex items-center gap-1.5">
-                <TrendingUp className="size-4 text-[#5F82A8]" />
-                <span>同类相近选题文案参考</span>
-              </h3>
+          {/* 排序切换 */}
+          <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg text-[12px]">
+            <button
+              onClick={() => handleSortChange("best")}
+              className={cn(
+                "px-2.5 py-1 rounded-md transition-all font-medium",
+                worksSort === "best" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
+              )}
+            >
+              爆款优先
+            </button>
+            <button
+              onClick={() => handleSortChange("recent")}
+              className={cn(
+                "px-2.5 py-1 rounded-md transition-all font-medium",
+                worksSort === "recent" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
+              )}
+            >
+              最新发布
+            </button>
+          </div>
+        </div>
 
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                {similarWorks.map((work) => (
-                  <div
-                    key={work.id}
-                    className="rounded-lg border border-stone-150 p-3 space-y-2 hover:border-stone-250 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-stone-600 truncate max-w-[120px]">
-                        {work.video_title}
-                      </span>
-                      {work.video_metrics_snapshots?.[0]?.play_count !== undefined && (
-                        <span className="text-[11px] text-stone-400 font-medium">
-                          播放量: {work.video_metrics_snapshots[0].play_count.toLocaleString()}
-                        </span>
+        {loadingWorks ? (
+          <div className="py-8 text-center text-stone-400 text-[12.5px] flex items-center justify-center gap-2">
+            <Loader2 className="size-4 animate-spin text-[#5F82A8]" />
+            <span>加载关联作品中...</span>
+          </div>
+        ) : works.length === 0 ? (
+          <div className="py-8 text-center text-stone-400 text-[12.5px] italic">
+            本选题暂无作品发布记录。
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {works.map((w) => {
+              const snap = w.video_metrics_snapshots?.[0];
+              const playCount = snap?.play_count ?? 0;
+              const likesCount = resolveWorkLikes(snap);
+
+              return (
+                <div key={w.id} className="flex items-center justify-between p-3.5 rounded-xl border border-stone-200 bg-stone-50/40 text-[12.5px] hover:border-stone-300 transition-all">
+                  <div className="space-y-0.5">
+                    <div className="font-semibold text-stone-900">{w.video_title}</div>
+                    <div className="flex items-center gap-3 text-[11px] text-stone-400">
+                      {w.account_name && <span>账号: {w.account_name}</span>}
+                      {(w.uploadedAt || w.uploaded_at) && (
+                        <span>发布时间: {new Date(w.uploadedAt || w.uploaded_at || "").toLocaleDateString()}</span>
                       )}
                     </div>
-                    {work.content && (
-                      <p className="text-[11.5px] text-stone-500 leading-relaxed italic line-clamp-3">
-                        “{work.content}”
-                      </p>
-                    )}
                   </div>
-                ))}
+                  {snap && (
+                    <div className="text-right tabular-nums">
+                      <div className="font-bold text-stone-900">
+                        {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount.toLocaleString()} 播放
+                      </div>
+                      <div className="text-[11px] text-stone-400">{likesCount.toLocaleString()} 点赞</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* 分页控制栏 */}
+        {worksTotal > worksPageSize && (
+          <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-[12px] text-stone-500">
+            <span>共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="xs"
+                variant="outline"
+                disabled={worksPage <= 1 || loadingWorks}
+                onClick={() => handlePageChange(worksPage - 1)}
+                className="h-7 text-[12px]"
+              >
+                上一页
+              </Button>
+              <Button
+                size="xs"
+                variant="outline"
+                disabled={worksPage >= totalPages || loadingWorks}
+                onClick={() => handlePageChange(worksPage + 1)}
+                className="h-7 text-[12px]"
+              >
+                下一页
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* 同类参考作品 (问题 3) */}
+        {similarReferences.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-stone-150 space-y-2">
+            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-stone-700">
+              <Film className="size-3.5 text-[#4F5E96]" />
+              <span>同类参考作品推荐 ({similarReferences.length})</span>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {similarReferences.map((ref, idx) => (
+                <div key={ref.id || idx} className="p-3 rounded-xl border border-stone-200 bg-stone-50/20 text-[12px] space-y-1">
+                  <div className="font-medium text-stone-850 truncate">{ref.video_title || ref.title || "未命名参考"}</div>
+                  <div className="flex items-center justify-between text-[11px] text-stone-400">
+                    <span>{ref.account_name || "全库爆款参考"}</span>
+                    {(() => {
+                      const playCount = ref.play_count ?? ref.video_metrics_snapshots?.[0]?.play_count;
+                      if (typeof playCount === "number") {
+                        return (
+                          <span className="font-semibold text-stone-700 tabular-nums">
+                            {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount} 播放
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 编辑 Modal */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-900 text-[16px] font-bold">编辑选题</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
+            <div className="space-y-1">
+              <label className="text-[12px] font-medium text-stone-600">选题标题 (必填)</label>
+              <input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757]"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[12px] font-medium text-stone-600">一句话钩子 (选填)</label>
+              <textarea
+                value={editHook}
+                onChange={(e) => setEditHook(e.target.value)}
+                className="w-full h-20 rounded-xl border border-stone-200 p-3 text-[13px] outline-none focus:border-[#D97757] resize-none"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[12px] font-medium text-stone-600">情绪标签</label>
+                <input
+                  value={editEmotionTag}
+                  onChange={(e) => setEditEmotionTag(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757]"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[12px] font-medium text-stone-600">目标受众</label>
+                <input
+                  value={editAudience}
+                  onChange={(e) => setEditAudience(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)}>取消</Button>
+              <Button type="submit" size="sm" disabled={isSubmittingEdit} className="bg-[#D97757] text-white">
+                {isSubmittingEdit ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}保存修改
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除 Modal & 409 阻断 Dialog (对齐规格提供 取消 / 去看关联作品 问题 4) */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-900 text-[15px] font-bold flex items-center gap-2">
+              <AlertTriangle className="size-4 text-[#C9604D]" />
+              <span>删除选题确认</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {deleteErrorMsg ? (
+            <div className="space-y-4 py-2">
+              <div className="rounded-xl bg-[#C9604D]/10 p-3.5 border border-[#C9604D]/25 text-[12.5px] text-[#C9604D] leading-relaxed">
+                {deleteErrorMsg}
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  取消
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setDeleteDialogOpen(false);
+                    document.getElementById("associated-works-section")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90"
+                >
+                  去看关联作品
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <p className="text-[13px] text-stone-600">
+                确认要删除此选题吗？若该选题已有作品关联，系统将拦截阻断。
+              </p>
+              <div className="flex items-center justify-end gap-2">
+                <Button type="button" size="sm" variant="outline" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)}>
+                  取消
+                </Button>
+                <Button type="button" size="sm" disabled={isDeleting} onClick={() => void handleDeleteSubmit()} className="bg-[#C9604D] text-white hover:bg-[#C9604D]/90">
+                  {isDeleting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+                  确认删除
+                </Button>
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 5/5 替换弹窗 */}
+      <Dialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
+        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-900 text-[15px] font-semibold flex items-center gap-2">
+              <ArrowRightLeft className="size-4 text-[#D97757]" />
+              <span>候选位已满 (5/5) · 请选择替换</span>
+            </DialogTitle>
+            <DialogDescription className="text-stone-500 text-[12.5px]">
+              您的候选选题库已达 5 条上限。请选择一条放回选题池，以便腾出空间认领本题。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2 space-y-2 max-h-[220px] overflow-y-auto pr-1">
+            {activeCandidateItems.map((item) => {
+              const isSelected = selectedReturnId === item.id;
+              const claimRecord = item.sub_topic_claims?.find((c) => c.user_id === currentUserId);
+              const claimedAtText = claimRecord?.claimed_at
+                ? new Date(claimRecord.claimed_at).toLocaleString()
+                : "已认领";
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedReturnId(item.id)}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-150",
+                    isSelected ? "border-[#D97757] bg-[#D97757]/5 shadow-xs" : "border-stone-200 bg-white hover:bg-stone-50"
+                  )}
+                >
+                  <div className="space-y-0.5 min-w-0 pr-2">
+                    <div className="text-[13px] font-medium text-stone-900 truncate">
+                      {item.title || "未命名选题"}
+                    </div>
+                    <div className="text-[11px] text-stone-400">
+                      认领时间: {claimedAtText}
+                    </div>
+                  </div>
+                  {isSelected && <Check className="size-4 text-[#D97757] shrink-0" />}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
+            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)}>
+              取消
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={!selectedReturnId || isReplacing}
+              onClick={() => void handleConfirmReplace()}
+              className="bg-[#D97757] text-white hover:bg-[#D97757]/90"
+            >
+              {isReplacing ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+              确认替换并认领
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

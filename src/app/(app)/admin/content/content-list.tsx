@@ -33,6 +33,7 @@ type VideoRow = Video & {
 };
 
 type FilterOption = Pick<Profile, "id" | "name">;
+type AccountOption = FilterOption;
 import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,

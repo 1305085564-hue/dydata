@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Loader2,
   ChevronDown,
@@ -12,7 +13,10 @@ import {
   ExternalLink,
   Clock,
   Award,
-  Check
+  Check,
+  Pencil,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -62,6 +66,8 @@ interface SubTopicCardProps {
   isLimitReached: boolean;
   isClaimedByMe: boolean;
   onClaimSuccess: () => void;
+  onLimitReached409?: () => void;
+  onRefresh?: () => void;
 }
 
 interface WorkItem {
@@ -79,9 +85,12 @@ interface WorkItem {
 
 export function SubTopicCard({
   item,
+  currentUserId,
   isLimitReached,
   isClaimedByMe,
-  onClaimSuccess
+  onClaimSuccess,
+  onLimitReached409,
+  onRefresh
 }: SubTopicCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [works, setWorks] = useState<WorkItem[]>([]);
@@ -89,6 +98,20 @@ export function SubTopicCard({
   const [hasLoadedWorks, setHasLoadedWorks] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
 
+  // 编辑 / 删除弹窗状态
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title || "");
+  const [editHook, setEditHook] = useState(item.hook || "");
+  const [editEmotionTag, setEditEmotionTag] = useState(item.emotion_tag || "");
+  const [editAudience, setEditAudience] = useState(item.audience || "");
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
+  const [deleteConflictWorksCount, setDeleteConflictWorksCount] = useState<number | null>(null);
+
+  const isOwner = Boolean(currentUserId && item.created_by === currentUserId);
   const averagePlay = item.summary.averagePlayCount;
 
   // 展开并获取第二级作品摘要数据
@@ -123,7 +146,16 @@ export function SubTopicCard({
   // 处理认领操作
   const handleClaim = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isClaiming || isClaimedByMe || isLimitReached) return;
+    if (isClaiming || isClaimedByMe) return;
+
+    if (isLimitReached) {
+      if (onLimitReached409) {
+        onLimitReached409();
+      } else {
+        feedbackToast.warning("候选选题已满 5 条上限，请先放回或推进旧选题");
+      }
+      return;
+    }
 
     setIsClaiming(true);
     try {
@@ -131,6 +163,15 @@ export function SubTopicCard({
         method: "POST"
       });
       const data = await res.json();
+
+      if (res.status === 409) {
+        if (onLimitReached409) {
+          onLimitReached409();
+        } else {
+          feedbackToast.warning("候选选题已满 5 条上限，请先放回或推进旧选题");
+        }
+        return;
+      }
 
       if (!res.ok) {
         throw new Error(data.error || "认领失败");
@@ -144,6 +185,75 @@ export function SubTopicCard({
       });
     } finally {
       setIsClaiming(false);
+    }
+  };
+
+  // 提交编辑
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTitle.trim()) {
+      feedbackToast.warning("选题标题不能为空");
+      return;
+    }
+    setIsSubmittingEdit(true);
+    try {
+      const res = await fetch(`/api/topics/sub-topics/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          hook: editHook.trim() || null,
+          emotion_tag: editEmotionTag.trim() || null,
+          audience: editAudience.trim() || null
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "修改失败");
+      feedbackToast.success("选题更新成功");
+      setEditDialogOpen(false);
+      if (onRefresh) onRefresh();
+      window.dispatchEvent(new CustomEvent("refresh-topics"));
+    } catch (err) {
+      feedbackToast.error("修改失败", {
+        details: err instanceof Error ? err.message : String(err)
+      });
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  // 提交删除
+  const handleDeleteSubmit = async () => {
+    setIsDeleting(true);
+    setDeleteErrorMsg(null);
+    setDeleteConflictWorksCount(null);
+    try {
+      const res = await fetch(`/api/topics/sub-topics/${item.id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (res.status === 409) {
+        const count = data.work_count ?? data.worksCount;
+        setDeleteConflictWorksCount(count ?? null);
+        setDeleteErrorMsg(
+          count
+            ? `该选题已有 ${count} 条作品关联，删除会切断数据回流。请先处理关联作品，或改为编辑。`
+            : `该选题已有关联作品，删除会切断数据回流。请先处理关联作品，或改为编辑。`
+        );
+        return;
+      }
+      if (!res.ok) throw new Error(data.error || "删除失败");
+
+      feedbackToast.success("选题已被删除");
+      setDeleteDialogOpen(false);
+      if (onRefresh) onRefresh();
+      window.dispatchEvent(new CustomEvent("refresh-topics"));
+    } catch (err) {
+      feedbackToast.error("删除失败", {
+        details: err instanceof Error ? err.message : String(err)
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -270,15 +380,15 @@ export function SubTopicCard({
             ) : (
               <button
                 type="button"
-                disabled={isLimitReached || isClaiming}
+                disabled={isClaiming}
                 onClick={handleClaim}
                 className={cn(
                   "pointer-events-auto relative z-20 flex h-6.5 items-center justify-center rounded-lg border px-2.5 text-[11.5px] font-medium transition-all duration-200",
                   isLimitReached
-                    ? "border-stone-200 bg-stone-50 text-stone-400 cursor-not-allowed"
+                    ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
                     : "border-[#D97757]/20 bg-[#D97757]/5 text-[#D97757] hover:bg-[#D97757] hover:text-white"
                 )}
-                title={isLimitReached ? "候选选题已达 5 条上限" : "认领此选题"}
+                title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
               >
                 {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : "认领"}
               </button>
@@ -368,8 +478,41 @@ export function SubTopicCard({
                 </div>
               )}
 
-              {/* 第三级：进入详情 */}
-              <div className="flex justify-end pt-1">
+              {/* 第三级：进入详情与编辑/删除 */}
+              <div className="flex items-center justify-between pt-1 border-t border-stone-100/60">
+                <div className="flex items-center gap-2">
+                  {isOwner && (
+                    <>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditDialogOpen(true);
+                        }}
+                        className="h-7 text-[12px] text-stone-600 hover:text-stone-900 gap-1"
+                      >
+                        <Pencil className="size-3.5 text-stone-400" />
+                        <span>编辑</span>
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteErrorMsg(null);
+                          setDeleteConflictWorksCount(null);
+                          setDeleteDialogOpen(true);
+                        }}
+                        className="h-7 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/10 gap-1"
+                      >
+                        <Trash2 className="size-3.5" />
+                        <span>删除</span>
+                      </Button>
+                    </>
+                  )}
+                </div>
+
                 <Link href={`/topics/${item.id}`} className="inline-block">
                   <Button size="xs" variant="outline" className="h-7.5 rounded-lg gap-1 text-[12px] font-medium border-stone-200 hover:border-stone-300">
                     <span>查看完整详情与历史版本</span>
@@ -381,6 +524,112 @@ export function SubTopicCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 编辑选题 Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-900 text-[15px] font-semibold">编辑选题</DialogTitle>
+            <DialogDescription className="text-stone-500 text-[12.5px]">修改该选题的标题、一句话钩子与附加标签。</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-3 mt-2">
+            <div className="space-y-1">
+              <label className="text-[12px] font-medium text-stone-700">选题标题 *</label>
+              <input
+                type="text"
+                required
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full h-8.5 rounded-lg border border-stone-200 px-3 text-[12.5px] outline-none focus:border-[#D97757]"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[12px] font-medium text-stone-700">一句话钩子 (选填)</label>
+              <textarea
+                rows={2}
+                value={editHook}
+                onChange={(e) => setEditHook(e.target.value)}
+                className="w-full rounded-lg border border-stone-200 p-2 text-[12.5px] outline-none focus:border-[#D97757]"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[12px] font-medium text-stone-700">情绪标签 (选填)</label>
+                <input
+                  type="text"
+                  value={editEmotionTag}
+                  onChange={(e) => setEditEmotionTag(e.target.value)}
+                  className="w-full h-8 rounded-lg border border-stone-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[12px] font-medium text-stone-700">目标受众 (选填)</label>
+                <input
+                  type="text"
+                  value={editAudience}
+                  onChange={(e) => setEditAudience(e.target.value)}
+                  className="w-full h-8 rounded-lg border border-stone-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)}>取消</Button>
+              <Button type="submit" size="sm" disabled={isSubmittingEdit}>
+                {isSubmittingEdit ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+                保存修改
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除选题 二次确认与409作品冲突 Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-900 text-[15px] font-semibold flex items-center gap-1.5">
+              <AlertTriangle className="size-4 text-[#C9604D]" />
+              <span>删除选题确认</span>
+            </DialogTitle>
+            <DialogDescription className="text-stone-500 text-[12.5px]">
+              {deleteErrorMsg || `确定要删除选题“${item.title}”吗？此操作不可撤销。`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {deleteErrorMsg ? (
+            <div className="mt-2 space-y-3">
+              <div className="rounded-xl border border-[#C9604D]/20 bg-[#C9604D]/5 p-3 text-[12.5px] text-[#C9604D] leading-relaxed">
+                {deleteErrorMsg}
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>
+                  取消
+                </Button>
+                <Link href={`/topics/${item.id}`}>
+                  <Button size="sm" className="bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90">
+                    去看关联作品 ({deleteConflictWorksCount})
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-2 pt-3">
+              <Button variant="outline" size="sm" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)}>
+                取消
+              </Button>
+              <Button
+                size="sm"
+                disabled={isDeleting}
+                onClick={() => void handleDeleteSubmit()}
+                className="bg-[#C9604D] text-white hover:bg-[#C9604D]/90"
+              >
+                {isDeleting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+                确认删除
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
