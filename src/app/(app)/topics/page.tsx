@@ -644,9 +644,9 @@ export default function TopicPoolPage() {
                         </div>
                       </div>
 
-                      {/* 子题 2 列 Grid 布局（主角实体） */}
+                      {/* 子题 3 列 Grid 画板布局（高密质感主角实体） */}
                       {!isCollapsed && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
                           {group.items.map((subTopic) => (
                             <SubTopicCard
                               key={subTopic.id}

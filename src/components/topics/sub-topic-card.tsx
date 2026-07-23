@@ -305,7 +305,7 @@ export function SubTopicCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col justify-between h-full rounded-xl border transition-all duration-200 p-4 space-y-3.5",
+        "group relative flex flex-col justify-between h-full rounded-xl border transition-all duration-200 p-3.5 space-y-2.5",
         isExpanded
           ? "border-stone-300/90 bg-white shadow-xs"
           : "border-stone-200/70 bg-stone-50/30 hover:border-stone-300 hover:bg-white hover:shadow-2xs"
