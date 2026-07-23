@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface TopicSummary {
@@ -143,12 +144,12 @@ export function SubTopicCard({
     setIsExpanded((prev) => !prev);
   };
 
-  // 处理认领操作
-  const handleClaim = async (e: React.MouseEvent) => {
+  // 再次点击已认领状态时放回选题池。
+  const handleClaimToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isClaiming || isClaimedByMe) return;
+    if (isClaiming) return;
 
-    if (isLimitReached) {
+    if (!isClaimedByMe && isLimitReached) {
       if (onLimitReached409) {
         onLimitReached409();
       } else {
@@ -159,12 +160,13 @@ export function SubTopicCard({
 
     setIsClaiming(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${item.id}/claim`, {
+      const request = getClaimToggleRequest(item.id, isClaimedByMe);
+      const res = await fetch(request.endpoint, {
         method: "POST"
       });
       const data = await res.json();
 
-      if (res.status === 409) {
+      if (!isClaimedByMe && res.status === 409) {
         if (onLimitReached409) {
           onLimitReached409();
         } else {
@@ -174,13 +176,13 @@ export function SubTopicCard({
       }
 
       if (!res.ok) {
-        throw new Error(data.error || "认领失败");
+        throw new Error(data.error || (isClaimedByMe ? "放回选题池失败" : "认领失败"));
       }
 
-      feedbackToast.success(`认领选题成功：“${item.title}”`);
+      feedbackToast.success(isClaimedByMe ? "已放回选题池" : `认领选题成功：“${item.title}”`);
       onClaimSuccess();
     } catch (err) {
-      feedbackToast.error("认领失败", {
+      feedbackToast.error(isClaimedByMe ? "放回失败" : "认领失败", {
         details: err instanceof Error ? err.message : String(err)
       });
     } finally {
@@ -372,15 +374,22 @@ export function SubTopicCard({
         {/* 认领按钮/状态 */}
         <div className="flex items-center gap-2">
           {isClaimedByMe ? (
-            <span className="inline-flex h-7 items-center gap-1 rounded-lg bg-[#6FAA7D]/12 border border-[#6FAA7D]/20 px-2.5 text-[11.5px] font-medium text-[#5B9668]">
-              <Check className="size-3.5 stroke-[2.5]" />
+            <button
+              type="button"
+              disabled={isClaiming}
+              onClick={handleClaimToggle}
+              title="再次点击放回选题池"
+              aria-label={`已认领：${item.title}，再次点击放回选题池`}
+              className="pointer-events-auto relative z-20 inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/20 bg-[#6FAA7D]/12 px-2.5 text-[11.5px] font-medium text-[#5B9668] transition-colors hover:bg-[#6FAA7D]/20 disabled:cursor-wait"
+            >
+              {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5 stroke-[2.5]" />}
               已认领
-            </span>
+            </button>
           ) : (
             <button
               type="button"
               disabled={isClaiming}
-              onClick={handleClaim}
+              onClick={handleClaimToggle}
               className={cn(
                 "pointer-events-auto relative z-20 flex h-7 items-center justify-center rounded-lg border px-3 text-[11.5px] font-medium active:scale-95 transition-all duration-150 shadow-2xs",
                 isLimitReached

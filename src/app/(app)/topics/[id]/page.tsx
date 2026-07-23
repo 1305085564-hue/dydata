@@ -34,6 +34,7 @@ import {
   Film
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
 
 interface ClaimInfo {
   userId: string;
@@ -315,14 +316,15 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     if (isUpdatingClaim) return;
     setIsUpdatingClaim(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/return`, {
+      const request = getClaimToggleRequest(subTopicId, true);
+      const res = await fetch(request.endpoint, {
         method: "POST"
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "放回选题池失败");
       }
-      feedbackToast.success("已顺利放回选题池");
+      feedbackToast.success(request.successMessage);
       await loadAllData();
     } catch (err) {
       feedbackToast.error("放回失败", {
@@ -537,10 +539,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                       variant="outline"
                       disabled={isUpdatingClaim}
                       onClick={() => void handleReturnClaim()}
-                      className="h-9 px-3 rounded-xl border-stone-200 text-stone-600 hover:bg-stone-50 text-[12.5px]"
+                      title="再次点击放回选题池"
+                      className="h-9 px-3 rounded-xl border-[#6FAA7D]/25 bg-[#6FAA7D]/10 text-[#5B9668] hover:bg-[#6FAA7D]/20 text-[12.5px]"
                     >
-                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <RotateCcw className="size-3.5 mr-1" />}
-                      放回选题池
+                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
+                      已认领
                     </Button>
                   </>
                 ) : (

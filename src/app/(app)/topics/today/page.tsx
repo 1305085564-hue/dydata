@@ -28,6 +28,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
 import { motion, AnimatePresence } from "framer-motion";
 
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
@@ -141,10 +142,10 @@ export default function TodayWorkspacePage() {
     return item ? isClaimedByMe(item, currentUserId) : false;
   };
 
-  const handleClaim = async (subTopicId: string) => {
+  const handleClaimToggle = async (subTopicId: string, isClaimedByMe: boolean) => {
     if (claimingIds.has(subTopicId)) return;
 
-    if (isLimitReached) {
+    if (!isClaimedByMe && isLimitReached) {
       setTargetClaimId(subTopicId);
       setSelectedReturnId(candidateClaims[0]?.id || null);
       setReplaceDialogOpen(true);
@@ -154,24 +155,25 @@ export default function TodayWorkspacePage() {
     setClaimingIds((prev) => new Set(prev).add(subTopicId));
 
     try {
-      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
+      const request = getClaimToggleRequest(subTopicId, isClaimedByMe);
+      const res = await fetch(request.endpoint, {
         method: "POST"
       });
       const resData = await res.json();
 
-      if (res.status === 409) {
+      if (!isClaimedByMe && res.status === 409) {
         setTargetClaimId(subTopicId);
         setSelectedReturnId(candidateClaims[0]?.id || null);
         setReplaceDialogOpen(true);
         return;
       }
 
-      if (!res.ok) throw new Error(resData.error || "认领选题失败");
+      if (!res.ok) throw new Error(resData.error || (isClaimedByMe ? "放回选题池失败" : "认领选题失败"));
 
-      feedbackToast.success("成功认领至您的候选选题库");
+      feedbackToast.success(request.successMessage);
       await Promise.all([fetchActiveData(), fetchMyClaims()]);
     } catch (err) {
-      feedbackToast.error("认领失败", {
+      feedbackToast.error(isClaimedByMe ? "放回失败" : "认领失败", {
         details: err instanceof Error ? err.message : String(err)
       });
     } finally {
@@ -419,16 +421,29 @@ export default function TodayWorkspacePage() {
                           </Link>
 
                           {isClaimed ? (
-                            <Link href={`/dashboard?topicId=${topic.id}`}>
-                              <Button size="xs" variant="outline" className="h-7 rounded-lg text-[11.5px] font-medium border-stone-200 hover:border-stone-300">
-                                去创作 <ChevronRight className="size-3" />
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                disabled={isClaiming}
+                                onClick={() => void handleClaimToggle(topic.id, true)}
+                                title="再次点击放回选题池"
+                                className="h-7 rounded-lg border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-2.5 text-[11.5px] font-medium text-[#5B9668] hover:bg-[#6FAA7D]/20 hover:text-[#4A8258]"
+                              >
+                                {isClaiming ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                                已认领
                               </Button>
-                            </Link>
+                              <Link href={`/dashboard?topicId=${topic.id}`}>
+                                <Button size="xs" variant="outline" title="去创作" className="h-7 rounded-lg px-2 text-[11.5px] font-medium border-stone-200 hover:border-stone-300">
+                                  <ChevronRight className="size-3" />
+                                </Button>
+                              </Link>
+                            </div>
                           ) : (
                             <Button
                               size="xs"
                               disabled={isClaiming}
-                              onClick={() => void handleClaim(topic.id)}
+                              onClick={() => void handleClaimToggle(topic.id, false)}
                               className="h-7 rounded-lg px-3 text-[11.5px] font-medium bg-[#D97757] hover:bg-[#D97757]/90 text-white active:scale-95 transition-all shadow-2xs"
                             >
                               {isClaiming ? <Loader2 className="size-3 animate-spin" /> : "认领此题"}
