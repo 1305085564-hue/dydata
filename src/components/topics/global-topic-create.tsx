@@ -161,7 +161,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[480px] p-5 md:p-6 rounded-2xl">
+      <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[540px] p-5 md:p-6 rounded-2xl">
         <DialogHeader className="gap-1.5">
           <DialogTitle className="flex items-center gap-2 text-stone-900 font-semibold">
             <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
@@ -175,7 +175,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-2 space-y-4">
-          {/* 母题选择 */}
+          {/* 母题选择：采用每排4个 (grid-cols-4) 舒展展示 */}
           <div className="space-y-2">
             <label className="text-[12.5px] font-medium text-stone-700 block">
               归属母题 <span className="text-[#C9604D]">*</span>
@@ -186,7 +186,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                 <span className="text-[12px] text-stone-400 ml-2">正在载入分类...</span>
               </div>
             ) : topics.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2 max-h-[190px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-[190px] overflow-y-auto pr-1">
                 {topics.map((topic) => {
                   const isSelected = selectedTopicId === topic.id;
                   return (
@@ -195,14 +195,15 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                       type="button"
                       onClick={() => setSelectedTopicId(topic.id)}
                       className={cn(
-                        "flex h-9 items-center justify-center rounded-xl border text-[12.5px] font-medium transition-all duration-150 cursor-pointer",
+                        "flex h-9 items-center justify-center rounded-xl border px-2 text-[12px] font-medium transition-all duration-150 cursor-pointer truncate",
                         "active:scale-[0.97]",
                         isSelected
                           ? "border-[#5F82A8]/50 bg-[#5F82A8]/12 text-[#355273] font-semibold ring-2 ring-[#5F82A8]/20 shadow-2xs"
                           : "border-stone-200/80 bg-stone-50/40 text-stone-600 hover:border-stone-300 hover:bg-white hover:text-stone-900"
                       )}
+                      title={topic.name}
                     >
-                      {topic.name}
+                      <span className="truncate">{topic.name}</span>
                     </button>
                   );
                 })}
