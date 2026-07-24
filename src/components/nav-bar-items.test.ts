@@ -11,7 +11,7 @@ test("管理员统一主导航合并包含日常管理入口", () => {
     [
       { href: "/dashboard", label: "数据台" },
       { href: "/growth", label: "数据分析" },
-      { href: "/topics/today", label: "选题库" },
+      { href: "/topics", label: "选题库" },
       { href: "/content-tools/rewrite", label: "文案助手" },
       { href: "/admin/content", label: "视频复盘" },
       { href: "/admin/videos", label: "素材库" },
@@ -26,7 +26,7 @@ test("非管理员看不到管理端入口", () => {
 
   assert.deepEqual(
     items.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics/today", "/content-tools/rewrite"]
+    ["/dashboard", "/growth", "/topics", "/content-tools/rewrite"]
   );
 });
 
@@ -38,7 +38,7 @@ test("统一主导航按具体权限暴露管理入口", () => {
   });
   assert.deepEqual(
     contentOnly.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics/today", "/content-tools/rewrite", "/admin/content"],
+    ["/dashboard", "/growth", "/topics", "/content-tools/rewrite", "/admin/content"],
   );
 
   const videosOnly = getNavItems({
@@ -48,7 +48,7 @@ test("统一主导航按具体权限暴露管理入口", () => {
   });
   assert.deepEqual(
     videosOnly.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics/today", "/content-tools/rewrite", "/admin/videos"],
+    ["/dashboard", "/growth", "/topics", "/content-tools/rewrite", "/admin/videos"],
   );
 
   const fulfillmentOnly = getNavItems({
@@ -61,7 +61,7 @@ test("统一主导航按具体权限暴露管理入口", () => {
     [
       "/dashboard",
       "/growth",
-      "/topics/today",
+      "/topics",
       "/content-tools/rewrite",
       "/admin/analytics",
       "/admin/fulfillment",
@@ -74,7 +74,7 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
 
   assert.deepEqual(
     items.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics/today"]
+    ["/dashboard", "/growth", "/topics"]
   );
 });
 
@@ -87,7 +87,7 @@ test("showSystemSettings 不影响主导航项列表", () => {
     [
       "/dashboard",
       "/growth",
-      "/topics/today",
+      "/topics",
       "/content-tools/rewrite",
       "/admin/content",
       "/admin/videos",
@@ -100,7 +100,7 @@ test("showSystemSettings 不影响主导航项列表", () => {
     [
       "/dashboard",
       "/growth",
-      "/topics/today",
+      "/topics",
       "/content-tools/rewrite",
       "/admin/content",
       "/admin/videos",

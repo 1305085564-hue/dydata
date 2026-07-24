@@ -36,7 +36,7 @@ export function getNavItems(input: {
       match: (pathname) => pathname === "/growth",
     },
     {
-      href: "/topics/today",
+      href: "/topics",
       label: "选题库",
       icon: Lightbulb,
       match: (pathname) => pathname === "/topics" || pathname.startsWith("/topics/"),
