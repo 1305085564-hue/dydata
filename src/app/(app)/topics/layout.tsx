@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
-import { Lightbulb, Plus, BookOpen, Compass } from "lucide-react";
+import { Lightbulb, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 export default function TopicsLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [showFloatingText, setShowFloatingText] = useState(false);
 
   // 滚动时隐藏悬浮文字，保持界面干净
@@ -21,25 +18,10 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const tabs = [
-    {
-      href: "/topics/today",
-      label: "今日选题",
-      icon: Compass,
-      active: pathname === "/topics/today"
-    },
-    {
-      href: "/topics",
-      label: "选题池",
-      icon: BookOpen,
-      active: pathname === "/topics"
-    }
-  ];
-
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       {/* 顶部标题 */}
-      <div className="border-b border-stone-200/80 pb-4">
+      <div className="pb-1">
         <div className="space-y-1">
           <h1 className="text-[24px] font-semibold tracking-tight text-stone-900 flex items-center gap-2">
             <Lightbulb className="size-6 text-[#D97757] stroke-[1.8]" />

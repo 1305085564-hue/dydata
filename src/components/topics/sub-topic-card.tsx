@@ -1,26 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import {
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-  User,
-  ExternalLink,
-  Clock,
-  Award,
-  Check,
-  Pencil,
-  Trash2,
-  AlertTriangle
-} from "lucide-react";
+import { Loader2, User, Check, Flame, Layers, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
-import { motion, AnimatePresence } from "framer-motion";
+import { TopicDetailModal } from "./topic-detail-modal";
 
 interface TopicSummary {
   qualifiedWorkCount: number;
@@ -69,19 +54,8 @@ interface SubTopicCardProps {
   onClaimSuccess: () => void;
   onLimitReached409?: () => void;
   onRefresh?: () => void;
-}
-
-interface WorkItem {
-  id: string;
-  video_title: string;
-  content: string | null;
-  uploaded_at: string | null;
-  video_metrics_snapshots?: Array<{
-    play_count: number;
-    likes: number;
-    follower_convert?: number;
-    follower_gain?: number;
-  }>;
+  onOpenDetail?: (item: SubTopicItem) => void;
+  compactView?: boolean;
 }
 
 export function SubTopicCard({
@@ -91,60 +65,25 @@ export function SubTopicCard({
   isClaimedByMe,
   onClaimSuccess,
   onLimitReached409,
-  onRefresh
+  onRefresh,
+  onOpenDetail,
+  compactView = false
 }: SubTopicCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [works, setWorks] = useState<WorkItem[]>([]);
-  const [loadingWorks, setLoadingWorks] = useState(false);
-  const [hasLoadedWorks, setHasLoadedWorks] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
-  // 编辑 / 删除弹窗状态
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState(item.title || "");
-  const [editHook, setEditHook] = useState(item.hook || "");
-  const [editEmotionTag, setEditEmotionTag] = useState(item.emotion_tag || "");
-  const [editAudience, setEditAudience] = useState(item.audience || "");
-  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
-  const [deleteConflictWorksCount, setDeleteConflictWorksCount] = useState<number | null>(null);
-
-  const isOwner = Boolean(currentUserId && item.created_by === currentUserId);
   const averagePlay = item.summary.averagePlayCount;
 
-  // 展开并获取第二级作品摘要数据
-  const handleToggleExpand = async () => {
-    if (!isExpanded && !hasLoadedWorks) {
-      setLoadingWorks(true);
-      try {
-        const [bestRes, recentRes] = await Promise.all([
-          fetch(`/api/topics/sub-topics/${item.id}/works?sort=best&page_size=1`),
-          fetch(`/api/topics/sub-topics/${item.id}/works?sort=recent&page_size=1`)
-        ]);
-        if (!bestRes.ok || !recentRes.ok) throw new Error("获取文案数据失败");
-        const [bestJson, recentJson] = await Promise.all([bestRes.json(), recentRes.json()]);
-        const bestWork = bestJson.items?.[0] as WorkItem | undefined;
-        const recentWork = recentJson.items?.[0] as WorkItem | undefined;
-        const extractedWorks = [bestWork, recentWork].filter((work, index, list): work is WorkItem => {
-          if (!work) return false;
-          return list.findIndex((candidate) => candidate?.id === work.id) === index;
-        });
-        setWorks(extractedWorks);
-        setHasLoadedWorks(true);
-      } catch (err) {
-        console.error("加载关联作品失败:", err);
-        feedbackToast.error("加载作品数据失败");
-      } finally {
-        setLoadingWorks(false);
-      }
+  // 点击卡片/单行数据行空白区域触发 3:4 沉浸弹窗
+  const handleCardClick = () => {
+    if (onOpenDetail) {
+      onOpenDetail(item);
+    } else {
+      setDetailModalOpen(true);
     }
-    setIsExpanded((prev) => !prev);
   };
 
-  // 再次点击已认领状态时放回选题池。
+  // 认领 / 放回切换逻辑（解耦点击，阻止冒泡）
   const handleClaimToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isClaiming) return;
@@ -161,9 +100,7 @@ export function SubTopicCard({
     setIsClaiming(true);
     try {
       const request = getClaimToggleRequest(item.id, isClaimedByMe);
-      const res = await fetch(request.endpoint, {
-        method: "POST"
-      });
+      const res = await fetch(request.endpoint, { method: "POST" });
       const data = await res.json();
 
       if (!isClaimedByMe && res.status === 409) {
@@ -190,449 +127,229 @@ export function SubTopicCard({
     }
   };
 
-  // 提交编辑
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editTitle.trim()) {
-      feedbackToast.warning("选题标题不能为空");
-      return;
-    }
-    setIsSubmittingEdit(true);
-    try {
-      const res = await fetch(`/api/topics/sub-topics/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editTitle.trim(),
-          hook: editHook.trim() || null,
-          emotion_tag: editEmotionTag.trim() || null,
-          audience: editAudience.trim() || null
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "修改失败");
-      feedbackToast.success("选题更新成功");
-      setEditDialogOpen(false);
-      if (onRefresh) onRefresh();
-      window.dispatchEvent(new CustomEvent("refresh-topics"));
-    } catch (err) {
-      feedbackToast.error("修改失败", {
-        details: err instanceof Error ? err.message : String(err)
-      });
-    } finally {
-      setIsSubmittingEdit(false);
-    }
-  };
-
-  // 提交删除
-  const handleDeleteSubmit = async () => {
-    setIsDeleting(true);
-    setDeleteErrorMsg(null);
-    setDeleteConflictWorksCount(null);
-    try {
-      const res = await fetch(`/api/topics/sub-topics/${item.id}`, {
-        method: "DELETE"
-      });
-      const data = await res.json();
-      if (res.status === 409) {
-        const count = data.work_count ?? data.worksCount;
-        setDeleteConflictWorksCount(count ?? null);
-        setDeleteErrorMsg(
-          count
-            ? `该选题已有 ${count} 条作品关联，删除会切断数据回流。请先处理关联作品，或改为编辑。`
-            : `该选题已有关联作品，删除会切断数据回流。请先处理关联作品，或改为编辑。`
-        );
-        return;
-      }
-      if (!res.ok) throw new Error(data.error || "删除失败");
-
-      feedbackToast.success("选题已被删除");
-      setDeleteDialogOpen(false);
-      if (onRefresh) onRefresh();
-      window.dispatchEvent(new CustomEvent("refresh-topics"));
-    } catch (err) {
-      feedbackToast.error("删除失败", {
-        details: err instanceof Error ? err.message : String(err)
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // 计算最好版本与最近版本
-  const getExtractedWorks = () => {
-    if (works.length === 0) return { best: null, latest: null };
-
-    // 最好版本（播放量最高）
-    const getPlayCount = (w: WorkItem) => {
-      const snap = w.video_metrics_snapshots?.[0];
-      return snap?.play_count ?? 0;
-    };
-
-    const bestWork = [...works].sort((a, b) => getPlayCount(b) - getPlayCount(a))[0];
-
-    // 最近版本（上传时间最新）
-    const latestWork = [...works].sort((a, b) => {
-      const timeA = a.uploaded_at ? Date.parse(a.uploaded_at) : 0;
-      const timeB = b.uploaded_at ? Date.parse(b.uploaded_at) : 0;
-      return timeB - timeA;
-    })[0];
-
-    return {
-      best: bestWork || null,
-      latest: latestWork && latestWork.id !== bestWork?.id ? latestWork : null
-    };
-  };
-
-  const { best, latest } = getExtractedWorks();
-
-  // 红涨绿跌色彩渲染逻辑
-  const renderPlayCount = (playCount: number) => {
-    if (averagePlay === null) {
-      return <span className="text-stone-700 font-medium tabular-nums">{playCount.toLocaleString()}</span>;
-    }
-    const isHigher = playCount >= averagePlay;
-    return (
-      <span
-        className={cn(
-          "font-semibold tabular-nums",
-          isHigher ? "text-[#C9604D]" : "text-[#6FAA7D]" // 红涨绿跌
-        )}
-      >
-        {playCount.toLocaleString()}
-      </span>
-    );
+  // 阻止文本选择/拖拽触发弹窗
+  const handleTextClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
-    <div
-      className={cn(
-        "group relative flex flex-col justify-between h-full rounded-xl border transition-all duration-200 p-3.5 space-y-2.5",
-        isExpanded
-          ? "border-stone-300/90 bg-white shadow-xs"
-          : "border-stone-200/70 bg-stone-50/30 hover:border-stone-300 hover:bg-white hover:shadow-2xs"
-      )}
-    >
-      {/* 第一级：基本信息与标签 */}
-      <div className="relative space-y-2 min-w-0 flex-1">
-        <button
-          type="button"
-          aria-expanded={isExpanded}
-          aria-controls={`sub-topic-details-${item.id}`}
-          aria-label={`${isExpanded ? "收起" : "展开"}选题：${item.title}`}
-          onClick={() => void handleToggleExpand()}
-          className="absolute -inset-2 z-0 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/35"
-        />
+    <>
+      {compactView ? (
+        /* Linear / Notion 级超高信息密度单行表格数据行 */
+        <div
+          onClick={handleCardClick}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleCardClick();
+            }
+          }}
+          className="group flex h-10 items-center justify-between gap-3 px-3 text-xs bg-white hover:bg-stone-50/90 transition-colors cursor-pointer border-b border-stone-100/80 last:border-b-0"
+        >
+          {/* 列 1：状态与认领 Action (84px) */}
+          <div className="w-[84px] shrink-0" onClick={(e) => e.stopPropagation()}>
+            {isClaimedByMe ? (
+              <button
+                type="button"
+                disabled={isClaiming}
+                onClick={handleClaimToggle}
+                title="点击放回选题池"
+                className="inline-flex h-6.5 items-center gap-1 rounded-md border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-2 text-[11px] font-medium text-[#5B9668] transition-colors hover:bg-[#6FAA7D]/22 cursor-pointer"
+              >
+                {isClaiming ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3 stroke-[2.5]" />}
+                已认领
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={isClaiming}
+                onClick={handleClaimToggle}
+                className={cn(
+                  "flex h-6.5 items-center justify-center rounded-md border px-2.5 text-[11px] font-medium transition-all shadow-2xs cursor-pointer",
+                  isLimitReached
+                    ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
+                    : "border-stone-200 bg-stone-50 text-stone-700 hover:bg-[#D97757] hover:text-white hover:border-[#D97757]"
+                )}
+                title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
+              >
+                {isClaiming ? <Loader2 className="size-3 animate-spin" /> : "认领"}
+              </button>
+            )}
+          </div>
 
-        <div className="pointer-events-none relative z-10 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* 列 2：选题标题与一句话 Hook 同行溢出省略 (弹性占满) */}
+          <div className="flex-1 flex items-center gap-2 min-w-0" onClick={handleTextClick}>
+            <span className="font-semibold text-stone-900 truncate text-[13px] group-hover:text-[#D97757] transition-colors shrink-0 max-w-[55%]">
+              {item.title}
+            </span>
+            {item.hook && (
+              <span className="text-stone-400 font-normal truncate text-[12px] flex-1">
+                · {item.hook}
+              </span>
+            )}
+          </div>
+
+          {/* 列 3：母题/情感标签 (120px) */}
+          <div className="w-[120px] shrink-0 flex items-center gap-1 truncate justify-start">
             {item.topic_groups && (
-              <span className="inline-flex items-center rounded-md bg-stone-200/60 px-2 py-0.5 text-[11px] font-medium text-stone-600">
-                {item.topic_groups.name}
+              <span className="inline-flex items-center gap-1 rounded bg-stone-100 px-1.5 py-0.5 text-[10.5px] font-medium text-stone-600 truncate max-w-[80px]">
+                <Layers className="size-2.5 text-stone-400 shrink-0" />
+                <span className="truncate">{item.topic_groups.name}</span>
               </span>
             )}
             {item.emotion_tag && (
-              <span className="inline-flex items-center rounded-md bg-[#D99E55]/[0.12] border border-[#D99E55]/20 px-2 py-0.5 text-[11px] font-medium text-[#B87D33]">
-                {item.emotion_tag}
+              <span className="inline-flex items-center gap-0.5 rounded bg-[#D99E55]/12 px-1.5 py-0.5 text-[10.5px] font-medium text-[#B87D33] shrink-0">
+                <Flame className="size-2.5" />
+                <span>{item.emotion_tag}</span>
               </span>
             )}
           </div>
-          <div className="pointer-events-none text-stone-400 group-hover:text-stone-600 transition-colors">
-            {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-          </div>
-        </div>
 
-        <h3 className="pointer-events-none relative z-10 text-[14.5px] font-semibold text-stone-950 leading-snug line-clamp-2 group-hover:text-[#D97757] transition-colors">
-          {item.title}
-        </h3>
-
-        {item.hook && (
-          <p className="pointer-events-none relative z-10 text-[12.5px] text-stone-500 line-clamp-2 leading-relaxed">
-            {item.hook}
-          </p>
-        )}
-      </div>
-
-      {/* 底部数据与操作栏 */}
-      <div className="pointer-events-none relative z-10 flex shrink-0 items-center justify-between gap-2 pt-2.5 border-t border-stone-100">
-        <div className="flex items-center gap-3 text-[11.5px]">
-          {averagePlay !== null && (
-            <div className="flex items-center gap-1 text-stone-500">
-              <span className="text-stone-400">均播:</span>
-              <span className="font-semibold text-stone-900 tabular-nums">
+          {/* 列 4：均播量与认领人数 (110px) */}
+          <div className="w-[110px] shrink-0 flex items-center justify-end gap-3 text-[11.5px] tabular-nums">
+            {averagePlay !== null && (
+              <span className="font-semibold text-stone-900">
                 {averagePlay >= 10000 ? `${(averagePlay / 10000).toFixed(1)}w` : averagePlay.toLocaleString()}
               </span>
-            </div>
-          )}
+            )}
+            <span className="text-stone-500 font-medium">{item.claimCount}人</span>
+          </div>
 
-          <div className="flex items-center gap-1 text-stone-500">
-            <User className="size-3 text-stone-400" />
-            <span className="font-semibold text-stone-700 tabular-nums">{item.claimCount} 人</span>
+          {/* 列 5：3:4 沉浸弹窗入口 (28px) */}
+          <div className="w-7 shrink-0 flex justify-end text-stone-300 group-hover:text-stone-600 transition-colors">
+            <ChevronRight className="size-4" />
           </div>
         </div>
-
-        {/* 认领按钮/状态 */}
-        <div className="flex items-center gap-2">
-          {isClaimedByMe ? (
-            <button
-              type="button"
-              disabled={isClaiming}
-              onClick={handleClaimToggle}
-              title="再次点击放回选题池"
-              aria-label={`已认领：${item.title}，再次点击放回选题池`}
-              className="pointer-events-auto relative z-20 inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/20 bg-[#6FAA7D]/12 px-2.5 text-[11.5px] font-medium text-[#5B9668] transition-colors hover:bg-[#6FAA7D]/20 disabled:cursor-wait"
-            >
-              {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5 stroke-[2.5]" />}
-              已认领
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={isClaiming}
-              onClick={handleClaimToggle}
-              className={cn(
-                "pointer-events-auto relative z-20 flex h-7 items-center justify-center rounded-lg border px-3 text-[11.5px] font-medium active:scale-95 transition-all duration-150 shadow-2xs",
-                isLimitReached
-                  ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white hover:shadow-xs"
-                  : "border-[#D97757]/20 bg-[#D97757]/8 text-[#D97757] hover:bg-[#D97757] hover:text-white hover:shadow-xs"
-              )}
-              title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
-            >
-              {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : "认领"}
-            </button>
+      ) : (
+        /* 标准网格 3D 卡片形态 */
+        <div
+          onClick={handleCardClick}
+          tabIndex={0}
+          role="button"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleCardClick();
+            }
+          }}
+          className={cn(
+            "group relative flex flex-col justify-between rounded-2xl border border-stone-200/80 bg-white p-4 transition-all duration-200 cursor-pointer min-h-[162px] h-auto space-y-2.5",
+            "hover:border-[#D97757]/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.995]"
           )}
-        </div>
-      </div>
-
-      {/* 第二级：展开文案数据摘要 */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            id={`sub-topic-details-${item.id}`}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="overflow-hidden border-t border-stone-100 bg-stone-50/50"
-          >
-            <div className="p-4 space-y-4">
-              {loadingWorks ? (
-                <div className="flex h-20 items-center justify-center">
-                  <Loader2 className="size-5 animate-spin text-stone-400" />
-                  <span className="text-[12px] text-stone-400 ml-2">正在分析版本文案数据...</span>
-                </div>
-              ) : works.length === 0 ? (
-                <div className="py-6 text-center text-[12.5px] text-stone-400">
-                  暂无作品数据沉淀
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {/* 最好版本 */}
-                  {best && (
-                    <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-2.5">
-                      <div className="flex items-center justify-between border-b border-stone-100 pb-1.5">
-                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#D97757]">
-                          <Award className="size-4" />
-                          <span>最好版本</span>
-                        </div>
-                        <div className="text-[11.5px] text-stone-500 font-medium">
-                          播放量: {renderPlayCount(best.video_metrics_snapshots?.[0]?.play_count ?? 0)}
-                        </div>
-                      </div>
-                      <p className="text-[12.5px] text-stone-600 line-clamp-3 leading-relaxed italic">
-                        “{best.content || best.video_title}”
-                      </p>
-                      {best.video_metrics_snapshots?.[0]?.likes !== undefined && (
-                        <div className="text-[11px] text-stone-400 flex items-center justify-between">
-                          <span>点赞数: {best.video_metrics_snapshots[0].likes.toLocaleString()}</span>
-                          {best.video_metrics_snapshots[0].follower_convert !== undefined && (
-                            <span>转粉率: {(best.video_metrics_snapshots[0].follower_convert * 100).toFixed(2)}%</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 最近版本 */}
-                  {latest && (
-                    <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-2.5">
-                      <div className="flex items-center justify-between border-b border-stone-100 pb-1.5">
-                        <div className="flex items-center gap-1 text-[12px] font-semibold text-[#5F82A8]">
-                          <Clock className="size-4" />
-                          <span>最近版本</span>
-                        </div>
-                        <div className="text-[11.5px] text-stone-500 font-medium">
-                          播放量: {renderPlayCount(latest.video_metrics_snapshots?.[0]?.play_count ?? 0)}
-                        </div>
-                      </div>
-                      <p className="text-[12.5px] text-stone-600 line-clamp-3 leading-relaxed italic">
-                        “{latest.content || latest.video_title}”
-                      </p>
-                      {latest.video_metrics_snapshots?.[0]?.likes !== undefined && (
-                        <div className="text-[11px] text-stone-400 flex items-center justify-between">
-                          <span>点赞数: {latest.video_metrics_snapshots[0].likes.toLocaleString()}</span>
-                          {latest.video_metrics_snapshots[0].follower_convert !== undefined && (
-                            <span>转粉率: {(latest.video_metrics_snapshots[0].follower_convert * 100).toFixed(2)}%</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+        >
+          {/* 卡片顶栏：母题/情感标签 */}
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+              {item.topic_groups && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-600">
+                  <Layers className="size-3 text-stone-400" />
+                  {item.topic_groups.name}
+                </span>
               )}
+              {item.emotion_tag && (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-[#D99E55]/12 px-2 py-0.5 text-[11px] font-medium text-[#B87D33]">
+                  <Flame className="size-3" />
+                  {item.emotion_tag}
+                </span>
+              )}
+            </div>
 
-              {/* 第三级：进入详情与编辑/删除 */}
-              <div className="flex items-center justify-between pt-1 border-t border-stone-100/60">
-                <div className="flex items-center gap-2">
-                  {isOwner && (
-                    <>
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditDialogOpen(true);
-                        }}
-                        className="h-7 text-[12px] text-stone-600 hover:text-stone-900 gap-1"
-                      >
-                        <Pencil className="size-3.5 text-stone-400" />
-                        <span>编辑</span>
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteErrorMsg(null);
-                          setDeleteConflictWorksCount(null);
-                          setDeleteDialogOpen(true);
-                        }}
-                        className="h-7 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/10 gap-1"
-                      >
-                        <Trash2 className="size-3.5" />
-                        <span>删除</span>
-                      </Button>
-                    </>
-                  )}
-                </div>
+            {isClaimedByMe && (
+              <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/12 px-2 py-0.5 text-[11px] font-semibold text-[#4F825B]">
+                <Check className="size-3 stroke-[2.5]" />
+                已认领
+              </span>
+            )}
+          </div>
 
-                <Link href={`/topics/${item.id}`} className="inline-block">
-                  <Button size="xs" variant="outline" className="h-7.5 rounded-lg gap-1 text-[12px] font-medium border-stone-200 hover:border-stone-300">
-                    <span>查看完整详情与历史版本</span>
-                    <ExternalLink className="size-3" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          {/* 标题 & Hook 区域（解耦选词，拖拽选择时不弹窗） */}
+          <div className="flex-1 space-y-1 min-w-0">
+            <h3
+              onClick={handleTextClick}
+              className="text-[14.5px] font-semibold text-stone-900 leading-snug line-clamp-2 select-text cursor-text group-hover:text-[#D97757] transition-colors"
+            >
+              {item.title}
+            </h3>
 
-      {/* 编辑选题 Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-stone-900 text-[15px] font-semibold">编辑选题</DialogTitle>
-            <DialogDescription className="text-stone-500 text-[12.5px]">修改该选题的标题、一句话钩子与附加标签。</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-3 mt-2">
-            <div className="space-y-1">
-              <label className="text-[12px] font-medium text-stone-700">选题标题 *</label>
-              <input
-                type="text"
-                required
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full h-8.5 rounded-lg border border-stone-200 px-3 text-[12.5px] outline-none focus:border-[#D97757]"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[12px] font-medium text-stone-700">一句话钩子 (选填)</label>
-              <textarea
-                rows={2}
-                value={editHook}
-                onChange={(e) => setEditHook(e.target.value)}
-                className="w-full rounded-lg border border-stone-200 p-2 text-[12.5px] outline-none focus:border-[#D97757]"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-[12px] font-medium text-stone-700">情绪标签 (选填)</label>
-                <input
-                  type="text"
-                  value={editEmotionTag}
-                  onChange={(e) => setEditEmotionTag(e.target.value)}
-                  className="w-full h-8 rounded-lg border border-stone-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[12px] font-medium text-stone-700">目标受众 (选填)</label>
-                <input
-                  type="text"
-                  value={editAudience}
-                  onChange={(e) => setEditAudience(e.target.value)}
-                  className="w-full h-8 rounded-lg border border-stone-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)}>取消</Button>
-              <Button type="submit" size="sm" disabled={isSubmittingEdit}>
-                {isSubmittingEdit ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
-                保存修改
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 删除选题 二次确认与409作品冲突 Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-stone-900 text-[15px] font-semibold flex items-center gap-1.5">
-              <AlertTriangle className="size-4 text-[#C9604D]" />
-              <span>删除选题确认</span>
-            </DialogTitle>
-            <DialogDescription className="text-stone-500 text-[12.5px]">
-              {deleteErrorMsg || `确定要删除选题“${item.title}”吗？此操作不可撤销。`}
-            </DialogDescription>
-          </DialogHeader>
-
-          {deleteErrorMsg ? (
-            <div className="mt-2 space-y-3">
-              <div className="rounded-xl border border-[#C9604D]/20 bg-[#C9604D]/5 p-3 text-[12.5px] text-[#C9604D] leading-relaxed">
-                {deleteErrorMsg}
-              </div>
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>
-                  取消
-                </Button>
-                <Link href={`/topics/${item.id}`}>
-                  <Button size="sm" className="bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90">
-                    去看关联作品 ({deleteConflictWorksCount})
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-end gap-2 pt-3">
-              <Button variant="outline" size="sm" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)}>
-                取消
-              </Button>
-              <Button
-                size="sm"
-                disabled={isDeleting}
-                onClick={() => void handleDeleteSubmit()}
-                className="bg-[#C9604D] text-white hover:bg-[#C9604D]/90"
+            {item.hook && (
+              <p
+                onClick={handleTextClick}
+                className="text-[12.5px] text-stone-500 line-clamp-2 leading-relaxed select-text cursor-text font-normal"
               >
-                {isDeleting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
-                确认删除
-              </Button>
+                {item.hook}
+              </p>
+            )}
+          </div>
+
+          {/* 底部数据与认领 Action Bar */}
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-stone-100/70">
+            <div className="flex items-center gap-3 text-[11.5px]">
+              {averagePlay !== null && (
+                <div className="flex items-center gap-1 text-stone-500">
+                  <span className="text-stone-400">均播:</span>
+                  <span className="font-semibold text-stone-900 tabular-nums">
+                    {averagePlay >= 10000 ? `${(averagePlay / 10000).toFixed(1)}w` : averagePlay.toLocaleString()}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-1 text-stone-500">
+                <User className="size-3 text-stone-400" />
+                <span className="font-semibold text-stone-700 tabular-nums">{item.claimCount} 人</span>
+              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+
+            {/* 独立 Action 按钮 */}
+            <div className="flex items-center gap-1.5">
+              {isClaimedByMe ? (
+                <button
+                  type="button"
+                  disabled={isClaiming}
+                  onClick={handleClaimToggle}
+                  title="点击放回选题池"
+                  aria-label={`已认领：${item.title}，点击放回选题池`}
+                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-2.5 text-[11.5px] font-medium text-[#5B9668] transition-colors hover:bg-[#6FAA7D]/22 disabled:cursor-wait cursor-pointer"
+                >
+                  {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5 stroke-[2.5]" />}
+                  已认领
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isClaiming}
+                  onClick={handleClaimToggle}
+                  className={cn(
+                    "flex h-7 items-center justify-center rounded-lg border px-3 text-[11.5px] font-medium active:scale-95 transition-all duration-150 shadow-2xs cursor-pointer",
+                    isLimitReached
+                      ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
+                      : "border-[#D97757]/20 bg-[#D97757]/8 text-[#D97757] hover:bg-[#D97757] hover:text-white"
+                  )}
+                  title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
+                >
+                  {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : "认领"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 当没有传入全局 modal 控制器时，内建 3:4 沉浸中心弹窗 */}
+      {!onOpenDetail && (
+        <TopicDetailModal
+          item={item}
+          isOpen={detailModalOpen}
+          onClose={() => setDetailModalOpen(false)}
+          currentUserId={currentUserId}
+          isLimitReached={isLimitReached}
+          isClaimedByMe={isClaimedByMe}
+          onClaimSuccess={onClaimSuccess}
+          onLimitReached409={onLimitReached409}
+          onRefresh={onRefresh}
+        />
+      )}
+    </>
   );
 }

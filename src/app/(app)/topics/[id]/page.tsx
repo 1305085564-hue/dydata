@@ -31,7 +31,8 @@ import {
   RefreshCw,
   FileText,
   RotateCcw,
-  Film
+  Film,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
@@ -48,8 +49,6 @@ interface ClaimsApiResponse {
   candidateCount: number;
   scriptingCount: number;
 }
-
-
 
 interface SubTopicClaim {
   id: string;
@@ -90,7 +89,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
   const [isClaiming, setIsClaiming] = useState(false);
   const [isUpdatingClaim, setIsUpdatingClaim] = useState(false);
 
-  // 作品列表、排序与分页 (问题 3)
+  // 作品列表、排序与分页
   const [works, setWorks] = useState<WorkItem[]>([]);
   const [similarReferences, setSimilarReferences] = useState<ReferenceWork[]>([]);
   const [worksTotal, setWorksTotal] = useState(0);
@@ -130,7 +129,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     void getUserId();
   }, []);
 
-  // 加载“我的认领”状态列表 (含错误显露与重试 问题 5)
+  // 加载“我的认领”状态列表
   const fetchMyClaims = useCallback(async () => {
     setMyClaimsError(null);
     try {
@@ -147,7 +146,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     }
   }, []);
 
-  // 加载作品列表 (包含后端真正 total、分页与同类参考作品 问题 3)
+  // 加载作品列表
   const fetchWorks = useCallback(async (page = 1, sort: "best" | "recent" = "best") => {
     setLoadingWorks(true);
     try {
@@ -169,7 +168,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     }
   }, [subTopicId]);
 
-  // 加载详情接口 (适配错层并消除冗余作品请求 问题 7)
+  // 加载详情接口
   const fetchDetail = useCallback(async () => {
     setLoadingDetail(true);
     try {
@@ -235,7 +234,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
 
   const isOwner = Boolean(currentUserId && detail?.created_by === currentUserId);
 
-  // 解析当前用户认领状态 (问题 2)
+  // 解析当前用户认领状态
   const currentSubTopicItem = myClaims.find((item) => item.id === subTopicId);
   const myClaimRecord = currentSubTopicItem?.sub_topic_claims?.find(
     (c) => c.user_id === currentUserId && c.status !== "returned"
@@ -288,7 +287,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  // 2. 推进至「标记脚本中」(问题 2)
+  // 2. 推进至「标记脚本中」
   const handleStartScripting = async () => {
     if (isUpdatingClaim) return;
     setIsUpdatingClaim(true);
@@ -311,7 +310,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  // 3. 放回选题池/放弃认领 (问题 2)
+  // 3. 放回选题池/放弃认领
   const handleReturnClaim = async () => {
     if (isUpdatingClaim) return;
     setIsUpdatingClaim(true);
@@ -427,7 +426,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  // 分页与排序切换 (问题 3)
+  // 分页与排序切换
   const handleSortChange = (newSort: "best" | "recent") => {
     setWorksSort(newSort);
     void fetchWorks(1, newSort);
@@ -461,12 +460,15 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
   const totalPages = Math.ceil(worksTotal / worksPageSize) || 1;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* 顶栏与门控按钮 */}
-      <div className="flex items-center justify-between border-b border-stone-200 pb-4">
-        <Link href="/topics" className="inline-flex items-center gap-1 text-[13px] font-medium text-stone-500 hover:text-stone-900">
-          <ChevronLeft className="size-4" />
-          返回选题池
+    <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6 space-y-6">
+      {/* 顶部面包屑与管理按钮 (L0 空间) */}
+      <div className="flex items-center justify-between pb-1">
+        <Link
+          href="/topics"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-stone-500 hover:text-stone-900 transition-colors"
+        >
+          <ChevronLeft className="size-4 text-stone-400" />
+          <span>返回选题池</span>
         </Link>
 
         {isOwner && (
@@ -475,7 +477,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               size="xs"
               variant="outline"
               onClick={() => setEditDialogOpen(true)}
-              className="h-8 rounded-lg border-stone-200 text-stone-700 hover:bg-stone-50 gap-1 text-[12px]"
+              className="h-8 px-3 rounded-xl border-stone-200 bg-white text-stone-700 hover:bg-stone-50 hover:text-stone-900 gap-1.5 text-[12px] font-medium transition-all"
             >
               <Edit2 className="size-3.5 text-stone-500" />
               <span>编辑选题</span>
@@ -484,7 +486,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               size="xs"
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
-              className="h-8 rounded-lg border-stone-200 text-[#C9604D] hover:bg-[#C9604D]/5 gap-1 text-[12px]"
+              className="h-8 px-3 rounded-xl border-stone-200 bg-white text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30 gap-1.5 text-[12px] font-medium transition-all"
             >
               <Trash2 className="size-3.5 text-[#C9604D]" />
               <span>删除选题</span>
@@ -493,303 +495,332 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      {/* 我的认领状态请求异常告警 (问题 5) */}
+      {/* 我的认领状态请求异常告警 Banner */}
       {myClaimsError && (
-        <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/30 bg-[#D99E55]/5 px-4 py-3 text-[12.5px] text-stone-700">
+        <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/5 px-4 py-3 text-[12.5px] text-stone-700">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-[#D99E55] shrink-0" />
             <span>我的认领状态加载失败：{myClaimsError}</span>
           </div>
-          <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px]">
+          <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px] border-stone-200 bg-white hover:bg-stone-50">
             <RefreshCw className="size-3 mr-1" />
-            重新加载认领状态
+            重新加载
           </Button>
         </div>
       )}
 
-      {/* 主信息卡 */}
-      <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-xs space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1.5 flex-1">
-            {detail.topics && (
-              <span className="inline-flex items-center rounded-md bg-[#4F5E96]/10 px-2.5 py-0.5 text-[11.5px] font-semibold text-[#4F5E96]">
-                {detail.topics.name}
-              </span>
-            )}
-            <h1 className="text-[20px] font-bold text-stone-900 leading-snug">{detail.title}</h1>
-          </div>
-
-          {/* 认领流转按钮区 (问题 2) */}
-          <div className="flex items-center gap-2">
-            {isClaimedByMe ? (
-              <div className="flex items-center gap-2">
-                {myClaimRecord?.status === "candidate" ? (
-                  <>
-                    <Button
-                      size="sm"
-                      disabled={isUpdatingClaim}
-                      onClick={() => void handleStartScripting()}
-                      className="h-9 px-3.5 rounded-xl bg-[#5F82A8] hover:bg-[#5F82A8]/90 text-white text-[12.5px] font-medium"
-                    >
-                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <FileText className="size-3.5 mr-1" />}
-                      标记脚本中
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isUpdatingClaim}
-                      onClick={() => void handleReturnClaim()}
-                      title="再次点击放回选题池"
-                      className="h-9 px-3 rounded-xl border-[#6FAA7D]/25 bg-[#6FAA7D]/10 text-[#5B9668] hover:bg-[#6FAA7D]/20 text-[12.5px]"
-                    >
-                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
-                      已认领
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#C9604D]/10 px-3.5 text-[12.5px] font-semibold text-[#C9604D]">
-                      <FileText className="size-3.5" />
-                      ⚠️ 脚本写作中
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={isUpdatingClaim}
-                      onClick={() => void handleReturnClaim()}
-                      className="h-9 px-3 rounded-xl border-stone-200 text-stone-600 hover:bg-stone-50 text-[12.5px]"
-                    >
-                      {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <RotateCcw className="size-3.5 mr-1" />}
-                      放回选题池
-                    </Button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <Button
-                disabled={isClaiming}
-                onClick={() => void handleClaim()}
-                className={cn(
-                  "h-9 px-5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all",
-                  isLimitReached ? "bg-[#D97757]/80 hover:bg-[#D97757]" : "bg-[#D97757] hover:bg-[#D97757]/90"
-                )}
-              >
-                {isClaiming ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}
-                {isLimitReached ? "认领此题 (选替换)" : "认领此选题"}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {detail.hook && (
-          <div className="rounded-xl bg-stone-50 p-4 border border-stone-150 text-[13px] text-stone-700 leading-relaxed">
-            <span className="font-semibold text-stone-900 block mb-1">一句话钩子：</span>
-            “{detail.hook}”
-          </div>
-        )}
-
-        <div className="flex flex-wrap items-center gap-4 text-[12px] text-stone-400 pt-2 border-t border-stone-100">
-          {detail.emotion_tag && <span>情绪标签: <strong className="text-stone-700 font-medium">{detail.emotion_tag}</strong></span>}
-          {detail.audience && <span>目标受众: <strong className="text-stone-700 font-medium">{detail.audience}</strong></span>}
-          <span>录入时间: {new Date(detail.created_at).toLocaleDateString()}</span>
-        </div>
-      </div>
-
-      {/* 撞车动态 */}
-      <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-          <div className="flex items-center gap-2">
-            <User className="size-4 text-[#D97757]" />
-            <h2 className="text-[14px] font-bold text-stone-900">
-              认领撞车动态
-            </h2>
-          </div>
-          {!claimsError && (
-            <span className="text-[12.5px] font-semibold text-stone-700">
-              已有 <strong className="text-[#D97757] tabular-nums">{totalInFlightCount}</strong> 人在做
-              {claimsData.scriptingCount > 0 && (
-                <span className="text-[#C9604D] font-normal ml-1">
-                  （含 {claimsData.scriptingCount} 人脚本中）
+      {/* L1 唯一纯白主画板 (L1 White Surface Artboard) */}
+      <div className="rounded-2xl border border-stone-200/80 bg-white p-7 sm:p-9 md:p-10 shadow-xs space-y-12">
+        
+        {/* L1-A: 选题核心描述区 */}
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
+            <div className="space-y-2 flex-1 min-w-0">
+              {detail.topics && (
+                <span className="inline-flex items-center rounded-md bg-[#4F5E96]/10 px-2.5 py-0.5 text-[11.5px] font-medium text-[#4F5E96]">
+                  {detail.topics.name}
                 </span>
               )}
-            </span>
-          )}
-        </div>
-
-        {claimsError ? (
-          <div className="flex items-center justify-between rounded-xl bg-[#C9604D]/5 p-3.5 border border-[#C9604D]/20 text-[12.5px] text-[#C9604D]">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="size-4 shrink-0" />
-              <span>撞车动态加载失败：{claimsError}</span>
+              <h1 className="text-[24px] font-bold text-stone-900 leading-[1.33] tracking-tight">
+                {detail.title}
+              </h1>
             </div>
-            <Button size="xs" variant="outline" onClick={() => void fetchClaims()} className="h-7 text-[12px]">
-              <RefreshCw className="size-3 mr-1" />
-              重新加载撞车动态
-            </Button>
-          </div>
-        ) : claimsData.claims.length === 0 ? (
-          <p className="text-[12.5px] text-stone-400 py-3 italic text-center">
-            暂无其他人认领此选题，抢先创作成就爆款！
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-            {claimsData.claims.map((c, idx) => (
-              <div
-                key={c.userId || idx}
-                className={cn(
-                  "flex items-center justify-between p-3 rounded-xl border text-[12.5px]",
-                  c.status === "scripting"
-                    ? "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]"
-                    : "border-stone-200 bg-stone-50/50 text-stone-700"
-                )}
-              >
-                <div className="flex items-center gap-2 font-medium">
-                  <User className="size-3.5 opacity-60" />
-                  <span>{c.displayName || c.userId || "未知成员"}</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] opacity-80">
-                  <span className="font-semibold">
-                    {c.status === "scripting" ? "⚠️ 脚本写作中" : "候选思考中"}
-                  </span>
-                  <span>{new Date(c.claimedAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {/* 作品回流记录 (含排序、真正 total、分页与同类参考视频 问题 3) */}
-      <div id="associated-works-section" className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs space-y-4 scroll-mt-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-stone-100 pb-3">
-          <div className="flex items-center gap-2">
-            <Video className="size-4 text-[#5F82A8]" />
-            <h2 className="text-[14px] font-bold text-stone-900">
-              已关联创作作品 ({worksTotal})
-            </h2>
-          </div>
-
-          {/* 排序切换 */}
-          <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg text-[12px]">
-            <button
-              onClick={() => handleSortChange("best")}
-              className={cn(
-                "px-2.5 py-1 rounded-md transition-all font-medium",
-                worksSort === "best" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
-              )}
-            >
-              爆款优先
-            </button>
-            <button
-              onClick={() => handleSortChange("recent")}
-              className={cn(
-                "px-2.5 py-1 rounded-md transition-all font-medium",
-                worksSort === "recent" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
-              )}
-            >
-              最新发布
-            </button>
-          </div>
-        </div>
-
-        {loadingWorks ? (
-          <div className="py-8 text-center text-stone-400 text-[12.5px] flex items-center justify-center gap-2">
-            <Loader2 className="size-4 animate-spin text-[#5F82A8]" />
-            <span>加载关联作品中...</span>
-          </div>
-        ) : works.length === 0 ? (
-          <div className="py-8 text-center text-stone-400 text-[12.5px] italic">
-            本选题暂无作品发布记录。
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {works.map((w) => {
-              const snap = w.video_metrics_snapshots?.[0];
-              const playCount = snap?.play_count ?? 0;
-              const likesCount = resolveWorkLikes(snap);
-
-              return (
-                <div key={w.id} className="flex items-center justify-between p-3.5 rounded-xl border border-stone-200 bg-stone-50/40 text-[12.5px] hover:border-stone-300 transition-all">
-                  <div className="space-y-0.5">
-                    <div className="font-semibold text-stone-900">{w.video_title}</div>
-                    <div className="flex items-center gap-3 text-[11px] text-stone-400">
-                      {w.account_name && <span>账号: {w.account_name}</span>}
-                      {(w.uploadedAt || w.uploaded_at) && (
-                        <span>发布时间: {new Date(w.uploadedAt || w.uploaded_at || "").toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  </div>
-                  {snap && (
-                    <div className="text-right tabular-nums">
-                      <div className="font-bold text-stone-900">
-                        {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount.toLocaleString()} 播放
-                      </div>
-                      <div className="text-[11px] text-stone-400">{likesCount.toLocaleString()} 点赞</div>
-                    </div>
+            {/* 认领流转按钮区（聚光灯原则：暖橙实底 `#D97757` 为全屏唯一高亮主 CTA） */}
+            <div className="flex items-center gap-2 shrink-0 pt-0.5">
+              {isClaimedByMe ? (
+                <div className="flex items-center gap-2">
+                  {myClaimRecord?.status === "candidate" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        disabled={isUpdatingClaim}
+                        onClick={() => void handleStartScripting()}
+                        className="h-9.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[12.5px] font-medium transition-colors"
+                      >
+                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <FileText className="size-3.5 mr-1.5 text-stone-600" />}
+                        标记脚本中
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isUpdatingClaim}
+                        onClick={() => void handleReturnClaim()}
+                        title="再次点击放回选题池"
+                        className="h-9.5 px-3.5 rounded-xl border-emerald-500/25 bg-emerald-500/10 text-[#5B9668] hover:bg-emerald-500/20 text-[12.5px] font-medium transition-colors"
+                      >
+                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Check className="size-3.5 mr-1.5" />}
+                        已认领
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-flex h-9.5 items-center gap-1.5 rounded-xl bg-[#C9604D]/10 px-3.5 text-[12.5px] font-medium text-[#C9604D]">
+                        <FileText className="size-3.5" />
+                        ⚠️ 脚本写作中
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isUpdatingClaim}
+                        onClick={() => void handleReturnClaim()}
+                        className="h-9.5 px-3.5 rounded-xl border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100 text-[12.5px] font-medium transition-colors"
+                      >
+                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <RotateCcw className="size-3.5 mr-1.5 text-stone-500" />}
+                        放回选题池
+                      </Button>
+                    </>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 分页控制栏 */}
-        {worksTotal > worksPageSize && (
-          <div className="flex items-center justify-between pt-2 border-t border-stone-100 text-[12px] text-stone-500">
-            <span>共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页</span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="xs"
-                variant="outline"
-                disabled={worksPage <= 1 || loadingWorks}
-                onClick={() => handlePageChange(worksPage - 1)}
-                className="h-7 text-[12px]"
-              >
-                上一页
-              </Button>
-              <Button
-                size="xs"
-                variant="outline"
-                disabled={worksPage >= totalPages || loadingWorks}
-                onClick={() => handlePageChange(worksPage + 1)}
-                className="h-7 text-[12px]"
-              >
-                下一页
-              </Button>
+              ) : (
+                <Button
+                  disabled={isClaiming}
+                  onClick={() => void handleClaim()}
+                  className={cn(
+                    "h-9.5 px-5.5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all active:scale-[0.98]",
+                    isLimitReached ? "bg-[#D97757]/90 hover:bg-[#D97757]" : "bg-[#D97757] hover:bg-[#D97757]/90"
+                  )}
+                >
+                  {isClaiming ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Plus className="size-4 mr-1.5" />}
+                  {isLimitReached ? "认领此题 (选替换)" : "认领此选题"}
+                </Button>
+              )}
             </div>
           </div>
-        )}
 
-        {/* 同类参考作品 (问题 3) */}
-        {similarReferences.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-stone-150 space-y-2">
-            <div className="flex items-center gap-1.5 text-[12.5px] font-semibold text-stone-700">
-              <Film className="size-3.5 text-[#4F5E96]" />
-              <span>同类参考作品推荐 ({similarReferences.length})</span>
+          {/* 一句话钩子：形态① 凹槽 Inset (bg-stone-100/60 终点浅凹槽) */}
+          {detail.hook && (
+            <div className="rounded-xl bg-stone-100/60 p-4 text-[13px] text-stone-800 leading-relaxed space-y-1.5">
+              <div className="font-medium text-stone-900 text-[12.5px] flex items-center gap-1.5">
+                <Sparkles className="size-3.5 text-[#D97757]" />
+                <span>一句话钩子</span>
+              </div>
+              <p className="italic text-stone-700">“{detail.hook}”</p>
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {similarReferences.map((ref, idx) => (
-                <div key={ref.id || idx} className="p-3 rounded-xl border border-stone-200 bg-stone-50/20 text-[12px] space-y-1">
-                  <div className="font-medium text-stone-850 truncate">{ref.video_title || ref.title || "未命名参考"}</div>
-                  <div className="flex items-center justify-between text-[11px] text-stone-400">
-                    <span>{ref.account_name || "全库爆款参考"}</span>
-                    {(() => {
-                      const playCount = ref.play_count ?? ref.video_metrics_snapshots?.[0]?.play_count;
-                      if (typeof playCount === "number") {
-                        return (
-                          <span className="font-semibold text-stone-700 tabular-nums">
-                            {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount} 播放
-                          </span>
-                        );
-                      }
-                      return null;
-                    })()}
+          )}
+
+          {/* 元属性横条（字色三阶：stone-900 / stone-700 / stone-500） */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-stone-500 pt-1">
+            {detail.emotion_tag && (
+              <span className="flex items-center gap-1.5">
+                <span className="text-stone-400">情绪标签:</span>
+                <strong className="text-stone-700 font-medium">{detail.emotion_tag}</strong>
+              </span>
+            )}
+            {detail.audience && (
+              <span className="flex items-center gap-1.5">
+                <span className="text-stone-400">目标受众:</span>
+                <strong className="text-stone-700 font-medium">{detail.audience}</strong>
+              </span>
+            )}
+            <span className="flex items-center gap-1.5">
+              <span className="text-stone-400">录入时间:</span>
+              <strong className="text-stone-600 font-normal">{new Date(detail.created_at).toLocaleDateString()}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
+        <div className="pt-8 border-t border-stone-100 space-y-3">
+          {/* L1-B: 认领撞车动态（标题与卡片紧密聚拢为一组） */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="size-4 text-[#D97757]" />
+              <h2 className="text-[16px] font-bold text-stone-900">
+                认领撞车动态
+              </h2>
+            </div>
+            {!claimsError && (
+              <span className="text-[12.5px] text-stone-500">
+                已有 <strong className="text-[#D97757] font-semibold tabular-nums">{totalInFlightCount}</strong> 人在做
+                {claimsData.scriptingCount > 0 && (
+                  <span className="text-[#C9604D] ml-1 font-medium">
+                    （含 {claimsData.scriptingCount} 人脚本中）
+                  </span>
+                )}
+              </span>
+            )}
+          </div>
+
+          {claimsError ? (
+            <div className="flex items-center justify-between rounded-xl bg-[#C9604D]/5 p-3.5 border border-[#C9604D]/20 text-[12.5px] text-[#C9604D]">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 shrink-0" />
+                <span>撞车动态加载失败：{claimsError}</span>
+              </div>
+              <Button size="xs" variant="outline" onClick={() => void fetchClaims()} className="h-7 text-[12px] border-stone-200 bg-white">
+                <RefreshCw className="size-3 mr-1" />
+                重新加载
+              </Button>
+            </div>
+          ) : claimsData.claims.length === 0 ? (
+            <div className="rounded-xl bg-stone-100/50 p-4 text-center text-[12.5px] text-stone-400 italic">
+              暂无其他人认领此选题，抢先创作成就爆款！
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              {claimsData.claims.map((c, idx) => (
+                <div
+                  key={c.userId || idx}
+                  className={cn(
+                    "flex items-center justify-between p-3.5 rounded-xl text-[12.5px] transition-colors",
+                    c.status === "scripting"
+                      ? "bg-[#C9604D]/10 text-[#C9604D] font-medium"
+                      : "bg-stone-100/60 hover:bg-stone-100 text-stone-700"
+                  )}
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <User className="size-3.5 opacity-60" />
+                    <span>{c.displayName || c.userId || "未知成员"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] opacity-80">
+                    <span className="font-medium">
+                      {c.status === "scripting" ? "⚠️ 脚本写作中" : "候选思考中"}
+                    </span>
+                    <span>{new Date(c.claimedAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               ))}
             </div>
+          )}
+        </div>
+
+        {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
+        <div id="associated-works-section" className="pt-8 border-t border-stone-100 space-y-3 scroll-mt-6">
+          {/* L1-C: 已关联创作作品（标题与首个作品紧密结合） */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Video className="size-4 text-[#5F82A8]" />
+              <h2 className="text-[16px] font-bold text-stone-900">
+                已关联创作作品 ({worksTotal})
+              </h2>
+            </div>
+
+            {/* 排序 Segmented Switch */}
+            <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg text-[12px]">
+              <button
+                onClick={() => handleSortChange("best")}
+                className={cn(
+                  "px-3 py-1 rounded-md transition-all font-medium",
+                  worksSort === "best" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
+                )}
+              >
+                爆款优先
+              </button>
+              <button
+                onClick={() => handleSortChange("recent")}
+                className={cn(
+                  "px-3 py-1 rounded-md transition-all font-medium",
+                  worksSort === "recent" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
+                )}
+              >
+                最新发布
+              </button>
+            </div>
           </div>
-        )}
+
+          {loadingWorks ? (
+            <div className="py-10 text-center text-stone-400 text-[12.5px] flex items-center justify-center gap-2">
+              <Loader2 className="size-4 animate-spin text-[#5F82A8]" />
+              <span>加载关联作品中...</span>
+            </div>
+          ) : works.length === 0 ? (
+            <div className="py-8 rounded-xl bg-stone-100/50 text-center text-stone-400 text-[12.5px] italic">
+              本选题暂无作品发布记录。
+            </div>
+          ) : (
+            <div className="divide-y divide-stone-100">
+              {works.map((w) => {
+                const snap = w.video_metrics_snapshots?.[0];
+                const playCount = snap?.play_count ?? 0;
+                const likesCount = resolveWorkLikes(snap);
+
+                return (
+                  <div
+                    key={w.id}
+                    className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-stone-50/80 text-[12.5px] transition-colors"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="font-semibold text-stone-900">{w.video_title}</div>
+                      <div className="flex items-center gap-3.5 text-[11px] text-stone-500">
+                        {w.account_name && <span>账号: {w.account_name}</span>}
+                        {(w.uploadedAt || w.uploaded_at) && (
+                          <span>发布时间: {new Date(w.uploadedAt || w.uploaded_at || "").toLocaleDateString()}</span>
+                        )}
+                      </div>
+                    </div>
+                    {snap && (
+                      <div className="text-right tabular-nums">
+                        <div className="font-bold text-stone-900">
+                          {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount.toLocaleString()} 播放
+                        </div>
+                        <div className="text-[11px] text-stone-500">{likesCount.toLocaleString()} 点赞</div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 分页控制栏 */}
+          {worksTotal > worksPageSize && (
+            <div className="flex items-center justify-between pt-4 text-[12px] text-stone-500 border-t border-stone-100">
+              <span>共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页</span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={worksPage <= 1 || loadingWorks}
+                  onClick={() => handlePageChange(worksPage - 1)}
+                  className="h-7 text-[12px] border-stone-200 bg-white"
+                >
+                  上一页
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={worksPage >= totalPages || loadingWorks}
+                  onClick={() => handlePageChange(worksPage + 1)}
+                  className="h-7 text-[12px] border-stone-200 bg-white"
+                >
+                  下一页
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 同类参考作品 */}
+          {similarReferences.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-stone-100 space-y-3">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-stone-700">
+                <Film className="size-3.5 text-[#4F5E96]" />
+                <span>同类参考作品推荐 ({similarReferences.length})</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                {similarReferences.map((ref, idx) => (
+                  <div key={ref.id || idx} className="p-3.5 rounded-xl bg-stone-100/50 hover:bg-stone-100/80 transition-colors text-[12px] space-y-1">
+                    <div className="font-medium text-stone-850 truncate">{ref.video_title || ref.title || "未命名参考"}</div>
+                    <div className="flex items-center justify-between text-[11px] text-stone-500">
+                      <span>{ref.account_name || "全库爆款参考"}</span>
+                      {(() => {
+                        const playCount = ref.play_count ?? ref.video_metrics_snapshots?.[0]?.play_count;
+                        if (typeof playCount === "number") {
+                          return (
+                            <span className="font-semibold text-stone-700 tabular-nums">
+                              {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount} 播放
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 编辑 Modal */}
@@ -804,7 +835,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757]"
+                className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
                 required
               />
             </div>
@@ -813,7 +844,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               <textarea
                 value={editHook}
                 onChange={(e) => setEditHook(e.target.value)}
-                className="w-full h-20 rounded-xl border border-stone-200 p-3 text-[13px] outline-none focus:border-[#D97757] resize-none"
+                className="w-full h-20 rounded-xl border border-stone-200 p-3 text-[13px] outline-none focus:border-[#D97757] resize-none transition-colors"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -822,7 +853,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 <input
                   value={editEmotionTag}
                   onChange={(e) => setEditEmotionTag(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757]"
+                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
                 />
               </div>
               <div className="space-y-1">
@@ -830,13 +861,13 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 <input
                   value={editAudience}
                   onChange={(e) => setEditAudience(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757]"
+                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)}>取消</Button>
-              <Button type="submit" size="sm" disabled={isSubmittingEdit} className="bg-[#D97757] text-white">
+              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)} className="rounded-xl border-stone-200 text-stone-600">取消</Button>
+              <Button type="submit" size="sm" disabled={isSubmittingEdit} className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90">
                 {isSubmittingEdit ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}保存修改
               </Button>
             </div>
@@ -844,7 +875,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
         </DialogContent>
       </Dialog>
 
-      {/* 删除 Modal & 409 阻断 Dialog (对齐规格提供 取消 / 去看关联作品 问题 4) */}
+      {/* 删除 Modal & 409 阻断 Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md p-5 rounded-2xl">
           <DialogHeader>
@@ -860,7 +891,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 {deleteErrorMsg}
               </div>
               <div className="flex items-center justify-end gap-2">
-                <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-stone-200">
                   取消
                 </Button>
                 <Button
@@ -870,7 +901,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     setDeleteDialogOpen(false);
                     document.getElementById("associated-works-section")?.scrollIntoView({ behavior: "smooth" });
                   }}
-                  className="bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90"
+                  className="rounded-xl bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90"
                 >
                   去看关联作品
                 </Button>
@@ -882,10 +913,10 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 确认要删除此选题吗？若该选题已有作品关联，系统将拦截阻断。
               </p>
               <div className="flex items-center justify-end gap-2">
-                <Button type="button" size="sm" variant="outline" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)}>
+                <Button type="button" size="sm" variant="outline" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-stone-200">
                   取消
                 </Button>
-                <Button type="button" size="sm" disabled={isDeleting} onClick={() => void handleDeleteSubmit()} className="bg-[#C9604D] text-white hover:bg-[#C9604D]/90">
+                <Button type="button" size="sm" disabled={isDeleting} onClick={() => void handleDeleteSubmit()} className="rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90">
                   {isDeleting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
                   确认删除
                 </Button>
@@ -940,7 +971,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
-            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)}>
+            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)} className="rounded-xl border-stone-200">
               取消
             </Button>
             <Button
@@ -948,7 +979,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               size="sm"
               disabled={!selectedReturnId || isReplacing}
               onClick={() => void handleConfirmReplace()}
-              className="bg-[#D97757] text-white hover:bg-[#D97757]/90"
+              className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90"
             >
               {isReplacing ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
               确认替换并认领
