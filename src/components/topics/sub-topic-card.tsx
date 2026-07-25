@@ -127,11 +127,6 @@ export function SubTopicCard({
     }
   };
 
-  // 阻止文本选择/拖拽触发弹窗
-  const handleTextClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
     <>
       {compactView ? (
@@ -180,7 +175,7 @@ export function SubTopicCard({
           </div>
 
           {/* 列 2：选题标题与一句话 Hook 同行溢出省略 (弹性占满) */}
-          <div className="flex-1 flex items-center gap-2 min-w-0" onClick={handleTextClick}>
+          <div className="flex-1 flex items-center gap-2 min-w-0">
             <span className="font-semibold text-stone-900 truncate text-[13px] group-hover:text-[#D97757] transition-colors shrink-0 max-w-[55%]">
               {item.title}
             </span>
@@ -264,20 +259,14 @@ export function SubTopicCard({
             )}
           </div>
 
-          {/* 标题 & Hook 区域（解耦选词，拖拽选择时不弹窗） */}
+          {/* 标题 & Hook 区域：点击统一打开详情弹窗 */}
           <div className="flex-1 space-y-1 min-w-0">
-            <h3
-              onClick={handleTextClick}
-              className="text-[14.5px] font-semibold text-stone-900 leading-snug line-clamp-2 select-text cursor-text group-hover:text-[#D97757] transition-colors"
-            >
+            <h3 className="text-[14.5px] font-semibold text-stone-900 leading-snug line-clamp-2 group-hover:text-[#D97757] transition-colors">
               {item.title}
             </h3>
 
             {item.hook && (
-              <p
-                onClick={handleTextClick}
-                className="text-[12.5px] text-stone-500 line-clamp-2 leading-relaxed select-text cursor-text font-normal"
-              >
+              <p className="text-[12.5px] text-stone-500 line-clamp-2 leading-relaxed font-normal">
                 {item.hook}
               </p>
             )}

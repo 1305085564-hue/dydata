@@ -7,7 +7,6 @@ import { buildCaseLibraryInboxResponse } from "./case-library/inbox/route";
 import { buildCaseLibraryInboxCountsResponse } from "./case-library/inbox/counts/route";
 import { buildCreateUsageRecordResponse } from "./conversion-hub/usage-records/route";
 import { buildReviewViolationResponse } from "./violations/[id]/review/route";
-import { buildCreateViolationTestRecordResponse } from "./violations/[id]/test/route";
 import { buildViolationsListResponse } from "./violations/route";
 
 type InboxBucket = {
@@ -1274,47 +1273,4 @@ test("conversion-hub usage-records 支持 pass/fail/null 三态，并继续汇�
   assert.equal(store.cases[0].total_views, 22);
   assert.equal(store.cases[0].total_follows, 3);
   assert.equal(store.cases[0].usage_count, 3);
-});
-
-test("violations test 过渡接口保留 X-Deprecation header，并写入 script_usage_records", async () => {
-  const store: { cases: CaseRow[]; records: UsageRecord[] } = {
-    cases: [
-      {
-        id: "case-9",
-        submitted_by: "member-1",
-        submitted_by_name: "张三",
-        team_id: "team-a",
-        status: "verified",
-        risk_level: "low",
-        purpose: "violation" as const,
-        is_deleted: false,
-        usage_state: "testing",
-        script_text: "测试接口",
-        created_at: "2026-05-21T09:00:00.000Z",
-      },
-    ],
-    records: [] as UsageRecord[],
-  };
-
-  const response = await buildCreateViolationTestRecordResponse(
-    createRequest("https://dydata.cc/api/violations/case-9/test", {
-      passed: true,
-      note: "首测通过",
-    }),
-    { params: Promise.resolve({ id: "case-9" }) },
-    {
-      getAuthenticatedContext: async () => ({
-        supabase: createCaseLookupSupabase(store.cases),
-        user: { id: "member-1" },
-      }),
-      createUsageRecordForUser: createUsageRecordWriter(store),
-    },
-  );
-
-  const json = await response.json();
-  assert.equal(response.status, 201);
-  assert.equal(response.headers.get("X-Deprecation"), "use POST /api/conversion-hub/usage-records with result_flag");
-  assert.equal(json.migrated, true);
-  assert.equal(store.records.length, 1);
-  assert.equal(store.records[0].result_flag, "pass");
 });

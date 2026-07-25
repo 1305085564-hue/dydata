@@ -1,8 +1,8 @@
 import type { ToolExecutionResult } from "./types";
-import { toSafeString } from "./utils";
+import { toTrimmedString } from "./utils";
 
 export async function diagnoseIssue(params: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const symptom = toSafeString(params.symptom);
+  const symptom = toTrimmedString(params.symptom);
   if (!symptom) return { success: false, error: "缺少 symptom" };
 
   const lower = symptom.toLowerCase();

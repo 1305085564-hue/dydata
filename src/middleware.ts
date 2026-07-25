@@ -86,9 +86,8 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const isGrowthRoute = pathname === "/growth" || pathname.startsWith("/growth/");
   const isViolationsRoute = pathname === "/violations" || pathname.startsWith("/violations/");
-  const isVideoReviewRoute = pathname === "/video-review" || pathname.startsWith("/video-review/");
   const isContentToolsRoute = pathname === "/content-tools" || pathname.startsWith("/content-tools/");
-  const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isGrowthRoute || isViolationsRoute || isVideoReviewRoute || isContentToolsRoute;
+  const isProtectedAppRoute = isDashboardRoute || isAdminRoute || isGrowthRoute || isViolationsRoute || isContentToolsRoute;
   const isClearSiteDataPass = request.nextUrl.searchParams.get(CLEAR_SITE_DATA_QUERY) === "1";
 
   if (isApiRoute && hasInvalidUuidPathParameter(pathname)) {
@@ -178,7 +177,6 @@ export const config = {
     "/admin/:path*",
     "/growth/:path*",
     "/violations/:path*",
-    "/video-review/:path*",
     "/content-tools/:path*",
     "/api/:path*",
     "/login",
