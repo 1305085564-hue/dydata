@@ -14,7 +14,6 @@ const TRACKED_PAGE_PREFIXES = [
   "/dashboard",
   "/growth",
   "/violations",
-  "/video-review",
   "/content-tools",
   "/admin",
 ] as const;

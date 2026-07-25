@@ -8,7 +8,7 @@ import {
 import { canManagePermissionsForTarget } from "@/lib/business-role";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
-import { toOptionalString, toSafeString } from "./utils";
+import { toOptionalString, toTrimmedString } from "./utils";
 
 type AdminToolProfile = {
   id: string;
@@ -116,7 +116,7 @@ export async function changeUserRole(
   context: ToolContext,
 ): Promise<ToolExecutionResult> {
   const userId = toOptionalString(params.userId);
-  const newRole = toSafeString(params.newRole);
+  const newRole = toTrimmedString(params.newRole);
   if (!userId || !["member", "admin"].includes(newRole)) {
     return { success: false, error: "newRole 仅支持 member/admin" };
   }

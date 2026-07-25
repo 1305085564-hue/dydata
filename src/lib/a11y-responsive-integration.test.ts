@@ -12,7 +12,6 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
     "src/app/(app)/admin/content/content-list.tsx",
     "src/app/(app)/admin/modules/modules-content-v2.tsx",
     "src/app/(app)/dashboard/history-list.tsx",
-    "src/app/(app)/video-review/components/case-card.tsx",
   ];
 
   for (const path of paths) {
@@ -39,7 +38,6 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   const providers = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
   const rewrite = readSource("src/app/(app)/admin/ai-config/components/rewrite-client.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
-  const caseCard = readSource("src/app/(app)/video-review/components/case-card.tsx");
 
   for (const source of [providers, rewrite, modules]) {
     assert.match(source, /aria-current=/);
@@ -47,7 +45,6 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   assert.match(providers, /opacity-100[^\n]*sm:opacity-0[^\n]*sm:group-focus-within:opacity-100/);
   assert.match(rewrite, /opacity-100[^\n]*sm:opacity-0[^\n]*sm:group-focus-within:opacity-100/);
   assert.match(modules, /pointer-events-auto[^\n]*sm:pointer-events-none[^\n]*sm:group-focus-within:pointer-events-auto/);
-  assert.match(caseCard, /opacity-100[^\n]*sm:opacity-0[^\n]*sm:group-focus-within:opacity-100/);
 });
 
 test("默认展开的渠道第一次点击即可收起", () => {

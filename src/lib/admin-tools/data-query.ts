@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ToolExecutionResult } from "./types";
-import { toOptionalString, toSafeString, toDateString } from "./utils";
+import { toOptionalString, toTrimmedString, toDateString } from "./utils";
 
 export async function getUserInfo(params: Record<string, unknown>): Promise<ToolExecutionResult> {
   const supabase = await createClient();
@@ -53,7 +53,7 @@ export async function getUserInfo(params: Record<string, unknown>): Promise<Tool
 
 export async function getAnomalousData(params: Record<string, unknown>): Promise<ToolExecutionResult> {
   const supabase = await createClient();
-  const type = toSafeString(params.type);
+  const type = toTrimmedString(params.type);
   const start = toDateString((params.dateRange as Record<string, unknown> | undefined)?.start);
   const end = toDateString((params.dateRange as Record<string, unknown> | undefined)?.end);
 
@@ -136,7 +136,7 @@ export async function getAnomalousData(params: Record<string, unknown>): Promise
 
 export async function getTaskStatus(params: Record<string, unknown>): Promise<ToolExecutionResult> {
   const service = createAdminClient();
-  const taskType = toSafeString(params.taskType);
+  const taskType = toTrimmedString(params.taskType);
 
   if (taskType === "daily_review") {
     const userId = toOptionalString(params.userId);

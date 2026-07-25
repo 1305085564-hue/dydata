@@ -2,9 +2,6 @@ import { toBoolean, toTrimmedString } from "@/lib/type-guards";
 
 export { toBoolean, toTrimmedString };
 
-/** @deprecated Use toTrimmedString instead */
-export const toSafeString = toTrimmedString;
-
 export function toOptionalString(value: unknown) {
   const text = toTrimmedString(value);
   return text ? text : null;

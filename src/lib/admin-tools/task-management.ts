@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { classifyContentSegmentsWithAi, splitContentIntoBusinessParagraphs } from "@/lib/content-segmentation";
 import { estimateSegmentTimeline } from "@/lib/timeline-alignment";
 import type { ToolExecutionResult } from "./types";
-import { toOptionalString, toDateString, toStringArray, toSafeString } from "./utils";
+import { toOptionalString, toDateString, toStringArray, toTrimmedString } from "./utils";
 
 export async function retryContentBreakdown(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
   const contentItemId = toOptionalString(params.contentItemId);
@@ -85,7 +85,7 @@ export async function retryDailyReview(params: Record<string, unknown>, dryRun: 
 }
 
 export async function clearCache(params: Record<string, unknown>, dryRun: boolean): Promise<ToolExecutionResult> {
-  const cacheType = toSafeString(params.cacheType) as "all" | "user_metrics" | "leaderboard" | "analytics";
+  const cacheType = toTrimmedString(params.cacheType) as "all" | "user_metrics" | "leaderboard" | "analytics";
   if (!cacheType) return { success: false, error: "缺少 cacheType" };
 
   const service = createAdminClient();
