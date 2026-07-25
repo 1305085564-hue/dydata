@@ -16,7 +16,7 @@ const ContentDiagnosisWorkbench = dynamic(
   {
     ssr: false,
     loading: () => (
-      <section className="flex min-h-[360px] items-center justify-center rounded-2xl border border-stone-200 bg-white text-sm text-stone-500">
+      <section className="flex min-h-[360px] items-center justify-center rounded-2xl border border-zinc-200 bg-white text-sm text-zinc-500">
         正在加载诊断工作台…
       </section>
     ),
@@ -298,12 +298,12 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-stone-200/80 bg-gradient-to-b from-stone-50/80 via-white to-white p-5 shadow-xs"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200/80 bg-gradient-to-b from-zinc-50/80 via-white to-white p-5 shadow-xs"
     >
       {/* 顶栏控制条：Sticky 毛玻璃与环境融合 */}
-      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200/60 bg-white/85 p-2.5 backdrop-blur-md transition-all duration-200 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)]">
+      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200/60 bg-white/85 p-2.5 backdrop-blur-md transition-all duration-200 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)]">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded-lg border border-stone-200 bg-stone-100/60 p-0.5 shadow-inner">
+          <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100/60 p-0.5 shadow-inner">
             <button
               type="button"
               onClick={() => switchView("pending")}
@@ -311,12 +311,12 @@ export function ContentPageClient({
               className={[
                 "rounded-md px-3 py-1.5 text-[12px] font-medium tracking-tight transition-all duration-150",
                 view === "pending"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800",
+                  ? "bg-white text-zinc-900 shadow-xs"
+                  : "text-zinc-500 hover:text-zinc-800",
               ].join(" ")}
             >
               未开始
-              <span className="ml-1.5 text-[12px] tabular-nums font-semibold text-stone-500">
+              <span className="ml-1.5 text-[12px] tabular-nums font-semibold text-zinc-500">
                 {data.workflowSummary.notStarted}
               </span>
             </button>
@@ -327,12 +327,12 @@ export function ContentPageClient({
               className={[
                 "rounded-md px-3 py-1.5 text-[12px] font-medium tracking-tight transition-all duration-150",
                 view === "all"
-                  ? "bg-white text-stone-900 shadow-xs"
-                  : "text-stone-500 hover:text-stone-800",
+                  ? "bg-white text-zinc-900 shadow-xs"
+                  : "text-zinc-500 hover:text-zinc-800",
               ].join(" ")}
             >
               全部
-              <span className="ml-1.5 text-[12px] tabular-nums font-medium text-stone-400">
+              <span className="ml-1.5 text-[12px] tabular-nums font-medium text-zinc-400">
                 {data.summary.totalVideos}
               </span>
             </button>
@@ -350,14 +350,14 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-8 min-w-36 rounded-lg border-stone-200 bg-white text-[12px] font-medium text-stone-700 hover:border-stone-300 shadow-2xs">
+              <SelectTrigger className="h-8 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px] font-medium text-stone-900">
+                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-900">
                     全公司 (全部团队)
                   </SelectItem>
                 )}
@@ -372,22 +372,22 @@ export function ContentPageClient({
 
           {/* 今日异常雷达内联胶囊（极致呼吸光晕与高雅调性） */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-gradient-to-r from-red-50/50 via-stone-50 to-stone-50 text-stone-600 border border-[#C9604D]/20 rounded-lg hover:border-[#C9604D]/40 transition-all shadow-2xs">
+            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-gradient-to-r from-red-50/50 via-zinc-50 to-zinc-50 text-zinc-600 border border-[#C9604D]/20 rounded-lg hover:border-[#C9604D]/40 transition-all shadow-2xs">
               <span className="relative flex size-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9604D] opacity-75"></span>
                 <span className="relative inline-flex rounded-full size-2 bg-[#C9604D]"></span>
               </span>
-              <span className="font-semibold text-stone-900">
+              <span className="font-semibold text-zinc-900">
                 今日异常({anomalyVideos.length})
               </span>
-              <span className="text-stone-300">·</span>
+              <span className="text-zinc-300">·</span>
               <span className="flex items-center gap-1.5 shrink-0">
                 {deletedCount > 0 && <span className="text-[#C9604D] font-semibold">{deletedCount}删稿</span>}
                 {limitedCount > 0 && <span className="text-[#C9604D] font-semibold">{limitedCount}限流</span>}
                 {halvedCount > 0 && <span className="text-[#D99E55] font-semibold">{halvedCount}腰斩</span>}
               </span>
-              <span className="text-stone-300 hidden lg:inline">|</span>
-              <span className="text-stone-500 truncate max-w-[210px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+              <span className="text-zinc-300 hidden lg:inline">|</span>
+              <span className="text-zinc-500 truncate max-w-[210px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
                 最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
                   <span key={v.id}>
                     {i > 0 && "、"}
@@ -410,7 +410,7 @@ export function ContentPageClient({
           )}
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">
+        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
           {data.workflowSummary.draft > 0 && (
             <span className="flex items-center gap-1 bg-amber-50/60 px-2 py-0.5 rounded border border-amber-200/50">
               待确认
@@ -443,7 +443,7 @@ export function ContentPageClient({
               </span>
             </span>
           )}
-          <span className="pl-2 text-[12px] font-medium text-stone-400 border-l border-stone-200">视频复盘</span>
+          <span className="pl-2 text-[12px] font-medium text-zinc-400 border-l border-zinc-200">视频复盘</span>
         </div>
       </div>
 

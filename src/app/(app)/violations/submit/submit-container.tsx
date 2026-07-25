@@ -30,7 +30,7 @@ export async function SubmitContainer({ userId, userEmail, initialAccountId }: S
   if (accountsError) {
     console.error("[violations/submit] failed to load accounts", accountsError);
     return (
-      <div className="rounded-2xl border border-stone-200 bg-white p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <ErrorState
           title="账号加载失败"
           description="暂时无法取得可选账号，请检查网络后重试。"

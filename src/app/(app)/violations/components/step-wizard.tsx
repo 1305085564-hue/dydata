@@ -67,7 +67,7 @@ export function StepWizard({
             >
               {visibleStep >= 0 ? <Check className="size-3 stroke-[2.5]" /> : "·"}
             </span>
-            <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
+            <span className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">
               起步
             </span>
           </motion.div>
@@ -102,7 +102,7 @@ export function StepWizard({
                         "flex size-8 items-center justify-center rounded-full text-[13px] font-medium transition-colors",
                         isCurrent && "bg-[#D97757] text-white shadow-sm",
                         isCompleted && "bg-[#6FAA7D] text-white",
-                        isUpcoming && "bg-stone-200 text-stone-500",
+                        isUpcoming && "bg-zinc-200 text-zinc-500",
                       )}
                     >
                       {isCompleted ? (
@@ -115,8 +115,8 @@ export function StepWizard({
                       className={cn(
                         "text-[12px] transition-colors",
                         isCurrent
-                          ? "font-medium text-stone-900"
-                          : "text-stone-500",
+                          ? "font-medium text-zinc-900"
+                          : "text-zinc-500",
                       )}
                     >
                       {step.label}
@@ -124,7 +124,7 @@ export function StepWizard({
                   </motion.div>
                   {index < visibleSteps.length - 1 ? (
                     <div className="mx-2 flex-1">
-                      <div className="relative h-px overflow-hidden bg-stone-200">
+                      <div className="relative h-px overflow-hidden bg-zinc-200">
                         <motion.div
                           initial={false}
                           animate={{
@@ -149,7 +149,7 @@ export function StepWizard({
       </div>
 
       {/* Step content with directional spring animation */}
-      <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-6">
+      <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={contentKey}
@@ -177,17 +177,17 @@ export function StepWizard({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            className="flex items-center justify-between border-t border-stone-100 pt-6"
+            className="flex items-center justify-between border-t border-zinc-100 pt-6"
           >
             <button
               type="button"
               onClick={onPrev}
               disabled={isSubmitting}
               className={cn(
-                "h-11 rounded-lg border border-stone-200 bg-white px-5 text-[13px] font-medium text-stone-700 transition-all active:translate-y-[1px]",
+                "h-11 rounded-lg border border-zinc-200 bg-white px-5 text-[13px] font-medium text-zinc-700 transition-all active:translate-y-[1px]",
                 isSubmitting
                   ? "cursor-not-allowed opacity-50"
-                  : "hover:bg-stone-50",
+                  : "hover:bg-zinc-50",
               )}
             >
               上一步
@@ -201,7 +201,7 @@ export function StepWizard({
                 className={cn(
                   "h-11 rounded-lg px-6 text-[13px] font-medium transition-all active:translate-y-[1px]",
                   isSubmitting || !canGoNext
-                    ? "cursor-not-allowed bg-stone-100 text-stone-500"
+                    ? "cursor-not-allowed bg-zinc-100 text-zinc-500"
                     : "bg-[#D97757] text-white shadow-sm hover:bg-[#C96442] hover:shadow-sm",
                 )}
               >
@@ -215,7 +215,7 @@ export function StepWizard({
                 className={cn(
                   "h-11 rounded-lg px-6 text-[13px] font-medium transition-all active:translate-y-[1px]",
                   !canGoNext
-                    ? "cursor-not-allowed bg-stone-100 text-stone-500"
+                    ? "cursor-not-allowed bg-zinc-100 text-zinc-500"
                     : "bg-[#D97757] text-white shadow-sm hover:bg-[#C96442] hover:shadow-sm",
                 )}
               >

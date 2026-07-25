@@ -31,7 +31,7 @@ export function RankBoard({
   const isViolation = metricKey === "pass_rate";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-5 text-left">
+    <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 text-left">
       {/* Title */}
       <div className="flex items-center gap-2">
         {isViolation ? (
@@ -42,11 +42,11 @@ export function RankBoard({
         ) : (
           <span className="size-2 rounded-full bg-[#6FAA7D] shrink-0" />
         )}
-        <h3 className="text-[18px] font-medium text-stone-900">
+        <h3 className="text-[18px] font-medium text-zinc-900">
           {title}
         </h3>
         {subtitle ? (
-          <span className="text-[12px] text-stone-500">
+          <span className="text-[12px] text-zinc-500">
             {subtitle}
           </span>
         ) : null}
@@ -59,10 +59,10 @@ export function RankBoard({
             {items.map((item, index) => {
               const inner = (
                 <>
-                  <span className="w-5 text-[12px] font-medium text-stone-500 tabular-nums">
+                  <span className="w-5 text-[12px] font-medium text-zinc-500 tabular-nums">
                     {index + 1}
                   </span>
-                  <span className="flex-1 truncate text-[13px] text-stone-700">
+                  <span className="flex-1 truncate text-[13px] text-zinc-700">
                     {item.script_text.slice(0, 20)}
                     {item.script_text.length > 20 ? "…" : ""}
                   </span>
@@ -78,7 +78,7 @@ export function RankBoard({
                 </>
               );
 
-              const btnClass = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-all duration-150 hover:bg-stone-100 active:scale-[0.98]";
+              const btnClass = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-all duration-150 hover:bg-zinc-100 active:scale-[0.98]";
 
               return (
                 <li key={item.id}>
@@ -104,17 +104,17 @@ export function RankBoard({
           </ul>
         ) : (
           <div className="py-6 text-center">
-            <p className="text-[12px] text-stone-500">{emptyHint}</p>
+            <p className="text-[12px] text-zinc-500">{emptyHint}</p>
           </div>
         )}
       </div>
 
       {/* View All */}
       {viewAllHref ? (
-        <div className="mt-2 border-t border-stone-100 pt-2.5">
+        <div className="mt-2 border-t border-zinc-100 pt-2.5">
           <Link
             href={viewAllHref}
-            className="inline-flex items-center gap-1 text-[12px] text-stone-500 transition-all duration-150 hover:text-stone-700 active:scale-[0.98]"
+            className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-all duration-150 hover:text-zinc-700 active:scale-[0.98]"
           >
             查看全部
             <ArrowRight className="size-3 stroke-[1.5]" />

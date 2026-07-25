@@ -68,7 +68,7 @@ const statusClassName: Record<Video["anomaly_status"], string> = {
   限流: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
   投流: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   活动干预: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
-  "未满24h": "border-stone-200 bg-stone-100/50 text-stone-500",
+  "未满24h": "border-zinc-200 bg-zinc-100/50 text-zinc-500",
 };
 
 const PAGE_SIZE = 30;
@@ -235,7 +235,7 @@ function MiniTimeline({
       {/* Track */}
       <div
         ref={trackRef}
-        className="relative w-[3px] rounded-full bg-stone-200 cursor-pointer"
+        className="relative w-[3px] rounded-full bg-zinc-200 cursor-pointer"
         style={{ height: 320 }}
         onClick={handleTrackClick}
         onMouseMove={handleMouseMove}
@@ -258,7 +258,7 @@ function MiniTimeline({
           return (
             <div
               key={g.label}
-              className="absolute left-1/2 -translate-x-1/2 size-1 rounded-full bg-stone-300"
+              className="absolute left-1/2 -translate-x-1/2 size-1 rounded-full bg-zinc-300"
               style={{ top: `${tickTop}%`, transform: "translate(-50%, -50%)" }}
             />
           );
@@ -268,7 +268,7 @@ function MiniTimeline({
       {/* Tooltip */}
       {hovered && tooltip && (
         <div
-          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-stone-700 bg-stone-700 px-2.5 py-1 text-[12px] text-white shadow-md"
+          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-700 px-2.5 py-1 text-[12px] text-white shadow-md"
           style={{ top: tooltip.y - 12 }}
         >
           {tooltip.label}
@@ -283,7 +283,7 @@ function MiniTimeline({
 /* ------------------------------------------------------------------ */
 
 const workflowStatusClass: Record<string, string> = {
-  not_started: "border-stone-200 bg-stone-100/50 text-stone-500",
+  not_started: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
   draft: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   confirmed: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   sent: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
@@ -291,7 +291,7 @@ const workflowStatusClass: Record<string, string> = {
 };
 
 const readinessClass: Record<string, string> = {
-  missing_snapshot: "border-stone-200 bg-stone-100/50 text-stone-500",
+  missing_snapshot: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
   missing_content: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
   missing_segments: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
   ready: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
@@ -801,7 +801,7 @@ export function ContentList({
           <Button
             size="sm"
             variant="outline"
-            className="h-8 shrink-0 gap-1 rounded-xl border-stone-200 bg-white text-[12px] text-[#D97757] hover:bg-stone-50 transition-colors"
+            className="h-8 shrink-0 gap-1 rounded-xl border-zinc-200 bg-white text-[12px] text-[#D97757] hover:bg-zinc-50 transition-colors"
             onClick={() => handleSortModeChange("priority")}
             title="恢复默认权重优先排序"
           >
@@ -812,7 +812,7 @@ export function ContentList({
         <Button
           size="sm"
           variant="ghost"
-          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-stone-500 hover:bg-stone-100 hover:text-stone-700"
+          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
           onClick={handleBatchGenerate}
           disabled={isBatchGenerating || batchCandidates.length === 0}
         >
@@ -826,12 +826,12 @@ export function ContentList({
         <div className="flex-1 min-w-0">
           <div
             ref={tableContainerRef}
-            className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white"
+            className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white"
             style={{ maxHeight: "calc(100vh - 280px)" }}
           >
             <Table>
               <TableHeader className="sticky top-0 z-10">
-                <TableRow className="border-b border-stone-200 bg-stone-100/50 hover:bg-stone-100/50">
+                <TableRow className="border-b border-zinc-200 bg-zinc-100/50 hover:bg-zinc-100/50">
                   {canManageLifecycle && (
                     <TableHead className="h-9 w-10 pl-4 pr-0">
                       <Checkbox
@@ -844,7 +844,7 @@ export function ContentList({
                   {/* 排名（优先级权重排序） */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("priority")}
-                    className="h-9 w-12 text-center text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-12 text-center text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按权重/最差优先排序"
                   >
                     <div className="flex items-center justify-center gap-0.5">
@@ -856,12 +856,12 @@ export function ContentList({
                   </TableHead>
 
                   {/* 视频标题（精简控制在 160px） */}
-                  <TableHead className="h-9 w-[160px] max-w-[160px] text-[12px] font-medium text-stone-500">视频标题</TableHead>
+                  <TableHead className="h-9 w-[160px] max-w-[160px] text-[12px] font-medium text-zinc-500">视频标题</TableHead>
 
                   {/* 作者与账号排序 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("user")}
-                    className="h-9 w-[120px] text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[120px] text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按作者归类排序"
                   >
                     <div className="flex items-center gap-1">
@@ -869,7 +869,7 @@ export function ContentList({
                       {filters.sortMode === "user" ? (
                         <ArrowDown className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
@@ -877,7 +877,7 @@ export function ContentList({
                   {/* 2s跳出 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("bounce_2s")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按2s跳出率排序（降序 ➔ 升序 ➔ 恢复默认）"
                   >
                     <div className="flex items-center justify-end gap-0.5">
@@ -887,7 +887,7 @@ export function ContentList({
                       ) : filters.sortMode === "bounce_2s_asc" ? (
                         <ArrowUp className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
@@ -895,7 +895,7 @@ export function ContentList({
                   {/* 5s完播 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("comp_5s")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按5s完播率排序（降序 ➔ 升序 ➔ 恢复默认）"
                   >
                     <div className="flex items-center justify-end gap-0.5">
@@ -905,7 +905,7 @@ export function ContentList({
                       ) : filters.sortMode === "comp_5s_asc" ? (
                         <ArrowUp className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
@@ -913,7 +913,7 @@ export function ContentList({
                   {/* 均播 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("avg_dur")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按均播时长排序（降序 ➔ 升序 ➔ 恢复默认）"
                   >
                     <div className="flex items-center justify-end gap-0.5">
@@ -923,7 +923,7 @@ export function ContentList({
                       ) : filters.sortMode === "avg_dur_asc" ? (
                         <ArrowUp className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
@@ -931,7 +931,7 @@ export function ContentList({
                   {/* 完播率 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("comp_rate")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按完播率排序（降序 ➔ 升序 ➔ 恢复默认）"
                   >
                     <div className="flex items-center justify-end gap-0.5">
@@ -941,7 +941,7 @@ export function ContentList({
                       ) : filters.sortMode === "comp_rate_asc" ? (
                         <ArrowUp className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
@@ -949,7 +949,7 @@ export function ContentList({
                   {/* 播放量排序 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("play")}
-                    className="h-9 w-[85px] text-right text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[85px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按播放量排序（降序 ➔ 升序 ➔ 恢复默认）"
                   >
                     <div className="flex items-center justify-end gap-0.5">
@@ -959,7 +959,7 @@ export function ContentList({
                       ) : filters.sortMode === "play_asc" ? (
                         <ArrowUp className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
@@ -967,7 +967,7 @@ export function ContentList({
                   {/* 发布时间排序 */}
                   <TableHead
                     onClick={() => handleHeaderSortClick("latest")}
-                    className="h-9 w-[100px] text-[12px] font-medium text-stone-600 cursor-pointer select-none hover:text-stone-900 transition-colors"
+                    className="h-9 w-[100px] text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
                     title="点击按发布时间排序（最新 ➔ 最早 ➔ 恢复默认）"
                   >
                     <div className="flex items-center gap-0.5">
@@ -977,12 +977,12 @@ export function ContentList({
                       ) : filters.sortMode === "oldest" ? (
                         <ArrowUp className="size-3 text-[#D97757]" />
                       ) : (
-                        <ArrowUpDown className="size-3 text-stone-400 opacity-40" />
+                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
                       )}
                     </div>
                   </TableHead>
-                  <TableHead className="h-9 w-[85px] text-[12px] font-medium text-stone-500">复盘状态</TableHead>
-                  <TableHead className="h-9 w-16 text-center text-[12px] font-medium text-stone-500">操作</TableHead>
+                  <TableHead className="h-9 w-[85px] text-[12px] font-medium text-zinc-500">复盘状态</TableHead>
+                  <TableHead className="h-9 w-16 text-center text-[12px] font-medium text-zinc-500">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -990,12 +990,12 @@ export function ContentList({
                   <TableRow className="hover:bg-transparent">
                     <TableCell colSpan={canManageLifecycle ? 12 : 11} className="py-16 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2.5">
-                        <span className="text-[13px] text-stone-500">没有找到符合条件的视频</span>
+                        <span className="text-[13px] text-zinc-500">没有找到符合条件的视频</span>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={handleResetFilters}
-                          className="h-8 rounded-xl border-stone-200 bg-white text-[12px] text-stone-600 hover:bg-stone-50 active:scale-[0.98] transition-all"
+                          className="h-8 rounded-xl border-zinc-200 bg-white text-[12px] text-zinc-600 hover:bg-zinc-50 active:scale-[0.98] transition-all"
                         >
                           清除过滤条件
                         </Button>
@@ -1020,9 +1020,9 @@ export function ContentList({
                         {showTodayDivider ? (
                           <TableRow className="hover:bg-transparent">
                             <TableCell colSpan={canManageLifecycle ? 12 : 11} className="px-4 py-2">
-                              <div className="flex items-center gap-3 text-[12px] text-stone-500">
+                              <div className="flex items-center gap-3 text-[12px] text-zinc-500">
                                 <span className="shrink-0 tracking-[0.18em]">历史</span>
-                                <span className="h-px flex-1 bg-stone-200" />
+                                <span className="h-px flex-1 bg-zinc-200" />
                               </div>
                             </TableCell>
                           </TableRow>
@@ -1043,7 +1043,7 @@ export function ContentList({
                             onSelectVideoId(video.id);
                           }}
                           className={[
-                            "group relative border-b border-stone-100 hover:bg-white hover:shadow-[0_4px_14px_-2px_rgba(0,0,0,0.06)] hover:z-10 cursor-pointer transition-all duration-200 ease-out",
+                            "group relative border-b border-zinc-100 hover:bg-white hover:shadow-[0_4px_14px_-2px_rgba(0,0,0,0.06)] hover:z-10 cursor-pointer transition-all duration-200 ease-out",
                             isNewBatch && "animate-fade-in-up",
                           ].filter(Boolean).join(" ")}
                           style={
@@ -1073,30 +1073,30 @@ export function ContentList({
                           )}
 
                           {/* 排名 */}
-                          <TableCell className="py-3 text-center text-[13px] tabular-nums text-stone-500 w-12">
+                          <TableCell className="py-3 text-center text-[13px] tabular-nums text-zinc-500 w-12">
                             {filters.sortMode === "priority" && index === 0 ? (
                               <span className="font-bold text-[#D99E55] text-[13px] drop-shadow-[0_1px_1px_rgba(217,158,85,0.15)]">1</span>
                             ) : filters.sortMode === "priority" && index === 1 ? (
-                              <span className="font-bold text-stone-800 text-[13px]">2</span>
+                              <span className="font-bold text-zinc-800 text-[13px]">2</span>
                             ) : filters.sortMode === "priority" && index === 2 ? (
                               <span className="font-bold text-[#B87333] text-[13px]">3</span>
                             ) : (
-                              <span className="text-[12px] font-medium text-stone-400 group-hover:text-stone-700 transition-colors">{index + 1}</span>
+                              <span className="text-[12px] font-medium text-zinc-400 group-hover:text-zinc-700 transition-colors">{index + 1}</span>
                             )}
                           </TableCell>
                           
                           {/* 视频信息标题 */}
                           <TableCell className="w-[160px] max-w-[160px] py-3">
-                            <div className="line-clamp-2 text-[13px] font-medium text-stone-900 leading-tight group-hover:text-[#D97757] transition-colors" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
+                            <div className="line-clamp-2 text-[13px] font-medium text-zinc-900 leading-tight group-hover:text-[#D97757] transition-colors" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
                               {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
                             </div>
                           </TableCell>
                           
                           {/* 作者与账号 */}
-                          <TableCell className="text-[13px] text-stone-700 py-3">
-                            <span className="font-medium text-stone-800">{video.profiles.name}</span>
-                            <span className="mx-1 text-stone-300">·</span>
-                            <span className="text-stone-500 text-[12px]">{video.accounts.name}</span>
+                          <TableCell className="text-[13px] text-zinc-700 py-3">
+                            <span className="font-medium text-zinc-800">{video.profiles.name}</span>
+                            <span className="mx-1 text-zinc-300">·</span>
+                            <span className="text-zinc-500 text-[12px]">{video.accounts.name}</span>
                           </TableCell>
 
                           {/* 2s跳出 */}
@@ -1117,10 +1117,10 @@ export function ContentList({
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                <span className="text-stone-700 font-medium">{formatRate(snap.bounce_rate_2s)}</span>
+                                <span className="text-zinc-700 font-medium">{formatRate(snap.bounce_rate_2s)}</span>
                               )
                             ) : (
-                              <span className="text-stone-300">-</span>
+                              <span className="text-zinc-300">-</span>
                             )}
                           </TableCell>
 
@@ -1142,10 +1142,10 @@ export function ContentList({
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                <span className="text-stone-700 font-medium">{formatRate(snap.completion_rate_5s)}</span>
+                                <span className="text-zinc-700 font-medium">{formatRate(snap.completion_rate_5s)}</span>
                               )
                             ) : (
-                              <span className="text-stone-300">-</span>
+                              <span className="text-zinc-300">-</span>
                             )}
                           </TableCell>
 
@@ -1167,10 +1167,10 @@ export function ContentList({
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                <span className="text-stone-700 font-medium">{snap.avg_play_duration.toFixed(1)}s</span>
+                                <span className="text-zinc-700 font-medium">{snap.avg_play_duration.toFixed(1)}s</span>
                               )
                             ) : (
-                              <span className="text-stone-300">-</span>
+                              <span className="text-zinc-300">-</span>
                             )}
                           </TableCell>
 
@@ -1192,15 +1192,15 @@ export function ContentList({
                                   </Tooltip>
                                 </TooltipProvider>
                               ) : (
-                                <span className="text-stone-700 font-medium">{formatRate(snap.completion_rate)}</span>
+                                <span className="text-zinc-700 font-medium">{formatRate(snap.completion_rate)}</span>
                               )
                             ) : (
-                              <span className="text-stone-300">-</span>
+                              <span className="text-zinc-300">-</span>
                             )}
                           </TableCell>
                           
                           {/* 播放量 */}
-                          <TableCell className="text-right text-[13px] tabular-nums text-stone-700 py-3 font-medium">
+                          <TableCell className="text-right text-[13px] tabular-nums text-zinc-700 py-3 font-medium">
                             {snap ? (
                               snap.play_count != null && snap.play_count < thresholds.play_count ? (
                                 <TooltipProvider>
@@ -1223,7 +1223,7 @@ export function ContentList({
                           </TableCell>
                           
                           {/* 发布时间 */}
-                          <TableCell className="text-[12px] text-stone-500 py-3 font-normal">
+                          <TableCell className="text-[12px] text-zinc-500 py-3 font-normal">
                             {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                           </TableCell>
                           
@@ -1233,7 +1233,7 @@ export function ContentList({
                               <div className="flex flex-col gap-1 items-start">
                                 <Badge
                                   variant="outline"
-                                  className={`text-[12px] transition-all duration-150 ${workflowStatusClass[cardStatus] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
+                                  className={`text-[12px] transition-all duration-150 ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
                                 >
                                   {card.workflow_label}
                                 </Badge>
@@ -1253,12 +1253,12 @@ export function ContentList({
                             ) : readiness ? (
                               <Badge
                                 variant="outline"
-                                className={`text-[12px] transition-all duration-150 ${readinessClass[readiness.status] ?? "border-stone-200 bg-stone-50 text-stone-500"}`}
+                                className={`text-[12px] transition-all duration-150 ${readinessClass[readiness.status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
                               >
                                 {readiness.label}
                               </Badge>
                             ) : (
-                              <span className="text-[12px] text-stone-400">未生成</span>
+                              <span className="text-[12px] text-zinc-400">未生成</span>
                             )}
                           </TableCell>
 
@@ -1272,7 +1272,7 @@ export function ContentList({
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="h-7 rounded-lg border-stone-200 bg-white px-3 text-[12px] text-stone-500 hover:text-stone-700 active:scale-[0.98] transition-all duration-150"
+                                      className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-[12px] text-zinc-500 hover:text-zinc-700 active:scale-[0.98] transition-all duration-150"
                                       onClick={() => onSelectVideoId(video.id)}
                                     >
                                       查看
@@ -1292,7 +1292,7 @@ export function ContentList({
                               {canManageLifecycle && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger
-                                    className="flex size-7 items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                                    className="flex size-7 items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
                                     title="更多操作"
                                   >
                                     <MoreHorizontal className="size-4" />
@@ -1358,7 +1358,7 @@ export function ContentList({
                   <>
                     <ChevronDown className="size-3.5" />
                     加载更多
-                    <span className="ml-1 text-[12px] text-stone-500">
+                    <span className="ml-1 text-[12px] text-zinc-500">
                       (已加载 {Math.min(loadedCount, filtered.length)} / 共 {hasDeferredData ? totalCount ?? filtered.length : filtered.length} 条)
                     </span>
                   </>
@@ -1369,7 +1369,7 @@ export function ContentList({
 
           {/* End state */}
           {!hasMore && filtered.length > 0 && (
-            <div className="mt-4 text-center text-[12px] text-stone-500">
+            <div className="mt-4 text-center text-[12px] text-zinc-500">
               已加载全部 {filtered.length} 条内容
             </div>
           )}
@@ -1378,7 +1378,7 @@ export function ContentList({
         {/* Right sidebar: mini timeline */}
         {filtered.length > PAGE_SIZE && (
           <div className="hidden flex-col items-center gap-4 py-4 lg:flex">
-            <span className="text-[12px] text-stone-500" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[12px] text-zinc-500" style={{ writingMode: "vertical-rl" }}>
               时间轴
             </span>
             <MiniTimeline
@@ -1387,7 +1387,7 @@ export function ContentList({
               currentIndex={Math.min(currentIndex, filtered.length - 1)}
               onSeek={handleTimelineSeek}
             />
-            <span className="text-[12px] text-stone-500" style={{ writingMode: "vertical-rl" }}>
+            <span className="text-[12px] text-zinc-500" style={{ writingMode: "vertical-rl" }}>
               {filtered.length} 条
             </span>
           </div>
@@ -1415,15 +1415,15 @@ export function ContentList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-stone-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
-          <span className="text-[13px] font-medium text-stone-700">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
+          <span className="text-[13px] font-medium text-zinc-700">
             已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
           </span>
-          <div className="h-4 w-px bg-stone-200" />
+          <div className="h-4 w-px bg-zinc-200" />
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-700 text-[12px]"
+            className="h-8 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 text-[12px]"
             onClick={() => setSelectedIds(new Set())}
           >
             取消选择

@@ -81,10 +81,10 @@ const TONE: Record<
     badgeText: "text-[#6FAA7D]",
   },
   neutral: {
-    bar: "bg-stone-400",
-    iconText: "text-stone-500",
-    badge: "border-stone-200 text-stone-500",
-    badgeText: "text-stone-500",
+    bar: "bg-zinc-400",
+    iconText: "text-zinc-500",
+    badge: "border-zinc-200 text-zinc-500",
+    badgeText: "text-zinc-500",
   },
 };
 
@@ -151,8 +151,8 @@ function TaskRow({
       className={cn(
         "group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200",
         selected
-          ? "border-stone-300 bg-stone-50"
-          : "border-transparent hover:border-stone-200 hover:bg-stone-50/80 hover:shadow-[0_4px_12px_-4px_rgba(28,25,23,0.06)]"
+          ? "border-zinc-300 bg-zinc-50"
+          : "border-transparent hover:border-zinc-200 hover:bg-zinc-50/80 hover:shadow-[0_4px_12px_-4px_rgba(28,25,23,0.06)]"
       )}
     >
       {/* Checkbox */}
@@ -163,10 +163,10 @@ function TaskRow({
           onToggle();
         }}
         className={cn(
-          "flex size-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300",
+          "flex size-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
           selected
             ? "border-[#D97757] bg-[#D97757] text-white"
-            : "border-stone-300 bg-white hover:border-stone-400"
+            : "border-zinc-300 bg-white hover:border-zinc-400"
         )}
       >
         {selected && <Check className="size-3 stroke-[2.5]" />}
@@ -190,16 +190,16 @@ function TaskRow({
         }}
         className="min-w-0 flex-1 cursor-pointer pl-1 text-left focus-visible:outline-none"
       >
-        <p className="line-clamp-2 text-[13px] font-medium text-stone-900 leading-[1.6]">
+        <p className="line-clamp-2 text-[13px] font-medium text-zinc-900 leading-[1.6]">
           {entry.script_text}
         </p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-stone-500">
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-zinc-500">
           <span>{entry.submitted_by_name}</span>
-          <span className="text-stone-300">·</span>
+          <span className="text-zinc-300">·</span>
           <span>{formatTime(entry.created_at)}</span>
           {entry.risk_level && entry.risk_level !== "low" ? (
             <>
-              <span className="text-stone-300">·</span>
+              <span className="text-zinc-300">·</span>
               <span
                 className={cn(
                   "rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-none",
@@ -228,7 +228,7 @@ function TaskRow({
           }}
           className={cn(
             "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-colors",
-            "text-stone-500 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
+            "text-zinc-500 hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
           title="通过"
@@ -247,7 +247,7 @@ function TaskRow({
           }}
           className={cn(
             "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-colors",
-            "text-stone-500 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
+            "text-zinc-500 hover:bg-[#C9604D]/10 hover:text-[#C9604D]",
             "disabled:cursor-wait disabled:opacity-60",
           )}
           title="驳回"
@@ -330,7 +330,7 @@ function CollapsibleSection({
         <Icon className="size-3.5 stroke-[1.5]" />
       </span>
       <div className="min-w-0 leading-tight">
-        <p className="text-[13px] font-medium text-stone-900 flex items-center gap-1.5">
+        <p className="text-[13px] font-medium text-zinc-900 flex items-center gap-1.5">
           <span>{section.title}</span>
           {visualCount > 0 && (
             <span
@@ -344,7 +344,7 @@ function CollapsibleSection({
           )}
           {section.headerTag}
         </p>
-        <p className="text-[12px] text-stone-500 mt-0.5">{section.hint}</p>
+        <p className="text-[12px] text-zinc-500 mt-0.5">{section.hint}</p>
       </div>
     </div>
   );
@@ -359,7 +359,7 @@ function CollapsibleSection({
         "overflow-hidden rounded-2xl border bg-white transition-colors duration-300 shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]",
         (section.tone === "danger" && visualCount > 0)
           ? "border-red-200/60 bg-gradient-to-b from-red-50/[0.03] to-white"
-          : "border-stone-200"
+          : "border-zinc-200"
       )}
     >
       {/* Header */}
@@ -367,18 +367,18 @@ function CollapsibleSection({
         <button
           type="button"
           onClick={() => setOpenState((v) => !v)}
-          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300 focus-visible:ring-inset"
+          className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 focus-visible:ring-inset"
         >
           {headerContent}
           <ChevronDown
             className={cn(
-              "size-4 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-300",
+              "size-4 shrink-0 stroke-[1.5] text-zinc-500 transition-transform duration-300",
               open ? "" : "-rotate-90"
             )}
           />
         </button>
       ) : (
-        <div className="flex w-full items-center justify-between gap-3 px-5 py-4 border-b border-stone-100 bg-white">
+        <div className="flex w-full items-center justify-between gap-3 px-5 py-4 border-b border-zinc-100 bg-white">
           {headerContent}
         </div>
       )}
@@ -398,7 +398,7 @@ function CollapsibleSection({
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="py-8 text-center text-[12px] text-stone-400"
+                  className="py-8 text-center text-[12px] text-zinc-400"
                 >
                   {section.emptyHint}
                 </motion.p>
@@ -440,7 +440,7 @@ function CollapsibleSection({
                       <button
                         type="button"
                         onClick={() => setExpanded((v) => !v)}
-                        className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
+                        className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
                       >
                         {expanded
                           ? "收起"
@@ -493,17 +493,17 @@ function BulkActionBar({
           bottom:
             "calc(env(safe-area-inset-bottom, 0px) + var(--bulk-bar-offset, 24px))",
         }}
-        className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-4 py-2.5 shadow-sm sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
+        className="fixed left-1/2 z-50 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm sm:gap-3 sm:px-5 sm:py-3 [--bulk-bar-offset:24px] max-sm:[--bulk-bar-offset:96px]"
       >
-        <span className="whitespace-nowrap text-[13px] font-medium text-stone-900">
+        <span className="whitespace-nowrap text-[13px] font-medium text-zinc-900">
           已选择 <span className="tabular-nums text-[#D97757]">{count}</span> 项
         </span>
-        <div className="h-4 w-px bg-stone-200" />
+        <div className="h-4 w-px bg-zinc-200" />
         <button
           type="button"
           disabled={busy !== null}
           onClick={onApprove}
-          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-stone-700 transition-colors hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
           {busy === "approve" ? <Loader2 className="size-3 animate-spin" /> : null}
           批量通过
@@ -512,7 +512,7 @@ function BulkActionBar({
           type="button"
           disabled={busy !== null}
           onClick={onReject}
-          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-stone-700 transition-colors hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
+          className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
           {busy === "reject" ? <Loader2 className="size-3 animate-spin" /> : null}
           批量驳回
@@ -521,7 +521,7 @@ function BulkActionBar({
           type="button"
           onClick={onClear}
           aria-label="清除已选"
-          className="flex size-7 items-center justify-center rounded-lg text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
+          className="flex size-7 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700"
         >
           <X className="size-3.5" />
         </button>
@@ -1002,16 +1002,16 @@ export function TaskInbox({
                 "rounded-2xl border text-center",
                 viewType === "main"
                   ? "border-[#6FAA7D]/25 bg-[#6FAA7D]/[0.04] px-6 py-8"
-                  : "border-stone-200 bg-stone-50 px-4 py-6"
+                  : "border-zinc-200 bg-zinc-50 px-4 py-6"
               )}
             >
               <div className="mx-auto flex size-8 items-center justify-center rounded-full bg-white shadow-sm">
                 <Sparkles className="size-4 stroke-[1.75] text-[#6FAA7D]" />
               </div>
-              <p className="mt-3 text-[13px] font-medium text-stone-900">
+              <p className="mt-3 text-[13px] font-medium text-zinc-900">
                 {viewType === "main" ? "今天的审批已清空" : "无待补材料"}
               </p>
-              <p className="mt-1 text-[12px] text-stone-500 font-normal">
+              <p className="mt-1 text-[12px] text-zinc-500 font-normal">
                 {viewType === "main" ? "辛苦了 · 5 秒内仍可在 toast 撤销" : "材料全部齐全"}
               </p>
             </motion.div>

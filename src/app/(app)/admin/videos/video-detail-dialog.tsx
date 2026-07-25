@@ -50,14 +50,14 @@ interface VideoDetailDialogProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  abnormal: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  正常: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  限流: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  投流: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
-  "未满24h": "border-stone-200 bg-stone-100 text-stone-500",
+  normal: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  abnormal: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  正常: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  限流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  投流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
+  "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-500",
 };
 
 function formatDateTime(value: string | null) {
@@ -88,16 +88,16 @@ function formatPercent(value: number | null | undefined) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-      <h3 className="text-[13px] font-medium text-stone-700">{children}</h3>
+      <h3 className="text-[13px] font-medium text-zinc-700">{children}</h3>
     </div>
   );
 }
 
 function MetricCard({ label, value, placeholder }: { label: string; value: string; placeholder?: boolean }) {
   return (
-    <div className="rounded-xl border border-stone-200 bg-white p-4">
-      <div className="text-[12px] text-stone-500">{label}</div>
-      <div className={`mt-1 text-[13px] ${placeholder ? "text-stone-500" : "text-stone-700"}`}>{value}</div>
+    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+      <div className="text-[12px] text-zinc-500">{label}</div>
+      <div className={`mt-1 text-[13px] ${placeholder ? "text-zinc-500" : "text-zinc-700"}`}>{value}</div>
     </div>
   );
 }
@@ -292,10 +292,10 @@ export function VideoDetailDialog({
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[18px] font-medium text-stone-900">
+                  <div className="text-[18px] font-medium text-zinc-900">
                     {video.video_title?.trim() || "未命名视频"}
                   </div>
-                  <div className="text-[12px] text-stone-500">
+                  <div className="text-[12px] text-zinc-500">
                     账号：{video.accounts.name} · 负责人：{video.profiles.name}
                   </div>
                 </div>
@@ -318,7 +318,7 @@ export function VideoDetailDialog({
                             type="button"
                             onClick={() => handleLifecycleAction("restore")}
                             disabled={isOperating}
-                            className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-stone-50 disabled:opacity-50"
+                            className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-zinc-50 disabled:opacity-50"
                           >
                             恢复作品
                           </button>
@@ -331,7 +331,7 @@ export function VideoDetailDialog({
                                 onClick={() => setShowConfirmPurge(true)}
                                 disabled={!eligible || isOperating}
                                 title={tooltip || undefined}
-                                className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-stone-50 disabled:text-stone-400 disabled:cursor-not-allowed"
+                                className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
                               >
                                 永久删除
                               </button>
@@ -362,8 +362,8 @@ export function VideoDetailDialog({
                 ) : (
                   <MetricCard label="发布时间" value={formatDateTime(video.published_at ?? null)} />
                 )}
-                <div className="rounded-xl border border-stone-200 bg-white p-4">
-                  <div className="text-[12px] text-stone-500">视频链接</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[12px] text-zinc-500">视频链接</div>
                   <div className="mt-1 text-[13px]">
                     {video.video_url ? (
                       <a
@@ -375,12 +375,12 @@ export function VideoDetailDialog({
                         {video.video_url}
                       </a>
                     ) : (
-                      <span className="text-stone-500">-</span>
+                      <span className="text-zinc-500">-</span>
                     )}
                   </div>
                 </div>
-                <div className="rounded-xl border border-stone-200 bg-white p-4">
-                  <div className="text-[12px] text-stone-500">素材等级</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[12px] text-zinc-500">素材等级</div>
                   <div className="mt-2 flex items-center gap-2">
                     <Select
                       value={assetLevel ?? "__null__"}
@@ -399,12 +399,12 @@ export function VideoDetailDialog({
                     </Select>
                   </div>
                 </div>
-                <div className="rounded-xl border border-stone-200 bg-white p-4">
-                  <div className="text-[12px] text-stone-500">人工备注</div>
+                <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                  <div className="text-[12px] text-zinc-500">人工备注</div>
                   <textarea
                     value={assetNote}
                     onChange={(e) => setAssetNote(e.target.value)}
-                    className="mt-2 w-full resize-none rounded-lg border border-stone-200 bg-stone-50 p-2 text-[13px] leading-[1.6] text-stone-700 placeholder:text-stone-500 focus-visible:outline-none focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/5"
+                    className="mt-2 w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-[13px] leading-[1.6] text-zinc-700 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:border-zinc-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-900/5"
                     rows={2}
                     placeholder="输入备注..."
                   />
@@ -423,9 +423,9 @@ export function VideoDetailDialog({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                <div className="text-[12px] text-stone-500">内容文案</div>
-                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-[1.6] text-stone-700">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                <div className="text-[12px] text-zinc-500">内容文案</div>
+                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-[1.6] text-zinc-700">
                   {video.content?.trim() || "-"}
                 </div>
               </div>
@@ -460,15 +460,15 @@ export function VideoDetailDialog({
                   const status = getTagReviewStatus(tag?.confidence ?? null);
                   const selectedValue = selection[dimension] || tag?.tag_value || "";
                   return (
-                    <div key={dimension} className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
+                    <div key={dimension} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="text-[12px] font-medium text-stone-700">{dimension}</div>
+                        <div className="text-[12px] font-medium text-zinc-700">{dimension}</div>
                         <Badge
                           variant="outline"
                           className={`text-[12px] ${
                             status === "可信"
-                              ? "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
-                              : "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
+                              ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+                              : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
                           }`}
                         >
                           {status}
@@ -496,7 +496,7 @@ export function VideoDetailDialog({
                         </SelectContent>
                       </Select>
 
-                      <div className="space-y-0.5 text-[12px] text-stone-500">
+                      <div className="space-y-0.5 text-[12px] text-zinc-500">
                         <div>来源：{tag?.source === "manual" ? "手动" : "AI"}</div>
                         <div>置信度：{tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}</div>
                         <div className="line-clamp-3">理由：{tag?.reason || "-"}</div>
@@ -514,7 +514,7 @@ export function VideoDetailDialog({
                   {renderSnapshotFields(snapshot)}
                 </div>
               ) : (
-                <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-500">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
                   暂无快照数据。
                 </div>
               )}
@@ -525,16 +525,16 @@ export function VideoDetailDialog({
       </SheetContent>
 
       {showConfirmPurge && video && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-stone-950/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-stone-900">永久删除确认</h3>
-            <p className="mt-2 text-sm text-stone-500 leading-relaxed">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-base font-semibold text-zinc-900">永久删除确认</h3>
+            <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
               将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="active:translate-y-0 h-9 rounded-xl border border-stone-200 px-4 text-stone-700 hover:bg-stone-50 text-[12px] font-medium transition-colors"
+                className="active:translate-y-0 h-9 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors"
                 onClick={() => setShowConfirmPurge(false)}
                 disabled={isOperating}
               >

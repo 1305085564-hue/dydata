@@ -55,7 +55,7 @@ function FeedbackSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2].map((i) => (
-        <div key={i} className="rounded-xl border border-stone-200 bg-white p-4">
+        <div key={i} className="rounded-xl border border-zinc-200 bg-white p-4">
           <div className="flex items-start gap-3">
             <Skeleton className="mt-1 size-2 rounded-full" />
             <div className="flex-1 space-y-2.5">
@@ -126,7 +126,7 @@ function CardRow({
   return (
     <div
       className={cn(
-        "rounded-xl border border-stone-200 bg-white transition-[box-shadow,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        "rounded-xl border border-zinc-200 bg-white transition-[box-shadow,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
         isUnread && "border-l-2 border-l-[#D97757]",
         expanded && "shadow-sm",
       )}
@@ -148,11 +148,11 @@ function CardRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center flex-wrap gap-x-2 gap-y-1">
-            <span className="truncate text-[13px] font-medium text-stone-700">
+            <span className="truncate text-[13px] font-medium text-zinc-700">
               {item.video?.video_title || (item.video_lifecycle_label ? "已回收或已删除作品" : "（无标题）")}
             </span>
             {item.video?.published_at && (
-              <span className="shrink-0 text-[12px] text-stone-500">
+              <span className="shrink-0 text-[12px] text-zinc-500">
                 {formatDate(item.video.published_at)}
               </span>
             )}
@@ -169,7 +169,7 @@ function CardRow({
           </div>
 
           {confirmed?.summary.one_line && (
-            <p className="mt-1 line-clamp-1 text-[12px] text-stone-500">
+            <p className="mt-1 line-clamp-1 text-[12px] text-zinc-500">
               {confirmed.summary.one_line}
             </p>
           )}
@@ -179,7 +179,7 @@ function CardRow({
               {confirmed.summary.problem_tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex rounded-md border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[12px] text-stone-500"
+                  className="inline-flex rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[12px] text-zinc-500"
                 >
                   {tag}
                 </span>
@@ -190,7 +190,7 @@ function CardRow({
 
         <ChevronDownIcon
           className={cn(
-            "mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-stone-500 transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+            "mt-0.5 size-3.5 shrink-0 stroke-[1.5] text-zinc-500 transition-transform duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
             expanded && "rotate-180",
           )}
         />
@@ -206,7 +206,7 @@ function CardRow({
             transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
-            <div className="space-y-4 border-t border-stone-100 px-4 pb-4 pt-3">
+            <div className="space-y-4 border-t border-zinc-100 px-4 pb-4 pt-3">
               {(() => {
                 const mainProblem =
                   confirmed.summary.one_line ||
@@ -218,18 +218,18 @@ function CardRow({
                   <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
                     {mainProblem && (
                       <div className="space-y-1">
-                        <div className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
+                        <div className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">
                           主要问题
                         </div>
-                        <p className="text-[13px] leading-[1.7] text-stone-700">{mainProblem}</p>
+                        <p className="text-[13px] leading-[1.7] text-zinc-700">{mainProblem}</p>
                       </div>
                     )}
                     {improvement && (
                       <div className="border-l-2 border-[#D97757] pl-3">
-                        <div className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
+                        <div className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">
                           建议下次
                         </div>
-                        <p className="mt-1 whitespace-pre-wrap text-[13px] font-medium leading-[1.7] text-stone-700">
+                        <p className="mt-1 whitespace-pre-wrap text-[13px] font-medium leading-[1.7] text-zinc-700">
                           {improvement}
                         </p>
                       </div>
@@ -239,7 +239,7 @@ function CardRow({
               })()}
 
               {item.account?.name && (
-                <div className="text-[12px] text-stone-500">账号：{item.account.name}</div>
+                <div className="text-[12px] text-zinc-500">账号：{item.account.name}</div>
               )}
 
               {/* Employee reply section */}
@@ -258,21 +258,21 @@ function CardRow({
                     我的复盘：{item.feedback_card.employee_reply_status === "acknowledged" ? "已认可并采纳" : "已提出申诉/解释"}
                   </div>
                   {item.feedback_card.employee_reply_text && (
-                    <p className="leading-relaxed text-stone-700 font-medium pl-3 border-l border-stone-300">
+                    <p className="leading-relaxed text-zinc-700 font-medium pl-3 border-l border-zinc-300">
                       {item.feedback_card.employee_reply_text}
                     </p>
                   )}
                 </div>
               ) : (
-                <div className="mt-4 pt-3 border-t border-stone-100 space-y-3">
-                  <div className="text-[12px] font-medium tracking-[0.12em] text-stone-500">
+                <div className="mt-4 pt-3 border-t border-zinc-100 space-y-3">
+                  <div className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">
                     复盘回传
                   </div>
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     disabled={submitting}
-                    className="w-full min-h-[64px] rounded-xl border border-stone-200 p-2.5 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:outline-none focus:ring-1 focus:ring-[#D97757] disabled:bg-stone-50"
+                    className="w-full min-h-[64px] rounded-xl border border-zinc-200 p-2.5 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#D97757] disabled:bg-zinc-50"
                     placeholder="在此输入你对本条视频数据波动的复盘分析、客观原因或下一步改进方案..."
                   />
                   <div className="flex gap-2">
@@ -288,7 +288,7 @@ function CardRow({
                       type="button"
                       disabled={submitting || !replyText.trim()}
                       onClick={() => handleSubmitReply("disputed")}
-                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-stone-900 px-4 text-[12px] font-medium text-white transition-colors hover:bg-stone-900 disabled:opacity-50"
+                      className="active:translate-y-0 inline-flex h-8 items-center justify-center rounded-lg bg-zinc-900 px-4 text-[12px] font-medium text-white transition-colors hover:bg-zinc-900 disabled:opacity-50"
                     >
                       {submitting ? "提交中..." : "申诉/解释复盘"}
                     </button>
@@ -391,7 +391,7 @@ export function FeedbackCardSection() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-4 w-px bg-[#D97757]" />
-          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
+          <h3 className="text-[13px] font-medium text-zinc-700">复盘反馈</h3>
         </div>
         <FeedbackSkeleton />
       </section>
@@ -403,7 +403,7 @@ export function FeedbackCardSection() {
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-4 w-px bg-[#D97757]" />
-          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
+          <h3 className="text-[13px] font-medium text-zinc-700">复盘反馈</h3>
         </div>
         <ErrorState description={error} onRetry={() => void loadCards()} />
       </section>
@@ -419,14 +419,14 @@ export function FeedbackCardSection() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="h-4 w-px bg-[#D97757]" />
-          <h3 className="text-[13px] font-medium text-stone-700">复盘反馈</h3>
+          <h3 className="text-[13px] font-medium text-zinc-700">复盘反馈</h3>
           {data.summary.unread > 0 && (
             <span className="inline-flex items-center rounded-full bg-[#D97757]/6 px-2 py-0.5 text-[12px] font-medium text-[#D97757]">
               {data.summary.unread} 条未读
             </span>
           )}
         </div>
-        <span className="text-[12px] text-stone-500">共 {data.summary.total} 条</span>
+        <span className="text-[12px] text-zinc-500">共 {data.summary.total} 条</span>
       </div>
 
       <div className="space-y-2">

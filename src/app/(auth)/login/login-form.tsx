@@ -127,7 +127,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
               value={password}
             />
             <Link
-              className="absolute right-0 top-0 active:translate-y-0 text-[12px] text-stone-500 hover:text-stone-700"
+              className="absolute right-0 top-0 active:translate-y-0 text-[12px] text-zinc-500 hover:text-zinc-700"
               href={forgotPasswordHref}
             >
               忘记密码
@@ -136,7 +136,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
         </div>
 
         <label
-          className="flex items-center gap-2 text-[13px] text-stone-500"
+          className="flex items-center gap-2 text-[13px] text-zinc-500"
           htmlFor="keep-logged-in"
         >
           <Checkbox
@@ -152,9 +152,9 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
 
 
 
-        <p className="text-center text-[13px] text-stone-500">
+        <p className="text-center text-[13px] text-zinc-500">
           还没有账号？
-          <Link className="ml-1 text-stone-700 underline underline-offset-4" href={registerHref}>
+          <Link className="ml-1 text-zinc-700 underline underline-offset-4" href={registerHref}>
             去注册
           </Link>
         </p>

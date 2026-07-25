@@ -112,7 +112,7 @@ export function FilterBar({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* 时间预设按钮 */}
-          <div className="flex items-center gap-1 rounded-lg bg-stone-100/50 p-1">
+          <div className="flex items-center gap-1 rounded-lg bg-zinc-100/50 p-1">
             {PRESET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -120,8 +120,8 @@ export function FilterBar({
                 onClick={() => handlePresetChange(opt.value)}
                 className={`rounded-md px-2.5 py-1 text-[13px] transition-all duration-150 ${
                   range === opt.value
-                    ? "bg-white font-medium text-stone-900 ring-1 ring-stone-200"
-                    : "text-stone-500 hover:text-stone-700"
+                    ? "bg-white font-medium text-zinc-900 ring-1 ring-zinc-200"
+                    : "text-zinc-500 hover:text-zinc-700"
                 }`}
               >
                 {opt.label}
@@ -161,8 +161,8 @@ export function FilterBar({
         </div>
 
         {/* 飞书催交总开关 */}
-        <div className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-3 py-1.5 transition-colors duration-200">
-          <span className="text-[12px] font-medium text-stone-700">飞书自动催交</span>
+        <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 transition-colors duration-200">
+          <span className="text-[12px] font-medium text-zinc-700">飞书自动催交</span>
           {settingsError ? (
             <button
               type="button"
@@ -181,7 +181,7 @@ export function FilterBar({
       </div>
 
       {/* 当前范围指示 */}
-      <div className="flex items-center gap-2 text-[12px] text-stone-500">
+      <div className="flex items-center gap-2 text-[12px] text-zinc-500">
         <CalendarDays className="size-3.5" />
         <span>
           当前范围：{formatRangeLabel(range, year, month)}

@@ -79,8 +79,8 @@ function DashboardActivityError({ message, onRetry }: { message: string; onRetry
   return (
     <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
       <ShieldAlert className="size-5 text-[#C9604D]" aria-hidden="true" />
-      <p className="text-[13px] font-medium text-stone-700">记录加载失败</p>
-      <p className="max-w-sm text-[12px] text-stone-500">{message}</p>
+      <p className="text-[13px] font-medium text-zinc-700">记录加载失败</p>
+      <p className="max-w-sm text-[12px] text-zinc-500">{message}</p>
       <Button type="button" variant="outline" size="sm" onClick={onRetry}>
         重新加载
       </Button>
@@ -608,8 +608,8 @@ export function VideoSubmitPanel({
 
   if (!accounts.length) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-        <div className="px-6 py-5 text-[13px] text-stone-500">
+      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+        <div className="px-6 py-5 text-[13px] text-zinc-500">
           当前没有可提交的数据账号，请联系管理员分配账号后再继续操作。
         </div>
       </div>
@@ -628,31 +628,31 @@ export function VideoSubmitPanel({
           "mx-auto overflow-hidden",
           embeddedChrome
             ? "max-w-3xl rounded-none border-none bg-transparent shadow-none"
-            : "max-w-6xl rounded-2xl border border-stone-200 bg-white",
+            : "max-w-6xl rounded-2xl border border-zinc-200 bg-white",
         )}>
           {!embeddedChrome ? (
-          <CardHeader className="space-y-0 border-b border-stone-200 bg-[var(--color-bg)] p-0">
+          <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
             <div className="space-y-4 px-6 py-6 sm:px-8 sm:py-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-[24px] font-medium tracking-tight text-stone-900">今日提交</h2>
+                <h2 className="text-[24px] font-medium tracking-tight text-zinc-900">今日提交</h2>
                 {watchConclusion && (
-                  <div className="text-[13px] text-stone-500 max-w-sm text-right">
+                  <div className="text-[13px] text-zinc-500 max-w-sm text-right">
                     {watchConclusion}
                   </div>
                 )}
               </div>
 
-              <div className="rounded-2xl border border-stone-200 bg-[var(--color-bg)] px-4 py-4">
-                <div className={cn("mb-5 flex flex-col gap-3 border-b border-stone-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
+              <div className="rounded-2xl border border-zinc-200 bg-[var(--color-bg)] px-4 py-4">
+                <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
                   <div className="space-y-1">
-                    <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-stone-500">今天</div>
+                    <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-zinc-500">今天</div>
                     <button
                       type="button"
                       onClick={openDatePicker}
                       className="group inline-flex items-center gap-2 rounded-lg px-0 py-1 text-left transition-opacity duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80"
                       aria-label="选择填报日期"
                     >
-                      <span className="text-[24px] font-medium tabular-nums tracking-tight text-stone-900">
+                      <span className="text-[24px] font-medium tabular-nums tracking-tight text-zinc-900">
                         {activeBizDate}
                       </span>
                       <CalendarDays className="size-5 stroke-[1.5] text-[#D97757]" />
@@ -669,7 +669,7 @@ export function VideoSubmitPanel({
                     />
                   </div>
                   <div className="flex flex-col gap-2 sm:items-end">
-                    <div className="text-[12px] font-medium text-stone-500">
+                    <div className="text-[12px] font-medium text-zinc-500">
                       {activeBizDate === today ? "今日填报" : "历史补填"}
                     </div>
                   </div>
@@ -698,7 +698,7 @@ export function VideoSubmitPanel({
             {activeCheckpointId === 1 ? (
               <>
             {hasPendingExemption && !dismissedPendingExemption && (
-              <div className="rounded-2xl border border-stone-200 border-l-[2px] border-l-[#D99E55] bg-stone-50 p-4 text-[13px] text-stone-700">
+              <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-4 text-[13px] text-zinc-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -707,14 +707,14 @@ export function VideoSubmitPanel({
                         申请审批中
                       </span>
                     </div>
-                    <p className="text-[12px] leading-[1.7] text-stone-500">
+                    <p className="text-[12px] leading-[1.7] text-zinc-500">
                       你的豁免申请正在等待管理员审批，审批结果将在这里更新。
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={dismissPendingExemption}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] font-medium text-stone-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-stone-300 hover:bg-stone-50 hover:text-stone-700 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-stone-900/5"
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-900/5"
                   >
                     <X className="size-3.5 stroke-[1.5]" />
                     关闭
@@ -732,7 +732,7 @@ export function VideoSubmitPanel({
                   opacity: { duration: 0.2 },
                   backgroundColor: { duration: 1.5, delay: 0.2 }
                 }}
-                className="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-gradient-to-br from-white to-stone-50/50 p-6 text-[13px] text-stone-700 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] animate-[fadeIn_0.5s_ease-out]"
+                className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-gradient-to-br from-white to-zinc-50/50 p-6 text-[13px] text-zinc-700 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] animate-[fadeIn_0.5s_ease-out]"
               >
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
                   <div className="space-y-4 flex-1">
@@ -746,44 +746,44 @@ export function VideoSubmitPanel({
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-[14px] font-semibold text-stone-800">
+                      <div className="text-[14px] font-semibold text-zinc-800">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
-                      <div className="text-[12px] leading-[1.7] text-stone-400" suppressHydrationWarning>
+                      <div className="text-[12px] leading-[1.7] text-zinc-400" suppressHydrationWarning>
                         提交时间：{formatDateTime(primarySummary.uploadedAt)}
-                        <span className="mx-2 text-stone-300">·</span>
+                        <span className="mx-2 text-zinc-300">·</span>
                         发布时间：{formatDateTime(primarySummary.publishedAt)}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                      <div className="rounded-2xl border border-stone-200/40 bg-stone-50/50 p-4 transition-all hover:bg-stone-50/80">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-stone-400">播放量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-stone-800 font-mono">
+                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">播放量</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined 
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN") 
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-stone-200/40 bg-stone-50/50 p-4 transition-all hover:bg-stone-50/80">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-stone-400">互动总量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-stone-800 font-mono">
+                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">互动总量</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
                           {((primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
                             (primarySummary.shares ?? 0) +
                             (primarySummary.favorites ?? 0)).toLocaleString("zh-CN")}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-stone-200/40 bg-stone-50/50 p-4 transition-all hover:bg-stone-50/80">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-stone-400">涨粉</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-stone-800 font-mono">
+                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">涨粉</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined 
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN") 
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-stone-200/40 bg-stone-50/50 p-4 transition-all hover:bg-stone-50/80">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-stone-400">完播率</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-stone-800 font-mono">
+                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">完播率</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
                           {primarySummary.completionRate ?? "--"}
                         </div>
                       </div>
@@ -801,7 +801,7 @@ export function VideoSubmitPanel({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-10 rounded-xl border-stone-200 bg-white text-[13px] font-medium text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors duration-150"
+                      className="h-10 rounded-xl border-zinc-200 bg-white text-[13px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 transition-colors duration-150"
                       onClick={() => setRequestedMode("editToday")}
                     >
                       <PencilLine className="size-4 stroke-[1.5]" />
@@ -819,8 +819,8 @@ export function VideoSubmitPanel({
                 className={cn(
                   "rounded-2xl border p-4 text-[13px] sm:p-5",
                   activeDateStatus.state === "waive"
-                    ? "border-stone-200 border-l-[2px] border-l-[#6FAA7D] bg-white text-stone-700"
-                    : "border-stone-200 border-l-[2px] border-l-[#D99E55] bg-stone-50 text-stone-700",
+                    ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white text-zinc-700"
+                    : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 text-zinc-700",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -830,15 +830,15 @@ export function VideoSubmitPanel({
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                     <div className="space-y-1">
-                      <div className="text-[18px] font-medium text-stone-700">
+                      <div className="text-[18px] font-medium text-zinc-700">
                         {activeBizDate} 已标记为{activeDateStatus.label}
                       </div>
-                      <p className="text-[13px] leading-[1.7] text-stone-500">
+                      <p className="text-[13px] leading-[1.7] text-zinc-500">
                         {activeDateStatus.description}
                       </p>
                     </div>
                     {activeExemptionState.reason ? (
-                      <p className="text-[13px] leading-[1.7] text-stone-500">
+                      <p className="text-[13px] leading-[1.7] text-zinc-500">
                         原因：{activeExemptionState.reason}
                       </p>
                     ) : null}
@@ -876,18 +876,18 @@ export function VideoSubmitPanel({
                 key={`checkpoint-placeholder-${activeCheckpointId}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50 px-6 py-20 text-center"
+                className="flex flex-col items-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-20 text-center"
               >
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500">
                   <Lock className="size-10 stroke-[1.5]" />
                 </div>
-                <h4 className="text-[18px] font-medium tracking-tight text-stone-900">
+                <h4 className="text-[18px] font-medium tracking-tight text-zinc-900">
                   卡点 {activeCheckpointId} 记录模块
                 </h4>
-                <p className="mt-2 max-w-xs text-[12px] font-medium uppercase leading-relaxed tracking-widest text-stone-500">
+                <p className="mt-2 max-w-xs text-[12px] font-medium uppercase leading-relaxed tracking-widest text-zinc-500">
                   目前暂为线下执行环节
                   <br />
-                  <span className="text-stone-700">Phase 2: 全量数据实时同步开发中</span>
+                  <span className="text-zinc-700">Phase 2: 全量数据实时同步开发中</span>
                 </p>
               </motion.div>
             )}
@@ -904,7 +904,7 @@ export function VideoSubmitPanel({
           {activityError ? (
             <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
           ) : isActivityLoading ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-stone-500">
+            <div className="flex h-40 items-center justify-center text-[13px] text-zinc-500">
               加载填报记录...
             </div>
           ) : (
@@ -919,16 +919,16 @@ export function VideoSubmitPanel({
             />
 
             {false ? (
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <p className="text-[12px] font-medium uppercase tracking-[0.22em] text-stone-500">
+                  <p className="text-[12px] font-medium uppercase tracking-[0.22em] text-zinc-500">
                     每日详情
                   </p>
-                  <h3 className="text-[18px] font-medium tracking-tight text-stone-900">
+                  <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">
                     {activeBizDate} 的提交情况
                   </h3>
-                  <p className="text-[13px] leading-6 text-stone-500">
+                  <p className="text-[13px] leading-6 text-zinc-500">
                     选择日期后，可查看当日状态；免交和请假会独立展示，不再落入未交/漏交逻辑。
                   </p>
                 </div>
@@ -941,31 +941,31 @@ export function VideoSubmitPanel({
               </div>
 
               {activeDateStatus.state === "submitted" && activeDateReport ? (
-                <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-3">
                       <div>
-                        <p className="text-[12px] text-stone-500">
+                        <p className="text-[12px] text-zinc-500">
                           {accounts.find((account) => account.id === activeDateReport.account_id)?.display_name ?? "当前账号"}
                         </p>
-                        <h4 className="text-[18px] font-medium text-stone-900">
+                        <h4 className="text-[18px] font-medium text-zinc-900">
                           {activeDateReport.title?.trim() || "未填写视频标题"}
                         </h4>
-                        <p className="mt-1 text-[12px] text-stone-500">
+                        <p className="mt-1 text-[12px] text-zinc-500">
                           提交时间：{activeDateReport.uploaded_at || "暂无"}
                         </p>
                       </div>
 
                       <div className={getDashboardMetricGridClass("secondary")}>
                         <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-stone-500">播放量</div>
-                          <div className="text-[13px] font-medium text-stone-700 tabular-nums">
+                          <div className="text-[12px] text-zinc-500">播放量</div>
+                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">
                             {activeDateReport.play_count?.toLocaleString("zh-CN") ?? "--"}
                           </div>
                         </div>
                         <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-stone-500">互动总量</div>
-                          <div className="text-[13px] font-medium text-stone-700 tabular-nums">
+                          <div className="text-[12px] text-zinc-500">互动总量</div>
+                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">
                             {(activeDateReport.likes ?? 0) +
                               (activeDateReport.comments ?? 0) +
                               (activeDateReport.shares ?? 0) +
@@ -973,12 +973,12 @@ export function VideoSubmitPanel({
                           </div>
                         </div>
                         <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-stone-500">涨粉</div>
-                          <div className="text-[13px] font-medium text-stone-700 tabular-nums">{activeDateReport.follower_gain ?? "--"}</div>
+                          <div className="text-[12px] text-zinc-500">涨粉</div>
+                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">{activeDateReport.follower_gain ?? "--"}</div>
                         </div>
                         <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-stone-500">完播率</div>
-                          <div className="text-[13px] font-medium text-stone-700 tabular-nums">{activeDateReport.completion_rate ?? "--"}</div>
+                          <div className="text-[12px] text-zinc-500">完播率</div>
+                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">{activeDateReport.completion_rate ?? "--"}</div>
                         </div>
                       </div>
                     </div>
@@ -1001,8 +1001,8 @@ export function VideoSubmitPanel({
                   className={cn(
                     "mt-4 rounded-2xl border p-4",
                     activeDateStatus.state === "waive"
-                      ? "border-stone-200 border-l-[2px] border-l-[#6FAA7D] bg-white"
-                      : "border-stone-200 border-l-[2px] border-l-[#D99E55] bg-stone-50",
+                      ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white"
+                      : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50",
                   )}
                 >
                   <div className="space-y-2">
@@ -1017,31 +1017,31 @@ export function VideoSubmitPanel({
                     <p
                       className={cn(
                         "text-[13px] leading-[1.7]",
-                        activeDateStatus.state === "waive" ? "text-stone-500" : "text-stone-500",
+                        activeDateStatus.state === "waive" ? "text-zinc-500" : "text-zinc-500",
                       )}
                     >
                       {activeDateStatus.description}
                     </p>
                     {activeExemptionState.reason ? (
-                      <p className="text-[13px] text-stone-500">原因：{activeExemptionState.reason}</p>
+                      <p className="text-[13px] text-zinc-500">原因：{activeExemptionState.reason}</p>
                     ) : null}
                   </div>
                 </div>
               ) : activeDateStatus.state === "future" ? (
-                <div className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                   <div className="space-y-1">
-                    <p className="text-[13px] font-medium text-stone-700">这一天还未到</p>
-                    <p className="text-[13px] leading-[1.7] text-stone-500">{activeDateStatus.description}</p>
+                    <p className="text-[13px] font-medium text-zinc-700">这一天还未到</p>
+                    <p className="text-[13px] leading-[1.7] text-zinc-500">{activeDateStatus.description}</p>
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-stone-200 border-l-[2px] border-l-[#C9604D] bg-stone-50 p-4">
+                <div className="mt-4 rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-1">
                       <p className="text-[13px] font-medium text-[#C9604D]">
                         {activeDateStatus.state === "unsubmitted" ? "今天还没有提交数据" : "这一天漏交了数据"}
                       </p>
-                      <p className="text-[13px] leading-[1.7] text-stone-500">
+                      <p className="text-[13px] leading-[1.7] text-zinc-500">
                         {activeDateStatus.description} 点击按钮后，将关闭当前弹窗，并把主页主表单切换到 {activeBizDate} 的补交模式。
                       </p>
                     </div>
@@ -1084,7 +1084,7 @@ export function VideoSubmitPanel({
           {activityError ? (
             <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
           ) : isActivityLoading ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-stone-500">
+            <div className="flex h-40 items-center justify-center text-[13px] text-zinc-500">
               加载历史记录...
             </div>
           ) : !historyReports || historyReports.length === 0 ? (
@@ -1152,8 +1152,8 @@ export function VideoSubmitPanel({
                 <Zap className="size-6 stroke-[2] fill-current" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-[14px] font-semibold text-stone-900">数据同步中</h4>
-                <p className="text-[12px] text-stone-500">正在前往数据分析...</p>
+                <h4 className="text-[14px] font-semibold text-zinc-900">数据同步中</h4>
+                <p className="text-[12px] text-zinc-500">正在前往数据分析...</p>
               </div>
             </motion.div>
           </motion.div>

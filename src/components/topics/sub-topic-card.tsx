@@ -141,7 +141,7 @@ export function SubTopicCard({
               handleCardClick();
             }
           }}
-          className="group flex h-10 items-center justify-between gap-3 px-3 text-xs bg-white hover:bg-stone-50/90 transition-colors cursor-pointer border-b border-stone-100/80 last:border-b-0"
+          className="group flex h-10 items-center justify-between gap-3 px-3 text-xs bg-white hover:bg-zinc-50/90 transition-colors cursor-pointer border-b border-zinc-100/80 last:border-b-0"
         >
           {/* 列 1：状态与认领 Action (84px) */}
           <div className="w-[84px] shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -165,7 +165,7 @@ export function SubTopicCard({
                   "flex h-6.5 items-center justify-center rounded-md border px-2.5 text-[11px] font-medium transition-all shadow-2xs cursor-pointer",
                   isLimitReached
                     ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
-                    : "border-stone-200 bg-stone-50 text-stone-700 hover:bg-[#D97757] hover:text-white hover:border-[#D97757]"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-[#D97757] hover:text-white hover:border-[#D97757]"
                 )}
                 title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
               >
@@ -176,11 +176,11 @@ export function SubTopicCard({
 
           {/* 列 2：选题标题与一句话 Hook 同行溢出省略 (弹性占满) */}
           <div className="flex-1 flex items-center gap-2 min-w-0">
-            <span className="font-semibold text-stone-900 truncate text-[13px] group-hover:text-[#D97757] transition-colors shrink-0 max-w-[55%]">
+            <span className="font-semibold text-zinc-900 truncate text-[13px] group-hover:text-[#D97757] transition-colors shrink-0 max-w-[55%]">
               {item.title}
             </span>
             {item.hook && (
-              <span className="text-stone-400 font-normal truncate text-[12px] flex-1">
+              <span className="text-zinc-400 font-normal truncate text-[12px] flex-1">
                 · {item.hook}
               </span>
             )}
@@ -189,8 +189,8 @@ export function SubTopicCard({
           {/* 列 3：母题/情感标签 (120px) */}
           <div className="w-[120px] shrink-0 flex items-center gap-1 truncate justify-start">
             {item.topic_groups && (
-              <span className="inline-flex items-center gap-1 rounded bg-stone-100 px-1.5 py-0.5 text-[10.5px] font-medium text-stone-600 truncate max-w-[80px]">
-                <Layers className="size-2.5 text-stone-400 shrink-0" />
+              <span className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600 truncate max-w-[80px]">
+                <Layers className="size-2.5 text-zinc-400 shrink-0" />
                 <span className="truncate">{item.topic_groups.name}</span>
               </span>
             )}
@@ -205,15 +205,15 @@ export function SubTopicCard({
           {/* 列 4：均播量与认领人数 (110px) */}
           <div className="w-[110px] shrink-0 flex items-center justify-end gap-3 text-[11.5px] tabular-nums">
             {averagePlay !== null && (
-              <span className="font-semibold text-stone-900">
+              <span className="font-semibold text-zinc-900">
                 {averagePlay >= 10000 ? `${(averagePlay / 10000).toFixed(1)}w` : averagePlay.toLocaleString()}
               </span>
             )}
-            <span className="text-stone-500 font-medium">{item.claimCount}人</span>
+            <span className="text-zinc-500 font-medium">{item.claimCount}人</span>
           </div>
 
           {/* 列 5：3:4 沉浸弹窗入口 (28px) */}
-          <div className="w-7 shrink-0 flex justify-end text-stone-300 group-hover:text-stone-600 transition-colors">
+          <div className="w-7 shrink-0 flex justify-end text-zinc-300 group-hover:text-zinc-600 transition-colors">
             <ChevronRight className="size-4" />
           </div>
         </div>
@@ -230,7 +230,7 @@ export function SubTopicCard({
             }
           }}
           className={cn(
-            "group relative flex flex-col justify-between rounded-2xl border border-stone-200/80 bg-white p-4 transition-all duration-200 cursor-pointer min-h-[162px] h-auto space-y-2.5",
+            "group relative flex flex-col justify-between rounded-2xl border border-zinc-200/80 bg-white p-4 transition-all duration-200 cursor-pointer min-h-[162px] h-auto space-y-2.5",
             "hover:border-[#D97757]/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.995]"
           )}
         >
@@ -238,8 +238,8 @@ export function SubTopicCard({
           <div className="flex items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               {item.topic_groups && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-600">
-                  <Layers className="size-3 text-stone-400" />
+                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+                  <Layers className="size-3 text-zinc-400" />
                   {item.topic_groups.name}
                 </span>
               )}
@@ -261,32 +261,32 @@ export function SubTopicCard({
 
           {/* 标题 & Hook 区域：点击统一打开详情弹窗 */}
           <div className="flex-1 space-y-1 min-w-0">
-            <h3 className="text-[14.5px] font-semibold text-stone-900 leading-snug line-clamp-2 group-hover:text-[#D97757] transition-colors">
+            <h3 className="text-[14.5px] font-semibold text-zinc-900 leading-snug line-clamp-2 group-hover:text-[#D97757] transition-colors">
               {item.title}
             </h3>
 
             {item.hook && (
-              <p className="text-[12.5px] text-stone-500 line-clamp-2 leading-relaxed font-normal">
+              <p className="text-[12.5px] text-zinc-500 line-clamp-2 leading-relaxed font-normal">
                 {item.hook}
               </p>
             )}
           </div>
 
           {/* 底部数据与认领 Action Bar */}
-          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-stone-100/70">
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100/70">
             <div className="flex items-center gap-3 text-[11.5px]">
               {averagePlay !== null && (
-                <div className="flex items-center gap-1 text-stone-500">
-                  <span className="text-stone-400">均播:</span>
-                  <span className="font-semibold text-stone-900 tabular-nums">
+                <div className="flex items-center gap-1 text-zinc-500">
+                  <span className="text-zinc-400">均播:</span>
+                  <span className="font-semibold text-zinc-900 tabular-nums">
                     {averagePlay >= 10000 ? `${(averagePlay / 10000).toFixed(1)}w` : averagePlay.toLocaleString()}
                   </span>
                 </div>
               )}
 
-              <div className="flex items-center gap-1 text-stone-500">
-                <User className="size-3 text-stone-400" />
-                <span className="font-semibold text-stone-700 tabular-nums">{item.claimCount} 人</span>
+              <div className="flex items-center gap-1 text-zinc-500">
+                <User className="size-3 text-zinc-400" />
+                <span className="font-semibold text-zinc-700 tabular-nums">{item.claimCount} 人</span>
               </div>
             </div>
 

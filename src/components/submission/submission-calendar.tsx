@@ -131,14 +131,14 @@ export function SubmissionCalendar({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-stone-200 bg-white p-4 shadow-[var(--shadow-card)] sm:p-5",
+        "rounded-2xl border border-zinc-200 bg-white p-4 shadow-[var(--shadow-card)] sm:p-5",
         className,
       )}
     >
       {compact ? (
         <div className="flex items-center justify-between pb-2">
-          <h3 className="text-[13px] font-medium tracking-[-0.02em] text-stone-900">选择日期</h3>
-          <div className="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-1 text-[12px] font-medium text-stone-700">
+          <h3 className="text-[13px] font-medium tracking-[-0.02em] text-zinc-900">选择日期</h3>
+          <div className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-1 text-[12px] font-medium text-zinc-700">
             {monthLabel}
           </div>
         </div>
@@ -148,12 +148,12 @@ export function SubmissionCalendar({
             <p className="text-[12px] font-medium uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
               Submission Calendar
             </p>
-            <h3 className="text-[18px] font-medium tracking-tight text-stone-900">数据状态日历</h3>
+            <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">数据状态日历</h3>
             <p className="text-[13px] leading-6 text-[var(--color-text-secondary)]">
               选择某一天后，可查看当日状态。已交、免交和请假不会再落入未交/漏交逻辑。
             </p>
           </div>
-          <div className="inline-flex items-center rounded-full border border-stone-200 bg-white px-3 py-1.5 text-[13px] font-medium text-stone-900 shadow-[var(--shadow-light)]">
+          <div className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[13px] font-medium text-zinc-900 shadow-[var(--shadow-light)]">
             {monthLabel}
           </div>
         </div>
@@ -186,7 +186,7 @@ export function SubmissionCalendar({
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="flex h-8 items-center justify-center rounded-md bg-stone-100 text-[12px] font-medium text-[var(--color-text-secondary)] sm:text-[12px]"
+            className="flex h-8 items-center justify-center rounded-md bg-zinc-100 text-[12px] font-medium text-[var(--color-text-secondary)] sm:text-[12px]"
           >
             {label}
           </div>
@@ -206,7 +206,7 @@ export function SubmissionCalendar({
                 cell.state === "leave" && "border-[#D99E55]/30 bg-[#D99E55]/10 text-[#D99E55]",
                 cell.state === "missing" && "border-[#C9604D]/30 bg-[#C9604D]/10 text-[#C9604D]",
                 cell.state === "unsubmitted" && "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D] ring-1 ring-[#C9604D]/30",
-                cell.state === "future" && "border-stone-200 bg-stone-50 text-stone-500",
+                cell.state === "future" && "border-zinc-200 bg-zinc-50 text-zinc-500",
                 cell.isToday && cell.state === "submitted" && "ring-1 ring-[#6FAA7D]/30",
                 cell.isToday && cell.state === "waive" && "ring-1 ring-[#6FAA7D]/30",
                 cell.isToday && cell.state === "leave" && "ring-1 ring-[#D99E55]/30",

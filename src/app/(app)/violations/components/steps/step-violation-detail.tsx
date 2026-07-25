@@ -48,14 +48,14 @@ export function StepViolationDetail({
     <div className="space-y-5">
       {/* Account */}
       <div className="space-y-2">
-        <Label className="text-[12px] font-normal text-stone-500">
+        <Label className="text-[12px] font-normal text-zinc-500">
           被处罚的账号 <span className="text-[#C9604D]">*</span>
         </Label>
         <Select
           value={data.accountId}
           onValueChange={(value) => value && onChange({ accountId: value })}
         >
-          <SelectTrigger className="h-11 w-full rounded-xl border border-stone-200 bg-stone-50 text-[13px] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5">
+          <SelectTrigger className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 text-[13px] focus:border-zinc-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5">
             <SelectValue placeholder="选择账号">
               {data.accountId === "none" || !data.accountId
                 ? "选择账号"
@@ -79,7 +79,7 @@ export function StepViolationDetail({
 
       {/* Event type */}
       <div className="space-y-2">
-        <Label className="text-[12px] font-normal text-stone-500">
+        <Label className="text-[12px] font-normal text-zinc-500">
           处罚类型 <span className="text-[#C9604D]">*</span>
         </Label>
         <div className="flex flex-wrap gap-2">
@@ -94,7 +94,7 @@ export function StepViolationDetail({
                   "rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-colors active:translate-y-0",
                   active
                     ? "border-[#D97757]/40 text-[#D97757]"
-                    : "border-stone-200 text-stone-500 hover:border-stone-300 hover:text-stone-700",
+                    : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700",
                 )}
               >
                 {type}
@@ -107,7 +107,7 @@ export function StepViolationDetail({
       {/* Date + Appeal status */}
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="occurred_at" className="text-[12px] font-normal text-stone-500">
+          <Label htmlFor="occurred_at" className="text-[12px] font-normal text-zinc-500">
             发生时间 <span className="text-[#C9604D]">*</span>
           </Label>
           <Input
@@ -115,11 +115,11 @@ export function StepViolationDetail({
             type="datetime-local"
             value={data.occurredAt}
             onChange={(e) => onChange({ occurredAt: e.target.value })}
-            className="h-11 rounded-xl border border-stone-200 bg-stone-50 text-[13px] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+            className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 text-[13px] focus:border-zinc-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-[12px] font-normal text-stone-500">
+          <Label className="text-[12px] font-normal text-zinc-500">
             申诉状态 <span className="text-[#C9604D]">*</span>
           </Label>
           <Select
@@ -128,7 +128,7 @@ export function StepViolationDetail({
               value && onChange({ appealStatus: value as WizardFormData["appealStatus"] })
             }
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border border-stone-200 bg-stone-50 text-[13px] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5">
+            <SelectTrigger className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50 text-[13px] focus:border-zinc-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5">
               <SelectValue>{data.appealStatus}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -154,7 +154,7 @@ export function StepViolationDetail({
             className="overflow-hidden"
           >
             <div className="space-y-2 pt-1">
-              <Label htmlFor="appeal_text" className="text-[12px] font-normal text-stone-500">
+              <Label htmlFor="appeal_text" className="text-[12px] font-normal text-zinc-500">
                 申诉话术 <span className="text-[#C9604D]">*</span>
               </Label>
               <Textarea
@@ -163,7 +163,7 @@ export function StepViolationDetail({
                 value={data.appealText}
                 onChange={(e) => onChange({ appealText: e.target.value })}
                 placeholder="把你提交申诉时写的内容原封不动贴进来"
-                className="rounded-xl border border-stone-200 bg-stone-50 text-[13px] leading-[1.6] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                className="rounded-xl border border-zinc-200 bg-zinc-50 text-[13px] leading-[1.6] focus:border-zinc-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
               />
             </div>
           </motion.div>
@@ -172,7 +172,7 @@ export function StepViolationDetail({
 
       {/* Platform notice */}
       <div className="space-y-2">
-        <Label htmlFor="platform_notice" className="text-[12px] font-normal text-stone-500">
+        <Label htmlFor="platform_notice" className="text-[12px] font-normal text-zinc-500">
           平台通知文本 <span className="text-[#C9604D]">*</span>
         </Label>
         <Textarea
@@ -185,9 +185,9 @@ export function StepViolationDetail({
               ? "粘贴平台对你申诉的最终回复（成功/失败的原文）"
               : "粘贴平台发来的处罚原文通知"
           }
-          className="rounded-xl border border-stone-200 bg-stone-50 text-[13px] leading-[1.6] focus:border-stone-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+          className="rounded-xl border border-zinc-200 bg-zinc-50 text-[13px] leading-[1.6] focus:border-zinc-500 focus:bg-white focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
         />
-        <p className="text-[12px] text-stone-500">
+        <p className="text-[12px] text-zinc-500">
           这是判违规的最硬证据，没有通知文本审核会被驳回。
         </p>
       </div>

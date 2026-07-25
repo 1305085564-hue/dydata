@@ -171,60 +171,60 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-stone-200 bg-white p-5">
+      <div className="rounded-xl border border-zinc-200 bg-white p-5">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <div className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
+            <div className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">
               通过率
             </div>
-            <div className="mt-2 text-[24px] font-semibold tabular-nums text-stone-900">
+            <div className="mt-2 text-[24px] font-semibold tabular-nums text-zinc-900">
               {rate === null ? "—" : `${rate}%`}
             </div>
           </div>
-          <div className="text-[12px] font-medium text-stone-500">{getConfidenceLabel(total)}</div>
+          <div className="text-[12px] font-medium text-zinc-500">{getConfidenceLabel(total)}</div>
         </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-stone-100">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-zinc-100">
           <div
             className="h-full rounded-full bg-[#D97757] transition-[width] duration-500"
             style={{ width: `${rate ?? 0}%` }}
           />
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-lg bg-stone-50 px-3 py-2 text-[13px] font-medium text-[#6FAA7D]">
+          <div className="rounded-lg bg-zinc-50 px-3 py-2 text-[13px] font-medium text-[#6FAA7D]">
             通过 {passCount}
           </div>
-          <div className="rounded-lg bg-stone-50 px-3 py-2 text-[13px] font-medium text-[#C9604D]">
+          <div className="rounded-lg bg-zinc-50 px-3 py-2 text-[13px] font-medium text-[#C9604D]">
             未通过 {failCount}
           </div>
         </div>
       </div>
 
       <div>
-        <h3 className="text-[18px] font-medium text-stone-900">同事追加测试</h3>
+        <h3 className="text-[18px] font-medium text-zinc-900">同事追加测试</h3>
         <div className="mt-3 space-y-2">
           {records.length ? (
             records.map((record) => (
               <div
                 key={record.id}
-                className="rounded-xl border border-stone-200 bg-white p-3 text-[13px] transition-colors hover:border-stone-300"
+                className="rounded-xl border border-zinc-200 bg-white p-3 text-[13px] transition-colors hover:border-zinc-300"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-stone-900">{getRecordAccountName(record)}</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
+                  <span className="font-medium text-zinc-900">{getRecordAccountName(record)}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
                     <span className={`size-1.5 rounded-full ${record.passed ? "bg-[#6FAA7D]" : "bg-[#C9604D]"}`} />
                     {record.passed ? "通过" : "未通过"}
                   </span>
                 </div>
-                <div className="mt-1 text-[12px] text-stone-500">
+                <div className="mt-1 text-[12px] text-zinc-500">
                   {getRecordTesterName(record)} · {formatDateTime(record.tested_at)}
                 </div>
                 {record.note ? (
-                  <p className="mt-2 whitespace-pre-wrap leading-[1.6] text-stone-700">{record.note}</p>
+                  <p className="mt-2 whitespace-pre-wrap leading-[1.6] text-zinc-700">{record.note}</p>
                 ) : null}
               </div>
             ))
           ) : (
-            <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/60 p-6 text-center text-[13px] text-stone-500">
+            <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 p-6 text-center text-[13px] text-zinc-500">
               暂无同事追加测试
             </div>
           )}
@@ -299,13 +299,13 @@ async function CaseDetailBottom({
   return (
     <>
       {isConversion && Array.isArray(caseItem.platforms) && caseItem.platforms.length > 0 ? (
-        <div className="flex items-center gap-2 text-[12px] text-stone-500">
-          <span className="text-stone-500">平台</span>
+        <div className="flex items-center gap-2 text-[12px] text-zinc-500">
+          <span className="text-zinc-500">平台</span>
           <div className="flex flex-wrap gap-1.5">
             {caseItem.platforms.map((platform) => (
               <span
                 key={platform}
-                className="rounded-lg border border-stone-200 px-2.5 py-0.5 text-[12px] font-normal text-stone-700"
+                className="rounded-lg border border-zinc-200 px-2.5 py-0.5 text-[12px] font-normal text-zinc-700"
               >
                 {platform}
               </span>
@@ -399,8 +399,8 @@ async function CaseDetailBottom({
       {!isConversion && ((caseItem.screenshot_paths?.length ?? 0) > 0 || caseItem.scene_description || caseItem.result) ? (
         <section className="grid gap-4 lg:grid-cols-2">
           {(caseItem.screenshot_paths?.length ?? 0) > 0 ? (
-            <div className="rounded-xl border border-stone-200 bg-white p-5">
-              <h2 className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
+              <h2 className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">
                 截图
               </h2>
               <div className="mt-4">
@@ -409,14 +409,14 @@ async function CaseDetailBottom({
             </div>
           ) : null}
           {caseItem.scene_description || caseItem.result ? (
-            <div className="rounded-xl border border-stone-200 bg-white p-5">
-              <h2 className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
+              <h2 className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">
                 上下文
               </h2>
-              <div className="mt-3 space-y-3 text-[13px] leading-[1.7] text-stone-700">
+              <div className="mt-3 space-y-3 text-[13px] leading-[1.7] text-zinc-700">
                 <p>{caseItem.scene_description || "暂无配套画面/导粉方式描述"}</p>
                 {caseItem.result ? (
-                  <p className="text-stone-700">结果：{caseItem.result}</p>
+                  <p className="text-zinc-700">结果：{caseItem.result}</p>
                 ) : null}
               </div>
             </div>
@@ -468,42 +468,42 @@ export async function DetailContainer({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/violations"
-          className="inline-flex items-center gap-2 text-[12px] font-medium text-stone-500 transition-colors hover:text-stone-700 active:translate-y-0"
+          className="inline-flex items-center gap-2 text-[12px] font-medium text-zinc-500 transition-colors hover:text-zinc-700 active:translate-y-0"
         >
           <ArrowLeft className="size-4 stroke-[1.5]" />
           话术库
         </Link>
         {isConversion ? null : (
-          <Suspense fallback={<div className="h-11 w-28 rounded-xl bg-stone-100" />}>
+          <Suspense fallback={<div className="h-11 w-28 rounded-xl bg-zinc-100" />}>
             <TestRecordFormLoader caseId={caseItem.id} user={user} />
           </Suspense>
         )}
       </div>
 
-      <section className="rounded-xl border border-stone-200 bg-white p-6 sm:p-7">
+      <section className="rounded-xl border border-zinc-200 bg-white p-6 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             {isConversion ? null : <UsageStateBadge usageState={caseItem.usage_state} size="lg" />}
             {isConversion ? null : (
               <PassRateBadge passCount={caseItem.pass_count} failCount={caseItem.fail_count} />
             )}
-            <span className="inline-flex items-center rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
+            <span className="inline-flex items-center rounded-lg border border-zinc-200 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
               {caseItem.category || "其他"}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
               <span className="size-1.5 rounded-full" style={{ backgroundColor: formatMeta.dotColor }} />
               {formatMeta.label}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-2 py-0.5 text-[12px] font-medium text-stone-700">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
               <span className="size-1.5 rounded-full" style={{ backgroundColor: purposeMeta.dotColor }} />
               {purposeMeta.label}
             </span>
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-wrap text-[18px] font-medium leading-[1.6] text-stone-900">
+        <p className="mt-6 whitespace-pre-wrap text-[18px] font-medium leading-[1.6] text-zinc-900">
           {caseItem.script_text}
         </p>
 
@@ -515,25 +515,25 @@ export async function DetailContainer({
           </div>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-stone-500">
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-zinc-500">
           <span>
-            <span className="text-stone-500">提交人 </span>
-            <span className="font-medium text-stone-700">{getSubmitterName(caseItem)}</span>
+            <span className="text-zinc-500">提交人 </span>
+            <span className="font-medium text-zinc-700">{getSubmitterName(caseItem)}</span>
           </span>
-          <span className="text-stone-500">·</span>
+          <span className="text-zinc-500">·</span>
           <span>
-            <span className="text-stone-500">提交时间 </span>
-            <span className="font-medium text-stone-700">{formatDateTime(caseItem.created_at)}</span>
+            <span className="text-zinc-500">提交时间 </span>
+            <span className="font-medium text-zinc-700">{formatDateTime(caseItem.created_at)}</span>
           </span>
-          <span className="text-stone-500">·</span>
+          <span className="text-zinc-500">·</span>
           <span>
-            <span className="text-stone-500">账号 </span>
-            <span className="font-medium text-stone-700">{getAccountName(caseItem)}</span>
+            <span className="text-zinc-500">账号 </span>
+            <span className="font-medium text-zinc-700">{getAccountName(caseItem)}</span>
           </span>
-          <span className="text-stone-500">·</span>
+          <span className="text-zinc-500">·</span>
           <span>
-            <span className="text-stone-500">团队 </span>
-            <span className="font-medium text-stone-700">{getTeamName(caseItem)}</span>
+            <span className="text-zinc-500">团队 </span>
+            <span className="font-medium text-zinc-700">{getTeamName(caseItem)}</span>
           </span>
         </div>
       </section>
@@ -543,19 +543,19 @@ export async function DetailContainer({
           <div className="space-y-5">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl border border-stone-200 bg-white p-5 space-y-2">
-                  <div className="h-4 w-20 rounded bg-stone-100" />
-                  <div className="h-8 w-16 rounded bg-stone-100" />
+                <div key={i} className="rounded-xl border border-zinc-200 bg-white p-5 space-y-2">
+                  <div className="h-4 w-20 rounded bg-zinc-100" />
+                  <div className="h-8 w-16 rounded bg-zinc-100" />
                 </div>
               ))}
             </div>
-            <div className="rounded-xl border border-stone-200 bg-white p-5 space-y-3">
-              <div className="h-5 w-32 rounded bg-stone-100" />
-              <div className="h-24 rounded bg-stone-100" />
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-3">
+              <div className="h-5 w-32 rounded bg-zinc-100" />
+              <div className="h-24 rounded bg-zinc-100" />
             </div>
-            <div className="rounded-xl border border-stone-200 bg-white p-5 space-y-3">
-              <div className="h-8 w-full rounded bg-stone-100" />
-              <div className="h-32 rounded bg-stone-100" />
+            <div className="rounded-xl border border-zinc-200 bg-white p-5 space-y-3">
+              <div className="h-8 w-full rounded bg-zinc-100" />
+              <div className="h-32 rounded bg-zinc-100" />
             </div>
           </div>
         }

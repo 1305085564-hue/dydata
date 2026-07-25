@@ -603,11 +603,11 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
       {/* P0 — 待处理工作流 (Tab 整合：异常处理队列 与 待处理申诉列表) */}
       <section className="space-y-3">
         <Tabs defaultValue="exceptions" className="w-full">
-          <div className="flex items-center justify-between border-b border-stone-200/50 pb-2">
+          <div className="flex items-center justify-between border-b border-zinc-200/50 pb-2">
             <TabsList variant="line">
               <TabsTrigger value="exceptions" className="text-[12px]">
                 待处理异常
-                <span className="ml-1.5 text-[12px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700">
+                <span className="ml-1.5 text-[12px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
                   {exceptionMembers.length}
                 </span>
               </TabsTrigger>
@@ -621,7 +621,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
                     {pendingAppeals.length}
                   </span>
                 ) : (
-                  <span className="ml-1.5 text-[12px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700">
+                  <span className="ml-1.5 text-[12px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
                     0
                   </span>
                 )}
@@ -631,9 +631,9 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
           <TabsContent value="exceptions" className="mt-3">
             {isLoadingCalendar ? (
-              <div className="flex items-center justify-center py-12 rounded-2xl border border-stone-200 bg-white">
+              <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-stone-500">正在刷新数据...</span>
+                <span className="text-[13px] text-zinc-500">正在刷新数据...</span>
               </div>
             ) : (
               <ExceptionQueue
@@ -652,43 +652,43 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
           <TabsContent value="appeals" className="mt-3">
             {appealsError ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
-                <p className="text-[13px] font-medium text-stone-800">申诉数据加载失败</p>
-                <p className="mt-1 text-[12px] text-stone-500">{appealsError}</p>
+                <p className="text-[13px] font-medium text-zinc-800">申诉数据加载失败</p>
+                <p className="mt-1 text-[12px] text-zinc-500">{appealsError}</p>
                 <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => void fetchAppeals()}>
                   重新加载
                 </Button>
               </div>
             ) : appealsLoading || isSubmittingAppeal ? (
-              <div className="flex items-center justify-center py-12 rounded-2xl border border-stone-200 bg-white">
+              <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-stone-500">{isSubmittingAppeal ? "正在处理申诉..." : "正在加载申诉..."}</span>
+                <span className="text-[13px] text-zinc-500">{isSubmittingAppeal ? "正在处理申诉..." : "正在加载申诉..."}</span>
               </div>
             ) : pendingAppeals.length === 0 ? (
-              <div className="rounded-2xl border border-stone-200 bg-white py-12">
+              <div className="rounded-2xl border border-zinc-200 bg-white py-12">
                 <EmptyState title="当前无待处理申诉" description="所有成员的申诉请求已处理完毕" />
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+              <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="border-b border-stone-200/50 bg-stone-50/50">
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-stone-500">成员</th>
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-stone-500">申诉日期</th>
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-stone-500">申诉原因</th>
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-stone-500">提交时间</th>
-                        <th className="px-3 py-2.5 text-right text-[12px] font-normal tracking-[0.12em] text-stone-500">操作</th>
+                      <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">成员</th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">申诉日期</th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">申诉原因</th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">提交时间</th>
+                        <th className="px-3 py-2.5 text-right text-[12px] font-normal tracking-[0.12em] text-zinc-500">操作</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pendingAppeals.map((appeal) => (
-                        <tr key={appeal.id} className="border-b border-stone-100 last:border-b-0 hover:bg-stone-50/30 transition-colors">
-                          <td className="px-3 py-2.5 font-medium text-stone-900">{appeal.user_name || "未知成员"}</td>
-                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-stone-700">{appeal.record_date}</td>
-                          <td className="max-w-[240px] truncate px-3 py-2.5 text-stone-700" title={appeal.reason}>
+                        <tr key={appeal.id} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/30 transition-colors">
+                          <td className="px-3 py-2.5 font-medium text-zinc-900">{appeal.user_name || "未知成员"}</td>
+                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-zinc-700">{appeal.record_date}</td>
+                          <td className="max-w-[240px] truncate px-3 py-2.5 text-zinc-700" title={appeal.reason}>
                             {appeal.reason}
                           </td>
-                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-stone-500">
+                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-zinc-500">
                             {new Date(appeal.created_at).toLocaleString("zh-CN")}
                           </td>
                           <td className="px-3 py-2.5 text-right">
@@ -726,9 +726,9 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
       <section>
         {isLoadingCalendar ? (
           <div className="flex flex-col gap-3">
-            <button disabled className="flex w-full items-center justify-between rounded-xl border border-stone-200 bg-white px-4 py-3 text-left">
-              <span className="text-[13px] font-normal text-stone-500">正在刷新日历数据...</span>
-              <span className="size-4 animate-spin rounded-full border-2 border-stone-400 border-t-transparent" />
+            <button disabled className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left">
+              <span className="text-[13px] font-normal text-zinc-500">正在刷新日历数据...</span>
+              <span className="size-4 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
             </button>
           </div>
         ) : (

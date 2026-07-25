@@ -82,9 +82,9 @@ function getBadgeVariant(level: ConfidenceLevel): "default" | "secondary" | "des
 }
 
 function getBadgeClassName(level: ConfidenceLevel): string {
-  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700";
-  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700";
-  return "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700";
+  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
 }
 
 interface ScreenshotImportProps {
@@ -237,7 +237,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2 rounded-2xl border border-stone-200 bg-stone-50 p-4 text-[13px] text-stone-500">
+      <div className="space-y-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
         <p>建议上传包含播放量、点赞、评论、分享、收藏、涨粉的抖音后台截图。</p>
         <p>系统会先识别，再由你确认与修正后写回日报表单。</p>
       </div>
@@ -267,27 +267,27 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           "flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors",
           isDragging
             ? "border-[#D97757] bg-[#D97757]/10"
-            : "border-stone-200 bg-stone-50 hover:border-[#D97757]/60 hover:bg-stone-100"
+            : "border-zinc-200 bg-zinc-50 hover:border-[#D97757]/60 hover:bg-zinc-100"
         )}
       >
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#D97757]/[0.08] text-[#D97757]">
           <Upload className="size-6" />
         </div>
         <div className="space-y-2">
-          <p className="text-[13px] font-medium text-stone-900">拖拽截图到这里，或点击选择图片</p>
-          <p className="text-[13px] text-stone-500">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
-          {fileName ? <p className="text-[13px] text-stone-700">当前文件：{fileName}</p> : null}
+          <p className="text-[13px] font-medium text-zinc-900">拖拽截图到这里，或点击选择图片</p>
+          <p className="text-[13px] text-zinc-500">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
+          {fileName ? <p className="text-[13px] text-zinc-700">当前文件：{fileName}</p> : null}
         </div>
       </div>
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {FIELD_META.map((field) => (
-            <Card key={field.key} className="animate-pulse border border-stone-200 bg-white">
+            <Card key={field.key} className="animate-pulse border border-zinc-200 bg-white">
               <CardContent className="space-y-4 pt-5 pb-5">
-                <div className="h-4 w-20 rounded bg-stone-200/60" />
-                <div className="h-8 w-full rounded bg-stone-200/60" />
-                <div className="h-3 w-16 rounded bg-stone-200/60" />
+                <div className="h-4 w-20 rounded bg-zinc-200/60" />
+                <div className="h-8 w-full rounded bg-zinc-200/60" />
+                <div className="h-3 w-16 rounded bg-zinc-200/60" />
               </CardContent>
             </Card>
           ))}
@@ -298,10 +298,10 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FIELD_META.map((field) => (
-              <Card key={field.key} className="border border-stone-200 bg-white">
+              <Card key={field.key} className="border border-zinc-200 bg-white">
                 <CardContent className="space-y-3 pt-5 pb-5">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-[13px] font-medium text-stone-900">{field.label}</div>
+                    <div className="text-[13px] font-medium text-zinc-900">{field.label}</div>
                     <Badge
                       variant={getBadgeVariant(confidence[field.key])}
                       className={getBadgeClassName(confidence[field.key])}
@@ -323,7 +323,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
                         className={field.suffix ? "pr-10 h-10" : "h-10"}
                       />
                       {field.suffix ? (
-                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-[13px] text-stone-500">
+                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-[13px] text-zinc-500">
                           {field.suffix}
                         </span>
                       ) : null}
@@ -334,7 +334,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-stone-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" variant="outline" onClick={resetAndPickAgain}>
               <RefreshCcw className="size-4" />
               继续识别下一张

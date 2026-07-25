@@ -65,9 +65,9 @@ export function EmptyState({ title, description, action, className }: EmptyState
 
       {/* 文案层 */}
       <div className="space-y-1">
-        <p className="text-[13px] font-normal text-stone-700 mt-4">{title}</p>
+        <p className="text-[13px] font-normal text-zinc-700 mt-4">{title}</p>
         {description && (
-          <p className="max-w-[240px] text-[12px] text-stone-500 mt-1">{description}</p>
+          <p className="max-w-[240px] text-[12px] text-zinc-500 mt-1">{description}</p>
         )}
       </div>
 

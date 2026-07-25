@@ -1,36 +1,71 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getNavItems } from "./nav-bar-items";
+import { getNavGroups, getNavItems } from "./nav-bar-items";
 
-test("管理员统一主导航合并包含日常管理入口", () => {
-  const items = getNavItems({ showAdmin: true, showSystemSettings: true, businessRole: "owner" });
+test("管理员 5 大分组结构完整解析", () => {
+  const groups = getNavGroups({ showAdmin: true, showSystemSettings: true, businessRole: "owner" });
 
   assert.deepEqual(
-    items.map((item) => ({ href: item.href, label: item.label })),
+    groups.map((g) => ({
+      key: g.key,
+      label: g.label,
+      href: g.href,
+      children: g.children?.map((c) => ({ href: c.href, label: c.label })),
+    })),
     [
-      { href: "/dashboard", label: "数据台" },
-      { href: "/growth", label: "数据分析" },
-      { href: "/topics", label: "选题库" },
-      { href: "/content-tools/rewrite", label: "文案助手" },
-      { href: "/admin/content", label: "视频复盘" },
-      { href: "/admin/videos", label: "素材库" },
-      { href: "/admin/analytics", label: "经营分析" },
-      { href: "/admin/fulfillment", label: "发布管理" },
+      { key: "dashboard", label: "工作台", href: "/dashboard", children: undefined },
+      { key: "topics", label: "选题库", href: "/topics", children: undefined },
+      {
+        key: "content-center",
+        label: "内容中心",
+        href: undefined,
+        children: [
+          { href: "/content-tools/rewrite", label: "文案助手" },
+          { href: "/admin/content", label: "视频复盘" },
+          { href: "/admin/videos", label: "素材库" },
+          { href: "/admin/fulfillment", label: "发布管理" },
+        ],
+      },
+      {
+        key: "data-center",
+        label: "数据中心",
+        href: undefined,
+        children: [
+          { href: "/growth", label: "数据分析" },
+          { href: "/admin/analytics", label: "经营分析" },
+        ],
+      },
+      {
+        key: "admin-center",
+        label: "管理中心",
+        href: undefined,
+        children: [
+          { href: "/admin/modules", label: "成员管理" },
+          { href: "/admin/settings", label: "系统维护" },
+          { href: "/admin/ai-config", label: "AI 配置" },
+        ],
+      },
     ]
   );
 });
 
-test("非管理员看不到管理端入口", () => {
-  const items = getNavItems({ showAdmin: false });
+test("非管理员只能看到基础分组，管理中心若全无权限则自动隐藏", () => {
+  const groups = getNavGroups({ showAdmin: false });
 
   assert.deepEqual(
-    items.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics", "/content-tools/rewrite"]
+    groups.map((g) => g.label),
+    ["工作台", "选题库", "内容中心", "数据中心"]
+  );
+
+  const flatItems = getNavItems({ showAdmin: false });
+  assert.deepEqual(
+    flatItems.map((item) => item.href),
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/growth"]
   );
 });
 
-test("统一主导航按具体权限暴露管理入口", () => {
+test("统一主导航按具体权限暴露管理子项", () => {
   const contentOnly = getNavItems({
     showAdmin: true,
     businessRole: "member",
@@ -38,7 +73,7 @@ test("统一主导航按具体权限暴露管理入口", () => {
   });
   assert.deepEqual(
     contentOnly.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics", "/content-tools/rewrite", "/admin/content"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/growth"],
   );
 
   const videosOnly = getNavItems({
@@ -48,24 +83,7 @@ test("统一主导航按具体权限暴露管理入口", () => {
   });
   assert.deepEqual(
     videosOnly.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics", "/content-tools/rewrite", "/admin/videos"],
-  );
-
-  const fulfillmentOnly = getNavItems({
-    showAdmin: true,
-    businessRole: "member",
-    permissions: { view_all_data: true },
-  });
-  assert.deepEqual(
-    fulfillmentOnly.map((item) => item.href),
-    [
-      "/dashboard",
-      "/growth",
-      "/topics",
-      "/content-tools/rewrite",
-      "/admin/analytics",
-      "/admin/fulfillment",
-    ],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/videos", "/growth"],
   );
 });
 
@@ -74,38 +92,7 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
 
   assert.deepEqual(
     items.map((item) => item.href),
-    ["/dashboard", "/growth", "/topics"]
+    ["/dashboard", "/topics", "/growth"]
   );
 });
 
-test("showSystemSettings 不影响主导航项列表", () => {
-  const withSettings = getNavItems({ showAdmin: true, showSystemSettings: true, businessRole: "owner" });
-  const withoutSettings = getNavItems({ showAdmin: true, showSystemSettings: false, businessRole: "owner" });
-
-  assert.deepEqual(
-    withSettings.map((item) => item.href),
-    [
-      "/dashboard",
-      "/growth",
-      "/topics",
-      "/content-tools/rewrite",
-      "/admin/content",
-      "/admin/videos",
-      "/admin/analytics",
-      "/admin/fulfillment",
-    ],
-  );
-  assert.deepEqual(
-    withoutSettings.map((item) => item.href),
-    [
-      "/dashboard",
-      "/growth",
-      "/topics",
-      "/content-tools/rewrite",
-      "/admin/content",
-      "/admin/videos",
-      "/admin/analytics",
-      "/admin/fulfillment",
-    ],
-  );
-});

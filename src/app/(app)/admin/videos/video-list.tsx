@@ -56,14 +56,14 @@ interface VideoListProps {
 }
 
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
-  abnormal: "border-stone-200 bg-stone-50 text-[#C9604D]",
-  正常: "border-stone-200 bg-stone-50 text-[#6FAA7D]",
-  删稿: "border-stone-200 bg-stone-50 text-[#C9604D]",
-  限流: "border-stone-200 bg-stone-50 text-[#C9604D]",
-  投流: "border-stone-200 bg-stone-50 text-[#D99E55]",
-  活动干预: "border-stone-200 bg-stone-50 text-[#D99E55]",
-  "未满24h": "border-stone-200 bg-stone-50 text-stone-500",
+  normal: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  abnormal: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  删稿: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  限流: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
+  投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
+  "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
 };
 
 const PAGE_SIZE = 30;
@@ -428,12 +428,12 @@ export function VideoList({
 
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto rounded-2xl border border-stone-200 bg-white"
+        className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white"
         style={{ maxHeight: "calc(100vh - 280px)" }}
       >
         <Table freezeFirst>
           <TableHeader className="sticky top-0 z-10">
-            <TableRow className="border-b border-stone-200 bg-stone-50 hover:bg-stone-50">
+            <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
               {canManageLifecycle && (
                 <TableHead className="h-9 w-10 pl-4 pr-0">
                   <Checkbox
@@ -443,23 +443,23 @@ export function VideoList({
                   />
                 </TableHead>
               )}
-              <TableHead className="h-9 px-4 text-[12px] font-medium text-stone-500">视频标题</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">账号</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">负责人</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">
+              <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">视频标题</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">负责人</TableHead>
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">
                 {view === "trash" ? "回收时间" : "发布时间"}
               </TableHead>
               {view !== "trash" && (
                 <>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">24h播放量</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">互动率(%)</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-stone-500">涨粉</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">24h播放量</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">互动率(%)</TableHead>
+                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">涨粉</TableHead>
                 </>
               )}
-              <TableHead className="h-9 text-[12px] font-medium text-stone-500">
+              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">
                 {view === "trash" ? "操作者" : "状态"}
               </TableHead>
-              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-stone-500">操作</TableHead>
+              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -469,7 +469,7 @@ export function VideoList({
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
 
                 return (
-                  <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-stone-50">
+                  <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-zinc-50">
                     {canManageLifecycle && (
                       <TableCell className="py-3 pl-4 pr-0" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
@@ -487,25 +487,25 @@ export function VideoList({
                       </TableCell>
                     )}
                     <TableCell className="max-w-[280px] whitespace-normal px-4 align-top">
-                      <div className="line-clamp-2 text-[13px] font-medium text-stone-900">
+                      <div className="line-clamp-2 text-[13px] font-medium text-zinc-900">
                         {video.video_title?.trim() || "未命名视频"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-[12px] text-stone-500">{video.accounts.name}</TableCell>
-                    <TableCell className="text-[12px] text-stone-500">{video.profiles.name}</TableCell>
-                    <TableCell className="text-[12px] text-stone-500">
+                    <TableCell className="text-[12px] text-zinc-500">{video.accounts.name}</TableCell>
+                    <TableCell className="text-[12px] text-zinc-500">{video.profiles.name}</TableCell>
+                    <TableCell className="text-[12px] text-zinc-500">
                       {view === "trash" ? formatDateTime(video.trashed_at ?? null) : formatDateTime(video.published_at ?? null)}
                     </TableCell>
                     {view !== "trash" && (
                       <>
-                        <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
-                        <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                        <TableCell className="text-[12px] text-stone-700 tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                        <TableCell className="text-[12px] text-zinc-700 tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
+                        <TableCell className="text-[12px] text-zinc-700 tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
+                        <TableCell className="text-[12px] text-zinc-700 tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
                       </>
                     )}
                     <TableCell>
                       {view === "trash" ? (
-                        <span className="text-[12px] text-stone-700">{video.trashed_by_name || "-"}</span>
+                        <span className="text-[12px] text-zinc-700">{video.trashed_by_name || "-"}</span>
                       ) : (
                         <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
                           {video.anomaly_status}
@@ -532,7 +532,7 @@ export function VideoList({
                                 onClick={() => setConfirmPurgeVideoId(video.id)}
                                 disabled={!eligible || isOperating !== null}
                                 title={tooltip || undefined}
-                                className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-stone-400 disabled:no-underline disabled:cursor-not-allowed"
+                                className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed"
                               >
                                 永久删除
                               </button>
@@ -553,14 +553,14 @@ export function VideoList({
                           <button
                             type="button"
                             onClick={() => setSelectedVideoId(video.id)}
-                            className="text-[12px] text-stone-700 underline-offset-4 hover:text-stone-900 hover:underline"
+                            className="text-[12px] text-zinc-700 underline-offset-4 hover:text-zinc-900 hover:underline"
                           >
                             查看详情
                           </button>
                           {canManageLifecycle && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                className="flex size-7 items-center justify-center rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
+                                className="flex size-7 items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
                                 title="更多操作"
                               >
                                 <MoreHorizontal className="size-4" />
@@ -585,7 +585,7 @@ export function VideoList({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={view === "trash" ? (canManageLifecycle ? 7 : 6) : (canManageLifecycle ? 10 : 9)} className="px-4 py-16 text-center text-[13px] text-stone-500">
+                <TableCell colSpan={view === "trash" ? (canManageLifecycle ? 7 : 6) : (canManageLifecycle ? 10 : 9)} className="px-4 py-16 text-center text-[13px] text-zinc-500">
                   当前筛选条件下暂无视频数据。
                 </TableCell>
               </TableRow>
@@ -609,7 +609,7 @@ export function VideoList({
           <Button
             variant="outline"
             size="sm"
-            className="h-10 gap-1.5 rounded-xl border-stone-200 px-6 text-[13px] text-stone-500 hover:bg-stone-50 hover:text-stone-700"
+            className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
             onClick={() => {
               if (hasDeferredData && onLoadDeferredData) {
                 void onLoadDeferredData();
@@ -629,7 +629,7 @@ export function VideoList({
               <>
                 <ChevronDown className="size-3.5" />
                 加载更多
-                <span className="ml-1 text-[12px] text-stone-500">
+                <span className="ml-1 text-[12px] text-zinc-500">
                   (已加载 {Math.min(loadedCount, filteredVideos.length)} / 共 {hasDeferredData ? totalCount ?? filteredVideos.length : filteredVideos.length} 条)
                 </span>
               </>
@@ -640,7 +640,7 @@ export function VideoList({
 
       {/* End state */}
       {!hasMore && filteredVideos.length > 0 && (
-        <div className="mt-4 text-center text-[12px] text-stone-500">
+        <div className="mt-4 text-center text-[12px] text-zinc-500">
           已加载全部 {filteredVideos.length} 条视频
         </div>
       )}
@@ -685,16 +685,16 @@ export function VideoList({
       />
 
       {confirmPurgeVideoId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-stone-900">永久删除确认</h3>
-            <p className="mt-2 text-sm text-stone-500 leading-relaxed">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-base font-semibold text-zinc-900">永久删除确认</h3>
+            <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
               将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="active:translate-y-0 h-9 rounded-xl border border-stone-200 px-4 text-stone-700 hover:bg-stone-50 text-[12px] font-medium transition-colors"
+                className="active:translate-y-0 h-9 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors"
                 onClick={() => setConfirmPurgeVideoId(null)}
                 disabled={isOperating !== null}
               >
@@ -715,15 +715,15 @@ export function VideoList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-stone-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
-          <span className="text-[13px] font-medium text-stone-700">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
+          <span className="text-[13px] font-medium text-zinc-700">
             已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
           </span>
-          <div className="h-4 w-px bg-stone-200" />
+          <div className="h-4 w-px bg-zinc-200" />
           <Button
             size="sm"
             variant="ghost"
-            className="h-8 rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-700 text-[12px]"
+            className="h-8 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 text-[12px]"
             onClick={() => setSelectedIds(new Set())}
           >
             取消选择

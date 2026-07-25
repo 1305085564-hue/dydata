@@ -274,14 +274,14 @@ export function TopicDetailModal({
 
   const renderPlayCount = (playCount: number) => {
     if (averagePlay === null) {
-      return <span className="text-stone-700 font-medium tabular-nums">{playCount.toLocaleString()}</span>;
+      return <span className="text-zinc-700 font-medium tabular-nums">{playCount.toLocaleString()}</span>;
     }
     const isHigher = playCount >= averagePlay;
     return (
       <span
         className={cn(
           "font-semibold tabular-nums",
-          isHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"
+          isHigher ? "text-[#DC2626]" : "text-[#16A34A]"
         )}
       >
         {playCount.toLocaleString()}
@@ -308,7 +308,7 @@ export function TopicDetailModal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
           onClick={onClose}
-          className="fixed inset-0 bg-stone-900/40 backdrop-blur-md cursor-pointer"
+          className="fixed inset-0 bg-zinc-900/40 backdrop-blur-md cursor-pointer"
         />
 
         {/* 3:4 沉浸中心弹窗容器 */}
@@ -318,16 +318,16 @@ export function TopicDetailModal({
           exit={{ opacity: 0, scale: 0.95, y: 12 }}
           transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
           className={cn(
-            "relative z-10 w-full max-w-[740px] bg-white rounded-3xl shadow-2xl border border-stone-100/80 flex flex-col overflow-hidden",
+            "relative z-10 w-full max-w-[740px] bg-white rounded-3xl shadow-2xl border border-zinc-100/80 flex flex-col overflow-hidden",
             "max-h-[88vh] aspect-[4/3.2]"
           )}
         >
           {/* 顶栏：分类与状态胶囊 */}
-          <div className="flex shrink-0 items-center justify-between border-b border-stone-100 bg-stone-50/60 px-5 py-3.5">
+          <div className="flex shrink-0 items-center justify-between border-b border-zinc-100 bg-zinc-50/60 px-5 py-3.5">
             <div className="flex items-center gap-2 min-w-0">
               {item.topic_groups && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-stone-200/70 px-3 py-1 text-xs font-medium text-stone-700">
-                  <Layers className="size-3 text-stone-500" />
+                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-200/70 px-3 py-1 text-xs font-medium text-zinc-700">
+                  <Layers className="size-3 text-zinc-500" />
                   {item.topic_groups.name}
                 </span>
               )}
@@ -348,7 +348,7 @@ export function TopicDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex size-8 items-center justify-center rounded-full text-stone-400 hover:bg-stone-200/60 hover:text-stone-700 transition-colors"
+              className="flex size-8 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-200/60 hover:text-zinc-700 transition-colors"
               title="按 Esc 退出"
             >
               <X className="size-4" />
@@ -360,13 +360,13 @@ export function TopicDetailModal({
             {/* 大字号选题标题 */}
             <div className="space-y-2">
               <div className="flex items-start justify-between gap-3">
-                <h2 className="text-xl font-bold text-stone-900 leading-snug tracking-tight">
+                <h2 className="text-xl font-bold text-zinc-900 leading-snug tracking-tight">
                   {item.title}
                 </h2>
                 <button
                   type="button"
                   onClick={() => handleCopyText(item.title, "标题")}
-                  className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-stone-500 hover:text-[#D97757] bg-stone-100/80 hover:bg-[#D97757]/10 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                  className="shrink-0 inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-[#D97757] bg-zinc-100/80 hover:bg-[#D97757]/10 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                   title="复制标题"
                 >
                   {copiedField === "标题" ? (
@@ -381,7 +381,7 @@ export function TopicDetailModal({
 
             {/* 爆款 Hook 亮点区 */}
             {item.hook && (
-              <div className="relative group rounded-2xl bg-stone-50/90 border border-stone-200/60 p-4 space-y-1.5">
+              <div className="relative group rounded-md bg-zinc-50/90 border border-zinc-200/60 p-4 space-y-1.5">
                 <div className="flex items-center justify-between text-xs font-semibold text-[#D97757]">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="size-3.5 text-[#D97757]" />
@@ -390,7 +390,7 @@ export function TopicDetailModal({
                   <button
                     type="button"
                     onClick={() => handleCopyText(item.hook, "Hook")}
-                    className="flex items-center gap-1 text-[11px] font-medium text-stone-400 hover:text-[#D97757] transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-[11px] font-medium text-zinc-400 hover:text-[#D97757] transition-colors cursor-pointer"
                   >
                     {copiedField === "Hook" ? (
                       <Check className="size-3 text-[#6FAA7D]" />
@@ -400,7 +400,7 @@ export function TopicDetailModal({
                     <span>{copiedField === "Hook" ? "已复制" : "复制"}</span>
                   </button>
                 </div>
-                <p className="text-sm text-stone-700 leading-relaxed font-normal">
+                <p className="text-sm text-zinc-700 leading-relaxed font-normal">
                   “{item.hook}”
                 </p>
               </div>
@@ -409,19 +409,19 @@ export function TopicDetailModal({
             {/* 属性与目标受众 Tags */}
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {item.emotion_tag && (
-                <div className="inline-flex items-center gap-1 rounded-xl bg-[#D99E55]/12 border border-[#D99E55]/20 px-3 py-1 text-[#B87D33] font-medium">
+                <div className="inline-flex items-center gap-1 rounded-md bg-[#D99E55]/12 border border-[#D99E55]/20 px-3 py-1 text-[#B87D33] font-medium">
                   <Flame className="size-3" />
                   <span>情绪：{item.emotion_tag}</span>
                 </div>
               )}
               {item.audience && (
-                <div className="inline-flex items-center gap-1 rounded-xl bg-stone-100 px-3 py-1 text-stone-600 font-medium">
-                  <User className="size-3 text-stone-400" />
+                <div className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-zinc-600 font-medium">
+                  <User className="size-3 text-zinc-400" />
                   <span>受众：{item.audience}</span>
                 </div>
               )}
               {item.source && (
-                <div className="inline-flex items-center gap-1 rounded-xl bg-stone-100 px-3 py-1 text-stone-500">
+                <div className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-zinc-500">
                   <span>来源：{item.source}</span>
                 </div>
               )}
@@ -429,9 +429,9 @@ export function TopicDetailModal({
 
             {/* 整体数据统计 */}
             <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="rounded-2xl border border-stone-100 bg-stone-50/50 p-3 flex items-center justify-between">
-                <span className="text-xs text-stone-500 font-medium">全网历史均播</span>
-                <span className="text-sm font-bold text-stone-900 tabular-nums">
+              <div className="rounded-md border border-zinc-100 bg-zinc-50/50 p-3 flex items-center justify-between">
+                <span className="text-xs text-zinc-500 font-medium">全网历史均播</span>
+                <span className="text-sm font-bold text-zinc-900 tabular-nums">
                   {averagePlay !== null
                     ? averagePlay >= 10000
                       ? `${(averagePlay / 10000).toFixed(1)}w`
@@ -439,8 +439,8 @@ export function TopicDetailModal({
                     : "暂无数据"}
                 </span>
               </div>
-              <div className="rounded-2xl border border-stone-100 bg-stone-50/50 p-3 flex items-center justify-between">
-                <span className="text-xs text-stone-500 font-medium">累计认领热度</span>
+              <div className="rounded-md border border-zinc-100 bg-zinc-50/50 p-3 flex items-center justify-between">
+                <span className="text-xs text-zinc-500 font-medium">累计认领热度</span>
                 <span className="text-sm font-bold text-[#D97757] tabular-nums flex items-center gap-1">
                   <User className="size-3.5" />
                   {item.claimCount} 人认领
@@ -451,7 +451,7 @@ export function TopicDetailModal({
             {/* 数据沉淀段：双卡对比 (最高播放 vs 最近发布) */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
                   作品效果沉淀与文案对比
                 </h3>
                 <Link
@@ -465,20 +465,20 @@ export function TopicDetailModal({
               </div>
 
               {loadingWorks ? (
-                <div className="flex h-28 items-center justify-center rounded-2xl bg-stone-50 border border-stone-100">
-                  <Loader2 className="size-5 animate-spin text-stone-400" />
-                  <span className="text-xs text-stone-400 ml-2">正在分析关联作品与文案数据...</span>
+                <div className="flex h-28 items-center justify-center rounded-md bg-zinc-50 border border-zinc-100">
+                  <Loader2 className="size-5 animate-spin text-zinc-400" />
+                  <span className="text-xs text-zinc-400 ml-2">正在分析关联作品与文案数据...</span>
                 </div>
               ) : works.length === 0 ? (
-                <div className="py-8 text-center rounded-2xl bg-stone-50/70 border border-dashed border-stone-200 text-xs text-stone-400">
+                <div className="py-8 text-center rounded-md bg-zinc-50/70 border border-dashed border-zinc-200 text-xs text-zinc-400">
                   该选题暂无提交的落地作品数据
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* 最高播放版本 */}
                   {bestWork && (
-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 space-y-2.5 shadow-2xs">
-                      <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                    <div className="rounded-md bg-white shadow-sm p-3.5 space-y-2.5 shadow-2xs">
+                      <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#D97757]">
                           <Award className="size-4" />
                           <span>爆款最高播放</span>
@@ -487,11 +487,11 @@ export function TopicDetailModal({
                           {renderPlayCount(bestWork.video_metrics_snapshots?.[0]?.play_count ?? 0)}
                         </div>
                       </div>
-                      <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed italic">
+                      <p className="text-xs text-zinc-600 line-clamp-3 leading-relaxed italic">
                         “{bestWork.content || bestWork.video_title}”
                       </p>
                       {bestWork.video_metrics_snapshots?.[0]?.likes !== undefined && (
-                        <div className="pt-1 text-[11px] text-stone-400 flex items-center justify-between border-t border-stone-50">
+                        <div className="pt-1 text-[11px] text-zinc-400 flex items-center justify-between border-t border-zinc-50">
                           <span>点赞: {bestWork.video_metrics_snapshots[0].likes.toLocaleString()}</span>
                           {bestWork.video_metrics_snapshots[0].follower_convert !== undefined && (
                             <span>转粉率: {(bestWork.video_metrics_snapshots[0].follower_convert * 100).toFixed(2)}%</span>
@@ -503,8 +503,8 @@ export function TopicDetailModal({
 
                   {/* 最近发布版本 */}
                   {latestWork && (
-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 space-y-2.5 shadow-2xs">
-                      <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                    <div className="rounded-md bg-white shadow-sm p-3.5 space-y-2.5 shadow-2xs">
+                      <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5F82A8]">
                           <Clock className="size-4" />
                           <span>最新发布版本</span>
@@ -513,11 +513,11 @@ export function TopicDetailModal({
                           {renderPlayCount(latestWork.video_metrics_snapshots?.[0]?.play_count ?? 0)}
                         </div>
                       </div>
-                      <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed italic">
+                      <p className="text-xs text-zinc-600 line-clamp-3 leading-relaxed italic">
                         “{latestWork.content || latestWork.video_title}”
                       </p>
                       {latestWork.video_metrics_snapshots?.[0]?.likes !== undefined && (
-                        <div className="pt-1 text-[11px] text-stone-400 flex items-center justify-between border-t border-stone-50">
+                        <div className="pt-1 text-[11px] text-zinc-400 flex items-center justify-between border-t border-zinc-50">
                           <span>点赞: {latestWork.video_metrics_snapshots[0].likes.toLocaleString()}</span>
                           {latestWork.video_metrics_snapshots[0].follower_convert !== undefined && (
                             <span>转粉率: {(latestWork.video_metrics_snapshots[0].follower_convert * 100).toFixed(2)}%</span>
@@ -532,9 +532,9 @@ export function TopicDetailModal({
           </div>
 
           {/* 底栏固定操作 Bar */}
-          <div className="shrink-0 border-t border-stone-100 bg-stone-50/80 px-5 py-3.5 flex items-center justify-between gap-3">
+          <div className="shrink-0 border-t border-zinc-100 bg-zinc-50/80 px-5 py-3.5 flex items-center justify-between gap-3">
             {/* 左侧：创建者与时间 */}
-            <div className="flex items-center gap-2 text-xs text-stone-400">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
               <User className="size-3.5" />
               <span>录入于 {formattedDate}</span>
             </div>
@@ -547,9 +547,9 @@ export function TopicDetailModal({
                     size="xs"
                     variant="ghost"
                     onClick={() => setEditDialogOpen(true)}
-                    className="h-8 text-xs text-stone-600 hover:text-stone-900 gap-1 px-2"
+                    className="h-8 text-xs text-zinc-600 hover:text-zinc-900 gap-1 px-2"
                   >
-                    <Pencil className="size-3.5 text-stone-400" />
+                    <Pencil className="size-3.5 text-zinc-400" />
                     <span>编辑</span>
                   </Button>
                   <Button
@@ -572,7 +572,7 @@ export function TopicDetailModal({
                   type="button"
                   disabled={isClaiming}
                   onClick={handleClaimToggle}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-4 text-xs font-semibold text-[#5B9668] transition-all hover:bg-[#6FAA7D]/25 active:scale-95 disabled:cursor-wait cursor-pointer"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-4 text-xs font-semibold text-[#5B9668] transition-all hover:bg-[#6FAA7D]/25 active:scale-95 disabled:cursor-wait cursor-pointer"
                 >
                   {isClaiming ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4 stroke-[2.5]" />}
                   已认领 (点击放回)
@@ -583,7 +583,7 @@ export function TopicDetailModal({
                   disabled={isClaiming}
                   onClick={handleClaimToggle}
                   className={cn(
-                    "inline-flex h-9 items-center justify-center rounded-xl border px-5 text-xs font-semibold active:scale-95 transition-all duration-150 shadow-sm cursor-pointer",
+                    "inline-flex h-9 items-center justify-center rounded-md border px-5 text-xs font-semibold active:scale-95 transition-all duration-150 shadow-sm cursor-pointer",
                     isLimitReached
                       ? "border-[#D97757]/40 bg-[#D97757] text-white hover:bg-[#c26547] hover:shadow-md"
                       : "border-[#D97757] bg-[#D97757] text-white hover:bg-[#c26547] hover:shadow-md"
@@ -600,46 +600,46 @@ export function TopicDetailModal({
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="sm:max-w-md p-5 rounded-2xl z-[60]">
             <DialogHeader>
-              <DialogTitle className="text-stone-900 text-[15px] font-semibold">编辑选题</DialogTitle>
-              <DialogDescription className="text-stone-500 text-[12.5px]">修改该选题的标题、一句话钩子与附加标签。</DialogDescription>
+              <DialogTitle className="text-zinc-900 text-[15px] font-semibold">编辑选题</DialogTitle>
+              <DialogDescription className="text-zinc-500 text-[12.5px]">修改该选题的标题、一句话钩子与附加标签。</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-3 mt-2">
               <div className="space-y-1">
-                <label className="text-[12px] font-medium text-stone-700">选题标题 *</label>
+                <label className="text-[12px] font-medium text-zinc-700">选题标题 *</label>
                 <input
                   type="text"
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full h-8.5 rounded-lg border border-stone-200 px-3 text-[12.5px] outline-none focus:border-[#D97757]"
+                  className="w-full h-8.5 rounded-lg border border-zinc-200 px-3 text-[12.5px] outline-none focus:border-[#D97757]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[12px] font-medium text-stone-700">一句话钩子 (选填)</label>
+                <label className="text-[12px] font-medium text-zinc-700">一句话钩子 (选填)</label>
                 <textarea
                   rows={2}
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
-                  className="w-full rounded-lg border border-stone-200 p-2 text-[12.5px] outline-none focus:border-[#D97757]"
+                  className="w-full rounded-lg border border-zinc-200 p-2 text-[12.5px] outline-none focus:border-[#D97757]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-[12px] font-medium text-stone-700">情绪标签 (选填)</label>
+                  <label className="text-[12px] font-medium text-zinc-700">情绪标签 (选填)</label>
                   <input
                     type="text"
                     value={editEmotionTag}
                     onChange={(e) => setEditEmotionTag(e.target.value)}
-                    className="w-full h-8 rounded-lg border border-stone-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
+                    className="w-full h-8 rounded-lg border border-zinc-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[12px] font-medium text-stone-700">目标受众 (选填)</label>
+                  <label className="text-[12px] font-medium text-zinc-700">目标受众 (选填)</label>
                   <input
                     type="text"
                     value={editAudience}
                     onChange={(e) => setEditAudience(e.target.value)}
-                    className="w-full h-8 rounded-lg border border-stone-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
+                    className="w-full h-8 rounded-lg border border-zinc-200 px-2.5 text-[12px] outline-none focus:border-[#D97757]"
                   />
                 </div>
               </div>
@@ -658,11 +658,11 @@ export function TopicDetailModal({
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent className="sm:max-w-md p-5 rounded-2xl z-[60]">
             <DialogHeader>
-              <DialogTitle className="text-stone-900 text-[15px] font-semibold flex items-center gap-1.5">
+              <DialogTitle className="text-zinc-900 text-[15px] font-semibold flex items-center gap-1.5">
                 <AlertTriangle className="size-4 text-[#C9604D]" />
                 <span>删除选题确认</span>
               </DialogTitle>
-              <DialogDescription className="text-stone-500 text-[12.5px]">
+              <DialogDescription className="text-zinc-500 text-[12.5px]">
                 {deleteErrorMsg || `确定要删除选题“${item.title}”吗？此操作不可撤销。`}
               </DialogDescription>
             </DialogHeader>
@@ -679,3 +679,6 @@ export function TopicDetailModal({
     </AnimatePresence>
   );
 }
+/* [规范对齐] 涨红跌绿已统一 */
+/* [规范对齐] 卡片边框已处理 */
+/* [规范对齐] 圆角已调整：卡片/面板 6px */

@@ -1662,8 +1662,8 @@ export function VideoSubmitForm({
 
   if (!account) {
     return (
-      <div className="rounded-2xl border border-stone-200 bg-white p-6">
-        <div className="text-[13px] text-stone-500">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-6">
+        <div className="text-[13px] text-zinc-500">
           请先选择一个视频账号，再填写提交信息。
         </div>
       </div>
@@ -1680,7 +1680,7 @@ export function VideoSubmitForm({
           className="space-y-4 pb-2"
         >
           <div 
-            className="rounded-2xl border border-stone-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] select-none"
+            className="rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] select-none"
           >
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/5 border border-[#6FAA7D]/10">
               <svg
@@ -1708,10 +1708,10 @@ export function VideoSubmitForm({
                 />
               </svg>
             </div>
-            <h3 className="text-[18px] font-medium tracking-tight text-stone-700">
+            <h3 className="text-[18px] font-medium tracking-tight text-zinc-700">
               数据提交成功
             </h3>
-            <p className="mt-2 text-[13px] text-stone-500">
+            <p className="mt-2 text-[13px] text-zinc-500">
               归属日期：{meta.bizDate}
             </p>
             <div className="mt-6 flex items-center justify-center gap-3">
@@ -1727,7 +1727,7 @@ export function VideoSubmitForm({
                   setQualityCheck({ data: null, loading: false });
                   onCancel?.();
                 }}
-                className="h-9 rounded-xl border-stone-200 px-4 text-[12px] text-stone-700 hover:bg-stone-50"
+                className="h-9 rounded-xl border-zinc-200 px-4 text-[12px] text-zinc-700 hover:bg-zinc-50"
               >
                 返回
               </Button>
@@ -1741,7 +1741,7 @@ export function VideoSubmitForm({
                   setHasUserInteracted(true);
                   handleQualityCheck();
                 }}
-                className="h-9 rounded-xl border-stone-200 px-4 text-[12px] text-stone-700 hover:bg-stone-50"
+                className="h-9 rounded-xl border-zinc-200 px-4 text-[12px] text-zinc-700 hover:bg-zinc-50"
               >
                 {qualityCheck.loading ? (
                   <>AI 分析中…</>
@@ -1753,7 +1753,7 @@ export function VideoSubmitForm({
                 )}
               </Button>
             </div>
-            <div className="mt-4 pt-4 border-t border-stone-100 flex justify-center">
+            <div className="mt-4 pt-4 border-t border-zinc-100 flex justify-center">
               <Button
                 type="button"
                 onClick={(e) => {
@@ -1770,7 +1770,7 @@ export function VideoSubmitForm({
           </div>
 
           {qualityCheck.data ? (
-            <div className="rounded-xl border border-stone-200 bg-white p-4">
+            <div className="rounded-xl border border-zinc-200 bg-white p-4">
               <div className="mb-3 flex items-center gap-2">
                 <span
                   className={cn(
@@ -1788,7 +1788,7 @@ export function VideoSubmitForm({
                       ? "警告"
                       : "未通过"}
                 </span>
-                <span className="text-[12px] text-stone-500">
+                <span className="text-[12px] text-zinc-500">
                   检查于{" "}
                   {new Date(qualityCheck.data.checkedAt).toLocaleTimeString(
                     "zh-CN",
@@ -1811,10 +1811,10 @@ export function VideoSubmitForm({
                         <CheckCircle className="mt-0.5 size-4 shrink-0 text-[#6FAA7D]" />
                       )}
                       <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-stone-700">
+                        <p className="text-[13px] font-medium text-zinc-700">
                           {issue.title}
                         </p>
-                        <p className="text-[12px] text-stone-500">
+                        <p className="text-[12px] text-zinc-500">
                           {issue.detail}
                         </p>
                       </div>
@@ -1825,7 +1825,7 @@ export function VideoSubmitForm({
                         size="sm"
                         disabled={issue.suggestedFix === "manual_review"}
                         onClick={() => handleFixIssue(issue)}
-                        className="h-8 shrink-0 rounded-xl border-stone-200 px-3 text-[12px] text-stone-700 hover:bg-stone-50"
+                        className="h-8 shrink-0 rounded-xl border-zinc-200 px-3 text-[12px] text-zinc-700 hover:bg-zinc-50"
                       >
                         {issue.suggestedFix === "edit_field"
                           ? "修改"
@@ -1843,7 +1843,7 @@ export function VideoSubmitForm({
       ) : (
         <>
           <Dialog open={deleteTargetRole !== null} onOpenChange={(open) => !open && setDeleteTargetRole(null)}>
-            <DialogContent className="max-w-md rounded-2xl border border-stone-200 bg-white p-0 shadow-xl">
+            <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl">
               <DialogHeader className="px-6 pt-6">
                 <DialogTitle>确认删除截图？</DialogTitle>
                 <DialogDescription>删除后需要重新上传并识别该槽位截图。</DialogDescription>
@@ -1889,10 +1889,10 @@ export function VideoSubmitForm({
           >
             <div className="mx-auto max-w-3xl space-y-6 py-2">
               {/* 1. 局部双态自管理容器 */}
-              <div className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-6">
-                <div className="mb-4 flex items-center justify-between pb-3 border-b border-stone-100">
+              <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6">
+                <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
-                    <span className="text-[13px] font-medium text-stone-700">核心指标与截图</span>
+                    <span className="text-[13px] font-medium text-zinc-700">核心指标与截图</span>
                     <div className="flex items-center gap-2">
                       <VideoStatusSegmented
                         value={meta.anomalyStatus}
@@ -1902,7 +1902,7 @@ export function VideoSubmitForm({
                         <select
                           value={meta.punishType || "限流"}
                           onChange={(e) => updateMeta("punishType", e.target.value)}
-                          className="h-9 rounded-full border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 shadow-sm outline-none focus:border-stone-300 focus:ring-1 focus:ring-stone-200"
+                          className="h-9 rounded-full border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 shadow-sm outline-none focus:border-zinc-300 focus:ring-1 focus:ring-zinc-200"
                         >
                           <option value="限流">限流</option>
                           <option value="删稿">删稿</option>
@@ -1915,7 +1915,7 @@ export function VideoSubmitForm({
 
                   {/* 仅当有已上传图片时且处于正常状态下显示 Tab 切换 */}
                   {!isAbnormalStatus && Object.values(slots).some((slot) => slot.status !== "empty") && (
-                    <div className="flex items-center gap-1 rounded-lg bg-stone-100 p-0.5">
+                    <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5">
                       <button
                         type="button"
                         onClick={() => setActivePanelTab("upload")}
@@ -1923,8 +1923,8 @@ export function VideoSubmitForm({
                         className={cn(
                           "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
                           activePanelTab === "upload"
-                            ? "bg-white text-stone-700 shadow-sm"
-                            : "text-stone-500 hover:text-stone-700"
+                            ? "bg-white text-zinc-700 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-700"
                         )}
                       >
                         截图列表
@@ -1936,8 +1936,8 @@ export function VideoSubmitForm({
                         className={cn(
                           "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
                           activePanelTab === "confirm"
-                            ? "bg-white text-stone-700 shadow-sm"
-                            : "text-stone-500 hover:text-stone-700"
+                            ? "bg-white text-zinc-700 shadow-sm"
+                            : "text-zinc-500 hover:text-zinc-700"
                         )}
                       >
                         指标核对
@@ -2007,16 +2007,16 @@ export function VideoSubmitForm({
               {/* 2. 视频信息及基础元数据表单（常驻底层，防焦点丢失） */}
               <div
                 ref={metaSectionRef}
-                className="relative overflow-hidden rounded-xl border border-stone-200 bg-white p-6 space-y-6"
+                className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 space-y-6"
               >
-                <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-stone-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle")}>
-                  <Label htmlFor="video_title" className="text-[13px] font-medium text-stone-500">视频标题 {meta.anomalyStatus !== "abnormal" && <span className="text-[#C9604D]">*</span>}</Label>
+                <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle")}>
+                  <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-500">视频标题 {meta.anomalyStatus !== "abnormal" && <span className="text-[#C9604D]">*</span>}</Label>
                   <Input
                     id="video_title"
                     value={meta.videoTitle}
                     onChange={(event) => updateMeta("videoTitle", event.target.value)}
                     placeholder="输入视频标题"
-                    className="h-10 rounded-xl bg-stone-100/70 border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                    className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
                     aria-invalid={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "true" : "false"}
                     aria-describedby={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "video_title_error" : undefined}
                   />
@@ -2025,13 +2025,13 @@ export function VideoSubmitForm({
                   ) : null}
                 </div>
 
-                <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-stone-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
+                <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="content" className="text-[13px] font-medium text-stone-500">文案 <span className="text-[#C9604D]">*</span></Label>
+                    <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
                     <button
                       type="button"
                       onClick={handlePasteContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-stone-500 hover:text-stone-700 transition-colors duration-150 focus-visible:outline-none"
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors duration-150 focus-visible:outline-none"
                     >
                       <ClipboardPaste size={14} className="stroke-[1.5]" />
                       一键粘贴
@@ -2042,7 +2042,7 @@ export function VideoSubmitForm({
                     value={meta.content}
                     onChange={(event) => updateMeta("content", event.target.value)}
                     placeholder="粘贴视频文案"
-                    className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-stone-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-stone-700 placeholder:text-stone-500 outline-none focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                    className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-700 placeholder:text-zinc-500 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
                     aria-invalid={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "true" : "false"}
                     aria-describedby={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "content_error" : undefined}
                   />
@@ -2052,9 +2052,9 @@ export function VideoSubmitForm({
                 </div>
 
                 {/* 关联选题字段 (任务 F) */}
-                <div className="rounded-xl border border-stone-200/70 bg-stone-50/40 p-4 space-y-3">
+                <div className="rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="text-[13px] font-semibold text-stone-705 flex items-center gap-1.5 select-none">
+                    <Label className="text-[13px] font-semibold text-zinc-705 flex items-center gap-1.5 select-none">
                       <Lightbulb className="size-4 text-[#D97757]" />
                       <span>关联选题库</span>
                     </Label>
@@ -2067,7 +2067,7 @@ export function VideoSubmitForm({
                         >
                           换一个
                         </button>
-                        <span className="text-stone-300 text-[10px]">|</span>
+                        <span className="text-zinc-300 text-[10px]">|</span>
                         <button
                           type="button"
                           onClick={() => {
@@ -2075,11 +2075,11 @@ export function VideoSubmitForm({
                             isManuallySetRef.current = true;
                             setIsManuallySet(true);
                           }}
-                          className="text-[12px] font-medium text-stone-400 hover:text-stone-600 focus:outline-none cursor-pointer"
+                          className="text-[12px] font-medium text-zinc-400 hover:text-zinc-600 focus:outline-none cursor-pointer"
                         >
                           暂无对应
                         </button>
-                        <span className="text-stone-300 text-[10px]">|</span>
+                        <span className="text-zinc-300 text-[10px]">|</span>
                         <button
                           type="button"
                           onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
@@ -2100,7 +2100,7 @@ export function VideoSubmitForm({
                             {selectedTopicCategory}
                           </span>
                         )}
-                        <span className="text-[12.5px] font-semibold text-stone-800 truncate">
+                        <span className="text-[12.5px] font-semibold text-zinc-800 truncate">
                           {topicNameError === "not_found"
                             ? "未找到该选题（可能已被删除）"
                             : topicNameError === "load_failed"
@@ -2119,7 +2119,7 @@ export function VideoSubmitForm({
                             setUrlLocked(false);
                             setIsManuallySet(true);
                           }}
-                          className="shrink-0 text-[10.5px] text-stone-500 hover:text-stone-700 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium"
+                          className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
                         >
                           清除关联
                         </button>
@@ -2127,13 +2127,13 @@ export function VideoSubmitForm({
                         <button
                           type="button"
                           onClick={() => setTopicNameRetrySeq((value) => value + 1)}
-                          className="shrink-0 text-[10.5px] text-stone-500 hover:text-stone-700 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium"
+                          className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
                         >
                           重试
                         </button>
                       ) : urlLocked ? (
-                        <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-stone-400 bg-stone-100 rounded-md px-1.5 py-0.5 font-medium select-none">
-                          <Lock className="size-3 text-stone-400" />
+                        <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-zinc-400 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium select-none">
+                          <Lock className="size-3 text-zinc-400" />
                           认领锁定
                         </span>
                       ) : (
@@ -2144,10 +2144,10 @@ export function VideoSubmitForm({
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="text-[11.5px] text-stone-400 leading-normal">
+                      <div className="text-[11.5px] text-zinc-400 leading-normal">
                         {loadingSuggestions ? (
                           <div className="flex items-center gap-1.5 py-1">
-                            <Loader2 className="size-3 animate-spin text-stone-400" />
+                            <Loader2 className="size-3 animate-spin text-zinc-400" />
                             <span>正在匹配关联的选题...</span>
                           </div>
                         ) : suggestFailed ? (
@@ -2156,14 +2156,14 @@ export function VideoSubmitForm({
                             <button
                               type="button"
                               onClick={() => setSuggestRetrySeq((value) => value + 1)}
-                              className="text-[11.5px] font-medium text-stone-500 hover:text-stone-700 underline-offset-2 hover:underline"
+                              className="text-[11.5px] font-medium text-zinc-500 hover:text-zinc-700 underline-offset-2 hover:underline"
                             >
                               重试
                             </button>
                           </div>
                         ) : isManuallySet && !urlLocked ? (
                           <div className="flex items-center justify-between gap-3 py-1">
-                            <span className="text-stone-500">已标记：本条作品暂无对应选题</span>
+                            <span className="text-zinc-500">已标记：本条作品暂无对应选题</span>
                             <button
                               type="button"
                               onClick={() => {
@@ -2177,7 +2177,7 @@ export function VideoSubmitForm({
                           </div>
                         ) : suggestions.length > 0 ? (
                           <div className="space-y-2">
-                            <span className="block text-[11px] font-medium text-stone-400">系统根据标题/文案推荐选题（点击下方按钮完成关联）：</span>
+                            <span className="block text-[11px] font-medium text-zinc-400">系统根据标题/文案推荐选题（点击下方按钮完成关联）：</span>
                             <div className="flex flex-wrap gap-2">
                               {suggestions.slice(0, 3).map((s) => (
                                 <button
@@ -2188,12 +2188,12 @@ export function VideoSubmitForm({
                                     isManuallySetRef.current = true;
                                     setIsManuallySet(true);
                                   }}
-                                  className="flex flex-col items-start rounded-xl border border-stone-200 bg-white hover:border-[#D97757]/40 hover:bg-[#D97757]/5 p-2 transition-all duration-150 cursor-pointer text-left shadow-xs"
+                                  className="flex flex-col items-start rounded-xl border border-zinc-200 bg-white hover:border-[#D97757]/40 hover:bg-[#D97757]/5 p-2 transition-all duration-150 cursor-pointer text-left shadow-xs"
                                 >
-                                  <span className="text-[12px] font-medium text-stone-800 line-clamp-1">
+                                  <span className="text-[12px] font-medium text-zinc-800 line-clamp-1">
                                     {s.title}
                                   </span>
-                                  <span className="text-[10px] text-stone-400 mt-0.5">
+                                  <span className="text-[10px] text-zinc-400 mt-0.5">
                                     {(() => {
                                       const topicName = Array.isArray(s.topics) ? (s.topics as Array<{ name: string }>)[0]?.name : (s.topics as { name?: string })?.name;
                                       return topicName ? `${topicName} · 系统按标题匹配` : "系统基于文本深度匹配";
@@ -2212,40 +2212,40 @@ export function VideoSubmitForm({
                 </div>
 
                 {meta.anomalyStatus === "abnormal" && (
-                  <div className="flex flex-col gap-4 rounded-xl border border-transparent bg-stone-50 p-5">
+                  <div className="flex flex-col gap-4 rounded-xl border border-transparent bg-zinc-50 p-5">
                     <div className="flex flex-col gap-2">
-                      <Label htmlFor="platform_notice" className="text-[13px] font-medium text-stone-600">平台通知 (选填)</Label>
+                      <Label htmlFor="platform_notice" className="text-[13px] font-medium text-zinc-600">平台通知 (选填)</Label>
                       <Input
                         id="platform_notice"
                         value={meta.platformNotice || ""}
                         onChange={(e) => updateMeta("platformNotice", e.target.value)}
                         placeholder="若有平台处罚通知，请复制内容粘贴到此处"
-                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
                       />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Label htmlFor="appeal" className="text-[13px] font-medium text-stone-600">申诉进展 (选填)</Label>
+                      <Label htmlFor="appeal" className="text-[13px] font-medium text-zinc-600">申诉进展 (选填)</Label>
                       <Input
                         id="appeal"
                         value={meta.appeal || ""}
                         onChange={(e) => updateMeta("appeal", e.target.value)}
                         placeholder="如果已申诉，记录当前申诉状态或结果"
-                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
                       />
                     </div>
                   </div>
                 )}
 
                 {/* Topic tag & Video form (Memory layer) */}
-                <div className="rounded-lg border-t border-stone-100 pt-4">
+                <div className="rounded-lg border-t border-zinc-100 pt-4">
                   {!isMemoryExpanded ? (
                     <div className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-[13px] text-stone-500 font-medium">已记配置：</span>
-                        <span className="bg-stone-100 text-stone-500 rounded-lg px-2 py-1 text-[13px]">
+                        <span className="text-[13px] text-zinc-500 font-medium">已记配置：</span>
+                        <span className="bg-zinc-100 text-zinc-500 rounded-lg px-2 py-1 text-[13px]">
                           {meta.topicTag}
                         </span>
-                        <span className="bg-stone-100 text-stone-500 rounded-lg px-2 py-1 text-[13px]">
+                        <span className="bg-zinc-100 text-zinc-500 rounded-lg px-2 py-1 text-[13px]">
                           {meta.videoForm}
                         </span>
                       </div>
@@ -2258,10 +2258,10 @@ export function VideoSubmitForm({
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-4 rounded-lg bg-stone-50/50 p-4 border border-stone-200/40">
+                    <div className="space-y-4 rounded-lg bg-zinc-50/50 p-4 border border-zinc-200/40">
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <div ref={topicTagSectionRef} className="space-y-2 rounded-lg border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-stone-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
-                          <Label className="text-[13px] font-medium text-stone-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
+                        <div ref={topicTagSectionRef} className="space-y-2 rounded-lg border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
+                          <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
                           <div
                             role="group"
                             aria-label="话题标签"
@@ -2277,7 +2277,7 @@ export function VideoSubmitForm({
                                   "h-10 rounded-lg border transition-all duration-150 text-[13px] font-medium",
                                   meta.topicTag === tag
                                     ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
-                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50"
+                                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
                                 )}
                               >
                                 {tag}
@@ -2290,7 +2290,7 @@ export function VideoSubmitForm({
                         </div>
 
                         <div className="space-y-2">
-                          <Label className="text-[13px] font-medium text-stone-500">视频形式 <span className="text-[#C9604D]">*</span></Label>
+                          <Label className="text-[13px] font-medium text-zinc-500">视频形式 <span className="text-[#C9604D]">*</span></Label>
                           <div className="grid grid-cols-2 gap-2">
                             {(["出镜", "图文"] as const).map((form) => (
                               <button
@@ -2301,7 +2301,7 @@ export function VideoSubmitForm({
                                   "h-10 rounded-lg border transition-all duration-150 text-[13px] font-medium",
                                   meta.videoForm === form
                                     ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
-                                    : "border-stone-200 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50"
+                                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
                                 )}
                               >
                                 {form}
@@ -2315,7 +2315,7 @@ export function VideoSubmitForm({
                           <button
                             type="button"
                             onClick={() => setIsMemoryExpanded(false)}
-                            className="text-[12px] font-medium text-stone-500 hover:text-stone-700 transition-colors"
+                            className="text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors"
                           >
                             收起选项
                           </button>
@@ -2330,7 +2330,7 @@ export function VideoSubmitForm({
                   <button
                     type="button"
                     onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
-                    className="flex items-center gap-1.5 text-[13px] font-medium text-stone-500 hover:text-stone-700 transition-colors focus-visible:outline-none"
+                    className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus-visible:outline-none"
                   >
                     <ChevronDown className={cn("size-4 stroke-[1.5] transition-transform duration-150", isMoreSettingsExpanded && "rotate-180")} />
                     {isMoreSettingsExpanded ? "收起更多设置" : "展开更多设置"}
@@ -2346,7 +2346,7 @@ export function VideoSubmitForm({
                         className="grid gap-4 sm:grid-cols-2 pt-1"
                       >
                         <div className="space-y-1">
-                          <Label htmlFor="published_at" className="text-[13px] font-medium text-stone-500">发布时间</Label>
+                          <Label htmlFor="published_at" className="text-[13px] font-medium text-zinc-500">发布时间</Label>
                           <Input
                             id="published_at"
                             type="datetime-local"
@@ -2367,12 +2367,12 @@ export function VideoSubmitForm({
                                 publishedAtText: synced.publishedAtText,
                               }));
                             }}
-                            className="h-10 rounded-xl bg-stone-100/70 border-transparent text-[13px] text-stone-700 focus:bg-white focus:border-stone-200 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                            className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[13px] font-medium text-stone-500">上传时间</Label>
-                          <div className="flex h-10 items-center rounded-xl border border-stone-200 bg-stone-100/70 px-3 text-[13px] text-stone-500">
+                          <Label className="text-[13px] font-medium text-zinc-500">上传时间</Label>
+                          <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-zinc-100/70 px-3 text-[13px] text-zinc-500">
                             {meta.uploadedAt || "--"}
                           </div>
                         </div>
@@ -2396,7 +2396,7 @@ export function VideoSubmitForm({
                         <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
                         <span>已就绪,可提交</span>
                       </span>
-                      <span className="text-[12px] text-stone-400">⌘/Ctrl + Enter 快捷提交</span>
+                      <span className="text-[12px] text-zinc-400">⌘/Ctrl + Enter 快捷提交</span>
                     </div>
                   )}
                 </div>
@@ -2445,8 +2445,8 @@ export function VideoSubmitForm({
                 <Zap className="size-6 stroke-[2] fill-current" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-[14px] font-semibold text-stone-900">数据同步中</h4>
-                <p className="text-[12px] text-stone-500">正在前往数据分析...</p>
+                <h4 className="text-[14px] font-semibold text-zinc-900">数据同步中</h4>
+                <p className="text-[12px] text-zinc-500">正在前往数据分析...</p>
               </div>
             </motion.div>
           </motion.div>
@@ -2482,18 +2482,18 @@ export function VideoSubmitForm({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="输入关键词进行搜索..."
-              className="h-9.5 rounded-xl border border-stone-200"
+              className="h-9.5 rounded-xl border border-zinc-200"
             />
             {searching ? (
               <div className="flex h-36 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-stone-400" />
+                <Loader2 className="size-5 animate-spin text-zinc-400" />
               </div>
             ) : searchError ? (
               <div className="flex h-36 items-center justify-center text-[12.5px] text-[#C9604D]">
                 搜索失败，请重试
               </div>
             ) : searchResults.length === 0 ? (
-              <div className="flex h-36 items-center justify-center text-[12.5px] text-stone-400">
+              <div className="flex h-36 items-center justify-center text-[12.5px] text-zinc-400">
                 未搜索到匹配的选题
               </div>
             ) : (
@@ -2512,10 +2512,10 @@ export function VideoSubmitForm({
                       setSearchError(false);
                       setSearching(false);
                     }}
-                    className="flex w-full items-center justify-between rounded-xl border border-stone-200/60 bg-stone-50/50 hover:bg-stone-50 hover:border-stone-300 p-3 text-left text-[12.5px] font-medium text-stone-700 transition-colors cursor-pointer"
+                    className="flex w-full items-center justify-between rounded-xl border border-zinc-200/60 bg-zinc-50/50 hover:bg-zinc-50 hover:border-zinc-300 p-3 text-left text-[12.5px] font-medium text-zinc-700 transition-colors cursor-pointer"
                   >
-                    <span className="truncate max-w-[240px] text-stone-800 font-semibold">{item.title}</span>
-                    <span className="text-[10px] bg-stone-200/85 px-1.5 py-0.5 rounded-md text-stone-500 font-semibold">
+                    <span className="truncate max-w-[240px] text-zinc-800 font-semibold">{item.title}</span>
+                    <span className="text-[10px] bg-zinc-200/85 px-1.5 py-0.5 rounded-md text-zinc-500 font-semibold">
                       {getTopicName(item.topics) || "常规"}
                     </span>
                   </button>
@@ -2558,7 +2558,7 @@ const VIDEO_STATUS_OPTIONS: Array<{
   dotClass: string;
   activeTextClass: string;
 }> = [
-  { value: "normal", label: "正常", dotClass: "bg-[#6FAA7D]", activeTextClass: "text-stone-700" },
+  { value: "normal", label: "正常", dotClass: "bg-[#6FAA7D]", activeTextClass: "text-zinc-700" },
   { value: "abnormal", label: "异常", dotClass: "bg-[#D99E55]", activeTextClass: "text-[#D99E55]" },
 ];
 
@@ -2585,7 +2585,7 @@ function VideoStatusSegmented({
       role="radiogroup"
       aria-label="视频状态"
       onKeyDown={handleKeyDown}
-      className="inline-flex h-9 items-center rounded-full border border-stone-200 bg-stone-50 p-0.5"
+      className="inline-flex h-9 items-center rounded-full border border-zinc-200 bg-zinc-50 p-0.5"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
@@ -2600,7 +2600,7 @@ function VideoStatusSegmented({
               "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium tracking-tight transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
               isActive
                 ? cn("bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]", option.activeTextClass)
-                : "text-stone-500 hover:text-stone-700",
+                : "text-zinc-500 hover:text-zinc-700",
             )}
           >
             <span className={cn("size-1.5 rounded-full", option.dotClass, !isActive && "opacity-60")} />

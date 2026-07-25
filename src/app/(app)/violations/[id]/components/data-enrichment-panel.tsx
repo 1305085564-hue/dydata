@@ -143,12 +143,12 @@ export function DataEnrichmentPanel({
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl overflow-hidden text-left">
       {/* Title */}
-      <div className="px-5 py-4 border-b border-stone-100 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileCheck className="size-4.5 text-[#D97757]" />
-          <h2 className="text-[18px] font-medium text-stone-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
+          <h2 className="text-[18px] font-medium text-zinc-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
         </div>
-        <button onClick={onClose} aria-label="关闭知识沉淀台" className="rounded-lg p-1 text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700">
+        <button onClick={onClose} aria-label="关闭知识沉淀台" className="rounded-lg p-1 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700">
           <X className="size-4" />
         </button>
       </div>
@@ -158,8 +158,8 @@ export function DataEnrichmentPanel({
         
         {/* Original Script */}
         <div className="space-y-1.5">
-          <span className="text-[12px] font-normal tracking-[0.12em] text-stone-500">原始脚本文案</span>
-          <div className="max-h-[120px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50/50 p-4 text-[12px] leading-relaxed text-stone-700">
+          <span className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">原始脚本文案</span>
+          <div className="max-h-[120px] overflow-y-auto whitespace-pre-wrap rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 text-[12px] leading-relaxed text-zinc-700">
             {caseDetail.script_text}
           </div>
         </div>
@@ -169,25 +169,25 @@ export function DataEnrichmentPanel({
             {/* Enrichment Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">
+                <label className="text-[12px] font-normal text-zinc-500">
                   钩子文案 (hook_text) <span className="text-[#C9604D]">*</span>
                 </label>
                 <textarea
                   value={hookText}
                   onChange={(e) => setHookText(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                  className="w-full min-h-[64px] rounded-xl border border-zinc-200 p-3 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
                   placeholder="提取视频前 3 秒吸引人点入的黄金钩子..."
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">
+                <label className="text-[12px] font-normal text-zinc-500">
                   系统级总结洞察 (admin_insight) <span className="text-[#C9604D]">*</span>
                 </label>
                 <textarea
                   value={adminInsight}
                   onChange={(e) => setAdminInsight(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                  className="w-full min-h-[64px] rounded-xl border border-zinc-200 p-3 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
                   placeholder="总结本条案例的核心数据高转化原因及可复用方法论..."
                 />
               </div>
@@ -195,41 +195,41 @@ export function DataEnrichmentPanel({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">主体文案 (body_text)</label>
+                <label className="text-[12px] font-normal text-zinc-500">主体文案 (body_text)</label>
                 <textarea
                   value={bodyText}
                   onChange={(e) => setBodyText(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                  className="w-full min-h-[64px] rounded-xl border border-zinc-200 p-3 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
                   placeholder="视频主体论证或价值交付段落..."
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[12px] font-normal text-stone-500">引导文案 (cta_text)</label>
+                <label className="text-[12px] font-normal text-zinc-500">引导文案 (cta_text)</label>
                 <textarea
                   value={ctaText}
                   onChange={(e) => setCtaText(e.target.value)}
-                  className="w-full min-h-[64px] rounded-xl border border-stone-200 p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                  className="w-full min-h-[64px] rounded-xl border border-zinc-200 p-3 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
                   placeholder="结尾引导点赞关注、私信或加粉丝群的话术..."
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[12px] font-normal text-stone-500">关联原始视频 UUID (original_video_id)</label>
+              <label className="text-[12px] font-normal text-zinc-500">关联原始视频 UUID (original_video_id)</label>
               <input
                 type="text"
                 value={originalVideoId}
                 onChange={(e) => setOriginalVideoId(e.target.value)}
-                className="h-9 w-full rounded-xl border border-stone-200 px-3 text-[12px] text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                className="h-9 w-full rounded-xl border border-zinc-200 px-3 text-[12px] text-zinc-700 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
                 placeholder="若本话术来源于某条复盘视频，可填入其 UUID"
               />
             </div>
 
             {/* Taxonomy Tag Pillars */}
-            <div className="space-y-3.5 pt-2 border-t border-stone-100">
+            <div className="space-y-3.5 pt-2 border-t border-zinc-100">
               <div className="space-y-1.5">
-                <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">情感分类 (Emotion)</span>
+                <span className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">情感分类 (Emotion)</span>
                 <div className="flex flex-wrap gap-1.5">
                   {emotionTags.map((tag) => {
                     const active = selectedEmotions.includes(tag);
@@ -242,7 +242,7 @@ export function DataEnrichmentPanel({
                           "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
                             ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
-                            : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
+                            : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
                         )}
                       >
                         {tag}
@@ -253,7 +253,7 @@ export function DataEnrichmentPanel({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">场景分类 (Scenario)</span>
+                <span className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">场景分类 (Scenario)</span>
                 <div className="flex flex-wrap gap-1.5">
                   {scenarioTags.map((tag) => {
                     const active = selectedScenarios.includes(tag);
@@ -266,7 +266,7 @@ export function DataEnrichmentPanel({
                           "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
                             ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
-                            : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
+                            : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
                         )}
                       >
                         {tag}
@@ -277,7 +277,7 @@ export function DataEnrichmentPanel({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-[12px] font-medium tracking-[0.12em] text-stone-500">产品品类 (Product Category)</span>
+                <span className="text-[12px] font-medium tracking-[0.12em] text-zinc-500">产品品类 (Product Category)</span>
                 <div className="flex flex-wrap gap-1.5">
                   {categoryTags.map((tag) => {
                     const active = selectedCategories.includes(tag);
@@ -290,7 +290,7 @@ export function DataEnrichmentPanel({
                           "rounded-lg border px-2.5 py-1 text-[12px] font-normal transition-colors active:scale-95",
                           active
                             ? "border-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
-                            : "border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700"
+                            : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:text-zinc-700"
                         )}
                       >
                         {tag}
@@ -310,19 +310,19 @@ export function DataEnrichmentPanel({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[12px] font-normal text-stone-500">打回具体原因说明</label>
+              <label className="text-[12px] font-normal text-zinc-500">打回具体原因说明</label>
               <textarea
                 value={supplementReason}
                 onChange={(e) => setSupplementReason(e.target.value)}
-                className="w-full min-h-[80px] rounded-xl border border-stone-200 bg-white p-3 text-[12px] leading-relaxed text-stone-700 placeholder:text-stone-500 focus:border-stone-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+                className="w-full min-h-[80px] rounded-xl border border-zinc-200 bg-white p-3 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-500 focus:border-zinc-500 focus:outline-none focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
                 placeholder="例如：请上传 24h 完播率或流量漏斗截图，以及本话术的使用效果反馈说明..."
               />
             </div>
 
             <div className="space-y-2">
-              <span className="block text-[12px] font-normal text-stone-500">需要补充的缺省项</span>
+              <span className="block text-[12px] font-normal text-zinc-500">需要补充的缺省项</span>
               <div className="flex gap-4">
-                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] font-normal text-stone-700">
+                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] font-normal text-zinc-700">
                   <input
                     type="checkbox"
                     checked={missingFields.includes("screenshot")}
@@ -330,11 +330,11 @@ export function DataEnrichmentPanel({
                       if (e.target.checked) setMissingFields([...missingFields, "screenshot"]);
                       else setMissingFields(missingFields.filter((f) => f !== "screenshot"));
                     }}
-                    className="rounded border-stone-300 text-[#D97757] focus:ring-[#D97757] size-3.5"
+                    className="rounded border-zinc-300 text-[#D97757] focus:ring-[#D97757] size-3.5"
                   />
                   完播/流量截图
                 </label>
-                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] font-normal text-stone-700">
+                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[12px] font-normal text-zinc-700">
                   <input
                     type="checkbox"
                     checked={missingFields.includes("usage_metrics")}
@@ -342,7 +342,7 @@ export function DataEnrichmentPanel({
                       if (e.target.checked) setMissingFields([...missingFields, "usage_metrics"]);
                       else setMissingFields(missingFields.filter((f) => f !== "usage_metrics"));
                     }}
-                    className="rounded border-stone-300 text-[#D97757] focus:ring-[#D97757] size-3.5"
+                    className="rounded border-zinc-300 text-[#D97757] focus:ring-[#D97757] size-3.5"
                   />
                   转化数据凭证
                 </label>
@@ -362,7 +362,7 @@ export function DataEnrichmentPanel({
                 size="sm"
                 variant="outline"
                 onClick={() => setShowSupplementForm(false)}
-                className="h-8 rounded-lg border-stone-200 bg-white text-[12px] text-stone-700"
+                className="h-8 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700"
               >
                 取消
               </Button>
@@ -373,7 +373,7 @@ export function DataEnrichmentPanel({
 
       {/* Footer bar */}
       {!showSupplementForm && (
-        <div className="px-5 py-4 border-t border-stone-100 flex justify-between items-center bg-stone-50/50">
+        <div className="px-5 py-4 border-t border-zinc-100 flex justify-between items-center bg-zinc-50/50">
           <Button
             size="sm"
             variant="outline"

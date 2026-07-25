@@ -76,7 +76,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-stone-200 bg-white p-3">
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-3">
       <Select
         value={filters.profileId}
         onValueChange={(value) => updateFilter("profileId", value || "all")}
@@ -116,14 +116,14 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           type="date"
           value={filters.startDate}
           onChange={(event) => updateFilter("startDate", event.target.value)}
-          className="h-8 w-32 rounded-lg border border-stone-200 bg-white text-[12px] text-stone-700 focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+          className="h-8 w-32 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-700 focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
         />
-        <span className="text-stone-500">—</span>
+        <span className="text-zinc-500">—</span>
         <Input
           type="date"
           value={filters.endDate}
           onChange={(event) => updateFilter("endDate", event.target.value)}
-          className="h-8 w-32 rounded-lg border border-stone-200 bg-white text-[12px] text-stone-700 focus:border-stone-500 focus:shadow-sm focus:ring-1 focus:ring-stone-900/5"
+          className="h-8 w-32 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-700 focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
         />
       </div>
 
@@ -146,7 +146,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 rounded-lg text-[12px] text-stone-500 hover:text-stone-700"
+        className="h-8 rounded-lg text-[12px] text-zinc-500 hover:text-zinc-700"
         onClick={handleReset}
       >
         重置

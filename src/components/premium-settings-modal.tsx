@@ -223,7 +223,7 @@ export function PremiumSettingsModal({
           exit={{ opacity: 0 }}
           onClick={() => onOpenChange(false)}
           aria-hidden="true"
-          className="absolute inset-0 bg-stone-950/60 backdrop-blur-md"
+          className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md"
         />
 
         {/* Modal content */}
@@ -239,7 +239,7 @@ export function PremiumSettingsModal({
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className={cn(
             "relative flex h-[min(620px,calc(100dvh-2rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl sm:h-[520px] sm:flex-row",
-            "border-stone-300 dark:border-stone-800 dark:bg-stone-950"
+            "border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950"
           )}
         >
           {/* Close button */}
@@ -248,15 +248,15 @@ export function PremiumSettingsModal({
             type="button"
             aria-label="关闭设置"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-stone-200 hover:bg-stone-200 dark:border-stone-800 dark:hover:bg-stone-800 text-stone-500 dark:text-[#E7E5E4] hover:text-stone-700 dark:hover:text-white transition-colors"
+            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-200 dark:border-zinc-800 dark:hover:bg-zinc-800 text-zinc-500 dark:text-[#E7E5E4] hover:text-zinc-700 dark:hover:text-white transition-colors"
           >
             <X className="size-4" />
           </button>
 
           {/* Left Sidebar Tab Navigation */}
-          <div className="w-full shrink-0 border-b border-stone-300/60 bg-stone-100/50 p-3 pt-11 dark:border-stone-800/80 dark:bg-stone-900/20 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
+          <div className="w-full shrink-0 border-b border-zinc-300/60 bg-zinc-100/50 p-3 pt-11 dark:border-zinc-800/80 dark:bg-zinc-900/20 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
             <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
-              <h2 id="premium-settings-title" className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-stone-500 sm:dark:text-[#E7E5E4]">
+              <h2 id="premium-settings-title" className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-zinc-500 sm:dark:text-[#E7E5E4]">
                 账号与设置
               </h2>
               
@@ -266,8 +266,8 @@ export function PremiumSettingsModal({
                 className={cn(
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "profile"
-                    ? "bg-stone-200 text-stone-900 dark:bg-stone-900 dark:text-white"
-                    : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
+                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
+                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]"
                 )}
               >
                 <User className="size-4 text-[#D97757]" />
@@ -280,8 +280,8 @@ export function PremiumSettingsModal({
                 className={cn(
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "accounts"
-                    ? "bg-stone-200 text-stone-900 dark:bg-stone-900 dark:text-white"
-                    : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
+                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
+                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]"
                 )}
               >
                 <Shield className="size-4 text-sky-500" />
@@ -294,8 +294,8 @@ export function PremiumSettingsModal({
                 className={cn(
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "system"
-                    ? "bg-stone-200 text-stone-900 dark:bg-stone-900 dark:text-white"
-                    : "text-stone-700 hover:text-stone-900 dark:hover:text-[#E7E5E4]"
+                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
+                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]"
                 )}
               >
                 <Settings2 className="size-4 text-emerald-500" />
@@ -313,7 +313,7 @@ export function PremiumSettingsModal({
                   退出当前系统
                 </button>
               </form>
-              <div className="hidden px-3 text-[12px] text-stone-500 dark:text-[#E7E5E4] sm:block">
+              <div className="hidden px-3 text-[12px] text-zinc-500 dark:text-[#E7E5E4] sm:block">
                 DYData v2.1 • 企业授权
               </div>
             </div>
@@ -330,10 +330,10 @@ export function PremiumSettingsModal({
                 className="space-y-6"
               >
                 <div>
-                  <h3 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight">
+                  <h3 className="text-[13px] font-medium text-zinc-900 dark:text-white tracking-tight">
                     个人资料设置
                   </h3>
-                  <p className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5">
+                  <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
                     修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
                 </div>
@@ -341,7 +341,7 @@ export function PremiumSettingsModal({
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
                   {/* Name input */}
                   <div className="space-y-1.5">
-                    <label className="text-[12px] font-medium text-stone-700 dark:text-stone-500">
+                    <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-500">
                       显示名称
                     </label>
                     <div className="flex gap-2">
@@ -353,8 +353,8 @@ export function PremiumSettingsModal({
                         maxLength={20}
                         className={cn(
                           "flex-1 rounded-lg border py-1.5 px-3 text-[12px] tracking-tight outline-none transition-all duration-200",
-                          "border-stone-300 bg-white focus:border-stone-400 focus:ring-0",
-                          "dark:border-stone-800 dark:bg-stone-900 dark:focus:border-stone-600"
+                          "border-zinc-300 bg-white focus:border-zinc-400 focus:ring-0",
+                          "dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-zinc-600"
                         )}
                         required
                         disabled={isPending}
@@ -378,7 +378,7 @@ export function PremiumSettingsModal({
                         )}
                       </button>
                     </div>
-                    <div className="flex justify-between items-center text-[12px] text-stone-500">
+                    <div className="flex justify-between items-center text-[12px] text-zinc-500">
                       <span>支持中英文、字数不超过 20 位。</span>
                       <span>{editingName.length}/20 字符</span>
                     </div>
@@ -386,18 +386,18 @@ export function PremiumSettingsModal({
 
                   {/* Role indicator */}
                   <div className="space-y-1.5 pt-2">
-                    <label className="text-[12px] font-medium text-stone-700 dark:text-stone-500">
+                    <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-500">
                       当前平台身份
                     </label>
-                    <div className="flex items-center gap-3 rounded-xl border border-stone-300/80 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-900/20 px-3.5 py-3">
-                      <div className="flex size-9 items-center justify-center rounded-xl bg-stone-900 dark:bg-stone-800 text-[12px] font-medium text-white">
+                    <div className="flex items-center gap-3 rounded-xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20 px-3.5 py-3">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-zinc-900 dark:bg-zinc-800 text-[12px] font-medium text-white">
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-[12px] font-medium text-stone-900 dark:text-stone-100">
+                        <p className="truncate text-[12px] font-medium text-zinc-900 dark:text-zinc-100">
                           {editingName}
                         </p>
-                        <p className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5 leading-none">
+                        <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5 leading-none">
                           主系统所有者 (Platform Owner)
                         </p>
                       </div>
@@ -419,16 +419,16 @@ export function PremiumSettingsModal({
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight">
+                    <h3 className="text-[13px] font-medium text-zinc-900 dark:text-white tracking-tight">
                       账号矩阵配置
                     </h3>
-                    <p className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5">
+                    <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
                       管理绑定在该平台下的抖音企业号。你可以新增、解绑或重命名账号别称。
                     </p>
                   </div>
                   <button
                     onClick={() => setIsAddingAccount(!isAddingAccount)}
-                    className="inline-flex items-center gap-1 bg-stone-200 dark:bg-stone-900 hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-900 dark:text-[#FAFAF9] px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+                    className="inline-flex items-center gap-1 bg-zinc-200 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-900 dark:text-[#FAFAF9] px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
                   >
                     <Plus className="size-3" />
                     添加新账号
@@ -442,7 +442,7 @@ export function PremiumSettingsModal({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden rounded-xl border border-stone-300 dark:border-stone-800 bg-stone-100/30 dark:bg-stone-900/10 p-3 space-y-2.5"
+                      className="overflow-hidden rounded-xl border border-zinc-300 dark:border-zinc-800 bg-zinc-100/30 dark:bg-zinc-900/10 p-3 space-y-2.5"
                     >
                       <div className="grid grid-cols-3 gap-2">
                         <input
@@ -450,34 +450,34 @@ export function PremiumSettingsModal({
                           placeholder="抖音账号名 (如: dydata)"
                           value={newAccName}
                           onChange={(e) => setNewAccName(e.target.value)}
-                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-stone-800 dark:bg-stone-900"
+                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900"
                         />
                         <input
                           type="text"
                           placeholder="账号备注名 (如: 探店主理人)"
                           value={newAccRemark}
                           onChange={(e) => setNewAccRemark(e.target.value)}
-                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-stone-800 dark:bg-stone-900"
+                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900"
                         />
                         <input
                           type="text"
                           placeholder="内容方向 (如: 美食探店)"
                           value={newAccDir}
                           onChange={(e) => setNewAccDir(e.target.value)}
-                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-stone-800 dark:bg-stone-900"
+                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900"
                         />
                       </div>
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setIsAddingAccount(false)}
-                          className="px-2.5 py-1 text-[12px] font-medium text-stone-500 hover:text-stone-700"
+                          className="px-2.5 py-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700"
                         >
                           取消
                         </button>
                         <button
                           onClick={handleAddAccount}
                           disabled={accountActionPending === "add"}
-                          className="inline-flex items-center justify-center bg-stone-900 hover:bg-stone-950 dark:bg-stone-800 dark:hover:bg-stone-700 text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
+                          className="inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-950 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
                         >
                           {accountActionPending === "add" ? (
                             <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -499,18 +499,18 @@ export function PremiumSettingsModal({
                     return (
                       <div
                         key={acc.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-stone-300/70 dark:border-stone-800/80 px-3.5 py-2.5 hover:bg-stone-200/50 dark:hover:bg-stone-900/10"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 px-3.5 py-2.5 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/10"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-[12px] font-medium text-stone-900 dark:text-stone-50 truncate">
+                            <span className="text-[12px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
                               {acc.display_name}
                             </span>
-                            <span className="text-[12px] font-medium text-stone-500 truncate">
+                            <span className="text-[12px] font-medium text-zinc-500 truncate">
                               @{acc.name}
                             </span>
                           </div>
-                          <span className="block text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5 truncate">
+                          <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5 truncate">
                             方向: {acc.content_direction || "未设置内容方向"}
                           </span>
                         </div>
@@ -527,7 +527,7 @@ export function PremiumSettingsModal({
                               onClick={() => {
                                 setDashboardAccount(acc.id);
                               }}
-                              className="text-[12px] font-medium border border-stone-300 dark:border-stone-800 hover:bg-stone-200 dark:hover:bg-stone-900 px-2.5 py-1 rounded-lg transition-colors"
+                              className="text-[12px] font-medium border border-zinc-300 dark:border-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-900 px-2.5 py-1 rounded-lg transition-colors"
                             >
                               切换为该账号
                             </button>
@@ -546,7 +546,7 @@ export function PremiumSettingsModal({
                             type="button"
                             onClick={() => handleEditAccountRemark(acc.id, acc.remark || "")}
                             disabled={isRemarkPending}
-                            className="text-[12px] font-medium text-stone-700 hover:text-stone-900"
+                            className="text-[12px] font-medium text-zinc-700 hover:text-zinc-900"
                           >
                             {isRemarkPending ? "正在保存..." : "修改备注"}
                           </button>
@@ -566,22 +566,22 @@ export function PremiumSettingsModal({
                 className="space-y-6"
               >
                 <div>
-                  <h3 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight">
+                  <h3 className="text-[13px] font-medium text-zinc-900 dark:text-white tracking-tight">
                     系统参数配置
                   </h3>
-                  <p className="text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5">
+                  <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
                     配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   {/* Cron Remind Setting */}
-                  <div className="flex items-center justify-between gap-4 p-3 rounded-xl border border-stone-300/80 dark:border-stone-800 bg-stone-100/50 dark:bg-stone-900/20">
+                  <div className="flex items-center justify-between gap-4 p-3 rounded-xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20">
                     <div>
-                      <span className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
+                      <span className="text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
                         启用每日催交动态提醒
                       </span>
-                      <span className="block text-[12px] text-stone-500 dark:text-[#E7E5E4] mt-0.5">
+                      <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
                         开启后系统将定期在选定时间点推送待办事项给所有未交日报的成员。
                       </span>
                     </div>
@@ -592,14 +592,14 @@ export function PremiumSettingsModal({
                         onChange={() => setPushEnabled(!pushEnabled)}
                         className="sr-only peer"
                       />
-                      <div className="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:bg-stone-800 peer-checked:bg-[#D97757]" />
+                      <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:bg-zinc-800 peer-checked:bg-[#D97757]" />
                     </label>
                   </div>
 
                   {/* Scheduled cron input */}
                   {pushEnabled && (
-                    <div className="space-y-1.5 p-3 rounded-xl border border-dashed border-stone-300 dark:border-stone-800">
-                      <label className="text-[12px] font-medium text-stone-700 dark:text-stone-500">
+                    <div className="space-y-1.5 p-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800">
+                      <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-500">
                         提醒定时设置 (24小时制)
                       </label>
                       <div className="flex gap-2">
@@ -608,10 +608,10 @@ export function PremiumSettingsModal({
                           value={remindHour}
                           onChange={(e) => setRemindHour(e.target.value)}
                           className={cn(
-                            "rounded-lg border py-1 px-2.5 text-[12px] outline-none dark:border-stone-800 dark:bg-stone-900 dark:text-white"
+                            "rounded-lg border py-1 px-2.5 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
                           )}
                         />
-                        <span className="text-[12px] text-stone-500 flex items-center">
+                        <span className="text-[12px] text-zinc-500 flex items-center">
                           配置与系统 Cron 进程对齐，将在每日 {remindHour} 准时执行。
                         </span>
                       </div>
@@ -619,8 +619,8 @@ export function PremiumSettingsModal({
                   )}
 
                   {/* Global configuration status */}
-                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-stone-50 to-stone-100/50 dark:from-stone-900 dark:to-stone-900/60 border border-stone-300/50 dark:border-stone-800 text-[12px] text-stone-700 dark:text-stone-500 leading-relaxed">
-                    ⚙️ <span className="font-medium text-stone-700 dark:text-stone-500">主库参数：</span>
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-900 dark:to-zinc-900/60 border border-zinc-300/50 dark:border-zinc-800 text-[12px] text-zinc-700 dark:text-zinc-500 leading-relaxed">
+                    ⚙️ <span className="font-medium text-zinc-700 dark:text-zinc-500">主库参数：</span>
                     当前连接 Supabase Singapore 实例，服务状态正常。所有 API 接口已自动检测环境变量 `SUPABASE_SERVICE_ROLE_KEY` 并适配权限。
                   </div>
                 </div>

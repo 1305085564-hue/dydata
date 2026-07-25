@@ -79,21 +79,21 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center justify-between gap-3 rounded-lg px-1 py-1 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-stone-900/20 outline-none",
-          "text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-[#E7E5E4] active:scale-[0.98]",
-          isOpen && "text-stone-900 dark:text-[#FAFAF9]"
+          "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#5F82A8]/30 outline-none",
+          "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70 active:scale-[0.98]",
+          isOpen && "text-zinc-900 bg-zinc-100/80"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0 flex items-center justify-center size-2.5">
-            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-[#6FAA7D]/60 motion-safe:animate-ping" />
-            <div className="relative size-2 rounded-full bg-[#6FAA7D]" />
+            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-[#16A34A]/40 motion-safe:animate-ping" />
+            <div className="relative size-2 rounded-full bg-[#16A34A]" />
           </div>
           <div className="min-w-0 flex flex-col">
-            <span className="truncate text-[12px] font-medium leading-tight text-stone-900 dark:text-[#FAFAF9] max-w-[110px]">
+            <span className="truncate text-[12px] font-medium leading-tight text-zinc-900 max-w-[120px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
-            <span className="truncate text-[11px] font-medium leading-none text-stone-500 mt-0.5 max-w-[115px] tracking-tight">
+            <span className="truncate text-[10px] font-normal leading-none text-zinc-500 mt-0.5 max-w-[125px] tracking-tight">
               {(() => {
                 if (!selectedAccount) return "dydata";
                 const cleanName = selectedAccount.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
@@ -108,92 +108,81 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         <ChevronDown
           size={14}
           className={cn(
-            "text-stone-500 transition-all shrink-0 duration-200 group-hover:translate-y-0.5",
-            isOpen && "rotate-180 text-stone-900 dark:text-[#FAFAF9]"
+            "text-zinc-400 transition-transform duration-200 shrink-0 group-hover:text-zinc-600",
+            isOpen && "rotate-180 text-zinc-900"
           )}
         />
       </button>
 
       {isOpen && (
-          <div
-            id={menuId}
-            className={cn(
-              "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute left-0 mt-2 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white p-2 shadow-xl duration-150",
-              "border-stone-200/80 dark:border-stone-800/80 dark:bg-stone-950 backdrop-blur-xl bg-white/95 dark:bg-stone-950/95"
-            )}
-          >
-            {/* Intro Header */}
-            <div className="px-2 py-1.5 border-b border-stone-100 dark:border-stone-900 mb-1">
-              <div className="text-[12px] font-medium text-stone-900 dark:text-stone-100">
-                工作账号切换
+        <div
+          id={menuId}
+          className={cn(
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white/95 p-1.5 shadow-xl shadow-zinc-900/5 duration-150 border-zinc-200/90 backdrop-blur-xl ring-1 ring-black/5"
+          )}
+        >
+          {/* Account List */}
+          <div role="group" aria-label="工作账号列表" className="max-h-64 space-y-0.5 overflow-y-auto">
+            {accounts.length === 0 ? (
+              <div className="py-6 text-center text-[12px] text-zinc-400">
+                没有找到匹配的账号
               </div>
-              <div className="text-[11px] text-stone-500 dark:text-[#E7E5E4] mt-0.5 leading-normal">
-                切换账号并载入对应数据
-              </div>
-            </div>
-
-            {/* List */}
-            <div role="group" aria-label="工作账号列表" className="max-h-64 space-y-0.5 overflow-y-auto pr-1">
-              {accounts.length === 0 ? (
-                <div className="py-6 text-center text-[12px] text-stone-500 dark:text-[#E7E5E4]">
-                  没有找到匹配的账号
-                </div>
-              ) : (
-                accounts.map((account) => {
-                  const isSelected = account.id === selectedAccountId;
-                  return (
-                    <button
-                      key={account.id}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => {
-                        setDashboardAccount(account.id);
-                        setIsOpen(false);
-                      }}
-                      className={cn(
-                        "flex w-full items-center justify-between gap-2.5 rounded-lg px-2 py-1.5 text-left transition-all duration-200",
-                        isSelected
-                          ? "bg-stone-100 dark:bg-stone-900/60"
-                          : "hover:bg-stone-200/70 dark:hover:bg-stone-900/30"
-                      )}
-                    >
-                      <div className="flex flex-col min-w-0">
-                        <span className="truncate text-[12px] font-medium tracking-tight text-stone-900 dark:text-stone-50">
-                          {account.display_name}
-                        </span>
-                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-stone-500 dark:text-[#E7E5E4] font-medium min-w-0">
-                          {(() => {
-                            const cleanName = account.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
-                            const isDuplicate = cleanName.toLowerCase() === account.name.trim().toLowerCase();
-                            if (isDuplicate) {
-                              return (
-                                <span className="truncate max-w-[120px]">
-                                  方向: {account.content_direction || "未分类"}
-                                </span>
-                              );
-                            }
+            ) : (
+              accounts.map((account) => {
+                const isSelected = account.id === selectedAccountId;
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      setDashboardAccount(account.id);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all duration-150 group/item",
+                      isSelected
+                        ? "bg-[#5F82A8]/10 text-[#5F82A8]"
+                        : "hover:bg-zinc-100/80 text-zinc-700 hover:text-zinc-900"
+                    )}
+                  >
+                    <div className="flex flex-col min-w-0">
+                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#5F82A8] font-semibold" : "text-zinc-800")}>
+                        {account.display_name}
+                      </span>
+                      <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-500 font-normal min-w-0">
+                        {(() => {
+                          const cleanName = account.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
+                          const isDuplicate = cleanName.toLowerCase() === account.name.trim().toLowerCase();
+                          if (isDuplicate) {
                             return (
-                              <>
-                                <span className="truncate max-w-[80px]">@{account.name}</span>
-                                <span className="text-stone-300 dark:text-stone-800 shrink-0">·</span>
-                                <span className="truncate max-w-[120px]">
-                                  方向: {account.content_direction || "未分类"}
-                                </span>
-                              </>
+                              <span className="truncate max-w-[140px]">
+                                方向: {account.content_direction || "未分类"}
+                              </span>
                             );
-                          })()}
-                        </div>
+                          }
+                          return (
+                            <>
+                              <span className="truncate max-w-[90px]">@{account.name}</span>
+                              <span className="text-zinc-300 shrink-0">·</span>
+                              <span className="truncate max-w-[120px]">
+                                方向: {account.content_direction || "未分类"}
+                              </span>
+                            </>
+                          );
+                        })()}
                       </div>
-                      
-                      {isSelected && (
-                        <Check className="size-3.5 shrink-0 text-[#D97757] mt-0.5" />
-                      )}
-                    </button>
-                  );
-                })
-              )}
-            </div>
+                    </div>
+                    
+                    {isSelected && (
+                      <Check className="size-4 shrink-0 text-[#5F82A8]" />
+                    )}
+                  </button>
+                );
+              })
+            )}
           </div>
+        </div>
       )}
     </div>
   );

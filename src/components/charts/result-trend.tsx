@@ -88,7 +88,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
     <svg
       aria-hidden="true"
       viewBox="0 0 12 12"
-      className={cn("h-3 w-3", positive ? "text-[#6FAA7D]" : "text-[#D99E55]")}
+      className={cn("h-3 w-3", positive ? "text-[#DC2626]" : "text-[#16A34A]")}
       fill="none"
     >
       <path
@@ -124,14 +124,14 @@ function 结果空状态({ text }: { text: string }) {
           }}
         />
       </div>
-      <p className="mt-4 text-[13px] text-stone-500">{text}</p>
+      <p className="mt-4 text-[13px] text-zinc-500">{text}</p>
     </motion.div>
   );
 }
 
 function 图例说明({ hasInteriorGaps, showStaleBand }: { hasInteriorGaps: boolean; showStaleBand: boolean }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-stone-500">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
       <span className="inline-flex items-center gap-1.5">
         <span className="h-0.5 w-4 rounded-full" style={{ backgroundColor: CHART_COLORS.primary }} />
         已知数据
@@ -191,9 +191,9 @@ function ResultTooltip({
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="min-w-40 rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
+      className="min-w-40 rounded-lg border border-zinc-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(28,25,23,0.06)]"
     >
-      <p className="text-[12px] tracking-[0.01em] text-stone-500">{label}</p>
+      <p className="text-[12px] tracking-[0.01em] text-zinc-500">{label}</p>
       <div className="mt-2 space-y-1.5">
         {items.map((item) => {
           const numericValue = typeof item.value === "number" ? item.value : null;
@@ -201,11 +201,11 @@ function ResultTooltip({
 
           return (
             <div key={item.dataKey} className="flex items-center justify-between gap-3 text-[12px] tabular-nums">
-              <span className="flex items-center gap-2 text-stone-500">
+              <span className="flex items-center gap-2 text-zinc-500">
                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
                 {item.name}
               </span>
-              <span className="flex items-center gap-1 text-stone-700">
+              <span className="flex items-center gap-1 text-zinc-700">
                 {numericValue != null ? <AnimatedNumber value={numericValue} duration={320} /> : "-"}
                 {showTrend ? <趋势方向图标 positive={isPositive} /> : null}
                 {numericValue != null ? <span className="sr-only">{formatter(numericValue)}</span> : null}
@@ -306,17 +306,17 @@ export function ResultTrend({
   );
 
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
-      <div className="flex flex-col gap-4 border-b border-stone-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5">
+      <div className="flex flex-col gap-4 border-b border-zinc-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
-          <h3 className="text-[18px] font-medium tracking-tight text-stone-900">结果趋势</h3>
-          <p className="text-[12px] text-stone-500">
+          <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">结果趋势</h3>
+          <p className="text-[12px] text-zinc-500">
             {activeMetric.label}按真实日期展示最近 {range} 天
             {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时暂无对比线。"}
           </p>
         </div>
         <div className="flex flex-col gap-1.5 sm:items-end">
-          <div className="inline-flex w-fit rounded-xl border border-stone-200 bg-stone-100 p-0.5">
+          <div className="inline-flex w-fit rounded-md border border-zinc-200 bg-zinc-100 p-0.5">
             {(
               [
                 ["playCount", "播放量"],
@@ -328,8 +328,8 @@ export function ResultTrend({
                 size="sm"
                 variant="ghost"
                 className={cn(
-                  "h-7 rounded-lg px-2 text-[12px] text-stone-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-stone-700",
-                  metric === key && "border border-stone-200 bg-white text-stone-700",
+                  "h-7 rounded-lg px-2 text-[12px] text-zinc-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-zinc-700",
+                  metric === key && "border border-zinc-200 bg-white text-zinc-700",
                 )}
                 onClick={() => setMetric(key)}
               >
@@ -337,15 +337,15 @@ export function ResultTrend({
               </Button>
             ))}
           </div>
-          <div className="inline-flex w-fit rounded-xl border border-stone-200 bg-stone-100 p-0.5">
+          <div className="inline-flex w-fit rounded-md border border-zinc-200 bg-zinc-100 p-0.5">
             {([7, 30] as const).map((value) => (
               <Button
                 key={value}
                 size="sm"
                 variant="ghost"
                 className={cn(
-                  "h-7 rounded-lg px-2 text-[12px] text-stone-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-stone-700",
-                  range === value && "border border-stone-200 bg-white text-stone-700",
+                  "h-7 rounded-lg px-2 text-[12px] text-zinc-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-zinc-700",
+                  range === value && "border border-zinc-200 bg-white text-zinc-700",
                 )}
                 onClick={() => setRange(value)}
               >
@@ -471,3 +471,6 @@ export function ResultTrend({
     </section>
   );
 }
+/* [规范对齐] 涨红跌绿已统一 */
+/* [规范对齐] 卡片边框已处理 */
+/* [规范对齐] 圆角已调整：卡片/面板 6px */

@@ -447,7 +447,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
   if (!detail) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
-        <p className="text-[14px] text-stone-500">无法显示选题信息，该选题可能已被删除。</p>
+        <p className="text-[14px] text-zinc-500">无法显示选题信息，该选题可能已被删除。</p>
         <Link href="/topics">
           <Button variant="outline" size="sm">
             返回选题池
@@ -465,9 +465,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <div className="flex items-center justify-between pb-1">
         <Link
           href="/topics"
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-stone-500 hover:text-stone-900 transition-colors"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
         >
-          <ChevronLeft className="size-4 text-stone-400" />
+          <ChevronLeft className="size-4 text-zinc-400" />
           <span>返回选题池</span>
         </Link>
 
@@ -477,16 +477,16 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               size="xs"
               variant="outline"
               onClick={() => setEditDialogOpen(true)}
-              className="h-8 px-3 rounded-xl border-stone-200 bg-white text-stone-700 hover:bg-stone-50 hover:text-stone-900 gap-1.5 text-[12px] font-medium transition-all"
+              className="h-8 px-3 rounded-xl border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 gap-1.5 text-[12px] font-medium transition-all"
             >
-              <Edit2 className="size-3.5 text-stone-500" />
+              <Edit2 className="size-3.5 text-zinc-500" />
               <span>编辑选题</span>
             </Button>
             <Button
               size="xs"
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
-              className="h-8 px-3 rounded-xl border-stone-200 bg-white text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30 gap-1.5 text-[12px] font-medium transition-all"
+              className="h-8 px-3 rounded-xl border-zinc-200 bg-white text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30 gap-1.5 text-[12px] font-medium transition-all"
             >
               <Trash2 className="size-3.5 text-[#C9604D]" />
               <span>删除选题</span>
@@ -497,12 +497,12 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
 
       {/* 我的认领状态请求异常告警 Banner */}
       {myClaimsError && (
-        <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/5 px-4 py-3 text-[12.5px] text-stone-700">
+        <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/5 px-4 py-3 text-[12.5px] text-zinc-700">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-[#D99E55] shrink-0" />
             <span>我的认领状态加载失败：{myClaimsError}</span>
           </div>
-          <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px] border-stone-200 bg-white hover:bg-stone-50">
+          <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px] border-zinc-200 bg-white hover:bg-zinc-50">
             <RefreshCw className="size-3 mr-1" />
             重新加载
           </Button>
@@ -510,7 +510,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       )}
 
       {/* L1 唯一纯白主画板 (L1 White Surface Artboard) */}
-      <div className="rounded-2xl border border-stone-200/80 bg-white p-7 sm:p-9 md:p-10 shadow-xs space-y-12">
+      <div className="rounded-2xl border border-zinc-200/80 bg-white p-7 sm:p-9 md:p-10 shadow-xs space-y-12">
         
         {/* L1-A: 选题核心描述区 */}
         <div className="space-y-5">
@@ -521,7 +521,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   {detail.topics.name}
                 </span>
               )}
-              <h1 className="text-[24px] font-bold text-stone-900 leading-[1.33] tracking-tight">
+              <h1 className="text-[24px] font-bold text-zinc-900 leading-[1.33] tracking-tight">
                 {detail.title}
               </h1>
             </div>
@@ -536,9 +536,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                         size="sm"
                         disabled={isUpdatingClaim}
                         onClick={() => void handleStartScripting()}
-                        className="h-9.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[12.5px] font-medium transition-colors"
+                        className="h-9.5 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[12.5px] font-medium transition-colors"
                       >
-                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <FileText className="size-3.5 mr-1.5 text-stone-600" />}
+                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <FileText className="size-3.5 mr-1.5 text-zinc-600" />}
                         标记脚本中
                       </Button>
                       <Button
@@ -564,9 +564,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                         variant="outline"
                         disabled={isUpdatingClaim}
                         onClick={() => void handleReturnClaim()}
-                        className="h-9.5 px-3.5 rounded-xl border-stone-200 bg-stone-50 text-stone-600 hover:bg-stone-100 text-[12.5px] font-medium transition-colors"
+                        className="h-9.5 px-3.5 rounded-xl border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 text-[12.5px] font-medium transition-colors"
                       >
-                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <RotateCcw className="size-3.5 mr-1.5 text-stone-500" />}
+                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <RotateCcw className="size-3.5 mr-1.5 text-zinc-500" />}
                         放回选题池
                       </Button>
                     </>
@@ -588,50 +588,50 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {/* 一句话钩子：形态① 凹槽 Inset (bg-stone-100/60 终点浅凹槽) */}
+          {/* 一句话钩子：形态① 凹槽 Inset (bg-zinc-100/60 终点浅凹槽) */}
           {detail.hook && (
-            <div className="rounded-xl bg-stone-100/60 p-4 text-[13px] text-stone-800 leading-relaxed space-y-1.5">
-              <div className="font-medium text-stone-900 text-[12.5px] flex items-center gap-1.5">
+            <div className="rounded-xl bg-zinc-100/60 p-4 text-[13px] text-zinc-800 leading-relaxed space-y-1.5">
+              <div className="font-medium text-zinc-900 text-[12.5px] flex items-center gap-1.5">
                 <Sparkles className="size-3.5 text-[#D97757]" />
                 <span>一句话钩子</span>
               </div>
-              <p className="italic text-stone-700">“{detail.hook}”</p>
+              <p className="italic text-zinc-700">“{detail.hook}”</p>
             </div>
           )}
 
-          {/* 元属性横条（字色三阶：stone-900 / stone-700 / stone-500） */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-stone-500 pt-1">
+          {/* 元属性横条（字色三阶：zinc-900 / zinc-700 / zinc-500） */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-zinc-500 pt-1">
             {detail.emotion_tag && (
               <span className="flex items-center gap-1.5">
-                <span className="text-stone-400">情绪标签:</span>
-                <strong className="text-stone-700 font-medium">{detail.emotion_tag}</strong>
+                <span className="text-zinc-400">情绪标签:</span>
+                <strong className="text-zinc-700 font-medium">{detail.emotion_tag}</strong>
               </span>
             )}
             {detail.audience && (
               <span className="flex items-center gap-1.5">
-                <span className="text-stone-400">目标受众:</span>
-                <strong className="text-stone-700 font-medium">{detail.audience}</strong>
+                <span className="text-zinc-400">目标受众:</span>
+                <strong className="text-zinc-700 font-medium">{detail.audience}</strong>
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <span className="text-stone-400">录入时间:</span>
-              <strong className="text-stone-600 font-normal">{new Date(detail.created_at).toLocaleDateString()}</strong>
+              <span className="text-zinc-400">录入时间:</span>
+              <strong className="text-zinc-600 font-normal">{new Date(detail.created_at).toLocaleDateString()}</strong>
             </span>
           </div>
         </div>
 
         {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
-        <div className="pt-8 border-t border-stone-100 space-y-3">
+        <div className="pt-8 border-t border-zinc-100 space-y-3">
           {/* L1-B: 认领撞车动态（标题与卡片紧密聚拢为一组） */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <User className="size-4 text-[#D97757]" />
-              <h2 className="text-[16px] font-bold text-stone-900">
+              <h2 className="text-[16px] font-bold text-zinc-900">
                 认领撞车动态
               </h2>
             </div>
             {!claimsError && (
-              <span className="text-[12.5px] text-stone-500">
+              <span className="text-[12.5px] text-zinc-500">
                 已有 <strong className="text-[#D97757] font-semibold tabular-nums">{totalInFlightCount}</strong> 人在做
                 {claimsData.scriptingCount > 0 && (
                   <span className="text-[#C9604D] ml-1 font-medium">
@@ -648,13 +648,13 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 <AlertTriangle className="size-4 shrink-0" />
                 <span>撞车动态加载失败：{claimsError}</span>
               </div>
-              <Button size="xs" variant="outline" onClick={() => void fetchClaims()} className="h-7 text-[12px] border-stone-200 bg-white">
+              <Button size="xs" variant="outline" onClick={() => void fetchClaims()} className="h-7 text-[12px] border-zinc-200 bg-white">
                 <RefreshCw className="size-3 mr-1" />
                 重新加载
               </Button>
             </div>
           ) : claimsData.claims.length === 0 ? (
-            <div className="rounded-xl bg-stone-100/50 p-4 text-center text-[12.5px] text-stone-400 italic">
+            <div className="rounded-xl bg-zinc-100/50 p-4 text-center text-[12.5px] text-zinc-400 italic">
               暂无其他人认领此选题，抢先创作成就爆款！
             </div>
           ) : (
@@ -666,7 +666,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     "flex items-center justify-between p-3.5 rounded-xl text-[12.5px] transition-colors",
                     c.status === "scripting"
                       ? "bg-[#C9604D]/10 text-[#C9604D] font-medium"
-                      : "bg-stone-100/60 hover:bg-stone-100 text-stone-700"
+                      : "bg-zinc-100/60 hover:bg-zinc-100 text-zinc-700"
                   )}
                 >
                   <div className="flex items-center gap-2 font-medium">
@@ -686,23 +686,23 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
-        <div id="associated-works-section" className="pt-8 border-t border-stone-100 space-y-3 scroll-mt-6">
+        <div id="associated-works-section" className="pt-8 border-t border-zinc-100 space-y-3 scroll-mt-6">
           {/* L1-C: 已关联创作作品（标题与首个作品紧密结合） */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Video className="size-4 text-[#5F82A8]" />
-              <h2 className="text-[16px] font-bold text-stone-900">
+              <h2 className="text-[16px] font-bold text-zinc-900">
                 已关联创作作品 ({worksTotal})
               </h2>
             </div>
 
             {/* 排序 Segmented Switch */}
-            <div className="flex items-center gap-1 bg-stone-100 p-0.5 rounded-lg text-[12px]">
+            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg text-[12px]">
               <button
                 onClick={() => handleSortChange("best")}
                 className={cn(
                   "px-3 py-1 rounded-md transition-all font-medium",
-                  worksSort === "best" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
+                  worksSort === "best" ? "bg-white text-zinc-900 shadow-2xs" : "text-zinc-500 hover:text-zinc-900"
                 )}
               >
                 爆款优先
@@ -711,7 +711,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 onClick={() => handleSortChange("recent")}
                 className={cn(
                   "px-3 py-1 rounded-md transition-all font-medium",
-                  worksSort === "recent" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-500 hover:text-stone-900"
+                  worksSort === "recent" ? "bg-white text-zinc-900 shadow-2xs" : "text-zinc-500 hover:text-zinc-900"
                 )}
               >
                 最新发布
@@ -720,16 +720,16 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           {loadingWorks ? (
-            <div className="py-10 text-center text-stone-400 text-[12.5px] flex items-center justify-center gap-2">
+            <div className="py-10 text-center text-zinc-400 text-[12.5px] flex items-center justify-center gap-2">
               <Loader2 className="size-4 animate-spin text-[#5F82A8]" />
               <span>加载关联作品中...</span>
             </div>
           ) : works.length === 0 ? (
-            <div className="py-8 rounded-xl bg-stone-100/50 text-center text-stone-400 text-[12.5px] italic">
+            <div className="py-8 rounded-xl bg-zinc-100/50 text-center text-zinc-400 text-[12.5px] italic">
               本选题暂无作品发布记录。
             </div>
           ) : (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-zinc-100">
               {works.map((w) => {
                 const snap = w.video_metrics_snapshots?.[0];
                 const playCount = snap?.play_count ?? 0;
@@ -738,11 +738,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 return (
                   <div
                     key={w.id}
-                    className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-stone-50/80 text-[12.5px] transition-colors"
+                    className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-zinc-50/80 text-[12.5px] transition-colors"
                   >
                     <div className="space-y-0.5">
-                      <div className="font-semibold text-stone-900">{w.video_title}</div>
-                      <div className="flex items-center gap-3.5 text-[11px] text-stone-500">
+                      <div className="font-semibold text-zinc-900">{w.video_title}</div>
+                      <div className="flex items-center gap-3.5 text-[11px] text-zinc-500">
                         {w.account_name && <span>账号: {w.account_name}</span>}
                         {(w.uploadedAt || w.uploaded_at) && (
                           <span>发布时间: {new Date(w.uploadedAt || w.uploaded_at || "").toLocaleDateString()}</span>
@@ -751,10 +751,10 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                     {snap && (
                       <div className="text-right tabular-nums">
-                        <div className="font-bold text-stone-900">
+                        <div className="font-bold text-zinc-900">
                           {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount.toLocaleString()} 播放
                         </div>
-                        <div className="text-[11px] text-stone-500">{likesCount.toLocaleString()} 点赞</div>
+                        <div className="text-[11px] text-zinc-500">{likesCount.toLocaleString()} 点赞</div>
                       </div>
                     )}
                   </div>
@@ -765,7 +765,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
 
           {/* 分页控制栏 */}
           {worksTotal > worksPageSize && (
-            <div className="flex items-center justify-between pt-4 text-[12px] text-stone-500 border-t border-stone-100">
+            <div className="flex items-center justify-between pt-4 text-[12px] text-zinc-500 border-t border-zinc-100">
               <span>共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页</span>
               <div className="flex items-center gap-1.5">
                 <Button
@@ -773,7 +773,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   variant="outline"
                   disabled={worksPage <= 1 || loadingWorks}
                   onClick={() => handlePageChange(worksPage - 1)}
-                  className="h-7 text-[12px] border-stone-200 bg-white"
+                  className="h-7 text-[12px] border-zinc-200 bg-white"
                 >
                   上一页
                 </Button>
@@ -782,7 +782,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   variant="outline"
                   disabled={worksPage >= totalPages || loadingWorks}
                   onClick={() => handlePageChange(worksPage + 1)}
-                  className="h-7 text-[12px] border-stone-200 bg-white"
+                  className="h-7 text-[12px] border-zinc-200 bg-white"
                 >
                   下一页
                 </Button>
@@ -792,22 +792,22 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
 
           {/* 同类参考作品 */}
           {similarReferences.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-stone-100 space-y-3">
-              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-stone-700">
+            <div className="mt-8 pt-6 border-t border-zinc-100 space-y-3">
+              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-700">
                 <Film className="size-3.5 text-[#4F5E96]" />
                 <span>同类参考作品推荐 ({similarReferences.length})</span>
               </div>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {similarReferences.map((ref, idx) => (
-                  <div key={ref.id || idx} className="p-3.5 rounded-xl bg-stone-100/50 hover:bg-stone-100/80 transition-colors text-[12px] space-y-1">
-                    <div className="font-medium text-stone-850 truncate">{ref.video_title || ref.title || "未命名参考"}</div>
-                    <div className="flex items-center justify-between text-[11px] text-stone-500">
+                  <div key={ref.id || idx} className="p-3.5 rounded-xl bg-zinc-100/50 hover:bg-zinc-100/80 transition-colors text-[12px] space-y-1">
+                    <div className="font-medium text-zinc-850 truncate">{ref.video_title || ref.title || "未命名参考"}</div>
+                    <div className="flex items-center justify-between text-[11px] text-zinc-500">
                       <span>{ref.account_name || "全库爆款参考"}</span>
                       {(() => {
                         const playCount = ref.play_count ?? ref.video_metrics_snapshots?.[0]?.play_count;
                         if (typeof playCount === "number") {
                           return (
-                            <span className="font-semibold text-stone-700 tabular-nums">
+                            <span className="font-semibold text-zinc-700 tabular-nums">
                               {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount} 播放
                             </span>
                           );
@@ -827,46 +827,46 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-lg p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-stone-900 text-[16px] font-bold">编辑选题</DialogTitle>
+            <DialogTitle className="text-zinc-900 text-[16px] font-bold">编辑选题</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
             <div className="space-y-1">
-              <label className="text-[12px] font-medium text-stone-600">选题标题 (必填)</label>
+              <label className="text-[12px] font-medium text-zinc-600">选题标题 (必填)</label>
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                className="w-full h-9 rounded-xl border border-zinc-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[12px] font-medium text-stone-600">一句话钩子 (选填)</label>
+              <label className="text-[12px] font-medium text-zinc-600">一句话钩子 (选填)</label>
               <textarea
                 value={editHook}
                 onChange={(e) => setEditHook(e.target.value)}
-                className="w-full h-20 rounded-xl border border-stone-200 p-3 text-[13px] outline-none focus:border-[#D97757] resize-none transition-colors"
+                className="w-full h-20 rounded-xl border border-zinc-200 p-3 text-[13px] outline-none focus:border-[#D97757] resize-none transition-colors"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[12px] font-medium text-stone-600">情绪标签</label>
+                <label className="text-[12px] font-medium text-zinc-600">情绪标签</label>
                 <input
                   value={editEmotionTag}
                   onChange={(e) => setEditEmotionTag(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[12px] font-medium text-stone-600">目标受众</label>
+                <label className="text-[12px] font-medium text-zinc-600">目标受众</label>
                 <input
                   value={editAudience}
                   onChange={(e) => setEditAudience(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-stone-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                  className="w-full h-9 rounded-xl border border-zinc-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)} className="rounded-xl border-stone-200 text-stone-600">取消</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)} className="rounded-xl border-zinc-200 text-zinc-600">取消</Button>
               <Button type="submit" size="sm" disabled={isSubmittingEdit} className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90">
                 {isSubmittingEdit ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}保存修改
               </Button>
@@ -879,7 +879,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md p-5 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-stone-900 text-[15px] font-bold flex items-center gap-2">
+            <DialogTitle className="text-zinc-900 text-[15px] font-bold flex items-center gap-2">
               <AlertTriangle className="size-4 text-[#C9604D]" />
               <span>删除选题确认</span>
             </DialogTitle>
@@ -891,7 +891,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 {deleteErrorMsg}
               </div>
               <div className="flex items-center justify-end gap-2">
-                <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-stone-200">
+                <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-zinc-200">
                   取消
                 </Button>
                 <Button
@@ -909,11 +909,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             </div>
           ) : (
             <div className="space-y-4 py-2">
-              <p className="text-[13px] text-stone-600">
+              <p className="text-[13px] text-zinc-600">
                 确认要删除此选题吗？若该选题已有作品关联，系统将拦截阻断。
               </p>
               <div className="flex items-center justify-end gap-2">
-                <Button type="button" size="sm" variant="outline" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-stone-200">
+                <Button type="button" size="sm" variant="outline" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-zinc-200">
                   取消
                 </Button>
                 <Button type="button" size="sm" disabled={isDeleting} onClick={() => void handleDeleteSubmit()} className="rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90">
@@ -930,11 +930,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <Dialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
         <DialogContent className="sm:max-w-md p-5 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-stone-900 text-[15px] font-semibold flex items-center gap-2">
+            <DialogTitle className="text-zinc-900 text-[15px] font-semibold flex items-center gap-2">
               <ArrowRightLeft className="size-4 text-[#D97757]" />
               <span>候选位已满 (5/5) · 请选择替换</span>
             </DialogTitle>
-            <DialogDescription className="text-stone-500 text-[12.5px]">
+            <DialogDescription className="text-zinc-500 text-[12.5px]">
               您的候选选题库已达 5 条上限。请选择一条放回选题池，以便腾出空间认领本题。
             </DialogDescription>
           </DialogHeader>
@@ -953,14 +953,14 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   onClick={() => setSelectedReturnId(item.id)}
                   className={cn(
                     "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-150",
-                    isSelected ? "border-[#D97757] bg-[#D97757]/5 shadow-xs" : "border-stone-200 bg-white hover:bg-stone-50"
+                    isSelected ? "border-[#D97757] bg-[#D97757]/5 shadow-xs" : "border-zinc-200 bg-white hover:bg-zinc-50"
                   )}
                 >
                   <div className="space-y-0.5 min-w-0 pr-2">
-                    <div className="text-[13px] font-medium text-stone-900 truncate">
+                    <div className="text-[13px] font-medium text-zinc-900 truncate">
                       {item.title || "未命名选题"}
                     </div>
-                    <div className="text-[11px] text-stone-400">
+                    <div className="text-[11px] text-zinc-400">
                       认领时间: {claimedAtText}
                     </div>
                   </div>
@@ -970,8 +970,8 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             })}
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
-            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)} className="rounded-xl border-stone-200">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-100">
+            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)} className="rounded-xl border-zinc-200">
               取消
             </Button>
             <Button

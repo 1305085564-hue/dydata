@@ -65,14 +65,14 @@ export function ImageLightbox({
           onClose();
         }
       }}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-stone-950/80"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/80"
     >
       {/* Close */}
       <button
         type="button"
         onClick={onClose}
         aria-label="关闭图片预览"
-        className="absolute top-4 right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
+        className="absolute top-4 right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
       >
         <X className="size-5" />
       </button>
@@ -83,7 +83,7 @@ export function ImageLightbox({
           type="button"
           onClick={handlePrev}
           aria-label="上一张"
-          className="absolute left-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
+          className="absolute left-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -103,7 +103,7 @@ export function ImageLightbox({
           type="button"
           onClick={handleNext}
           aria-label="下一张"
-          className="absolute right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-stone-800/60 text-white transition-colors hover:bg-stone-700"
+          className="absolute right-4 z-10 flex size-9 items-center justify-center rounded-lg bg-zinc-800/60 text-white transition-colors hover:bg-zinc-700"
         >
           <ChevronRight className="size-5" />
         </button>
@@ -111,7 +111,7 @@ export function ImageLightbox({
 
       {/* Counter */}
       {total > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-stone-800/60 px-3 py-1.5 text-[12px] tabular-nums text-white">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-zinc-800/60 px-3 py-1.5 text-[12px] tabular-nums text-white">
           {currentIndex + 1} / {total}
         </div>
       )}

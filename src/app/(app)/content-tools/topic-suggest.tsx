@@ -62,10 +62,10 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
-            <div className="text-[12px] font-normal text-stone-500">账号范围</div>
+            <div className="text-[12px] font-normal text-zinc-500">账号范围</div>
             <Select
               value={accountId}
               onValueChange={(value) => setAccountId(value || "all")}
@@ -89,7 +89,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
           </div>
 
           <div className="space-y-2">
-            <div className="text-[12px] font-normal text-stone-500">统计范围</div>
+            <div className="text-[12px] font-normal text-zinc-500">统计范围</div>
             <Select
               value={String(days)}
               onValueChange={(value) => setDays(Number(value) as 7 | 14 | 30)}
@@ -127,7 +127,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
       ) : null}
 
       {!loading && !error && !data ? (
-        <div className="rounded-2xl border border-stone-200 bg-white py-8">
+        <div className="rounded-2xl border border-zinc-200 bg-white py-8">
           <EmptyState
             title="选择账号范围和统计范围"
             description="设置完成后生成选题建议，系统会同时给出参考依据。"
@@ -139,30 +139,30 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
       {data ? (
         <>
           <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-            <div className="rounded-2xl border border-stone-200 bg-white p-5">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-[18px] font-medium text-stone-900">爆款依据</div>
-                  <div className="mt-1 text-[12px] text-stone-500">
+                  <div className="text-[18px] font-medium text-zinc-900">爆款依据</div>
+                  <div className="mt-1 text-[12px] text-zinc-500">
                     样本 {data.sampleCount} 条 · 热点日期 {data.marketDate ?? "暂无"}
                   </div>
                 </div>
-                <div className="inline-flex items-center gap-1 rounded-full bg-stone-50 px-3 py-1 text-[12px] text-[#D97757] ring-1 ring-stone-200">
+                <div className="inline-flex items-center gap-1 rounded-full bg-zinc-50 px-3 py-1 text-[12px] text-[#D97757] ring-1 ring-zinc-200">
                   <TrendingUp className="size-3.5" />
                   高播放样本
                 </div>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {data.evidenceSummary.map((item) => (
-                  <div key={item} className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-[13px] text-stone-500">
+                  <div key={item} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-[13px] text-zinc-500">
                     {item}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="rounded-2xl border border-stone-200 bg-white p-5">
-              <div className="text-[18px] font-medium text-stone-900">使用建议</div>
-              <ul className="mt-3 space-y-2 text-[13px] leading-[1.7] text-stone-500">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5">
+              <div className="text-[18px] font-medium text-zinc-900">使用建议</div>
+              <ul className="mt-3 space-y-2 text-[13px] leading-[1.7] text-zinc-500">
                 <li>• 优先挑 1 个热点题材 + 1 个历史高胜率角度组合。</li>
                 <li>• 参考视频只抄结构，不直接复刻标题或原句。</li>
                 <li>• 预期表现以“高于中位数多少倍”理解，不当作保底承诺。</li>
@@ -172,38 +172,38 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
 
           <div className="grid gap-4 xl:grid-cols-2">
             {data.suggestions.map((item) => (
-              <Card key={item.title} className="border-stone-200 bg-white">
+              <Card key={item.title} className="border-zinc-200 bg-white">
                 <CardHeader>
                   <CardDescription>{item.category}</CardDescription>
                   <CardTitle>{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="rounded-xl bg-stone-50 p-4">
-                    <div className="text-[12px] text-stone-500">切入角度</div>
-                    <div className="mt-1 text-[13px] text-stone-700">{item.angle}</div>
+                  <div className="rounded-xl bg-zinc-50 p-4">
+                    <div className="text-[12px] text-zinc-500">切入角度</div>
+                    <div className="mt-1 text-[13px] text-zinc-700">{item.angle}</div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl border border-stone-200 bg-white p-4">
-                      <div className="text-[12px] text-stone-500">预期表现</div>
-                      <div className="mt-1 text-[13px] text-stone-700">{item.expectedPerformance}</div>
+                    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                      <div className="text-[12px] text-zinc-500">预期表现</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{item.expectedPerformance}</div>
                     </div>
-                    <div className="rounded-xl border border-stone-200 bg-white p-4">
-                      <div className="text-[12px] text-stone-500">数据依据</div>
-                      <div className="mt-1 text-[13px] text-stone-700">{item.evidence}</div>
+                    <div className="rounded-xl border border-zinc-200 bg-white p-4">
+                      <div className="text-[12px] text-zinc-500">数据依据</div>
+                      <div className="mt-1 text-[13px] text-zinc-700">{item.evidence}</div>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <div className="text-[13px] font-normal text-stone-700">参考视频</div>
+                    <div className="text-[13px] font-normal text-zinc-700">参考视频</div>
                     {item.referenceVideos.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-stone-200 px-4 py-3 text-[13px] text-stone-500">
+                      <div className="rounded-xl border border-dashed border-zinc-200 px-4 py-3 text-[13px] text-zinc-500">
                         暂无参考视频
                       </div>
                     ) : (
                       item.referenceVideos.map((video) => (
-                        <div key={`${item.title}-${video.videoId}`} className="rounded-xl border border-stone-200 bg-white p-4">
-                          <div className="text-[13px] font-normal text-stone-700">{video.title ?? "未命名视频"}</div>
-                          <div className="mt-1 text-[12px] text-stone-500">
+                        <div key={`${item.title}-${video.videoId}`} className="rounded-xl border border-zinc-200 bg-white p-4">
+                          <div className="text-[13px] font-normal text-zinc-700">{video.title ?? "未命名视频"}</div>
+                          <div className="mt-1 text-[12px] text-zinc-500">
                             {video.accountName ?? "未知账号"} · 24h播放 {video.playCount24h ? formatPlayCount(video.playCount24h) : "暂无"}
                             {typeof video.breakoutCoefficient === "number"
                               ? ` · 爆款系数 ${video.breakoutCoefficient.toFixed(2)}`

@@ -27,7 +27,7 @@ const RewriteClient = dynamic(() => import("./components/rewrite-client"), {
 
 function LoadingPlaceholder() {
   return (
-    <div className="flex h-48 items-center justify-center rounded-2xl border border-stone-200 bg-white text-stone-500">
+    <div className="flex h-48 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500">
       <div className="flex items-center gap-3">
         <Skeleton className="size-4 rounded-full" />
         <span className="text-[13px]">正在加载模块...</span>
@@ -50,7 +50,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
                 "inline-flex items-center rounded-xl border px-4 py-2 text-[13px] font-medium transition-colors",
                 isActive
                   ? "border-[#D97757]/40 bg-[#D97757]/8 text-[#D97757]"
-                  : "border-stone-200 bg-white text-stone-700 hover:bg-stone-50 hover:text-stone-900",
+                  : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
               )}
             >
               {tab.label}
@@ -59,7 +59,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
         })}
       </div>
 
-      <div className="text-[12px] text-stone-500 mt-1 px-1 font-normal">
+      <div className="text-[12px] text-zinc-500 mt-1 px-1 font-normal">
         {TAB_ITEMS.find((tab) => tab.key === initialTab)?.description}
       </div>
 

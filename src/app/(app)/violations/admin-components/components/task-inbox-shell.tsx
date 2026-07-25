@@ -50,17 +50,17 @@ export function TaskInboxShell({
         />
 
         {/* 已处理记录卡片 */}
-        <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
-          <div className="border-b border-stone-100 px-5 py-4">
-            <h2 className="text-[15px] font-medium text-stone-900 flex items-center gap-2">
+        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <div className="border-b border-zinc-100 px-5 py-4">
+            <h2 className="text-[15px] font-medium text-zinc-900 flex items-center gap-2">
               <span>已处理记录</span>
               {processedCount !== null ? (
-                <span className="inline-flex h-5 items-center rounded-md bg-stone-100 px-1.5 text-[12px] tabular-nums font-medium text-stone-600">
+                <span className="inline-flex h-5 items-center rounded-md bg-zinc-100 px-1.5 text-[12px] tabular-nums font-medium text-zinc-600">
                   {processedCount}
                 </span>
               ) : null}
             </h2>
-            <p className="text-[12px] text-stone-500 mt-0.5">近 30 天审批记录</p>
+            <p className="text-[12px] text-zinc-500 mt-0.5">近 30 天审批记录</p>
           </div>
           <div className="px-4 py-3 sm:px-5">
             <ProcessedList

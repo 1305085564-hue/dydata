@@ -30,13 +30,13 @@ const SEVERITY_LABEL: Record<SeverityKey, string> = {
 const SEVERITY_DOT: Record<SeverityKey, string> = {
   critical: "bg-[#C9604D]",
   warning: "bg-[#D99E55]",
-  info: "bg-stone-400",
+  info: "bg-zinc-400",
 };
 
 const SEVERITY_TEXT: Record<SeverityKey, string> = {
   critical: "text-[#C9604D]",
   warning: "text-[#D99E55]",
-  info: "text-stone-500",
+  info: "text-zinc-500",
 };
 
 type ApiResponse = AlertAggregationResult & {
@@ -364,11 +364,11 @@ export function AiAlertPanel({
   const showPanelBody = expanded && totalAlerts > 0;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
       <header
         className={cn(
           "flex items-center justify-between gap-3 px-4 py-2.5",
-          showPanelBody && "border-b border-stone-200",
+          showPanelBody && "border-b border-zinc-200",
         )}
       >
         <button
@@ -382,8 +382,8 @@ export function AiAlertPanel({
           aria-expanded={showPanelBody}
         >
           <span className="flex shrink-0 items-center gap-1.5">
-            <Sparkles className="size-3.5 text-stone-500" strokeWidth={1.75} />
-            <span className="text-[12px] font-medium tracking-tight text-stone-700">AI 速览</span>
+            <Sparkles className="size-3.5 text-zinc-500" strokeWidth={1.75} />
+            <span className="text-[12px] font-medium tracking-tight text-zinc-700">AI 速览</span>
           </span>
           {summary && totalAlerts > 0 ? (
             <span className="flex shrink-0 items-center gap-1">
@@ -394,7 +394,7 @@ export function AiAlertPanel({
                   <span
                     key={sev}
                     className={cn(
-                      "inline-flex items-center gap-1 rounded-md bg-stone-100 px-1.5 py-0.5 text-[12px] font-medium",
+                      "inline-flex items-center gap-1 rounded-md bg-zinc-100 px-1.5 py-0.5 text-[12px] font-medium",
                       SEVERITY_TEXT[sev],
                     )}
                   >
@@ -406,12 +406,12 @@ export function AiAlertPanel({
             </span>
           ) : null}
           {topAlertSummary && !showPanelBody ? (
-            <span className="min-w-0 flex-1 truncate text-[12px] text-stone-500">
+            <span className="min-w-0 flex-1 truncate text-[12px] text-zinc-500">
               · {topAlertSummary}
             </span>
           ) : null}
           {totalAlerts > 0 ? (
-            <span className="ml-auto shrink-0 text-stone-500">
+            <span className="ml-auto shrink-0 text-zinc-500">
               {showPanelBody ? (
                 <ChevronUp className="size-3.5" strokeWidth={1.75} />
               ) : (
@@ -419,14 +419,14 @@ export function AiAlertPanel({
               )}
             </span>
           ) : (
-            <span className="ml-auto shrink-0 text-[12px] text-stone-500">
+            <span className="ml-auto shrink-0 text-[12px] text-zinc-500">
               今日暂无待办
             </span>
           )}
         </button>
         <div className="flex shrink-0 items-center gap-2">
           {relative ? (
-            <span className="text-[12px] text-stone-500">{relative}</span>
+            <span className="text-[12px] text-zinc-500">{relative}</span>
           ) : null}
           {totalAlerts > 0 ? (
             <button
@@ -456,7 +456,7 @@ export function AiAlertPanel({
             }}
             disabled={state.refreshing}
             aria-busy={state.refreshing}
-            className="flex size-6 items-center justify-center rounded-md text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex size-6 items-center justify-center rounded-md text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
             aria-label="刷新告警"
           >
             <RefreshCw
@@ -469,7 +469,7 @@ export function AiAlertPanel({
 
       {state.loading ? (
         <div className="px-4 py-2">
-          <span className="text-[12px] text-stone-500">正在加载 AI 速览…</span>
+          <span className="text-[12px] text-zinc-500">正在加载 AI 速览…</span>
         </div>
       ) : state.error ? (
         <div className="px-4 py-2 flex items-center gap-2">
@@ -477,7 +477,7 @@ export function AiAlertPanel({
           <button
             type="button"
             onClick={() => void runFetch(true)}
-            className="rounded-md border border-stone-200 bg-white px-2 py-0.5 text-[12px] font-medium text-stone-700 transition hover:border-stone-300 hover:text-stone-900"
+            className="rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-[12px] font-medium text-zinc-700 transition hover:border-zinc-300 hover:text-zinc-900"
           >
             重试
           </button>
@@ -486,11 +486,11 @@ export function AiAlertPanel({
         <div className="flex md:h-[480px]">
           <aside
             className={cn(
-              "min-w-0 md:w-[32%] md:min-w-[260px] md:max-w-[340px] md:flex-shrink-0 md:overflow-y-auto md:border-r md:border-stone-200",
+              "min-w-0 md:w-[32%] md:min-w-[260px] md:max-w-[340px] md:flex-shrink-0 md:overflow-y-auto md:border-r md:border-zinc-200",
               mobileView === "detail" ? "hidden md:block" : "block w-full",
             )}
           >
-            <ul className="divide-y divide-stone-100">
+            <ul className="divide-y divide-zinc-100">
               {alertGroups.map((group) => {
                 const active = group.groupKey === effectiveSelectedKey;
                 const firstAlert = group.alerts[0];
@@ -506,22 +506,22 @@ export function AiAlertPanel({
                       }}
                       className={cn(
                         "active:translate-y-0 flex w-full items-start gap-2 border-l-[2px] px-3.5 py-2.5 text-left transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        active ? "border-l-[#D97757] bg-stone-200/95" : "border-l-transparent hover:bg-stone-100",
+                        active ? "border-l-[#D97757] bg-zinc-200/95" : "border-l-transparent hover:bg-zinc-100",
                       )}
                       aria-current={active ? "true" : undefined}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className={cn("size-2 shrink-0 rounded-full", SEVERITY_DOT[group.severity])} />
-                          <span className="truncate text-[13px] font-medium text-stone-900">
+                          <span className="truncate text-[13px] font-medium text-zinc-900">
                             {group.label}
                           </span>
-                          <span className="shrink-0 text-[12px] font-normal tabular-nums text-stone-500">
+                          <span className="shrink-0 text-[12px] font-normal tabular-nums text-zinc-500">
                             {group.count}
                           </span>
                         </div>
                         {previewName || previewDetail ? (
-                          <p className="mt-0.5 truncate text-[12px] text-stone-500">
+                          <p className="mt-0.5 truncate text-[12px] text-zinc-500">
                             {previewName ?? ""}
                             {previewName && previewDetail ? " · " : ""}
                             {previewDetail ?? ""}
@@ -542,23 +542,23 @@ export function AiAlertPanel({
             )}
           >
             {!activeGroup ? (
-              <div className="flex flex-1 items-center justify-center p-6 text-[12px] text-stone-500">
+              <div className="flex flex-1 items-center justify-center p-6 text-[12px] text-zinc-500">
                 选择左侧分组查看详情
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-2 border-b border-stone-100 px-3.5 py-2 md:hidden">
+                <div className="flex items-center gap-2 border-b border-zinc-100 px-3.5 py-2 md:hidden">
                   <button
                     type="button"
                     onClick={() => setMobileView("list")}
-                    className="active:translate-y-0 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[12px] text-stone-500 transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-100 hover:text-stone-900"
+                    className="active:translate-y-0 inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[12px] text-zinc-500 transition-[color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-900"
                   >
                     <ChevronLeft className="size-3.5" strokeWidth={1.75} />
                     返回列表
                   </button>
                 </div>
 
-                <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-stone-100 bg-stone-50/90 px-3.5 py-1.5 backdrop-blur">
+                <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-zinc-100 bg-zinc-50/90 px-3.5 py-1.5 backdrop-blur">
                   <Checkbox
                     aria-label="全选"
                     checked={
@@ -569,7 +569,7 @@ export function AiAlertPanel({
                       toggleSelectAll(activeGroup.groupKey, activeGroup.alerts)
                     }
                   />
-                  <span className="text-[12px] text-stone-500">
+                  <span className="text-[12px] text-zinc-500">
                     {selectedCount(activeGroup.groupKey) === 0
                       ? "全选"
                       : `已选 ${selectedCount(activeGroup.groupKey)}`}
@@ -582,14 +582,14 @@ export function AiAlertPanel({
                         selectedCount(activeGroup.groupKey) === 0
                       }
                       onClick={() => void handleBatchExecute(activeGroup)}
-                      className="inline-flex h-6 items-center rounded-md border border-stone-200 px-2.5 text-[12px] text-stone-700 transition hover:border-stone-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-6 items-center rounded-md border border-zinc-200 px-2.5 text-[12px] text-zinc-700 transition hover:border-zinc-300 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {executingGroup === activeGroup.groupKey ? <>执行中…</> : "一键执行"}
                     </button>
                   </div>
                 </div>
 
-                <ul className="flex-1 divide-y divide-stone-100 md:overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-200 [&::-webkit-scrollbar-track]:bg-transparent">
+                <ul className="flex-1 divide-y divide-zinc-100 md:overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-200 [&::-webkit-scrollbar-track]:bg-transparent">
                   {activeGroup.alerts.map((alert) => {
                     const navigate = getPrimaryNavigate(alert);
                     const primaryEntity = alert.affectedEntities[0];
@@ -598,7 +598,7 @@ export function AiAlertPanel({
                         {navigate ? (
                           <Link
                             href={navigate.href!}
-                            className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-50/60"
+                            className="active:translate-y-0 group flex h-9 items-center gap-3 px-4 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50/60"
                           >
                             <div
                               onClick={(e) => {
@@ -625,17 +625,17 @@ export function AiAlertPanel({
                                 }
                               />
                             </div>
-                            <span className="min-w-[80px] truncate text-[13px] font-medium text-stone-900">
+                            <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-900">
                               {primaryEntity?.name ?? "—"}
                             </span>
-                            <span className="flex-1 truncate text-[12px] text-stone-500">
+                            <span className="flex-1 truncate text-[12px] text-zinc-500">
                               {alert.detail ?? alert.title}
                             </span>
-                            <ArrowRight className="size-3.5 text-stone-500 opacity-0 transition duration-150 group-hover:opacity-100" />
+                            <ArrowRight className="size-3.5 text-zinc-500 opacity-0 transition duration-150 group-hover:opacity-100" />
                           </Link>
                         ) : (
                           <div
-                            className="group flex h-9 items-center gap-3 px-4 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-stone-50/60"
+                            className="group flex h-9 items-center gap-3 px-4 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50/60"
                           >
                             <div
                               onClick={(e) => {
@@ -660,10 +660,10 @@ export function AiAlertPanel({
                                 }
                               />
                             </div>
-                            <span className="min-w-[80px] truncate text-[13px] font-medium text-stone-900">
+                            <span className="min-w-[80px] truncate text-[13px] font-medium text-zinc-900">
                               {primaryEntity?.name ?? "—"}
                             </span>
-                            <span className="flex-1 truncate text-[12px] text-stone-500">
+                            <span className="flex-1 truncate text-[12px] text-zinc-500">
                               {alert.detail ?? alert.title}
                             </span>
                           </div>

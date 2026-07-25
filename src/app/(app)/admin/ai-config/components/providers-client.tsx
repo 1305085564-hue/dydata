@@ -39,7 +39,7 @@ export default function ProvidersClient() {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
-          <div key={i} className="h-24 rounded-2xl bg-stone-50 animate-pulse border border-stone-200" />
+          <div key={i} className="h-24 rounded-2xl bg-zinc-50 animate-pulse border border-zinc-200" />
         ))}
       </div>
     );
@@ -91,10 +91,10 @@ export default function ProvidersClient() {
   return (
     <div className="flex flex-col md:flex-row gap-3 items-start min-h-[580px]">
       {/* 左栏：极简白底卡片树导航 */}
-      <div className="w-full md:w-[280px] border border-stone-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
+      <div className="w-full md:w-[280px] border border-zinc-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
         <div className="flex justify-between items-center px-2 py-1">
-          <h2 className="text-[12px] font-normal text-stone-500 tracking-wider">渠道与分组</h2>
-          <Button variant="ghost" size="icon" aria-label="新建渠道" className="size-6 text-stone-500 hover:text-stone-700 rounded-md bg-stone-50 hover:bg-stone-100" onClick={() => setProviderModal({ open: true, data: null })}>
+          <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">渠道与分组</h2>
+          <Button variant="ghost" size="icon" aria-label="新建渠道" className="size-6 text-zinc-500 hover:text-zinc-700 rounded-md bg-zinc-50 hover:bg-zinc-100" onClick={() => setProviderModal({ open: true, data: null })}>
             <Plus strokeWidth={2} className="size-3.5" />
           </Button>
         </div>
@@ -112,8 +112,8 @@ export default function ProvidersClient() {
                   className={cn(
                     "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px] relative",
                     isProviderActive
-                      ? "bg-stone-100/80 text-stone-900 font-medium"
-                      : "text-stone-700 hover:bg-stone-50 hover:text-stone-900"
+                      ? "bg-zinc-100/80 text-zinc-900 font-medium"
+                      : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
                   )}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-1">
@@ -121,7 +121,7 @@ export default function ProvidersClient() {
                       type="button"
                       aria-label={`${isExpanded ? "收起" : "展开"}渠道 ${p.name}`}
                       aria-expanded={isExpanded}
-                      className="flex items-center justify-center size-5 rounded-md hover:bg-stone-200/50 text-stone-500 transition-colors shrink-0"
+                      className="flex items-center justify-center size-5 rounded-md hover:bg-zinc-200/50 text-zinc-500 transition-colors shrink-0"
                       onClick={() => toggleProvider(p.id)}
                     >
                       {isExpanded ? (
@@ -138,7 +138,7 @@ export default function ProvidersClient() {
                     >
                       <span className="truncate">{p.name}</span>
                       {!p.is_enabled && (
-                        <span className="text-[12px] text-stone-500 bg-stone-100 px-1 rounded-sm">停用</span>
+                        <span className="text-[12px] text-zinc-500 bg-zinc-100 px-1 rounded-sm">停用</span>
                       )}
                     </button>
                   </div>
@@ -147,7 +147,7 @@ export default function ProvidersClient() {
                       variant="ghost"
                       size="icon"
                       aria-label={`编辑渠道 ${p.name}`}
-                      className="size-5 text-stone-500 hover:text-stone-700"
+                      className="size-5 text-zinc-500 hover:text-zinc-700"
                       onClick={(e) => {
                         e.stopPropagation();
                         setProviderModal({ open: true, data: p });
@@ -162,7 +162,7 @@ export default function ProvidersClient() {
                 {isExpanded && (
                   <div className="pl-[28px] space-y-0.5 pb-1">
                     {pKeys.length === 0 ? (
-                      <div className="text-[12px] text-stone-500 py-1 pl-2">无分组</div>
+                      <div className="text-[12px] text-zinc-500 py-1 pl-2">无分组</div>
                     ) : (
                       pKeys.map((key) => {
                         const isKeyActive = activeNode?.type === "key" && activeNode?.id === key.id;
@@ -174,8 +174,8 @@ export default function ProvidersClient() {
                             className={cn(
                               "group flex items-center justify-between px-2 py-1.5 rounded-md transition-all text-[13px]",
                               isKeyActive
-                                ? "bg-[#5F82A8]/10 text-stone-900 font-medium"
-                                : "text-stone-500 hover:bg-stone-50 hover:text-stone-900"
+                                ? "bg-[#5F82A8]/10 text-zinc-900 font-medium"
+                                : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
                             )}
                           >
                             <button
@@ -193,7 +193,7 @@ export default function ProvidersClient() {
                                 variant="ghost"
                                 size="icon"
                                 aria-label={`编辑分组 ${key.label}`}
-                                className="size-5 text-stone-500 hover:text-stone-700"
+                                className="size-5 text-zinc-500 hover:text-zinc-700"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setKeyModal({ open: true, providerId: p.id, data: key });
@@ -215,21 +215,21 @@ export default function ProvidersClient() {
       </div>
 
       {/* 右栏：独立白底配置卡片 */}
-      <div className="flex-1 border border-stone-200 rounded-2xl bg-white p-6 min-h-[480px] min-w-0">
+      <div className="flex-1 border border-zinc-200 rounded-2xl bg-white p-6 min-h-[480px] min-w-0">
         {activeNode?.type === "provider" && (() => {
           const provider = bundle.providers.find((p) => p.id === activeNode.id);
-          if (!provider) return <div className="text-stone-500 text-[12px] py-10 text-center">渠道已不存在</div>;
+          if (!provider) return <div className="text-zinc-500 text-[12px] py-10 text-center">渠道已不存在</div>;
           const providerKeys = bundle.keys.filter((k) => k.provider_id === provider.id);
 
           return (
             <div className="space-y-5">
-              <div className="flex justify-between items-center border-b border-stone-100 pb-3">
+              <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
                 <div>
-                  <h3 className="font-medium text-[13px] leading-[1.5] text-stone-900">{provider.name}</h3>
-                  <div className="text-[12px] text-stone-500 mt-1 font-mono">{provider.base_url}</div>
+                  <h3 className="font-medium text-[13px] leading-[1.5] text-zinc-900">{provider.name}</h3>
+                  <div className="text-[12px] text-zinc-500 mt-1 font-mono">{provider.base_url}</div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md">
                     <span>{provider.is_enabled ? "已启用" : "已禁用"}</span>
                     <Switch
                       aria-label={`启用渠道 ${provider.name}`}
@@ -248,22 +248,22 @@ export default function ProvidersClient() {
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">绑定的 API 分组</h4>
-                <div className="rounded-lg border border-stone-200 overflow-hidden bg-white">
+                <h4 className="text-[12px] font-normal text-zinc-500 uppercase tracking-wider">绑定的 API 分组</h4>
+                <div className="rounded-lg border border-zinc-200 overflow-hidden bg-white">
                   <Table>
-                    <TableHeader className="bg-stone-50/50">
+                    <TableHeader className="bg-zinc-50/50">
                       <TableRow>
-                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-normal text-stone-500">分组名称</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">API Key</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">健康状态</TableHead>
-                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-stone-500">启用</TableHead>
-                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-stone-500">操作</TableHead>
+                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-normal text-zinc-500">分组名称</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">API Key</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">健康状态</TableHead>
+                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">启用</TableHead>
+                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-zinc-500">操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {providerKeys.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-stone-500">
+                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-zinc-500">
                             暂无 API 分组，请点击新建分组
                           </TableCell>
                         </TableRow>
@@ -271,9 +271,9 @@ export default function ProvidersClient() {
                         providerKeys.map((key) => {
                           const healthy = isKeyHealthy(key);
                           return (
-                            <TableRow key={key.id} className="group hover:bg-stone-50/50 h-9 transition-colors">
-                              <TableCell className="py-1 text-[13px] font-medium text-stone-900 pl-3 text-left">{key.label}</TableCell>
-                              <TableCell className="py-1 text-[13px] font-mono text-stone-500 text-left">{key.api_key_masked || "***"}</TableCell>
+                            <TableRow key={key.id} className="group hover:bg-zinc-50/50 h-9 transition-colors">
+                              <TableCell className="py-1 text-[13px] font-medium text-zinc-900 pl-3 text-left">{key.label}</TableCell>
+                              <TableCell className="py-1 text-[13px] font-mono text-zinc-500 text-left">{key.api_key_masked || "***"}</TableCell>
                               <TableCell className="py-1 text-left">
                                 {healthy ? (
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[12px] font-medium bg-[#6FAA7D]/100/5 text-[#6FAA7D] border border-[#6FAA7D]/10">
@@ -298,14 +298,14 @@ export default function ProvidersClient() {
                               <TableCell className="py-1 text-right pr-3">
                                 <div className="flex items-center justify-end relative h-7">
                                   <div className="absolute right-1.5 opacity-0 transition-opacity sm:opacity-30 sm:group-hover:opacity-0 sm:group-focus-within:opacity-0">
-                                    <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
+                                    <span className="text-zinc-500 text-[12px] tracking-widest font-normal">···</span>
                                   </div>
                                   <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                                     <Button
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`编辑分组 ${key.label}`}
-                                      className="size-7 text-stone-500 hover:text-stone-700"
+                                      className="size-7 text-zinc-500 hover:text-zinc-700"
                                       onClick={() => setKeyModal({ open: true, providerId: provider.id, data: key })}
                                     >
                                       <Pencil strokeWidth={1.5} className="size-3" />
@@ -314,7 +314,7 @@ export default function ProvidersClient() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`为分组 ${key.label} 添加模型`}
-                                      className="size-7 text-stone-500 hover:text-[#D97757]"
+                                      className="size-7 text-zinc-500 hover:text-[#D97757]"
                                       onClick={() => setModelModal({ open: true, keyId: key.id, data: null })}
                                     >
                                       <Plus strokeWidth={1.5} className="size-3" />
@@ -323,7 +323,7 @@ export default function ProvidersClient() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`删除分组 ${key.label}`}
-                                      className="size-7 text-stone-500 hover:text-[#C9604D]"
+                                      className="size-7 text-zinc-500 hover:text-[#C9604D]"
                                       onClick={() => setDeleteConfirm({ open: true, entity: "key", id: key.id, title: `删除分组 ${key.label}` })}
                                     >
                                       <Trash2 strokeWidth={1.5} className="size-3" />
@@ -345,21 +345,21 @@ export default function ProvidersClient() {
 
         {activeNode?.type === "key" && (() => {
           const apiKey = bundle.keys.find((k) => k.id === activeNode.id);
-          if (!apiKey) return <div className="text-stone-500 text-[13px] py-10 text-center">分组已不存在</div>;
+          if (!apiKey) return <div className="text-zinc-500 text-[13px] py-10 text-center">分组已不存在</div>;
           const provider = bundle.providers.find((p) => p.id === apiKey.provider_id);
           const keyModels = bundle.models.filter((m) => m.key_id === apiKey.id);
 
           return (
             <div className="space-y-5">
-              <div className="flex justify-between items-center border-b border-stone-100 pb-3">
+              <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
                 <div>
-                  <h3 className="font-medium text-[13px] leading-[1.5] text-stone-900">{apiKey.label} 分组</h3>
-                  <div className="text-[12px] text-stone-500 mt-1">
+                  <h3 className="font-medium text-[13px] leading-[1.5] text-zinc-900">{apiKey.label} 分组</h3>
+                  <div className="text-[12px] text-zinc-500 mt-1">
                     所属渠道：{provider?.name || "未知"} | Key：<span className="font-mono">{apiKey.api_key_masked}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-[12px] text-stone-500 bg-stone-50 border border-stone-100 px-2 py-0.5 rounded-md">
+                  <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md">
                     <span>{apiKey.is_enabled ? "已启用" : "已禁用"}</span>
                     <Switch
                       aria-label={`启用分组 ${apiKey.label}`}
@@ -378,21 +378,21 @@ export default function ProvidersClient() {
               </div>
 
               {/* 诊断小栏 */}
-              <div className="grid grid-cols-2 gap-4 bg-stone-50/50 p-3 rounded-lg border border-stone-100 text-[12px]">
+              <div className="grid grid-cols-2 gap-4 bg-zinc-50/50 p-3 rounded-lg border border-zinc-100 text-[12px]">
                 <div>
-                  <span className="text-stone-500">连续失败次数：</span>
-                  <span className={cn("font-medium", apiKey.consecutive_failures > 0 ? "text-[#C9604D]" : "text-stone-700")}>
+                  <span className="text-zinc-500">连续失败次数：</span>
+                  <span className={cn("font-medium", apiKey.consecutive_failures > 0 ? "text-[#C9604D]" : "text-zinc-700")}>
                     {apiKey.consecutive_failures}
                   </span>
                 </div>
                 <div>
-                  <span className="text-stone-500">最近成功时间：</span>
-                  <span className="text-stone-700 font-medium">
+                  <span className="text-zinc-500">最近成功时间：</span>
+                  <span className="text-zinc-700 font-medium">
                     {apiKey.last_success_at ? new Date(apiKey.last_success_at).toLocaleString() : "暂无"}
                   </span>
                 </div>
                 {apiKey.last_error_message && (
-                  <div className="col-span-2 text-[#C9604D] border-t border-stone-100 pt-1.5 mt-0.5">
+                  <div className="col-span-2 text-[#C9604D] border-t border-zinc-100 pt-1.5 mt-0.5">
                     <span className="font-medium text-[12px] uppercase tracking-wider">最近异常：</span>
                     {apiKey.last_error_message}
                   </div>
@@ -400,29 +400,29 @@ export default function ProvidersClient() {
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-[12px] font-normal text-stone-500 uppercase tracking-wider">支持的可用模型列表</h4>
-                <div className="rounded-lg border border-stone-200 overflow-hidden bg-white">
+                <h4 className="text-[12px] font-normal text-zinc-500 uppercase tracking-wider">支持的可用模型列表</h4>
+                <div className="rounded-lg border border-zinc-200 overflow-hidden bg-white">
                   <Table>
-                    <TableHeader className="bg-stone-50/50">
+                    <TableHeader className="bg-zinc-50/50">
                       <TableRow>
-                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-normal text-stone-500">模型标识 (ID)</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-stone-500">友好显示名称</TableHead>
-                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-stone-500">启用</TableHead>
-                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-stone-500">操作</TableHead>
+                        <TableHead className="h-8 py-1.5 pl-3 text-left text-[12px] font-normal text-zinc-500">模型标识 (ID)</TableHead>
+                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">友好显示名称</TableHead>
+                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">启用</TableHead>
+                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-zinc-500">操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {keyModels.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-[13px] py-8 text-stone-500">
+                          <TableCell colSpan={4} className="text-center text-[13px] py-8 text-zinc-500">
                             暂无可用模型，请点击右上角添加
                           </TableCell>
                         </TableRow>
                       ) : (
                         keyModels.map((model) => (
-                          <TableRow key={model.id} className="group hover:bg-stone-50/50 h-9 transition-colors">
-                            <TableCell className="py-1 text-[12px] font-mono text-stone-700 pl-3 text-left">{model.model_id}</TableCell>
-                            <TableCell className="py-1 text-[13px] font-medium text-stone-900 text-left">{model.display_name || model.model_id}</TableCell>
+                          <TableRow key={model.id} className="group hover:bg-zinc-50/50 h-9 transition-colors">
+                            <TableCell className="py-1 text-[12px] font-mono text-zinc-700 pl-3 text-left">{model.model_id}</TableCell>
+                            <TableCell className="py-1 text-[13px] font-medium text-zinc-900 text-left">{model.display_name || model.model_id}</TableCell>
                             <TableCell className="py-1 text-left">
                               <Switch
                                 aria-label={`启用模型 ${model.display_name || model.model_id}`}
@@ -434,14 +434,14 @@ export default function ProvidersClient() {
                             <TableCell className="py-1 text-right pr-3">
                               <div className="flex items-center justify-end relative h-7">
                                 <div className="absolute right-1.5 opacity-0 transition-opacity sm:opacity-30 sm:group-hover:opacity-0 sm:group-focus-within:opacity-0">
-                                  <span className="text-stone-500 text-[12px] tracking-widest font-normal">···</span>
+                                  <span className="text-zinc-500 text-[12px] tracking-widest font-normal">···</span>
                                 </div>
                                 <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     aria-label={`编辑模型 ${model.display_name || model.model_id}`}
-                                    className="size-7 text-stone-500 hover:text-stone-700"
+                                    className="size-7 text-zinc-500 hover:text-zinc-700"
                                     onClick={() => setModelModal({ open: true, keyId: apiKey.id, data: model })}
                                   >
                                     <Pencil strokeWidth={1.5} className="size-3" />
@@ -450,7 +450,7 @@ export default function ProvidersClient() {
                                     variant="ghost"
                                     size="icon"
                                     aria-label={`删除模型 ${model.display_name || model.model_id}`}
-                                    className="size-7 text-stone-500 hover:text-[#C9604D]"
+                                    className="size-7 text-zinc-500 hover:text-[#C9604D]"
                                     onClick={() => setDeleteConfirm({ open: true, entity: "model", id: model.id, title: `删除模型 ${model.display_name || model.model_id}` })}
                                   >
                                     <Trash2 strokeWidth={1.5} className="size-3" />
@@ -470,7 +470,7 @@ export default function ProvidersClient() {
         })()}
 
         {!activeNode && (
-          <div className="text-center py-20 text-[13px] text-stone-500">
+          <div className="text-center py-20 text-[13px] text-zinc-500">
             请在左侧树中选择渠道或分组以查看详情
           </div>
         )}

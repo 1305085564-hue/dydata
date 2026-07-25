@@ -115,13 +115,13 @@ export function QuotaConfigPanel({
   };
 
   return (
-    <div className="border-t border-stone-200 pt-8 space-y-6">
+    <div className="border-t border-zinc-200 pt-8 space-y-6">
       <div>
-        <h2 className="text-[18px] font-medium tracking-[-0.02em] text-stone-900 flex items-center gap-2">
+        <h2 className="text-[18px] font-medium tracking-[-0.02em] text-zinc-900 flex items-center gap-2">
           <Settings className="size-5 text-[#D97757]" />
           产量目标管理
         </h2>
-        <p className="text-[13px] leading-6 text-stone-500 mt-1">
+        <p className="text-[13px] leading-6 text-zinc-500 mt-1">
           设置团队每日视频发布产量额度目标。新规则到达生效日期后将自动覆盖旧规则。
         </p>
       </div>
@@ -130,27 +130,27 @@ export function QuotaConfigPanel({
         {/* 左侧：当前目标与添加表单 */}
         <div className="md:col-span-1 space-y-5">
           {/* 当前生效指标卡 (A.3/C.3) */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 flex flex-col justify-between h-[105px]">
-            <span className="text-[13px] text-stone-500 font-medium">今日生效发片指标</span>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 flex flex-col justify-between h-[105px]">
+            <span className="text-[13px] text-zinc-500 font-medium">今日生效发片指标</span>
             <div className="flex items-baseline gap-1">
               <span className="text-[24px] font-medium tabular-nums text-[#D97757]">
                 {currentTarget}
               </span>
-              <span className="text-[12px] text-stone-500 ml-1">条 / 天</span>
+              <span className="text-[12px] text-zinc-500 ml-1">条 / 天</span>
             </div>
           </div>
 
           {/* 新增目标规则表单 (U1) */}
           {isOwner ? (
-            <div className="rounded-2xl border border-stone-200 bg-white p-5 space-y-4">
-              <h3 className="text-[13px] font-medium text-stone-900">
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-4">
+              <h3 className="text-[13px] font-medium text-zinc-900">
                 配置新发片目标
               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* 生效日期 */}
                 <div className="space-y-1.5">
-                  <label htmlFor="effective-date" className="text-[12px] font-medium text-stone-500">
+                  <label htmlFor="effective-date" className="text-[12px] font-medium text-zinc-500">
                     生效日期
                   </label>
                   <input
@@ -158,13 +158,13 @@ export function QuotaConfigPanel({
                     type="date"
                     value={effectiveDate}
                     onChange={(e) => setEffectiveDate(e.target.value)}
-                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-950/5 transition-[background-color,box-shadow]"
+                    className="w-full h-10 rounded-xl border-0 bg-zinc-100/70 px-4 text-[13px] text-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
                   />
                 </div>
 
                 {/* 目标数 */}
                 <div className="space-y-1.5">
-                  <label htmlFor="daily-target" className="text-[12px] font-medium text-stone-500">
+                  <label htmlFor="daily-target" className="text-[12px] font-medium text-zinc-500">
                     每日产量目标 (条/天)
                   </label>
                   <input
@@ -174,13 +174,13 @@ export function QuotaConfigPanel({
                     max="50"
                     value={dailyTarget}
                     onChange={(e) => setDailyTarget(e.target.value)}
-                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] text-stone-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-950/5 transition-[background-color,box-shadow]"
+                    className="w-full h-10 rounded-xl border-0 bg-zinc-100/70 px-4 text-[13px] text-zinc-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
                   />
                 </div>
 
                 {/* 备注 */}
                 <div className="space-y-1.5">
-                  <label htmlFor="quota-note" className="text-[12px] font-medium text-stone-500">
+                  <label htmlFor="quota-note" className="text-[12px] font-medium text-zinc-500">
                     调整说明 / 备注
                   </label>
                   <input
@@ -189,7 +189,7 @@ export function QuotaConfigPanel({
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="如：夏季发片量调整..."
-                    className="w-full h-10 rounded-xl border-0 bg-stone-100/70 px-4 text-[13px] text-stone-900 placeholder:text-stone-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-950/5 transition-[background-color,box-shadow]"
+                    className="w-full h-10 rounded-xl border-0 bg-zinc-100/70 px-4 text-[13px] text-zinc-900 placeholder:text-zinc-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,box-shadow]"
                   />
                 </div>
 
@@ -214,7 +214,7 @@ export function QuotaConfigPanel({
               </form>
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50 p-4 text-[12px] text-stone-500 leading-[1.6]">
+            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50 p-4 text-[12px] text-zinc-500 leading-[1.6]">
               <AlertCircle className="size-4 text-[#D99E55] mb-1.5" />
               只有系统 Owner 拥有添加及编辑每日发片指标规则的写入权限。Admin 角色仅供查阅规则历史。
             </div>
@@ -224,20 +224,20 @@ export function QuotaConfigPanel({
         {/* 右侧：规则变更历史 (U2) */}
         <div className="md:col-span-2 space-y-3">
           <div className="flex items-baseline justify-between px-1">
-            <h3 className="text-[13px] font-medium text-stone-900">
+            <h3 className="text-[13px] font-medium text-zinc-900">
               指标规则调整历史
             </h3>
-            <span className="text-[12px] tabular-nums text-stone-500">
+            <span className="text-[12px] tabular-nums text-zinc-500">
               共 {rules.length} 条历史规则
             </span>
           </div>
 
           {rules.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stone-200 bg-white py-12 text-center text-stone-500 text-[13px]">
+            <div className="rounded-2xl border border-dashed border-zinc-200 bg-white py-12 text-center text-zinc-500 text-[13px]">
               暂无历史指标配置记录
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
               {rules.map((rule, idx) => {
                 const isLast = idx === rules.length - 1;
                 const isEffectiveToday = rule.effective_date <= todayDate && (idx === 0 || rules[idx - 1].effective_date > todayDate);
@@ -246,14 +246,14 @@ export function QuotaConfigPanel({
                   <div
                     key={rule.id}
                     className={cn(
-                      "flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-stone-50/50",
-                      !isLast && "border-b border-stone-100",
+                      "flex items-center justify-between px-5 py-3.5 transition-colors hover:bg-zinc-50/50",
+                      !isLast && "border-b border-zinc-100",
                       isEffectiveToday && "bg-[#D97757]/[0.015]"
                     )}
                   >
                     <div className="space-y-0.5 min-w-0 flex-1">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-[13px] font-medium text-stone-900">
+                        <span className="text-[13px] font-medium text-zinc-900">
                           自 {rule.effective_date} 生效
                         </span>
                         {isEffectiveToday && (
@@ -264,22 +264,22 @@ export function QuotaConfigPanel({
                       </div>
                       
                       {rule.note && (
-                        <p className="text-[12px] text-stone-500 truncate flex items-center gap-1">
-                          <FileText className="size-3 text-stone-500" />
+                        <p className="text-[12px] text-zinc-500 truncate flex items-center gap-1">
+                          <FileText className="size-3 text-zinc-500" />
                           <span>说明: {rule.note}</span>
                         </p>
                       )}
 
-                      <div className="text-[12px] text-stone-500">
+                      <div className="text-[12px] text-zinc-500">
                         发布人: {rule.profiles?.name || "系统"} • 创建于: {new Date(rule.created_at).toLocaleDateString()}
                       </div>
                     </div>
 
                     <div className="shrink-0 flex items-baseline gap-0.5 ml-4">
-                      <span className="text-[18px] font-medium tabular-nums text-stone-900">
+                      <span className="text-[18px] font-medium tabular-nums text-zinc-900">
                         {rule.daily_target}
                       </span>
-                      <span className="text-[12px] text-stone-500">条/天</span>
+                      <span className="text-[12px] text-zinc-500">条/天</span>
                     </div>
                   </div>
                 );

@@ -163,13 +163,13 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[540px] p-5 md:p-6 rounded-2xl">
         <DialogHeader className="gap-1.5">
-          <DialogTitle className="flex items-center gap-2 text-stone-900 font-semibold">
+          <DialogTitle className="flex items-center gap-2 text-zinc-900 font-semibold">
             <div className="flex size-7 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757]">
               <Lightbulb className="size-4" />
             </div>
             <span>极速录入新选题</span>
           </DialogTitle>
-          <DialogDescription className="text-stone-500 text-[12.5px] leading-relaxed">
+          <DialogDescription className="text-zinc-500 text-[12.5px] leading-relaxed">
             写下您的选题标题与钩子灵感，并归入对应的母题。
           </DialogDescription>
         </DialogHeader>
@@ -177,13 +177,13 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
         <form onSubmit={handleSubmit} className="mt-2 space-y-4">
           {/* 母题选择：采用每排4个 (grid-cols-4) 舒展展示 */}
           <div className="space-y-2">
-            <label className="text-[12.5px] font-medium text-stone-700 block">
+            <label className="text-[12.5px] font-medium text-zinc-700 block">
               归属母题 <span className="text-[#C9604D]">*</span>
             </label>
             {isLoadingTopics ? (
-              <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-stone-200 bg-stone-50/50">
-                <Loader2 className="size-4 animate-spin text-stone-400" />
-                <span className="text-[12px] text-stone-400 ml-2">正在载入分类...</span>
+              <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50">
+                <Loader2 className="size-4 animate-spin text-zinc-400" />
+                <span className="text-[12px] text-zinc-400 ml-2">正在载入分类...</span>
               </div>
             ) : topics.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-[190px] overflow-y-auto pr-1">
@@ -199,7 +199,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                         "active:scale-[0.97]",
                         isSelected
                           ? "border-[#5F82A8]/50 bg-[#5F82A8]/12 text-[#355273] font-semibold ring-2 ring-[#5F82A8]/20 shadow-2xs"
-                          : "border-stone-200/80 bg-stone-50/40 text-stone-600 hover:border-stone-300 hover:bg-white hover:text-stone-900"
+                          : "border-zinc-200/80 bg-zinc-50/40 text-zinc-600 hover:border-zinc-300 hover:bg-white hover:text-zinc-900"
                       )}
                       title={topic.name}
                     >
@@ -218,7 +218,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
 
           {/* 选题标题 */}
           <div className="space-y-1.5">
-            <label htmlFor="topic-title" className="text-[12.5px] font-medium text-stone-700 block">
+            <label htmlFor="topic-title" className="text-[12.5px] font-medium text-zinc-700 block">
               选题标题 <span className="text-[#C9604D]">*</span>
             </label>
             <input
@@ -229,7 +229,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               onChange={(e) => setInputText(e.target.value)}
               placeholder="例如：揭秘庄家吸筹的三种常见假象"
               className={cn(
-                "w-full h-9.5 rounded-xl border border-stone-200/90 bg-white px-3 text-[13px] text-stone-900 placeholder-stone-400 outline-none",
+                "w-full h-9.5 rounded-xl border border-zinc-200/90 bg-white px-3 text-[13px] text-zinc-900 placeholder-zinc-400 outline-none",
                 "transition-all duration-200 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/15"
               )}
             />
@@ -237,8 +237,8 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
 
           {/* 一句话钩子（选填） */}
           <div className="space-y-1.5">
-            <label htmlFor="topic-hook" className="text-[12.5px] font-medium text-stone-700 block">
-              一句话钩子 <span className="text-stone-400 font-normal">(选填)</span>
+            <label htmlFor="topic-hook" className="text-[12.5px] font-medium text-zinc-700 block">
+              一句话钩子 <span className="text-zinc-400 font-normal">(选填)</span>
             </label>
             <textarea
               id="topic-hook"
@@ -247,7 +247,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               onChange={(e) => setHookText(e.target.value)}
               placeholder="选填，例如：为什么散户总在底部割肉？因为主力用了这招..."
               className={cn(
-                "w-full rounded-xl border border-stone-200 bg-white p-2.5 text-[13px] text-stone-900 placeholder-stone-400 outline-none leading-relaxed",
+                "w-full rounded-xl border border-zinc-200 bg-white p-2.5 text-[13px] text-zinc-900 placeholder-zinc-400 outline-none leading-relaxed",
                 "transition-all duration-200 focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20"
               )}
             />
@@ -275,23 +275,23 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                 >
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[12px] text-stone-600 block font-medium">情绪标签 (选填)</label>
+                      <label className="text-[12px] text-zinc-600 block font-medium">情绪标签 (选填)</label>
                       <input
                         type="text"
                         value={emotionTag}
                         onChange={(e) => setEmotionTag(e.target.value)}
                         placeholder="如：焦虑 / 好奇 / 避坑"
-                        className="w-full h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-800 outline-none focus:border-[#D97757]"
+                        className="w-full h-8.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-800 outline-none focus:border-[#D97757]"
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[12px] text-stone-600 block font-medium">目标受众 (选填)</label>
+                      <label className="text-[12px] text-zinc-600 block font-medium">目标受众 (选填)</label>
                       <input
                         type="text"
                         value={audience}
                         onChange={(e) => setAudience(e.target.value)}
                         placeholder="如：小白投资者 / 职场新人"
-                        className="w-full h-8.5 rounded-lg border border-stone-200 bg-white px-2.5 text-[12px] text-stone-800 outline-none focus:border-[#D97757]"
+                        className="w-full h-8.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] text-zinc-800 outline-none focus:border-[#D97757]"
                       />
                     </div>
                   </div>
@@ -301,7 +301,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
           </div>
 
           {/* 操作 */}
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-stone-100">
+          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100">
             <Button
               type="button"
               variant="outline"

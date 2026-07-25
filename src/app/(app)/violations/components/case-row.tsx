@@ -83,8 +83,8 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
     <div
       className={cn(
         "group relative flex items-center gap-2 px-4 py-3 transition-colors duration-150",
-        "hover:bg-stone-100 focus-within:bg-stone-100",
-        accent.muted && "bg-stone-50/40",
+        "hover:bg-zinc-100 focus-within:bg-zinc-100",
+        accent.muted && "bg-zinc-50/40",
       )}
     >
       <button
@@ -106,7 +106,7 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
         <span
           className={cn(
             "min-w-0 flex-1 truncate text-[13px] leading-[1.6]",
-            accent.muted ? "text-stone-500" : "text-stone-700",
+            accent.muted ? "text-zinc-500" : "text-zinc-700",
           )}
         >
           {caseItem.script_text}
@@ -115,27 +115,27 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
         {/* 右侧标签 + 指标 */}
         <span className="flex shrink-0 items-center gap-2">
         {/* 类目 */}
-        <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[12px] font-normal text-stone-500 sm:inline-flex">
+        <span className="hidden rounded-md border border-zinc-200 px-1.5 py-0.5 text-[12px] font-normal text-zinc-500 sm:inline-flex">
           {caseItem.category || "其他"}
         </span>
 
         {/* 导粉方式 */}
         {guidanceLabel ? (
-          <span className="hidden rounded-md border border-stone-200 px-1.5 py-0.5 text-[12px] text-stone-500 md:inline-flex">
+          <span className="hidden rounded-md border border-zinc-200 px-1.5 py-0.5 text-[12px] text-zinc-500 md:inline-flex">
             {guidanceLabel}
           </span>
         ) : null}
 
         {/* 指标（label 上方 / 数字下方，紧凑） */}
         <span className="min-w-[68px] text-right leading-none">
-          <span className="block text-[12px] tracking-[0.12em] text-stone-500">
+          <span className="block text-[12px] tracking-[0.12em] text-zinc-500">
             {metric.label}
           </span>
           <span
             className={cn(
               "mt-1 block text-[13px] font-medium tabular-nums",
-              caseItem.purpose === "conversion" ? "text-[#6FAA7D]" : "text-stone-700",
-              accent.muted && "text-stone-500",
+              caseItem.purpose === "conversion" ? "text-[#6FAA7D]" : "text-zinc-700",
+              accent.muted && "text-zinc-500",
             )}
           >
             {metric.value}
@@ -153,7 +153,7 @@ export function CaseRow({ caseItem, onOpenDetail }: CaseRowProps) {
           "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 sm:group-focus-within:opacity-100",
           copied
             ? "bg-[#6FAA7D]/10 text-[#6FAA7D] opacity-100"
-            : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
+            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700",
         )}
         aria-label="复制话术"
       >

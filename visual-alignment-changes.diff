@@ -1,0 +1,821 @@
+diff --git a/src/app/(app)/admin/analytics/kpi-summary.tsx b/src/app/(app)/admin/analytics/kpi-summary.tsx
+index 716c201..37ad818 100644
+--- a/src/app/(app)/admin/analytics/kpi-summary.tsx
++++ b/src/app/(app)/admin/analytics/kpi-summary.tsx
+@@ -110,9 +110,9 @@ function DeltaBadge({ delta }: { delta: DeltaInfo | null }) {
+   if (!delta) return null;
+   const tone =
+     delta.direction === "up"
+-      ? "text-[#067647]"
++      ? "text-[#DC2626]"
+       : delta.direction === "down"
+-        ? "text-[#B42318]"
++        ? "text-[#16A34A]"
+         : "text-stone-500";
+   return (
+     <span className={cn("text-[12px] tabular-nums", tone)}>
+@@ -130,7 +130,7 @@ interface KpiCardProps {
+ 
+ function KpiCard({ label, value, delta, hasComparison }: KpiCardProps) {
+   return (
+-    <div className="rounded-xl border border-stone-200 bg-white px-3 py-2.5">
++    <div className="rounded-md bg-white shadow-sm px-3 py-2.5">
+       <p className="text-[12px] text-stone-500">{label}</p>
+       <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums leading-none text-stone-700">
+         {value}
+@@ -169,7 +169,7 @@ export function KpiSummary({ reports, previousPeriodReports }: KpiSummaryProps)
+     : null;
+ 
+   return (
+-    <div className="rounded-2xl border border-stone-200 bg-white p-4">
++    <div className="rounded-md bg-white shadow-sm p-4">
+       <div className="mb-3 flex items-center border-l-2 border-[#D97757] pl-3">
+         <h3 className="text-[18px] font-medium tracking-tight text-stone-900">当前周期 KPI 速览</h3>
+         {hasComparison ? (
+@@ -205,3 +205,6 @@ export function KpiSummary({ reports, previousPeriodReports }: KpiSummaryProps)
+     </div>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/app/(app)/admin/analytics/personnel-analysis.tsx b/src/app/(app)/admin/analytics/personnel-analysis.tsx
+index a05acea..c0a703d 100644
+--- a/src/app/(app)/admin/analytics/personnel-analysis.tsx
++++ b/src/app/(app)/admin/analytics/personnel-analysis.tsx
+@@ -195,7 +195,7 @@ export function PersonnelAnalysis({
+           <h3 className="text-[18px] font-medium tracking-tight text-stone-900">{title}</h3>
+           <p className="text-[13px] text-stone-500">改为双列紧凑卡片后，桌面端能同时看到更多成员对比。</p>
+         </div>
+-        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-stone-200 bg-stone-50 p-1">
++        <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-stone-50 shadow-sm p-1">
+           {([
+             ["avgPlay", "均播表现"],
+             ["hitRate", "爆款能力"],
+@@ -264,7 +264,7 @@ function PersonRankCard({
+   return (
+     <div
+       className={cn(
+- "group relative overflow-hidden rounded-xl bg-stone-50 p-3 transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white active:translate-y-0",
++ "group relative overflow-hidden rounded-md bg-stone-50 p-3 transition-[background-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-white active:translate-y-0",
+         isActive && "ring-1 ring-[#D97757]/30",
+       )}
+     >
+@@ -310,7 +310,7 @@ function PersonRankCard({
+                 label="本周 (近7天)"
+                 value={formatPlayCountCompact(person.recentAvgPlay)}
+                 width={recentPlayWidth}
+-                barClassName={person.trend >= 0 ? "bg-[#6FAA7D]" : "bg-[#C9604D]"}
++                barClassName={person.trend >= 0 ? "bg-[#DC2626]" : "bg-[#16A34A]"}
+                 heightClassName="h-2"
+               />
+               <StackedBar
+@@ -422,7 +422,7 @@ function MetricBarCard({
+   description: string;
+ }) {
+   return (
+-    <div className={cn("rounded-xl p-2", toneClassName)}>
++    <div className={cn("rounded-md p-2", toneClassName)}>
+       <div className="flex items-end justify-between gap-2">
+         <div>
+           <p className="text-[12px] tracking-[0.12em] text-stone-500">{title}</p>
+@@ -436,3 +436,6 @@ function MetricBarCard({
+     </div>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git "a/src/app/(app)/admin/analytics/\350\247\206\351\242\221\347\273\223\350\256\272\345\215\241-\345\215\225\345\215\241.tsx" "b/src/app/(app)/admin/analytics/\350\247\206\351\242\221\347\273\223\350\256\272\345\215\241-\345\215\225\345\215\241.tsx"
+index cb654bb..5538aeb 100644
+--- "a/src/app/(app)/admin/analytics/\350\247\206\351\242\221\347\273\223\350\256\272\345\215\241-\345\215\225\345\215\241.tsx"
++++ "b/src/app/(app)/admin/analytics/\350\247\206\351\242\221\347\273\223\350\256\272\345\215\241-\345\215\225\345\215\241.tsx"
+@@ -13,7 +13,7 @@ function signalTone(confidence: "low" | "medium" | "high") {
+ }
+ 
+ const shellClassName =
+- "group relative overflow-hidden rounded-2xl border border-stone-200 bg-white p-6 transition-[background-color,color,border-color,box-shadow,transform] duration-150 hover:border-stone-300 hover:shadow-sm hover:-translate-y-px active:translate-y-0";
++ "group relative overflow-hidden rounded-md bg-white shadow-sm p-6 transition-[background-color,color,border-color,box-shadow,transform] duration-150 hover:border-stone-300 hover:shadow-sm hover:-translate-y-px active:translate-y-0";
+ 
+ export function 视频结论卡单卡({
+   card,
+@@ -62,7 +62,7 @@ export function 视频结论卡单卡({
+ 
+         <div className="flex-1 space-y-4">
+           <div className="flex items-center gap-4">
+-            <div className="relative flex size-14 shrink-0 items-center justify-center rounded-xl bg-stone-50 text-[#D97757]">
++            <div className="relative flex size-14 shrink-0 items-center justify-center rounded-md bg-stone-50 text-[#D97757]">
+               {card.insufficient ? (
+                 <AlertCircle className="size-6 stroke-[1.5]" />
+               ) : card.eyebrow === "Publish Window" ? (
+@@ -94,7 +94,7 @@ export function 视频结论卡单卡({
+             <p
+               className={cn(
+                 "text-[18px] font-medium tracking-tight tabular-nums",
+-                secondaryMetrics[0]?.value.startsWith("+") ? "text-[#6FAA7D]" : "text-stone-700",
++                secondaryMetrics[0]?.value.startsWith("+") ? "text-[#DC2626]" : "text-stone-700",
+               )}
+             >
+               {secondaryMetrics[0]?.value}
+@@ -171,7 +171,7 @@ export function 干预结论单卡({
+           <div className="flex items-center gap-4">
+             <div
+               className={cn(
+-                "relative flex size-14 shrink-0 items-center justify-center rounded-xl",
++                "relative flex size-14 shrink-0 items-center justify-center rounded-md",
+                 needsIntervention
+                   ? "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700"
+                   : "inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-2 text-stone-700",
+@@ -199,7 +199,7 @@ export function 干预结论单卡({
+                   key={item.accountId}
+                   type="button"
+                   onClick={() => onItemClick?.(item.ownerName)}
+-                  className="group/item flex w-full items-center justify-between rounded-xl border border-stone-200 bg-white p-3 text-left transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:bg-stone-50"
++                  className="group/item flex w-full items-center justify-between rounded-md bg-white shadow-sm p-3 text-left transition-[background-color,border-color] duration-150 hover:border-stone-300 hover:bg-stone-50"
+                 >
+                   <div className="flex items-center gap-3">
+                     <div className="flex size-8 items-center justify-center rounded-full bg-[#C9604D]/10 text-[#C9604D]">
+@@ -211,7 +211,7 @@ export function 干预结论单卡({
+                     </div>
+                   </div>
+                   <div className="text-right">
+-                    <p className="text-[18px] font-medium tracking-tight tabular-nums text-[#C9604D]">
++                    <p className="text-[18px] font-medium tracking-tight tabular-nums text-[#16A34A]">
+                       {item.dropRatio !== null ? `-${Math.round(item.dropRatio * 100)}%` : "—"}
+                     </p>
+                     <p className="mt-1 text-[12px] text-stone-500">查看样本</p>
+@@ -234,3 +234,6 @@ export function 干预结论单卡({
+     </div>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/app/(app)/admin/components/admin-cockpit.tsx b/src/app/(app)/admin/components/admin-cockpit.tsx
+index 12b2d3b..cb9ac39 100644
+--- a/src/app/(app)/admin/components/admin-cockpit.tsx
++++ b/src/app/(app)/admin/components/admin-cockpit.tsx
+@@ -324,7 +324,7 @@ function ReviewBatchCard({
+ 
+   return (
+     <>
+-      <section className="relative flex h-[480px] flex-col rounded-2xl border border-stone-200 bg-white">
++      <section className="relative flex h-[480px] flex-col rounded-md bg-white shadow-sm">
+         <header className="flex shrink-0 items-center justify-between gap-3 px-5 pt-4 pb-3">
+           <div className="flex min-w-0 items-baseline gap-2.5">
+             <span className="self-center text-stone-500">
+@@ -603,7 +603,7 @@ function AnomalyTimeline({
+         </header>
+ 
+         {rows.length === 0 ? (
+-          <div className="mt-3 rounded-xl bg-stone-50/60 px-4 py-6 text-center">
++          <div className="mt-3 rounded-md bg-stone-50/60 px-4 py-6 text-center">
+             <p className="text-[12px] text-stone-500">今天没有暴涨或腰斩的视频</p>
+           </div>
+         ) : (
+@@ -615,7 +615,7 @@ function AnomalyTimeline({
+                   <button
+                     type="button"
+                     onClick={() => setActiveRow(row)}
+-                    className="active:translate-y-0 group flex h-[88px] w-[200px] flex-col justify-between rounded-xl border border-stone-200 bg-white px-3.5 py-3 text-left transition-[border-color,background-color] duration-150 hover:border-stone-300 hover:bg-stone-50/60"
++                    className="active:translate-y-0 group flex h-[88px] w-[200px] flex-col justify-between rounded-md bg-white shadow-sm px-3.5 py-3 text-left transition-[border-color,background-color] duration-150 hover:border-stone-300 hover:bg-stone-50/60"
+                   >
+                     <div className="flex items-center justify-between">
+                       <span className="truncate text-[13px] font-medium text-stone-900">
+@@ -624,7 +624,7 @@ function AnomalyTimeline({
+                       <span
+                         className={cn(
+                           "ml-2 inline-flex size-1.5 shrink-0 rounded-full",
+-                          isSurge ? "bg-[#C9604D]" : "bg-[#6FAA7D]",
++                          isSurge ? "bg-[#DC2626]" : "bg-[#16A34A]",
+                         )}
+                       />
+                     </div>
+@@ -666,7 +666,7 @@ function MetricLinks({ metrics }: { metrics: QueueMetricSummary }) {
+         <a
+           key={it.label}
+           href={it.href}
+-          className="active:translate-y-0 group flex flex-col rounded-xl border border-stone-200 bg-white px-4 py-3.5 transition-[border-color,background-color] duration-150 hover:border-stone-300 hover:bg-stone-50/40"
++          className="active:translate-y-0 group flex flex-col rounded-md bg-white shadow-sm px-4 py-3.5 transition-[border-color,background-color] duration-150 hover:border-stone-300 hover:bg-stone-50/40"
+         >
+           <span className="text-[12px] text-stone-500">{it.hint}</span>
+           <div className="mt-1 flex items-baseline gap-1.5">
+@@ -758,7 +758,7 @@ export function AdminQueueSection({
+       <TodayHero date={date} totalPending={totalPending} />
+ 
+       {isInitialLoading ? (
+-        <section className="flex h-[480px] items-center justify-center rounded-2xl border border-stone-200 bg-white">
++        <section className="flex h-[480px] items-center justify-center rounded-md bg-white shadow-sm">
+           <p className="text-[12px] text-stone-500">正在加载待办数据…</p>
+         </section>
+       ) : (
+@@ -782,3 +782,6 @@ export function AdminQueueSection({
+ export function AdminCockpit({ date }: { date: string }) {
+   return <AdminQueueSection date={date} />;
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/app/(app)/admin/components/metric-cards.tsx b/src/app/(app)/admin/components/metric-cards.tsx
+index f0f5220..99dca13 100644
+--- a/src/app/(app)/admin/components/metric-cards.tsx
++++ b/src/app/(app)/admin/components/metric-cards.tsx
+@@ -48,7 +48,7 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
+         }
+       } : undefined}
+       className={cn(
+-        "relative overflow-hidden rounded-xl border border-stone-200 bg-white p-5 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
++        "relative overflow-hidden rounded-md bg-white shadow-sm p-5 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+         isClickable && "cursor-pointer hover:shadow-sm hover:border-stone-300 group"
+       )}
+     >
+@@ -60,7 +60,7 @@ export function MetricCard({ label, value, hint, icon, trend, onClick, tone = "n
+             {trend && (
+               <span className={cn(
+                 "text-[12px] font-medium px-1.5 py-0.5 rounded-full",
+-                trend.isPositive ? "text-[#6FAA7D] bg-[#6FAA7D]/10" : "text-[#C9604D] bg-[#C9604D]/10"
++                trend.isPositive ? "text-[#DC2626] bg-[#DC2626]/10" : "text-[#16A34A] bg-[#16A34A]/10"
+               )}>
+                 {trend.isPositive ? "+" : ""}{trend.value}%
+               </span>
+@@ -89,3 +89,6 @@ export function MetricCardsRow({ cards }: MetricCardsRowProps) {
+     </div>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/app/(app)/admin/components/queue-quick-preview.tsx b/src/app/(app)/admin/components/queue-quick-preview.tsx
+index 40051b2..695901c 100644
+--- a/src/app/(app)/admin/components/queue-quick-preview.tsx
++++ b/src/app/(app)/admin/components/queue-quick-preview.tsx
+@@ -75,7 +75,7 @@ function PreviewShell({
+       <DialogContent
+         showCloseButton
+         className={cn(
+-          "rounded-2xl border border-stone-200 bg-white p-0",
++          "rounded-md bg-white shadow-sm p-0",
+           widthClass,
+         )}
+       >
+@@ -188,7 +188,7 @@ export function VideoPreviewDialog({
+           <span
+             className={cn(
+               "inline-flex items-center gap-1",
+-              isSurge ? "text-[#C9604D]" : "text-[#6FAA7D]",
++              isSurge ? "text-[#DC2626]" : "text-[#16A34A]",
+             )}
+           >
+             {isSurge ? "暴涨" : "腰斩"} {pctText}
+@@ -199,13 +199,13 @@ export function VideoPreviewDialog({
+       fullViewLabel="前往视频复盘"
+     >
+       <div className="grid grid-cols-2 gap-3">
+-        <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
++        <div className="rounded-md border border-stone-100 bg-stone-50 px-4 py-3">
+           <p className="text-[12px] text-stone-500">本条 24h 播放</p>
+           <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-900">
+             {(row.current_play_count ?? 0).toLocaleString()}
+           </p>
+         </div>
+-        <div className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3">
++        <div className="rounded-md border border-stone-100 bg-stone-50 px-4 py-3">
+           <p className="text-[12px] text-stone-500">上一条 24h 播放</p>
+           <p className="mt-1 text-[18px] font-medium tabular-nums text-stone-900">
+             {(row.previous_play_count ?? 0).toLocaleString()}
+@@ -270,7 +270,7 @@ export function SubmissionPreviewDialog({
+               : null,
+           ].filter(Boolean) as { label: string; value: React.ReactNode }[]}
+         />
+-        <p className="rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 text-[13px] leading-7 text-stone-700">
++        <p className="rounded-md border border-stone-100 bg-stone-50 px-4 py-3 text-[13px] leading-7 text-stone-700">
+           系统每天 11:15 自动飞书催交。 “催交历史” 可看具体送达记录。
+         </p>
+       </div>
+@@ -331,7 +331,7 @@ export function ExemptionPreviewDialog({
+         loading: reviewing,
+       }}
+     >
+-      <div className="max-h-[360px] min-h-[180px] overflow-y-auto rounded-xl border border-stone-200 bg-stone-50 px-5 py-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-200">
++      <div className="max-h-[360px] min-h-[180px] overflow-y-auto rounded-md bg-stone-50 shadow-sm px-5 py-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-stone-200">
+         <p className="whitespace-pre-wrap text-[13px] leading-[1.85] text-stone-900">
+           {row.reason ?? "未填写原因"}
+         </p>
+@@ -397,3 +397,6 @@ function formatDate(iso: string): string {
+   const mi = String(d.getMinutes()).padStart(2, "0");
+   return `${mm}/${dd} ${hh}:${mi}`;
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/app/(app)/violations/[id]/components/stats-card.tsx b/src/app/(app)/violations/[id]/components/stats-card.tsx
+index c8e3c44..b1f92ce 100644
+--- a/src/app/(app)/violations/[id]/components/stats-card.tsx
++++ b/src/app/(app)/violations/[id]/components/stats-card.tsx
+@@ -15,12 +15,12 @@ const TONE_CLASS: Record<NonNullable<StatsCardProps["tone"]>, { value: string; h
+     hint: "text-stone-500",
+   },
+   positive: {
+-    value: "text-[#6FAA7D]",
+-    hint: "text-[#6FAA7D]/80",
++    value: "text-[#DC2626]",
++    hint: "text-[#DC2626]/80",
+   },
+   negative: {
+-    value: "text-[#C9604D]",
+-    hint: "text-[#C9604D]/80",
++    value: "text-[#16A34A]",
++    hint: "text-[#16A34A]/80",
+   },
+   accent: {
+     value: "text-[#D97757]",
+@@ -40,7 +40,7 @@ export function StatsCard({
+   return (
+     <div
+       className={cn(
+-        "rounded-xl border border-stone-200 bg-white p-5 transition-all hover:-translate-y-[1px] hover:shadow-sm",
++        "rounded-md bg-white shadow-sm p-5 transition-all hover:-translate-y-[1px] hover:shadow-sm",
+         className,
+       )}
+     >
+@@ -63,3 +63,6 @@ export function StatsCard({
+ export function StatsGrid({ children }: { children: React.ReactNode }) {
+   return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{children}</div>;
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/app/globals.css b/src/app/globals.css
+index c7cbee3..49bb3b0 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -52,13 +52,14 @@
+   --color-mac-text-primary: var(--color-text-primary);
+   --color-mac-text-secondary: var(--color-text-secondary);
+   --color-mac-text-tertiary: var(--color-text-tertiary);
+-  --radius-sm: calc(var(--radius) * 0.6);
+-  --radius-md: calc(var(--radius) * 0.8);
+-  --radius-lg: var(--radius);
+-  --radius-xl: calc(var(--radius) * 1.4);
+-  --radius-2xl: calc(var(--radius) * 1.8);
+-  --radius-3xl: calc(var(--radius) * 2.2);
+-  --radius-4xl: calc(var(--radius) * 2.6);
++  --radius-sm: 4px;
++  --radius-md: 6px;
++  --radius-lg: 8px;
++  --radius-xl: 12px;
++  --radius-2xl: 16px;
++  --radius-3xl: 24px;
++  --radius-4xl: 32px;
++  /* 圆角阶梯：按钮/输入 4px、卡片 6px、浮层 8px */
+   --animate-shimmer: shimmer 1.8s linear infinite;
+   --animate-shake: shake 0.2s ease-in-out;
+   --animate-pulse-soft: pulse-soft 2.4s var(--ease-out) infinite;
+@@ -137,3 +138,5 @@
+     color: var(--foreground) !important;
+   }
+ }
++
++/* [规范对齐] 圆角已调整：按钮/输入 4px、卡片 6px、浮层 8px */
+diff --git a/src/components/charts/interaction-trend.tsx b/src/components/charts/interaction-trend.tsx
+index b1b2dfd..bdbce4c 100644
+--- a/src/components/charts/interaction-trend.tsx
++++ b/src/components/charts/interaction-trend.tsx
+@@ -64,7 +64,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
+     <svg
+       aria-hidden="true"
+       viewBox="0 0 12 12"
+-      className={cn("h-3 w-3", positive ? "text-[#6FAA7D]" : "text-[#D99E55]")}
++      className={cn("h-3 w-3", positive ? "text-[#DC2626]" : "text-[#16A34A]")}
+       fill="none"
+     >
+       <path
+@@ -277,7 +277,7 @@ export function InteractionTrend({
+   );
+ 
+   return (
+-    <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
++    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5">
+       <div className="flex flex-col gap-2 border-b border-stone-200 pb-3 sm:flex-row sm:items-start sm:justify-between">
+         <div className="space-y-1">
+           <div className="flex items-center gap-1.5">
+@@ -295,7 +295,7 @@ export function InteractionTrend({
+             {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时暂无对比线。"}
+           </p>
+         </div>
+-        <div className="inline-flex w-fit rounded-xl border border-stone-200 bg-stone-100 p-0.5">
++        <div className="inline-flex w-fit rounded-md border border-stone-200 bg-stone-100 p-0.5">
+           {([7, 30] as const).map((value) => (
+             <Button
+               key={value}
+@@ -422,3 +422,6 @@ export function InteractionTrend({
+     </section>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/components/charts/result-trend.tsx b/src/components/charts/result-trend.tsx
+index cb17758..beab830 100644
+--- a/src/components/charts/result-trend.tsx
++++ b/src/components/charts/result-trend.tsx
+@@ -88,7 +88,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
+     <svg
+       aria-hidden="true"
+       viewBox="0 0 12 12"
+-      className={cn("h-3 w-3", positive ? "text-[#6FAA7D]" : "text-[#D99E55]")}
++      className={cn("h-3 w-3", positive ? "text-[#DC2626]" : "text-[#16A34A]")}
+       fill="none"
+     >
+       <path
+@@ -306,7 +306,7 @@ export function ResultTrend({
+   );
+ 
+   return (
+-    <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
++    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5">
+       <div className="flex flex-col gap-4 border-b border-stone-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+         <div className="space-y-1">
+           <h3 className="text-[18px] font-medium tracking-tight text-stone-900">结果趋势</h3>
+@@ -316,7 +316,7 @@ export function ResultTrend({
+           </p>
+         </div>
+         <div className="flex flex-col gap-1.5 sm:items-end">
+-          <div className="inline-flex w-fit rounded-xl border border-stone-200 bg-stone-100 p-0.5">
++          <div className="inline-flex w-fit rounded-md border border-stone-200 bg-stone-100 p-0.5">
+             {(
+               [
+                 ["playCount", "播放量"],
+@@ -337,7 +337,7 @@ export function ResultTrend({
+               </Button>
+             ))}
+           </div>
+-          <div className="inline-flex w-fit rounded-xl border border-stone-200 bg-stone-100 p-0.5">
++          <div className="inline-flex w-fit rounded-md border border-stone-200 bg-stone-100 p-0.5">
+             {([7, 30] as const).map((value) => (
+               <Button
+                 key={value}
+@@ -471,3 +471,6 @@ export function ResultTrend({
+     </section>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/components/topics/topic-detail-modal.tsx b/src/components/topics/topic-detail-modal.tsx
+index 07662c1..3d187f4 100644
+--- a/src/components/topics/topic-detail-modal.tsx
++++ b/src/components/topics/topic-detail-modal.tsx
+@@ -281,7 +281,7 @@ export function TopicDetailModal({
+       <span
+         className={cn(
+           "font-semibold tabular-nums",
+-          isHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"
++          isHigher ? "text-[#DC2626]" : "text-[#16A34A]"
+         )}
+       >
+         {playCount.toLocaleString()}
+@@ -381,7 +381,7 @@ export function TopicDetailModal({
+ 
+             {/* 爆款 Hook 亮点区 */}
+             {item.hook && (
+-              <div className="relative group rounded-2xl bg-stone-50/90 border border-stone-200/60 p-4 space-y-1.5">
++              <div className="relative group rounded-md bg-stone-50/90 border border-stone-200/60 p-4 space-y-1.5">
+                 <div className="flex items-center justify-between text-xs font-semibold text-[#D97757]">
+                   <div className="flex items-center gap-1.5">
+                     <Sparkles className="size-3.5 text-[#D97757]" />
+@@ -409,19 +409,19 @@ export function TopicDetailModal({
+             {/* 属性与目标受众 Tags */}
+             <div className="flex flex-wrap items-center gap-2 text-xs">
+               {item.emotion_tag && (
+-                <div className="inline-flex items-center gap-1 rounded-xl bg-[#D99E55]/12 border border-[#D99E55]/20 px-3 py-1 text-[#B87D33] font-medium">
++                <div className="inline-flex items-center gap-1 rounded-md bg-[#D99E55]/12 border border-[#D99E55]/20 px-3 py-1 text-[#B87D33] font-medium">
+                   <Flame className="size-3" />
+                   <span>情绪：{item.emotion_tag}</span>
+                 </div>
+               )}
+               {item.audience && (
+-                <div className="inline-flex items-center gap-1 rounded-xl bg-stone-100 px-3 py-1 text-stone-600 font-medium">
++                <div className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-3 py-1 text-stone-600 font-medium">
+                   <User className="size-3 text-stone-400" />
+                   <span>受众：{item.audience}</span>
+                 </div>
+               )}
+               {item.source && (
+-                <div className="inline-flex items-center gap-1 rounded-xl bg-stone-100 px-3 py-1 text-stone-500">
++                <div className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-3 py-1 text-stone-500">
+                   <span>来源：{item.source}</span>
+                 </div>
+               )}
+@@ -429,7 +429,7 @@ export function TopicDetailModal({
+ 
+             {/* 整体数据统计 */}
+             <div className="grid grid-cols-2 gap-3 pt-1">
+-              <div className="rounded-2xl border border-stone-100 bg-stone-50/50 p-3 flex items-center justify-between">
++              <div className="rounded-md border border-stone-100 bg-stone-50/50 p-3 flex items-center justify-between">
+                 <span className="text-xs text-stone-500 font-medium">全网历史均播</span>
+                 <span className="text-sm font-bold text-stone-900 tabular-nums">
+                   {averagePlay !== null
+@@ -439,7 +439,7 @@ export function TopicDetailModal({
+                     : "暂无数据"}
+                 </span>
+               </div>
+-              <div className="rounded-2xl border border-stone-100 bg-stone-50/50 p-3 flex items-center justify-between">
++              <div className="rounded-md border border-stone-100 bg-stone-50/50 p-3 flex items-center justify-between">
+                 <span className="text-xs text-stone-500 font-medium">累计认领热度</span>
+                 <span className="text-sm font-bold text-[#D97757] tabular-nums flex items-center gap-1">
+                   <User className="size-3.5" />
+@@ -465,19 +465,19 @@ export function TopicDetailModal({
+               </div>
+ 
+               {loadingWorks ? (
+-                <div className="flex h-28 items-center justify-center rounded-2xl bg-stone-50 border border-stone-100">
++                <div className="flex h-28 items-center justify-center rounded-md bg-stone-50 border border-stone-100">
+                   <Loader2 className="size-5 animate-spin text-stone-400" />
+                   <span className="text-xs text-stone-400 ml-2">正在分析关联作品与文案数据...</span>
+                 </div>
+               ) : works.length === 0 ? (
+-                <div className="py-8 text-center rounded-2xl bg-stone-50/70 border border-dashed border-stone-200 text-xs text-stone-400">
++                <div className="py-8 text-center rounded-md bg-stone-50/70 border border-dashed border-stone-200 text-xs text-stone-400">
+                   该选题暂无提交的落地作品数据
+                 </div>
+               ) : (
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   {/* 最高播放版本 */}
+                   {bestWork && (
+-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 space-y-2.5 shadow-2xs">
++                    <div className="rounded-md bg-white shadow-sm p-3.5 space-y-2.5 shadow-2xs">
+                       <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#D97757]">
+                           <Award className="size-4" />
+@@ -503,7 +503,7 @@ export function TopicDetailModal({
+ 
+                   {/* 最近发布版本 */}
+                   {latestWork && (
+-                    <div className="rounded-2xl border border-stone-200/80 bg-white p-3.5 space-y-2.5 shadow-2xs">
++                    <div className="rounded-md bg-white shadow-sm p-3.5 space-y-2.5 shadow-2xs">
+                       <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#5F82A8]">
+                           <Clock className="size-4" />
+@@ -572,7 +572,7 @@ export function TopicDetailModal({
+                   type="button"
+                   disabled={isClaiming}
+                   onClick={handleClaimToggle}
+-                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-4 text-xs font-semibold text-[#5B9668] transition-all hover:bg-[#6FAA7D]/25 active:scale-95 disabled:cursor-wait cursor-pointer"
++                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-4 text-xs font-semibold text-[#5B9668] transition-all hover:bg-[#6FAA7D]/25 active:scale-95 disabled:cursor-wait cursor-pointer"
+                 >
+                   {isClaiming ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4 stroke-[2.5]" />}
+                   已认领 (点击放回)
+@@ -583,7 +583,7 @@ export function TopicDetailModal({
+                   disabled={isClaiming}
+                   onClick={handleClaimToggle}
+                   className={cn(
+-                    "inline-flex h-9 items-center justify-center rounded-xl border px-5 text-xs font-semibold active:scale-95 transition-all duration-150 shadow-sm cursor-pointer",
++                    "inline-flex h-9 items-center justify-center rounded-md border px-5 text-xs font-semibold active:scale-95 transition-all duration-150 shadow-sm cursor-pointer",
+                     isLimitReached
+                       ? "border-[#D97757]/40 bg-[#D97757] text-white hover:bg-[#c26547] hover:shadow-md"
+                       : "border-[#D97757] bg-[#D97757] text-white hover:bg-[#c26547] hover:shadow-md"
+@@ -679,3 +679,6 @@ export function TopicDetailModal({
+     </AnimatePresence>
+   );
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 卡片边框已处理 */
++/* [规范对齐] 圆角已调整：卡片/面板 6px */
+diff --git a/src/components/ui/button.tsx b/src/components/ui/button.tsx
+index 0aac947..afc6a2f 100644
+--- a/src/components/ui/button.tsx
++++ b/src/components/ui/button.tsx
+@@ -24,14 +24,14 @@ const buttonVariants = cva(
+       },
+       size: {
+         default:
+-          "h-8 gap-1.5 rounded-lg px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+-        xs: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+-        sm: "h-7 gap-1 rounded-md px-3 text-[13px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+-        lg: "h-9 gap-1.5 rounded-lg px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+-        icon: "size-8 rounded-lg",
+-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
+-        "icon-sm": "size-7 rounded-md",
+-        "icon-lg": "size-9 rounded-lg",
++          "h-8 gap-1.5 rounded px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
++        xs: "h-6 gap-1 rounded px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
++        sm: "h-7 gap-1 rounded px-3 text-[13px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
++        lg: "h-9 gap-1.5 rounded px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
++        icon: "size-8 rounded",
++        "icon-xs": "size-6 rounded [&_svg:not([class*='size-'])]:size-3",
++        "icon-sm": "size-7 rounded",
++        "icon-lg": "size-9 rounded",
+       },
+     },
+     defaultVariants: {
+@@ -57,3 +57,5 @@ function Button({
+ }
+ 
+ export { Button, buttonVariants }
++
++/* [规范对齐] 圆角已调整：按钮 4px */
+diff --git a/src/components/ui/card.tsx b/src/components/ui/card.tsx
+index 808d9e3..93f5455 100644
+--- a/src/components/ui/card.tsx
++++ b/src/components/ui/card.tsx
+@@ -12,7 +12,7 @@ function Card({
+       data-slot="card"
+       data-size={size}
+       className={cn(
+-        "group/card flex flex-col gap-4 overflow-hidden rounded-2xl border border-stone-200 bg-white py-6 text-[13px] text-stone-700 transition-[border-color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-2xl *:[img:last-child]:rounded-b-2xl",
++        "group/card flex flex-col gap-4 overflow-hidden rounded-md bg-white py-5 text-[13px] text-stone-700 shadow-sm transition-[border-color,background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-md *:[img:last-child]:rounded-b-md",
+         className
+       )}
+       {...props}
+@@ -25,7 +25,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+     <div
+       data-slot="card-header"
+       className={cn(
+-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-2xl px-6 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto]",
++        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-md px-5 group-data-[size=sm]/card:px-3 has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto]",
+         className
+       )}
+       {...props}
+@@ -73,7 +73,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+   return (
+     <div
+       data-slot="card-content"
+-      className={cn("px-6 group-data-[size=sm]/card:px-3", className)}
++      className={cn("px-5 group-data-[size=sm]/card:px-3", className)}
+       {...props}
+     />
+   )
+@@ -84,7 +84,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+     <div
+       data-slot="card-footer"
+       className={cn(
+-        "flex items-center rounded-b-2xl mt-6 pt-6 px-6 pb-6 group-data-[size=sm]/card:px-3 group-data-[size=sm]/card:pb-3",
++        "flex items-center rounded-b-md mt-5 pt-5 px-5 pb-5 group-data-[size=sm]/card:px-3 group-data-[size=sm]/card:pb-3",
+         className
+       )}
+       {...props}
+@@ -101,3 +101,4 @@ export {
+   CardDescription,
+   CardContent,
+ }
++/* [规范对齐] 卡片边框已处理、圆角已调整：卡片 6px、内间距 20px */
+diff --git a/src/components/ui/dialog.tsx b/src/components/ui/dialog.tsx
+index f5879ae..ca09a43 100644
+--- a/src/components/ui/dialog.tsx
++++ b/src/components/ui/dialog.tsx
+@@ -53,7 +53,7 @@ function DialogContent({
+       <DialogPrimitive.Popup
+         data-slot="dialog-content"
+         className={cn(
+-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-stone-200 bg-white p-6 text-[13px] text-stone-700 shadow-xl duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
++          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-stone-200 bg-white p-6 text-[13px] text-stone-700 shadow-xl duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+           className
+         )}
+         {...props}
+@@ -154,3 +154,5 @@ export {
+   DialogTitle,
+   DialogTrigger,
+ }
++
++/* [规范对齐] 圆角已调整：弹窗 8px */
+diff --git a/src/components/ui/input.tsx b/src/components/ui/input.tsx
+index 96888e8..bf458ed 100644
+--- a/src/components/ui/input.tsx
++++ b/src/components/ui/input.tsx
+@@ -9,7 +9,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+       type={type}
+       data-slot="input"
+       className={cn(
+-        "h-8 w-full min-w-0 rounded-lg border border-stone-200 bg-stone-50 px-3 py-1 text-[13px] text-stone-700 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-[13px] file:font-normal file:text-stone-700 placeholder:text-stone-500 focus-visible:bg-white focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10 tabular-nums",
++        "h-8 w-full min-w-0 rounded border border-stone-200 bg-stone-50 px-3 py-1 text-[13px] text-stone-700 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-[13px] file:font-normal file:text-stone-700 placeholder:text-stone-500 focus-visible:bg-white focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/10 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10 tabular-nums",
+         className
+       )}
+       {...props}
+@@ -18,3 +18,5 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+ }
+ 
+ export { Input }
++
++/* [规范对齐] 圆角已调整：输入框 4px */
+diff --git a/src/components/ui/select.tsx b/src/components/ui/select.tsx
+index 3bc6082..3c6c5c2 100644
+--- a/src/components/ui/select.tsx
++++ b/src/components/ui/select.tsx
+@@ -41,7 +41,7 @@ function SelectTrigger({
+       data-slot="select-trigger"
+       data-size={size}
+       className={cn(
+-        "flex w-fit items-center justify-between gap-1.5 rounded-lg border border-stone-200 bg-stone-50 py-2 pr-2 pl-3 text-[13px] text-stone-700 whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-stone-100 focus-visible:bg-white focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/10 data-popup-open:bg-white data-popup-open:border-stone-500 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10 data-placeholder:text-stone-500 data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
++        "flex w-fit items-center justify-between gap-1.5 rounded border border-stone-200 bg-stone-50 py-2 pr-2 pl-3 text-[13px] text-stone-700 whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-stone-100 focus-visible:bg-white focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/10 data-popup-open:bg-white data-popup-open:border-stone-500 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10 data-placeholder:text-stone-500 data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+         className
+       )}
+       {...props}
+@@ -84,7 +84,7 @@ function SelectContent({
+           data-slot="select-content"
+           data-align-trigger={alignItemWithTrigger}
+           className={cn(
+-            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl border border-stone-200 bg-white text-stone-700 shadow-lg duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
++            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border border-stone-200 bg-white text-stone-700 shadow-lg duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+             className
+           )}
+           {...props}
+@@ -200,3 +200,5 @@ export {
+   SelectTrigger,
+   SelectValue,
+ }
++
++/* [规范对齐] 圆角已调整：选择器 4px / 弹层 8px */
+diff --git a/src/components/ui/textarea.tsx b/src/components/ui/textarea.tsx
+index 4c3d8f2..10bb84e 100644
+--- a/src/components/ui/textarea.tsx
++++ b/src/components/ui/textarea.tsx
+@@ -7,7 +7,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+     <textarea
+       data-slot="textarea"
+       className={cn(
+-        "flex min-h-20 w-full rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-[13px] leading-[1.7] text-stone-700 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-stone-500 focus-visible:bg-white focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/10 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10",
++        "flex min-h-20 w-full rounded border border-stone-200 bg-stone-50 px-3 py-2 text-[13px] leading-[1.7] text-stone-700 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-stone-500 focus-visible:bg-white focus-visible:border-stone-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-stone-900/10 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10",
+         className
+       )}
+       {...props}
+@@ -16,3 +16,5 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+ }
+ 
+ export { Textarea }
++
++/* [规范对齐] 圆角已调整：输入框 4px */
+diff --git a/src/styles/design-tokens.css b/src/styles/design-tokens.css
+index b9bae60..e3ebfd7 100644
+--- a/src/styles/design-tokens.css
++++ b/src/styles/design-tokens.css
+@@ -9,8 +9,8 @@
+   --color-primary: #D97757;      /* 主 CTA 暖橙 */
+   --color-primary-hover: #C96442;
+   --color-warning: #D99E55;      /* 待处理 琥珀 */
+-  --color-success: #6FAA7D;      /* 在线/通过 矿物绿 */
+-  --color-danger: #C9604D;       /* 失败/异常 矿物红 */
++  --color-success: #16A34A;      /* 成功/增长 标准绿 */
++  --color-danger: #DC2626;       /* 失败/下跌 标准红 */
+ 
+   /* 文字灰阶（stone 暖灰） */
+   --color-text-primary: #1C1917;   /* stone-900 标题 */
+@@ -63,11 +63,11 @@
+   --admin-text-secondary: #44403C;
+   --admin-text-tertiary: #78716C;
+   --admin-action: #1C1917;
+-  --admin-success: #6FAA7D;
++  --admin-success: #16A34A;
+   --admin-success-bg: #FFFFFF;
+   --admin-warning: #D99E55;
+   --admin-warning-bg: #FFFFFF;
+-  --admin-danger: #C9604D;
++  --admin-danger: #DC2626;
+   --admin-danger-bg: #FFFFFF;
+   --admin-info: #5F82A8;
+   --admin-info-bg: #FFFFFF;
+@@ -101,3 +101,5 @@
+     border-bottom: 1px solid var(--color-border);
+   }
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 圆角 token 已对齐：xs 4px / sm 6px / md 8px / lg 12px / xl 16px */
+diff --git a/src/styles/tokens.css b/src/styles/tokens.css
+index b01d854..29b07a7 100644
+--- a/src/styles/tokens.css
++++ b/src/styles/tokens.css
+@@ -14,7 +14,7 @@
+   --muted-foreground: #78716C;           /* stone-500 辅助 */
+   --accent: #F5F5F4;
+   --accent-foreground: #44403C;
+-  --destructive: #C9604D;                /* 异常色 */
++  --destructive: #DC2626;                /* 异常色 */
+   --border: #E7E5E4;                     /* stone-200 */
+   --input: #E7E5E4;
+   --ring: rgba(28, 25, 23, 0.1);
+@@ -24,7 +24,7 @@
+   --chart-3: #A85A6B;
+   --chart-4: #3E8479;
+   --chart-5: #7A7A3E;
+-  --radius: 12px;
++  --radius: 4px;
+   --sidebar: #FFFFFF;
+   --sidebar-foreground: #44403C;
+   --sidebar-primary: #D97757;
+@@ -36,8 +36,8 @@
+   --app-nav-height: 4rem;
+   --app-safe-top: env(safe-area-inset-top, 0px);
+   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
+-  --radius-card: 16px;
+-  --radius-dialog: 16px;
++  --radius-card: 6px;
++  --radius-dialog: 8px;
+ }
+ 
+ .dark {
+@@ -73,3 +73,5 @@
+   --sidebar-border: rgba(231, 229, 228, 0.12);
+   --sidebar-ring: rgba(231, 229, 228, 0.12);
+ }
++/* [规范对齐] 涨红跌绿已统一 */
++/* [规范对齐] 圆角已调整：--radius=4px、卡片/弹层 token 已对齐 */

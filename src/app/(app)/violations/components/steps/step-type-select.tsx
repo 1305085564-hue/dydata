@@ -39,13 +39,13 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <p className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
+        <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">
           起步
         </p>
-        <h2 className="text-[18px] font-medium leading-tight text-stone-900">
+        <h2 className="text-[18px] font-medium leading-tight text-zinc-900">
           先告诉我们这一条的来由
         </h2>
-        <p className="text-[12px] leading-[1.7] text-stone-500">
+        <p className="text-[12px] leading-[1.7] text-zinc-500">
           点击对应卡片，下一步会自动展开。
         </p>
       </div>
@@ -70,10 +70,10 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
               transition={{ type: "spring", stiffness: 380, damping: 28 }}
               className={cn(
                 "group relative flex flex-col items-start gap-3 overflow-hidden rounded-xl border bg-white p-5 text-left",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
                 active
-                  ? "border-stone-300 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]"
-                  : "border-stone-200 hover:border-stone-300",
+                  ? "border-zinc-300 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]"
+                  : "border-zinc-200 hover:border-zinc-300",
               )}
               style={
                 active
@@ -92,7 +92,7 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
               <span
                 className={cn(
                   "flex size-9 items-center justify-center rounded-lg border bg-white transition-colors",
-                  active ? "border-stone-200" : "border-stone-200",
+                  active ? "border-zinc-200" : "border-zinc-200",
                 )}
                 style={
                   active
@@ -106,10 +106,10 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
                 />
               </span>
               <div>
-                <p className="text-[13px] font-medium text-stone-900">
+                <p className="text-[13px] font-medium text-zinc-900">
                   {option.title}
                 </p>
-                <p className="mt-1 text-[12px] leading-[1.7] text-stone-500">
+                <p className="mt-1 text-[12px] leading-[1.7] text-zinc-500">
                   {option.description}
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
         })}
       </div>
 
-      <p className="text-[12px] text-stone-500">
+      <p className="text-[12px] text-zinc-500">
         点错了？再点另一张卡片即可切换。
       </p>
     </div>

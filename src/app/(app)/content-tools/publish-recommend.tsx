@@ -62,10 +62,10 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_140px] md:items-end">
           <div className="space-y-2">
-            <div className="text-[12px] font-normal text-stone-500">账号范围</div>
+            <div className="text-[12px] font-normal text-zinc-500">账号范围</div>
             <Select
               value={accountId}
               onValueChange={(value) => setAccountId(value || "all")}
@@ -89,7 +89,7 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
           </div>
 
           <div className="space-y-2">
-            <div className="text-[12px] font-normal text-stone-500">统计范围</div>
+            <div className="text-[12px] font-normal text-zinc-500">统计范围</div>
             <Select
               value={String(days)}
               onValueChange={(value) => setDays(Number(value) as 30 | 60 | 90)}
@@ -128,32 +128,32 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
 
       {data ? (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-stone-200 bg-white p-5 text-[13px] text-stone-500">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 text-[13px] text-zinc-500">
             分析窗口 {data.windowDays} 天 · 有效样本 {data.sampleCount} 条
           </div>
 
           {data.recommendations.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stone-200 px-4 py-8 text-center text-[13px] text-stone-500">
+            <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-[13px] text-zinc-500">
               当前范围内暂无足够发布时间数据。
             </div>
           ) : (
             <div className="grid gap-4 xl:grid-cols-2">
               {data.recommendations.map((item) => (
-                <Card key={item.dimensionLabel} className="border-stone-200 bg-white">
+                <Card key={item.dimensionLabel} className="border-zinc-200 bg-white">
                   <CardHeader>
                     <CardDescription>推荐维度</CardDescription>
                     <CardTitle>{item.dimensionLabel}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {item.recommendedSlots.map((slot) => (
-                      <div key={`${item.dimensionLabel}-${slot.hourBlock}-${slot.weekday ?? "all"}`} className="rounded-xl border border-stone-200 bg-white p-4">
+                      <div key={`${item.dimensionLabel}-${slot.hourBlock}-${slot.weekday ?? "all"}`} className="rounded-xl border border-zinc-200 bg-white p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            <div className="text-[13px] font-normal text-stone-700">
+                            <div className="text-[13px] font-normal text-zinc-700">
                               {slot.weekday ? `${slot.weekday} · ` : ""}
                               {slot.hourBlock}
                             </div>
-                            <div className="mt-1 text-[12px] text-stone-500">{slot.reason}</div>
+                            <div className="mt-1 text-[12px] text-zinc-500">{slot.reason}</div>
                           </div>
                           <div className={`rounded-full border px-2.5 py-1 text-[12px] ${getConfidenceTone(slot.confidence)}`}>
                             可信度 {slot.confidence}
@@ -161,16 +161,16 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
                         </div>
                         <div className="mt-4 grid gap-3 sm:grid-cols-3">
                           <div>
-                            <div className="text-[12px] text-stone-500">历史平均播放</div>
-                            <div className="mt-1 text-[13px] text-stone-700 tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
+                            <div className="text-[12px] text-zinc-500">历史平均播放</div>
+                            <div className="mt-1 text-[13px] text-zinc-700 tabular-nums">{formatPlayCount(slot.avgPlayCount)}</div>
                           </div>
                           <div>
-                            <div className="text-[12px] text-stone-500">爆款率</div>
-                            <div className="mt-1 text-[13px] text-stone-700 tabular-nums">{formatRatio(slot.hitRate)}</div>
+                            <div className="text-[12px] text-zinc-500">爆款率</div>
+                            <div className="mt-1 text-[13px] text-zinc-700 tabular-nums">{formatRatio(slot.hitRate)}</div>
                           </div>
                           <div>
-                            <div className="text-[12px] text-stone-500">样本数</div>
-                            <div className="mt-1 text-[13px] text-stone-700 tabular-nums">{slot.sampleCount}</div>
+                            <div className="text-[12px] text-zinc-500">样本数</div>
+                            <div className="mt-1 text-[13px] text-zinc-700 tabular-nums">{slot.sampleCount}</div>
                           </div>
                         </div>
                       </div>

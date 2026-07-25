@@ -35,16 +35,16 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
               onClick={() => onCheckpointClick(checkpoint.id)}
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl p-2.5 text-left transition-all duration-200",
-                isActive ? "bg-stone-50 border border-stone-200/60 shadow-sm" : "hover:bg-stone-50/50"
+                isActive ? "bg-zinc-50 border border-zinc-200/60 shadow-sm" : "hover:bg-zinc-50/50"
               )}
             >
               <div
                 className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-500 transition-colors",
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-zinc-500 transition-colors",
                   checkpoint.status === "done" && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
                   checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#D99E55]",
                   checkpoint.status === "late" && "border-[#C9604D] bg-[#C9604D] text-white",
-                  checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-500",
+                  checkpoint.status === "idle" && "border-zinc-200 bg-white text-zinc-500",
                 )}
               >
                 {checkpoint.status === "done" ? (
@@ -58,8 +58,8 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12px] font-medium text-stone-700">{checkpoint.name}</p>
-                <p className="text-[12px] text-stone-500">{checkpoint.time}</p>
+                <p className="truncate text-[12px] font-medium text-zinc-700">{checkpoint.name}</p>
+                <p className="text-[12px] text-zinc-500">{checkpoint.time}</p>
               </div>
             </button>
           );
@@ -71,7 +71,7 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
   return (
     <div className="relative w-full overflow-x-auto">
       <div className="relative grid min-w-[620px] grid-cols-5 gap-2 px-2 py-1.5">
-        <div className="absolute left-16 right-16 top-[2.1rem] z-0 h-[1px] bg-stone-200" />
+        <div className="absolute left-16 right-16 top-[2.1rem] z-0 h-[1px] bg-zinc-200" />
 
         {checkpoints.map((checkpoint, index) => {
           const isActive = activeId === checkpoint.id;
@@ -82,18 +82,18 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
               type="button"
               onClick={() => onCheckpointClick(checkpoint.id)}
               className={cn(
-                "group relative z-10 flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left outline-none transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0 focus-visible:ring-1 focus-visible:ring-stone-900/5",
-                isActive ? "bg-white shadow-sm ring-1 ring-stone-200" : "bg-white/70 hover:bg-white",
+                "group relative z-10 flex min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left outline-none transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-900/5",
+                isActive ? "bg-white shadow-sm ring-1 ring-zinc-200" : "bg-white/70 hover:bg-white",
               )}
             >
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-stone-500 transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-zinc-500 transition-[background-color,border-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   checkpoint.status === "done" && "border-[#6FAA7D] bg-[#6FAA7D] text-white",
                   checkpoint.status === "pending" && "border-[#D99E55] bg-white text-[#D99E55]",
                   checkpoint.status === "late" && "border-[#C9604D] bg-[#C9604D] text-white",
-                  checkpoint.status === "idle" && "border-stone-200 bg-white text-stone-500",
-                  isActive && "ring-1 ring-stone-900/5",
+                  checkpoint.status === "idle" && "border-zinc-200 bg-white text-zinc-500",
+                  isActive && "ring-1 ring-zinc-900/5",
                 )}
               >
                 {checkpoint.status === "done" ? (
@@ -111,12 +111,12 @@ export function CheckpointTracker({ checkpoints, onCheckpointClick, activeId, or
                 <p
                   className={cn(
                     "truncate text-[12px] font-medium tracking-[0.02em]",
-                    isActive ? "text-stone-700" : "text-stone-500 group-hover:text-stone-700",
+                    isActive ? "text-zinc-700" : "text-zinc-500 group-hover:text-zinc-700",
                   )}
                 >
                   {checkpoint.name}
                 </p>
-                <div className="flex items-center gap-1.5 text-stone-500">
+                <div className="flex items-center gap-1.5 text-zinc-500">
                   <Clock className="size-3 stroke-[1.5]" />
                   <span className="text-[12px] font-medium tabular-nums">{checkpoint.time}</span>
                 </div>

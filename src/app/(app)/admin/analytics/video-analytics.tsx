@@ -122,9 +122,9 @@ function TrendTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload?.length || !label) return null;
 
   return (
-    <div className="rounded-lg border border-stone-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]">
-      <p className="text-[12px] font-medium text-stone-700">{label}</p>
-      <p className="mt-1 text-[12px] text-stone-500">发布视频 {payload[0].value} 条</p>
+    <div className="rounded-lg border border-zinc-200 bg-white p-2.5 shadow-[0_4px_12px_-6px_rgba(15,23,42,0.06)]">
+      <p className="text-[12px] font-medium text-zinc-700">{label}</p>
+      <p className="mt-1 text-[12px] text-zinc-500">发布视频 {payload[0].value} 条</p>
     </div>
   );
 }
@@ -191,12 +191,12 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
             return (
               <Card
                 key={video.id}
-                className="rounded-2xl border border-stone-200 bg-white"
+                className="rounded-2xl border border-zinc-200 bg-white"
               >
                 <CardHeader className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-[12px] tracking-[0.12em] text-stone-500">
+                      <p className="text-[12px] tracking-[0.12em] text-zinc-500">
                         TOP {video.rank}
                       </p>
                       <CardTitle className="line-clamp-2 text-[18px] font-medium tracking-tight text-foreground">
@@ -209,28 +209,28 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-3 rounded-2xl bg-muted/35 p-3">
                     <div>
-                      <p className="text-[12px] text-stone-500">24h 播放</p>
-                      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-stone-700">
+                      <p className="text-[12px] text-zinc-500">24h 播放</p>
+                      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">
                         {formatCompactNumber(video.snapshot24h.play_count)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[12px] text-stone-500">互动率</p>
-                      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-stone-700">{formatPercent(rate)}</p>
+                      <p className="text-[12px] text-zinc-500">互动率</p>
+                      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">{formatPercent(rate)}</p>
                     </div>
                     <div>
-                      <p className="text-[12px] text-stone-500">涨粉</p>
-                      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-stone-700">
+                      <p className="text-[12px] text-zinc-500">涨粉</p>
+                      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">
                         {formatCompactNumber(video.snapshot24h.follower_gain)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[12px] text-stone-500">负责人</p>
-                      <p className="mt-1 text-[13px] font-normal tracking-tight text-stone-700">{video.profiles?.name ?? "未知"}</p>
+                      <p className="text-[12px] text-zinc-500">负责人</p>
+                      <p className="mt-1 text-[13px] font-normal tracking-tight text-zinc-700">{video.profiles?.name ?? "未知"}</p>
                     </div>
                   </div>
 
-                  <div className="space-y-1 text-[13px] text-stone-500">
+                  <div className="space-y-1 text-[13px] text-zinc-500">
                     <p>账号：{video.accounts.name}</p>
                     <p>发布时间：{formatDateTime(video.published_at)}</p>
                   </div>
@@ -244,15 +244,15 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
               <CardTitle className="text-[18px]">Top Performers</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-[13px] text-stone-500">暂无 24h 视频快照，无法生成头部表现卡片。</p>
+              <p className="text-[13px] text-zinc-500">暂无 24h 视频快照，无法生成头部表现卡片。</p>
             </CardContent>
           </Card>
         )}
       </div>
 
-      <Card className="rounded-2xl border border-stone-200 bg-white">
+      <Card className="rounded-2xl border border-zinc-200 bg-white">
         <CardHeader>
-          <CardTitle className="text-[18px] font-medium tracking-tight text-stone-900">每日视频数趋势</CardTitle>
+          <CardTitle className="text-[18px] font-medium tracking-tight text-zinc-900">每日视频数趋势</CardTitle>
         </CardHeader>
         <CardContent>
           {trendData.some((item) => item.count > 0) ? (
@@ -280,14 +280,14 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-[13px] text-stone-500">最近 30 天暂无发布时间数据。</p>
+            <p className="text-[13px] text-zinc-500">最近 30 天暂无发布时间数据。</p>
           )}
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border border-stone-200 bg-white">
+      <Card className="rounded-2xl border border-zinc-200 bg-white">
         <CardHeader>
-          <CardTitle className="text-[18px] font-medium tracking-tight text-stone-900">视频排行榜</CardTitle>
+          <CardTitle className="text-[18px] font-medium tracking-tight text-zinc-900">视频排行榜</CardTitle>
         </CardHeader>
         <CardContent>
           {rankedVideos.length > 0 ? (
@@ -302,17 +302,17 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground">TOP {video.rank}</span>
                         <Badge variant={getStatusVariant(video.anomaly_status)} className="text-[12px]">{getStatusLabel(video.anomaly_status)}</Badge>
                       </div>
-                      <p className="line-clamp-2 text-[13px] font-medium leading-[1.6] text-stone-900">
+                      <p className="line-clamp-2 text-[13px] font-medium leading-[1.6] text-zinc-900">
                         {video.video_title || "未命名视频"}
                       </p>
                       <div className="grid grid-cols-2 gap-1.5">
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
                           <p className="text-[12px] text-muted-foreground">24h播放</p>
-                          <p className="text-[12px] font-medium tabular-nums text-stone-700">{formatCompactNumber(video.snapshot24h.play_count)}</p>
+                          <p className="text-[12px] font-medium tabular-nums text-zinc-700">{formatCompactNumber(video.snapshot24h.play_count)}</p>
                         </div>
                         <div className="rounded-xl bg-muted/60 px-2 py-1.5">
                           <p className="text-[12px] text-muted-foreground">涨粉</p>
-                          <p className="text-[12px] font-medium tabular-nums text-stone-700">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
+                          <p className="text-[12px] font-medium tabular-nums text-zinc-700">{formatCompactNumber(video.snapshot24h.follower_gain)}</p>
                         </div>
                       </div>
                       <p className="truncate text-[12px] text-muted-foreground">{video.accounts?.name} · {video.profiles?.name ?? "未知"}</p>
@@ -340,7 +340,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                     const rate = calculateInteractionRate(video.snapshot24h);
                     return (
                       <TableRow key={video.id}>
-                        <TableCell className="font-medium tabular-nums text-stone-500">#{video.rank}</TableCell>
+                        <TableCell className="font-medium tabular-nums text-zinc-500">#{video.rank}</TableCell>
                         <TableCell className="max-w-[320px] whitespace-normal">
                           <div className="space-y-1">
                             <p className="line-clamp-2 font-medium tracking-tight text-foreground">
@@ -351,7 +351,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                                 href={video.video_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[12px] text-stone-500 underline-offset-4 hover:text-stone-700 hover:underline"
+                                className="text-[12px] text-zinc-500 underline-offset-4 hover:text-zinc-700 hover:underline"
                               >
                                 查看视频
                               </a>
@@ -360,11 +360,11 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
                         </TableCell>
                         <TableCell>{video.accounts.name}</TableCell>
                         <TableCell>{video.profiles?.name ?? "未知"}</TableCell>
-                        <TableCell className="text-right font-medium tabular-nums text-stone-700">
+                        <TableCell className="text-right font-medium tabular-nums text-zinc-700">
                           {formatCompactNumber(video.snapshot24h.play_count)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums text-stone-700">{formatPercent(rate)}</TableCell>
-                        <TableCell className="text-right tabular-nums text-stone-700">
+                        <TableCell className="text-right tabular-nums text-zinc-700">{formatPercent(rate)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-zinc-700">
                           {formatCompactNumber(video.snapshot24h.follower_gain)}
                         </TableCell>
                         <TableCell>
@@ -378,7 +378,7 @@ export function VideoAnalytics({ videos, snapshots }: VideoAnalyticsProps) {
             </div>
             </>
           ) : (
-            <p className="text-[13px] text-stone-500">暂无 24h 快照数据，无法展示视频排行榜。</p>
+            <p className="text-[13px] text-zinc-500">暂无 24h 快照数据，无法展示视频排行榜。</p>
           )}
         </CardContent>
       </Card>

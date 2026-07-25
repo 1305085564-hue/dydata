@@ -23,11 +23,11 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
       {/* 顶部标题 */}
       <div className="pb-1">
         <div className="space-y-1">
-          <h1 className="text-[24px] font-semibold tracking-tight text-stone-900 flex items-center gap-2">
+          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900 flex items-center gap-2">
             <Lightbulb className="size-6 text-[#D97757] stroke-[1.8]" />
             <span>选题库</span>
           </h1>
-          <p className="text-[13px] text-stone-500">
+          <p className="text-[13px] text-zinc-500">
             归纳创作灵感，认领并跟进选题制作，沉淀爆款文案。
           </p>
         </div>

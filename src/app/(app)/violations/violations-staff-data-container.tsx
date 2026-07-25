@@ -131,7 +131,7 @@ export async function ViolationsStaffDataContainer({
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-stone-200 bg-white p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <ErrorState title="案例加载失败" description={error} />
       </div>
     );
@@ -143,7 +143,7 @@ export async function ViolationsStaffDataContainer({
 
   if (cases.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-stone-300 bg-white py-12">
+      <div className="rounded-2xl border border-dashed border-zinc-300 bg-white py-12">
         <EmptyState
           title={query ? "没找到匹配的话术" : "话术库还没有内容"}
           description={

@@ -22,10 +22,10 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
       <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
         <div className="space-y-4">
           <div className="space-y-2">
-            <span className="text-[12px] font-medium uppercase tracking-widest text-stone-500">
+            <span className="text-[12px] font-medium uppercase tracking-widest text-zinc-500">
               成长进度 · 累积期
             </span>
-            <h2 className="text-[24px] font-medium leading-[1.4] text-stone-900">
+            <h2 className="text-[24px] font-medium leading-[1.4] text-zinc-900">
               再积累 {remaining} 份日报，解锁你的第一份完整体检
             </h2>
           </div>
@@ -43,22 +43,22 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
                 key={index}
                 className={cn(
                   "h-2 flex-1 rounded-full",
-                  index < filled ? "bg-[#D97757]" : "bg-stone-200",
+                  index < filled ? "bg-[#D97757]" : "bg-zinc-200",
                 )}
               />
             ))}
           </div>
 
-          <p className="text-[13px] text-stone-500">
+          <p className="text-[13px] text-zinc-500">
             已积累 {lifetimeReportCount} 份真实日报。解锁后你将得到：
           </p>
           <div className="flex flex-wrap gap-2">
             {UNLOCK_PREVIEW.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-stone-50 px-2.5 py-1 text-[12px] text-stone-600"
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[12px] text-zinc-600"
               >
-                <Lock className="h-3 w-3 text-stone-400" />
+                <Lock className="h-3 w-3 text-zinc-400" />
                 {item}
               </span>
             ))}
@@ -69,7 +69,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
               <span className="text-[12px] text-[#8A6A2F]">{staleText}</span>
               <Link
                 href="/dashboard"
-                className="text-[12px] font-medium text-[#8A6A2F] underline decoration-[#D99E55]/60 underline-offset-4 transition-colors hover:text-stone-900"
+                className="text-[12px] font-medium text-[#8A6A2F] underline decoration-[#D99E55]/60 underline-offset-4 transition-colors hover:text-zinc-900"
               >
                 去同步
               </Link>
@@ -85,7 +85,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
             提交今日日报
             <ArrowRight className="h-4 w-4" />
           </Link>
-          <p className="text-center text-[12px] text-stone-500">每天 1 份，{remaining} 天后解锁</p>
+          <p className="text-center text-[12px] text-zinc-500">每天 1 份，{remaining} 天后解锁</p>
         </div>
       </div>
     </section>

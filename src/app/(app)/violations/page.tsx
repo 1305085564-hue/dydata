@@ -76,16 +76,16 @@ export default async function ViolationsPage({
       />
 
       {/* Hero / Header */}
-      <header className="rounded-2xl border border-stone-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
+      <header className="rounded-2xl border border-zinc-200 bg-white px-6 py-5 sm:px-8 sm:py-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-stone-500">
+            <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-zinc-500">
               避坑案例
             </p>
-            <h1 className="mt-2 text-[24px] font-medium leading-[1.33] tracking-tight text-stone-900">
+            <h1 className="mt-2 text-[24px] font-medium leading-[1.33] tracking-tight text-zinc-900">
               {isManageView ? "审核工作台" : "找话术 · 看避坑"}
             </h1>
-            <div className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-stone-500">
+            <div className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
               {isManageView ? (
                 "审核员工上传的话术，把有效案例沉淀进知识库；高风险先处理，缺数据其次。"
               ) : (
@@ -103,7 +103,7 @@ export default async function ViolationsPage({
                 <BackButton />
                 <Link
                   href="/violations"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[12px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:text-zinc-900 active:translate-y-0"
                 >
                   <TrendingUp className="size-3.5 stroke-[1.5]" />
                   员工视角
@@ -121,7 +121,7 @@ export default async function ViolationsPage({
                 {canManageViolations ? (
                   <Link
                     href="/violations?view=manage"
-                    className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3 text-[13px] font-medium text-stone-700 transition-colors hover:border-stone-300 hover:text-stone-900 active:translate-y-0"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[13px] font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:text-zinc-900 active:translate-y-0"
                   >
                     <Settings2 className="size-3.5 stroke-[1.5]" />
                     审核工作台

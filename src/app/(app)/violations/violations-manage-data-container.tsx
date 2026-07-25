@@ -34,7 +34,7 @@ export async function ViolationsManageDataContainer({
   const result = await loadManageData(userId);
   if (!result.ok) {
     return (
-      <div className="rounded-2xl border border-stone-200 bg-white p-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5">
         <ErrorState title="审核队列加载失败" description={result.message} />
       </div>
     );

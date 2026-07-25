@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase/server";
@@ -19,13 +18,6 @@ export const metadata: Metadata = {
   description: "维护 DYData 成员权限、团队分组与系统配置。",
 };
 
-interface SettingCardProps {
-  href: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-}
-
 interface QuotaRule {
   id: string;
   effective_date: string;
@@ -39,28 +31,6 @@ interface QuotaRule {
 type RawQuotaRule = Omit<QuotaRule, "profiles"> & {
   profiles?: { name: string | null } | { name: string | null }[] | null;
 };
-
-function SettingCard({ href, title, description, icon }: SettingCardProps) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group flex flex-col gap-3 rounded-2xl border border-stone-200 bg-white p-5 transition duration-200 ease-out",
-        "hover:border-[#D97757]/40 active:translate-y-0",
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <span className="flex size-11 items-center justify-center rounded-2xl border border-stone-200 bg-stone-50 text-stone-700 transition group-hover:border-[#D97757]/30 group-hover:text-[#D97757]">
-          {icon}
-        </span>
-        <span className="flex-1 pt-1 text-[18px] font-medium tracking-[-0.02em] text-stone-900">
-          {title}
-        </span>
-      </div>
-      <span className="text-[13px] leading-6 text-stone-500">{description}</span>
-    </Link>
-  );
-}
 
 export default async function AdminSettingsPage() {
   const permission = await getUserPermissions();
@@ -108,24 +78,6 @@ export default async function AdminSettingsPage() {
       indexItems={[]}
     >
       <div className="space-y-8">
-        {/* 系统设置大卡片区 */}
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <SettingCard
-            href="/admin/modules"
-            title="成员管理"
-            description="系统团队架构、分组归属维护、一键入团审批及成员精细化授权。"
-            icon={<UsersRound className="size-5 text-[#D97757]" />}
-          />
-          {isOwner ? (
-            <SettingCard
-              href="/admin/ai-config"
-              title="AI 配置"
-              description="模型渠道、功能绑定、文案改写和执行路线管理."
-              icon={<Sparkles className="size-5 text-[#D97757]" />}
-            />
-          ) : null}
-        </div>
-
         {/* 异常阈值配置区块 */}
         <ThresholdsConfigPanel
           initialThresholds={initialThresholds}

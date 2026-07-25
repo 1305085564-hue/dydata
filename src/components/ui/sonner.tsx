@@ -10,7 +10,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4 stroke-[1.5] text-[#6FAA7D]" />,
-        info: <InfoIcon className="size-4 stroke-[1.5] text-stone-500" />,
+        info: <InfoIcon className="size-4 stroke-[1.5] text-zinc-500" />,
         warning: <TriangleAlertIcon className="size-4 stroke-[1.5] text-[#D99E55]" />,
         error: <OctagonXIcon className="size-4 stroke-[1.5] text-[#C9604D]" />,
         loading: (

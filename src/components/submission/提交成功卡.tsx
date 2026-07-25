@@ -16,7 +16,7 @@ export function 提交成功卡({ bizDate }: SubmissionSuccessCardProps) {
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/12 px-4"
     >
-      <div className="w-full max-w-md rounded-xl border border-stone-200 bg-white p-6 text-center">
+      <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6 text-center">
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[color:rgba(52,199,89,0.14)] text-[var(--color-success)]">
           <CheckCircle2 className="size-8" />
         </div>

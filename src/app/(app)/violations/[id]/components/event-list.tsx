@@ -26,16 +26,16 @@ export type EventItem = {
 const EVENT_TYPE_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
   限流: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
   警告: { borderColor: "border-[#D99E55]/30", textColor: "text-[#D99E55]", dotColor: "#D99E55" },
-  删除视频: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
+  删除视频: { borderColor: "border-zinc-200", textColor: "text-zinc-500", dotColor: "#78716c" },
   封号: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
-  其他: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
+  其他: { borderColor: "border-zinc-200", textColor: "text-zinc-500", dotColor: "#78716c" },
 };
 
 const APPEAL_STATUS_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
   申诉成功: { borderColor: "border-[#6FAA7D]/30", textColor: "text-[#6FAA7D]", dotColor: "#6FAA7D" },
   申诉失败: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
   申诉中: { borderColor: "border-[#5F82A8]/30", textColor: "text-[#5F82A8]", dotColor: "#5F82A8" },
-  未申诉: { borderColor: "border-stone-200", textColor: "text-stone-500", dotColor: "#78716c" },
+  未申诉: { borderColor: "border-zinc-200", textColor: "text-zinc-500", dotColor: "#78716c" },
 };
 
 function firstOf<T>(value: T | T[] | null | undefined): T | null {
@@ -58,7 +58,7 @@ function formatDateTime(value: string | null | undefined): string {
 
 function EmptyEvents() {
   return (
-    <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50/60 py-8">
+    <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/60 py-8">
       <EmptyState
         title="暂无违规事件"
         description="这条话术目前没有被平台判违规"
@@ -73,16 +73,16 @@ function PlatformNoticeBlock({ text }: { text: string }) {
   const needsClamp = lines.length > 2 || text.length > 160;
 
   return (
-    <div className="rounded-lg bg-stone-50 p-3">
+    <div className="rounded-lg bg-zinc-50 p-3">
       <div className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-stone-500" strokeWidth={1.5} />
+        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-zinc-500" strokeWidth={1.5} />
         <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-normal tracking-[0.12em] text-stone-500">
+          <div className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">
             平台通知
           </div>
           <p
             className={cn(
-              "mt-1 whitespace-pre-wrap text-[13px] leading-[1.7] text-stone-700",
+              "mt-1 whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700",
               needsClamp && !expanded && "line-clamp-2",
             )}
           >
@@ -92,7 +92,7 @@ function PlatformNoticeBlock({ text }: { text: string }) {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-1 inline-flex items-center gap-1 text-[12px] font-normal text-stone-500 hover:text-stone-700 active:translate-y-0"
+              className="mt-1 inline-flex items-center gap-1 text-[12px] font-normal text-zinc-500 hover:text-zinc-700 active:translate-y-0"
             >
               {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
               {expanded ? "收起" : "展开全文"}
@@ -119,7 +119,7 @@ function ScreenshotThumbs({
           key={path}
           type="button"
           onClick={() => onOpen(path)}
-          className="group relative size-16 overflow-hidden rounded-lg border border-stone-200 bg-stone-100 transition-colors hover:border-stone-400 active:translate-y-0"
+          className="group relative size-16 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-colors hover:border-zinc-400 active:translate-y-0"
           aria-label="查看截图大图"
         >
           <Image
@@ -217,7 +217,7 @@ export function EventList({ events }: { events: EventItem[] }) {
                 hidden: { opacity: 0, y: 6 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.22, 1, 0.36, 1] } },
               }}
-              className="rounded-xl border border-stone-200 bg-white p-4 transition-colors hover:border-stone-300"
+              className="rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -231,12 +231,12 @@ export function EventList({ events }: { events: EventItem[] }) {
                     <span className="size-1.5 rounded-full" style={{ backgroundColor: eventStyle.dotColor }} />
                     {event.event_type}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[12px] text-stone-500">
-                    <Calendar className="size-3.5 text-stone-500" strokeWidth={1.5} />
+                  <span className="inline-flex items-center gap-1 text-[12px] text-zinc-500">
+                    <Calendar className="size-3.5 text-zinc-500" strokeWidth={1.5} />
                     {formatDateTime(event.occurred_at)}
                   </span>
-                    <span className="text-stone-500">·</span>
-                  <span className="text-[12px] font-normal text-stone-700">{accountName}</span>
+                    <span className="text-zinc-500">·</span>
+                  <span className="text-[12px] font-normal text-zinc-700">{accountName}</span>
                 </div>
                 <span
                   className={cn(
@@ -257,15 +257,15 @@ export function EventList({ events }: { events: EventItem[] }) {
               ) : null}
 
               {event.suspected_reason ? (
-                <p className="mt-3 text-[12px] leading-6 text-stone-700">
-                  <span className="font-normal text-stone-500">疑似原因：</span>
+                <p className="mt-3 text-[12px] leading-6 text-zinc-700">
+                  <span className="font-normal text-zinc-500">疑似原因：</span>
                   {event.suspected_reason}
                 </p>
               ) : null}
 
               {event.appeal_result ? (
-                <p className="mt-2 text-[12px] leading-6 text-stone-700">
-                  <span className="font-normal text-stone-500">申诉结果：</span>
+                <p className="mt-2 text-[12px] leading-6 text-zinc-700">
+                  <span className="font-normal text-zinc-500">申诉结果：</span>
                   {event.appeal_result}
                 </p>
               ) : null}
@@ -280,13 +280,13 @@ export function EventList({ events }: { events: EventItem[] }) {
               <ScreenshotThumbs paths={screenshots} onOpen={setLightboxPath} />
 
               {event.note ? (
-                <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-stone-700">
+                <p className="mt-3 whitespace-pre-wrap pt-3 text-[12px] leading-6 text-zinc-700">
                   {event.note}
                 </p>
               ) : null}
 
               {reporterName ? (
-                <div className="mt-3 text-[12px] text-stone-500">上报人 {reporterName}</div>
+                <div className="mt-3 text-[12px] text-zinc-500">上报人 {reporterName}</div>
               ) : null}
             </motion.li>
           );

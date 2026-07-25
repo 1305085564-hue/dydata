@@ -62,17 +62,17 @@ export function ThresholdsConfigPanel({
   };
 
   return (
-    <div className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-stone-100">
+    <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-zinc-100">
         <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 text-[#D97757]">
+          <span className="flex size-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-[#D97757]">
             <Sliders className="size-5" />
           </span>
           <div>
-            <h3 className="text-[16px] font-semibold text-stone-900 tracking-tight">
+            <h3 className="text-[16px] font-semibold text-zinc-900 tracking-tight">
               视频复盘与素材库异常警戒阈值
             </h3>
-            <p className="text-[12px] text-stone-500 mt-0.5">
+            <p className="text-[12px] text-zinc-500 mt-0.5">
               自定义全站数据指标警戒线。触及警戒线时将以高雅浅红框亮起提醒。
             </p>
           </div>
@@ -84,7 +84,7 @@ export function ThresholdsConfigPanel({
             variant="outline"
             size="sm"
             onClick={handleResetToDefault}
-            className="h-8 gap-1.5 rounded-xl border-stone-200 text-[12px] text-stone-600 hover:bg-stone-50"
+            className="h-8 gap-1.5 rounded-xl border-zinc-200 text-[12px] text-zinc-600 hover:bg-zinc-50"
           >
             <RotateCcw className="size-3.5" />
             恢复系统默认
@@ -103,9 +103,9 @@ export function ThresholdsConfigPanel({
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {/* 2s跳出率 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium text-stone-700 flex items-center justify-between">
+            <label className="text-[12px] font-medium text-zinc-700 flex items-center justify-between">
               <span>2s 跳出率</span>
-              <span className="text-stone-400 font-normal text-[11px]">高于此值触发</span>
+              <span className="text-zinc-400 font-normal text-[11px]">高于此值触发</span>
             </label>
             <div className="relative flex items-center">
               <Input
@@ -116,17 +116,17 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.bounce_rate_2s}
                 onChange={(e) => handleChange("bounce_rate_2s", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-stone-900 bg-stone-50/50 border-stone-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-zinc-900 bg-zinc-50/50 border-zinc-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
-              <span className="absolute right-3 text-[12px] font-medium text-stone-400">%</span>
+              <span className="absolute right-3 text-[12px] font-medium text-zinc-400">%</span>
             </div>
           </div>
 
           {/* 5s完播率 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium text-stone-700 flex items-center justify-between">
+            <label className="text-[12px] font-medium text-zinc-700 flex items-center justify-between">
               <span>5s 完播率</span>
-              <span className="text-stone-400 font-normal text-[11px]">低于此值触发</span>
+              <span className="text-zinc-400 font-normal text-[11px]">低于此值触发</span>
             </label>
             <div className="relative flex items-center">
               <Input
@@ -137,17 +137,17 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.completion_rate_5s}
                 onChange={(e) => handleChange("completion_rate_5s", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-stone-900 bg-stone-50/50 border-stone-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-zinc-900 bg-zinc-50/50 border-zinc-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
-              <span className="absolute right-3 text-[12px] font-medium text-stone-400">%</span>
+              <span className="absolute right-3 text-[12px] font-medium text-zinc-400">%</span>
             </div>
           </div>
 
           {/* 均播时长 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium text-stone-700 flex items-center justify-between">
+            <label className="text-[12px] font-medium text-zinc-700 flex items-center justify-between">
               <span>均播时长</span>
-              <span className="text-stone-400 font-normal text-[11px]">低于此值触发</span>
+              <span className="text-zinc-400 font-normal text-[11px]">低于此值触发</span>
             </label>
             <div className="relative flex items-center">
               <Input
@@ -157,17 +157,17 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.avg_play_duration}
                 onChange={(e) => handleChange("avg_play_duration", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-stone-900 bg-stone-50/50 border-stone-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-zinc-900 bg-zinc-50/50 border-zinc-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
-              <span className="absolute right-3 text-[12px] font-medium text-stone-400">秒</span>
+              <span className="absolute right-3 text-[12px] font-medium text-zinc-400">秒</span>
             </div>
           </div>
 
           {/* 完播率 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium text-stone-700 flex items-center justify-between">
+            <label className="text-[12px] font-medium text-zinc-700 flex items-center justify-between">
               <span>整体完播率</span>
-              <span className="text-stone-400 font-normal text-[11px]">低于此值触发</span>
+              <span className="text-zinc-400 font-normal text-[11px]">低于此值触发</span>
             </label>
             <div className="relative flex items-center">
               <Input
@@ -178,17 +178,17 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.completion_rate}
                 onChange={(e) => handleChange("completion_rate", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-stone-900 bg-stone-50/50 border-stone-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-zinc-900 bg-zinc-50/50 border-zinc-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
-              <span className="absolute right-3 text-[12px] font-medium text-stone-400">%</span>
+              <span className="absolute right-3 text-[12px] font-medium text-zinc-400">%</span>
             </div>
           </div>
 
           {/* 播放量 */}
           <div className="flex flex-col gap-2">
-            <label className="text-[12px] font-medium text-stone-700 flex items-center justify-between">
+            <label className="text-[12px] font-medium text-zinc-700 flex items-center justify-between">
               <span>播放量门槛</span>
-              <span className="text-stone-400 font-normal text-[11px]">低于此值触发</span>
+              <span className="text-zinc-400 font-normal text-[11px]">低于此值触发</span>
             </label>
             <div className="relative flex items-center">
               <Input
@@ -198,9 +198,9 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.play_count}
                 onChange={(e) => handleChange("play_count", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-stone-900 bg-stone-50/50 border-stone-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-zinc-900 bg-zinc-50/50 border-zinc-200 focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
-              <span className="absolute right-3 text-[12px] font-medium text-stone-400">次</span>
+              <span className="absolute right-3 text-[12px] font-medium text-zinc-400">次</span>
             </div>
           </div>
         </div>

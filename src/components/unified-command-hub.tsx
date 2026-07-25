@@ -241,7 +241,7 @@ export function UnifiedCommandHub({
       case "success":
         return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-250 dark:border-emerald-900/30";
       default:
-        return "bg-stone-50 text-stone-700 dark:bg-stone-900 dark:text-stone-500 border-stone-200 dark:border-stone-800";
+        return "bg-zinc-50 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-500 border-zinc-200 dark:border-zinc-800";
     }
   };
 
@@ -262,136 +262,159 @@ export function UnifiedCommandHub({
     if (Number.isNaN(ts)) return "";
     const diff = Date.now() - ts;
     const min = Math.floor(diff / 60_000);
-    if (min < 1) return "刚刚";
-    if (min < 60) return `${min} 分钟前`;
-    const hr = Math.floor(min / 60);
     if (hr < 24) return `${hr} 小时前`;
     const day = Math.floor(hr / 24);
     if (day < 7) return `${day} 天前`;
     return new Date(iso).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
   };
 
+  // Keyboard shortcut for tab switching (1, 2, 3)
+  useEffect(() => {
+    const handleShortcut = (e: KeyboardEvent) => {
+      if (!open) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+      if (e.key === "1") {
+        onTabChange("todos");
+      } else if (e.key === "2" && isAdmin) {
+        onTabChange("approvals");
+      } else if (e.key === "3") {
+        onTabChange("notifications");
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [open, isAdmin, onTabChange]);
+
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop Blur */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={handleOverlayClick}
-            className="absolute inset-0 bg-stone-950/40 dark:bg-stone-950/60 backdrop-blur-sm"
+        <>
+          {/* Invisible Backdrop to handle click outside seamlessly */}
+          <div
+            onClick={() => onOpenChange(false)}
+            className="fixed inset-0 z-40 bg-transparent"
           />
 
-          {/* Drawer Sidebar */}
+          {/* Raycast / macOS style Topbar Command Popover */}
           <motion.div
             ref={drawerRef}
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 220 }}
+            initial={{ opacity: 0, scale: 0.95, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -6 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "relative flex h-full w-full max-w-[460px] flex-col border-l bg-stone-50 dark:bg-stone-950 shadow-xl",
-              "border-stone-200 dark:border-stone-800"
+              "absolute right-0 top-full mt-2 z-50 flex w-[420px] max-h-[580px] flex-col overflow-hidden rounded-2xl border bg-white/95 shadow-2xl shadow-zinc-900/12 backdrop-blur-2xl ring-1 ring-black/5",
+              "border-zinc-200/90"
             )}
           >
-            {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b bg-white dark:bg-stone-900 px-5 py-4 border-stone-200 dark:border-stone-800">
-              <div>
-                <div className="text-[12px] font-medium tracking-widest text-[#D97757] uppercase">
-                  Command Hub
-                </div>
-                <h2 className="text-[13px] font-medium text-stone-900 dark:text-white tracking-tight mt-0.5">
-                  智能工作中心
-                </h2>
+            {/* Header & Spring Segmented Controller */}
+            <div className="flex shrink-0 items-center justify-between border-b border-zinc-100 bg-zinc-50/70 px-3 py-2">
+              {/* Spring Segmented Tab Bar */}
+              <div className="flex items-center gap-0.5 rounded-xl bg-zinc-200/60 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => onTabChange("todos")}
+                  className={cn(
+                    "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
+                    activeTab === "todos"
+                      ? "text-zinc-950 font-semibold"
+                      : "text-zinc-500 hover:text-zinc-800 font-medium"
+                  )}
+                >
+                  {activeTab === "todos" && (
+                    <motion.div
+                      layoutId="popoverSegmentedTab"
+                      className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span>待办</span>
+                  {activeTodos.length > 0 && (
+                    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium text-white tabular-nums">
+                      {activeTodos.length}
+                    </span>
+                  )}
+                </button>
+
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => onTabChange("approvals")}
+                    className={cn(
+                      "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
+                      activeTab === "approvals"
+                        ? "text-zinc-950 font-semibold"
+                        : "text-zinc-500 hover:text-zinc-800 font-medium"
+                    )}
+                  >
+                    {activeTab === "approvals" && (
+                      <motion.div
+                        layoutId="popoverSegmentedTab"
+                        className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span>审批</span>
+                    {pendingApprovalsCount > 0 && (
+                      <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium text-white tabular-nums">
+                        {pendingApprovalsCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onTabChange("notifications")}
+                  className={cn(
+                    "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
+                    activeTab === "notifications"
+                      ? "text-zinc-950 font-semibold"
+                      : "text-zinc-500 hover:text-zinc-800 font-medium"
+                  )}
+                >
+                  {activeTab === "notifications" && (
+                    <motion.div
+                      layoutId="popoverSegmentedTab"
+                      className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <span>动态</span>
+                  {alerts.filter((n) => n.status === "unread").length > 0 && (
+                    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-medium text-white tabular-nums">
+                      {alerts.filter((n) => n.status === "unread").length}
+                    </span>
+                  )}
+                </button>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1.5">
                 {activeTab === "notifications" && alerts.some((n) => n.status === "unread") && (
                   <button
+                    type="button"
                     onClick={() => void markAllRead()}
-                    className="text-[12px] font-medium text-stone-500 hover:text-stone-900 dark:text-stone-500 dark:hover:text-white px-2 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    className="text-[11px] font-medium text-zinc-500 hover:text-zinc-900 px-2 py-0.5 rounded-lg hover:bg-zinc-200/50 transition-colors"
                   >
                     全部已读
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => onOpenChange(false)}
                   aria-label="关闭"
-                  className="flex size-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-500 hover:text-stone-900 dark:hover:text-white transition-all duration-200"
+                  className="flex size-6.5 items-center justify-center rounded-lg hover:bg-zinc-200/60 text-zinc-400 hover:text-zinc-800 transition-all duration-150"
                 >
-                  <X className="size-4 stroke-[1.8]" />
+                  <X className="size-3.5 stroke-[1.8]" />
                 </button>
               </div>
-            </div>
-
-            {/* Tab switch navigation */}
-            <div className="flex shrink-0 border-b border-stone-200 dark:border-stone-800 px-5 bg-white dark:bg-stone-900">
-              <button
-                onClick={() => onTabChange("todos")}
-                className={cn(
-                  "relative py-3 text-[12px] font-medium transition-colors duration-200 mr-6",
-                  activeTab === "todos" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
-                )}
-              >
-                今日待办
-                {activeTodos.length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
-                    {activeTodos.length}
-                  </span>
-                )}
-                {activeTab === "todos" && (
-                  <motion.div
-                    layoutId="commandHubActiveTabIndicator"
-                    className="absolute bottom-0 inset-x-0 h-0.5 bg-[#D97757]"
-                  />
-                )}
-              </button>
-
-              {isAdmin && (
-                <button
-                  onClick={() => onTabChange("approvals")}
-                  className={cn(
-                    "relative py-3 text-[12px] font-medium transition-colors duration-200 mr-6",
-                    activeTab === "approvals" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
-                  )}
-                >
-                  豁免审批
-                  {pendingApprovalsCount > 0 && (
-                    <span className="ml-1.5 rounded-full bg-[#D97757]/10 dark:bg-[#D97757]/20 text-[#D97757] px-1.5 py-0.5 text-[12px] font-medium">
-                      {pendingApprovalsCount}
-                    </span>
-                  )}
-                  {activeTab === "approvals" && (
-                    <motion.div
-                      layoutId="commandHubActiveTabIndicator"
-                      className="absolute bottom-0 inset-x-0 h-0.5 bg-[#D97757]"
-                    />
-                  )}
-                </button>
-              )}
-
-              <button
-                onClick={() => onTabChange("notifications")}
-                className={cn(
-                  "relative py-3 text-[12px] font-medium transition-colors duration-200",
-                  activeTab === "notifications" ? "text-stone-900 dark:text-white" : "text-stone-500 hover:text-stone-700"
-                )}
-              >
-                系统动态
-                {alerts.filter((n) => n.status === "unread").length > 0 && (
-                  <span className="ml-1.5 rounded-full bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 text-[12px] font-medium">
-                    {alerts.filter((n) => n.status === "unread").length}
-                  </span>
-                )}
-                {activeTab === "notifications" && (
-                  <motion.div
-                    layoutId="commandHubActiveTabIndicator"
-                    className="absolute bottom-0 inset-x-0 h-0.5 bg-[#D97757]"
-                  />
-                )}
-              </button>
             </div>
 
             {/* Content Body */}
@@ -400,17 +423,17 @@ export function UnifiedCommandHub({
               {/* APPROVALS TAB */}
               {activeTab === "approvals" && isAdmin && (
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-stone-200 bg-white p-4">
+                  <div className="rounded-2xl border border-zinc-200 bg-white p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-stone-500">
+                        <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-zinc-500">
                           待审申请
                         </div>
                         <div className="mt-1 flex items-baseline gap-2">
-                          <span className="text-[24px] font-medium tabular-nums text-stone-900">
+                          <span className="text-[24px] font-medium tabular-nums text-zinc-900">
                             {pendingApprovals.length}
                           </span>
-                          <span className="text-[12px] font-medium text-stone-500">
+                          <span className="text-[12px] font-medium text-zinc-500">
                             条待处理
                           </span>
                         </div>
@@ -418,7 +441,7 @@ export function UnifiedCommandHub({
 
                       {pendingApprovals.length > 0 && (
                         <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-center gap-2 rounded-full bg-stone-100 px-3 py-1.5">
+                          <div className="flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5">
                             <Checkbox
                               checked={allSelected}
                               aria-label="全选"
@@ -426,12 +449,12 @@ export function UnifiedCommandHub({
                                 const nextChecked = Boolean(checked);
                                 setSelectedApprovalIds(nextChecked ? new Set(allApprovalIds) : new Set());
                               }}
-                              className="border-stone-300"
+                              className="border-zinc-300"
                             />
-                            <span className="text-[12px] font-medium text-stone-700">
+                            <span className="text-[12px] font-medium text-zinc-700">
                               全选
                             </span>
-                            <span className="text-[12px] font-medium text-stone-900">
+                            <span className="text-[12px] font-medium text-zinc-900">
                               {selectedApprovalIds.size}
                             </span>
                           </div>
@@ -443,7 +466,7 @@ export function UnifiedCommandHub({
                             className={cn(
                               "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-medium transition-colors",
                               selectedApprovalIds.size === 0 || batchProcessing
-                                ? "cursor-not-allowed bg-stone-100 text-stone-500"
+                                ? "cursor-not-allowed bg-zinc-100 text-zinc-500"
                                 : "bg-[#D97757] text-white hover:bg-[#C96442]"
                             )}
                           >
@@ -460,17 +483,17 @@ export function UnifiedCommandHub({
                   </div>
 
                   {approvalsLoading && pendingApprovals.length === 0 ? (
-                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-[12px] text-stone-500">
+                    <div className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 py-12 text-[12px] text-zinc-500">
                       <Loader2 className="size-4 animate-spin text-[#D97757]" />
                       正在加载待审批申请...
                     </div>
                   ) : pendingApprovals.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-200 bg-stone-50/70 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 py-12 text-center">
                       <CheckCircle2 className="mb-2 size-8 text-[#6FAA7D]" />
-                      <h3 className="text-[12px] font-medium text-stone-900">
+                      <h3 className="text-[12px] font-medium text-zinc-900">
                         暂无待审豁免
                       </h3>
-                      <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-stone-500">
+                      <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-zinc-500">
                         当前没有新的豁免申请，审批队列已经清空。
                       </p>
                     </div>
@@ -488,7 +511,7 @@ export function UnifiedCommandHub({
                           <div
                             key={rowKey}
                             className={cn(
-                              "group rounded-2xl border border-stone-200 bg-white p-4 transition-colors",
+                              "group rounded-2xl border border-zinc-200 bg-white p-4 transition-colors",
                               isSelected && "border-[#D97757]/50 bg-[#D97757]/[0.03]"
                             )}
                           >
@@ -501,35 +524,35 @@ export function UnifiedCommandHub({
                                   if (!requestId) return;
                                   toggleApprovalSelection(requestId, Boolean(checked));
                                 }}
-                                className="mt-0.5 border-stone-300"
+                                className="mt-0.5 border-zinc-300"
                               />
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <span className="truncate text-[12px] font-medium text-stone-900">
+                                      <span className="truncate text-[12px] font-medium text-zinc-900">
                                         {item.applicant_name || "未命名成员"}
                                       </span>
                                       <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
                                         {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
                                       </span>
                                     </div>
-                                    <div className="mt-1 text-[12px] text-stone-500">
+                                    <div className="mt-1 text-[12px] text-zinc-500">
                                       {item.group_name || item.team_name || "未分组"} ·{" "}
-                                      <span className="tabular-nums text-stone-500">
+                                      <span className="tabular-nums text-zinc-500">
                                         {item.start_date}
                                         {item.end_date ? ` 至 ${item.end_date}` : ""}
                                       </span>
                                     </div>
                                   </div>
 
-                                  <span className="shrink-0 text-[12px] text-stone-500">
+                                  <span className="shrink-0 text-[12px] text-zinc-500">
                                     {relativeTime(item.created_at)}
                                   </span>
                                 </div>
 
-                                <p className="mt-2 line-clamp-1 rounded-lg bg-stone-50 px-2.5 py-2 text-[12px] text-stone-700">
+                                <p className="mt-2 line-clamp-1 rounded-lg bg-zinc-50 px-2.5 py-2 text-[12px] text-zinc-700">
                                   原因：{item.reason?.trim() || "未填写原因"}
                                 </p>
                                 {!requestId ? (
@@ -544,7 +567,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
                                   onClick={() => void handleReviewApproval(item, "approved")}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-zinc-500"
                                 >
                                   {isApproving ? (
                                     <Loader2 className="size-3.5 animate-spin" />
@@ -557,7 +580,7 @@ export function UnifiedCommandHub({
                                   type="button"
                                   disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
                                   onClick={() => void handleReviewApproval(item, "rejected")}
-                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-stone-500"
+                                  className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-zinc-500"
                                 >
                                   {isRejecting ? (
                                     <Loader2 className="size-3.5 animate-spin" />
@@ -579,21 +602,21 @@ export function UnifiedCommandHub({
                 <div className="space-y-4">
                   {/* 日常发布管理入口 (管理员专有，高频日常运营，弱化顶部导航后的入口分流) */}
                   {isAdmin && (
-                    <div className="rounded-xl border border-stone-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:border-stone-300">
+                    <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:border-zinc-300">
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2.5">
                           <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-[#D97757] dark:bg-amber-950/20">
                             <CalendarDays className="size-4 text-[#D97757]" />
                           </div>
                           <div>
-                            <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-100 leading-tight">日常发布管理</h4>
-                            <p className="text-[11px] text-stone-500 mt-0.5">查看团队成员作品交档与申诉处理</p>
+                            <h4 className="text-[12px] font-medium text-zinc-900 dark:text-zinc-100 leading-tight">日常发布管理</h4>
+                            <p className="text-[11px] text-zinc-500 mt-0.5">查看团队成员作品交档与申诉处理</p>
                           </div>
                         </div>
                         <Link
                           href="/admin/fulfillment"
                           onClick={() => onOpenChange(false)}
-                          className="inline-flex h-7 items-center justify-center rounded-lg border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900 px-3 text-[12px] font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-950 dark:hover:text-white transition-all active:scale-95 shrink-0"
+                          className="inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-3 text-[12px] font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-950 dark:hover:text-white transition-all active:scale-95 shrink-0"
                         >
                           <span>进入</span>
                           <ArrowRight className="size-3 ml-1" />
@@ -603,7 +626,7 @@ export function UnifiedCommandHub({
                   )}
 
                   {loading && activeTodos.length === 0 && (
-                    <div className="py-12 text-center text-[12px] text-stone-500 animate-pulse">
+                    <div className="py-12 text-center text-[12px] text-zinc-500 animate-pulse">
                       正在加载待办事项...
                     </div>
                   )}
@@ -611,19 +634,19 @@ export function UnifiedCommandHub({
                   {/* Active Todos List */}
                   {!loading && activeTodos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
                         <CheckCircle2 className="size-6 text-emerald-500" />
                       </div>
-                      <h3 className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
+                      <h3 className="text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
                         今日待办已全部完成
                       </h3>
-                      <p className="text-[12px] text-stone-500 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-[12px] text-zinc-500 dark:text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
                         团队目前没有未处理的违规审核或履约卡点，状态良好。
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="text-[12px] font-medium text-stone-500 dark:text-stone-500 mb-1">
+                      <div className="text-[12px] font-medium text-zinc-500 dark:text-zinc-500 mb-1">
                         进行中 ({activeTodos.length})
                       </div>
                       <AnimatePresence initial={false}>
@@ -635,14 +658,14 @@ export function UnifiedCommandHub({
                             exit={{ opacity: 0, x: -50, height: 0, marginBottom: 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={cn(
-                              "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors",
-                              "border-stone-200/80 dark:border-stone-800"
+                              "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-zinc-900 transition-colors",
+                              "border-zinc-200/80 dark:border-zinc-800"
                             )}
                           >
                             <button
                               onClick={() => handleToggleTodo(todo)}
                               aria-label={`标记完成：${todo.title}`}
-                              className="mt-0.5 text-stone-500 hover:text-[#D97757] transition-colors shrink-0 outline-none"
+                              className="mt-0.5 text-zinc-500 hover:text-[#D97757] transition-colors shrink-0 outline-none"
                             >
                               <Circle className="size-4" />
                             </button>
@@ -654,16 +677,16 @@ export function UnifiedCommandHub({
                                 )}>
                                   {todo.severity === "critical" ? "P0 急需" : todo.severity === "warning" ? "P1 高优" : "P2 常规"}
                                 </span>
-                                <span className="text-[12px] text-stone-500 dark:text-stone-500 flex items-center gap-1">
+                                <span className="text-[12px] text-zinc-500 dark:text-zinc-500 flex items-center gap-1">
                                   <CalendarDays className="size-2.5" />
                                   截止于 {relativeTime(todo.created_at)}
                                 </span>
                               </div>
-                              <h4 className="text-[12px] font-medium text-stone-900 dark:text-stone-50 leading-tight mt-1.5">
+                              <h4 className="text-[12px] font-medium text-zinc-900 dark:text-zinc-50 leading-tight mt-1.5">
                                 {todo.title}
                               </h4>
                               {todo.body && (
-                                <p className="text-[12px] text-stone-500 dark:text-stone-500 leading-normal mt-1">
+                                <p className="text-[12px] text-zinc-500 dark:text-zinc-500 leading-normal mt-1">
                                   {todo.body}
                                 </p>
                               )}
@@ -692,20 +715,20 @@ export function UnifiedCommandHub({
 
                   {/* Completed List (in this session) */}
                   {completedSessionIds.length > 0 && (
-                    <div className="pt-2 border-t border-stone-200/50 dark:border-stone-800/50">
-                      <div className="text-[12px] font-medium text-stone-500 dark:text-stone-500 mb-2">
+                    <div className="pt-2 border-t border-zinc-200/50 dark:border-zinc-800/50">
+                      <div className="text-[12px] font-medium text-zinc-500 dark:text-zinc-500 mb-2">
                         已完成 ({completedSessionIds.length})
                       </div>
                       <div className="space-y-1.5 opacity-60">
                         {completedSessionIds.map((id) => (
                           <div
                             key={id}
-                            className="flex items-center gap-3 rounded-lg border border-dashed border-stone-200 dark:border-stone-800 p-2.5 bg-stone-100/50 dark:bg-stone-900/30"
+                            className="flex items-center gap-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 p-2.5 bg-zinc-100/50 dark:bg-zinc-900/30"
                           >
                             <span className="text-emerald-500 shrink-0">
                               <CheckCircle2 className="size-4 fill-emerald-500 text-white" />
                             </span>
-                            <span className="text-[12px] font-medium text-stone-500 dark:text-stone-500 line-through truncate flex-1">
+                            <span className="text-[12px] font-medium text-zinc-500 dark:text-zinc-500 line-through truncate flex-1">
                               {completedSessionTitles[id] || "完成的待办事项"}
                             </span>
                           </div>
@@ -720,20 +743,20 @@ export function UnifiedCommandHub({
               {activeTab === "notifications" && (
                 <div className="space-y-4">
                   {loading && alerts.length === 0 && (
-                    <div className="py-12 text-center text-[12px] text-stone-500 animate-pulse">
+                    <div className="py-12 text-center text-[12px] text-zinc-500 animate-pulse">
                       正在读取系统动态...
                     </div>
                   )}
 
                   {!loading && alerts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-900 text-stone-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
-                        <Inbox className="size-6 text-stone-500" />
+                      <div className="flex size-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
+                        <Inbox className="size-6 text-zinc-500" />
                       </div>
-                      <h3 className="text-[12px] font-medium text-stone-900 dark:text-[#FAFAF9]">
+                      <h3 className="text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
                         目前没有任何动态
                       </h3>
-                      <p className="text-[12px] text-stone-500 dark:text-stone-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="text-[12px] text-zinc-500 dark:text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
                         当系统有新的合规提示、账号限流预警或发布情况时，将在此汇总。
                       </p>
                     </div>
@@ -751,8 +774,8 @@ export function UnifiedCommandHub({
                               exit={{ opacity: 0, x: 50, height: 0, marginBottom: 0 }}
                               transition={{ type: "spring", stiffness: 450, damping: 28 }}
                               className={cn(
-                                "relative rounded-xl border p-3.5 bg-white dark:bg-stone-900 transition-colors",
-                                !isUnread ? "border-stone-200/50 dark:border-stone-800/50 opacity-70" : "border-stone-200 dark:border-stone-700/80"
+                                "relative rounded-xl border p-3.5 bg-white dark:bg-zinc-900 transition-colors",
+                                !isUnread ? "border-zinc-200/50 dark:border-zinc-800/50 opacity-70" : "border-zinc-200 dark:border-zinc-700/80"
                               )}
                             >
                               <div className="flex items-start gap-2.5">
@@ -767,26 +790,26 @@ export function UnifiedCommandHub({
                                       notif.severity === "critical" ? "text-rose-600 bg-rose-50 dark:bg-rose-950/20" :
                                       notif.severity === "warning" ? "text-amber-600 bg-amber-50 dark:bg-amber-950/20" :
                                       notif.severity === "success" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" :
-                                      "text-stone-500 bg-stone-100"
+                                      "text-zinc-500 bg-zinc-100"
                                     )}>
                                       {notif.severity === "critical" ? "重大预警" : notif.severity === "warning" ? "建议反馈" : "动态通知"}
                                     </span>
-                                    <span className="text-[12px] text-stone-500 dark:text-stone-500">{relativeTime(notif.created_at)}</span>
+                                    <span className="text-[12px] text-zinc-500 dark:text-zinc-500">{relativeTime(notif.created_at)}</span>
                                   </div>
                                   <h4 className={cn(
                                     "text-[12px] leading-snug mt-1.5",
-                                    !isUnread ? "font-medium text-stone-700 dark:text-stone-500" : "font-medium text-stone-900 dark:text-stone-50"
+                                    !isUnread ? "font-medium text-zinc-700 dark:text-zinc-500" : "font-medium text-zinc-900 dark:text-zinc-50"
                                   )}>
                                     {notif.title}
                                   </h4>
                                   {notif.body && (
-                                    <p className="text-[12px] text-stone-500 dark:text-stone-500 leading-normal mt-1">
+                                    <p className="text-[12px] text-zinc-500 dark:text-zinc-500 leading-normal mt-1">
                                       {notif.body}
                                     </p>
                                   )}
 
                                   {/* Interactive Actions */}
-                                  <div className="mt-2.5 flex items-center justify-between border-t border-stone-100 dark:border-stone-800/60 pt-2">
+                                  <div className="mt-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 pt-2">
                                     <div className="flex gap-2">
                                       {isUnread && (
                                         <button
@@ -826,7 +849,7 @@ export function UnifiedCommandHub({
                                     <button
                                       type="button"
                                       onClick={() => void markDone(notif.id, "ignored")}
-                                      className="text-stone-500 hover:text-rose-500 transition-colors"
+                                      className="text-zinc-500 hover:text-rose-500 transition-colors"
                                       title="忽略此条"
                                       aria-label="忽略此条"
                                     >
@@ -845,12 +868,20 @@ export function UnifiedCommandHub({
               )}
             </div>
 
-            {/* Footer summary */}
-            <div className="shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 text-center text-[12px] text-stone-500 dark:text-stone-500">
-              <span className="font-medium">DYData Premium Console</span> • 所有待处理项目将同步同步至移动钉群
+            {/* Footer summary & shortcut bar */}
+            <div className="shrink-0 flex items-center justify-between border-t border-zinc-100 bg-zinc-50/70 px-4 py-2.5 text-[11px] text-zinc-400">
+              <span className="font-normal">待处理提醒已同步至团队控制台</span>
+              <div className="hidden sm:flex items-center gap-2 font-mono text-[10px] text-zinc-400">
+                <span className="inline-flex items-center gap-1 bg-zinc-200/60 px-1.5 py-0.5 rounded-md">
+                  <kbd className="font-sans">1-3</kbd> 切换页签
+                </span>
+                <span className="inline-flex items-center gap-1 bg-zinc-200/60 px-1.5 py-0.5 rounded-md">
+                  <kbd className="font-sans">Esc</kbd> 收起
+                </span>
+              </div>
             </div>
           </motion.div>
-        </div>
+        </>
       )}
     </AnimatePresence>
   );

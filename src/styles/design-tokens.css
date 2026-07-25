@@ -1,7 +1,7 @@
 /* 美学规范 V2 Token —— 全站唯一真源 */
 :root {
-  /* 底色三层（stone 暖灰体系） */
-  --color-bg: #FAFAF9;           /* L0 页面背景 stone-50 */
+  /* 底色三层（zinc 冷灰体系） */
+  --color-bg: #FAFAFA;           /* L0 页面背景 zinc-50 */
   --color-surface: #FFFFFF;      /* L1 白卡、主工作区 */
   --color-focus: #FFFFFF;        /* 焦点区、Modal、Focus 态输入、激活 Tab */
 
@@ -9,15 +9,15 @@
   --color-primary: #D97757;      /* 主 CTA 暖橙 */
   --color-primary-hover: #C96442;
   --color-warning: #D99E55;      /* 待处理 琥珀 */
-  --color-success: #6FAA7D;      /* 在线/通过 矿物绿 */
-  --color-danger: #C9604D;       /* 失败/异常 矿物红 */
+  --color-success: #16A34A;      /* 成功/增长 标准绿 */
+  --color-danger: #DC2626;       /* 失败/下跌 标准红 */
 
-  /* 文字灰阶（stone 暖灰） */
-  --color-text-primary: #1C1917;   /* stone-900 标题 */
-  --color-text-secondary: #44403C; /* stone-700 正文 */
-  --color-text-tertiary: #78716C;  /* stone-500 元数据/空状态/单位 */
-  --color-border: #E7E5E4;         /* stone-200 分隔/卡片/表格 */
-  --color-border-warm: #D6D3D1;    /* stone-300 可交互元素 */
+  /* 文字灰阶（zinc 冷灰） */
+  --color-text-primary: #18181B;   /* zinc-900 标题 */
+  --color-text-secondary: #3F3F46; /* zinc-700 正文 */
+  --color-text-tertiary: #71717A;  /* zinc-500 元数据/空状态/单位 */
+  --color-border: #E4E4E7;         /* zinc-200 分隔/卡片/表格 */
+  --color-border-warm: #D4D4D8;    /* zinc-300 可交互元素 */
 
   /* 圆角阶梯 */
   --radius-xs: 4px;
@@ -52,37 +52,37 @@
   /* glass/nav 实色 */
   --glass-bg: #FFFFFF;
   --glass-blur: none;
-  --nav-bg: #FAFAF9;
+  --nav-bg: #FAFAFA;
   --nav-blur: none;
 
   /* Admin 专用 token */
-  --admin-bg: #FAFAF9;
+  --admin-bg: #FAFAFA;
   --admin-surface: #FFFFFF;
-  --admin-border: #E7E5E4;
-  --admin-text-primary: #1C1917;
-  --admin-text-secondary: #44403C;
-  --admin-text-tertiary: #78716C;
-  --admin-action: #1C1917;
-  --admin-success: #6FAA7D;
+  --admin-border: #E4E4E7;
+  --admin-text-primary: #18181B;
+  --admin-text-secondary: #3F3F46;
+  --admin-text-tertiary: #71717A;
+  --admin-action: #18181B;
+  --admin-success: #16A34A;
   --admin-success-bg: #FFFFFF;
   --admin-warning: #D99E55;
   --admin-warning-bg: #FFFFFF;
-  --admin-danger: #C9604D;
+  --admin-danger: #DC2626;
   --admin-danger-bg: #FFFFFF;
   --admin-info: #5F82A8;
   --admin-info-bg: #FFFFFF;
 }
 
 .dark {
-  --color-bg: #1C1917;
-  --color-surface: #292524;
-  --color-focus: #292524;
-  --color-text-primary: #FAFAF9;
-  --color-text-secondary: #D6D3D1;
-  --color-text-tertiary: #A8A29E;
-  --color-border: rgba(231, 229, 228, 0.12);
-  --glass-bg: #292524;
-  --nav-bg: #292524;
+  --color-bg: #18181B;
+  --color-surface: #27272A;
+  --color-focus: #27272A;
+  --color-text-primary: #FAFAFA;
+  --color-text-secondary: #D4D4D8;
+  --color-text-tertiary: #A1A1AA;
+  --color-border: rgba(228, 228, 231, 0.12);
+  --glass-bg: #27272A;
+  --nav-bg: #27272A;
 }
 
 @layer utilities {
@@ -101,3 +101,6 @@
     border-bottom: 1px solid var(--color-border);
   }
 }
+/* [规范对齐] 涨红跌绿已统一 */
+/* [规范对齐] 圆角 token 已对齐：xs 4px / sm 6px / md 8px / lg 12px / xl 16px */
+/* [规范对齐] 批次四：stone → zinc 色彩体系已切换 */

@@ -85,7 +85,7 @@ export function ResetPasswordForm() {
   if (recoveryState === "checking") {
     return (
       <AuthShell title="设置新密码" subtitle="正在确认重置链接是否有效">
-        <p aria-live="polite" className="text-center text-[13px] text-stone-500" role="status">
+        <p aria-live="polite" className="text-center text-[13px] text-zinc-500" role="status">
           正在验证重置链接...
         </p>
       </AuthShell>
@@ -96,11 +96,11 @@ export function ResetPasswordForm() {
     return (
       <AuthShell title="重置链接已失效" subtitle="请重新发送重置邮件后再设置新密码">
         <div className="space-y-5 text-center">
-          <Link className="text-[13px] text-stone-700 underline underline-offset-4" href={forgotPasswordHref}>
+          <Link className="text-[13px] text-zinc-700 underline underline-offset-4" href={forgotPasswordHref}>
             重新发送重置邮件
           </Link>
-          <p className="text-[13px] text-stone-500">
-            <Link className="text-stone-700 underline underline-offset-4" href={loginHref}>
+          <p className="text-[13px] text-zinc-500">
+            <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
               返回登录
             </Link>
           </p>
@@ -141,8 +141,8 @@ export function ResetPasswordForm() {
           <Button className="w-full" disabled={submitting} type="submit">
             {submitting ? "提交中" : "确认重置密码"}
           </Button>
-          <p className="text-center text-[13px] text-stone-500">
-            <Link className="text-stone-700 underline underline-offset-4" href={loginHref}>
+          <p className="text-center text-[13px] text-zinc-500">
+            <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
               返回登录
             </Link>
           </p>

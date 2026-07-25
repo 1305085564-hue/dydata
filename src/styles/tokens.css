@@ -1,75 +1,78 @@
-/* shadcn token 映射 · 美学规范 V2 · stone 暖灰体系 */
+/* shadcn token 映射 · 美学规范 V2 · zinc 冷灰体系 */
 :root {
-  --background: #FAFAF9;                 /* L0 stone-50 */
-  --foreground: #44403C;                 /* stone-700 正文 */
+  --background: #FAFAFA;                 /* L0 zinc-50 */
+  --foreground: #3F3F46;                 /* zinc-700 正文 */
   --card: #FFFFFF;                       /* L1 白卡 */
-  --card-foreground: #44403C;            /* stone-700 */
+  --card-foreground: #3F3F46;            /* zinc-700 */
   --popover: #FFFFFF;                    /* L2 white */
-  --popover-foreground: #44403C;
+  --popover-foreground: #3F3F46;
   --primary: #D97757;                    /* 暖橙 主 CTA */
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F5F4;
-  --secondary-foreground: #44403C;
-  --muted: #F5F5F4;
-  --muted-foreground: #78716C;           /* stone-500 辅助 */
-  --accent: #F5F5F4;
-  --accent-foreground: #44403C;
-  --destructive: #C9604D;                /* 异常色 */
-  --border: #E7E5E4;                     /* stone-200 */
-  --input: #E7E5E4;
-  --ring: rgba(28, 25, 23, 0.1);
+  --secondary: #F4F4F5;
+  --secondary-foreground: #3F3F46;
+  --muted: #F4F4F5;
+  --muted-foreground: #71717A;           /* zinc-500 辅助 */
+  --accent: #F4F4F5;
+  --accent-foreground: #3F3F46;
+  --destructive: #DC2626;                /* 异常色 */
+  --border: #E4E4E7;                     /* zinc-200 */
+  --input: #E4E4E7;
+  --ring: rgba(24, 24, 27, 0.1);
   /* 数据可视化色板 */
   --chart-1: #D97757;
   --chart-2: #7E5C99;
   --chart-3: #A85A6B;
   --chart-4: #3E8479;
   --chart-5: #7A7A3E;
-  --radius: 12px;
+  --radius: 4px;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #44403C;
+  --sidebar-foreground: #3F3F46;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F5F4;
-  --sidebar-accent-foreground: #44403C;
-  --sidebar-border: #E7E5E4;
-  --sidebar-ring: rgba(28, 25, 23, 0.1);
+  --sidebar-accent: #F4F4F5;
+  --sidebar-accent-foreground: #3F3F46;
+  --sidebar-border: #E4E4E7;
+  --sidebar-ring: rgba(24, 24, 27, 0.1);
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
-  --radius-card: 16px;
-  --radius-dialog: 16px;
+  --radius-card: 6px;
+  --radius-dialog: 8px;
 }
 
 .dark {
-  --background: #1C1917;
-  --foreground: #E7E5E4;
-  --card: #292524;
-  --card-foreground: #E7E5E4;
-  --popover: #292524;
-  --popover-foreground: #E7E5E4;
+  --background: #18181B;
+  --foreground: #E4E4E7;
+  --card: #27272A;
+  --card-foreground: #E4E4E7;
+  --popover: #27272A;
+  --popover-foreground: #E4E4E7;
   --primary: #D97757;
   --primary-foreground: #FFFFFF;
-  --secondary: #292524;
-  --secondary-foreground: #E7E5E4;
-  --muted: #292524;
-  --muted-foreground: #A8A29E;
-  --accent: #292524;
-  --accent-foreground: #E7E5E4;
+  --secondary: #27272A;
+  --secondary-foreground: #E4E4E7;
+  --muted: #27272A;
+  --muted-foreground: #A1A1AA;
+  --accent: #27272A;
+  --accent-foreground: #E4E4E7;
   --destructive: #C9604D;
-  --border: rgba(231, 229, 228, 0.12);
-  --input: rgba(231, 229, 228, 0.15);
-  --ring: rgba(231, 229, 228, 0.12);
+  --border: rgba(228, 228, 231, 0.12);
+  --input: rgba(228, 228, 231, 0.15);
+  --ring: rgba(228, 228, 231, 0.12);
   --chart-1: #D97757;
   --chart-2: #7E5C99;
   --chart-3: #A85A6B;
   --chart-4: #3E8479;
   --chart-5: #7A7A3E;
-  --sidebar: #1C1917;
-  --sidebar-foreground: #E7E5E4;
+  --sidebar: #18181B;
+  --sidebar-foreground: #E4E4E7;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #292524;
-  --sidebar-accent-foreground: #E7E5E4;
-  --sidebar-border: rgba(231, 229, 228, 0.12);
-  --sidebar-ring: rgba(231, 229, 228, 0.12);
+  --sidebar-accent: #27272A;
+  --sidebar-accent-foreground: #E4E4E7;
+  --sidebar-border: rgba(228, 228, 231, 0.12);
+  --sidebar-ring: rgba(228, 228, 231, 0.12);
 }
+/* [规范对齐] 涨红跌绿已统一 */
+/* [规范对齐] 圆角已调整：--radius=4px、卡片/弹层 token 已对齐 */
+/* [规范对齐] 批次四：stone → zinc 色彩体系已切换 */

@@ -160,7 +160,7 @@ export function DashboardForm({
         <div className="dashboard-form-layout">
           <div className="dashboard-form-column">
             <Card
-              className={`${getDashboardSurfaceClass("hero")} dashboard-form-import-card overflow-hidden rounded-2xl border border-stone-200 bg-white`}
+              className={`${getDashboardSurfaceClass("hero")} dashboard-form-import-card overflow-hidden rounded-2xl border border-zinc-200 bg-white`}
             >
               <CardContent className="space-y-4 px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -170,7 +170,7 @@ export function DashboardForm({
                       截图上传
                     </div>
                     <h3 className="dashboard-section-title">截图识别导入后，关键数据会自动回填到表单</h3>
-                    <p className="text-[13px] leading-6 text-stone-500">
+                    <p className="text-[13px] leading-6 text-zinc-500">
                       先完成截图导入，再检查标题、发布时间和补充字段，桌面端两块区域会保持统一起点和间距。
                     </p>
                   </div>
@@ -184,8 +184,8 @@ export function DashboardForm({
                     </DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
                       <DialogHeader>
-                        <DialogTitle className="text-[18px] font-medium tracking-tight text-stone-700">截图识别导入</DialogTitle>
-                        <DialogDescription className="text-[13px] leading-[1.7] text-stone-500">
+                        <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-700">截图识别导入</DialogTitle>
+                        <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
                           支持 jpg、png、webp。识别结果可以逐项修改，确认后才会写回主表单。
                         </DialogDescription>
                       </DialogHeader>
@@ -197,21 +197,21 @@ export function DashboardForm({
                 <div className="dashboard-summary-bar">
                   <div className="glass-chip">
                     账号
-                    <span className="font-medium text-stone-700">
+                    <span className="font-medium text-zinc-700">
                       {accounts.find((account) => account.id === selectedAccountId)?.name ?? "--"}
                     </span>
                   </div>
                   <div className="glass-chip">
                     日期
-                    <span className="font-medium tabular-nums text-stone-700">{existingData?.report_date ?? today}</span>
+                    <span className="font-medium tabular-nums text-zinc-700">{existingData?.report_date ?? today}</span>
                   </div>
                   <div className="glass-chip">
                     状态
                     <span
                       className={
                         existingData
-                          ? "inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-stone-700"
-                          : "inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-stone-700"
+                          ? "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-700"
+                          : "inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-zinc-700"
                       }
                     >
                       <span
@@ -231,13 +231,13 @@ export function DashboardForm({
 
           <div className="dashboard-form-column">
             <Card
-              className={`${getDashboardSurfaceClass("panel")} dashboard-form-entry-card rounded-2xl border border-stone-200 bg-white`}
+              className={`${getDashboardSurfaceClass("panel")} dashboard-form-entry-card rounded-2xl border border-zinc-200 bg-white`}
             >
               <CardContent className="space-y-6 px-5 py-5 sm:px-6">
                 <div className="space-y-1.5">
                   <div className="dashboard-section-kicker">指标录入</div>
                   <h3 className="dashboard-section-title">把基础信息、核心指标和补充信息收进同一个录入模板</h3>
-                  <p className="text-[13px] leading-6 text-stone-500">
+                  <p className="text-[13px] leading-6 text-zinc-500">
                     右侧统一使用同层级卡片结构，桌面端与左侧截图区共用一套两列布局，顶部和间距都会更整齐。
                   </p>
                 </div>
@@ -267,7 +267,7 @@ export function DashboardForm({
                           disabled
                           items={accounts.map((account) => ({ value: account.id, label: account.name }))}
                         >
-                          <SelectTrigger id="account_id" className="h-10 w-full bg-stone-50">
+                          <SelectTrigger id="account_id" className="h-10 w-full bg-zinc-50">
                             <SelectValue placeholder="请选择账号" />
                           </SelectTrigger>
                           <SelectContent>
@@ -287,7 +287,7 @@ export function DashboardForm({
                           type="date"
                           defaultValue={existingData?.report_date ?? today}
                           required
-                          className="h-10 bg-stone-50 text-[13px]"
+                          className="h-10 bg-zinc-50 text-[13px]"
                         />
                       </div>
                     </div>
@@ -300,12 +300,12 @@ export function DashboardForm({
                   <div className="space-y-1">
                     <div className="dashboard-section-kicker">核心数据</div>
                     <h3 className="dashboard-section-title">第一优先：播放量和涨粉</h3>
-                    <p className="text-[12px] text-stone-500">
+                    <p className="text-[12px] text-zinc-500">
                       先填这两项，再补全完播率、均播时长和留存指标。
                     </p>
                   </div>
                   <div
-                    className={`${getDashboardMetricGridClass("primary")} rounded-xl border border-stone-200 bg-stone-50 p-4 sm:p-5`}
+                    className={`${getDashboardMetricGridClass("primary")} rounded-xl border border-zinc-200 bg-zinc-50 p-4 sm:p-5`}
                   >
                     <div className="dashboard-metric-card dashboard-metric-card-primary space-y-1.5">
                       <Label htmlFor="play_count">播放量</Label>
@@ -317,7 +317,7 @@ export function DashboardForm({
                         min={0}
                         placeholder="32100"
                         required
-                        className="h-12 rounded-xl border-stone-200 bg-stone-50 text-[18px] font-medium text-stone-900"
+                        className="h-12 rounded-xl border-zinc-200 bg-zinc-50 text-[18px] font-medium text-zinc-900"
                         value={ocrValues.play_count}
                         onChange={(e) => updateOcrValue("play_count", e.target.value)}
                       />
@@ -330,7 +330,7 @@ export function DashboardForm({
                         type="number"
                         min={0}
                         required
-                        className="h-12 rounded-xl border-stone-200 bg-stone-50 text-[18px] font-medium text-stone-900"
+                        className="h-12 rounded-xl border-zinc-200 bg-zinc-50 text-[18px] font-medium text-zinc-900"
                         value={ocrValues.follower_gain}
                         onChange={(e) => updateOcrValue("follower_gain", e.target.value)}
                       />
@@ -351,7 +351,7 @@ export function DashboardForm({
                           className="h-10 pr-8"
                           defaultValue={stripSuffix(existingData?.completion_rate ?? null, "%")}
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-stone-500">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-zinc-500">
                           %
                         </span>
                       </div>
@@ -369,7 +369,7 @@ export function DashboardForm({
                           className="h-10 pr-8"
                           defaultValue={stripSuffix(existingData?.avg_play_duration ?? null, "秒")}
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-stone-500">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-zinc-500">
                           秒
                         </span>
                       </div>
@@ -388,7 +388,7 @@ export function DashboardForm({
                           className="h-10 pr-8"
                           defaultValue={stripSuffix(existingData?.bounce_rate_2s ?? null, "%")}
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-stone-500">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-zinc-500">
                           %
                         </span>
                       </div>
@@ -407,7 +407,7 @@ export function DashboardForm({
                           className="h-10 pr-8"
                           defaultValue={stripSuffix(existingData?.completion_rate_5s ?? null, "%")}
                         />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-stone-500">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[13px] text-zinc-500">
                           %
                         </span>
                       </div>
@@ -421,7 +421,7 @@ export function DashboardForm({
                   <div className="space-y-1">
                     <div className="dashboard-section-kicker">补充信息</div>
                     <h3 className="dashboard-section-title">第二优先：互动、发布时间、文案</h3>
-                    <p className="text-[12px] text-stone-500">
+                    <p className="text-[12px] text-zinc-500">
                       这些信息用于后续复盘和分析，建议一次补齐。
                     </p>
                   </div>
@@ -511,10 +511,10 @@ export function DashboardForm({
                       id="content"
                       name="content"
                       placeholder="粘贴今天发布的视频文案（选填）"
-                      className="min-h-[120px] w-full resize-y rounded-md border border-stone-200 bg-stone-50 px-3 py-2 text-[13px] text-stone-700 placeholder:text-stone-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-900/5"
+                      className="min-h-[120px] w-full resize-y rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-700 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5"
                       defaultValue={existingData?.content ?? ""}
                     />
-                    <p className="text-[12px] leading-5 text-stone-500">
+                    <p className="text-[12px] leading-5 text-zinc-500">
                       只填今天这条视频的实际发布文案，方便后面回看和复盘。
                     </p>
                   </div>
@@ -530,11 +530,11 @@ export function DashboardForm({
               <div className="dashboard-form-floating-panel">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
-                    <div className="inline-flex items-center gap-2 text-[13px] text-stone-500">
-                      <CheckCircle2 className="size-4 stroke-[1.5] text-stone-700" />
+                    <div className="inline-flex items-center gap-2 text-[13px] text-zinc-500">
+                      <CheckCircle2 className="size-4 stroke-[1.5] text-zinc-700" />
                       <span>补充完成后再提交</span>
                     </div>
-                    <p className="text-[12px] leading-[1.7] text-stone-500">
+                    <p className="text-[12px] leading-[1.7] text-zinc-500">
                       这个操作面板会跟随当前视口底部，同时给表单底部预留留白，不会压住最后几项输入。
                     </p>
                   </div>
@@ -542,7 +542,7 @@ export function DashboardForm({
                     type="submit"
                     disabled={isPending}
                     data-success={showSuccess || undefined}
-                    className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
+                    className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
                   >
                     {submitButtonLabel}
                   </Button>
@@ -551,12 +551,12 @@ export function DashboardForm({
             </div>
 
             <div className="fixed inset-x-0 bottom-0 z-20 dashboard-mobile-submit-bar p-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:hidden">
-              <div className="mx-auto max-w-md rounded-2xl border border-stone-200 bg-white p-2">
+              <div className="mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-2">
                 <Button
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-12 w-full text-[13px] font-medium tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200"
+                  className="h-12 w-full text-[13px] font-medium tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200"
                 >
                   {submitButtonLabel}
                 </Button>
@@ -565,17 +565,17 @@ export function DashboardForm({
           </>
         ) : (
           <div className="dashboard-form-inline-action">
-            <div className="rounded-xl border border-stone-200 bg-white px-4 py-3">
+            <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="inline-flex items-center gap-2 text-[13px] text-stone-500">
-                  <CheckCircle2 className="size-4 stroke-[1.5] text-stone-700" />
+                <div className="inline-flex items-center gap-2 text-[13px] text-zinc-500">
+                  <CheckCircle2 className="size-4 stroke-[1.5] text-zinc-700" />
                   <span>检查完整数据后再提交，提交后可在历史记录继续修改</span>
                 </div>
                 <Button
                   type="submit"
                   disabled={isPending}
                   data-success={showSuccess || undefined}
-                  className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-stone-200 sm:min-w-[168px] sm:w-auto"
+                  className="h-11 w-full px-6 text-[13px] tabular-nums transition-[background-color,color] duration-150 data-[success]:bg-white data-[success]:text-[#6FAA7D] data-[success]:border data-[success]:border-zinc-200 sm:min-w-[168px] sm:w-auto"
                 >
                   {submitButtonLabel}
                 </Button>
