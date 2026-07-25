@@ -8,6 +8,7 @@ import { Bell, Zap, ChevronDown } from "lucide-react";
 import { getNavGroups } from "@/components/nav-bar-items";
 import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
 import { WorkspacePicker } from "@/components/workspace-picker";
+import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { cn } from "@/lib/utils";
 import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions } from "@/types";
@@ -473,58 +474,43 @@ export function NavBarClient({
               </div>
             </div>
   
-            {/* RIGHT: Switchers / Profile / Notifications Hub (Far Right) */}
+            {/* RIGHT: Combined User & Workspace Controls / Notifications Hub (Far Right) */}
             <div className="flex items-center gap-3 shrink-0 ml-auto">
 
-              {/* Workspace Selector (Visible only if accounts are loaded) */}
-              {accounts.length > 0 && (
-                <div className="hidden md:block shrink-0">
-                  <WorkspacePicker accounts={accounts} selectedAccountId={selectedAccountId} />
-                </div>
-              )}
+              {/* Integrated Persona & Workspace Control */}
+              <UserWorkspacePopover
+                name={name}
+                role={role}
+                accounts={accounts}
+                selectedAccountId={selectedAccountId}
+                onOpenSettings={handleSettingsOpen}
+              />
 
-              {/* Separator */}
-              <div className="hidden h-5 w-px bg-zinc-200 sm:block" />
-
-              {/* User profile avatar info */}
-              <button
-                type="button"
-                onClick={handleSettingsOpen}
-                aria-label={`打开账号与设置：${name}`}
-                className="flex items-center gap-2 text-left rounded-xl p-1 focus-visible:ring-2 focus-visible:ring-[#5F82A8]/40 group transition-colors duration-200 hover:bg-zinc-100/60"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-zinc-100 text-[12px] font-medium text-zinc-700 transition-all duration-200 group-hover:border-[#5F82A8] group-hover:bg-[#5F82A8]/10 group-hover:text-[#5F82A8]">
-                  {name.trim().slice(0, 1).toUpperCase() || "?"}
-                </div>
-                <div className="hidden lg:flex flex-col transition-colors duration-200">
-                  <span className="text-[12px] font-medium text-zinc-700 leading-tight group-hover:text-zinc-950">
-                    {name.split(" ")[0]}
-                  </span>
-                  <span className="mt-0.5 text-[10px] font-normal text-zinc-500 leading-none tracking-wider uppercase group-hover:text-[#5F82A8]">
-                    {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
-                  </span>
-                </div>
-              </button>
-
-              {/* Separator */}
-              <div className="hidden h-5 w-px bg-zinc-200 sm:block" />
-
-              {/* Bell alert Popover button container (FAR RIGHT) */}
+              {/* Bell alert Popover button container (FAR RIGHT - Enhanced Functional UI) */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-8.5 w-8.5 items-center justify-center rounded-xl transition-all duration-200 group",
-                    "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/70 active:scale-95",
-                    commandHubOpen && "text-[#5F82A8] bg-zinc-100/80 font-semibold"
+                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30",
+                    bellBadgeCount > 0
+                      ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
+                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 active:scale-95",
+                    commandHubOpen && "bg-zinc-900 text-white font-semibold shadow-md border-transparent"
                   )}
                   title="待办与通知中心"
                   aria-label="待办与通知中心"
                 >
-                  <Bell className="size-4 stroke-[1.8] transition-transform duration-300 ease-out group-hover:rotate-[15deg] group-active:scale-90" />
+                  <Bell
+                    className={cn(
+                      "size-4 stroke-[1.9] transition-transform duration-300 ease-out group-hover:rotate-12 group-hover:scale-110",
+                      bellBadgeCount > 0 && "text-[#D97757] fill-[#D97757]/20"
+                    )}
+                  />
+
+                  {/* Functional Count Label */}
                   {bellBadgeCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-br from-[#D97757] to-[#C9503B] px-1 text-[10px] font-semibold text-white ring-2 ring-white tabular-nums motion-safe:animate-pulse">
+                    <span className="ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#D97757] px-1.5 text-[10.5px] font-semibold text-white tabular-nums shadow-sm">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}
