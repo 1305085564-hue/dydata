@@ -584,16 +584,16 @@ export default function TopicPoolPage() {
                   className={cn(
                     "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-xl",
                     activeTab === "pool"
-                      ? "bg-[#D97757] text-white shadow-sm font-semibold"
+                      ? "text-[#D97757] font-semibold"
                       : "text-stone-500 hover:text-stone-800 font-medium"
                   )}
                 >
                   {currentView === "all" ? (
-                    <Compass className={cn("size-4 shrink-0", activeTab === "pool" ? "text-white" : "text-[#D97757]")} />
+                    <Compass className={cn("size-4 shrink-0", activeTab === "pool" ? "text-[#D97757]" : "text-stone-400")} />
                   ) : currentView === "my_claims" ? (
-                    <Clock className={cn("size-4 shrink-0", activeTab === "pool" ? "text-white" : "text-[#D97757]")} />
+                    <Clock className={cn("size-4 shrink-0", activeTab === "pool" ? "text-[#D97757]" : "text-stone-400")} />
                   ) : (
-                    <Film className={cn("size-4 shrink-0", activeTab === "pool" ? "text-white" : "text-[#D97757]")} />
+                    <Film className={cn("size-4 shrink-0", activeTab === "pool" ? "text-[#D97757]" : "text-stone-400")} />
                   )}
                   <span>
                     {currentView === "all"
@@ -653,14 +653,14 @@ export default function TopicPoolPage() {
                 className={cn(
                   "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-xl relative",
                   activeTab === "recommendations"
-                    ? "bg-[#D97757] text-white shadow-sm font-semibold"
+                    ? "text-[#D97757] font-semibold"
                     : "text-stone-500 hover:text-stone-800 font-medium"
                 )}
               >
-                <Sparkles className={cn("size-4 shrink-0", activeTab === "recommendations" ? "text-white" : "text-stone-400")} />
+                <Sparkles className={cn("size-4 shrink-0", activeTab === "recommendations" ? "text-[#D97757]" : "text-stone-400")} />
                 <span>AI系统推荐</span>
                 {visibleSuggestions.length > 0 && (
-                  <span className={cn("ml-1 rounded-full px-1.5 py-0.2 text-[10px] font-semibold shadow-xs", activeTab === "recommendations" ? "bg-white text-[#D97757]" : "bg-[#D97757] text-white")}>
+                  <span className="ml-1 rounded-full bg-[#D97757] px-1.5 py-0.2 text-[10px] text-white font-semibold shadow-xs">
                     {visibleSuggestions.length}
                   </span>
                 )}
@@ -671,11 +671,11 @@ export default function TopicPoolPage() {
                 className={cn(
                   "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-xl",
                   activeTab === "comparison"
-                    ? "bg-[#D97757] text-white shadow-sm font-semibold"
+                    ? "text-[#D97757] font-semibold"
                     : "text-stone-500 hover:text-stone-800 font-medium"
                 )}
               >
-                <BarChart3 className={cn("size-4 shrink-0", activeTab === "comparison" ? "text-white" : "text-stone-400")} />
+                <BarChart3 className={cn("size-4 shrink-0", activeTab === "comparison" ? "text-[#D97757]" : "text-stone-400")} />
                 <span>趋势与对比</span>
               </button>
             </div>
