@@ -39,7 +39,8 @@ import {
   X,
   LayoutGrid,
   List,
-  Layers
+  Layers,
+  User
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -60,6 +61,16 @@ function isClaimedByMe(item: { sub_topic_claims?: SubTopicClaim[] | null }, curr
 
 function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | null }>, currentUserId: string) {
   return items.filter((item) => getMyClaim(item, currentUserId) !== null).length;
+}
+
+function formatTopicName5(rawName: string): string {
+  if (!rawName) return rawName;
+  const trimmed = rawName.trim();
+  if (trimmed.includes("热点") || trimmed.includes("新闻") || trimmed.includes("实时")) return "实时解读类";
+  if (trimmed.includes("案例") || trimmed.includes("拆解") || trimmed.includes("复盘")) return "案例复盘类";
+  if (trimmed.includes("工具") || trimmed.includes("神技")) return "工具神技类";
+  if (trimmed.endsWith("类")) return trimmed;
+  return `${trimmed}类`;
 }
 
 // 骨架屏组件
@@ -88,10 +99,16 @@ export default function TopicPoolPage() {
   const [topicsList, setTopicsList] = useState<TopicInfo[]>([]);
   const [topicsError, setTopicsError] = useState<string | null>(null);
 
-  // 主页视图 Tab: "pool" 选题池 | "recommendations" 系统推荐 | "comparison" 横向对比
+  // 主页视图 Tab
   const [activeTab, setActiveTab] = useState<"pool" | "comparison" | "recommendations">("pool");
   
+  // 推荐选题与趋势变化 Modal / Popover 状态
+  const [recModalOpen, setRecModalOpen] = useState(false);
+  const [compModalOpen, setCompModalOpen] = useState(false);
+  const [compPopoverOpen, setCompPopoverOpen] = useState(false);
+
   // 筛选与 Popover 控制状态
+  const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [viewPopoverOpen, setViewPopoverOpen] = useState(false);
   const [sortBy, setSortBy] = useState<"default" | "play_desc" | "claims_desc" | "newest">("default");
@@ -100,9 +117,15 @@ export default function TopicPoolPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  // 多选分类 Toggle Handler
+  const handleToggleTopicId = useCallback((id: string) => {
+    setSelectedTopicIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }, []);
+
   // 视图基础过滤状态
   const [currentView, setCurrentView] = useState<"all" | "my_claims" | "my_created">("all");
-  const [selectedTopicId, setSelectedTopicId] = useState<string>("__all__");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -232,8 +255,8 @@ export default function TopicPoolPage() {
       params.append("page", String(page));
       params.append("page_size", String(pageSize));
 
-      if (selectedTopicId !== "__all__") {
-        params.append("topic_id", selectedTopicId);
+      if (selectedTopicIds.length === 1) {
+        params.append("topic_id", selectedTopicIds[0]);
       }
 
       const json = await fetchTopicPoolResponse(`/api/topics/pool?${params.toString()}`);
@@ -258,7 +281,7 @@ export default function TopicPoolPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [currentView, selectedTopicId]);
+  }, [currentView, selectedTopicIds]);
 
   // 加载系统推荐
   const fetchRecommendations = useCallback(async () => {
@@ -445,6 +468,10 @@ export default function TopicPoolPage() {
   const filteredAndSortedItems = useMemo(() => {
     let result = [...items];
 
+    if (selectedTopicIds.length > 0) {
+      result = result.filter((item) => item.topic_id && selectedTopicIds.includes(item.topic_id));
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       result = result.filter(
@@ -465,7 +492,7 @@ export default function TopicPoolPage() {
     }
 
     return result;
-  }, [items, searchQuery, sortBy]);
+  }, [items, selectedTopicIds, searchQuery, sortBy]);
 
   // 母题分组聚合
   const groupedGroups = useMemo(() => {
@@ -565,125 +592,148 @@ export default function TopicPoolPage() {
       {/* L1 工作区主面板 (Unified L1 White Workbench Panel) */}
       <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 md:p-6 shadow-xs space-y-6">
         {/* 控制台顶栏：Tab 筛选与合一控制器 */}
-        <div className="flex items-center justify-between gap-4 border-b border-zinc-100 pb-3.5 flex-wrap">
+        <div className="flex items-center justify-between gap-4 pb-1 flex-wrap">
           {/* 左侧：Tab 菜单 + 三合一筛选口 + 划入伸缩搜索 */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1 bg-zinc-100/70 p-1 rounded-2xl">
-              {/* 一体化视角切换控制器（划入/Hover 平滑展开 3 个视角选项） */}
-              <div
-                className="relative group"
-                onMouseEnter={() => setViewPopoverOpen(true)}
-                onMouseLeave={() => setViewPopoverOpen(false)}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab("pool");
-                    setViewPopoverOpen((prev) => !prev);
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-xl",
-                    activeTab === "pool"
-                      ? "text-[#D97757] font-semibold bg-white shadow-2xs"
-                      : "text-zinc-500 hover:text-zinc-800 font-medium"
-                  )}
-                >
-                  {currentView === "all" ? (
-                    <Compass className={cn("size-4 shrink-0", activeTab === "pool" ? "text-[#D97757]" : "text-zinc-400")} />
-                  ) : currentView === "my_claims" ? (
-                    <Clock className={cn("size-4 shrink-0", activeTab === "pool" ? "text-[#D97757]" : "text-zinc-400")} />
-                  ) : (
-                    <Film className={cn("size-4 shrink-0", activeTab === "pool" ? "text-[#D97757]" : "text-zinc-400")} />
-                  )}
-                  <span>
-                    {currentView === "all"
-                      ? "全部选题"
-                      : currentView === "my_claims"
-                      ? "我正在做的"
-                      : "我录入的"}
-                  </span>
-                  <ChevronDown className="size-3 text-zinc-400 group-hover:rotate-180 transition-transform duration-200" />
-                </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* 主焦点组：核心业务视角切换器 (Primary Focus - Unified 3-Way Segmented Control) */}
+            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 shadow-2xs">
+              {[
+                { id: "all", label: "全部选题", icon: Compass },
+                { id: "my_created", label: "个人选题", icon: Film },
+                { id: "my_claims", label: "脚本中", icon: Clock }
+              ].map((opt) => {
+                const Icon = opt.icon;
+                const isSelected = activeTab === "pool" && currentView === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("pool");
+                      setCurrentPage(1);
+                      setCurrentView(opt.id as any);
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 text-[13px] font-bold transition-all cursor-pointer px-3.5 py-1.5 rounded-lg select-none",
+                      isSelected
+                        ? "bg-white text-zinc-900 font-bold shadow-xs border border-zinc-200/90 ring-1 ring-zinc-950/5"
+                        : "text-zinc-500 hover:text-zinc-800"
+                    )}
+                  >
+                    <Icon className={cn("size-4 shrink-0", isSelected ? "text-zinc-900" : "text-zinc-400")} />
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-                <AnimatePresence>
-                  {viewPopoverOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-0 top-full mt-1 z-30 w-44 bg-white rounded-2xl shadow-xl border border-zinc-200/90 p-1.5 space-y-1 text-xs"
-                    >
-                      {[
-                        { id: "all", label: "全部选题", icon: Compass },
-                        { id: "my_claims", label: "我正在做的", icon: Clock },
-                        { id: "my_created", label: "我录入的", icon: Film },
-                      ].map((opt) => {
-                        const Icon = opt.icon;
-                        const isSelected = activeTab === "pool" && currentView === opt.id;
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("pool");
-                              setCurrentView(opt.id as any);
-                              setViewPopoverOpen(false);
-                            }}
-                            className={cn(
-                              "flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer text-left",
-                              isSelected
-                                ? "text-[#D97757] font-semibold bg-zinc-50/80"
-                                : "text-zinc-700 hover:bg-zinc-100"
-                            )}
-                          >
-                            <Icon className={cn("size-3.5", isSelected ? "text-[#D97757]" : "text-zinc-400")} />
-                            <span>{opt.label}</span>
-                            {isSelected && <Check className="size-3 ml-auto text-[#D97757]" />}
-                          </button>
-                        );
-                      })}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
+            {/* 次焦点组：辅助决策工具 (Secondary Focus - Subdued & Subtle Control) */}
+            <div className="flex items-center gap-1 bg-zinc-50/70 p-1 rounded-xl border border-zinc-200/40">
               <button
-                onClick={() => setActiveTab("recommendations")}
+                type="button"
+                onClick={() => setRecModalOpen(true)}
                 className={cn(
-                  "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-xl relative",
-                  activeTab === "recommendations"
-                    ? "text-[#D97757] font-semibold bg-white shadow-2xs"
-                    : "text-zinc-500 hover:text-zinc-800 font-medium"
+                  "flex items-center gap-1.5 text-[12px] font-medium transition-all cursor-pointer px-2.5 py-1.5 rounded-lg select-none relative",
+                  recModalOpen
+                    ? "bg-white text-zinc-800 font-semibold shadow-2xs border border-zinc-200/60"
+                    : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/60"
                 )}
               >
-                <Sparkles className={cn("size-4 shrink-0", activeTab === "recommendations" ? "text-[#D97757]" : "text-zinc-400")} />
-                <span>AI系统推荐</span>
+                <Sparkles className="size-3.5 text-[#D97757]/80 shrink-0" />
+                <span>推荐选题</span>
                 {visibleSuggestions.length > 0 && (
-                  <span className="ml-1 rounded-full bg-[#D97757] px-1.5 py-0.2 text-[10px] text-white font-semibold shadow-xs">
+                  <span className="ml-0.5 rounded-full bg-[#D97757]/80 px-1.5 py-0.2 text-[9.5px] text-white font-medium">
                     {visibleSuggestions.length}
                   </span>
                 )}
               </button>
 
-              <button
-                onClick={() => setActiveTab("comparison")}
-                className={cn(
-                  "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-xl",
-                  activeTab === "comparison"
-                    ? "text-[#D97757] font-semibold bg-white shadow-2xs"
-                    : "text-zinc-500 hover:text-zinc-800 font-medium"
-                )}
+              {/* 趋势变化：划入/Hover 展开母题/账号维度 Dropover 子选项 (次焦点 2) */}
+              <div
+                className="relative group"
+                onMouseEnter={() => setCompPopoverOpen(true)}
+                onMouseLeave={() => setCompPopoverOpen(false)}
               >
-                <BarChart3 className={cn("size-4 shrink-0", activeTab === "comparison" ? "text-[#D97757]" : "text-zinc-400")} />
-                <span>趋势与对比</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCompModalOpen(true);
+                    setCompPopoverOpen(false);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 text-[12px] font-medium transition-all cursor-pointer px-2.5 py-1.5 rounded-lg select-none",
+                    compModalOpen
+                      ? "bg-white text-zinc-800 font-semibold shadow-2xs border border-zinc-200/60"
+                      : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/60"
+                  )}
+                >
+                  <BarChart3 className="size-3.5 text-zinc-500 shrink-0" />
+                  <span>趋势变化</span>
+                  <ChevronDown className="size-3 text-zinc-400 group-hover:rotate-180 transition-transform duration-200" />
+                </button>
+
+                <AnimatePresence>
+                  {compPopoverOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute left-0 top-full pt-1.5 z-30 w-48"
+                    >
+                      <div className="bg-white rounded-2xl shadow-xl border border-zinc-200/90 p-1.5 space-y-1 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setComparisonDimension("topic");
+                            setCompModalOpen(true);
+                            setCompPopoverOpen(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all cursor-pointer text-left group/item",
+                            comparisonDimension === "topic" ? "bg-zinc-100/90 text-zinc-900 font-semibold shadow-2xs" : "text-zinc-600 hover:bg-zinc-50"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Layers className="size-3.5 text-zinc-500 group-hover/item:text-zinc-900 transition-colors shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="font-semibold leading-tight">母题维度</span>
+                              <span className="text-[10px] text-zinc-400 font-normal">统计母题爆款率</span>
+                            </div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setComparisonDimension("account");
+                            setCompModalOpen(true);
+                            setCompPopoverOpen(false);
+                          }}
+                          className={cn(
+                            "flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all cursor-pointer text-left group/item",
+                            comparisonDimension === "account" ? "bg-zinc-100/90 text-zinc-900 font-semibold shadow-2xs" : "text-zinc-600 hover:bg-zinc-50"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <User className="size-3.5 text-zinc-500 group-hover/item:text-zinc-900 transition-colors shrink-0" />
+                            <div className="flex flex-col">
+                              <span className="font-semibold leading-tight">账号维度</span>
+                              <span className="text-[10px] text-zinc-400 font-normal">评估矩阵号播放</span>
+                            </div>
+                          </div>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
 
             {/* 划入（Hover）即时展开的“三合一筛选与视图” Popover 入口 */}
             {activeTab === "pool" && (
               <div className="flex items-center gap-2">
-                <div className="h-4 w-[1px] bg-zinc-200/80 shrink-0" />
+                <div className="h-4 w-[1px] bg-zinc-200 shrink-0" />
 
                 <div
                   className="relative group"
@@ -694,8 +744,8 @@ export default function TopicPoolPage() {
                     type="button"
                     onClick={() => setFilterPopoverOpen((prev) => !prev)}
                     className={cn(
-                      "flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer h-8.5 px-3 rounded-xl border border-zinc-200/90 bg-zinc-50/80 hover:bg-white text-zinc-700 shadow-2xs",
-                      filterPopoverOpen && "border-[#D97757]/50 bg-white text-[#D97757] font-semibold"
+                      "flex items-center gap-1.5 text-xs font-medium transition-all cursor-pointer h-8 px-3 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 shadow-2xs",
+                      filterPopoverOpen && "border-zinc-300 bg-white text-zinc-900 font-semibold"
                     )}
                   >
                     <SlidersHorizontal className="size-3.5 text-zinc-500" />
@@ -710,43 +760,36 @@ export default function TopicPoolPage() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.96 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 top-full mt-1.5 z-30 w-[380px] bg-white rounded-2xl shadow-xl border border-zinc-200/90 p-4.5 space-y-4 text-xs"
+                        className="absolute left-0 top-full mt-1.5 z-30 w-[380px] bg-white rounded-xl shadow-md border border-zinc-200 p-4 space-y-4 text-xs"
                       >
-                        {/* 分区 1：母题分类（3 行 3 列 3x3 宽幅胶囊矩阵，全部分类置于末尾） */}
+                        {/* 分区 1：母题分类（4 列 2 行 4x2 胶囊矩阵，可多选与取消，不选即全选） */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-[11.5px] font-semibold text-zinc-400 uppercase tracking-wider">
                             <span>母题分类</span>
-                            <span className="text-[11px] font-normal text-zinc-400">划入直选</span>
+                            <span className="text-[11px] font-normal text-zinc-400">
+                              {selectedTopicIds.length === 0 ? "默认全选" : `已指定 ${selectedTopicIds.length} 项`}
+                            </span>
                           </div>
-                          <div className="grid grid-cols-3 gap-2">
-                            {topicsList.map((t) => (
-                              <button
-                                key={t.id}
-                                type="button"
-                                onClick={() => setSelectedTopicId(t.id)}
-                                title={t.name}
-                                className={cn(
-                                  "h-8.5 rounded-xl border text-[12px] font-medium transition-all cursor-pointer truncate px-2 text-center",
-                                  selectedTopicId === t.id
-                                    ? "border-transparent bg-zinc-100/90 text-[#D97757] font-semibold"
-                                    : "border-zinc-200/80 bg-zinc-50/60 text-zinc-700 hover:bg-zinc-100"
-                                )}
-                              >
-                                {t.name}
-                              </button>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() => setSelectedTopicId("__all__")}
-                              className={cn(
-                                "h-8.5 rounded-xl border text-[12px] font-medium transition-all cursor-pointer truncate px-2 text-center",
-                                selectedTopicId === "__all__"
-                                  ? "border-transparent bg-zinc-100/90 text-[#D97757] font-semibold"
-                                  : "border-zinc-200/80 bg-zinc-50/60 text-zinc-700 hover:bg-zinc-100"
-                              )}
-                            >
-                              全部分类
-                            </button>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {topicsList.slice(0, 8).map((t) => {
+                              const isSelected = selectedTopicIds.includes(t.id);
+                              return (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => handleToggleTopicId(t.id)}
+                                  title={t.name}
+                                  className={cn(
+                                    "h-8 rounded-lg border text-[11.5px] font-medium transition-all cursor-pointer truncate px-0.5 text-center tracking-tight",
+                                    isSelected
+                                      ? "border-zinc-900 bg-zinc-900 text-white font-medium"
+                                      : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
+                                  )}
+                                >
+                                  {formatTopicName5(t.name)}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
 
@@ -769,10 +812,10 @@ export default function TopicPoolPage() {
                                 type="button"
                                 onClick={() => setSortBy(opt.id as any)}
                                 className={cn(
-                                  "h-8 rounded-xl border text-[11.5px] font-medium transition-all cursor-pointer text-center px-1",
+                                  "h-8 rounded-lg border text-[11.5px] font-medium transition-all cursor-pointer text-center px-1",
                                   sortBy === opt.id
-                                    ? "border-transparent bg-zinc-100/90 text-[#D97757] font-semibold"
-                                    : "border-zinc-200/80 bg-zinc-50/60 text-zinc-700 hover:bg-zinc-100"
+                                    ? "border-zinc-900 bg-zinc-900 text-white font-medium"
+                                    : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100"
                                 )}
                               >
                                 {opt.label}
@@ -783,66 +826,65 @@ export default function TopicPoolPage() {
 
                         <div className="h-[1px] bg-zinc-100" />
 
-                        {/* 分区 3：视图模式 */}
-                        <div className="space-y-2">
-                          <div className="text-[11.5px] font-semibold text-zinc-400 uppercase tracking-wider">
-                            视图密度
+                        {/* 分区 3：视图密度与分组结构 (在一行左右分开) */}
+                        <div className="grid grid-cols-2 gap-3 pt-0.5">
+                          <div className="space-y-1.5">
+                            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                              视图密度
+                            </div>
+                            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
+                              <button
+                                type="button"
+                                onClick={() => setViewDensity("grid")}
+                                className={cn(
+                                  "flex-1 h-7 rounded text-[11.5px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer",
+                                  viewDensity === "grid" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
+                                )}
+                              >
+                                <LayoutGrid className="size-3" />
+                                <span>网格</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setViewDensity("compact")}
+                                className={cn(
+                                  "flex-1 h-7 rounded text-[11.5px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer",
+                                  viewDensity === "compact" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
+                                )}
+                              >
+                                <List className="size-3" />
+                                <span>紧凑</span>
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl">
-                            <button
-                              type="button"
-                              onClick={() => setViewDensity("grid")}
-                              className={cn(
-                                "flex-1 h-8 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                                viewDensity === "grid" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
-                              )}
-                            >
-                              <LayoutGrid className="size-3.5" />
-                              <span>网格视图</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setViewDensity("compact")}
-                              className={cn(
-                                "flex-1 h-8 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                                viewDensity === "compact" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
-                              )}
-                            >
-                              <List className="size-3.5" />
-                              <span>紧凑列表</span>
-                            </button>
-                          </div>
-                        </div>
 
-                        <div className="h-[1px] bg-zinc-100" />
-
-                        {/* 分区 4：分组结构 */}
-                        <div className="space-y-2">
-                          <div className="text-[11.5px] font-semibold text-zinc-400 uppercase tracking-wider">
-                            分组结构
-                          </div>
-                          <div className="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl">
-                            <button
-                              type="button"
-                              onClick={() => setGroupBy("none")}
-                              className={cn(
-                                "flex-1 h-8 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                                groupBy === "none" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
-                              )}
-                            >
-                              <span>平铺无分组</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setGroupBy("topic")}
-                              className={cn(
-                                "flex-1 h-8 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                                groupBy === "topic" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
-                              )}
-                            >
-                              <Layers className="size-3.5" />
-                              <span>按母题分组</span>
-                            </button>
+                          <div className="space-y-1.5">
+                            <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                              分组结构
+                            </div>
+                            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
+                              <button
+                                type="button"
+                                onClick={() => setGroupBy("none")}
+                                className={cn(
+                                  "flex-1 h-7 rounded text-[11.5px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer",
+                                  groupBy === "none" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
+                                )}
+                              >
+                                <span>平铺</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setGroupBy("topic")}
+                                className={cn(
+                                  "flex-1 h-7 rounded text-[11.5px] font-medium flex items-center justify-center gap-1 transition-all cursor-pointer",
+                                  groupBy === "topic" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
+                                )}
+                              >
+                                <Layers className="size-3" />
+                                <span>母题分组</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -1097,262 +1139,6 @@ export default function TopicPoolPage() {
           </div>
         )}
 
-        {/* 视图 2：系统推荐 View */}
-        {activeTab === "recommendations" && (
-          <AnimatePresence mode="wait">
-            <motion.div key="rec-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-              <div className="rounded-2xl border border-[#D97757]/30 bg-gradient-to-r from-[#D97757]/5 to-amber-50/40 p-5 space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="size-5 text-[#D97757]" />
-                    <h2 className="text-[15px] font-bold text-zinc-900">AI 爆款选题推荐</h2>
-                  </div>
-                  {recData && (
-                    <div className="flex items-center gap-3 text-[11.5px] text-zinc-500 font-medium">
-                      {typeof recData.sampleCount === "number" && recData.sampleCount > 0 && <span>样本数：{recData.sampleCount} 条</span>}
-                      {recData.marketDate && <span>热点日期：{recData.marketDate}</span>}
-                    </div>
-                  )}
-                </div>
-                {recData?.evidenceSummary ? (
-                  <p className="text-[12.5px] text-zinc-600 leading-relaxed">
-                    推荐依据：{recData.evidenceSummary}
-                  </p>
-                ) : (
-                  <p className="text-[12.5px] text-zinc-600 leading-relaxed">
-                    基于团队全网爆款视频样本与数据趋势生成的选题提炼。采纳后将自动转换为正式子题放入选题池。
-                  </p>
-                )}
-              </div>
-
-              {loadingRecommendations ? (
-                <TopicPoolSkeleton />
-              ) : visibleSuggestions.length === 0 ? (
-                <div className="py-12 text-center border border-dashed border-zinc-200 rounded-2xl bg-white space-y-2">
-                  <EmptyState title="暂无推荐选题" description="先积累更多作品数据，AI 将持续学习并自动生成复刻建议。" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {visibleSuggestions.map((rec) => {
-                    const key = getRecommendationKey(rec);
-                    return (
-                      <div
-                        key={key}
-                        className="flex flex-col justify-between rounded-2xl border border-[#D97757]/25 bg-white p-5 shadow-2xs hover:border-[#D97757]/45 transition-all"
-                      >
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="rounded-md bg-[#D97757]/10 px-2 py-0.5 text-[11px] font-semibold text-[#D97757]">
-                              {rec.category || "爆款推荐"}
-                            </span>
-                            {rec.expectedPerformance && (
-                              <span className="text-[11px] font-medium text-[#5F82A8] bg-[#5F82A8]/10 px-2 py-0.5 rounded-md">
-                                预期表现: {rec.expectedPerformance}
-                              </span>
-                            )}
-                          </div>
-
-                          <h3 className="text-[15px] font-bold text-zinc-900 leading-snug">{rec.title}</h3>
-
-                          {rec.angle && (
-                            <div className="rounded-xl bg-zinc-50 p-3 border border-zinc-150 text-[12.5px] text-zinc-700 leading-relaxed">
-                              <span className="font-semibold text-zinc-850 block mb-0.5">切入角度：</span>
-                              “{rec.angle}”
-                            </div>
-                          )}
-
-                          {rec.evidence && (
-                            <div className="text-[11.5px] text-zinc-500 flex items-start gap-1">
-                              <Info className="size-3.5 text-[#5F82A8] shrink-0 mt-0.5" />
-                              <span>依据：{rec.evidence}</span>
-                            </div>
-                          )}
-
-                          {rec.referenceVideos && rec.referenceVideos.length > 0 && (
-                            <div className="space-y-1 pt-1 border-t border-zinc-100">
-                              <span className="text-[11px] font-medium text-zinc-400 block flex items-center gap-1">
-                                <Film className="size-3 text-zinc-400" />
-                                参考视频 ({rec.referenceVideos.length})
-                              </span>
-                              <div className="space-y-1">
-                                {rec.referenceVideos.slice(0, 2).map((vid, idx) => {
-                                  const playVal = vid.playCount24h ?? vid.playCount;
-                                  return (
-                                    <div key={idx} className="flex items-center justify-between text-[11px] text-zinc-600 bg-zinc-50 px-2 py-1 rounded-md">
-                                      <span className="truncate max-w-[200px]">{vid.title || "爆款原片"}</span>
-                                      {playVal !== undefined && (
-                                        <span className="text-zinc-400 tabular-nums">
-                                          {playVal >= 10000 ? `${(playVal / 10000).toFixed(1)}w` : playVal}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-4 flex items-center justify-end gap-2 border-t border-zinc-100 pt-3">
-                          <Button
-                            size="xs"
-                            variant="ghost"
-                            onClick={() => setIgnoredRecKeys((prev) => new Set(prev).add(key))}
-                            className="h-7.5 text-zinc-400 hover:text-zinc-600"
-                          >
-                            忽略
-                          </Button>
-                          <Button
-                            size="xs"
-                            onClick={() => handleOpenAdoptModal(rec, key)}
-                            className="h-7.5 px-3.5 bg-[#D97757] hover:bg-[#D97757]/90 text-white font-medium rounded-lg cursor-pointer"
-                          >
-                            采纳微调
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        )}
-
-        {/* 视图 3：横向对比 View */}
-        {activeTab === "comparison" && (
-          <AnimatePresence mode="wait">
-            <motion.div key="comp-panel" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-2xs">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
-                    <button
-                      onClick={() => setComparisonDimension("topic")}
-                      className={cn(
-                        "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
-                        comparisonDimension === "topic" ? "bg-white text-zinc-900 font-semibold shadow-2xs" : "text-zinc-500"
-                      )}
-                    >
-                      母题维度
-                    </button>
-                    <button
-                      onClick={() => setComparisonDimension("account")}
-                      className={cn(
-                        "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
-                        comparisonDimension === "account" ? "bg-white text-zinc-900 font-semibold shadow-2xs" : "text-zinc-500"
-                      )}
-                    >
-                      账号维度
-                    </button>
-                  </div>
-
-                  {comparisonDimension === "account" && topicsList.length > 0 && (
-                    <div className="flex items-center gap-1.5 text-[12px]">
-                      <span className="text-zinc-500 font-medium">对比母题：</span>
-                      <select
-                        value={comparisonTopicId}
-                        onChange={(e) => setComparisonTopicId(e.target.value)}
-                        className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 outline-none focus:border-[#5F82A8]"
-                      >
-                        {topicsList.map((t) => (
-                          <option key={t.id} value={t.id}>{t.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5 text-[12px]">
-                  <Calendar className="size-3.5 text-zinc-400" />
-                  <span className="text-zinc-500 font-medium">时间筛选：</span>
-                  <select
-                    value={comparisonDays}
-                    onChange={(e) => setComparisonDays(Number(e.target.value))}
-                    className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] outline-none"
-                  >
-                    <option value={7}>近 7 天</option>
-                    <option value={14}>近 14 天</option>
-                    <option value={30}>近 30 天</option>
-                  </select>
-                </div>
-              </div>
-
-              {comparisonRows.length > 0 && (
-                <div className="rounded-xl bg-zinc-100/70 p-3 border border-zinc-200/50 text-[12px] text-zinc-700 flex items-center gap-1.5">
-                  <Info className="size-4 text-[#5F82A8] shrink-0" />
-                  <span>
-                    对比数据解读：基于当前列表分布中位数（达标率中位数：{(comparisonMedians.qualifiedRateMedian * 100).toFixed(1)}%，均播中位数：{comparisonMedians.avgPlayMedian.toLocaleString()}）。低于中位数标绿，高于中位数标红。
-                  </span>
-                </div>
-              )}
-
-              {loadingComparison ? (
-                <TopicPoolSkeleton />
-              ) : comparisonRows.length === 0 ? (
-                <div className="py-12 text-center border border-dashed border-zinc-200 rounded-2xl bg-white space-y-2">
-                  <EmptyState title="暂无对比样本" description="当前筛选条件下缺少足够的作品发布样本。" />
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-[12.5px]">
-                      <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium">
-                        <tr>
-                          <th className="py-3 px-4">{comparisonDimension === "topic" ? "母题分类" : "账号名称"}</th>
-                          <th className="py-3 px-4">作品样本数</th>
-                          <th className="py-3 px-4">爆款达标率</th>
-                          <th className="py-3 px-4">平均播放量</th>
-                          <th className="py-3 px-4">最高播放量</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100">
-                        {comparisonRows.map((row, idx) => {
-                          const name = comparisonDimension === "account"
-                            ? (row.accountName || row.topicName || `账号 ${idx + 1}`)
-                            : (row.topicName || row.accountName || `母题 ${idx + 1}`);
-                          const rowKey = comparisonDimension === "account"
-                            ? `acc-${row.accountId || idx}-${idx}`
-                            : `top-${row.topicId || idx}-${idx}`;
-
-                          const isLowConfidence = row.lowConfidence || row.workCount < 3;
-                          const isRateHigher = row.qualifiedRate >= comparisonMedians.qualifiedRateMedian;
-                          const isPlayHigher = row.avgPlayCount >= comparisonMedians.avgPlayMedian;
-
-                          return (
-                            <tr key={rowKey} className={cn("hover:bg-zinc-50/60", isLowConfidence && "opacity-70 bg-zinc-50/30")}>
-                              <td className="py-3 px-4 font-semibold text-zinc-900 flex items-center gap-1.5">
-                                <span className={cn(isLowConfidence && "text-zinc-500")}>{name}</span>
-                                {isLowConfidence && (
-                                  <span className="rounded bg-zinc-200 px-1.5 py-0.2 text-[10px] text-zinc-500 font-normal shrink-0">
-                                    样本少仅供参考
-                                  </span>
-                                )}
-                              </td>
-                              <td className="py-3 px-4 tabular-nums text-zinc-700">{row.workCount} 条</td>
-                              <td className="py-3 px-4 font-semibold tabular-nums">
-                                <span className={isRateHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
-                                  {(row.qualifiedRate * 100).toFixed(1)}%
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 font-semibold tabular-nums">
-                                <span className={isPlayHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
-                                  {row.avgPlayCount >= 10000 ? `${(row.avgPlayCount / 10000).toFixed(1)}w` : row.avgPlayCount.toLocaleString()}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 tabular-nums text-zinc-800">
-                                {row.bestPlayCount >= 10000 ? `${(row.bestPlayCount / 10000).toFixed(1)}w` : row.bestPlayCount.toLocaleString()}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        )}
       </div>
 
       {/* 3:4 全局沉浸中心弹窗 */}
@@ -1498,6 +1284,267 @@ export default function TopicPoolPage() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 沉浸式“推荐选题”大弹窗 (黄金视口 max-w-[960px], 2张一行) */}
+      <Dialog open={recModalOpen} onOpenChange={setRecModalOpen}>
+        <DialogContent className="!max-w-[960px] sm:!max-w-[960px] w-[92vw] max-h-[86vh] overflow-y-auto rounded-2xl p-6 bg-white border border-zinc-200/90 shadow-xl space-y-4">
+          <DialogHeader className="pb-1 space-y-1">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4.5 text-[#D97757]" />
+                <DialogTitle className="text-base font-semibold text-zinc-900">推荐选题</DialogTitle>
+              </div>
+              {recData && (
+                <div className="flex items-center gap-3 text-[11.5px] text-zinc-400 font-normal">
+                  {typeof recData.sampleCount === "number" && recData.sampleCount > 0 && <span>样本数: {recData.sampleCount} 条</span>}
+                  {recData.marketDate && <span>热点日期: {recData.marketDate}</span>}
+                </div>
+              )}
+            </div>
+            <DialogDescription className="text-[12px] text-zinc-500 font-normal leading-relaxed text-left">
+              {recData?.evidenceSummary
+                ? `推荐依据：${recData.evidenceSummary}`
+                : "基于团队全网爆款视频样本与数据趋势生成的选题提炼。采纳后将自动转换为正式子题放入选题池。"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+
+            {loadingRecommendations ? (
+              <TopicPoolSkeleton />
+            ) : visibleSuggestions.length === 0 ? (
+              <div className="py-12 text-center border border-dashed border-zinc-200 rounded-xl bg-white space-y-2">
+                <EmptyState title="暂无推荐选题" description="先积累更多作品数据，AI 将持续学习并自动生成复刻建议。" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
+                {visibleSuggestions.map((rec) => {
+                  const key = getRecommendationKey(rec);
+                  return (
+                    <div
+                      key={key}
+                      className="flex flex-col justify-between rounded-xl border border-zinc-200/90 bg-white p-4.5 transition-colors hover:border-zinc-300 shadow-2xs min-w-0"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="rounded bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-700 whitespace-nowrap shrink-0">
+                            {rec.category || "爆款推荐"}
+                          </span>
+                          {rec.expectedPerformance && (
+                            <span className="text-[11px] font-normal text-zinc-500 bg-zinc-100/70 px-2 py-0.5 rounded whitespace-nowrap shrink-0">
+                              预期表现: {rec.expectedPerformance}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-[14.5px] font-semibold text-zinc-900 leading-snug">{rec.title}</h3>
+
+                        {rec.angle && (
+                          <div className="border-l-2 border-zinc-300 pl-3 py-0.5 text-[12px] text-zinc-600 leading-relaxed">
+                            <span className="font-medium text-zinc-800 block mb-0.5">切入角度：</span>
+                            “{rec.angle}”
+                          </div>
+                        )}
+
+                        {rec.evidence && (
+                          <div className="text-[11.5px] text-zinc-500 flex items-start gap-1">
+                            <Info className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
+                            <span>依据：{rec.evidence}</span>
+                          </div>
+                        )}
+
+                        {rec.referenceVideos && rec.referenceVideos.length > 0 && (
+                          <div className="space-y-1.5 pt-1">
+                            <span className="text-[11px] font-normal text-zinc-400 flex items-center gap-1">
+                              <Film className="size-3 text-zinc-400" />
+                              参考视频 ({rec.referenceVideos.length})
+                            </span>
+                            <div className="space-y-1">
+                              {rec.referenceVideos.slice(0, 2).map((vid, idx) => {
+                                const playVal = vid.playCount24h ?? vid.playCount;
+                                return (
+                                  <div key={idx} className="flex items-center justify-between text-[11px] text-zinc-600 bg-zinc-50/80 px-2 py-1 rounded">
+                                    <span className="truncate max-w-[200px]">{vid.title || "爆款原片"}</span>
+                                    {playVal !== undefined && (
+                                      <span className="text-zinc-400 tabular-nums">
+                                        {playVal >= 10000 ? `${(playVal / 10000).toFixed(1)}w` : playVal}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-end gap-2 pt-1">
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          onClick={() => setIgnoredRecKeys((prev) => new Set(prev).add(key))}
+                          className="h-7 text-zinc-400 hover:text-zinc-600 text-[12px]"
+                        >
+                          忽略
+                        </Button>
+                        <Button
+                          size="xs"
+                          onClick={() => handleOpenAdoptModal(rec, key)}
+                          className="h-7 px-3 bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium rounded-lg text-[12px] cursor-pointer"
+                        >
+                          采纳微调
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 沉浸式“趋势变化”大弹窗 (精细视口 max-w-[1040px]) */}
+      <Dialog open={compModalOpen} onOpenChange={setCompModalOpen}>
+        <DialogContent className="!max-w-[1040px] sm:!max-w-[1040px] w-[92vw] max-h-[86vh] overflow-y-auto rounded-2xl p-6 bg-white border border-zinc-200 shadow-xl space-y-4.5">
+          <DialogHeader className="flex flex-row items-center justify-between border-b border-zinc-100 pb-3.5">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="size-4.5 text-zinc-900" />
+              <DialogTitle className="text-base font-semibold text-zinc-900">趋势变化</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-2xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
+                  <button
+                    onClick={() => setComparisonDimension("topic")}
+                    className={cn(
+                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
+                      comparisonDimension === "topic" ? "bg-white text-zinc-900 font-semibold shadow-2xs" : "text-zinc-500"
+                    )}
+                  >
+                    母题维度
+                  </button>
+                  <button
+                    onClick={() => setComparisonDimension("account")}
+                    className={cn(
+                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
+                      comparisonDimension === "account" ? "bg-white text-zinc-900 font-semibold shadow-2xs" : "text-zinc-500"
+                    )}
+                  >
+                    账号维度
+                  </button>
+                </div>
+
+                {comparisonDimension === "account" && topicsList.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-[12px]">
+                    <span className="text-zinc-500 font-medium">对比母题：</span>
+                    <select
+                      value={comparisonTopicId}
+                      onChange={(e) => setComparisonTopicId(e.target.value)}
+                      className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 outline-none focus:border-[#5F82A8]"
+                    >
+                      {topicsList.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[12px]">
+                <Calendar className="size-3.5 text-zinc-400" />
+                <span className="text-zinc-500 font-medium">时间筛选：</span>
+                <select
+                  value={comparisonDays}
+                  onChange={(e) => setComparisonDays(Number(e.target.value))}
+                  className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] outline-none"
+                >
+                  <option value={7}>近 7 天</option>
+                  <option value={14}>近 14 天</option>
+                  <option value={30}>近 30 天</option>
+                </select>
+              </div>
+            </div>
+
+            {comparisonRows.length > 0 && (
+              <div className="rounded-xl bg-zinc-100/70 p-3.5 border border-zinc-200/50 text-[12px] text-zinc-700 flex items-center gap-1.5">
+                <Info className="size-4 text-[#5F82A8] shrink-0" />
+                <span>
+                  对比数据解读：基于当前列表分布中位数（达标率中位数：{(comparisonMedians.qualifiedRateMedian * 100).toFixed(1)}%，均播中位数：{comparisonMedians.avgPlayMedian.toLocaleString()}）。低于中位数标绿，高于中位数标红。
+                </span>
+              </div>
+            )}
+
+            {loadingComparison ? (
+              <TopicPoolSkeleton />
+            ) : comparisonRows.length === 0 ? (
+              <div className="py-12 text-center border border-dashed border-zinc-200 rounded-2xl bg-white space-y-2">
+                <EmptyState title="暂无对比样本" description="当前筛选条件下缺少足够的作品发布样本。" />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[13px]">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium">
+                      <tr>
+                        <th className="py-3.5 px-6">{comparisonDimension === "topic" ? "母题分类" : "账号名称"}</th>
+                        <th className="py-3.5 px-6">作品样本数</th>
+                        <th className="py-3.5 px-6">爆款达标率</th>
+                        <th className="py-3.5 px-6">平均播放量</th>
+                        <th className="py-3.5 px-6">最高播放量</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {comparisonRows.map((row, idx) => {
+                        const name = comparisonDimension === "account"
+                          ? (row.accountName || row.topicName || `账号 ${idx + 1}`)
+                          : (row.topicName || row.accountName || `母题 ${idx + 1}`);
+                        const rowKey = comparisonDimension === "account"
+                          ? `acc-${row.accountId || idx}-${idx}`
+                          : `top-${row.topicId || idx}-${idx}`;
+
+                        const isLowConfidence = row.lowConfidence || row.workCount < 3;
+                        const isRateHigher = row.qualifiedRate >= comparisonMedians.qualifiedRateMedian;
+                        const isPlayHigher = row.avgPlayCount >= comparisonMedians.avgPlayMedian;
+
+                        return (
+                          <tr key={rowKey} className={cn("hover:bg-zinc-50/60", isLowConfidence && "opacity-70 bg-zinc-50/30")}>
+                            <td className="py-3.5 px-6 font-semibold text-zinc-900 flex items-center gap-1.5">
+                              <span className={cn(isLowConfidence && "text-zinc-500")}>{name}</span>
+                              {isLowConfidence && (
+                                <span className="rounded bg-zinc-200 px-1.5 py-0.2 text-[10px] text-zinc-500 font-normal shrink-0">
+                                  样本少仅供参考
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-6 tabular-nums text-zinc-700">{row.workCount} 条</td>
+                            <td className="py-3.5 px-6 font-semibold tabular-nums">
+                              <span className={isRateHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
+                                {(row.qualifiedRate * 100).toFixed(1)}%
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-6 font-semibold tabular-nums">
+                              <span className={isPlayHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
+                                {row.avgPlayCount >= 10000 ? `${(row.avgPlayCount / 10000).toFixed(1)}w` : row.avgPlayCount.toLocaleString()}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-6 tabular-nums text-zinc-800">
+                              {row.bestPlayCount >= 10000 ? `${(row.bestPlayCount / 10000).toFixed(1)}w` : row.bestPlayCount.toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

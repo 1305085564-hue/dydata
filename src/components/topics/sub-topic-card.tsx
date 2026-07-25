@@ -195,8 +195,8 @@ export function SubTopicCard({
               </span>
             )}
             {item.emotion_tag && (
-              <span className="inline-flex items-center gap-0.5 rounded bg-[#D99E55]/12 px-1.5 py-0.5 text-[10.5px] font-medium text-[#B87D33] shrink-0">
-                <Flame className="size-2.5" />
+              <span className="inline-flex items-center gap-0.5 rounded bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600 shrink-0">
+                <Flame className="size-2.5 text-zinc-400" />
                 <span>{item.emotion_tag}</span>
               </span>
             )}
@@ -230,33 +230,26 @@ export function SubTopicCard({
             }
           }}
           className={cn(
-            "group relative flex flex-col justify-between rounded-2xl border border-zinc-200/80 bg-white p-4 transition-all duration-200 cursor-pointer min-h-[162px] h-auto space-y-2.5",
-            "hover:border-[#D97757]/40 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.995]"
+            "group relative flex flex-col justify-between rounded-xl border border-zinc-200 bg-white p-4 transition-all duration-200 cursor-pointer min-h-[162px] h-auto space-y-2.5",
+            "hover:border-zinc-300 hover:shadow-sm hover:-translate-y-0.5 active:scale-[0.995]"
           )}
         >
           {/* 卡片顶栏：母题/情感标签 */}
           <div className="flex items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               {item.topic_groups && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+                <span className="inline-flex items-center gap-1 rounded bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
                   <Layers className="size-3 text-zinc-400" />
                   {item.topic_groups.name}
                 </span>
               )}
               {item.emotion_tag && (
-                <span className="inline-flex items-center gap-0.5 rounded-md bg-[#D99E55]/12 px-2 py-0.5 text-[11px] font-medium text-[#B87D33]">
-                  <Flame className="size-3" />
+                <span className="inline-flex items-center gap-0.5 rounded bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600">
+                  <Flame className="size-3 text-zinc-400" />
                   {item.emotion_tag}
                 </span>
               )}
             </div>
-
-            {isClaimedByMe && (
-              <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/12 px-2 py-0.5 text-[11px] font-semibold text-[#4F825B]">
-                <Check className="size-3 stroke-[2.5]" />
-                已认领
-              </span>
-            )}
           </div>
 
           {/* 标题 & Hook 区域：点击统一打开详情弹窗 */}
@@ -273,7 +266,7 @@ export function SubTopicCard({
           </div>
 
           {/* 底部数据与认领 Action Bar */}
-          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100/70">
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100">
             <div className="flex items-center gap-3 text-[11.5px]">
               {averagePlay !== null && (
                 <div className="flex items-center gap-1 text-zinc-500">
@@ -299,7 +292,7 @@ export function SubTopicCard({
                   onClick={handleClaimToggle}
                   title="点击放回选题池"
                   aria-label={`已认领：${item.title}，点击放回选题池`}
-                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/12 px-2.5 text-[11.5px] font-medium text-[#5B9668] transition-colors hover:bg-[#6FAA7D]/22 disabled:cursor-wait cursor-pointer"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-emerald-200/80 bg-emerald-50 px-2.5 text-[11.5px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-wait cursor-pointer"
                 >
                   {isClaiming ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5 stroke-[2.5]" />}
                   已认领
@@ -310,10 +303,10 @@ export function SubTopicCard({
                   disabled={isClaiming}
                   onClick={handleClaimToggle}
                   className={cn(
-                    "flex h-7 items-center justify-center rounded-lg border px-3 text-[11.5px] font-medium active:scale-95 transition-all duration-150 shadow-2xs cursor-pointer",
+                    "flex h-7 items-center justify-center rounded-md border px-3 text-[11.5px] font-medium active:scale-95 transition-all duration-150 cursor-pointer",
                     isLimitReached
                       ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
-                      : "border-[#D97757]/20 bg-[#D97757]/8 text-[#D97757] hover:bg-[#D97757] hover:text-white"
+                      : "border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-[#D97757] hover:text-white hover:border-[#D97757]"
                   )}
                   title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
                 >

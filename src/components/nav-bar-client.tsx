@@ -486,8 +486,15 @@ export function NavBarClient({
                 onOpenSettings={handleSettingsOpen}
               />
 
-              {/* Bell alert Popover button container (FAR RIGHT - Enhanced Functional UI) */}
-              <div className="relative">
+              {/* Bell alert Popover button container (FAR RIGHT - Seamless Hover Expansion) */}
+              <div
+                className="relative group py-1 -my-1"
+                onMouseEnter={() => {
+                  if (!commandHubLoaded) setCommandHubLoaded(true);
+                  setCommandHubOpen(true);
+                }}
+                onMouseLeave={() => setCommandHubOpen(false)}
+              >
                 <button
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
