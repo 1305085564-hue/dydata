@@ -41,7 +41,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded border border-zinc-200 bg-zinc-50 py-2 pr-2 pl-3 text-[13px] text-zinc-700 whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-zinc-100 focus-visible:bg-white focus-visible:border-zinc-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-900/10 data-popup-open:bg-white data-popup-open:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10 data-placeholder:text-zinc-500 data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+        "flex w-fit items-center justify-between gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 py-2 pr-2 pl-3 text-[13px] text-zinc-700 whitespace-nowrap outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] select-none hover:bg-zinc-100 focus-visible:bg-white focus-visible:border-zinc-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-900/10 data-popup-open:bg-white data-popup-open:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-[#C9604D]/40 aria-invalid:ring-1 aria-invalid:ring-[#C9604D]/10 data-placeholder:text-zinc-500 data-[size=default]:h-8 data-[size=sm]:h-7 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
         className
       )}
       {...props}
@@ -201,5 +201,5 @@ export {
   SelectValue,
 }
 
-/* [规范对齐] 圆角已调整：选择器 4px / 弹层 8px；批次二：SelectItem 选中态仅保留字重字色 */
+/* [规范对齐] 圆角已调整：选择器 6px（rounded-md）/ 弹层 8px；批次二：SelectItem 选中态仅保留字重字色 */
 
