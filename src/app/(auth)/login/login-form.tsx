@@ -12,6 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { buildAuthPathWithNext, getLoginErrorMessage, sanitizeNextPath } from "@/lib/auth-password";
+import {
+  getSafeFeishuErrorCode,
+  requestFeishuAuthCode,
+  type FeishuAuthBridge,
+} from "@/lib/feishu/browser-auth";
 
 import { AuthShell } from "../_components/auth-shell";
 
@@ -33,13 +38,7 @@ type FeishuH5Sdk = {
   }) => Promise<unknown>;
 };
 
-type FeishuAuthBridge = {
-  requestAuthCode: (options: {
-    appId: string;
-    onSuccess: (result: { code: string }) => void;
-    onFail: (error: unknown) => void;
-  }) => void;
-};
+type FeishuLoginStage = "jssdk-config" | "auth-code" | "sso" | "session";
 
 type FeishuSdkWindow = Window & {
   h5sdk?: FeishuH5Sdk;
@@ -55,6 +54,13 @@ function getFeishuH5Sdk(): FeishuH5Sdk | undefined {
 function getFeishuAuthBridge(): FeishuAuthBridge | undefined {
   const feishuWindow = window as FeishuSdkWindow;
   return feishuWindow.tt;
+}
+
+function logFeishuLoginFailure(stage: FeishuLoginStage, error?: unknown) {
+  console.error("[飞书登录] 失败", {
+    stage,
+    code: getSafeFeishuErrorCode(error),
+  });
 }
 
 /** 动态加载飞书 JSSDK */
@@ -167,79 +173,101 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
         return;
       }
 
-      // 2. 获取 JSSDK 鉴权签名
-      const configResp = await fetch("/api/feishu/jssdk-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: window.location.href.split("#")[0] }),
-      });
-
-      if (!configResp.ok) {
-        feedbackToast.error("飞书鉴权失败，请用邮箱密码登录");
-        return;
-      }
-
-      const config = (await configResp.json()) as FeishuJssdkConfig;
-
-      // 3. 配置 JSSDK
-      await h5sdk.config({
-        appId: config.appId,
-        timestamp: config.timestamp,
-        nonceStr: config.nonceStr,
-        signature: config.signature,
-        jsApiList: ["requestAuthCode"],
-      });
-      await new Promise<void>((resolve) => h5sdk.ready(resolve));
-
-      if (feishuAbortRef.current) return;
-
-      // 4. 获取授权码
-      const authResult = await new Promise<{ code: string }>((resolve, reject) => {
-        authBridge.requestAuthCode({
-          appId: config.appId,
-          onSuccess: (res: { code: string }) => resolve(res),
-          onFail: (err: unknown) => reject(new Error(JSON.stringify(err))),
+      let config: FeishuJssdkConfig;
+      try {
+        // 2. 获取签名并配置 JSSDK
+        const configResp = await fetch("/api/feishu/jssdk-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: window.location.href.split("#")[0] }),
         });
-      });
+
+        if (!configResp.ok) {
+          logFeishuLoginFailure("jssdk-config", configResp.status);
+          feedbackToast.error("飞书网页鉴权失败，请联系管理员检查可信域名");
+          return;
+        }
+
+        config = (await configResp.json()) as FeishuJssdkConfig;
+        await h5sdk.config({
+          appId: config.appId,
+          timestamp: config.timestamp,
+          nonceStr: config.nonceStr,
+          signature: config.signature,
+          jsApiList: ["requestAuthCode"],
+        });
+        await new Promise<void>((resolve) => h5sdk.ready(resolve));
+      } catch (err) {
+        logFeishuLoginFailure("jssdk-config", err);
+        feedbackToast.error("飞书网页鉴权失败，请联系管理员检查可信域名");
+        return;
+      }
 
       if (feishuAbortRef.current) return;
 
-      // 5. 用授权码换取 Supabase session token
-      const ssoResp = await fetch("/api/feishu/sso", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: authResult.code }),
-      });
-
-      const ssoData = await ssoResp.json();
-
-      if (!ssoResp.ok) {
-        feedbackToast.error(ssoData.hint || ssoData.error || "飞书登录失败");
+      let authResult: { code: string };
+      try {
+        // 3. 获取授权码。tt API 使用 success/fail，不是 onSuccess/onFail。
+        authResult = await requestFeishuAuthCode(authBridge, config.appId);
+      } catch (err) {
+        logFeishuLoginFailure("auth-code", err);
+        feedbackToast.error("飞书授权失败，请重试");
         return;
       }
 
-      // 6. 用 token 创建 Supabase session
-      const { createBrowserClient } = await import("@supabase/ssr");
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      );
+      if (feishuAbortRef.current) return;
 
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        type: "email",
-        token_hash: ssoData.hashed_token,
-      });
+      let ssoData: { hashed_token?: string; hint?: string; error?: string };
+      try {
+        // 4. 用授权码换取 Supabase session token
+        const ssoResp = await fetch("/api/feishu/sso", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: authResult.code }),
+        });
 
-      if (otpError) {
-        console.error("verifyOtp 失败:", otpError);
-        feedbackToast.error("登录失败，请用邮箱密码登录");
+        ssoData = await ssoResp.json();
+        if (!ssoResp.ok) {
+          logFeishuLoginFailure("sso", ssoResp.status);
+          feedbackToast.error(ssoData.hint || ssoData.error || "飞书登录失败");
+          return;
+        }
+      } catch (err) {
+        logFeishuLoginFailure("sso", err);
+        feedbackToast.error("飞书登录服务异常，请稍后重试");
         return;
       }
 
-      // 7. 登录成功，跳转
+      try {
+        // 5. 用 token 创建 Supabase session
+        const { createBrowserClient } = await import("@supabase/ssr");
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        );
+
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          type: "email",
+          token_hash: ssoData.hashed_token!,
+        });
+
+        if (otpError) {
+          logFeishuLoginFailure("session", otpError);
+          feedbackToast.error("飞书会话建立失败，请用邮箱密码登录");
+          return;
+        }
+      } catch (err) {
+        logFeishuLoginFailure("session", err);
+        feedbackToast.error("飞书会话建立失败，请用邮箱密码登录");
+        return;
+      }
+
+      // 6. 登录成功，跳转
       window.location.href = next || "/dashboard";
     } catch (err) {
-      console.error("飞书登录异常:", err);
+      console.error("[飞书登录] SDK 初始化失败", {
+        code: getSafeFeishuErrorCode(err),
+      });
       feedbackToast.error("飞书登录失败，请用邮箱密码登录");
     } finally {
       setFeishuLoading(false);
