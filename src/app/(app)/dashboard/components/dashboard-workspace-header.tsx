@@ -63,8 +63,8 @@ export function DashboardWorkspaceHeader({
           <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
             <Activity size={14} className="text-zinc-700" /> 数据台
           </div>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <h2 className="text-[24px] font-medium tracking-tight text-zinc-900">
+          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+            <h2 className="text-[24px] font-bold tracking-tight text-zinc-900">
               今日提交
             </h2>
             <nav
@@ -78,12 +78,11 @@ export function DashboardWorkspaceHeader({
                     key={action.key}
                     type="button"
                     onClick={() => onDashboardAction(action.key)}
-                    className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-700 focus-visible:bg-zinc-100 focus-visible:text-zinc-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5"
-                    style={{ transitionDelay: "50ms" }}
+                    className="group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium text-zinc-600 transition-all duration-200 ease-out hover:bg-zinc-200/80 hover:text-zinc-950 hover:scale-105 hover:font-semibold focus-visible:bg-zinc-200/80 focus-visible:text-zinc-950 focus-visible:outline-none"
                   >
                     <Icon
-                      size={14}
-                      className="stroke-[1.5] text-zinc-500 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:text-zinc-700"
+                      size={15}
+                      className="stroke-[1.6] text-zinc-500 transition-all duration-200 group-hover:text-zinc-900 group-hover:scale-110"
                     />
                     {action.label}
                   </button>
@@ -91,12 +90,11 @@ export function DashboardWorkspaceHeader({
               })}
               <Link
                 href="/violations"
-                className="group inline-flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-700 focus-visible:bg-zinc-100 focus-visible:text-zinc-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5"
-                style={{ transitionDelay: "50ms" }}
+                className="group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium text-zinc-600 transition-all duration-200 ease-out hover:bg-zinc-200/80 hover:text-zinc-950 hover:scale-105 hover:font-semibold focus-visible:bg-zinc-200/80 focus-visible:text-zinc-950 focus-visible:outline-none"
               >
                 <BookOpen
-                  size={14}
-                  className="stroke-[1.5] text-zinc-500 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:text-zinc-700"
+                  size={15}
+                  className="stroke-[1.6] text-zinc-500 transition-all duration-200 group-hover:text-zinc-900 group-hover:scale-110"
                 />
                 避坑案例
               </Link>
@@ -115,12 +113,12 @@ export function DashboardWorkspaceHeader({
           <button
             type="button"
             onClick={openDatePicker}
-            className="group inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3.5 text-[13px] font-medium tracking-tight text-zinc-700 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#D97757]/40 hover:bg-[#FDF9F7] hover:text-[#C96442] focus-visible:ring-1 focus-visible:ring-zinc-900/5"
+            className="group inline-flex h-9 items-center gap-2 rounded-xl border border-zinc-200/80 bg-white/90 px-3 text-[13px] font-medium tracking-tight text-zinc-700 shadow-xs transition-all duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-zinc-900/10"
             aria-label="选择填报日期"
           >
             <CalendarDays className="size-4 stroke-[1.6] text-zinc-500 transition-colors duration-150 group-hover:text-[#D97757]" />
-            <span className="tabular-nums">{activeBizDate}</span>
-            <ChevronDown className="size-3.5 stroke-[1.6] text-zinc-500 transition-colors duration-150 group-hover:text-[#D97757]" />
+            <span className="font-mono tabular-nums text-zinc-800">{activeBizDate}</span>
+            <ChevronDown className="size-3.5 stroke-[1.6] text-zinc-400 transition-colors duration-150 group-hover:text-zinc-600" />
           </button>
           <input
             ref={dateInputRef}
