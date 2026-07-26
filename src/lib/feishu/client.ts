@@ -58,9 +58,9 @@ export async function getFeishuUserInfo(code: string): Promise<{
 }> {
   const appAccessToken = await getAppAccessToken();
 
-  // 用授权码换 user_access_token
+  // 飞书客户端免登码必须走 access_token，而不是网页 OAuth 的 oidc/access_token。
   const tokenResp = await fetch(
-    "https://open.feishu.cn/open-apis/authen/v1/oidc/access_token",
+    "https://open.feishu.cn/open-apis/authen/v1/access_token",
     {
       method: "POST",
       headers: {
@@ -73,29 +73,19 @@ export async function getFeishuUserInfo(code: string): Promise<{
 
   const tokenData = await tokenResp.json();
   if (tokenData.code !== 0) {
-    throw new Error(`换取 user_access_token 失败: ${tokenData.msg}`);
+    throw new Error(`换取飞书用户身份失败: ${tokenData.msg ?? "未知错误"}`);
   }
 
-  const userAccessToken = tokenData.data.access_token;
-
-  // 用 user_access_token 获取用户信息
-  const userResp = await fetch(
-    "https://open.feishu.cn/open-apis/authen/v1/user_info",
-    {
-      headers: { Authorization: `Bearer ${userAccessToken}` },
-    },
-  );
-
-  const userData = await userResp.json();
-  if (userData.code !== 0) {
-    throw new Error(`获取用户信息失败: ${userData.msg}`);
+  const user = tokenData.data;
+  if (!user?.open_id || !user?.union_id || !user?.name) {
+    throw new Error("飞书用户身份信息不完整");
   }
 
   return {
-    open_id: userData.data.open_id,
-    union_id: userData.data.union_id,
-    name: userData.data.name,
-    email: userData.data.email,
-    avatar: userData.data.avatar_url,
+    open_id: user.open_id,
+    union_id: user.union_id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar_url,
   };
 }
