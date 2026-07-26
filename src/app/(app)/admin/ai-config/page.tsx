@@ -15,9 +15,10 @@ interface Props {
 }
 
 function normalizeTab(value: string | undefined): AIConfigTabKey {
-  if (value === "bindings" || value === "rewrite") return value;
-  return "providers";
+  if (value === "providers" || value === "bindings" || value === "rewrite") return value;
+  return "models";
 }
+
 
 export default async function AIConfigPage({ searchParams }: Props) {
   const permission = await getUserPermissions();
@@ -30,9 +31,7 @@ export default async function AIConfigPage({ searchParams }: Props) {
   return (
     <div className="max-w-5xl w-full mx-auto">
       <AdminWorkspaceLayout
-        eyebrow="AI 配置"
-        title="统一 AI 配置中心"
-        description="管理渠道、分组、功能绑定及文案改写路由。"
+        title="AI 配置中心"
         indexItems={[]}
       >
         <AIConfigShell initialTab={initialTab} />

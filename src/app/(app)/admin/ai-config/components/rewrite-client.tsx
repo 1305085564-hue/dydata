@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Plus, Pencil, Trash2, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Star, GitFork, Info } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -131,11 +131,11 @@ function RewriteRouteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{route?.id ? "编辑路由" : "添加路由"}</DialogTitle>
+          <DialogTitle>{route?.id ? "编辑路由规则" : "添加路由规则"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="route-model-view">模型视图</Label>
+            <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
               id="route-model-view"
               className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
@@ -149,7 +149,7 @@ function RewriteRouteDialog({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="route-provider-key-model">物理映射 (渠道 / 分组 / 模型)</Label>
+            <Label htmlFor="route-provider-key-model">物理映射 (渠道 / Key / 模型)</Label>
             <select
               id="route-provider-key-model"
               className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
@@ -173,11 +173,11 @@ function RewriteRouteDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="route-actual-model">实际模型</Label>
+            <Label htmlFor="route-actual-model">实际调用 Model ID</Label>
             <Input id="route-actual-model" value={formData.actual_model || ""} onChange={(e) => setFormData({ ...formData, actual_model: e.target.value })} />
           </div>
           <div className="flex items-center justify-between">
-            <Label>启用</Label>
+            <Label>是否启用</Label>
             <Switch aria-label="启用路由" checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
           </div>
         </div>
@@ -251,164 +251,180 @@ export default function RewriteClient() {
   const views = [...bundle.rewriteModelViews].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
-    <div className="flex flex-col md:flex-row gap-3 items-start min-h-[580px]">
-      {/* 左栏：极简白底卡片导航 */}
-      <div className="w-full md:w-[280px] border border-zinc-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
-        <div className="flex justify-between items-center px-2 py-1">
-          <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">模型视图</h2>
-          <Button variant="ghost" size="icon" aria-label="新建视图" className="size-6 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 bg-zinc-50 rounded-md shrink-0" onClick={() => setViewModal({ open: true, data: null })}>
-            <Plus strokeWidth={2} className="size-3.5" />
-          </Button>
+    <div className="space-y-5">
+      {/* 顶栏提示说明 */}
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-zinc-900 font-medium text-[14px]">
+            <GitFork className="size-4 text-[#D97757]" />
+            <span>文案改写工具专属模型分发路由</span>
+          </div>
         </div>
-
-        <div className="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
-          {views.length === 0 ? (
-            <div className="text-[12px] text-zinc-500 py-6 text-center">暂无模型视图</div>
-          ) : (
-            views.map((v) => {
-              const isViewActive = activeViewId === v.id;
-              return (
-                <div
-                  key={v.id}
-                  className={cn(
-                    "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
-                    isViewActive
-                      ? "bg-zinc-100/80 text-zinc-900 font-medium"
-                      : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
-                  )}
-                >
-                  <button
-                    type="button"
-                    aria-current={isViewActive ? "true" : undefined}
-                    className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                    onClick={() => setSelectedViewId(v.id)}
-                  >
-                    <span className="truncate">{v.label}</span>
-                    <Badge variant="outline" className={cn("font-mono text-[12px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-zinc-700 border-zinc-300" : "text-zinc-500 border-zinc-200")}>{v.key}</Badge>
-                    {v.is_default && (
-                      <Star strokeWidth={1.5} className="size-3 text-[#D97757] fill-[#D97757] shrink-0" />
-                    )}
-                    {!v.is_enabled && (
-                      <span className="text-[12px] text-zinc-500 bg-zinc-100 px-1 rounded-sm shrink-0">停用</span>
-                    )}
-                  </button>
-                  <div className="flex shrink-0 items-center gap-1 pr-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`编辑视图 ${v.label}`}
-                      className="size-5 text-zinc-500 hover:text-zinc-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setViewModal({ open: true, data: v });
-                      }}
-                    >
-                      <Pencil strokeWidth={1.5} className="size-3" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="flex items-start gap-2 text-[12px] text-zinc-500 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
+          <Info className="size-4 text-[#5F82A8] shrink-0 mt-0.5" />
+          <span>
+            控制前台“文案改写”工作台在不同模式（如<em>快速模式/深度精修</em>）下的模型映射关系。非改写模块高级维护无须修改。
+          </span>
         </div>
       </div>
 
-      {/* 右栏：独立白底配置卡片 */}
-      <div className="flex-1 border border-zinc-200 rounded-2xl bg-white p-6 min-h-[480px] min-w-0">
-        {activeViewId && (() => {
-          const view = bundle.rewriteModelViews.find((v) => v.id === activeViewId);
-          if (!view) return <div className="text-zinc-500 text-[12px] py-10 text-center">模型视图已不存在</div>;
-          const routes = bundle.rewriteModelRoutes.filter((route) => route.model_view_id === view.id);
+      <div className="flex flex-col md:flex-row gap-3 items-start min-h-[520px]">
+        {/* 左栏：极简白底卡片导航 */}
+        <div className="w-full md:w-[280px] border border-zinc-200 rounded-2xl bg-white p-3 space-y-3 shrink-0">
+          <div className="flex justify-between items-center px-2 py-1">
+            <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">改写视图</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="新建视图"
+              className="size-6 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 bg-zinc-50 rounded-md shrink-0"
+              onClick={() => setViewModal({ open: true, data: null })}
+            >
+              <Plus strokeWidth={2} className="size-3.5" />
+            </Button>
+          </div>
 
-          return (
-            <div className="space-y-5">
-              <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-[13px] leading-[1.5] text-zinc-900">{view.label}</h3>
-                    <Badge variant="outline" className="font-mono text-[12px] bg-zinc-50">{view.key}</Badge>
-                    {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10">默认</Badge>}
+          <div className="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
+            {views.length === 0 ? (
+              <div className="text-[12px] text-zinc-500 py-6 text-center">暂无改写视图</div>
+            ) : (
+              views.map((v) => {
+                const isViewActive = activeViewId === v.id;
+                return (
+                  <div
+                    key={v.id}
+                    className={cn(
+                      "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
+                      isViewActive
+                        ? "bg-zinc-100/80 text-zinc-900 font-medium"
+                        : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                    )}
+                  >
+                    <button
+                      type="button"
+                      aria-current={isViewActive ? "true" : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded text-left focus-visible:outline-none"
+                      onClick={() => setSelectedViewId(v.id)}
+                    >
+                      <span className="truncate">{v.label}</span>
+                      <Badge variant="outline" className={cn("font-mono text-[11px] h-4.5 px-1 py-0 bg-white shrink-0", isViewActive ? "text-zinc-700 border-zinc-300" : "text-zinc-500 border-zinc-200")}>{v.key}</Badge>
+                      {v.is_default && (
+                        <Star strokeWidth={1.5} className="size-3 text-[#D97757] fill-[#D97757] shrink-0" />
+                      )}
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1 pr-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`编辑视图 ${v.label}`}
+                        className="size-5 text-zinc-500 hover:text-zinc-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewModal({ open: true, data: v });
+                        }}
+                      >
+                        <Pencil strokeWidth={1.5} className="size-3" />
+                      </Button>
+                    </div>
                   </div>
-                  {view.description && (
-                    <div className="text-[12px] text-zinc-500 mt-1">{view.description}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md">
-                    <span>{view.is_enabled ? "已启用" : "已禁用"}</span>
-                    <Switch
-                      aria-label={`启用视图 ${view.label}`}
-                      className="scale-75"
-                      checked={view.is_enabled}
-                      onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_view", { id: view.id, is_enabled: checked })}
-                    />
-                  </div>
-                  <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setViewModal({ open: true, data: view })}>
-                    <Pencil strokeWidth={1.5} className="size-3 mr-1" /> 编辑
-                  </Button>
-                  <Button size="sm" className="h-7 text-[12px]" onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: { model_view_id: view.id } })}>
-                    <Plus strokeWidth={1.5} className="size-3 mr-1" /> 添加路由
-                  </Button>
-                </div>
-              </div>
+                );
+              })
+            )}
+          </div>
+        </div>
 
-              <div className="space-y-2">
-                <h4 className="text-[12px] font-normal text-zinc-500 uppercase tracking-wider">绑定的路由分配规则</h4>
-                <div className="rounded-lg border border-zinc-200 overflow-hidden bg-white">
-                  <Table>
-                    <TableHeader className="bg-zinc-50/50">
-                      <TableRow>
-                        <TableHead className="h-8 w-[80px] py-1.5 pl-3 text-left text-[12px] font-normal text-zinc-500">优先级</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">目标实际模型</TableHead>
-                        <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">物理渠道 (渠道 / 分组)</TableHead>
-                        <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">启用</TableHead>
-                        <TableHead className="h-8 w-[100px] py-1.5 pr-3 text-right text-[12px] font-normal text-zinc-500">操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {routes.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="py-8 text-center text-[13px] text-zinc-500">
-                            暂无路由，请点击右上角添加
-                          </TableCell>
+        {/* 右栏：路由规则配置卡片 */}
+        <div className="flex-1 border border-zinc-200 rounded-2xl bg-white p-6 min-h-[460px] min-w-0 shadow-sm">
+          {activeViewId && (() => {
+            const view = bundle.rewriteModelViews.find((v) => v.id === activeViewId);
+            if (!view) return <div className="text-zinc-500 text-[12px] py-10 text-center">模型视图已不存在</div>;
+            const routes = bundle.rewriteModelRoutes.filter((route) => route.model_view_id === view.id);
+
+            return (
+              <div className="space-y-5">
+                <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-[14px] text-zinc-900">{view.label}</h3>
+                      <Badge variant="outline" className="font-mono text-[12px] bg-zinc-50">{view.key}</Badge>
+                      {view.is_default && <Badge className="h-5 text-[11px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10 border-0 font-medium">默认规则</Badge>}
+                    </div>
+                    {view.description && (
+                      <div className="text-[12px] text-zinc-500 mt-1">{view.description}</div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md">
+                      <span>{view.is_enabled ? "已启用" : "已禁用"}</span>
+                      <Switch
+                        aria-label={`启用视图 ${view.label}`}
+                        className="scale-75 origin-right"
+                        checked={view.is_enabled}
+                        onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_view", { id: view.id, is_enabled: checked })}
+                      />
+                    </div>
+                    <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setViewModal({ open: true, data: view })}>
+                      <Pencil strokeWidth={1.5} className="size-3 mr-1" /> 编辑
+                    </Button>
+                    <Button size="sm" className="h-7 text-[12px]" onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: { model_view_id: view.id } })}>
+                      <Plus strokeWidth={1.5} className="size-3 mr-1" /> 添加路由
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-[12px] font-normal text-zinc-500 uppercase tracking-wider">绑定的路由分配规则</h4>
+                  <div className="rounded-xl border border-zinc-200 overflow-hidden bg-white">
+                    <Table>
+                      <TableHeader className="bg-zinc-50/60">
+                        <TableRow className="hover:bg-transparent border-zinc-100">
+                          <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-zinc-500">优先级</TableHead>
+                          <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">实际 Model ID</TableHead>
+                          <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">映射物理渠道 (渠道 / Key)</TableHead>
+                          <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">启用</TableHead>
+                          <TableHead className="h-8 w-[100px] py-1.5 pr-4 text-right text-[12px] font-normal text-zinc-500">操作</TableHead>
                         </TableRow>
-                      ) : (
-                        routes.map((route) => {
-                          const model = bundle.models.find((item) => item.id === route.provider_key_model_id);
-                          const key = bundle.keys.find((item) => item.id === model?.key_id);
-                          const provider = bundle.providers.find((item) => item.id === key?.provider_id);
+                      </TableHeader>
+                      <TableBody>
+                        {routes.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="py-8 text-center text-[13px] text-zinc-400">
+                              暂无路由规则，请点击右上角添加
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          routes.map((route) => {
+                            const model = bundle.models.find((item) => item.id === route.provider_key_model_id);
+                            const key = bundle.keys.find((item) => item.id === model?.key_id);
+                            const provider = bundle.providers.find((item) => item.id === key?.provider_id);
 
-                          return (
-                            <TableRow
-                              key={route.id}
-                              className={cn(
-                                "group hover:bg-zinc-50/50 h-9 transition-colors",
-                                !route.is_enabled && "opacity-60"
-                              )}
-                            >
-                              <TableCell className="py-1 text-[12px] font-mono text-zinc-500 font-normal pl-3 text-left">
-                                P{route.priority}
-                              </TableCell>
-                              <TableCell className="py-1 text-[13px] font-medium text-zinc-900 text-left">
-                                {route.actual_model}
-                              </TableCell>
-                              <TableCell className="py-1 text-[12px] text-zinc-500 text-left truncate max-w-[200px]">
-                                {provider ? `${provider.name} / ${key?.label}` : "自动分配"}
-                              </TableCell>
-                              <TableCell className="py-1 text-left">
-                                <Switch
-                                  aria-label={`启用路由 ${route.actual_model}`}
-                                  className="scale-75 origin-left"
-                                  checked={route.is_enabled}
-                                  onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_route", { id: route.id, is_enabled: checked })}
-                                />
-                              </TableCell>
-                              <TableCell className="py-1 text-right pr-3">
-                                <div className="flex items-center justify-end relative h-7">
-                                  <div className="absolute right-1.5 opacity-0 transition-opacity sm:opacity-30 sm:group-hover:opacity-0 sm:group-focus-within:opacity-0">
-                                    <span className="text-zinc-500 text-[12px] tracking-widest font-normal">···</span>
-                                  </div>
-                                  <div className="flex items-center justify-end gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                            return (
+                              <TableRow
+                                key={route.id}
+                                className={cn(
+                                  "group hover:bg-zinc-50/50 h-9 transition-colors text-[13px]",
+                                  !route.is_enabled && "opacity-60"
+                                )}
+                              >
+                                <TableCell className="py-1 text-[12px] font-mono text-zinc-500 font-normal pl-4 text-left">
+                                  P{route.priority}
+                                </TableCell>
+                                <TableCell className="py-1 font-mono text-[12px] font-medium text-zinc-900 text-left">
+                                  {route.actual_model}
+                                </TableCell>
+                                <TableCell className="py-1 text-[12px] text-zinc-500 text-left truncate max-w-[200px]">
+                                  {provider ? `${provider.name} / ${key?.label}` : "自动分配"}
+                                </TableCell>
+                                <TableCell className="py-1 text-left">
+                                  <Switch
+                                    aria-label={`启用路由 ${route.actual_model}`}
+                                    className="scale-75 origin-left"
+                                    checked={route.is_enabled}
+                                    onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_route", { id: route.id, is_enabled: checked })}
+                                  />
+                                </TableCell>
+                                <TableCell className="py-1 text-right pr-4">
+                                  <div className="flex items-center justify-end gap-1">
                                     <Button
                                       variant="ghost"
                                       size="icon"
@@ -416,7 +432,7 @@ export default function RewriteClient() {
                                       className="size-7 text-zinc-500 hover:text-zinc-700"
                                       onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: route })}
                                     >
-                                      <Pencil strokeWidth={1.5} className="size-3" />
+                                      <Pencil strokeWidth={1.5} className="size-3.5" />
                                     </Button>
                                     <Button
                                       variant="ghost"
@@ -425,28 +441,28 @@ export default function RewriteClient() {
                                       className="size-7 text-zinc-500 hover:text-[#C9604D]"
                                       onClick={() => setDeleteTarget({ open: true, id: route.id, entity: "rewrite_model_route", title: `删除路由 ${route.actual_model}` })}
                                     >
-                                      <Trash2 strokeWidth={1.5} className="size-3" />
+                                      <Trash2 strokeWidth={1.5} className="size-3.5" />
                                     </Button>
                                   </div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
-        {!activeViewId && (
-          <div className="text-center py-20 text-[12px] text-zinc-500">
-            请在左侧选择模型视图以查看详情
-          </div>
-        )}
+          {!activeViewId && (
+            <div className="text-center py-20 text-[12px] text-zinc-500">
+              请在左侧选择模型视图以查看详情
+            </div>
+          )}
+        </div>
       </div>
 
       <RewriteViewDialog open={viewModal.open} view={viewModal.data} onOpenChange={(open) => setViewModal({ ...viewModal, open })} onSave={handleSaveView} />
@@ -465,7 +481,6 @@ export default function RewriteClient() {
         description="此操作无法撤销，确定要删除吗？"
         confirmText="删除"
         cancelText="取消"
-        destructive
         onConfirm={handleDelete}
         onOpenChange={(open) => setDeleteTarget({ ...deleteTarget, open })}
       />

@@ -16,7 +16,7 @@ type AiConfigEntity =
   | "feature_binding"
   | "rewrite_model_view"
   | "rewrite_model_route";
-type AiConfigAction = "create" | "update" | "delete";
+type AiConfigAction = "create" | "update" | "delete" | "test_key";
 
 type AiConfigBody = {
   action?: unknown;
@@ -51,7 +51,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -254,7 +254,12 @@ async function loadAiConfig(supabase: SupabaseClient) {
   };
 }
 
-async function applyMutation(supabase: SupabaseClient, action: AiConfigAction, entity: AiConfigEntity, data: Record<string, unknown>) {
+async function applyMutation(
+  supabase: SupabaseClient,
+  action: Exclude<AiConfigAction, "test_key">,
+  entity: AiConfigEntity,
+  data: Record<string, unknown>
+) {
   const table = {
     provider: "ai_providers",
     key: "ai_provider_keys",
@@ -316,6 +321,101 @@ export async function GET() {
   }
 }
 
+async function handleTestKey(supabase: SupabaseClient, data: Record<string, unknown>) {
+  const keyId = toTrimmedString(data.key_id);
+  const modelId = toTrimmedString(data.model_id);
+  if (!keyId) throw new Error("缺少 key_id");
+
+  const { data: keyData, error: keyErr } = await supabase
+    .from("ai_provider_keys")
+    .select("id, api_key, provider:ai_providers(id, name, base_url)")
+    .eq("id", keyId)
+    .single();
+
+  if (keyErr || !keyData) throw new Error(keyErr?.message || "密钥不存在");
+
+  const keyRow = keyData as unknown as {
+    id: string;
+    api_key: string;
+    provider: { id: string; name: string; base_url: string } | Array<{ id: string; name: string; base_url: string }> | null;
+  };
+
+  const provider = firstOrNull(keyRow.provider);
+  if (!provider?.base_url) throw new Error("渠道 URL 不存在");
+
+  let testModel = modelId;
+  if (!testModel) {
+    const { data: modelData } = await supabase
+      .from("ai_provider_key_models")
+      .select("model_id")
+      .eq("key_id", keyId)
+      .limit(1)
+      .maybeSingle();
+    testModel = (modelData as { model_id?: string } | null)?.model_id || "gpt-3.5-turbo";
+  }
+
+  const startTime = Date.now();
+  const baseUrlClean = provider.base_url.replace(/\/+$/, "");
+  const targetUrl = baseUrlClean.endsWith("/chat/completions")
+    ? baseUrlClean
+    : `${baseUrlClean}/chat/completions`;
+
+  try {
+    const res = await fetch(targetUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${keyRow.api_key}`,
+      },
+      body: JSON.stringify({
+        model: testModel,
+        messages: [{ role: "user", content: "hi" }],
+        max_tokens: 1,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    const elapsedMs = Date.now() - startTime;
+    if (res.ok) {
+      await supabase
+        .from("ai_provider_keys")
+        .update({
+          consecutive_failures: 0,
+          unhealthy_until: null,
+          last_success_at: new Date().toISOString(),
+          last_error_message: null,
+        })
+        .eq("id", keyId);
+
+      return { ok: true, latencyMs: elapsedMs, status: res.status, message: "连通测试成功" };
+    } else {
+      const errText = await res.text().catch(() => "");
+      const errMsg = `HTTP ${res.status}: ${errText.slice(0, 200)}`;
+      await supabase
+        .from("ai_provider_keys")
+        .update({
+          last_failure_at: new Date().toISOString(),
+          last_error_message: errMsg,
+        })
+        .eq("id", keyId);
+
+      return { ok: false, latencyMs: elapsedMs, status: res.status, message: errMsg };
+    }
+  } catch (err) {
+    const elapsedMs = Date.now() - startTime;
+    const errMsg = err instanceof Error ? err.message : "连接超时或失败";
+    await supabase
+      .from("ai_provider_keys")
+      .update({
+        last_failure_at: new Date().toISOString(),
+        last_error_message: errMsg,
+      })
+      .eq("id", keyId);
+
+    return { ok: false, latencyMs: elapsedMs, status: 0, message: errMsg };
+  }
+}
+
 export async function POST(request: NextRequest) {
   const auth = await requireOwnerActor();
   if ("error" in auth) {
@@ -330,9 +430,23 @@ export async function POST(request: NextRequest) {
   }
 
   const action = parseAction(body.action);
+  if (!action) {
+    return NextResponse.json({ error: "action 不正确" }, { status: 400 });
+  }
+
+  if (action === "test_key") {
+    try {
+      const result = await handleTestKey(auth.supabase, asRecord(body.data));
+      const bundle = await loadAiConfig(auth.supabase);
+      return NextResponse.json({ testResult: result, ...bundle });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "连通性测试失败" }, { status: 400 });
+    }
+  }
+
   const entity = parseEntity(body.entity);
-  if (!action || !entity) {
-    return NextResponse.json({ error: "action/entity 不正确" }, { status: 400 });
+  if (!entity) {
+    return NextResponse.json({ error: "entity 不正确" }, { status: 400 });
   }
 
   try {
@@ -343,3 +457,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "保存 AI 配置失败" }, { status: 400 });
   }
 }
+

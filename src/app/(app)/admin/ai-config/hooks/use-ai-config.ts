@@ -146,6 +146,32 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
+  const testKeyConnection = useCallback(async (keyId: string, modelId?: string) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "test_key", data: { key_id: keyId, model_id: modelId } }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "连通测试失败");
+      }
+      const { testResult, ...newBundle } = data;
+      mutate(newBundle as AiConfigBundle);
+      if (testResult?.ok) {
+        feedbackToast.success(`连接正常！响应耗时: ${testResult.latencyMs}ms`);
+      } else {
+        feedbackToast.error(`测试未通过: ${testResult?.message || "无响应"}`);
+      }
+      return testResult;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "连通测试异常";
+      feedbackToast.error(msg);
+      return { ok: false, latencyMs: 0, message: msg };
+    }
+  }, [mutate]);
+
   useEffect(() => {
     if (!cachedBundle) {
       void loadData();
@@ -158,6 +184,8 @@ export function useAiConfig() {
     error,
     mutate,
     mutateEntity,
+    testKeyConnection,
     refresh: () => loadData(true),
   };
 }
+
