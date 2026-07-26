@@ -30,9 +30,10 @@ type FeishuH5Sdk = {
   ready: (callback: () => void) => void;
   config: (options: FeishuJssdkConfig & {
     jsApiList: string[];
-    onSuccess: () => void;
-    onFail: (error: unknown) => void;
-  }) => void;
+  }) => Promise<unknown>;
+};
+
+type FeishuAuthBridge = {
   requestAuthCode: (options: {
     appId: string;
     onSuccess: (result: { code: string }) => void;
@@ -43,11 +44,17 @@ type FeishuH5Sdk = {
 type FeishuSdkWindow = Window & {
   h5sdk?: FeishuH5Sdk;
   lark?: FeishuH5Sdk;
+  tt?: FeishuAuthBridge;
 };
 
 function getFeishuH5Sdk(): FeishuH5Sdk | undefined {
   const feishuWindow = window as FeishuSdkWindow;
   return feishuWindow.h5sdk ?? feishuWindow.lark;
+}
+
+function getFeishuAuthBridge(): FeishuAuthBridge | undefined {
+  const feishuWindow = window as FeishuSdkWindow;
+  return feishuWindow.tt;
 }
 
 /** 动态加载飞书 JSSDK */
@@ -154,7 +161,8 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
       await loadFeishuSdk();
 
       const h5sdk = getFeishuH5Sdk();
-      if (!h5sdk) {
+      const authBridge = getFeishuAuthBridge();
+      if (!h5sdk || !authBridge) {
         feedbackToast.error("飞书 SDK 加载失败，请用邮箱密码登录");
         return;
       }
@@ -174,30 +182,23 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
       const config = (await configResp.json()) as FeishuJssdkConfig;
 
       // 3. 配置 JSSDK
-      await new Promise<void>((resolve, reject) => {
-        h5sdk.ready(() => {
-          h5sdk.config({
-            appId: config.appId,
-            timestamp: config.timestamp,
-            nonceStr: config.nonceStr,
-            signature: config.signature,
-            jsApiList: ["requestAuthCode"],
-            onSuccess: () => resolve(),
-            onFail: (err: unknown) => reject(new Error(JSON.stringify(err))),
-          });
-        });
+      await h5sdk.config({
+        appId: config.appId,
+        timestamp: config.timestamp,
+        nonceStr: config.nonceStr,
+        signature: config.signature,
+        jsApiList: ["requestAuthCode"],
       });
+      await new Promise<void>((resolve) => h5sdk.ready(resolve));
 
       if (feishuAbortRef.current) return;
 
       // 4. 获取授权码
       const authResult = await new Promise<{ code: string }>((resolve, reject) => {
-        h5sdk.ready(() => {
-          h5sdk.requestAuthCode({
-            appId: config.appId,
-            onSuccess: (res: { code: string }) => resolve(res),
-            onFail: (err: unknown) => reject(new Error(JSON.stringify(err))),
-          });
+        authBridge.requestAuthCode({
+          appId: config.appId,
+          onSuccess: (res: { code: string }) => resolve(res),
+          onFail: (err: unknown) => reject(new Error(JSON.stringify(err))),
         });
       });
 

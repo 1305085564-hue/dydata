@@ -10,8 +10,24 @@ test("飞书登录使用可用的官方网页 SDK 并限制加载等待时间", 
 });
 
 test("飞书 SDK 只暴露 lark 时仍可用于登录", () => {
-  assert.match(source, /type FeishuSdkWindow = Window & \{\s*h5sdk\?: FeishuH5Sdk;\s*lark\?: FeishuH5Sdk;\s*\}/);
+  assert.match(source, /type FeishuSdkWindow = Window & \{\s*h5sdk\?: FeishuH5Sdk;\s*lark\?: FeishuH5Sdk;/);
   assert.match(source, /return feishuWindow\.h5sdk \?\? feishuWindow\.lark/);
+});
+
+test("飞书授权码必须通过 window.tt 获取", () => {
+  assert.match(source, /tt\?: FeishuAuthBridge/);
+  assert.match(source, /return feishuWindow\.tt/);
+  assert.match(source, /authBridge\.requestAuthCode\(/);
+  assert.doesNotMatch(source, /h5sdk\.requestAuthCode\(/);
+});
+
+test("飞书 JSSDK 必须先 config 再等待 ready", () => {
+  const configIndex = source.indexOf("await h5sdk.config(");
+  const readyIndex = source.indexOf("h5sdk.ready(resolve)");
+
+  assert.notEqual(configIndex, -1);
+  assert.notEqual(readyIndex, -1);
+  assert.ok(configIndex < readyIndex);
 });
 
 test("SDK 脚本加载后必须确认已暴露登录对象", () => {
