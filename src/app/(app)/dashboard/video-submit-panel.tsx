@@ -3,11 +3,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Clock, FilePenLine, History, Lock, PencilLine, ShieldAlert, X, Zap } from "lucide-react";
+import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -26,7 +25,6 @@ import {
 } from "@/lib/豁免";
 import { DashboardForm, type DashboardReportData } from "./dashboard-form";
 import {
-  getDashboardMetricGridClass,
   getDashboardStatusClass,
 } from "./dashboard-visuals";
 import { HistoryList } from "./history-list";
@@ -40,7 +38,6 @@ import {
 } from "./video-submit-panel-state";
 
 import { cn } from "@/lib/utils";
-import { CheckpointTracker, type CheckpointStatus } from "./checkpoint-tracker";
 
 type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
   id: string;
@@ -203,7 +200,6 @@ export function VideoSubmitPanel({
   const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
-  const [activeCheckpointId, setActiveCheckpointId] = useState(1);
   const [isDataViewOpen, setIsDataViewOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isExempting, setIsExempting] = useState(false);
@@ -326,18 +322,6 @@ export function VideoSubmitPanel({
     return () => clearInterval(timer);
   }, []);
 
-  const checkpoints = useMemo(() => {
-    const isDataReported = mergedTodayReports.some((report) => report.account_id === selectedAccountId);
-    const dataStatus: CheckpointStatus = isDataReported ? "done" : isLate ? "late" : "pending";
-
-    return [
-      { id: 1, name: "数据上报", time: "11:00", status: dataStatus },
-      { id: 2, name: "早盘早会", time: "11:15", status: "idle" as CheckpointStatus, isPlaceholder: true },
-      { id: 3, name: "选题第一关", time: "15:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
-      { id: 4, name: "文案第二关", time: "18:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
-      { id: 5, name: "审片发布", time: "20:00", status: "idle" as CheckpointStatus, isPlaceholder: true },
-    ];
-  }, [mergedTodayReports, selectedAccountId, isLate]);
 
   const monthExemptionDates = useMemo(
     () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),
@@ -674,13 +658,6 @@ export function VideoSubmitPanel({
                     </div>
                   </div>
                 </div>
-                <CheckpointTracker
-                  checkpoints={checkpoints}
-                  activeId={activeCheckpointId}
-                  onCheckpointClick={(id) => {
-                    setActiveCheckpointId(id);
-                  }}
-                />
               </div>
             </div>
           </CardHeader>
@@ -695,8 +672,6 @@ export function VideoSubmitPanel({
             )}
           >
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
-            {activeCheckpointId === 1 ? (
-              <>
             {hasPendingExemption && !dismissedPendingExemption && (
               <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-4 text-[13px] text-zinc-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -870,27 +845,6 @@ export function VideoSubmitPanel({
                 }}
               />
             ) : null}
-              </>
-            ) : (
-              <motion.div
-                key={`checkpoint-placeholder-${activeCheckpointId}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center rounded-2xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-20 text-center"
-              >
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-zinc-200 bg-white text-zinc-500">
-                  <Lock className="size-10 stroke-[1.5]" />
-                </div>
-                <h4 className="text-[18px] font-medium tracking-tight text-zinc-900">
-                  卡点 {activeCheckpointId} 记录模块
-                </h4>
-                <p className="mt-2 max-w-xs text-[12px] font-medium uppercase leading-relaxed tracking-widest text-zinc-500">
-                  目前暂为线下执行环节
-                  <br />
-                  <span className="text-zinc-700">Phase 2: 全量数据实时同步开发中</span>
-                </p>
-              </motion.div>
-            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -918,158 +872,6 @@ export function VideoSubmitPanel({
               onDateSelect={(date) => jumpFromDataView(date)}
             />
 
-            {false ? (
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <p className="text-[12px] font-medium uppercase tracking-[0.22em] text-zinc-500">
-                    每日详情
-                  </p>
-                  <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">
-                    {activeBizDate} 的提交情况
-                  </h3>
-                  <p className="text-[13px] leading-6 text-zinc-500">
-                    选择日期后，可查看当日状态；免交和请假会独立展示，不再落入未交/漏交逻辑。
-                  </p>
-                </div>
-                <Badge
-                  variant="secondary"
-                  className={getDashboardStatusClass(activeDateStatus.tone)}
-                >
-                  {activeDateStatus.label}
-                </Badge>
-              </div>
-
-              {activeDateStatus.state === "submitted" && activeDateReport ? (
-                <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-[12px] text-zinc-500">
-                          {accounts.find((account) => account.id === activeDateReport.account_id)?.display_name ?? "当前账号"}
-                        </p>
-                        <h4 className="text-[18px] font-medium text-zinc-900">
-                          {activeDateReport.title?.trim() || "未填写视频标题"}
-                        </h4>
-                        <p className="mt-1 text-[12px] text-zinc-500">
-                          提交时间：{activeDateReport.uploaded_at || "暂无"}
-                        </p>
-                      </div>
-
-                      <div className={getDashboardMetricGridClass("secondary")}>
-                        <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-zinc-500">播放量</div>
-                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">
-                            {activeDateReport.play_count?.toLocaleString("zh-CN") ?? "--"}
-                          </div>
-                        </div>
-                        <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-zinc-500">互动总量</div>
-                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">
-                            {(activeDateReport.likes ?? 0) +
-                              (activeDateReport.comments ?? 0) +
-                              (activeDateReport.shares ?? 0) +
-                              (activeDateReport.favorites ?? 0)}
-                          </div>
-                        </div>
-                        <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-zinc-500">涨粉</div>
-                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">{activeDateReport.follower_gain ?? "--"}</div>
-                        </div>
-                        <div className="dashboard-metric-card">
-                          <div className="text-[12px] text-zinc-500">完播率</div>
-                          <div className="text-[13px] font-medium text-zinc-700 tabular-nums">{activeDateReport.completion_rate ?? "--"}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex shrink-0 flex-col gap-2 lg:w-[180px]">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-11 bg-white"
-                        onClick={() => setEditingReport(activeDateReport)}
-                      >
-                        <PencilLine className="size-4 stroke-[1.5]" />
-                        查看并修改
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : shouldShowBlockedStateCard ? (
-                <div
-                  className={cn(
-                    "mt-4 rounded-2xl border p-4",
-                    activeDateStatus.state === "waive"
-                      ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white"
-                      : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50",
-                  )}
-                >
-                  <div className="space-y-2">
-                    <p
-                      className={cn(
-                        "text-[13px] font-medium",
-                        activeDateStatus.state === "waive" ? "text-[#6FAA7D]" : "text-[#D99E55]",
-                      )}
-                    >
-                      这一天已标记为{activeDateStatus.label}
-                    </p>
-                    <p
-                      className={cn(
-                        "text-[13px] leading-[1.7]",
-                        activeDateStatus.state === "waive" ? "text-zinc-500" : "text-zinc-500",
-                      )}
-                    >
-                      {activeDateStatus.description}
-                    </p>
-                    {activeExemptionState.reason ? (
-                      <p className="text-[13px] text-zinc-500">原因：{activeExemptionState.reason}</p>
-                    ) : null}
-                  </div>
-                </div>
-              ) : activeDateStatus.state === "future" ? (
-                <div className="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-                  <div className="space-y-1">
-                    <p className="text-[13px] font-medium text-zinc-700">这一天还未到</p>
-                    <p className="text-[13px] leading-[1.7] text-zinc-500">{activeDateStatus.description}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-zinc-50 p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="space-y-1">
-                      <p className="text-[13px] font-medium text-[#C9604D]">
-                        {activeDateStatus.state === "unsubmitted" ? "今天还没有提交数据" : "这一天漏交了数据"}
-                      </p>
-                      <p className="text-[13px] leading-[1.7] text-zinc-500">
-                        {activeDateStatus.description} 点击按钮后，将关闭当前弹窗，并把主页主表单切换到 {activeBizDate} 的补交模式。
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-11 border-[#C9604D] text-[#C9604D] hover:bg-[#C9604D]/5"
-                        disabled={isExempting}
-                        onClick={() => handleApplyExemption(activeBizDate)}
-                      >
-                        <ShieldAlert className="size-4 stroke-[1.5]" />
-                        {isExempting ? "提交中..." : "申请豁免"}
-                      </Button>
-                      <Button
-                        type="button"
-                        className="h-11"
-                        onClick={() => openBackfillForDate(activeBizDate)}
-                      >
-                        <PencilLine className="size-4 stroke-[1.5]" />
-                        去补交这一天
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            ) : null}
           </div>
           )}
         </DialogContent>

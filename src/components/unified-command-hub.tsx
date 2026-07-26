@@ -261,7 +261,7 @@ export function UnifiedCommandHub({
     const ts = new Date(iso).getTime();
     if (Number.isNaN(ts)) return "";
     const diff = Date.now() - ts;
-    const min = Math.floor(diff / 60_000);
+    const hr = Math.floor(diff / 3_600_000);
     if (hr < 24) return `${hr} 小时前`;
     const day = Math.floor(hr / 24);
     if (day < 7) return `${day} 天前`;

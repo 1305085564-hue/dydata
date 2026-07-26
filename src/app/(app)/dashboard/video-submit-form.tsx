@@ -2545,13 +2545,6 @@ export function VideoSubmitForm({
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const WIZARD_STEPS = [
-  { key: "screenshots", label: "截图与识别", hint: "上传 2 张关键截图，OCR 自动识别成功后会进入下一步。" },
-  { key: "metrics", label: "数据指标", hint: "核对识别结果，按需补全播放、互动与留存指标。" },
-  { key: "info", label: "视频信息", hint: "补全标题、文案与发布时间，提交即归档到团队数据流。" },
-];
-
 const VIDEO_STATUS_OPTIONS: Array<{
   value: AnomalyStatus;
   label: string;
