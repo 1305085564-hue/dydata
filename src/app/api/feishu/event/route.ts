@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { createDecipheriv, createHash } from "node:crypto";
 
-// Edge Runtime：零冷启动，确保 3 秒内响应
-export const runtime = "edge";
+// 飞书 Node SDK 依赖 Node.js 内置模块，不能在 Edge Runtime 中运行。
+export const runtime = "nodejs";
 
 /**
  * 飞书事件回调接口
@@ -26,33 +27,49 @@ interface FeishuEventBody {
   type?: string;
 }
 
-/** 用 Web Crypto API 解密飞书加密事件（Edge Runtime 兼容） */
-async function decryptEvent(encrypt: string): Promise<FeishuEventBody> {
-  const keyStr = process.env.FEISHU_APP_ENCRYPT_KEY!;
-  const keyData = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(keyStr),
+/** 用 AES-256-CBC 解密飞书加密事件。 */
+function decryptEvent(encrypt: string): FeishuEventBody {
+  const encryptKey = process.env.FEISHU_APP_ENCRYPT_KEY;
+  if (!encryptKey) throw new Error("缺少 FEISHU_APP_ENCRYPT_KEY");
+
+  const encrypted = Buffer.from(encrypt, "base64");
+  const iv = encrypted.subarray(0, 16);
+  const ciphertext = encrypted.subarray(16);
+  const decipher = createDecipheriv(
+    "aes-256-cbc",
+    createHash("sha256").update(encryptKey).digest(),
+    iv,
   );
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
-  const buf = Uint8Array.from(atob(encrypt), (c) => c.charCodeAt(0));
-  const iv = buf.slice(0, 16);
-  const data = buf.slice(16);
+  return JSON.parse(plaintext.toString("utf8"));
+}
 
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    keyData,
-    { name: "AES-CBC" },
-    false,
-    ["decrypt"],
-  );
+function parseEventBody(rawBody: string): FeishuEventBody | null {
+  try {
+    return JSON.parse(rawBody) as FeishuEventBody;
+  } catch {
+    const form = new URLSearchParams(rawBody);
+    const payload = form.get("payload");
 
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-CBC", iv },
-    cryptoKey,
-    data,
-  );
+    if (payload) {
+      try {
+        return JSON.parse(payload) as FeishuEventBody;
+      } catch {
+        return null;
+      }
+    }
 
-  return JSON.parse(new TextDecoder().decode(decrypted));
+    const body = Object.fromEntries(form.entries());
+    return Object.keys(body).length > 0 ? body : null;
+  }
+}
+
+function challengeResponse(challenge: string) {
+  return new Response(JSON.stringify({ challenge }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 /** 处理接收到的机器人消息（异步，不阻塞响应） */
@@ -70,7 +87,7 @@ async function handleMessageEvent(event: Record<string, unknown>) {
 
   if (messageType === "text") {
     try {
-      // 动态导入飞书 SDK（Edge 不支持 require）
+      // 仅在收到消息时加载 SDK，challenge 验证不会触发此依赖。
       const { getFeishuClient } = await import("@/lib/feishu/client");
       const client = getFeishuClient();
       await client.im.message.reply({
@@ -87,11 +104,8 @@ async function handleMessageEvent(event: Record<string, unknown>) {
 }
 
 export async function POST(request: Request) {
-  let body: FeishuEventBody;
-
-  try {
-    body = await request.json();
-  } catch {
+  const body = parseEventBody(await request.text());
+  if (!body) {
     return new Response('{"code":0}', {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -100,21 +114,24 @@ export async function POST(request: Request) {
 
   // ── URL 验证（challenge）── 最高优先级，必须在 3 秒内返回
   if (body.type === "url_verification" && body.challenge) {
-    console.log("[飞书] URL 验证 challenge:", body.challenge);
-    return new Response(JSON.stringify({ challenge: body.challenge }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.log("[飞书] 收到未加密 URL 验证");
+    return challengeResponse(body.challenge);
   }
 
   // ── 加密事件解密 ──
   if (body.encrypt) {
     try {
-      body = await decryptEvent(body.encrypt);
+      Object.assign(body, decryptEvent(body.encrypt));
     } catch (err) {
       console.error("[飞书] 解密失败:", err);
       return NextResponse.json({ code: 0 });
     }
+  }
+
+  // 飞书启用事件加密时，challenge 位于解密后的请求体中。
+  if (body.type === "url_verification" && body.challenge) {
+    console.log("[飞书] 收到加密 URL 验证");
+    return challengeResponse(body.challenge);
   }
 
   // ── 验证 token ──
