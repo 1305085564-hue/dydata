@@ -8,3 +8,7 @@ test("飞书登录使用可用的官方网页 SDK 并限制加载等待时间", 
   assert.match(source, /https:\/\/lf-scm-cn\.feishucdn\.com\/lark\/op\/h5-js-sdk-1\.5\.30\.js/);
   assert.match(source, /const FEISHU_SDK_LOAD_TIMEOUT_MS = 10_000/);
 });
+
+test("飞书 SSO 的 magic link 用 email 类型验证 hashed token", () => {
+  assert.match(source, /type:\s*"email",\s*token_hash:\s*ssoData\.hashed_token/);
+});

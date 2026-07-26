@@ -213,7 +213,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
       );
 
       const { error: otpError } = await supabase.auth.verifyOtp({
-        type: "magiclink",
+        type: "email",
         token_hash: ssoData.hashed_token,
       });
 
