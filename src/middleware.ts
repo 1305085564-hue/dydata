@@ -13,8 +13,15 @@ import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
+// 飞书回调等外部服务调用的路由，豁免 CSRF 检查
+const CSRF_EXEMPT_PATHS = new Set(["/api/feishu/event"]);
+
 export function isUntrustedApiWriteRequest(request: NextRequest) {
   if (!request.nextUrl.pathname.startsWith("/api/") || !UNSAFE_METHODS.has(request.method.toUpperCase())) {
+    return false;
+  }
+
+  if (CSRF_EXEMPT_PATHS.has(request.nextUrl.pathname)) {
     return false;
   }
 
