@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { Loader2, X } from "lucide-react";
@@ -12,103 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { buildAuthPathWithNext, getLoginErrorMessage, sanitizeNextPath } from "@/lib/auth-password";
-import {
-  getSafeFeishuErrorCode,
-  requestFeishuAuthCode,
-  type FeishuAuthBridge,
-} from "@/lib/feishu/browser-auth";
 
 import { AuthShell } from "../_components/auth-shell";
-
-const FEISHU_JSSDK_URL =
-  "https://lf-scm-cn.feishucdn.com/lark/op/h5-js-sdk-1.5.30.js";
-const FEISHU_SDK_LOAD_TIMEOUT_MS = 10_000;
-
-type FeishuJssdkConfig = {
-  appId: string;
-  timestamp: number;
-  nonceStr: string;
-  signature: string;
-};
-
-type FeishuH5Sdk = {
-  ready: (callback: () => void) => void;
-  config: (options: FeishuJssdkConfig & {
-    jsApiList: string[];
-  }) => Promise<unknown>;
-};
-
-type FeishuLoginStage = "jssdk-config" | "auth-code" | "sso" | "session";
-
-type FeishuSdkWindow = Window & {
-  h5sdk?: FeishuH5Sdk;
-  lark?: FeishuH5Sdk;
-  tt?: FeishuAuthBridge;
-};
-
-function getFeishuH5Sdk(): FeishuH5Sdk | undefined {
-  const feishuWindow = window as FeishuSdkWindow;
-  return feishuWindow.h5sdk ?? feishuWindow.lark;
-}
-
-function getFeishuAuthBridge(): FeishuAuthBridge | undefined {
-  const feishuWindow = window as FeishuSdkWindow;
-  return feishuWindow.tt;
-}
-
-function logFeishuLoginFailure(stage: FeishuLoginStage, error?: unknown) {
-  console.error("[飞书登录] 失败", {
-    stage,
-    code: getSafeFeishuErrorCode(error),
-  });
-}
-
-/** 动态加载飞书 JSSDK */
-function loadFeishuSdk(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window !== "undefined" && getFeishuH5Sdk()) {
-      resolve();
-      return;
-    }
-
-    const script = document.querySelector<HTMLScriptElement>(`script[src="${FEISHU_JSSDK_URL}"]`)
-      ?? document.createElement("script");
-    const isNewScript = !script.src;
-
-    const cleanup = (error?: Error) => {
-      window.clearTimeout(timer);
-      script.removeEventListener("load", handleLoad);
-      script.removeEventListener("error", handleError);
-      if (error) {
-        script.remove();
-        reject(error);
-      } else {
-        resolve();
-      }
-    };
-    const handleLoad = () => {
-      if (!getFeishuH5Sdk()) {
-        cleanup(new Error("飞书 SDK 初始化失败"));
-        return;
-      }
-      cleanup();
-    };
-    const handleError = () => cleanup(new Error("飞书 SDK 加载失败"));
-    const timer = window.setTimeout(
-      () => cleanup(new Error("飞书 SDK 加载超时")),
-      FEISHU_SDK_LOAD_TIMEOUT_MS,
-    );
-
-    script.addEventListener("load", handleLoad, { once: true });
-    script.addEventListener("error", handleError, { once: true });
-
-    if (isNewScript) {
-      script.src = FEISHU_JSSDK_URL;
-      script.async = true;
-      document.head.appendChild(script);
-    }
-  });
-}
 
 type LoginFormState = {
   error: string | null;
@@ -130,7 +35,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full relative overflow-hidden transition-all duration-150 active:scale-[0.98]" disabled={pending} type="submit">
+    <Button className="w-full relative overflow-hidden rounded-md transition-all duration-150 active:scale-[0.98]" disabled={pending} type="submit">
       {pending ? (
         <span className="flex items-center justify-center gap-1.5">
           <Loader2 className="size-3.5 animate-spin" />
@@ -155,131 +60,6 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
-  const [feishuLoading, setFeishuLoading] = useState(false);
-  const feishuAbortRef = useRef(false);
-
-  const handleFeishuLogin = useCallback(async () => {
-    setFeishuLoading(true);
-    feishuAbortRef.current = false;
-
-    try {
-      // 1. 加载飞书 JSSDK
-      await loadFeishuSdk();
-
-      const h5sdk = getFeishuH5Sdk();
-      const authBridge = getFeishuAuthBridge();
-      if (!h5sdk || !authBridge) {
-        feedbackToast.error("飞书 SDK 加载失败，请用邮箱密码登录");
-        return;
-      }
-
-      let config: FeishuJssdkConfig;
-      try {
-        // 2. 获取签名并配置 JSSDK
-        const configResp = await fetch("/api/feishu/jssdk-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: window.location.href.split("#")[0] }),
-        });
-
-        if (!configResp.ok) {
-          logFeishuLoginFailure("jssdk-config", configResp.status);
-          feedbackToast.error("飞书网页鉴权失败，请联系管理员检查可信域名");
-          return;
-        }
-
-        config = (await configResp.json()) as FeishuJssdkConfig;
-        await h5sdk.config({
-          appId: config.appId,
-          timestamp: config.timestamp,
-          nonceStr: config.nonceStr,
-          signature: config.signature,
-          jsApiList: ["requestAuthCode"],
-        });
-        await new Promise<void>((resolve) => h5sdk.ready(resolve));
-      } catch (err) {
-        logFeishuLoginFailure("jssdk-config", err);
-        feedbackToast.error("飞书网页鉴权失败，请联系管理员检查可信域名");
-        return;
-      }
-
-      if (feishuAbortRef.current) return;
-
-      let authResult: { code: string };
-      try {
-        // 3. 获取授权码。tt API 使用 success/fail，不是 onSuccess/onFail。
-        authResult = await requestFeishuAuthCode(authBridge, config.appId);
-      } catch (err) {
-        logFeishuLoginFailure("auth-code", err);
-        feedbackToast.error("飞书授权失败，请重试");
-        return;
-      }
-
-      if (feishuAbortRef.current) return;
-
-      let ssoData: { hashed_token?: string; hint?: string; error?: string };
-      try {
-        // 4. 用授权码换取 Supabase session token
-        const ssoResp = await fetch("/api/feishu/sso", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: authResult.code }),
-        });
-
-        ssoData = await ssoResp.json();
-        if (!ssoResp.ok) {
-          logFeishuLoginFailure("sso", ssoResp.status);
-          feedbackToast.error(ssoData.hint || ssoData.error || "飞书登录失败");
-          return;
-        }
-      } catch (err) {
-        logFeishuLoginFailure("sso", err);
-        feedbackToast.error("飞书登录服务异常，请稍后重试");
-        return;
-      }
-
-      try {
-        // 5. 用 token 创建 Supabase session
-        const { createBrowserClient } = await import("@supabase/ssr");
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        );
-
-        const { error: otpError } = await supabase.auth.verifyOtp({
-          type: "email",
-          token_hash: ssoData.hashed_token!,
-        });
-
-        if (otpError) {
-          logFeishuLoginFailure("session", otpError);
-          feedbackToast.error("飞书会话建立失败，请用邮箱密码登录");
-          return;
-        }
-      } catch (err) {
-        logFeishuLoginFailure("session", err);
-        feedbackToast.error("飞书会话建立失败，请用邮箱密码登录");
-        return;
-      }
-
-      // 6. 登录成功，跳转
-      window.location.href = next || "/dashboard";
-    } catch (err) {
-      console.error("[飞书登录] SDK 初始化失败", {
-        code: getSafeFeishuErrorCode(err),
-      });
-      feedbackToast.error("飞书登录失败，请用邮箱密码登录");
-    } finally {
-      setFeishuLoading(false);
-    }
-  }, [next]);
-
-  // 组件卸载时中断飞书登录流程
-  useEffect(() => {
-    return () => {
-      feishuAbortRef.current = true;
-    };
-  }, []);
 
   useEffect(() => {
     setShowExpiredAlert(isExpired);
@@ -369,39 +149,6 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
         </label>
 
         <SubmitButton />
-
-        <div className="relative my-2">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-200" />
-          </div>
-          <div className="relative flex justify-center text-[12px]">
-            <span className="bg-white px-3 text-zinc-400">或</span>
-          </div>
-        </div>
-
-        <Button
-          className="w-full bg-[#3370FF] text-white hover:bg-[#2860E1] active:scale-[0.98] transition-all duration-150"
-          disabled={feishuLoading}
-          onClick={handleFeishuLogin}
-          type="button"
-          variant="outline"
-        >
-          {feishuLoading ? (
-            <span className="flex items-center justify-center gap-1.5">
-              <Loader2 className="size-3.5 animate-spin" />
-              <span>飞书授权中...</span>
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              <span className="flex items-center justify-center size-4 rounded-sm bg-white/20 text-[10px] font-bold">
-                飞
-              </span>
-              飞书一键登录
-            </span>
-          )}
-        </Button>
-
-
 
         <p className="text-center text-[13px] text-zinc-500">
           还没有账号？

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createDecipheriv, createHash } from "node:crypto";
 
 // 飞书 Node SDK 依赖 Node.js 内置模块，不能在 Edge Runtime 中运行。
@@ -9,7 +9,7 @@ export const runtime = "nodejs";
  *
  * 职责：
  * 1. 处理飞书 URL 验证（challenge 回显）—— 3 秒内必须返回
- * 2. 接收机器人消息事件（im.message.receive_v1）
+ * 2. 接收机器人消息事件（im.message.receive_v1）—— 安排后台处理后立即返回
  */
 
 interface FeishuEventBody {
@@ -72,7 +72,7 @@ function challengeResponse(challenge: string) {
   });
 }
 
-/** 处理接收到的机器人消息（异步，不阻塞响应） */
+/** 处理接收到的机器人消息（后台执行，不阻塞响应） */
 async function handleMessageEvent(event: Record<string, unknown>) {
   const message = event.message as Record<string, unknown> | undefined;
   if (!message) return;
@@ -135,21 +135,28 @@ export async function POST(request: Request) {
   }
 
   // ── 验证 token ──
+  // 业务事件必须验证 token；缺失或不匹配时停止处理
   const verifyToken = process.env.FEISHU_APP_VERIFICATION_TOKEN;
   const eventToken = body.header?.token ?? body.token;
-  if (verifyToken && eventToken && eventToken !== verifyToken) {
+
+  if (!verifyToken) {
+    console.error("[飞书] 未配置 FEISHU_APP_VERIFICATION_TOKEN，拒绝处理事件");
+    return NextResponse.json({ code: 0 });
+  }
+
+  if (!eventToken || eventToken !== verifyToken) {
     console.warn("[飞书] token 验证失败");
     return NextResponse.json({ code: 0 });
   }
 
-  // ── 处理事件（异步，不阻塞响应） ──
+  // ── 处理事件 ──
   const eventType = body.header?.event_type;
   console.log("[飞书] 收到事件:", eventType);
 
   switch (eventType) {
     case "im.message.receive_v1":
-      // 用 waitUntil 让事件处理在响应发送后继续
-      handleMessageEvent(body.event ?? {});
+      // 安排后台处理消息，立即返回 {"code":0} 给飞书，避免超时导致重复推送
+      after(() => handleMessageEvent(body.event ?? {}));
       break;
 
     case "im.chat.member.bot.added_v1":
