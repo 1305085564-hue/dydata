@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { getFeishuClient } from "@/lib/feishu/client";
+// Edge Runtime：零冷启动，确保 3 秒内响应
+export const runtime = "edge";
 
 /**
  * 飞书事件回调接口
  *
  * 职责：
- * 1. 处理飞书 URL 验证（challenge 回显）—— 应用首次配置回调地址时触发
+ * 1. 处理飞书 URL 验证（challenge 回显）—— 3 秒内必须返回
  * 2. 接收机器人消息事件（im.message.receive_v1）
  */
 
@@ -20,30 +21,41 @@ interface FeishuEventBody {
   };
   event?: Record<string, unknown>;
   encrypt?: string;
-  // challenge 字段
   challenge?: string;
   token?: string;
   type?: string;
 }
 
-/** 用 AES-256-CBC 解密飞书加密事件 */
-function decryptEvent(encrypt: string): FeishuEventBody {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require("node:crypto") as typeof import("node:crypto");
-  const key = process.env.FEISHU_APP_ENCRYPT_KEY!;
+/** 用 Web Crypto API 解密飞书加密事件（Edge Runtime 兼容） */
+async function decryptEvent(encrypt: string): Promise<FeishuEventBody> {
+  const keyStr = process.env.FEISHU_APP_ENCRYPT_KEY!;
+  const keyData = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(keyStr),
+  );
 
-  const keyHash = crypto.createHash("sha256").update(key).digest();
-  const buf = Buffer.from(encrypt, "base64");
-  const iv = buf.subarray(0, 16);
-  const data = buf.subarray(16);
+  const buf = Uint8Array.from(atob(encrypt), (c) => c.charCodeAt(0));
+  const iv = buf.slice(0, 16);
+  const data = buf.slice(16);
 
-  const decipher = crypto.createDecipheriv("aes-256-cbc", keyHash, iv);
-  const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "AES-CBC" },
+    false,
+    ["decrypt"],
+  );
 
-  return JSON.parse(decrypted.toString("utf-8"));
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-CBC", iv },
+    cryptoKey,
+    data,
+  );
+
+  return JSON.parse(new TextDecoder().decode(decrypted));
 }
 
-/** 处理接收到的机器人消息 */
+/** 处理接收到的机器人消息（异步，不阻塞响应） */
 async function handleMessageEvent(event: Record<string, unknown>) {
   const message = event.message as Record<string, unknown> | undefined;
   if (!message) return;
@@ -58,6 +70,8 @@ async function handleMessageEvent(event: Record<string, unknown>) {
 
   if (messageType === "text") {
     try {
+      // 动态导入飞书 SDK（Edge 不支持 require）
+      const { getFeishuClient } = await import("@/lib/feishu/client");
       const client = getFeishuClient();
       await client.im.message.reply({
         path: { message_id: messageId },
@@ -78,12 +92,15 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ code: 0 });
+    return new Response('{"code":0}', {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // ── URL 验证（challenge）── 最高优先级，直接返回
+  // ── URL 验证（challenge）── 最高优先级，必须在 3 秒内返回
   if (body.type === "url_verification" && body.challenge) {
-    console.log("[飞书] URL 验证 challenge");
+    console.log("[飞书] URL 验证 challenge:", body.challenge);
     return new Response(JSON.stringify({ challenge: body.challenge }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
@@ -93,7 +110,7 @@ export async function POST(request: Request) {
   // ── 加密事件解密 ──
   if (body.encrypt) {
     try {
-      body = decryptEvent(body.encrypt);
+      body = await decryptEvent(body.encrypt);
     } catch (err) {
       console.error("[飞书] 解密失败:", err);
       return NextResponse.json({ code: 0 });
@@ -108,13 +125,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ code: 0 });
   }
 
-  // ── 处理事件 ──
+  // ── 处理事件（异步，不阻塞响应） ──
   const eventType = body.header?.event_type;
   console.log("[飞书] 收到事件:", eventType);
 
   switch (eventType) {
     case "im.message.receive_v1":
-      await handleMessageEvent(body.event ?? {});
+      // 用 waitUntil 让事件处理在响应发送后继续
+      handleMessageEvent(body.event ?? {});
       break;
 
     case "im.chat.member.bot.added_v1":
