@@ -40,8 +40,14 @@ type FeishuH5Sdk = {
   }) => void;
 };
 
+type FeishuSdkWindow = Window & {
+  h5sdk?: FeishuH5Sdk;
+  lark?: FeishuH5Sdk;
+};
+
 function getFeishuH5Sdk(): FeishuH5Sdk | undefined {
-  return (window as Window & { h5sdk?: FeishuH5Sdk }).h5sdk;
+  const feishuWindow = window as FeishuSdkWindow;
+  return feishuWindow.h5sdk ?? feishuWindow.lark;
 }
 
 /** 动态加载飞书 JSSDK */
@@ -67,7 +73,13 @@ function loadFeishuSdk(): Promise<void> {
         resolve();
       }
     };
-    const handleLoad = () => cleanup();
+    const handleLoad = () => {
+      if (!getFeishuH5Sdk()) {
+        cleanup(new Error("飞书 SDK 初始化失败"));
+        return;
+      }
+      cleanup();
+    };
     const handleError = () => cleanup(new Error("飞书 SDK 加载失败"));
     const timer = window.setTimeout(
       () => cleanup(new Error("飞书 SDK 加载超时")),
