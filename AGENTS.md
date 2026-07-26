@@ -141,7 +141,8 @@
 
 ### 禁止误操作
 
-- codex 和 claude code任务完成后，默认自动提交并 push `main`，其他 agent必须得到确认。
+- 所有代理在本地主项目目录工作，禁止沙箱 / worktree / 隔离环境；改动不是本地立刻可见的，必须明文提醒阿禅。
+- 任务完成后提醒阿禅需要 push，不阻塞流程。
 - 禁止把 Git remote 改成 HTTPS；本仓库默认 SSH remote：`git@github.com:1305085564-hue/dydata.git`。
 - `git config user.email` 必须是 `1305085564@qq.com`。
 
