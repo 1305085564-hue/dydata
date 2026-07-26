@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: profile, error: profileError } = await admin
       .from("profiles")
-      .select("id, name, email, role")
+      .select("id, name, role")
       .eq("feishu_open_id", feishuUser.open_id)
       .single();
 
@@ -60,11 +60,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const { data: authUserData, error: authUserError } = await admin.auth.admin.getUserById(profile.id);
+    const email = authUserData.user?.email;
+
+    if (authUserError || !email) {
+      console.error("[飞书SSO] 读取账号邮箱失败:", authUserError?.message ?? "邮箱为空");
+      return NextResponse.json(
+        { error: "登录账号邮箱不可用，请联系管理员" },
+        { status: 500 },
+      );
+    }
+
     // 3. 生成 magic link token（不发送邮件，只拿 token）
     const { data: linkData, error: linkError } =
       await admin.auth.admin.generateLink({
         type: "magiclink",
-        email: profile.email ?? `${feishuUser.open_id}@feishu.local`,
+        email,
       });
 
     if (linkError || !linkData) {
@@ -75,8 +86,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 从 action_link 中提取 hashed_token
-    const actionLink = linkData.properties?.action_link;
     const hashedToken = linkData.properties?.hashed_token;
 
     if (!hashedToken) {

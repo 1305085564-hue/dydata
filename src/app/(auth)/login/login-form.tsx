@@ -16,29 +16,72 @@ import { buildAuthPathWithNext, getLoginErrorMessage, sanitizeNextPath } from "@
 import { AuthShell } from "../_components/auth-shell";
 
 const FEISHU_JSSDK_URL =
-  "https://lf1-cdn-tos.bytegoofy.com/goofy/lark/op/h5-js-sdk-1.5.33/h5-js-sdk-lark.js";
+  "https://lf-scm-cn.feishucdn.com/lark/op/h5-js-sdk-1.5.30.js";
+const FEISHU_SDK_LOAD_TIMEOUT_MS = 10_000;
+
+type FeishuJssdkConfig = {
+  appId: string;
+  timestamp: number;
+  nonceStr: string;
+  signature: string;
+};
+
+type FeishuH5Sdk = {
+  ready: (callback: () => void) => void;
+  config: (options: FeishuJssdkConfig & {
+    jsApiList: string[];
+    onSuccess: () => void;
+    onFail: (error: unknown) => void;
+  }) => void;
+  requestAuthCode: (options: {
+    appId: string;
+    onSuccess: (result: { code: string }) => void;
+    onFail: (error: unknown) => void;
+  }) => void;
+};
+
+function getFeishuH5Sdk(): FeishuH5Sdk | undefined {
+  return (window as Window & { h5sdk?: FeishuH5Sdk }).h5sdk;
+}
 
 /** 动态加载飞书 JSSDK */
 function loadFeishuSdk(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (typeof window !== "undefined" && (window as any).h5sdk) {
+    if (typeof window !== "undefined" && getFeishuH5Sdk()) {
       resolve();
       return;
     }
 
-    const existing = document.querySelector(`script[src="${FEISHU_JSSDK_URL}"]`);
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("JSSDK 加载失败")));
-      return;
-    }
+    const script = document.querySelector<HTMLScriptElement>(`script[src="${FEISHU_JSSDK_URL}"]`)
+      ?? document.createElement("script");
+    const isNewScript = !script.src;
 
-    const script = document.createElement("script");
-    script.src = FEISHU_JSSDK_URL;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("JSSDK 加载失败"));
-    document.head.appendChild(script);
+    const cleanup = (error?: Error) => {
+      window.clearTimeout(timer);
+      script.removeEventListener("load", handleLoad);
+      script.removeEventListener("error", handleError);
+      if (error) {
+        script.remove();
+        reject(error);
+      } else {
+        resolve();
+      }
+    };
+    const handleLoad = () => cleanup();
+    const handleError = () => cleanup(new Error("飞书 SDK 加载失败"));
+    const timer = window.setTimeout(
+      () => cleanup(new Error("飞书 SDK 加载超时")),
+      FEISHU_SDK_LOAD_TIMEOUT_MS,
+    );
+
+    script.addEventListener("load", handleLoad, { once: true });
+    script.addEventListener("error", handleError, { once: true });
+
+    if (isNewScript) {
+      script.src = FEISHU_JSSDK_URL;
+      script.async = true;
+      document.head.appendChild(script);
+    }
   });
 }
 
@@ -98,7 +141,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
       // 1. 加载飞书 JSSDK
       await loadFeishuSdk();
 
-      const h5sdk = (window as any).h5sdk;
+      const h5sdk = getFeishuH5Sdk();
       if (!h5sdk) {
         feedbackToast.error("飞书 SDK 加载失败，请用邮箱密码登录");
         return;
@@ -116,7 +159,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
         return;
       }
 
-      const config = await configResp.json();
+      const config = (await configResp.json()) as FeishuJssdkConfig;
 
       // 3. 配置 JSSDK
       await new Promise<void>((resolve, reject) => {
@@ -128,7 +171,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
             signature: config.signature,
             jsApiList: ["requestAuthCode"],
             onSuccess: () => resolve(),
-            onFail: (err: any) => reject(new Error(JSON.stringify(err))),
+            onFail: (err: unknown) => reject(new Error(JSON.stringify(err))),
           });
         });
       });
@@ -141,7 +184,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
           h5sdk.requestAuthCode({
             appId: config.appId,
             onSuccess: (res: { code: string }) => resolve(res),
-            onFail: (err: any) => reject(new Error(JSON.stringify(err))),
+            onFail: (err: unknown) => reject(new Error(JSON.stringify(err))),
           });
         });
       });
