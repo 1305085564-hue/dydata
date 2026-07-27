@@ -7,6 +7,7 @@ import { replaceDailyReportUsageRecord } from "@/lib/conversion-hub/service";
 import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
+import { resolveSubmissionVideoWriteMode } from "./submission-video-lifecycle";
 import { syncAbnormalVideoCase } from "./abnormal-case";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
 import {
@@ -95,6 +96,18 @@ async function rollbackNewVideoSubmission(videoId: string, userId: string) {
     p_user_id: userId,
   });
   assertVideoSubmissionRollbackResult(data, error);
+}
+
+async function restoreVideoSubmission(videoId: string, userId: string) {
+  const { data, error } = await createAdminClient().rpc("transition_video_lifecycle", {
+    p_video_id: videoId,
+    p_action: "restore",
+    p_actor_id: userId,
+  });
+  const restored = Array.isArray(data) ? data[0] : null;
+  if (error || restored?.lifecycle_state !== "active") {
+    throw new Error(error?.message || "视频记录恢复失败");
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -217,10 +230,10 @@ export async function POST(request: NextRequest) {
     operator_user_id: roleUserIds.operatorUserId,
   };
 
-  const { data: existingVideo, error: existingVideoError } = await supabase
+  const adminSupabase = createAdminClient();
+  const { data: existingVideo, error: existingVideoError } = await adminSupabase
     .from("videos")
-    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, script_author_user_id, video_editor_user_id, operator_user_id, created_at")
-    .eq("lifecycle_state", "active")
+    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, script_author_user_id, video_editor_user_id, operator_user_id, lifecycle_state, created_at")
     .eq("id", submissionVideoId)
     .maybeSingle();
 
@@ -228,9 +241,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: existingVideoError.message }, { status: 500 });
   }
 
+  if (existingVideo && existingVideo.user_id !== user.id) {
+    return NextResponse.json({ error: "视频记录已被其他成员占用" }, { status: 409 });
+  }
+
+  const videoWriteMode = resolveSubmissionVideoWriteMode(existingVideo?.lifecycle_state ?? null);
+  if (existingVideo && videoWriteMode === "insert") {
+    return NextResponse.json({ error: "视频记录已永久删除，请修改内容后重新提交" }, { status: 409 });
+  }
+
+  if (videoWriteMode === "restore_then_update") {
+    try {
+      await restoreVideoSubmission(submissionVideoId, user.id);
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "视频记录恢复失败" }, { status: 500 });
+    }
+  }
+
   if (existingVideo) {
     rollbackActions.push(async () => {
-      const { error } = await supabase.from("videos").update(stripId(existingVideo)).eq("id", existingVideo.id);
+      const { error } = await adminSupabase.from("videos").update(stripId(existingVideo)).eq("id", existingVideo.id);
       if (error) throw error;
     });
   } else {
