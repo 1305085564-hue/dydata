@@ -850,19 +850,27 @@ export function VideoSubmitPanel({
       </motion.div>
 
       <Dialog open={isDataViewOpen} onOpenChange={setIsDataViewOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
-          <DialogHeader>
-            <DialogTitle>数据查看</DialogTitle>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none border-zinc-200/80 bg-white/98 backdrop-blur-2xl p-6 sm:p-7 rounded-2xl shadow-2xl">
+          <DialogHeader className="pb-3 border-b border-zinc-100">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#5F82A8]" />
+              <DialogTitle className="text-[17px] font-semibold text-zinc-900 tracking-tight">
+                数据填报日历与状态
+              </DialogTitle>
+            </div>
           </DialogHeader>
 
           {activityError ? (
             <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
           ) : isActivityLoading ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-zinc-500">
-              加载填报记录...
+            <div className="flex h-48 items-center justify-center text-[13px] text-zinc-500">
+              <div className="flex items-center gap-2">
+                <span className="size-4 animate-spin rounded-full border-2 border-zinc-300 border-t-[#5F82A8]" />
+                <span>加载填报记录...</span>
+              </div>
             </div>
           ) : (
-          <div className="space-y-4">
+          <div className="pt-2 space-y-4">
             <SubmissionCalendar
               today={today}
               submittedDates={submittedDates}
@@ -871,7 +879,6 @@ export function VideoSubmitPanel({
               selectedDate={activeBizDate}
               onDateSelect={(date) => jumpFromDataView(date)}
             />
-
           </div>
           )}
         </DialogContent>

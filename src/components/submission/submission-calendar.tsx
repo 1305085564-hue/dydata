@@ -131,98 +131,131 @@ export function SubmissionCalendar({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-zinc-200 bg-white p-4 shadow-[var(--shadow-card)] sm:p-5",
+        "rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm space-y-4",
         className,
       )}
     >
       {compact ? (
-        <div className="flex items-center justify-between pb-2">
-          <h3 className="text-[13px] font-medium tracking-[-0.02em] text-zinc-900">选择日期</h3>
-          <div className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-1 text-[12px] font-medium text-zinc-700">
+        <div className="flex items-center justify-between pb-1 border-b border-zinc-100">
+          <h3 className="text-[13px] font-semibold tracking-tight text-zinc-900">选择日期</h3>
+          <div className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-0.5 text-[12px] font-medium text-zinc-700 tabular-nums">
             {monthLabel}
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-4">
           <div className="space-y-1">
-            <p className="text-[12px] font-medium uppercase tracking-[0.22em] text-[var(--color-text-tertiary)]">
-              Submission Calendar
-            </p>
-            <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">数据状态日历</h3>
-            <p className="text-[13px] leading-6 text-[var(--color-text-secondary)]">
-              选择某一天后，可查看当日状态。已交、免交和请假不会再落入未交/漏交逻辑。
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#5F82A8]" />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">
+                SUBMISSION CALENDAR
+              </p>
+            </div>
+            <h3 className="text-[16px] font-semibold tracking-tight text-zinc-900">数据填报日历</h3>
           </div>
-          <div className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[13px] font-medium text-zinc-900 shadow-[var(--shadow-light)]">
+          <div className="inline-flex items-center rounded-full border border-zinc-200/80 bg-zinc-50 px-3 py-1 text-[12.5px] font-semibold text-zinc-800 shadow-2xs tabular-nums">
             {monthLabel}
           </div>
         </div>
       )}
 
-      <div className={cn("flex flex-wrap gap-2 text-[12px] text-[var(--color-text-secondary)]", compact ? "mt-1" : "mt-4")}>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#6FAA7D]/10 px-3 py-1 text-[#6FAA7D]">
-          <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
+      {/* 低调精致微状态图例 (Refined Micro Legend Bar) */}
+      <div className="flex flex-wrap items-center gap-2 text-[12px]">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/60 bg-emerald-50/50 px-2.5 py-0.5 text-emerald-700 font-medium">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
           已交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#6FAA7D]/10 px-3 py-1 text-[#6FAA7D]">
-          <span className="h-2 w-2 rounded-full bg-[#6FAA7D] ring-1 ring-white" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/60 bg-emerald-50/50 px-2.5 py-0.5 text-emerald-700 font-medium">
+          <span className="size-1.5 rounded-full bg-emerald-500" />
           免交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#D99E55]/10 px-3 py-1 text-[#D99E55]">
-          <span className="h-2 w-2 rounded-full bg-[#D99E55] ring-1 ring-white" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/60 bg-amber-50/50 px-2.5 py-0.5 text-amber-700 font-medium">
+          <span className="size-1.5 rounded-full bg-amber-500" />
           请假
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#C9604D]/10 px-3 py-1 text-[#C9604D]">
-          <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/60 bg-rose-50/50 px-2.5 py-0.5 text-rose-700 font-medium">
+          <span className="size-1.5 rounded-full bg-rose-500" />
           未交
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#C9604D]/10 px-3 py-1 text-[#C9604D]">
-          <span className="h-2 w-2 rounded-full bg-[#C9604D] ring-1 ring-white" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/60 bg-rose-50/50 px-2.5 py-0.5 text-rose-700 font-medium">
+          <span className="size-1.5 rounded-full bg-rose-500" />
           漏交
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-7 gap-1.5 sm:gap-2">
+      {/* 周月日历网格 (Calendar Grid) */}
+      <div className="pt-2 grid grid-cols-7 gap-1.5 sm:gap-2">
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="flex h-8 items-center justify-center rounded-md bg-zinc-100 text-[12px] font-medium text-[var(--color-text-secondary)] sm:text-[12px]"
+            className="flex h-7 items-center justify-center text-[11.5px] font-semibold uppercase tracking-wider text-zinc-400 select-none"
           >
             {label}
           </div>
         ))}
 
-        {cells.map((cell) =>
-          cell.day ? (
+        {cells.map((cell) => {
+          if (!cell.day) {
+            return (
+              <div
+                key={cell.key}
+                className="aspect-square rounded-2xl sm:aspect-auto sm:min-h-[3.6rem]"
+                aria-hidden="true"
+              />
+            );
+          }
+
+          const isSelected = selectedDate === cell.key || selectedDates.includes(cell.key);
+          const isSubmitted = cell.state === "submitted" || cell.state === "waive";
+          const isLeave = cell.state === "leave";
+          const isMissing = cell.state === "missing" || cell.state === "unsubmitted";
+          const isFuture = cell.state === "future";
+
+          return (
             <button
               key={cell.key}
               type="button"
-              onClick={() => onDateSelect?.(cell.key, submittedDateSet.has(cell.key))}
+              disabled={isFuture}
+              onClick={() => onDateSelect?.(cell.key, isSubmitted)}
               className={cn(
-                "flex aspect-square flex-col items-center justify-center rounded-xl border text-[13px] font-medium shadow-[var(--shadow-light)] transition-colors sm:aspect-auto sm:min-h-[4rem]",
-                onDateSelect && "cursor-pointer",
-                cell.state === "submitted" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
-                cell.state === "waive" && "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]",
-                cell.state === "leave" && "border-[#D99E55]/30 bg-[#D99E55]/10 text-[#D99E55]",
-                cell.state === "missing" && "border-[#C9604D]/30 bg-[#C9604D]/10 text-[#C9604D]",
-                cell.state === "unsubmitted" && "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D] ring-1 ring-[#C9604D]/30",
-                cell.state === "future" && "border-zinc-200 bg-zinc-50 text-zinc-500",
-                cell.isToday && cell.state === "submitted" && "ring-1 ring-[#6FAA7D]/30",
-                cell.isToday && cell.state === "waive" && "ring-1 ring-[#6FAA7D]/30",
-                cell.isToday && cell.state === "leave" && "ring-1 ring-[#D99E55]/30",
-                (selectedDate === cell.key || selectedDates.includes(cell.key)) &&
-                  "ring-1 ring-[#D97757] ring-offset-2 ring-offset-white bg-[#D97757]/10",
+                "relative flex aspect-square flex-col items-center justify-center rounded-2xl border text-[13px] font-medium transition-all duration-200 ease-out origin-center select-none outline-none sm:aspect-auto sm:min-h-[3.6rem] p-1",
+                !isFuture && "cursor-pointer hover:scale-[1.04] active:scale-95 hover:z-20 hover:shadow-sm",
+                isSubmitted && "border-emerald-200/70 bg-emerald-50/30 text-emerald-900 hover:bg-emerald-50/70",
+                isLeave && "border-amber-200/70 bg-amber-50/30 text-amber-900 hover:bg-amber-50/70",
+                isMissing && "border-rose-200/70 bg-rose-50/30 text-rose-900 hover:bg-rose-50/70",
+                isFuture && "border-zinc-100 bg-zinc-50/40 text-zinc-400 opacity-50 cursor-not-allowed",
+                cell.isToday && "ring-1 ring-[#D97757]/60 font-semibold",
+                isSelected &&
+                  "ring-2 ring-[#5F82A8] ring-offset-2 ring-offset-white border-[#5F82A8] bg-[#5F82A8]/10 text-zinc-950 font-semibold scale-[1.04] z-10 shadow-sm"
               )}
             >
-              <span className="text-[12px] sm:text-[13px]">{cell.day}</span>
-              <span className="mt-0.5 text-[12px] font-medium leading-none sm:mt-1 sm:leading-tight">
-                {getStateText(cell.state ?? "future")}
+              {/* 今日小亮点 */}
+              {cell.isToday && (
+                <span className="absolute top-1 right-1.5 size-1.5 rounded-full bg-[#D97757]" title="今天" />
+              )}
+
+              <span className="text-[13px] font-medium tabular-nums leading-none">
+                {cell.day}
               </span>
+
+              <div className="mt-1 flex items-center gap-1">
+                {/* 微型状态气泡/Dot */}
+                <span
+                  className={cn(
+                    "size-1 rounded-full",
+                    isSubmitted && "bg-emerald-500",
+                    isLeave && "bg-amber-500",
+                    isMissing && "bg-rose-500",
+                    isFuture && "bg-zinc-300"
+                  )}
+                />
+                <span className="text-[10.5px] font-normal tracking-tight opacity-90 leading-none">
+                  {getStateText(cell.state ?? "future")}
+                </span>
+              </div>
             </button>
-          ) : (
-            <div key={cell.key} className="aspect-square rounded-xl sm:aspect-auto sm:min-h-[4rem]" aria-hidden="true" />
-          ),
-        )}
+          );
+        })}
       </div>
     </section>
   );

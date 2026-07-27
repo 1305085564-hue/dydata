@@ -44,9 +44,6 @@ export type GetNavItemsInput = {
 };
 
 export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
-  const role = input.businessRole ?? input.userRole ?? (input.showAdmin ? "admin" : "member");
-  const permissions = input.permissions ?? {};
-
   const groups: NavGroup[] = [
     {
       key: "dashboard",
@@ -64,75 +61,46 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     },
   ];
 
-  // 3. 内容中心 (分组下拉)
-  const contentChildren: NavSubItem[] = [];
-
-  if (input.showAiCopywriting !== false) {
-    contentChildren.push({
+  // 3. 内容中心 (分组下拉) - 全员可见完整生态
+  const contentChildren: NavSubItem[] = [
+    {
       href: "/content-tools/rewrite",
       label: "文案助手",
       icon: Sparkles,
       match: (pathname) =>
         pathname === "/content-tools/rewrite" || pathname.startsWith("/content-tools/rewrite/"),
-    });
-  }
+    },
+    {
+      href: "/admin/content",
+      label: "视频复盘",
+      icon: FileEdit,
+      badgeKey: "content",
+      match: (pathname) =>
+        pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
+    },
+    {
+      href: "/admin/videos",
+      label: "素材库",
+      icon: Library,
+      badgeKey: "videos",
+      match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
+    },
+    {
+      href: "/admin/fulfillment",
+      label: "发布管理",
+      icon: CalendarDays,
+      match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
+    },
+  ];
 
-  if (input.showAdmin) {
-    if (
-      role === "owner" ||
-      hasPermission(role, permissions, "view_content_review") ||
-      hasPermission(role, permissions, "view_analytics")
-    ) {
-      contentChildren.push({
-        href: "/admin/content",
-        label: "视频复盘",
-        icon: FileEdit,
-        badgeKey: "content",
-        match: (pathname) =>
-          pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
-      });
-    }
+  groups.push({
+    key: "content-center",
+    label: "内容中心",
+    icon: Sparkles,
+    children: contentChildren,
+  });
 
-    if (
-      role === "owner" ||
-      hasPermission(role, permissions, "manage_video_assets") ||
-      hasPermission(role, permissions, "view_analytics")
-    ) {
-      contentChildren.push({
-        href: "/admin/videos",
-        label: "素材库",
-        icon: Library,
-        badgeKey: "videos",
-        match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
-      });
-    }
-
-    if (
-      role === "owner" ||
-      role === "team_admin" ||
-      role === "group_leader" ||
-      hasPermission(role, permissions, "view_analytics") ||
-      hasPermission(role, permissions, "view_all_data")
-    ) {
-      contentChildren.push({
-        href: "/admin/fulfillment",
-        label: "发布管理",
-        icon: CalendarDays,
-        match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
-      });
-    }
-  }
-
-  if (contentChildren.length > 0) {
-    groups.push({
-      key: "content-center",
-      label: "内容中心",
-      icon: Sparkles,
-      children: contentChildren,
-    });
-  }
-
-  // 4. 数据中心 (分组下拉)
+  // 4. 数据中心 (分组下拉) - 全员可见完整生态
   const dataChildren: NavSubItem[] = [
     {
       href: "/growth",
@@ -140,76 +108,49 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       icon: Compass,
       match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
     },
+    {
+      href: "/admin/analytics",
+      label: "经营分析",
+      icon: LineChart,
+      match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
+    },
   ];
 
-  if (input.showAdmin) {
-    if (
-      role === "owner" ||
-      hasPermission(role, permissions, "view_analytics") ||
-      hasPermission(role, permissions, "view_all_data")
-    ) {
-      dataChildren.push({
-        href: "/admin/analytics",
-        label: "经营分析",
-        icon: LineChart,
-        match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
-      });
-    }
-  }
+  groups.push({
+    key: "data-center",
+    label: "数据中心",
+    icon: Compass,
+    children: dataChildren,
+  });
 
-  if (dataChildren.length > 0) {
-    groups.push({
-      key: "data-center",
-      label: "数据中心",
-      icon: Compass,
-      children: dataChildren,
-    });
-  }
-
-  // 5. 管理中心 (分组下拉)
-  const adminChildren: NavSubItem[] = [];
-
-  if (input.showAdmin) {
-    if (
-      role === "owner" ||
-      role === "team_admin" ||
-      hasPermission(role, permissions, "manage_members")
-    ) {
-      adminChildren.push({
-        href: "/admin/modules",
-        label: "成员管理",
-        icon: UsersRound,
-        match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules/"),
-      });
-    }
-
-    if (input.showSystemSettings) {
-      adminChildren.push({
-        href: "/admin/settings",
-        label: "系统维护",
-        icon: Settings,
-        match: (pathname) => pathname === "/admin/settings" || pathname.startsWith("/admin/settings/"),
-      });
-    }
-
-    if (role === "owner") {
-      adminChildren.push({
-        href: "/admin/ai-config",
-        label: "AI 配置",
-        icon: Sparkles,
-        match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
-      });
-    }
-  }
-
-  if (adminChildren.length > 0) {
-    groups.push({
-      key: "admin-center",
-      label: "管理中心",
+  // 5. 管理中心 (分组下拉) - 全员可见完整生态
+  const adminChildren: NavSubItem[] = [
+    {
+      href: "/admin/modules",
+      label: "成员管理",
+      icon: UsersRound,
+      match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules/"),
+    },
+    {
+      href: "/admin/settings",
+      label: "系统维护",
       icon: Settings,
-      children: adminChildren,
-    });
-  }
+      match: (pathname) => pathname === "/admin/settings" || pathname.startsWith("/admin/settings/"),
+    },
+    {
+      href: "/admin/ai-config",
+      label: "AI 配置",
+      icon: Sparkles,
+      match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
+    },
+  ];
+
+  groups.push({
+    key: "admin-center",
+    label: "管理中心",
+    icon: Settings,
+    children: adminChildren,
+  });
 
   return groups;
 }

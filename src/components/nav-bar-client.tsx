@@ -312,9 +312,6 @@ export function NavBarClient({
                 </div>
               </Link>
   
-              {/* Separator */}
-              <div className="hidden h-5 w-px bg-zinc-200 lg:block" />
-  
               {/* 5-Group Primary Navigation Links */}
               <div
                 className="hidden min-w-0 items-center gap-1.5 md:flex"
@@ -339,17 +336,17 @@ export function NavBarClient({
                         prefetch={false}
                         onMouseEnter={() => prefetchOnHover(group.href!)}
                         className={cn(
-                          "relative inline-flex h-9 shrink-0 items-center rounded-xl px-3 text-[13px] font-medium tracking-tight transition-all duration-200 ease-out group",
+                          "relative inline-flex h-9 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-all duration-200 ease-out group origin-center",
                           isGroupActive
-                            ? "text-[#5F82A8] font-semibold"
-                            : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70"
+                            ? "text-zinc-950 font-semibold scale-[1.03]"
+                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-200/80 hover:scale-[1.03] active:scale-95"
                         )}
                       >
                         {isGroupActive && (
                           <span className="absolute bottom-0 inset-x-2.5 h-[2.5px] rounded-full bg-[#5F82A8] transition-all duration-200" />
                         )}
                         {Icon && (
-                          <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105", isGroupActive ? "text-[#5F82A8]" : "text-zinc-400 group-hover:text-zinc-600")} />
+                          <Icon className={cn("size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105", isGroupActive ? "text-[#5F82A8]" : "text-zinc-500 group-hover:text-zinc-800")} />
                         )}
                         <span className="whitespace-nowrap">{group.label}</span>
                       </Link>
@@ -373,10 +370,10 @@ export function NavBarClient({
                         }
                         aria-expanded={isDropdownOpen}
                         className={cn(
-                          "relative inline-flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] font-medium tracking-tight transition-all duration-200 ease-out group",
+                          "relative inline-flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-all duration-200 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#5F82A8] font-semibold"
-                            : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70"
+                            ? "text-zinc-950 font-semibold scale-[1.03]"
+                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-200/80 hover:scale-[1.03] active:scale-95"
                         )}
                       >
                         {isGroupActive && (
@@ -388,7 +385,7 @@ export function NavBarClient({
                               "size-3.5 stroke-[1.8] shrink-0 mr-0.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive || isDropdownOpen
                                 ? "text-[#5F82A8]"
-                                : "text-zinc-400 group-hover:text-zinc-600"
+                                : "text-zinc-500 group-hover:text-zinc-800"
                             )}
                           />
                         )}
@@ -431,10 +428,10 @@ export function NavBarClient({
                                     onMouseEnter={() => prefetchOnHover(child.href)}
                                     onClick={() => setActiveDropdownGroup(null)}
                                     className={cn(
-                                      "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[13px] transition-all duration-150 group/item",
+                                      "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[13px] transition-all duration-150 origin-left group/item",
                                       active
-                                        ? "bg-[#5F82A8]/10 text-[#5F82A8] font-semibold"
-                                        : "text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-950 font-medium"
+                                        ? "bg-[#5F82A8]/12 text-zinc-950 font-semibold scale-[1.02]"
+                                        : "text-zinc-700 font-medium hover:bg-zinc-200/70 hover:text-zinc-950 hover:scale-[1.02]"
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">
