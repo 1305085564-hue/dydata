@@ -2034,7 +2034,7 @@ export function VideoSubmitForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="mx-auto max-w-4xl space-y-7 py-2">
+            <div className="mx-auto max-w-4xl space-y-3.5 py-0">
               {/* 1. 局部双态自管理容器 */}
               <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-7">
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">

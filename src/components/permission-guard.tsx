@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ShieldAlert, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 import { ExemptionDialog } from "@/app/(app)/admin/豁免弹窗";
 
 interface PermissionGuardProps {

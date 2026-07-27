@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -11,6 +11,8 @@ import {
   History,
 } from "lucide-react";
 import { QuickExemptionButton } from "./quick-exemption-button";
+import { SubmissionCalendar } from "@/components/submission/submission-calendar";
+import { cn } from "@/lib/utils";
 
 interface AccountOption {
   id: string;
@@ -41,23 +43,43 @@ export function DashboardWorkspaceHeader({
   hasPendingExemption,
   submittedDates,
 }: DashboardWorkspaceHeaderProps) {
-  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
 
   const utilityActions = [
     { key: "data-view", label: "数据查看", icon: Eye },
     { key: "history", label: "历史记录", icon: History },
   ];
 
-  function openDatePicker() {
-    if (dateInputRef.current?.showPicker) {
-      dateInputRef.current.showPicker();
-      return;
+  // 点击外部及 Esc 键收起 Popover
+  useEffect(() => {
+    if (!isCalendarOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        calendarPopoverRef.current &&
+        !calendarPopoverRef.current.contains(event.target as Node)
+      ) {
+        setIsCalendarOpen(false);
+      }
     }
-    dateInputRef.current?.focus();
-  }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isCalendarOpen]);
 
   return (
-    <div className="mx-auto mb-4 max-w-6xl">
+    <div className="mx-auto mb-1.5 max-w-6xl">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
@@ -109,29 +131,52 @@ export function DashboardWorkspaceHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        {/* 右侧日期按钮及高阶日历选择器 (High-End Calendar Popover) */}
+        <div className="relative flex shrink-0 items-center gap-2" ref={calendarPopoverRef}>
           <button
             type="button"
-            onClick={openDatePicker}
-            className="group inline-flex h-9 items-center gap-2 rounded-xl border border-zinc-200/80 bg-white/90 px-3 text-[13px] font-medium tracking-tight text-zinc-700 shadow-xs transition-all duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-zinc-900/10"
+            onClick={() => setIsCalendarOpen((prev) => !prev)}
+            aria-expanded={isCalendarOpen}
+            className={cn(
+              "group inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-[13px] font-medium tracking-tight shadow-xs transition-all duration-200 outline-none select-none",
+              isCalendarOpen
+                ? "border-[#5F82A8] bg-white text-zinc-950 ring-2 ring-[#5F82A8]/20 font-semibold scale-[1.02]"
+                : "border-zinc-200/80 bg-white/90 text-zinc-700 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 active:scale-95"
+            )}
             aria-label="选择填报日期"
           >
-            <CalendarDays className="size-4 stroke-[1.6] text-zinc-500 transition-colors duration-150 group-hover:text-[#D97757]" />
-            <span className="font-mono tabular-nums text-zinc-800">{activeBizDate}</span>
-            <ChevronDown className="size-3.5 stroke-[1.6] text-zinc-400 transition-colors duration-150 group-hover:text-zinc-600" />
+            <CalendarDays
+              className={cn(
+                "size-4 stroke-[1.8] transition-colors duration-150",
+                isCalendarOpen ? "text-[#5F82A8]" : "text-zinc-500 group-hover:text-[#D97757]"
+              )}
+            />
+            <span className="font-mono tabular-nums text-zinc-900 font-semibold">{activeBizDate}</span>
+            <ChevronDown
+              className={cn(
+                "size-3.5 stroke-[1.8] text-zinc-400 transition-transform duration-200",
+                isCalendarOpen && "rotate-180 text-[#5F82A8]"
+              )}
+            />
           </button>
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={activeBizDate}
-            max={today}
-            onChange={(event) => {
-              if (event.target.value) onDateChange(event.target.value);
-            }}
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden="true"
-          />
+
+          {/* 高阶精致日历 Popover 浮层 */}
+          {isCalendarOpen && (
+            <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+              <div className="w-[280px] rounded-2xl border border-zinc-200/90 bg-white/98 p-1.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
+                <SubmissionCalendar
+                  today={today}
+                  submittedDates={submittedDates}
+                  selectedDate={activeBizDate}
+                  compact
+                  onDateSelect={(date) => {
+                    onDateChange(date);
+                    setIsCalendarOpen(false);
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
