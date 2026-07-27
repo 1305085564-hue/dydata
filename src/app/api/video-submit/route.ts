@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
     : await supabase.from("videos").insert(videoPayload).select(VIDEO_SUBMIT_RESPONSE_SELECT).single();
 
   if (videoError || !persistedVideo) {
-    await rollbackSafely(rollbackActions);
+    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: videoError?.message || "视频记录创建失败" }, { status: 500 });
   }
 
@@ -338,7 +338,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (existingSnapshotError) {
-    await rollbackSafely(rollbackActions);
+    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: existingSnapshotError.message }, { status: 500 });
   }
 
@@ -349,7 +349,8 @@ export async function POST(request: NextRequest) {
     });
   } else {
     rollbackActions.push(async () => {
-      const { error } = await supabase
+      // video_metrics_snapshots 无成员 DELETE RLS，必须用 adminSupabase，否则 user client 静默 0 行
+      const { error } = await adminSupabase
         .from("video_metrics_snapshots")
         .delete()
         .eq("video_id", persistedVideo.id)
@@ -363,7 +364,7 @@ export async function POST(request: NextRequest) {
     : await supabase.from("video_metrics_snapshots").insert(snapshotPayload).select(SNAPSHOT_WRITE_SELECT).single();
 
   if (snapshotError || !persistedSnapshot) {
-    await rollbackSafely(rollbackActions);
+    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: snapshotError?.message || "视频快照创建失败" }, { status: 500 });
   }
 
@@ -402,7 +403,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (existingReportError) {
-    await rollbackSafely(rollbackActions);
+    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: existingReportError.message }, { status: 500 });
   }
 
@@ -427,7 +428,7 @@ export async function POST(request: NextRequest) {
     : await supabase.from("daily_reports").insert(dailyReportPayload).select(DAILY_REPORT_WRITE_SELECT).single();
 
   if (dailyReportError || !persistedReport) {
-    await rollbackSafely(rollbackActions);
+    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: dailyReportError?.message || "日报记录创建失败" }, { status: 500 });
   }
 
@@ -437,20 +438,21 @@ export async function POST(request: NextRequest) {
     .eq("video_id", persistedVideo.id);
 
   if (previousTagsResult.error) {
-    await rollbackSafely(rollbackActions);
+    { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
     return NextResponse.json({ error: previousTagsResult.error.message }, { status: 500 });
   }
 
   const previousTags = previousTagsResult.data ?? [];
   rollbackActions.push(async () => {
-    const { error: deleteError } = await supabase.from("video_tags").delete().eq("video_id", persistedVideo.id);
+    // video_tags 在 20260727193000 之前无成员 DELETE RLS，用 adminSupabase 保证回滚可靠执行
+    const { error: deleteError } = await adminSupabase.from("video_tags").delete().eq("video_id", persistedVideo.id);
     if (deleteError) throw deleteError;
 
     if (!previousTags.length) {
       return;
     }
 
-    const { error: insertError } = await supabase.from("video_tags").insert(previousTags);
+    const { error: insertError } = await adminSupabase.from("video_tags").insert(previousTags);
     if (insertError) throw insertError;
   });
 
@@ -477,14 +479,14 @@ export async function POST(request: NextRequest) {
       .in("tag_dimension", aiDimensions);
 
     if (deleteAiTagError) {
-      await rollbackSafely(rollbackActions);
+      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: deleteAiTagError.message }, { status: 500 });
     }
 
     const { error: insertAiTagError } = await supabase.from("video_tags").insert(aiTagPayload);
 
     if (insertAiTagError) {
-      await rollbackSafely(rollbackActions);
+      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: insertAiTagError.message }, { status: 500 });
     }
   }
@@ -504,13 +506,13 @@ export async function POST(request: NextRequest) {
       .in("tag_dimension", ["话题", "表达形式", "关键词"]);
 
     if (deleteManualTagError) {
-      await rollbackSafely(rollbackActions);
+      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: deleteManualTagError.message }, { status: 500 });
     }
 
     const { error: insertManualTagError } = await supabase.from("video_tags").insert(manualTags);
     if (insertManualTagError) {
-      await rollbackSafely(rollbackActions);
+      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: insertManualTagError.message }, { status: 500 });
     }
   }
@@ -530,7 +532,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!usageRecordResult.ok) {
-      await rollbackSafely(rollbackActions);
+      { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: usageRecordResult.message }, { status: usageRecordResult.status });
     }
   }

@@ -128,6 +128,17 @@
 - 使用项目封装 UI 组件前，先看 `components/ui/*` 的真实 Props，不能套原版 shadcn/Radix 写法。
 - UI 联动要覆盖加载、空状态、折叠、选中、hover/focus 分支。
 
+### 提交链路专项规则（2026-07-27 连续生产事故教训）
+
+凡涉及"组员提交/替换/重试"类接口，动手前必须对照以下检查项：
+
+1. **含新字段必须发布三连**：① 生产执行 migration → ② 刷新 PostgREST schema cache → ③ 真实角色 API 实测。三步缺任一不算完成，日志里必须写明三步均已完成。
+2. **delete + insert 替换模式，先确认 DELETE RLS 存在**：在 `supabase/migrations/` 里 grep 该表的 `FOR DELETE` policy。无策略时，delete 静默成功但影响 0 行，insert 随即撞唯一约束——错误表面是"重复键"，根因是"旧数据未删"。涉及 `video_tags`、`video_metrics_snapshots`、`video_content_segments` 等表时尤其注意。
+3. **rollbackSafely 返回值不能丢弃**：调用后必须 `const rbErr = await rollbackSafely(...); if (rbErr) console.error("[接口名] rollback failed", rbErr);`。回滚失败时第一个业务错误仍然返回给调用方，rollback 错误另行记录，两者都不能丢。
+4. **多表回滚操作走 service role**：`video_metrics_snapshots`、`video_tags` 等无成员 DELETE RLS 的表，回滚删除必须用 `adminSupabase`，不能用 `supabase`（user client），否则 delete 静默 0 行，造成半提交残留。
+5. **稳定 PK 重试必须覆盖五种状态**：用 `buildSubmissionRecordId` 生成固定 ID 的提交接口，验收时必须人工模拟：active（正常更新）、trashed（恢复后更新）、purged（应拒绝，返回 409）、他人占用（返回 409）、并发提交（两个相同请求同时到达），五种都要覆盖，不能只测正常路径。
+6. **成员相关修复，必须用普通组员账号验收全链路**：任何影响成员权限或提交的修复，验收方式必须是用真实普通组员（有 `team_id` 或 `group_id` 的 `member` 账号）走完完整提交流程，不能只用 owner/admin 测。测试账号见 `~/.claude/projects/-Users-mac-Projects-dydata/memory/测试账号-选题库.md`（待补充提交链路专用账号）。
+
 ### 废弃机制
 
 - 不从旧设计文档里恢复功能，必须先用当前代码验证是否上线。
