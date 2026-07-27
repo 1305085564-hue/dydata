@@ -175,6 +175,9 @@ export interface Video {
   id: string;
   account_id: string;
   user_id: string;
+  script_author_user_id?: string | null;
+  video_editor_user_id?: string | null;
+  operator_user_id?: string | null;
   video_url: string | null;
   video_title: string | null;
   content: string | null;

@@ -13,6 +13,7 @@ import {
   normalizeOptionalText,
   normalizeSubmissionAssets,
   normalizeVideoIdLike,
+  isUuidLike,
 } from "./stability";
 import { parseSubmissionScreenshotPath } from "@/lib/submission-screenshot-access";
 
@@ -48,6 +49,9 @@ export interface VideoSubmitValidationResult {
     appeal: string | null;
     topic_tag: string | null;
     topic_id: string | null;
+    script_author_user_id: string | null;
+    video_editor_user_id: string | null;
+    operator_user_id: string | null;
     video_form: string | null;
     content_keywords: string[];
     script_text: string | null;
@@ -64,6 +68,29 @@ export interface VideoSubmitValidationErrorResult {
 }
 
 export type VideoSubmitValidationOutcome = VideoSubmitValidationResult | VideoSubmitValidationErrorResult;
+
+export function resolveOperatorUserId(operatorUserId: string | null, currentUserId: string) {
+  return operatorUserId ?? currentUserId;
+}
+
+export function resolveSubmissionRoleUserIds(
+  input: Pick<VideoSubmitValidationResult["normalized"], "script_author_user_id" | "video_editor_user_id" | "operator_user_id">,
+  currentUserId: string,
+) {
+  return {
+    scriptAuthorUserId: input.script_author_user_id ?? currentUserId,
+    videoEditorUserId: input.video_editor_user_id ?? currentUserId,
+    operatorUserId: input.operator_user_id ?? currentUserId,
+  };
+}
+
+function normalizeOptionalUserId(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return isUuidLike(trimmed) ? trimmed : undefined;
+}
 
 export function normalizeContentKeywords(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -147,10 +174,17 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const content = normalizeOptionalText(payload.content);
   const keywords = normalizeContentKeywords(payload.content_keywords);
   const assetUrlError = validateSubmissionAssetUrls(payload.assets);
+  const scriptAuthorUserId = normalizeOptionalUserId(payload.script_author_user_id);
+  const videoEditorUserId = normalizeOptionalUserId(payload.video_editor_user_id);
+  const operatorUserId = normalizeOptionalUserId(payload.operator_user_id);
 
   if (assetUrlError) {
     return { ok: false, error: assetUrlError };
   }
+
+  if (scriptAuthorUserId === undefined) return { ok: false, error: "script_author_user_id 必须是合法 UUID" };
+  if (videoEditorUserId === undefined) return { ok: false, error: "video_editor_user_id 必须是合法 UUID" };
+  if (operatorUserId === undefined) return { ok: false, error: "operator_user_id 必须是合法 UUID" };
 
   const anomalyStatus = normalizeVideoAnomalyStatus(payload.anomaly_status);
 
@@ -183,6 +217,9 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       appeal: normalizeOptionalText(payload.appeal),
       topic_tag: normalizeOptionalText(payload.topic_tag),
       topic_id: normalizeVideoIdLike(payload.topic_id),
+      script_author_user_id: scriptAuthorUserId,
+      video_editor_user_id: videoEditorUserId,
+      operator_user_id: operatorUserId,
       video_form: normalizeOptionalText(payload.video_form),
       content_keywords: keywords,
       script_text: normalizeOptionalText(payload.script_text),

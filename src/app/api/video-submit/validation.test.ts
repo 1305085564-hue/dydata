@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { normalizeContentKeywords, validateVideoSubmitPayload } from "./validation";
+import {
+  normalizeContentKeywords,
+  resolveSubmissionRoleUserIds,
+  resolveOperatorUserId,
+  validateVideoSubmitPayload,
+} from "./validation";
 import { buildStableUuid, buildSubmissionFingerprint, buildSubmissionRecordId } from "./stability";
 
 test("提交接口要求标题和文案，内容标签可为空", () => {
@@ -31,6 +36,77 @@ test("提交接口允许内容标签为空数组", () => {
 
   assert.deepEqual(result.contentKeywords, []);
   assert.deepEqual(result.normalized.content_keywords, []);
+});
+
+test("提交接口接受责任人 UUID，并在省略时回退到提交人", () => {
+  const operatorUserId = "123e4567-e89b-12d3-a456-426614174002";
+  const result = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "标题",
+    content: "文案",
+    operator_user_id: ` ${operatorUserId} `,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.normalized.operator_user_id, operatorUserId);
+  assert.equal(resolveOperatorUserId(result.normalized.operator_user_id, "123e4567-e89b-12d3-a456-426614174003"), operatorUserId);
+  assert.equal(resolveOperatorUserId(null, "123e4567-e89b-12d3-a456-426614174003"), "123e4567-e89b-12d3-a456-426614174003");
+});
+
+test("提交接口拒绝非 UUID 的责任人", () => {
+  assert.deepEqual(
+    validateVideoSubmitPayload({
+      account_id: "acc-1",
+      video_title: "标题",
+      content: "文案",
+      operator_user_id: "not-a-uuid",
+    }),
+    { ok: false, error: "operator_user_id 必须是合法 UUID" },
+  );
+});
+
+test("提交接口分别规范化文案、剪辑和运营责任人，并把空值回退给提交人", () => {
+  const scriptAuthorUserId = "123e4567-e89b-12d3-a456-426614174004";
+  const videoEditorUserId = "123e4567-e89b-12d3-a456-426614174005";
+  const submitterUserId = "123e4567-e89b-12d3-a456-426614174003";
+  const result = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "标题",
+    content: "文案",
+    script_author_user_id: ` ${scriptAuthorUserId} `,
+    video_editor_user_id: ` ${videoEditorUserId} `,
+    operator_user_id: " ",
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.deepEqual(result.normalized, {
+    ...result.normalized,
+    script_author_user_id: scriptAuthorUserId,
+    video_editor_user_id: videoEditorUserId,
+    operator_user_id: null,
+  });
+  assert.deepEqual(resolveSubmissionRoleUserIds(result.normalized, submitterUserId), {
+    scriptAuthorUserId,
+    videoEditorUserId,
+    operatorUserId: submitterUserId,
+  });
+});
+
+test("提交接口分别拒绝无效的文案和剪辑责任人", () => {
+  const base = { account_id: "acc-1", video_title: "标题", content: "文案" };
+
+  assert.deepEqual(
+    validateVideoSubmitPayload({ ...base, script_author_user_id: "not-a-uuid" }),
+    { ok: false, error: "script_author_user_id 必须是合法 UUID" },
+  );
+  assert.deepEqual(
+    validateVideoSubmitPayload({ ...base, video_editor_user_id: "not-a-uuid" }),
+    { ok: false, error: "video_editor_user_id 必须是合法 UUID" },
+  );
 });
 
 test("内容标签会去空格、去重，并最多保留 3 个", () => {

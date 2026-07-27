@@ -5,7 +5,7 @@ import { callAiJson } from "@/lib/ai/client";
 import { normalizeAiTagSuggestions, type RawAiTagSuggestion } from "@/lib/video-tags";
 import { replaceDailyReportUsageRecord } from "@/lib/conversion-hub/service";
 import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
-import { validateVideoSubmitPayload } from "./validation";
+import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 import { syncAbnormalVideoCase } from "./abnormal-case";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("name, team_id")
+    .select("name, team_id, group_id")
     .eq("id", user.id)
     .single();
 
@@ -166,6 +166,32 @@ export async function POST(request: NextRequest) {
   }
 
   const submitter = profile?.name ?? "未知";
+  const roleUserIds = resolveSubmissionRoleUserIds(normalized, user.id);
+  const externalAssigneeIds = [...new Set(Object.values(roleUserIds).filter((id) => id !== user.id))];
+
+  if (externalAssigneeIds.length) {
+    const { data: assigneeProfiles, error: assigneeProfilesError } = await createAdminClient()
+      .from("profiles")
+      .select("id, team_id, group_id, status")
+      .in("id", externalAssigneeIds);
+
+    const validAssigneeIds = new Set(
+      (assigneeProfiles ?? [])
+        .filter((assignee) => {
+          const isInSameOrganization = profile?.team_id
+            ? assignee.team_id === profile.team_id
+            : profile?.group_id
+              ? assignee.group_id === profile.group_id
+              : false;
+          return assignee.status === "active" && isInSameOrganization;
+        })
+        .map((assignee) => assignee.id),
+    );
+    if (assigneeProfilesError || externalAssigneeIds.some((id) => !validAssigneeIds.has(id))) {
+      return NextResponse.json({ error: "责任人必须是当前团队或小组中的在职成员" }, { status: 403 });
+    }
+  }
+
   const submissionVideoId = buildSubmissionRecordId(normalized);
   const nowIso = new Date().toISOString();
   const rollbackActions: RollbackAction[] = [];
@@ -184,11 +210,14 @@ export async function POST(request: NextRequest) {
     platform_notice: normalized.platform_notice,
     appeal: normalized.appeal,
     topic_id: normalized.topic_id,
+    script_author_user_id: roleUserIds.scriptAuthorUserId,
+    video_editor_user_id: roleUserIds.videoEditorUserId,
+    operator_user_id: roleUserIds.operatorUserId,
   };
 
   const { data: existingVideo, error: existingVideoError } = await supabase
     .from("videos")
-    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, created_at")
+    .select("id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, punish_type, platform_notice, appeal, topic_id, script_author_user_id, video_editor_user_id, operator_user_id, created_at")
     .eq("lifecycle_state", "active")
     .eq("id", submissionVideoId)
     .maybeSingle();
@@ -326,12 +355,15 @@ export async function POST(request: NextRequest) {
     published_at: normalized.published_at,
     uploaded_at: nowIso,
     account_id: normalized.account_id,
+    script_author_user_id: roleUserIds.scriptAuthorUserId,
+    video_editor_user_id: roleUserIds.videoEditorUserId,
+    operator_user_id: roleUserIds.operatorUserId,
   };
 
   const { data: existingReport, error: existingReportError } = await supabase
     .from("daily_reports")
     .select(
-      "id, user_id, account_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
+      "id, user_id, account_id, script_author_user_id, video_editor_user_id, operator_user_id, submitter, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
     )
     .eq("account_id", normalized.account_id)
     .eq("report_date", normalized.biz_date)

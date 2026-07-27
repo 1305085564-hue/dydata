@@ -2,13 +2,134 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  addRoleOverride,
+  getActiveNonSelfRoles,
+  removeRoleOverride,
   resolveDraftManualTopicState,
   resolveDraftTopicId,
+  resolveOperatorUserIdForTopic,
+  resolveScriptAuthorUserIdForTopic,
   sanitizeTopicSearchKeyword,
+  setOperatorToSelf,
+  setOperatorUser,
   shouldAutoBindNewTopic,
   shouldAutoRedirectToGrowthAfterSubmit,
   shouldAutoSelectSuggestedTopic,
 } from "./video-submit-form-state";
+
+test("只有实际指派给他人的岗位进入外协暴露集合", () => {
+  const userId = "user-self";
+  assert.deepEqual(
+    getActiveNonSelfRoles({
+      userId,
+      scriptAuthorUserId: userId,
+      videoEditorUserId: null,
+      operatorUserId: "user-operator",
+    }),
+    ["operator"],
+  );
+});
+
+test("添加外协只打开待选状态，取消外协会恢复为本人", () => {
+  const userId = "user-self";
+  const added = addRoleOverride({
+    userId,
+    role: "video_editor",
+    assignments: {
+      scriptAuthorUserId: userId,
+      videoEditorUserId: userId,
+      operatorUserId: userId,
+    },
+    overrides: [],
+  });
+
+  assert.deepEqual(added, {
+    assignments: {
+      scriptAuthorUserId: userId,
+      videoEditorUserId: userId,
+      operatorUserId: userId,
+    },
+    overrides: ["video_editor"],
+  });
+  assert.deepEqual(
+    removeRoleOverride({
+      userId,
+      role: "video_editor",
+      assignments: { ...added.assignments, videoEditorUserId: "user-editor" },
+      overrides: added.overrides,
+    }),
+    {
+      assignments: {
+        scriptAuthorUserId: userId,
+        videoEditorUserId: userId,
+        operatorUserId: userId,
+      },
+      overrides: [],
+    },
+  );
+});
+
+test("选题认领只自动填入文案岗位，并且不覆盖人工选择", () => {
+  assert.equal(
+    resolveScriptAuthorUserIdForTopic({
+      currentScriptAuthorUserId: "user-self",
+      claimantUserId: "user-claimant",
+      currentUserId: "user-self",
+      hasManualScriptAuthorSelection: false,
+    }),
+    "user-claimant",
+  );
+  assert.equal(
+    resolveScriptAuthorUserIdForTopic({
+      currentScriptAuthorUserId: "user-self",
+      claimantUserId: "user-claimant",
+      currentUserId: "user-self",
+      hasManualScriptAuthorSelection: true,
+    }),
+    "user-self",
+  );
+  assert.equal(
+    resolveScriptAuthorUserIdForTopic({
+      currentScriptAuthorUserId: "user-self",
+      claimantUserId: "user-self",
+      currentUserId: "user-self",
+      hasManualScriptAuthorSelection: false,
+    }),
+    "user-self",
+  );
+});
+
+test("子题认领人只在责任人未被手动修改时自动接管", () => {
+  assert.equal(
+    resolveOperatorUserIdForTopic({
+      currentOperatorUserId: "123e4567-e89b-12d3-a456-426614174010",
+      claimantUserId: "123e4567-e89b-12d3-a456-426614174011",
+      hasManualOperatorSelection: false,
+    }),
+    "123e4567-e89b-12d3-a456-426614174011",
+  );
+  assert.equal(
+    resolveOperatorUserIdForTopic({
+      currentOperatorUserId: "123e4567-e89b-12d3-a456-426614174010",
+      claimantUserId: "123e4567-e89b-12d3-a456-426614174011",
+      hasManualOperatorSelection: true,
+    }),
+    "123e4567-e89b-12d3-a456-426614174010",
+  );
+  assert.equal(
+    resolveOperatorUserIdForTopic({
+      currentOperatorUserId: "123e4567-e89b-12d3-a456-426614174010",
+      claimantUserId: null,
+      hasManualOperatorSelection: false,
+    }),
+    "123e4567-e89b-12d3-a456-426614174010",
+  );
+});
+
+test("责任人快捷操作返回当前人或明确指定的人", () => {
+  assert.equal(setOperatorToSelf("user-self"), "user-self");
+  assert.equal(setOperatorUser("user-operator"), "user-operator");
+});
 
 test("今天首次创建提交成功后自动跳转 growth", () => {
   assert.equal(

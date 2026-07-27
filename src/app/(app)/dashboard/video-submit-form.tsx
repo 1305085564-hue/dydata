@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Lightbulb, Plus, Lock, Loader2 } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Lock, Loader2, Search, Check, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -56,12 +56,18 @@ import {
   toManualFieldState,
 } from "@/components/submission/填报表单状态";
 import {
+  addRoleOverride as addSubmissionRoleOverride,
   normalizeOptionalText,
+  removeRoleOverride as removeSubmissionRoleOverride,
   resolveDraftManualTopicState,
   resolveDraftTopicId,
+  resolveScriptAuthorUserIdForTopic,
+  setOperatorToSelf as resolveSelfOperatorUserId,
+  setOperatorUser as resolveSelectedOperatorUserId,
   sanitizeTopicSearchKeyword,
   shouldAutoBindNewTopic,
   shouldAutoRedirectToGrowthAfterSubmit,
+  type SubmissionAssigneeRole,
 } from "./video-submit-form-state";
 
 import type {
@@ -159,6 +165,15 @@ export interface TopicSuggestion {
   topics?: { name: string }[] | { name: string } | null;
 }
 
+type OperatorMember = {
+  id: string;
+  name: string;
+  display_name: string;
+  department: string | null;
+  team_id: string | null;
+  group_id: string | null;
+};
+
 function getTopicName(topics: TopicSuggestion["topics"]) {
   if (!topics) return null;
   if (Array.isArray(topics)) return topics[0]?.name ?? null;
@@ -181,6 +196,10 @@ type FormMetaState = {
   platformNotice?: string;
   appeal?: string;
   topicId?: string | null;
+  scriptAuthorUserId: string | null;
+  videoEditorUserId: string | null;
+  operatorUserId: string | null;
+  roleOverrides: SubmissionAssigneeRole[];
 };
 
 type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
@@ -210,7 +229,7 @@ const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_3: "截图3",
 };
 
-function createInitialMeta(today: string): FormMetaState {
+function createInitialMeta(today: string, userId: string): FormMetaState {
   const publishedAt = getDefaultPublishedAtValue();
   const defaultBizDate = getDatePartFromDateTimeLocal(publishedAt) ?? today;
 
@@ -229,6 +248,10 @@ function createInitialMeta(today: string): FormMetaState {
     platformNotice: "",
     appeal: "",
     topicId: null,
+    scriptAuthorUserId: userId,
+    videoEditorUserId: userId,
+    operatorUserId: userId,
+    roleOverrides: [],
   };
 }
 
@@ -480,7 +503,7 @@ export function VideoSubmitForm({
 }: VideoSubmitFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today));
+  const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today, userId));
   const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
   const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(() => createEditableSlots());
   const slotsRef = useRef(slots);
@@ -504,6 +527,9 @@ export function VideoSubmitForm({
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [isManuallySet, setIsManuallySet] = useState(false);
+  const [hasManualScriptAuthorSelection, setHasManualScriptAuthorSelection] = useState(false);
+  const [hasManualOperatorSelection, setHasManualOperatorSelection] = useState(false);
+  const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
   const [urlLocked, setUrlLocked] = useState(false);
   const [selectedTopicName, setSelectedTopicName] = useState<string>("");
   const [selectedTopicCategory, setSelectedTopicCategory] = useState<string>("");
@@ -513,6 +539,7 @@ export function VideoSubmitForm({
   const [suggestRetrySeq, setSuggestRetrySeq] = useState(0);
   const urlLockedRef = useRef(urlLocked);
   const isManuallySetRef = useRef(isManuallySet);
+  const hasManualScriptAuthorSelectionRef = useRef(hasManualScriptAuthorSelection);
   const topicIdRef = useRef<FormMetaState["topicId"]>(null);
   const suggestSeqRef = useRef(0);
 
@@ -523,15 +550,108 @@ export function VideoSubmitForm({
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
 
+  // 岗位外协与下拉相关状态
+  const [addRolePopoverOpen, setAddRolePopoverOpen] = useState(false);
+  const [activeRoleDropdown, setActiveRoleDropdown] = useState<"script_author" | "video_editor" | "operator" | null>(null);
+  const [roleSearchQuery, setRoleSearchQuery] = useState("");
+
+  const isScriptAuthorExternal = Boolean(meta.scriptAuthorUserId && meta.scriptAuthorUserId !== userId);
+  const isVideoEditorExternal = Boolean(meta.videoEditorUserId && meta.videoEditorUserId !== userId);
+  const isOperatorExternal = Boolean(meta.operatorUserId && meta.operatorUserId !== userId);
+  const hasAnyExternalRole = isScriptAuthorExternal || isVideoEditorExternal || isOperatorExternal;
+
+
+
+  const filteredMembersForRole = useMemo(() => {
+    if (!roleSearchQuery.trim()) return operatorMembers;
+    const q = roleSearchQuery.trim().toLowerCase();
+    return operatorMembers.filter(
+      (m) =>
+        m.name?.toLowerCase().includes(q) ||
+        m.display_name?.toLowerCase().includes(q) ||
+        (m.department && m.department.toLowerCase().includes(q))
+    );
+  }, [operatorMembers, roleSearchQuery]);
+
+
+
   useEffect(() => {
     urlLockedRef.current = urlLocked;
     isManuallySetRef.current = isManuallySet;
+    hasManualScriptAuthorSelectionRef.current = hasManualScriptAuthorSelection;
     topicIdRef.current = meta.topicId;
-  }, [urlLocked, isManuallySet, meta.topicId]);
+  }, [urlLocked, isManuallySet, hasManualScriptAuthorSelection, meta.topicId]);
 
   useEffect(() => {
     slotsRef.current = slots;
   }, [slots]);
+
+  const setRoleUser = useCallback((role: SubmissionAssigneeRole, id: string, options: { isManual?: boolean } = {}) => {
+    const operatorUserId = resolveSelectedOperatorUserId(id);
+    if (operatorMembers.length > 0 && !operatorMembers.some((member) => member.id === operatorUserId)) {
+      feedbackToast.error("责任人必须是当前团队或小组中的成员");
+      return;
+    }
+    setMeta((current) => {
+      const next = operatorUserId === userId
+        ? removeSubmissionRoleOverride({ userId, role, assignments: current, overrides: current.roleOverrides })
+        : addSubmissionRoleOverride({ userId, role, assignments: current, overrides: current.roleOverrides });
+      const assignmentKey = role === "script_author" ? "scriptAuthorUserId" : role === "video_editor" ? "videoEditorUserId" : "operatorUserId";
+      return { ...current, ...next.assignments, [assignmentKey]: operatorUserId, roleOverrides: next.overrides };
+    });
+    if (role === "script_author") setHasManualScriptAuthorSelection(options.isManual ?? true);
+    if (role === "operator") setHasManualOperatorSelection(options.isManual ?? true);
+  }, [operatorMembers, userId]);
+
+  const removeRoleOverride = useCallback((role: SubmissionAssigneeRole) => {
+    setMeta((current) => {
+      const next = removeSubmissionRoleOverride({
+      userId,
+      role,
+      assignments: current,
+      overrides: current.roleOverrides,
+      });
+      return { ...current, ...next.assignments, roleOverrides: next.overrides };
+    });
+    if (role === "script_author") setHasManualScriptAuthorSelection(false);
+    if (role === "operator") setHasManualOperatorSelection(false);
+  }, [userId]);
+
+  const setOperatorToSelf = useCallback(() => {
+    removeRoleOverride("operator");
+  }, [removeRoleOverride]);
+
+  const setOperatorUser = useCallback((id: string, options: { isManual?: boolean } = {}) => {
+    setRoleUser("operator", id, options);
+  }, [setRoleUser]);
+
+  const setScriptAuthorUser = useCallback((id: string, options: { isManual?: boolean } = {}) => {
+    setRoleUser("script_author", id, options);
+  }, [setRoleUser]);
+
+  useEffect(() => {
+    setOperatorToSelf();
+  }, [setOperatorToSelf]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void fetch("/api/dashboard/operator-members")
+      .then(async (response) => {
+        if (!response.ok) throw new Error("load operator members failed");
+        return response.json() as Promise<{ members?: OperatorMember[] }>;
+      })
+      .then((payload) => {
+        if (!cancelled) setOperatorMembers(Array.isArray(payload.members) ? payload.members : []);
+      })
+      .catch(() => {
+        if (!cancelled) setOperatorMembers([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // 1. URL 锁定逻辑
   useEffect(() => {
@@ -562,22 +682,34 @@ export function VideoSubmitForm({
         return;
       }
       try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("sub_topics")
-          .select("title, topics(name)")
-          .eq("id", meta.topicId)
-          .maybeSingle();
+        const response = await fetch(`/api/topics/sub-topics/${encodeURIComponent(meta.topicId)}`);
         if (cancelled) return;
-        if (error) {
-          setTopicNameError("load_failed");
+        if (!response.ok) {
+          setTopicNameError(response.status === 404 ? "not_found" : "load_failed");
           return;
         }
-        if (data) {
-          setSelectedTopicName(data.title);
-          setSelectedTopicCategory(getTopicName(data.topics) || "常规母题");
-        } else {
+        const payload = await response.json() as {
+          subTopic?: {
+            title?: string;
+            topics?: TopicSuggestion["topics"];
+            claimant_user_id?: string | null;
+          };
+        };
+        const data = payload.subTopic;
+        if (!data?.title) {
           setTopicNameError("not_found");
+          return;
+        }
+        setSelectedTopicName(data.title);
+        setSelectedTopicCategory(getTopicName(data.topics) || "常规母题");
+        const scriptAuthorUserId = resolveScriptAuthorUserIdForTopic({
+          currentScriptAuthorUserId: meta.scriptAuthorUserId,
+          claimantUserId: data.claimant_user_id,
+          currentUserId: userId,
+          hasManualScriptAuthorSelection: hasManualScriptAuthorSelectionRef.current,
+        });
+        if (scriptAuthorUserId && scriptAuthorUserId !== meta.scriptAuthorUserId) {
+          setScriptAuthorUser(scriptAuthorUserId, { isManual: false });
         }
       } catch (err) {
         if (cancelled) return;
@@ -589,7 +721,7 @@ export function VideoSubmitForm({
     return () => {
       cancelled = true;
     };
-  }, [meta.topicId, topicNameRetrySeq]);
+  }, [meta.topicId, meta.scriptAuthorUserId, topicNameRetrySeq, setScriptAuthorUser, userId]);
 
   // 3. 监听新建选题事件：自动绑定最新创建的选题
   useEffect(() => {
@@ -805,6 +937,8 @@ export function VideoSubmitForm({
     scriptText: string;
     keywordInput: string;
     isManuallySet?: boolean;
+    hasManualScriptAuthorSelection?: boolean;
+    hasManualOperatorSelection?: boolean;
   };
 
   const draftData: DraftData = useMemo(
@@ -819,14 +953,16 @@ export function VideoSubmitForm({
       scriptText,
       keywordInput,
       isManuallySet,
+      hasManualScriptAuthorSelection,
+      hasManualOperatorSelection,
     }),
-    [meta, fields, slots, scriptText, keywordInput, isManuallySet]
+    [meta, fields, slots, scriptText, keywordInput, isManuallySet, hasManualScriptAuthorSelection, hasManualOperatorSelection]
   );
 
   const { hasDraft, restoreDraft, clearDraft, lastSavedAt } = useFormDraft<DraftData>(
     draftKey,
     draftData,
-    [meta, fields, slots, scriptText, keywordInput, isManuallySet],
+    [meta, fields, slots, scriptText, keywordInput, isManuallySet, hasManualScriptAuthorSelection, hasManualOperatorSelection],
     { isEmpty: isVideoSubmitDraftEmpty }
   );
 
@@ -846,6 +982,10 @@ export function VideoSubmitForm({
       return {
         ...draft.meta,
         topicId: nextTopicId,
+        scriptAuthorUserId: draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
+        videoEditorUserId: draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
+        operatorUserId: draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+        roleOverrides: draft.meta.roleOverrides ?? [],
       };
     });
     setIsManuallySet((current) =>
@@ -856,6 +996,8 @@ export function VideoSubmitForm({
         draftTopicId: draft.meta.topicId,
       })
     );
+    setHasManualScriptAuthorSelection(draft.hasManualScriptAuthorSelection ?? false);
+    setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
     setFields(draft.fields);
     setSlots((current) => ({
       screenshot_1: { ...current.screenshot_1, ...draft.slots.screenshot_1, file: null, previewUrl: null },
@@ -865,7 +1007,7 @@ export function VideoSubmitForm({
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
     feedbackToast.success("草稿已恢复");
-  }, [restoreDraft]);
+  }, [restoreDraft, userId]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
@@ -932,7 +1074,7 @@ export function VideoSubmitForm({
     });
     blobUrlsRef.current.clear();
 
-    const nextMeta = createInitialMeta(today);
+    const nextMeta = createInitialMeta(today, userId);
     if (initialBizDate) {
       nextMeta.bizDate = initialBizDate;
     }
@@ -962,7 +1104,9 @@ export function VideoSubmitForm({
     setKeywordInput("");
     setScriptText("");
     setFocusedRole(null);
-  }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today, submittedViewActive]);
+    setHasManualScriptAuthorSelection(false);
+    setHasManualOperatorSelection(false);
+  }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today, userId, submittedViewActive]);
 
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
   const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
@@ -1460,6 +1604,9 @@ export function VideoSubmitForm({
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
           topic_id: meta.topicId || null,
+          script_author_user_id: meta.scriptAuthorUserId,
+          video_editor_user_id: meta.videoEditorUserId,
+          operator_user_id: meta.operatorUserId,
           content_keywords: meta.contentKeywords,
           assets: buildAssets(slots),
           script_text: parseMetric(fields.follower_convert.value) > 0 ? scriptText.trim() || null : null,
@@ -1887,9 +2034,9 @@ export function VideoSubmitForm({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="mx-auto max-w-3xl space-y-6 py-2">
+            <div className="mx-auto max-w-4xl space-y-7 py-2">
               {/* 1. 局部双态自管理容器 */}
-              <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6">
+              <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-7">
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <span className="text-[13px] font-medium text-zinc-700">核心指标与截图</span>
@@ -2004,381 +2151,525 @@ export function VideoSubmitForm({
                 </div>
               </div>
 
-              {/* 2. 视频信息及基础元数据表单（常驻底层，防焦点丢失） */}
+              {/* 2. 视频信息及基础元数据表单（与上卡片 100% 物理齐平对齐） */}
               <div
                 ref={metaSectionRef}
-                className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-6 space-y-6"
+                className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-7"
               >
-                <div className="space-y-1 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle")}>
-                  <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-500">视频标题 {meta.anomalyStatus !== "abnormal" && <span className="text-[#C9604D]">*</span>}</Label>
-                  <Input
-                    id="video_title"
-                    value={meta.videoTitle}
-                    onChange={(event) => updateMeta("videoTitle", event.target.value)}
-                    placeholder="输入视频标题"
-                    className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
-                    aria-invalid={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "true" : "false"}
-                    aria-describedby={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "video_title_error" : undefined}
-                  />
-                  {hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
-                    <p id="video_title_error" role="alert" className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
-                  ) : null}
-                </div>
-
-                <div className="rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}>
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="content" className="text-[13px] font-medium text-zinc-500">文案 <span className="text-[#C9604D]">*</span></Label>
-                    <button
-                      type="button"
-                      onClick={handlePasteContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors duration-150 focus-visible:outline-none"
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 items-stretch">
+                  {/* 【左栏：内容创作区 (1fr 动态自适应高度，与右侧虚线框永远底部齐平)】 */}
+                  <div className="space-y-4 flex flex-col h-full min-w-0">
+                    {/* 视频标题 */}
+                    <div
+                      className="space-y-1 shrink-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
+                      data-missing={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle")}
                     >
-                      <ClipboardPaste size={14} className="stroke-[1.5]" />
-                      一键粘贴
-                    </button>
-                  </div>
-                  <textarea
-                    id="content"
-                    value={meta.content}
-                    onChange={(event) => updateMeta("content", event.target.value)}
-                    placeholder="粘贴视频文案"
-                    className="mt-1 min-h-[140px] w-full resize-y rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3 text-[13px] leading-[1.7] tracking-[0.005em] text-zinc-700 placeholder:text-zinc-500 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
-                    aria-invalid={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "true" : "false"}
-                    aria-describedby={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "content_error" : undefined}
-                  />
-                  {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                    <p id="content_error" role="alert" className="mt-1 text-[12px] font-medium text-[#C9604D]">必填，仍未填写文案</p>
-                  ) : null}
-                </div>
-
-                {/* 关联选题字段 (任务 F) */}
-                <div className="rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[13px] font-semibold text-zinc-705 flex items-center gap-1.5 select-none">
-                      <Lightbulb className="size-4 text-[#D97757]" />
-                      <span>关联选题库</span>
-                    </Label>
-                    {!urlLocked ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSearchDialogOpen(true)}
-                          className="text-[12px] font-medium text-[#5F82A8] hover:underline focus:outline-none cursor-pointer"
-                        >
-                          换一个
-                        </button>
-                        <span className="text-zinc-300 text-[10px]">|</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            updateMeta("topicId", null);
-                            isManuallySetRef.current = true;
-                            setIsManuallySet(true);
-                          }}
-                          className="text-[12px] font-medium text-zinc-400 hover:text-zinc-600 focus:outline-none cursor-pointer"
-                        >
-                          暂无对应
-                        </button>
-                        <span className="text-zinc-300 text-[10px]">|</span>
-                        <button
-                          type="button"
-                          onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
-                          className="text-[12px] font-medium text-[#D97757] hover:underline inline-flex items-center gap-0.5 focus:outline-none cursor-pointer"
-                        >
-                          <Plus className="size-3 stroke-[2.5]" />
-                          <span>新建选题</span>
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {meta.topicId ? (
-                    <div className="flex items-center justify-between rounded-lg border border-[#5F82A8]/20 bg-white p-3 shadow-[0_2px_8px_-3px_rgba(138,168,199,0.1)]">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {selectedTopicCategory && (
-                          <span className="shrink-0 inline-flex items-center rounded-md bg-[#4F5E96]/[0.12] px-1.5 py-0.5 text-[10px] font-semibold text-[#4F5E96]">
-                            {selectedTopicCategory}
-                          </span>
-                        )}
-                        <span className="text-[12.5px] font-semibold text-zinc-800 truncate">
-                          {topicNameError === "not_found"
-                            ? "未找到该选题（可能已被删除）"
-                            : topicNameError === "load_failed"
-                              ? "选题信息加载失败"
-                              : selectedTopicName || "获取选题信息中..."}
-                        </span>
-                      </div>
-                      
-                      {topicNameError === "not_found" ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            updateMeta("topicId", null);
-                            urlLockedRef.current = false;
-                            isManuallySetRef.current = true;
-                            setUrlLocked(false);
-                            setIsManuallySet(true);
-                          }}
-                          className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
-                        >
-                          清除关联
-                        </button>
-                      ) : topicNameError === "load_failed" ? (
-                        <button
-                          type="button"
-                          onClick={() => setTopicNameRetrySeq((value) => value + 1)}
-                          className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
-                        >
-                          重试
-                        </button>
-                      ) : urlLocked ? (
-                        <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-zinc-400 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium select-none">
-                          <Lock className="size-3 text-zinc-400" />
-                          认领锁定
-                        </span>
-                      ) : (
-                        <span className="shrink-0 text-[10.5px] text-[#6FAA7D] bg-[#6FAA7D]/5 rounded-md px-1.5 py-0.5 font-medium select-none">
-                          已关联
-                        </span>
-                      )}
+                      <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-600">
+                        视频标题 {meta.anomalyStatus !== "abnormal" && <span className="text-[#C9604D]">*</span>}
+                      </Label>
+                      <Input
+                        id="video_title"
+                        value={meta.videoTitle}
+                        onChange={(event) => updateMeta("videoTitle", event.target.value)}
+                        placeholder="输入视频标题"
+                        className="h-10.5 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-150"
+                        aria-invalid={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "true" : "false"}
+                        aria-describedby={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "video_title_error" : undefined}
+                      />
+                      {hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
+                        <p id="video_title_error" role="alert" className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
+                      ) : null}
                     </div>
-                  ) : (
+
+                    {/* 视频文案 (flex-1 自动调高填满全高，与右侧虚线框完美动态平齐) */}
+                    <div
+                      className="flex-1 flex flex-col min-h-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
+                      data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}
+                    >
+                      <div className="flex items-center justify-between shrink-0">
+                        <Label htmlFor="content" className="text-[13px] font-medium text-zinc-600">
+                          文案 <span className="text-[#C9604D]">*</span>
+                        </Label>
+                        <button
+                          type="button"
+                          onClick={handlePasteContent}
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors duration-150 focus-visible:outline-none cursor-pointer"
+                        >
+                          <ClipboardPaste size={14} className="stroke-[1.5]" />
+                          一键粘贴
+                        </button>
+                      </div>
+                      <textarea
+                        id="content"
+                        value={meta.content}
+                        onChange={(event) => updateMeta("content", event.target.value)}
+                        placeholder="粘贴视频文案..."
+                        className="mt-1.5 flex-1 min-h-[160px] w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3.5 text-[13px] leading-[1.75] tracking-[0.005em] text-zinc-700 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-200 overflow-y-auto custom-scrollbar"
+                        aria-invalid={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "true" : "false"}
+                        aria-describedby={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "content_error" : undefined}
+                      />
+                      {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
+                        <p id="content_error" role="alert" className="mt-1 text-[12px] font-medium text-[#C9604D] shrink-0">必填，仍未填写文案</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* 【右栏：选题与属性配置区 (280px 固定物理宽度，与上卡片对齐)】 */}
+                  <div className="w-full md:w-[280px] shrink-0 rounded-xl border border-dashed border-zinc-200/90 bg-zinc-50/40 p-3.5 space-y-3.5 flex flex-col justify-between">
+                    {/* 模块一：关联选题库 */}
                     <div className="space-y-2">
-                      <div className="text-[11.5px] text-zinc-400 leading-normal">
-                        {loadingSuggestions ? (
-                          <div className="flex items-center gap-1.5 py-1">
-                            <Loader2 className="size-3 animate-spin text-zinc-400" />
-                            <span>正在匹配关联的选题...</span>
-                          </div>
-                        ) : suggestFailed ? (
-                          <div className="flex items-center gap-2 py-1">
-                            <span className="text-[#C9604D]">选题推荐加载失败</span>
-                            <button
-                              type="button"
-                              onClick={() => setSuggestRetrySeq((value) => value + 1)}
-                              className="text-[11.5px] font-medium text-zinc-500 hover:text-zinc-700 underline-offset-2 hover:underline"
-                            >
-                              重试
-                            </button>
-                          </div>
-                        ) : isManuallySet && !urlLocked ? (
-                          <div className="flex items-center justify-between gap-3 py-1">
-                            <span className="text-zinc-500">已标记：本条作品暂无对应选题</span>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[13px] font-semibold text-zinc-700 select-none">
+                          关联选题
+                        </Label>
+                        {!urlLocked ? (
+                          <div className="flex items-center gap-1.5 text-[12px]">
                             <button
                               type="button"
                               onClick={() => {
-                                isManuallySetRef.current = false;
-                                setIsManuallySet(false);
+                                updateMeta("topicId", null);
+                                isManuallySetRef.current = true;
+                                setIsManuallySet(true);
                               }}
-                              className="shrink-0 text-[11.5px] font-medium text-[#5F82A8] hover:underline"
+                              className="font-medium text-zinc-400 hover:text-zinc-600 cursor-pointer"
                             >
-                              重新自动匹配
+                              暂无
+                            </button>
+                            <span className="text-zinc-300 text-[10px]">|</span>
+                            <button
+                              type="button"
+                              onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
+                              className="font-medium text-[#D97757] hover:underline inline-flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Plus className="size-3 stroke-[2.5]" />
+                              <span>新建</span>
                             </button>
                           </div>
-                        ) : suggestions.length > 0 ? (
-                          <div className="space-y-2">
-                            <span className="block text-[11px] font-medium text-zinc-400">系统根据标题/文案推荐选题（点击下方按钮完成关联）：</span>
-                            <div className="flex flex-wrap gap-2">
-                              {suggestions.slice(0, 3).map((s) => (
-                                <button
-                                  key={s.id}
-                                  type="button"
-                                  onClick={() => {
-                                    updateMeta("topicId", s.id);
-                                    isManuallySetRef.current = true;
-                                    setIsManuallySet(true);
-                                  }}
-                                  className="flex flex-col items-start rounded-xl border border-zinc-200 bg-white hover:border-[#D97757]/40 hover:bg-[#D97757]/5 p-2 transition-all duration-150 cursor-pointer text-left shadow-xs"
+                        ) : null}
+                      </div>
+
+                      {meta.topicId ? (
+                        <div className="flex items-center justify-between rounded-lg border border-zinc-200/60 bg-white p-2.5 shadow-2xs">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {selectedTopicCategory && (
+                              <span className="shrink-0 inline-flex items-center rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600">
+                                {selectedTopicCategory}
+                              </span>
+                            )}
+                            <span className="text-[12.5px] font-semibold text-zinc-800 truncate">
+                              {topicNameError === "not_found"
+                                ? "未找到选题"
+                                : topicNameError === "load_failed"
+                                  ? "加载失败"
+                                  : selectedTopicName || "获取选题中..."}
+                            </span>
+                          </div>
+                          
+                          {topicNameError === "not_found" ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateMeta("topicId", null);
+                                urlLockedRef.current = false;
+                                isManuallySetRef.current = true;
+                                setUrlLocked(false);
+                                setIsManuallySet(true);
+                              }}
+                              className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
+                            >
+                              清除
+                            </button>
+                          ) : topicNameError === "load_failed" ? (
+                            <button
+                              type="button"
+                              onClick={() => setTopicNameRetrySeq((value) => value + 1)}
+                              className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
+                            >
+                              重试
+                            </button>
+                          ) : urlLocked ? (
+                            <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-zinc-400 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium select-none">
+                              <Lock className="size-3 text-zinc-400" />
+                              锁定
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[10.5px] text-zinc-600 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium select-none">
+                              已关联
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {loadingSuggestions ? (
+                            <div className="flex items-center gap-1.5 py-1 text-[11.5px] text-zinc-400">
+                              <Loader2 className="size-3 animate-spin" />
+                              <span>正在匹配选题...</span>
+                            </div>
+                          ) : suggestFailed ? (
+                            <div className="flex items-center gap-2 py-1 text-[11.5px]">
+                              <span className="text-[#C9604D]">匹配失败</span>
+                              <button
+                                type="button"
+                                onClick={() => setSuggestRetrySeq((value) => value + 1)}
                                 >
-                                  <span className="text-[12px] font-medium text-zinc-800 line-clamp-1">
-                                    {s.title}
-                                  </span>
-                                  <span className="text-[10px] text-zinc-400 mt-0.5">
-                                    {(() => {
-                                      const topicName = Array.isArray(s.topics) ? (s.topics as Array<{ name: string }>)[0]?.name : (s.topics as { name?: string })?.name;
-                                      return topicName ? `${topicName} · 系统按标题匹配` : "系统基于文本深度匹配";
-                                    })()}
-                                  </span>
+                                重试
+                              </button>
+                            </div>
+                          ) : isManuallySet && !urlLocked ? (
+                            <div className="flex items-center justify-between gap-2 py-1 text-[11px] text-zinc-500">
+                              <span>本条作品暂无对应选题</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  isManuallySetRef.current = false;
+                                  setIsManuallySet(false);
+                                }}
+                                className="font-medium text-[#5F82A8] hover:underline"
+                              >
+                                重新自动匹配
+                              </button>
+                            </div>
+                          ) : suggestions.length > 0 ? (
+                            <div className="space-y-1.5">
+                              <span className="block text-[11px] text-zinc-400">推荐关联选题：</span>
+                              <div className="flex flex-col gap-1.5">
+                                {suggestions.slice(0, 2).map((s) => (
+                                  <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => {
+                                      updateMeta("topicId", s.id);
+                                      isManuallySetRef.current = true;
+                                      setIsManuallySet(true);
+                                    }}
+                                    className="flex items-center justify-between rounded-lg border border-zinc-200/60 bg-white hover:border-[#D97757]/40 hover:bg-[#D97757]/5 px-3 py-2 transition-all duration-150 cursor-pointer text-left shadow-2xs"
+                                  >
+                                    <span className="text-[12px] font-medium text-zinc-800 truncate">
+                                      {s.title}
+                                    </span>
+                                    <span className="text-[10.5px] text-[#D97757] shrink-0 font-medium ml-2">
+                                      关联
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="italic block text-[11.5px] text-zinc-400 py-0.5">打字输入标题或文案，系统将自动匹配。</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 模块二：团队分工 (纯留白隔离) */}
+                    <div className="space-y-2.5 pt-1.5 pb-0.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[13px] font-semibold text-zinc-700 select-none">
+                          团队分工
+                        </Label>
+
+                        <div className="flex items-center gap-1.5 relative">
+                          <button
+                            type="button"
+                            onClick={() => setAddRolePopoverOpen(!addRolePopoverOpen)}
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5F82A8] hover:underline transition-all duration-150 cursor-pointer"
+                          >
+                            <Plus className="size-3 stroke-[2.5]" />
+                            <span>+ 协作成员</span>
+                          </button>
+
+                          <AnimatePresence>
+                            {addRolePopoverOpen && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-20"
+                                  onClick={() => setAddRolePopoverOpen(false)}
+                                />
+                                <motion.div
+                                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                                  transition={{ duration: 0.12 }}
+                                  className="absolute right-0 top-6 z-30 w-44 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg space-y-0.5"
+                                >
+                                  <div className="px-2 py-1 text-[10.5px] font-semibold text-zinc-400">选择指派外协岗位：</div>
+                                  
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const other = operatorMembers.find((m) => m.id !== userId);
+                                      setRoleUser("script_author", other?.id || userId, { isManual: true });
+                                      setAddRolePopoverOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[12px] transition-colors cursor-pointer",
+                                      isScriptAuthorExternal ? "bg-zinc-100 text-zinc-400" : "text-zinc-700 hover:bg-zinc-100"
+                                    )}
+                                  >
+                                    <span>✍️ 文案</span>
+                                    {isScriptAuthorExternal ? <span className="text-[10px] text-zinc-400">已暴露</span> : <Plus className="size-3 text-[#5F82A8]" />}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const other = operatorMembers.find((m) => m.id !== userId);
+                                      setRoleUser("video_editor", other?.id || userId, { isManual: true });
+                                      setAddRolePopoverOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[12px] transition-colors cursor-pointer",
+                                      isVideoEditorExternal ? "bg-zinc-100 text-zinc-400" : "text-zinc-700 hover:bg-zinc-100"
+                                    )}
+                                  >
+                                    <span>✂️ 剪辑</span>
+                                    {isVideoEditorExternal ? <span className="text-[10px] text-zinc-400">已暴露</span> : <Plus className="size-3 text-[#5F82A8]" />}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const other = operatorMembers.find((m) => m.id !== userId);
+                                      setRoleUser("operator", other?.id || userId, { isManual: true });
+                                      setAddRolePopoverOpen(false);
+                                    }}
+                                    className={cn(
+                                      "flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[12px] transition-colors cursor-pointer",
+                                      isOperatorExternal ? "bg-zinc-100 text-zinc-400" : "text-zinc-700 hover:bg-zinc-100"
+                                    )}
+                                  >
+                                    <span>🚀 运营</span>
+                                    {isOperatorExternal ? <span className="text-[10px] text-zinc-400">已暴露</span> : <Plus className="size-3 text-[#5F82A8]" />}
+                                  </button>
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+
+                      {!hasAnyExternalRole ? (
+                        <div className="text-[11.5px] text-zinc-400 py-0.5">
+                          全由达人我自己包办 (文案 / 剪辑 / 运营全是我)
+                        </div>
+                      ) : (
+                        <div className="space-y-2 pt-1 pb-1">
+                          {isScriptAuthorExternal && (
+                            <RoleItemSelectorRow
+                              label="✍️ 文案"
+                              roleKey="script_author"
+                              selectedUserId={meta.scriptAuthorUserId}
+                              operatorMembers={operatorMembers}
+                              userId={userId}
+                              activeRoleDropdown={activeRoleDropdown}
+                              setActiveRoleDropdown={setActiveRoleDropdown}
+                              roleSearchQuery={roleSearchQuery}
+                              setRoleSearchQuery={setRoleSearchQuery}
+                              filteredMembersForRole={filteredMembersForRole}
+                              onSelectUser={(id) => setScriptAuthorUser(id, { isManual: true })}
+                              onResetSelf={() => removeRoleOverride("script_author")}
+                            />
+                          )}
+
+                          {/* ✂️ 剪辑行 */}
+                          {isVideoEditorExternal && (
+                            <RoleItemSelectorRow
+                              label="✂️ 剪辑"
+                              roleKey="video_editor"
+                              selectedUserId={meta.videoEditorUserId}
+                              operatorMembers={operatorMembers}
+                              userId={userId}
+                              activeRoleDropdown={activeRoleDropdown}
+                              setActiveRoleDropdown={setActiveRoleDropdown}
+                              roleSearchQuery={roleSearchQuery}
+                              setRoleSearchQuery={setRoleSearchQuery}
+                              filteredMembersForRole={filteredMembersForRole}
+                              onSelectUser={(id) => setRoleUser("video_editor", id, { isManual: true })}
+                              onResetSelf={() => removeRoleOverride("video_editor")}
+                            />
+                          )}
+
+                          {/* 🚀 运营行 */}
+                          {isOperatorExternal && (
+                            <RoleItemSelectorRow
+                              label="🚀 运营"
+                              roleKey="operator"
+                              selectedUserId={meta.operatorUserId}
+                              operatorMembers={operatorMembers}
+                              userId={userId}
+                              activeRoleDropdown={activeRoleDropdown}
+                              setActiveRoleDropdown={setActiveRoleDropdown}
+                              roleSearchQuery={roleSearchQuery}
+                              setRoleSearchQuery={setRoleSearchQuery}
+                              filteredMembersForRole={filteredMembersForRole}
+                              onSelectUser={(id) => setOperatorUser(id, { isManual: true })}
+                              onResetSelf={() => removeRoleOverride("operator")}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 模块三：已记配置 (纯留白隔离，增加充裕呼吸步长) */}
+                    <div className="space-y-2 pt-3">
+                      {!isMemoryExpanded ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[12.5px] text-zinc-700 font-semibold">已记配置：</span>
+                            <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-2 py-0.5 text-[11.5px] font-medium">
+                              {meta.topicTag}
+                            </span>
+                            <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-2 py-0.5 text-[11.5px] font-medium">
+                              {meta.videoForm}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsMemoryExpanded(true)}
+                            className="text-[12px] font-medium text-[#D97757] hover:text-[#C96442] transition-colors cursor-pointer"
+                          >
+                            修改
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 rounded-xl bg-white p-3 border border-zinc-200 shadow-2xs">
+                          <div className="space-y-2">
+                            <Label className="text-[12px] font-medium text-zinc-600">话题标签 *</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {(["干货", "复盘"] as const).map((tag) => (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
+                                  className={cn(
+                                    "h-8 rounded-lg border transition-all duration-150 text-[12px] font-medium cursor-pointer",
+                                    meta.topicTag === tag
+                                      ? "border-[#D97757] bg-[#D97757] text-white"
+                                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                                  )}
+                                >
+                                  {tag}
                                 </button>
                               ))}
                             </div>
                           </div>
-                        ) : (
-                          <span className="italic block py-1">输入标题或文案，系统将自动匹配选题库。</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
 
-                {meta.anomalyStatus === "abnormal" && (
-                  <div className="flex flex-col gap-4 rounded-xl border border-transparent bg-zinc-50 p-5">
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="platform_notice" className="text-[13px] font-medium text-zinc-600">平台通知 (选填)</Label>
-                      <Input
-                        id="platform_notice"
-                        value={meta.platformNotice || ""}
-                        onChange={(e) => updateMeta("platformNotice", e.target.value)}
-                        placeholder="若有平台处罚通知，请复制内容粘贴到此处"
-                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="appeal" className="text-[13px] font-medium text-zinc-600">申诉进展 (选填)</Label>
-                      <Input
-                        id="appeal"
-                        value={meta.appeal || ""}
-                        onChange={(e) => updateMeta("appeal", e.target.value)}
-                        placeholder="如果已申诉，记录当前申诉状态或结果"
-                        className="h-10 rounded-xl bg-white border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Topic tag & Video form (Memory layer) */}
-                <div className="rounded-lg border-t border-zinc-100 pt-4">
-                  {!isMemoryExpanded ? (
-                    <div className="flex items-center justify-between py-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] text-zinc-500 font-medium">已记配置：</span>
-                        <span className="bg-zinc-100 text-zinc-500 rounded-lg px-2 py-1 text-[13px]">
-                          {meta.topicTag}
-                        </span>
-                        <span className="bg-zinc-100 text-zinc-500 rounded-lg px-2 py-1 text-[13px]">
-                          {meta.videoForm}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setIsMemoryExpanded(true)}
-                        className="text-[13px] font-medium text-[#D97757] hover:text-[#C96442] transition-colors"
-                      >
-                        修改
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4 rounded-lg bg-zinc-50/50 p-4 border border-zinc-200/40">
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div ref={topicTagSectionRef} className="space-y-2 rounded-lg border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3" data-missing={hasAttemptedSubmit && issueSummary.topicTagMissing}>
-                          <Label className="text-[13px] font-medium text-zinc-500">话题标签 <span className="text-[#C9604D]">*</span></Label>
-                          <div
-                            role="group"
-                            aria-label="话题标签"
-                            aria-describedby={hasAttemptedSubmit && issueSummary.topicTagMissing ? "topic_tag_error" : undefined}
-                            className="grid grid-cols-2 gap-2"
-                          >
-                            {(["干货", "复盘"] as const).map((tag) => (
-                              <button
-                                key={tag}
-                                type="button"
-                                onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-                                className={cn(
-                                  "h-10 rounded-lg border transition-all duration-150 text-[13px] font-medium",
-                                  meta.topicTag === tag
-                                    ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
-                                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
-                                )}
-                              >
-                                {tag}
-                              </button>
-                            ))}
+                          <div className="space-y-2">
+                            <Label className="text-[12px] font-medium text-zinc-600">视频形式 *</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {(["出镜", "图文"] as const).map((form) => (
+                                <button
+                                  key={form}
+                                  type="button"
+                                  onClick={() => updateMeta("videoForm", form)}
+                                  className={cn(
+                                    "h-8 rounded-lg border transition-all duration-150 text-[12px] font-medium cursor-pointer",
+                                    meta.videoForm === form
+                                      ? "border-[#D97757] bg-[#D97757] text-white"
+                                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                                  )}
+                                >
+                                  {form}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          {hasAttemptedSubmit && issueSummary.topicTagMissing ? (
-                            <p id="topic_tag_error" role="alert" className="text-[12px] font-medium text-[#C9604D]">必填，仍未选择话题标签</p>
-                          ) : null}
-                        </div>
 
-                        <div className="space-y-2">
-                          <Label className="text-[13px] font-medium text-zinc-500">视频形式 <span className="text-[#C9604D]">*</span></Label>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(["出镜", "图文"] as const).map((form) => (
-                              <button
-                                key={form}
-                                type="button"
-                                onClick={() => updateMeta("videoForm", form)}
-                                className={cn(
-                                  "h-10 rounded-lg border transition-all duration-150 text-[13px] font-medium",
-                                  meta.videoForm === form
-                                    ? "border-[#D97757] bg-[#D97757] text-white hover:bg-[#C96442]"
-                                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
-                                )}
-                              >
-                                {form}
-                              </button>
-                            ))}
+                          <div className="flex justify-end pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setIsMemoryExpanded(false)}
+                              className="text-[11.5px] font-medium text-zinc-500 hover:text-zinc-700"
+                            >
+                              收起选项
+                            </button>
                           </div>
-                        </div>
-                      </div>
-                      {meta.topicTag && meta.videoForm && (
-                        <div className="flex justify-end pt-1">
-                          <button
-                            type="button"
-                            onClick={() => setIsMemoryExpanded(false)}
-                            className="text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors"
-                          >
-                            收起选项
-                          </button>
                         </div>
                       )}
                     </div>
-                  )}
-                </div>
 
-                {/* Publish & Upload time accordion (Default settings) */}
-                <div className="space-y-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
-                    className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus-visible:outline-none"
-                  >
-                    <ChevronDown className={cn("size-4 stroke-[1.5] transition-transform duration-150", isMoreSettingsExpanded && "rotate-180")} />
-                    {isMoreSettingsExpanded ? "收起更多设置" : "展开更多设置"}
-                  </button>
-                  
-                  <AnimatePresence initial={false}>
-                    {isMoreSettingsExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.15 }}
-                        className="grid gap-4 sm:grid-cols-2 pt-1"
-                      >
-                        <div className="space-y-1">
-                          <Label htmlFor="published_at" className="text-[13px] font-medium text-zinc-500">发布时间</Label>
+                    {/* 模块四：异常状态补充输入 */}
+                    {meta.anomalyStatus === "abnormal" && (
+                      <div className="flex flex-col gap-3 rounded-xl border border-amber-200/80 bg-amber-50/40 p-3.5">
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="platform_notice" className="text-[12px] font-medium text-zinc-600">平台通知 (选填)</Label>
                           <Input
-                            id="published_at"
-                            type="datetime-local"
-                            step={3600}
-                            value={meta.publishedAt}
-                            onChange={(event) => {
-                              const nextPublishedAt = event.target.value;
-                              const synced = syncPublishedAtAndText({
-                                nextPublishedAt,
-                                nextPublishedAtText: meta.publishedAtText,
-                                changedField: "published_at",
-                              });
-                              const nextBizDate = !isBackfillMode && !initialSummary ? getDatePartFromDateTimeLocal(nextPublishedAt) : null;
-                              setMeta((current) => ({
-                                ...current,
-                                bizDate: nextBizDate ?? current.bizDate,
-                                publishedAt: synced.publishedAt,
-                                publishedAtText: synced.publishedAtText,
-                              }));
-                            }}
-                            className="h-10 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-[background-color,border-color,box-shadow] duration-150"
+                            id="platform_notice"
+                            value={meta.platformNotice || ""}
+                            onChange={(e) => updateMeta("platformNotice", e.target.value)}
+                            placeholder="如处罚通知文案"
+                            className="h-8.5 rounded-lg bg-white border-zinc-200 text-[12px] text-zinc-700 focus:bg-white"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[13px] font-medium text-zinc-500">上传时间</Label>
-                          <div className="flex h-10 items-center rounded-xl border border-zinc-200 bg-zinc-100/70 px-3 text-[13px] text-zinc-500">
-                            {meta.uploadedAt || "--"}
-                          </div>
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="appeal" className="text-[12px] font-medium text-zinc-600">申诉进展 (选填)</Label>
+                          <Input
+                            id="appeal"
+                            value={meta.appeal || ""}
+                            onChange={(e) => updateMeta("appeal", e.target.value)}
+                            placeholder="如申诉处理中"
+                            className="h-8.5 rounded-lg bg-white border-zinc-200 text-[12px] text-zinc-700 focus:bg-white"
+                          />
                         </div>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
+
+                    {/* 模块五：展开更多设置 (Accordion) */}
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
+                        className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus-visible:outline-none cursor-pointer"
+                      >
+                        <ChevronDown className={cn("size-3.5 stroke-[1.5] transition-transform duration-150", isMoreSettingsExpanded && "rotate-180")} />
+                        {isMoreSettingsExpanded ? "收起更多设置" : "展开更多设置"}
+                      </button>
+                      
+                      <AnimatePresence initial={false}>
+                        {isMoreSettingsExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.15 }}
+                            className="space-y-3 pt-2"
+                          >
+                            <div className="space-y-1">
+                              <Label htmlFor="published_at" className="text-[12px] font-medium text-zinc-500">发布时间</Label>
+                              <Input
+                                id="published_at"
+                                type="datetime-local"
+                                step={3600}
+                                value={meta.publishedAt}
+                                onChange={(event) => {
+                                  const nextPublishedAt = event.target.value;
+                                  const synced = syncPublishedAtAndText({
+                                    nextPublishedAt,
+                                    nextPublishedAtText: meta.publishedAtText,
+                                    changedField: "published_at",
+                                  });
+                                  const nextBizDate = !isBackfillMode && !initialSummary ? getDatePartFromDateTimeLocal(nextPublishedAt) : null;
+                                  setMeta((current) => ({
+                                    ...current,
+                                    bizDate: nextBizDate ?? current.bizDate,
+                                    publishedAt: synced.publishedAt,
+                                    publishedAtText: synced.publishedAtText,
+                                  }));
+                                }}
+                                className="h-9 rounded-lg bg-zinc-100/70 border-transparent text-[12px] text-zinc-700 focus:bg-white focus:border-zinc-200 transition-all duration-150"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[12px] font-medium text-zinc-500">上传时间</Label>
+                              <div className="flex h-9 items-center rounded-lg border border-zinc-200/80 bg-zinc-100/60 px-3 text-[12px] text-zinc-500">
+                                {meta.uploadedAt || "--"}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2601,6 +2892,144 @@ function VideoStatusSegmented({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+interface RoleItemSelectorRowProps {
+  label: string;
+  roleKey: "script_author" | "video_editor" | "operator";
+  selectedUserId: string | null;
+  operatorMembers: OperatorMember[];
+  userId: string;
+  activeRoleDropdown: "script_author" | "video_editor" | "operator" | null;
+  setActiveRoleDropdown: (role: "script_author" | "video_editor" | "operator" | null) => void;
+  roleSearchQuery: string;
+  setRoleSearchQuery: (query: string) => void;
+  filteredMembersForRole: OperatorMember[];
+  onSelectUser: (id: string) => void;
+  onResetSelf: () => void;
+}
+
+function RoleItemSelectorRow({
+  label,
+  roleKey,
+  selectedUserId,
+  operatorMembers,
+  userId,
+  activeRoleDropdown,
+  setActiveRoleDropdown,
+  roleSearchQuery,
+  setRoleSearchQuery,
+  filteredMembersForRole,
+  onSelectUser,
+  onResetSelf,
+}: RoleItemSelectorRowProps) {
+  const isOpen = activeRoleDropdown === roleKey;
+  const currentMember = operatorMembers.find((m) => m.id === selectedUserId) || null;
+
+  return (
+    <div className="flex items-center justify-between gap-2 py-0.5">
+      {/* 左侧岗位 */}
+      <span className="text-[12px] font-medium text-zinc-600 shrink-0 select-none">
+        {label}
+      </span>
+
+      {/* 右侧人员下拉 + X 按钮 */}
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
+        <div className="relative max-w-[170px] min-w-[110px] flex-1">
+          <button
+            type="button"
+            onClick={() => {
+              setRoleSearchQuery("");
+              setActiveRoleDropdown(isOpen ? null : roleKey);
+            }}
+            className="flex h-7.5 w-full items-center justify-between rounded-lg bg-white border border-zinc-200/60 px-2.5 text-[11.5px] text-zinc-700 hover:border-zinc-300 focus:outline-none transition-colors shadow-2xs"
+          >
+            <span className="truncate font-medium">
+              {currentMember
+                ? `${currentMember.display_name || currentMember.name}${currentMember.id === userId ? " (我)" : ""}`
+                : "选择成员..."}
+            </span>
+            <ChevronDown className={cn("size-3 text-zinc-400 shrink-0 ml-1 transition-transform duration-150", isOpen && "rotate-180")} />
+          </button>
+
+          <AnimatePresence>
+            {isOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setActiveRoleDropdown(null)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 top-8.5 z-30 w-48 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg space-y-1"
+                >
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2 size-3 text-zinc-400" />
+                    <input
+                      type="text"
+                      value={roleSearchQuery}
+                      onChange={(e) => setRoleSearchQuery(e.target.value)}
+                      placeholder="搜索姓名/部门..."
+                      className="h-7 w-full rounded-md bg-zinc-100/80 pl-6 pr-2 text-[11px] text-zinc-700 outline-none focus:bg-white focus:ring-1 focus:ring-zinc-300"
+                    />
+                  </div>
+
+                  <div className="max-h-36 overflow-y-auto space-y-0.5 pt-0.5 custom-scrollbar">
+                    {filteredMembersForRole.length === 0 ? (
+                      <div className="py-2 text-center text-[11px] text-zinc-400">未找到匹配成员</div>
+                    ) : (
+                      filteredMembersForRole.map((member) => {
+                        const isSelected = selectedUserId === member.id;
+                        const isSelf = member.id === userId;
+                        return (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => {
+                              onSelectUser(member.id);
+                              setActiveRoleDropdown(null);
+                            }}
+                            className={cn(
+                              "flex h-7 w-full items-center justify-between rounded-md px-2 text-left text-[11px] transition-colors cursor-pointer",
+                              isSelected
+                                ? "bg-[#5F82A8]/10 text-[#5F82A8] font-medium"
+                                : "text-zinc-700 hover:bg-zinc-100"
+                            )}
+                          >
+                            <div className="flex items-center gap-1 truncate">
+                              <span className="truncate">{member.display_name || member.name}</span>
+                              {isSelf && <span className="text-[9px] text-[#5F82A8] font-semibold">(我)</span>}
+                              {member.department && (
+                                <span className="text-[9px] text-zinc-400 truncate">· {member.department}</span>
+                              )}
+                            </div>
+                            {isSelected && <Check className="size-3 text-[#5F82A8] shrink-0" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 取消外协按钮 (微型 X) */}
+        <button
+          type="button"
+          onClick={onResetSelf}
+          className="flex size-6 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 transition-colors cursor-pointer shrink-0"
+          title="取消指派，恢复为达人我自己"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -659,8 +659,27 @@ export async function loadSubTopicDetail(supabase: TopicSupabase, id: string, sc
   if (error) return { ok: false, status: 500, message: error.message };
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
 
+  const { data: claims, error: claimsError } = await supabase
+    .from("sub_topic_claims")
+    .select("user_id, status, claimed_at")
+    .eq("sub_topic_id", id)
+    .in("status", ["candidate", "scripting"])
+    .order("claimed_at", { ascending: false });
+  if (claimsError) return { ok: false, status: 500, message: claimsError.message };
+
+  const claimant = (claims ?? []).sort((left, right) => {
+    const statusOrder = Number(right.status === "scripting") - Number(left.status === "scripting");
+    return statusOrder || 0;
+  })[0] as { user_id?: string | null } | undefined;
+
   const works = await loadSubTopicWorks(supabase, id, scope, { sort: "best", page: 1, pageSize: 20 });
-  return { ok: true, value: { subTopic, works: works.ok ? works.value : null } };
+  return {
+    ok: true,
+    value: {
+      subTopic: { ...subTopic, claimant_user_id: claimant?.user_id ?? null },
+      works: works.ok ? works.value : null,
+    },
+  };
 }
 
 export async function loadTopicPool(
