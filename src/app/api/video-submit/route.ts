@@ -69,7 +69,7 @@ function extractJsonFromContent(content: string): string | null {
   return content.slice(start, end + 1);
 }
 
-async function rollbackSafely(actions: RollbackAction[]) {
+export async function rollbackSafely(actions: RollbackAction[]) {
   const errors: Error[] = [];
   for (const action of [...actions].reverse()) {
     try {
@@ -78,7 +78,9 @@ async function rollbackSafely(actions: RollbackAction[]) {
       errors.push(error instanceof Error ? error : new Error("回滚失败"));
     }
   }
-  if (errors.length) throw new Error(`提交失败后的回滚未完成：${errors.map((error) => error.message).join("；")}`);
+  if (!errors.length) return null;
+
+  return new Error(`提交失败后的回滚未完成：${errors.map((error) => error.message).join("；")}`);
 }
 
 export function assertVideoSubmissionRollbackResult(data: unknown, error: { message?: string } | null) {
