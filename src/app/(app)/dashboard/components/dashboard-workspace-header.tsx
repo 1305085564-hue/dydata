@@ -47,7 +47,6 @@ export function DashboardWorkspaceHeader({
   const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
 
   const utilityActions = [
-    { key: "data-view", label: "数据查看", icon: Eye },
     { key: "history", label: "历史记录", icon: History },
   ];
 
@@ -138,7 +137,7 @@ export function DashboardWorkspaceHeader({
             onClick={() => setIsCalendarOpen((prev) => !prev)}
             aria-expanded={isCalendarOpen}
             className={cn(
-              "group inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-[13px] font-medium tracking-tight shadow-xs transition-all duration-200 outline-none select-none",
+              "group inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-[13px] font-medium tracking-tight shadow-xs transition-all duration-200 outline-none select-none",
               isCalendarOpen
                 ? "border-[#5F82A8] bg-white text-zinc-950 ring-2 ring-[#5F82A8]/20 font-semibold scale-[1.02]"
                 : "border-zinc-200/80 bg-white/90 text-zinc-700 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 active:scale-95"
@@ -160,10 +159,10 @@ export function DashboardWorkspaceHeader({
             />
           </button>
 
-          {/* 高阶精致日历 Popover 浮层 */}
+          {/* 高阶精致日历 Popover 浮层（拓宽为 w-[330px]，舒展大方） */}
           {isCalendarOpen && (
             <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-              <div className="w-[280px] rounded-2xl border border-zinc-200/90 bg-white/98 p-1.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
+              <div className="w-[330px] rounded-2xl border border-zinc-200/90 bg-white/98 p-2.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
                 <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}
