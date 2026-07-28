@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Loader2, Search, Check, X } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Search, Check, X, FileText, Scissors, Rocket } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -507,16 +507,18 @@ export function VideoSubmitForm({
   const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
 
   // 岗位外协与下拉相关状态
-  const [addRolePopoverOpen, setAddRolePopoverOpen] = useState(false);
   const [activeRoleDropdown, setActiveRoleDropdown] = useState<"script_author" | "video_editor" | "operator" | null>(null);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
+  const [hiddenRoles, setHiddenRoles] = useState<Set<SubmissionAssigneeRole>>(new Set());
 
   const isScriptAuthorExternal = Boolean(meta.scriptAuthorUserId && meta.scriptAuthorUserId !== userId);
   const isVideoEditorExternal = Boolean(meta.videoEditorUserId && meta.videoEditorUserId !== userId);
   const isOperatorExternal = Boolean(meta.operatorUserId && meta.operatorUserId !== userId);
-  const hasAnyExternalRole = isScriptAuthorExternal || isVideoEditorExternal || isOperatorExternal;
 
-
+  const isScriptAuthorVisible = isScriptAuthorExternal || !hiddenRoles.has("script_author");
+  const isVideoEditorVisible = isVideoEditorExternal || !hiddenRoles.has("video_editor");
+  const isOperatorVisible = isOperatorExternal || !hiddenRoles.has("operator");
+  const hasAnyVisibleRole = isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
 
   const filteredMembersForRole = useMemo(() => {
     if (!roleSearchQuery.trim()) return operatorMembers;
@@ -528,8 +530,6 @@ export function VideoSubmitForm({
         (m.department && m.department.toLowerCase().includes(q))
     );
   }, [operatorMembers, roleSearchQuery]);
-
-
 
   useEffect(() => {
     slotsRef.current = slots;
@@ -555,16 +555,29 @@ export function VideoSubmitForm({
   const removeRoleOverride = useCallback((role: SubmissionAssigneeRole) => {
     setMeta((current) => {
       const next = removeSubmissionRoleOverride({
-      userId,
-      role,
-      assignments: current,
-      overrides: current.roleOverrides,
+        userId,
+        role,
+        assignments: current,
+        overrides: current.roleOverrides,
       });
       return { ...current, ...next.assignments, roleOverrides: next.overrides };
     });
     if (role === "script_author") setHasManualScriptAuthorSelection(false);
     if (role === "operator") setHasManualOperatorSelection(false);
   }, [userId]);
+
+  const hideRole = useCallback((role: SubmissionAssigneeRole) => {
+    removeRoleOverride(role);
+    setHiddenRoles((prev) => {
+      const next = new Set(prev);
+      next.add(role);
+      return next;
+    });
+  }, [removeRoleOverride]);
+
+  const showAllRoles = useCallback(() => {
+    setHiddenRoles(new Set());
+  }, []);
 
   const setOperatorToSelf = useCallback(() => {
     removeRoleOverride("operator");
@@ -1866,7 +1879,7 @@ export function VideoSubmitForm({
               {/* 2. 视频信息及基础元数据表单（与上卡片 100% 物理齐平对齐） */}
               <div
                 ref={metaSectionRef}
-                className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-7"
+                className="relative rounded-xl border border-zinc-200 bg-white p-7"
               >
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 items-stretch">
                   {/* 【左栏：内容创作区 (1fr 动态自适应高度，与右侧虚线框永远底部齐平)】 */}
@@ -1935,95 +1948,28 @@ export function VideoSubmitForm({
                           团队分工
                         </Label>
 
-                        <div className="flex items-center gap-1.5 relative">
+                        {!hasAnyVisibleRole ? (
                           <button
                             type="button"
-                            onClick={() => setAddRolePopoverOpen(!addRolePopoverOpen)}
+                            onClick={showAllRoles}
                             className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5F82A8] hover:underline transition-all duration-150 cursor-pointer"
                           >
                             <Plus className="size-3 stroke-[2.5]" />
-                            <span>+ 协作成员</span>
+                            <span>+ 协同指派</span>
                           </button>
-
-                          <AnimatePresence>
-                            {addRolePopoverOpen && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-20"
-                                  onClick={() => setAddRolePopoverOpen(false)}
-                                />
-                                <motion.div
-                                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
-                                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                                  transition={{ duration: 0.12 }}
-                                  className="absolute right-0 top-6 z-30 w-44 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-lg space-y-0.5"
-                                >
-                                  <div className="px-2 py-1 text-[10.5px] font-semibold text-zinc-400">选择指派外协岗位：</div>
-                                  
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const other = operatorMembers.find((m) => m.id !== userId);
-                                      setRoleUser("script_author", other?.id || userId, { isManual: true });
-                                      setAddRolePopoverOpen(false);
-                                    }}
-                                    className={cn(
-                                      "flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[12px] transition-colors cursor-pointer",
-                                      isScriptAuthorExternal ? "bg-zinc-100 text-zinc-400" : "text-zinc-700 hover:bg-zinc-100"
-                                    )}
-                                  >
-                                    <span>✍️ 文案</span>
-                                    {isScriptAuthorExternal ? <span className="text-[10px] text-zinc-400">已暴露</span> : <Plus className="size-3 text-[#5F82A8]" />}
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const other = operatorMembers.find((m) => m.id !== userId);
-                                      setRoleUser("video_editor", other?.id || userId, { isManual: true });
-                                      setAddRolePopoverOpen(false);
-                                    }}
-                                    className={cn(
-                                      "flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[12px] transition-colors cursor-pointer",
-                                      isVideoEditorExternal ? "bg-zinc-100 text-zinc-400" : "text-zinc-700 hover:bg-zinc-100"
-                                    )}
-                                  >
-                                    <span>✂️ 剪辑</span>
-                                    {isVideoEditorExternal ? <span className="text-[10px] text-zinc-400">已暴露</span> : <Plus className="size-3 text-[#5F82A8]" />}
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const other = operatorMembers.find((m) => m.id !== userId);
-                                      setRoleUser("operator", other?.id || userId, { isManual: true });
-                                      setAddRolePopoverOpen(false);
-                                    }}
-                                    className={cn(
-                                      "flex h-8 w-full items-center justify-between rounded-lg px-2 text-left text-[12px] transition-colors cursor-pointer",
-                                      isOperatorExternal ? "bg-zinc-100 text-zinc-400" : "text-zinc-700 hover:bg-zinc-100"
-                                    )}
-                                  >
-                                    <span>🚀 运营</span>
-                                    {isOperatorExternal ? <span className="text-[10px] text-zinc-400">已暴露</span> : <Plus className="size-3 text-[#5F82A8]" />}
-                                  </button>
-                                </motion.div>
-                              </>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                        ) : null}
                       </div>
 
-                      {!hasAnyExternalRole ? (
+                      {!hasAnyVisibleRole ? (
                         <div className="text-[11.5px] text-zinc-400 py-0.5">
                           全由达人我自己包办 (文案 / 剪辑 / 运营全是我)
                         </div>
                       ) : (
                         <div className="space-y-2 pt-1 pb-1">
-                          {isScriptAuthorExternal && (
+                          {isScriptAuthorVisible && (
                             <RoleItemSelectorRow
-                              label="✍️ 文案"
+                              label="文案"
+                              icon={<FileText className="size-3.5 text-zinc-500 stroke-[1.75]" />}
                               roleKey="script_author"
                               selectedUserId={meta.scriptAuthorUserId}
                               operatorMembers={operatorMembers}
@@ -2033,15 +1979,19 @@ export function VideoSubmitForm({
                               roleSearchQuery={roleSearchQuery}
                               setRoleSearchQuery={setRoleSearchQuery}
                               filteredMembersForRole={filteredMembersForRole}
-                              onSelectUser={(id) => setScriptAuthorUser(id, { isManual: true })}
-                              onResetSelf={() => removeRoleOverride("script_author")}
+                              onSelectUser={(id) => {
+                                setScriptAuthorUser(id, { isManual: true });
+                                if (id === userId) hideRole("script_author");
+                              }}
+                              onResetSelf={() => hideRole("script_author")}
                             />
                           )}
 
-                          {/* ✂️ 剪辑行 */}
-                          {isVideoEditorExternal && (
+                          {/* 剪辑行 */}
+                          {isVideoEditorVisible && (
                             <RoleItemSelectorRow
-                              label="✂️ 剪辑"
+                              label="剪辑"
+                              icon={<Scissors className="size-3.5 text-zinc-500 stroke-[1.75]" />}
                               roleKey="video_editor"
                               selectedUserId={meta.videoEditorUserId}
                               operatorMembers={operatorMembers}
@@ -2051,15 +2001,19 @@ export function VideoSubmitForm({
                               roleSearchQuery={roleSearchQuery}
                               setRoleSearchQuery={setRoleSearchQuery}
                               filteredMembersForRole={filteredMembersForRole}
-                              onSelectUser={(id) => setRoleUser("video_editor", id, { isManual: true })}
-                              onResetSelf={() => removeRoleOverride("video_editor")}
+                              onSelectUser={(id) => {
+                                setRoleUser("video_editor", id, { isManual: true });
+                                if (id === userId) hideRole("video_editor");
+                              }}
+                              onResetSelf={() => hideRole("video_editor")}
                             />
                           )}
 
-                          {/* 🚀 运营行 */}
-                          {isOperatorExternal && (
+                          {/* 运营行 */}
+                          {isOperatorVisible && (
                             <RoleItemSelectorRow
-                              label="🚀 运营"
+                              label="运营"
+                              icon={<Rocket className="size-3.5 text-zinc-500 stroke-[1.75]" />}
                               roleKey="operator"
                               selectedUserId={meta.operatorUserId}
                               operatorMembers={operatorMembers}
@@ -2069,8 +2023,11 @@ export function VideoSubmitForm({
                               roleSearchQuery={roleSearchQuery}
                               setRoleSearchQuery={setRoleSearchQuery}
                               filteredMembersForRole={filteredMembersForRole}
-                              onSelectUser={(id) => setOperatorUser(id, { isManual: true })}
-                              onResetSelf={() => removeRoleOverride("operator")}
+                              onSelectUser={(id) => {
+                                setOperatorUser(id, { isManual: true });
+                                if (id === userId) hideRole("operator");
+                              }}
+                              onResetSelf={() => hideRole("operator")}
                             />
                           )}
                         </div>
@@ -2099,7 +2056,7 @@ export function VideoSubmitForm({
                           </button>
                         </div>
                       ) : (
-                        <div className="space-y-3 rounded-xl bg-white p-3 border border-zinc-200 shadow-2xs">
+                        <div className="space-y-3 rounded-xl bg-zinc-100/50 p-3 border border-zinc-200/50">
                           <div className="space-y-2">
                             <Label className="text-[12px] font-medium text-zinc-600">话题标签 *</Label>
                             <div className="grid grid-cols-2 gap-2">
@@ -2112,7 +2069,7 @@ export function VideoSubmitForm({
                                     "h-8 rounded-lg border transition-all duration-150 text-[12px] font-medium cursor-pointer",
                                     meta.topicTag === tag
                                       ? "border-[#D97757] bg-[#D97757] text-white"
-                                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                                      : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60"
                                   )}
                                 >
                                   {tag}
@@ -2133,7 +2090,7 @@ export function VideoSubmitForm({
                                     "h-8 rounded-lg border transition-all duration-150 text-[12px] font-medium cursor-pointer",
                                     meta.videoForm === form
                                       ? "border-[#D97757] bg-[#D97757] text-white"
-                                      : "border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50"
+                                      : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60"
                                   )}
                                 >
                                   {form}
@@ -2376,7 +2333,9 @@ function VideoStatusSegmented({
 
 interface RoleItemSelectorRowProps {
   label: string;
+  icon?: React.ReactNode;
   roleKey: "script_author" | "video_editor" | "operator";
+  placement?: "bottom" | "top";
   selectedUserId: string | null;
   operatorMembers: OperatorMember[];
   userId: string;
@@ -2391,7 +2350,9 @@ interface RoleItemSelectorRowProps {
 
 function RoleItemSelectorRow({
   label,
+  icon,
   roleKey,
+  placement = roleKey === "operator" ? "top" : "bottom",
   selectedUserId,
   operatorMembers,
   userId,
@@ -2405,13 +2366,15 @@ function RoleItemSelectorRow({
 }: RoleItemSelectorRowProps) {
   const isOpen = activeRoleDropdown === roleKey;
   const currentMember = operatorMembers.find((m) => m.id === selectedUserId) || null;
+  const isUpward = placement === "top";
 
   return (
     <div className="flex items-center justify-between gap-2 py-0.5">
       {/* 左侧岗位 */}
-      <span className="text-[12px] font-medium text-zinc-600 shrink-0 select-none">
-        {label}
-      </span>
+      <div className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-600 shrink-0 select-none">
+        {icon}
+        <span>{label}</span>
+      </div>
 
       {/* 右侧人员下拉 + X 按钮 */}
       <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
@@ -2422,7 +2385,7 @@ function RoleItemSelectorRow({
               setRoleSearchQuery("");
               setActiveRoleDropdown(isOpen ? null : roleKey);
             }}
-            className="flex h-7.5 w-full items-center justify-between rounded-lg bg-white border border-zinc-200/60 px-2.5 text-[11.5px] text-zinc-700 hover:border-zinc-300 focus:outline-none transition-colors shadow-2xs"
+            className="flex h-7.5 w-full items-center justify-between rounded-lg bg-zinc-100/90 hover:bg-zinc-200/60 border border-zinc-200/40 px-2.5 text-[11.5px] text-zinc-700 focus:outline-none transition-colors"
           >
             <span className="truncate font-medium">
               {currentMember
@@ -2440,11 +2403,14 @@ function RoleItemSelectorRow({
                   onClick={() => setActiveRoleDropdown(null)}
                 />
                 <motion.div
-                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  initial={{ opacity: 0, y: isUpward ? 4 : -4, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  exit={{ opacity: 0, y: isUpward ? 4 : -4, scale: 0.98 }}
                   transition={{ duration: 0.12 }}
-                  className="absolute right-0 top-8.5 z-30 w-48 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg space-y-1"
+                  className={cn(
+                    "absolute right-0 z-30 w-48 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg space-y-1",
+                    isUpward ? "bottom-8.5 mb-0.5" : "top-8.5"
+                  )}
                 >
                   <div className="relative">
                     <Search className="absolute left-2 top-2 size-3 text-zinc-400" />
@@ -2457,7 +2423,7 @@ function RoleItemSelectorRow({
                     />
                   </div>
 
-                  <div className="max-h-36 overflow-y-auto space-y-0.5 pt-0.5 custom-scrollbar">
+                  <div className="max-h-52 overflow-y-auto space-y-0.5 pt-0.5 custom-scrollbar">
                     {filteredMembersForRole.length === 0 ? (
                       <div className="py-2 text-center text-[11px] text-zinc-400">未找到匹配成员</div>
                     ) : (
@@ -2498,12 +2464,12 @@ function RoleItemSelectorRow({
           </AnimatePresence>
         </div>
 
-        {/* 取消外协按钮 (微型 X) */}
+        {/* 取消外协按钮 (微型 X，点击恢复为我自己并隐去) */}
         <button
           type="button"
           onClick={onResetSelf}
           className="flex size-6 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 transition-colors cursor-pointer shrink-0"
-          title="取消指派，恢复为达人我自己"
+          title="设为达人我自己并隐藏"
         >
           <X className="size-3.5" />
         </button>
