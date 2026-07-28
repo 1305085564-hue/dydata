@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Lock, Loader2, Search, Check, X } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Loader2, Search, Check, X } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
-import { triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,13 +58,8 @@ import {
   addRoleOverride as addSubmissionRoleOverride,
   normalizeOptionalText,
   removeRoleOverride as removeSubmissionRoleOverride,
-  resolveDraftManualTopicState,
-  resolveDraftTopicId,
-  resolveScriptAuthorUserIdForTopic,
   setOperatorToSelf as resolveSelfOperatorUserId,
   setOperatorUser as resolveSelectedOperatorUserId,
-  sanitizeTopicSearchKeyword,
-  shouldAutoBindNewTopic,
   shouldAutoRedirectToGrowthAfterSubmit,
   type SubmissionAssigneeRole,
 } from "./video-submit-form-state";
@@ -158,13 +152,6 @@ type ScreenshotUploadResponse = {
   error?: string;
 };
 
-export interface TopicSuggestion {
-  id: string;
-  title: string;
-  hook?: string;
-  topics?: { name: string }[] | { name: string } | null;
-}
-
 type OperatorMember = {
   id: string;
   name: string;
@@ -173,12 +160,6 @@ type OperatorMember = {
   team_id: string | null;
   group_id: string | null;
 };
-
-function getTopicName(topics: TopicSuggestion["topics"]) {
-  if (!topics) return null;
-  if (Array.isArray(topics)) return topics[0]?.name ?? null;
-  return topics.name ?? null;
-}
 
 type FormMetaState = {
   videoUrl: string;
@@ -195,7 +176,6 @@ type FormMetaState = {
   punishType?: string;
   platformNotice?: string;
   appeal?: string;
-  topicId?: string | null;
   scriptAuthorUserId: string | null;
   videoEditorUserId: string | null;
   operatorUserId: string | null;
@@ -247,7 +227,6 @@ function createInitialMeta(today: string, userId: string): FormMetaState {
     contentKeywords: [],
     platformNotice: "",
     appeal: "",
-    topicId: null,
     scriptAuthorUserId: userId,
     videoEditorUserId: userId,
     operatorUserId: userId,
@@ -523,32 +502,9 @@ export function VideoSubmitForm({
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
 
-  // 关联选题相关状态
-  const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [isManuallySet, setIsManuallySet] = useState(false);
   const [hasManualScriptAuthorSelection, setHasManualScriptAuthorSelection] = useState(false);
   const [hasManualOperatorSelection, setHasManualOperatorSelection] = useState(false);
   const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
-  const [urlLocked, setUrlLocked] = useState(false);
-  const [selectedTopicName, setSelectedTopicName] = useState<string>("");
-  const [selectedTopicCategory, setSelectedTopicCategory] = useState<string>("");
-  const [topicNameError, setTopicNameError] = useState<"not_found" | "load_failed" | null>(null);
-  const [topicNameRetrySeq, setTopicNameRetrySeq] = useState(0);
-  const [suggestFailed, setSuggestFailed] = useState(false);
-  const [suggestRetrySeq, setSuggestRetrySeq] = useState(0);
-  const urlLockedRef = useRef(urlLocked);
-  const isManuallySetRef = useRef(isManuallySet);
-  const hasManualScriptAuthorSelectionRef = useRef(hasManualScriptAuthorSelection);
-  const topicIdRef = useRef<FormMetaState["topicId"]>(null);
-  const suggestSeqRef = useRef(0);
-
-  // 搜索相关状态（“换一个” Dialog）
-  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<TopicSuggestion[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState(false);
 
   // 岗位外协与下拉相关状态
   const [addRolePopoverOpen, setAddRolePopoverOpen] = useState(false);
@@ -574,13 +530,6 @@ export function VideoSubmitForm({
   }, [operatorMembers, roleSearchQuery]);
 
 
-
-  useEffect(() => {
-    urlLockedRef.current = urlLocked;
-    isManuallySetRef.current = isManuallySet;
-    hasManualScriptAuthorSelectionRef.current = hasManualScriptAuthorSelection;
-    topicIdRef.current = meta.topicId;
-  }, [urlLocked, isManuallySet, hasManualScriptAuthorSelection, meta.topicId]);
 
   useEffect(() => {
     slotsRef.current = slots;
@@ -653,214 +602,6 @@ export function VideoSubmitForm({
     };
   }, []);
 
-  // 1. URL 锁定逻辑
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      const urlTopicId = searchParams.get("topicId") || searchParams.get("topic_id");
-      if (urlTopicId) {
-        topicIdRef.current = urlTopicId;
-        urlLockedRef.current = true;
-        isManuallySetRef.current = true;
-        updateMeta("topicId", urlTopicId);
-        setUrlLocked(true);
-        setIsManuallySet(true);
-      }
-    }
-  }, []);
-
-  // 2. 根据选中的 topicId 获取其详细名称
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchTopicName = async () => {
-      setSelectedTopicName("");
-      setSelectedTopicCategory("");
-      setTopicNameError(null);
-
-      if (!meta.topicId) {
-        return;
-      }
-      try {
-        const response = await fetch(`/api/topics/sub-topics/${encodeURIComponent(meta.topicId)}`);
-        if (cancelled) return;
-        if (!response.ok) {
-          setTopicNameError(response.status === 404 ? "not_found" : "load_failed");
-          return;
-        }
-        const payload = await response.json() as {
-          subTopic?: {
-            title?: string;
-            topics?: TopicSuggestion["topics"];
-            claimant_user_id?: string | null;
-          };
-        };
-        const data = payload.subTopic;
-        if (!data?.title) {
-          setTopicNameError("not_found");
-          return;
-        }
-        setSelectedTopicName(data.title);
-        setSelectedTopicCategory(getTopicName(data.topics) || "常规母题");
-        const scriptAuthorUserId = resolveScriptAuthorUserIdForTopic({
-          currentScriptAuthorUserId: meta.scriptAuthorUserId,
-          claimantUserId: data.claimant_user_id,
-          currentUserId: userId,
-          hasManualScriptAuthorSelection: hasManualScriptAuthorSelectionRef.current,
-        });
-        if (scriptAuthorUserId && scriptAuthorUserId !== meta.scriptAuthorUserId) {
-          setScriptAuthorUser(scriptAuthorUserId, { isManual: false });
-        }
-      } catch (err) {
-        if (cancelled) return;
-        console.error("获取选题名称失败:", err);
-        setTopicNameError("load_failed");
-      }
-    };
-    void fetchTopicName();
-    return () => {
-      cancelled = true;
-    };
-  }, [meta.topicId, meta.scriptAuthorUserId, topicNameRetrySeq, setScriptAuthorUser, userId]);
-
-  // 3. 监听新建选题事件：自动绑定最新创建的选题
-  useEffect(() => {
-    const handleNewTopic = async () => {
-      if (!userId) return;
-      if (
-        !shouldAutoBindNewTopic({
-          urlLocked: urlLockedRef.current,
-          isManuallySet: isManuallySetRef.current,
-          topicId: topicIdRef.current,
-        })
-      ) {
-        return;
-      }
-      try {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("sub_topics")
-          .select("id, title, topics(name)")
-          .eq("created_by", userId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (data) {
-          updateMeta("topicId", data.id);
-          topicIdRef.current = data.id;
-          isManuallySetRef.current = true;
-          setIsManuallySet(true);
-          feedbackToast.success(`已自动关联新创建的选题：“${data.title}”`);
-        }
-      } catch (err) {
-        console.error("绑定新选题失败:", err);
-      }
-    };
-    window.addEventListener("refresh-topics", handleNewTopic);
-    return () => window.removeEventListener("refresh-topics", handleNewTopic);
-  }, [userId]);
-
-  // 4. 防抖推荐逻辑
-  useEffect(() => {
-    suggestSeqRef.current += 1;
-    if (urlLocked || isManuallySet) {
-      setLoadingSuggestions(false);
-      return;
-    }
-    if (!meta.videoTitle.trim() && !meta.content.trim()) {
-      setSuggestions([]);
-      setSuggestFailed(false);
-      setLoadingSuggestions(false);
-      updateMeta("topicId", null);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      const seq = ++suggestSeqRef.current;
-      setLoadingSuggestions(true);
-      setSuggestFailed(false);
-      try {
-        const params = new URLSearchParams();
-        params.append("title", meta.videoTitle.trim());
-        params.append("content", meta.content.trim());
-        const res = await fetch(`/api/topics/sub-topics/suggest?${params.toString()}`);
-        if (!res.ok) {
-          throw new Error("suggest request failed");
-        }
-        const data = await res.json();
-        if (seq !== suggestSeqRef.current) return;
-        setSuggestions(data || []);
-        // 注意：按 item 2 规格，“给候选不预选”，绝不自动为用户写 topicId，待用户手动点击候选按钮后方才绑定。
-      } catch (err) {
-        if (seq !== suggestSeqRef.current) return;
-        console.error("推荐获取失败:", err);
-        setSuggestions([]);
-        setSuggestFailed(true);
-      } finally {
-        if (seq === suggestSeqRef.current) {
-          setLoadingSuggestions(false);
-        }
-      }
-    }, 450);
-
-    return () => clearTimeout(timer);
-  }, [meta.videoTitle, meta.content, urlLocked, isManuallySet, suggestRetrySeq]);
-
-  // 5. 换一个：子题搜索逻辑
-  useEffect(() => {
-    if (!searchDialogOpen) return;
-    let cancelled = false;
-    setSearching(true);
-    setSearchError(false);
-    const delayDebounce = setTimeout(async () => {
-      setSearching(true);
-      setSearchError(false);
-      try {
-        const supabase = createClient();
-        let query = supabase
-          .from("sub_topics")
-          .select("id, title, topics(name)")
-          .order("created_at", { ascending: false })
-          .limit(10);
-        
-        const keyword = sanitizeTopicSearchKeyword(searchQuery);
-        if (keyword) {
-          query = query.or(`title.ilike.%${keyword}%,hook.ilike.%${keyword}%`);
-        }
-        const { data, error } = await query;
-        if (cancelled) return;
-        if (error) {
-          setSearchResults([]);
-          setSearchError(true);
-          return;
-        }
-        if (data) {
-          setSearchResults(
-            data.map((item) => ({
-              id: item.id,
-              title: item.title,
-              topics: item.topics,
-            }))
-          );
-        }
-      } catch (err) {
-        if (cancelled) return;
-        console.error("搜索选题失败:", err);
-        setSearchResults([]);
-        setSearchError(true);
-      } finally {
-        if (!cancelled) {
-          setSearching(false);
-        }
-      }
-    }, 300);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(delayDebounce);
-    };
-  }, [searchQuery, searchDialogOpen]);
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
   const isBackfillMode = mode === "backfill";
@@ -936,7 +677,6 @@ export function VideoSubmitForm({
     slots: Record<SubmissionSlotRole, SlotViewState>;
     scriptText: string;
     keywordInput: string;
-    isManuallySet?: boolean;
     hasManualScriptAuthorSelection?: boolean;
     hasManualOperatorSelection?: boolean;
   };
@@ -952,17 +692,16 @@ export function VideoSubmitForm({
       },
       scriptText,
       keywordInput,
-      isManuallySet,
       hasManualScriptAuthorSelection,
       hasManualOperatorSelection,
     }),
-    [meta, fields, slots, scriptText, keywordInput, isManuallySet, hasManualScriptAuthorSelection, hasManualOperatorSelection]
+    [meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection]
   );
 
   const { hasDraft, restoreDraft, clearDraft, lastSavedAt } = useFormDraft<DraftData>(
     draftKey,
     draftData,
-    [meta, fields, slots, scriptText, keywordInput, isManuallySet, hasManualScriptAuthorSelection, hasManualOperatorSelection],
+    [meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection],
     { isEmpty: isVideoSubmitDraftEmpty }
   );
 
@@ -972,30 +711,13 @@ export function VideoSubmitForm({
     const draft = restoreDraft();
     if (!draft) return;
 
-    setMeta((current) => {
-      const nextTopicId = resolveDraftTopicId({
-        urlLocked: urlLockedRef.current,
-        currentTopicId: current.topicId,
-        draftTopicId: draft.meta.topicId,
-      });
-      topicIdRef.current = nextTopicId;
-      return {
-        ...draft.meta,
-        topicId: nextTopicId,
-        scriptAuthorUserId: draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
-        videoEditorUserId: draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
-        operatorUserId: draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
-        roleOverrides: draft.meta.roleOverrides ?? [],
-      };
+    setMeta({
+      ...draft.meta,
+      scriptAuthorUserId: draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
+      videoEditorUserId: draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
+      operatorUserId: draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+      roleOverrides: draft.meta.roleOverrides ?? [],
     });
-    setIsManuallySet((current) =>
-      resolveDraftManualTopicState({
-        urlLocked: urlLockedRef.current,
-        currentIsManuallySet: current,
-        draftIsManuallySet: draft.isManuallySet,
-        draftTopicId: draft.meta.topicId,
-      })
-    );
     setHasManualScriptAuthorSelection(draft.hasManualScriptAuthorSelection ?? false);
     setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
     setFields(draft.fields);
@@ -1087,14 +809,7 @@ export function VideoSubmitForm({
       nextMeta.uploadedAt = initialSummary.uploadedAt ?? nextMeta.uploadedAt;
     }
 
-    setMeta((current) => {
-      const nextTopicId = urlLockedRef.current ? current.topicId : nextMeta.topicId;
-      topicIdRef.current = nextTopicId;
-      return {
-        ...nextMeta,
-        topicId: nextTopicId,
-      };
-    });
+    setMeta(nextMeta);
     setFields(createEditableFields());
     setSlots(createEditableSlots());
     setIsSubmitted(false);
@@ -1136,9 +851,6 @@ export function VideoSubmitForm({
         : "提交今日数据";
 
   function updateMeta<Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) {
-    if (key === "topicId") {
-      topicIdRef.current = value as FormMetaState["topicId"];
-    }
     setMeta((current) => ({ ...current, [key]: value }));
   }
 
@@ -1603,7 +1315,7 @@ export function VideoSubmitForm({
           appeal: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.appeal ?? "") : undefined,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
-          topic_id: meta.topicId || null,
+          topic_id: null,
           script_author_user_id: meta.scriptAuthorUserId,
           video_editor_user_id: meta.videoEditorUserId,
           operator_user_id: meta.operatorUserId,
@@ -2214,154 +1926,9 @@ export function VideoSubmitForm({
                     </div>
                   </div>
 
-                  {/* 【右栏：选题与属性配置区 (280px 固定物理宽度，与上卡片对齐)】 */}
+                  {/* 【右栏：属性配置区 (280px 固定物理宽度，与上卡片对齐)】 */}
                   <div className="w-full md:w-[280px] shrink-0 rounded-xl border border-dashed border-zinc-200/90 bg-zinc-50/40 p-3.5 space-y-3.5 flex flex-col justify-between">
-                    {/* 模块一：关联选题库 */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-[13px] font-semibold text-zinc-700 select-none">
-                          关联选题
-                        </Label>
-                        {!urlLocked ? (
-                          <div className="flex items-center gap-1.5 text-[12px]">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateMeta("topicId", null);
-                                isManuallySetRef.current = true;
-                                setIsManuallySet(true);
-                              }}
-                              className="font-medium text-zinc-400 hover:text-zinc-600 cursor-pointer"
-                            >
-                              暂无
-                            </button>
-                            <span className="text-zinc-300 text-[10px]">|</span>
-                            <button
-                              type="button"
-                              onClick={() => triggerGlobalTopicCreate({ title: meta.videoTitle })}
-                              className="font-medium text-[#D97757] hover:underline inline-flex items-center gap-0.5 cursor-pointer"
-                            >
-                              <Plus className="size-3 stroke-[2.5]" />
-                              <span>新建</span>
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-
-                      {meta.topicId ? (
-                        <div className="flex items-center justify-between rounded-lg border border-zinc-200/60 bg-white p-2.5 shadow-2xs">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            {selectedTopicCategory && (
-                              <span className="shrink-0 inline-flex items-center rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-600">
-                                {selectedTopicCategory}
-                              </span>
-                            )}
-                            <span className="text-[12.5px] font-semibold text-zinc-800 truncate">
-                              {topicNameError === "not_found"
-                                ? "未找到选题"
-                                : topicNameError === "load_failed"
-                                  ? "加载失败"
-                                  : selectedTopicName || "获取选题中..."}
-                            </span>
-                          </div>
-                          
-                          {topicNameError === "not_found" ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                updateMeta("topicId", null);
-                                urlLockedRef.current = false;
-                                isManuallySetRef.current = true;
-                                setUrlLocked(false);
-                                setIsManuallySet(true);
-                              }}
-                              className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
-                            >
-                              清除
-                            </button>
-                          ) : topicNameError === "load_failed" ? (
-                            <button
-                              type="button"
-                              onClick={() => setTopicNameRetrySeq((value) => value + 1)}
-                              className="shrink-0 text-[10.5px] text-zinc-500 hover:text-zinc-700 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium"
-                            >
-                              重试
-                            </button>
-                          ) : urlLocked ? (
-                            <span className="shrink-0 flex items-center gap-0.5 text-[10.5px] text-zinc-400 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium select-none">
-                              <Lock className="size-3 text-zinc-400" />
-                              锁定
-                            </span>
-                          ) : (
-                            <span className="shrink-0 text-[10.5px] text-zinc-600 bg-zinc-100 rounded-md px-1.5 py-0.5 font-medium select-none">
-                              已关联
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          {loadingSuggestions ? (
-                            <div className="flex items-center gap-1.5 py-1 text-[11.5px] text-zinc-400">
-                              <Loader2 className="size-3 animate-spin" />
-                              <span>正在匹配选题...</span>
-                            </div>
-                          ) : suggestFailed ? (
-                            <div className="flex items-center gap-2 py-1 text-[11.5px]">
-                              <span className="text-[#C9604D]">匹配失败</span>
-                              <button
-                                type="button"
-                                onClick={() => setSuggestRetrySeq((value) => value + 1)}
-                                >
-                                重试
-                              </button>
-                            </div>
-                          ) : isManuallySet && !urlLocked ? (
-                            <div className="flex items-center justify-between gap-2 py-1 text-[11px] text-zinc-500">
-                              <span>本条作品暂无对应选题</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  isManuallySetRef.current = false;
-                                  setIsManuallySet(false);
-                                }}
-                                className="font-medium text-[#5F82A8] hover:underline"
-                              >
-                                重新自动匹配
-                              </button>
-                            </div>
-                          ) : suggestions.length > 0 ? (
-                            <div className="space-y-1.5">
-                              <span className="block text-[11px] text-zinc-400">推荐关联选题：</span>
-                              <div className="flex flex-col gap-1.5">
-                                {suggestions.slice(0, 2).map((s) => (
-                                  <button
-                                    key={s.id}
-                                    type="button"
-                                    onClick={() => {
-                                      updateMeta("topicId", s.id);
-                                      isManuallySetRef.current = true;
-                                      setIsManuallySet(true);
-                                    }}
-                                    className="flex items-center justify-between rounded-lg border border-zinc-200/60 bg-white hover:border-[#D97757]/40 hover:bg-[#D97757]/5 px-3 py-2 transition-all duration-150 cursor-pointer text-left shadow-2xs"
-                                  >
-                                    <span className="text-[12px] font-medium text-zinc-800 truncate">
-                                      {s.title}
-                                    </span>
-                                    <span className="text-[10.5px] text-[#D97757] shrink-0 font-medium ml-2">
-                                      关联
-                                    </span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="italic block text-[11.5px] text-zinc-400 py-0.5">打字输入标题或文案，系统将自动匹配。</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 模块二：团队分工 (纯留白隔离) */}
+                    {/* 团队分工 */}
                     <div className="space-y-2.5 pt-1.5 pb-0.5">
                       <div className="flex items-center justify-between">
                         <Label className="text-[13px] font-semibold text-zinc-700 select-none">
@@ -2743,95 +2310,6 @@ export function VideoSubmitForm({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* 模糊选择选题 Dialog */}
-      <Dialog
-        open={searchDialogOpen}
-        onOpenChange={(open) => {
-          setSearchDialogOpen(open);
-          if (open) {
-            setSearching(true);
-            setSearchError(false);
-          } else {
-            setSearchQuery("");
-            setSearchResults([]);
-            setSearchError(false);
-            setSearching(false);
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-md w-full max-w-[calc(100%-2rem)] md:max-w-[460px] p-5 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>选择关联的子选题</DialogTitle>
-            <DialogDescription>
-              模糊搜索您在选题池里已录入的子题。
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="输入关键词进行搜索..."
-              className="h-9.5 rounded-xl border border-zinc-200"
-            />
-            {searching ? (
-              <div className="flex h-36 items-center justify-center">
-                <Loader2 className="size-5 animate-spin text-zinc-400" />
-              </div>
-            ) : searchError ? (
-              <div className="flex h-36 items-center justify-center text-[12.5px] text-[#C9604D]">
-                搜索失败，请重试
-              </div>
-            ) : searchResults.length === 0 ? (
-              <div className="flex h-36 items-center justify-center text-[12.5px] text-zinc-400">
-                未搜索到匹配的选题
-              </div>
-            ) : (
-              <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-1">
-                {searchResults.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      updateMeta("topicId", item.id);
-                      isManuallySetRef.current = true;
-                      setIsManuallySet(true);
-                      setSearchDialogOpen(false);
-                      setSearchQuery("");
-                      setSearchResults([]);
-                      setSearchError(false);
-                      setSearching(false);
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl border border-zinc-200/60 bg-zinc-50/50 hover:bg-zinc-50 hover:border-zinc-300 p-3 text-left text-[12.5px] font-medium text-zinc-700 transition-colors cursor-pointer"
-                  >
-                    <span className="truncate max-w-[240px] text-zinc-800 font-semibold">{item.title}</span>
-                    <span className="text-[10px] bg-zinc-200/85 px-1.5 py-0.5 rounded-md text-zinc-500 font-semibold">
-                      {getTopicName(item.topics) || "常规"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setSearchDialogOpen(false);
-                setSearchQuery("");
-                setSearchResults([]);
-                setSearchError(false);
-                setSearching(false);
-              }}
-              className="rounded-lg"
-            >
-              关闭
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

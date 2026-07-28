@@ -73,36 +73,6 @@ export function setOperatorUser(id: string) {
   return id;
 }
 
-export function resolveOperatorUserIdForTopic({
-  currentOperatorUserId,
-  claimantUserId,
-  hasManualOperatorSelection,
-}: {
-  currentOperatorUserId: string | null;
-  claimantUserId: string | null | undefined;
-  hasManualOperatorSelection: boolean;
-}) {
-  if (hasManualOperatorSelection || !claimantUserId) return currentOperatorUserId;
-  return claimantUserId;
-}
-
-export function resolveScriptAuthorUserIdForTopic({
-  currentScriptAuthorUserId,
-  claimantUserId,
-  currentUserId,
-  hasManualScriptAuthorSelection,
-}: {
-  currentScriptAuthorUserId: string | null;
-  claimantUserId: string | null | undefined;
-  currentUserId: string;
-  hasManualScriptAuthorSelection: boolean;
-}) {
-  if (hasManualScriptAuthorSelection || !claimantUserId || claimantUserId === currentUserId) {
-    return currentScriptAuthorUserId;
-  }
-  return claimantUserId;
-}
-
 export function shouldAutoRedirectToGrowthAfterSubmit({
   mode,
   bizDate,
@@ -117,60 +87,4 @@ export function shouldAutoRedirectToGrowthAfterSubmit({
   hasInitialSummary: boolean;
 }) {
   return mode === "create" && bizDate === today && !submittedViewActive && !hasInitialSummary;
-}
-
-export function shouldAutoBindNewTopic({
-  urlLocked,
-  isManuallySet,
-  topicId,
-}: {
-  urlLocked: boolean;
-  isManuallySet: boolean;
-  topicId: string | null | undefined;
-}) {
-  if (urlLocked) return false;
-  return !(isManuallySet && Boolean(topicId));
-}
-
-export function resolveDraftTopicId({
-  urlLocked,
-  currentTopicId,
-  draftTopicId,
-}: {
-  urlLocked: boolean;
-  currentTopicId: string | null | undefined;
-  draftTopicId: string | null | undefined;
-}) {
-  return urlLocked ? (currentTopicId ?? null) : (draftTopicId ?? null);
-}
-
-export function resolveDraftManualTopicState({
-  urlLocked,
-  currentIsManuallySet,
-  draftIsManuallySet,
-  draftTopicId,
-}: {
-  urlLocked: boolean;
-  currentIsManuallySet: boolean;
-  draftIsManuallySet?: boolean;
-  draftTopicId: string | null | undefined;
-}) {
-  if (urlLocked) return currentIsManuallySet;
-  return draftIsManuallySet ?? Boolean(draftTopicId);
-}
-
-export function shouldAutoSelectSuggestedTopic({
-  urlLocked,
-  isManuallySet,
-  currentTopicId,
-}: {
-  urlLocked: boolean;
-  isManuallySet: boolean;
-  currentTopicId: string | null | undefined;
-}) {
-  return !urlLocked && !isManuallySet && !currentTopicId;
-}
-
-export function sanitizeTopicSearchKeyword(value: string) {
-  return value.replace(/[%(),"]/g, " ").replace(/\s+/g, " ").trim();
 }
