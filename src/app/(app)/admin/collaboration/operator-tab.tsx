@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, HelpCircle, ArrowUpDown, TrendingUp, TrendingDown } from "lucide-react";
+import { ChevronDown, ChevronRight, HelpCircle, ArrowUpDown, ArrowDown, ArrowUp, TrendingUp, TrendingDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -46,6 +46,17 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
       setSortField(field);
       setSortOrder("desc");
     }
+  };
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ArrowUpDown className="size-3 text-zinc-400 opacity-60" />;
+    }
+    return sortOrder === "desc" ? (
+      <ArrowDown className="size-3 text-[#D97757]" />
+    ) : (
+      <ArrowUp className="size-3 text-[#D97757]" />
+    );
   };
 
   const sortedOperators = useMemo(() => {
@@ -94,40 +105,48 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
               <button
                 type="button"
                 onClick={() => handleSort("reportCount")}
-                className="inline-flex items-center gap-1 hover:text-zinc-900 transition-colors ml-auto"
+                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                  sortField === "reportCount" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                }`}
               >
                 本月条数
-                <ArrowUpDown className="size-3" />
+                {renderSortIcon("reportCount")}
               </button>
             </TableHead>
             <TableHead className="text-right font-medium text-zinc-600">
               <button
                 type="button"
                 onClick={() => handleSort("totalPlay")}
-                className="inline-flex items-center gap-1 hover:text-zinc-900 transition-colors ml-auto"
+                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                  sortField === "totalPlay" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                }`}
               >
                 总播放
-                <ArrowUpDown className="size-3" />
+                {renderSortIcon("totalPlay")}
               </button>
             </TableHead>
             <TableHead className="text-right font-medium text-zinc-600">
               <button
                 type="button"
                 onClick={() => handleSort("avgPlay")}
-                className="inline-flex items-center gap-1 hover:text-zinc-900 transition-colors ml-auto"
+                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                  sortField === "avgPlay" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                }`}
               >
                 人均播放
-                <ArrowUpDown className="size-3" />
+                {renderSortIcon("avgPlay")}
               </button>
             </TableHead>
             <TableHead className="text-right font-medium text-zinc-600">
               <button
                 type="button"
                 onClick={() => handleSort("totalFollowerConvert")}
-                className="inline-flex items-center gap-1 hover:text-zinc-900 transition-colors ml-auto"
+                className={`inline-flex items-center gap-1 transition-colors ml-auto ${
+                  sortField === "totalFollowerConvert" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                }`}
               >
                 导粉
-                <ArrowUpDown className="size-3" />
+                {renderSortIcon("totalFollowerConvert")}
               </button>
             </TableHead>
             <TableHead className="text-right font-medium text-zinc-600">爆款数</TableHead>
@@ -144,14 +163,23 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
             const mom = op.momChange;
 
             return (
-              <tr key={op.userId} className="group border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+              <tr key={op.userId} className="group transition-colors">
                 <td colSpan={9} className="p-0">
-                  <div className="flex items-center px-4 py-3 border-b border-zinc-100 hover:bg-zinc-50/40">
+                  {/* 父行：展开时与子内容融合为一体，移除中间分割线 */}
+                  <div
+                    className={`flex items-center px-4 py-3 transition-colors ${
+                      isExpanded
+                        ? "bg-zinc-50/90 font-medium"
+                        : "border-b border-zinc-100 hover:bg-zinc-50/40"
+                    }`}
+                  >
                     {canExpand ? (
                       <button
                         type="button"
                         onClick={() => toggleExpand(op.userId)}
-                        className="w-8 flex items-center justify-center text-zinc-400 hover:text-zinc-700"
+                        className={`w-8 flex items-center justify-center transition-colors ${
+                          isExpanded ? "text-[#D97757]" : "text-zinc-400 hover:text-zinc-700"
+                        }`}
                       >
                         {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
                       </button>
@@ -219,29 +247,28 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                     </div>
                   </div>
 
-                  {/* Subrow (accounts list) */}
+                  {/* 展开子区域：与父行亲密融合，底部与下一行拉开留白隔断 */}
                   {isExpanded && (
-                    <div className="bg-zinc-50/60 px-12 py-3 border-b border-zinc-200/80">
-                      <div className="text-[12px] font-medium text-zinc-500 mb-2">名下达人作品统计：</div>
-                      <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
+                    <div className="bg-zinc-50/90 px-12 pt-1 pb-5 border-b border-zinc-200/80 transition-all duration-200">
+                      <div className="rounded-xl border border-zinc-200/80 bg-white overflow-hidden shadow-2xs">
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="border-b border-zinc-100 bg-zinc-50/80 text-zinc-500 text-left">
-                              <th className="py-2 px-3 font-medium">达人姓名</th>
-                              <th className="py-2 px-3 font-medium">账号名</th>
-                              <th className="py-2 px-3 font-medium text-right">条数</th>
-                              <th className="py-2 px-3 font-medium text-right">总播放</th>
-                              <th className="py-2 px-3 font-medium text-right">导粉</th>
+                              <th className="py-2.5 px-3.5 font-medium">达人姓名</th>
+                              <th className="py-2.5 px-3.5 font-medium">账号名</th>
+                              <th className="py-2.5 px-3.5 font-medium text-right">条数</th>
+                              <th className="py-2.5 px-3.5 font-medium text-right">总播放</th>
+                              <th className="py-2.5 px-3.5 font-medium text-right pr-4">导粉</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody className="divide-y divide-zinc-100">
                             {op.accounts.map((acc) => (
-                              <tr key={acc.accountId} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/30">
-                                <td className="py-2 px-3 font-medium text-zinc-800">{acc.ownerName}</td>
-                                <td className="py-2 px-3 text-zinc-600">{acc.accountName}</td>
-                                <td className="py-2 px-3 text-right tabular-nums text-zinc-900 font-medium">{acc.reportCount}</td>
-                                <td className="py-2 px-3 text-right tabular-nums text-zinc-700">{formatBigNumber(acc.totalPlay)}</td>
-                                <td className="py-2 px-3 text-right tabular-nums text-zinc-700">{acc.totalFollowerConvert.toLocaleString("zh-CN")}</td>
+                              <tr key={acc.accountId} className="hover:bg-zinc-50/50 transition-colors">
+                                <td className="py-2.5 px-3.5 font-medium text-zinc-800">{acc.ownerName}</td>
+                                <td className="py-2.5 px-3.5 text-zinc-600">{acc.accountName}</td>
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-900 font-semibold">{acc.reportCount}</td>
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700">{formatBigNumber(acc.totalPlay)}</td>
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700 pr-4">{acc.totalFollowerConvert.toLocaleString("zh-CN")}</td>
                               </tr>
                             ))}
                           </tbody>

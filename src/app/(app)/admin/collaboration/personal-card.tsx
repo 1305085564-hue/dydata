@@ -114,10 +114,10 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[94vw] h-[640px] aspect-[5/4] p-0 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[94vw] h-[640px] aspect-[5/4] p-0 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
-        <DialogHeader className="p-5 pb-3.5 border-b border-zinc-100 flex flex-row items-center justify-between shrink-0">
+        <DialogHeader className="p-5 pb-3.5 border-b border-zinc-100 flex flex-row items-center justify-between shrink-0 bg-zinc-50/40">
           {loading ? (
             <div className="space-y-1.5">
               <Skeleton className="h-6 w-32 rounded-md" />
@@ -134,18 +134,18 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                 <div className="flex items-center gap-2">
                   <DialogTitle className="text-[18px] font-semibold text-zinc-900">{data.name}</DialogTitle>
                   <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200/60">
-                    个人档案卡
+                    个人协作档案
                   </span>
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-[12px] text-zinc-500">
                   <span>本月分工：</span>
-                  <span className="rounded bg-blue-50/80 px-1.5 py-0.5 text-blue-700 border border-blue-200/50">
+                  <span className="rounded bg-sky-50/80 px-1.5 py-0.5 text-[#4A7FB5] border border-sky-200/50 font-medium">
                     文案 <strong className="font-semibold">{data.currentMonth.writerCount}</strong> 篇
                   </span>
-                  <span className="rounded bg-purple-50/80 px-1.5 py-0.5 text-purple-700 border border-purple-200/50">
+                  <span className="rounded bg-purple-50/80 px-1.5 py-0.5 text-[#7B6BA5] border border-purple-200/50 font-medium">
                     剪辑 <strong className="font-semibold">{data.currentMonth.editorCount}</strong> 条
                   </span>
-                  <span className="rounded bg-orange-50/80 px-1.5 py-0.5 text-[#D97757] border border-orange-200/50">
+                  <span className="rounded bg-orange-50/80 px-1.5 py-0.5 text-[#D97757] border border-orange-200/50 font-medium">
                     运营 <strong className="font-semibold">{data.currentMonth.operatorCount}</strong> 条
                   </span>
                 </div>
@@ -162,8 +162,8 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
           </button>
         </DialogHeader>
 
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+        {/* Content Body：取消主容器大滚动，采用 flex-1 弹性垂直布局 */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-5 gap-3.5">
           {loading ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -174,8 +174,8 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
             </div>
           ) : data ? (
             <>
-              {/* 中部：KPI 汇总 + 产量趋势 宽横向双栏 */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              {/* 中部：KPI 汇总 + 产量趋势 (固定自然高度 shrink-0) */}
+              <div className="shrink-0 grid grid-cols-1 md:grid-cols-5 gap-3.5">
                 {/* 4 个 KPI 小卡片 (占 2 列) */}
                 <div className="md:col-span-2 space-y-2 rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3.5 flex flex-col justify-between">
                   <div className="flex items-center justify-between text-[12px]">
@@ -236,13 +236,24 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                 {/* 近 6 个月产量堆叠柱状图 (占 3 列) */}
                 <div className="md:col-span-3 rounded-xl border border-zinc-200 bg-white p-3 space-y-1">
                   <div className="text-[12px] font-medium text-zinc-700">近 6 个月产量趋势</div>
-                  <div className="h-40">
+                  <div className="h-38">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F4F4F5" />
                         <XAxis dataKey="monthLabel" tick={{ fontSize: 10, fill: "#71717A" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 10, fill: "#71717A" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <RechartsTooltip contentStyle={{ fontSize: 11, borderRadius: 8, padding: "4px 8px" }} />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "rgba(24, 24, 27, 0.95)",
+                            borderColor: "rgba(39, 39, 42, 0.9)",
+                            borderRadius: "8px",
+                            padding: "6px 10px",
+                            color: "#FFFFFF",
+                            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)",
+                            fontSize: "11px",
+                          }}
+                          itemStyle={{ color: "#F4F4F5" }}
+                        />
                         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 2 }} />
                         <Bar dataKey="writer" name="文案" stackId="a" fill="#3B82F6" barSize={14} />
                         <Bar dataKey="editor" name="剪辑" stackId="a" fill="#8B5CF6" barSize={14} />
@@ -253,19 +264,19 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                 </div>
               </div>
 
-              {/* 底部：经手作品明细 */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between">
+              {/* 底部：经手作品明细 (flex-1 弹性延伸分配剩余高度) */}
+              <div className="flex-1 flex flex-col min-h-0 space-y-2">
+                <div className="flex items-center justify-between shrink-0">
                   <h4 className="text-[12px] font-semibold text-zinc-900">本月经手作品明细</h4>
                   <span className="text-[11px] text-zinc-400">共 {data.records.length} 条</span>
                 </div>
 
                 {data.records.length === 0 ? (
-                  <div className="rounded-xl border border-zinc-200 p-4 text-center text-[12px] text-zinc-400">
+                  <div className="flex-1 rounded-xl border border-zinc-200 p-4 text-center text-[12px] text-zinc-400 flex items-center justify-center">
                     本月暂无明细记录
                   </div>
                 ) : (
-                  <div className="max-h-56 overflow-y-auto rounded-xl border border-zinc-200 bg-white">
+                  <div className="flex-1 overflow-y-auto rounded-xl border border-zinc-200 bg-white">
                     <table className="w-full text-[12px]">
                       <thead className="sticky top-0 bg-zinc-50/95 backdrop-blur-xs border-b border-zinc-100 text-zinc-500 text-left z-10">
                         <tr>
@@ -294,20 +305,20 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                                 {rec.roles.map((r) => {
                                   if (r === "writer") {
                                     return (
-                                      <span key={r} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 border border-blue-200/50">
+                                      <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200/60">
                                         文案
                                       </span>
                                     );
                                   }
                                   if (r === "editor") {
                                     return (
-                                      <span key={r} className="rounded bg-purple-50 px-1.5 py-0.5 text-[10px] font-medium text-purple-600 border border-purple-200/50">
+                                      <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200/60">
                                         剪辑
                                       </span>
                                     );
                                   }
                                   return (
-                                    <span key={r} className="rounded bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-[#D97757] border border-orange-200/50">
+                                    <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200/60">
                                       运营
                                     </span>
                                   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { HealthBar } from "./health-bar";
 import { OperatorTab } from "./operator-tab";
 import { StaffTab } from "./staff-tab";
@@ -112,6 +113,31 @@ export function CollaborationWorkbench({
     router.push(`/admin/collaboration?year=${y}&month=${m}&tab=${tab}`);
   };
 
+  const handlePrevMonth = () => {
+    let prevY = year;
+    let prevM = month - 1;
+    if (prevM < 1) {
+      prevM = 12;
+      prevY--;
+    }
+    if (prevY < 2026 || (prevY === 2026 && prevM < 7)) return;
+    router.push(`/admin/collaboration?year=${prevY}&month=${prevM}&tab=${tab}`);
+  };
+
+  const handleNextMonth = () => {
+    const now = new Date();
+    let nextY = year;
+    let nextM = month + 1;
+    if (nextM > 12) {
+      nextM = 1;
+      nextY++;
+    }
+    const currentY = now.getFullYear();
+    const currentM = now.getMonth() + 1;
+    if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
+    router.push(`/admin/collaboration?year=${nextY}&month=${nextM}&tab=${tab}`);
+  };
+
   const currentStaffRows = useMemo(() => {
     if (tab === "operators") return [];
     const role = tab === "writers" ? "writer" : "editor";
@@ -121,68 +147,95 @@ export function CollaborationWorkbench({
 
   return (
     <div className="space-y-4">
-      {/* Month Bar */}
-      <div className="flex items-center justify-between bg-white rounded-xl border border-zinc-200 p-3 shadow-2xs">
-        <div className="w-48">
-          <Select value={currentMonthValue} onValueChange={handleMonthChange}>
-            <SelectTrigger className="h-9 text-[13px] bg-zinc-50 border-zinc-200 font-medium">
-              <SelectValue placeholder="选择月份" />
-            </SelectTrigger>
-            <SelectContent>
-              {monthOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {/* 整合型流线控制舱：L1 纯白纸感底板 */}
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xs space-y-3.5">
+        {/* 控制舱顶栏：月份快捷翻页与标题 */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-200/60">
+          <div className="flex items-center gap-3">
+            {/* 快捷翻月控制组 */}
+            <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-zinc-200/80 shadow-2xs">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                title="上一月"
+                className="size-7 rounded flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <div className="w-36">
+                <Select value={currentMonthValue} onValueChange={handleMonthChange}>
+                  <SelectTrigger className="h-7 text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-zinc-50 transition-colors focus:ring-0">
+                    <SelectValue placeholder="选择月份" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {monthOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                title="下一月"
+                className="size-7 rounded flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+
+            <span className="text-[14px] font-semibold text-zinc-900 tracking-tight">
+              {year} 年 {month} 月 团队协作概览
+            </span>
+          </div>
+
+          {/* 右侧：健康度极轻静默芯片 (取代大黄框) */}
+          <HealthBar summary={summary} />
         </div>
-        <div className="text-[14px] font-medium text-zinc-900 pr-2">
-          {year} 年 {month} 月 协作概览
+
+        {/* 暖橙主体风格导航 Tab */}
+        <div className="flex items-center gap-1.5 pt-1">
+          <button
+            type="button"
+            onClick={() => handleTabChange("operators")}
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
+              tab === "operators"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+            }`}
+          >
+            运营团队 ({operators.length})
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("writers")}
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
+              tab === "writers"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+            }`}
+          >
+            文案人员
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("editors")}
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
+              tab === "editors"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+            }`}
+          >
+            剪辑人员
+          </button>
         </div>
       </div>
 
-      {/* Health Bar */}
-      <HealthBar summary={summary} />
-
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 border-b border-zinc-200 pb-0.5">
-        <button
-          type="button"
-          onClick={() => handleTabChange("operators")}
-          className={`px-4 py-2 text-[13px] font-medium rounded-t-lg transition-colors border-b-2 -mb-[1px] ${
-            tab === "operators"
-              ? "border-[#D97757] text-[#D97757] bg-white font-semibold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-          }`}
-        >
-          运营团队 ({operators.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => handleTabChange("writers")}
-          className={`px-4 py-2 text-[13px] font-medium rounded-t-lg transition-colors border-b-2 -mb-[1px] ${
-            tab === "writers"
-              ? "border-[#D97757] text-[#D97757] bg-white font-semibold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-          }`}
-        >
-          文案人员
-        </button>
-        <button
-          type="button"
-          onClick={() => handleTabChange("editors")}
-          className={`px-4 py-2 text-[13px] font-medium rounded-t-lg transition-colors border-b-2 -mb-[1px] ${
-            tab === "editors"
-              ? "border-[#D97757] text-[#D97757] bg-white font-semibold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50"
-          }`}
-        >
-          剪辑人员
-        </button>
-      </div>
-
-      {/* Tab Content */}
+      {/* Tab Content 区域 */}
       {tab === "operators" ? (
         <OperatorTab
           operators={operators}
@@ -199,7 +252,7 @@ export function CollaborationWorkbench({
         />
       )}
 
-      {/* Personal Card Sheet */}
+      {/* 个人档案卡对话框 */}
       <PersonalCard
         userId={selectedPersonId}
         year={year}
