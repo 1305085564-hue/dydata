@@ -2,109 +2,53 @@
 
 > 本文件供多 Agent 共用。
 
+## 零、懒加载索引机制
+
+命中触发场景时整读对应文件，未命中不读。
+
+- 同一问题修改两次仍失败 → `docs/reference/纠错索引.md`
+- 需要产品信息、技术栈、环境变量、权限模型 → `docs/reference/项目事实.md`
+
+------
+
 ## 一、开工分诊
 
-动手前输出三行：
-一、领域：可同时命中多个岗位，逐项列出。
-二、已读：本次实际读过的岗位文档，本次任务需要读取的 skill 技能。
-三、边界：各岗位分别负责什么。
+动手前一行说明：命中岗位 + 本次读的文档/Skill。
 
-| 岗位 | 何时进入 | 必读 | 优先 Skill |
-| --- | --- | --- | --- |
-| 产品与信息架构 | 页面取舍、流程、需求 | `docs/全站模块地图.md` | 产品规划、产品设计、需求探索 |
-| 前端工程师 | 外观、交互、动效、响应式 | `docs/美学规范.md` | 前端视觉总控、前端界面实现、交互体验设计、响应式检查 |
-| 性能工程师 | 慢、首屏、请求数、接口耗时 | `docs/架构与性能总纲.md` | React 架构模式、浏览器调试、Supabase 数据库优化 |
-| 后端与数据工程师 | 接口、数据、查询、AI | `docs/后端与数据说明.md` | 测试驱动开发、接口边界设计、Supabase 数据库优化、提示词工程 |
-| 权限与安全工程师 | 登录、权限、RLS | `docs/权限与安全说明.md` | 登录权限集成、安全加固、安全审查 |
-| 部署运维工程师 | Vercel、域名、回滚、线上故障 | `docs/运维排查手册.md` | Vercel 部署、Git 提交推送 |
-| 代码治理工程师 | 文件、模块边界、审查、交付 | `docs/代码治理手册.md` | 根因调试恢复、静态质量检查、代码审查新版、交付前验证 |
+| 岗位 | 何时进入 | 必读 |
+| --- | --- | --- |
+| 产品与信息架构 | 页面取舍、流程、需求 | `docs/全站模块地图.md` |
+| 前端工程师 | 外观、交互、动效、响应式 | `docs/美学规范.md` |
+| 性能工程师 | 慢、首屏、请求数、接口耗时 | `docs/架构与性能总纲.md` |
+| 后端与数据工程师 | 接口、数据、查询、AI | `docs/后端与数据说明.md` |
+| 权限与安全工程师 | 登录、权限、RLS | `docs/权限与安全说明.md` |
+| 部署运维工程师 | Vercel、域名、回滚、线上故障 | `docs/运维排查手册.md` |
+| 代码治理工程师 | 文件、模块边界、审查、交付 | `docs/代码治理手册.md` |
 
 - 岗位可多选；只有需要独立验收、独立发布或风险不同的改动，才拆子任务。
-- 用户点名或表中 Skill 明显匹配时使用；不匹配时按岗位文档和代码执行，不因找 Skill 停住。
-- 当前 Agent 不支持某项 Skill 时，用等价方法完成。
-- 三行没报，不动手。
+- Skill 由用户点名或自行判断匹配时使用，不因找 Skill 停住。
 
 ------
 
-## 二、元约束与行为准则
+## 二、行为准则
 
-### 元约束（最高优先级，覆盖所有代理，冲突时以此为准）
+一、先发散再收束，补齐真实需求。阿禅不懂编程，字面指令常与本意有偏差。收到需求先定位真实问题、识别隐含假设，发散后收束，主动补全完善真实目标；理解后复述确认，不顺字面直接执行。
 
-一、先思后答。收到需求先在思考区推演：定位真实核心问题、识别隐含假设、标出信息缺口，禁止顺字面直接执行。关键节点显式输出中文思考过程。
+二、纠偏不迎合。发现用户判断有缺陷直接指出并给理由；只依据逻辑与事实，不软化结论。
 
-二、先校准后执行。执行前逐条复述校准后的全部关键需求点（非一句概括），确认与用户真实目标一致。将用户可能失准的表达翻译为精准、无歧义、可落地执行的目标，并主动补全与完善。
+三、带答案确认。需用户裁决时附上己方推定答案；信息不足会导致做错时先一次性问清，进入执行后独立排查到结果。
 
-三、纠偏不迎合。发现用户判断、假设或表达存在逻辑或事实缺陷时直接指出并给出理由；只依据逻辑与事实，不做心理分析、不谈情绪、不软化结论。
+四、术语零门槛。回复中文、简短、直接；凡专业术语必须就地用大白话解释，说明对阿禅的实际影响。
 
-四、带答案确认，必要时提问。凡需用户裁决处，附上己方推定答案供其判断，而非空手索取内容。若信息仍不足以做对，可提问，单轮不超过 5 个，问题须具体、锋利、能推进判断；能不问则不问。
-
-五、术语零门槛。用户不懂编程。面向用户的一切输出中，凡出现专业术语、英文缩写或技术黑话，必须就地用大白话解释清楚，并说明它对用户的实际影响；不得默认用户理解。仅供 AI 内部使用、用户不阅读的内容不受此限。
-
-### 核心原则
-
-- 项目规则以本文件和当前代码为准；旧设计文档、历史记忆、任务摘要只能当线索。
-- 阿禅不写代码。回复要中文、简短、直接；必要术语要顺手解释。
-- 需求明确就直接做；涉及大改、配置、规则、部署链路、线上数据时，先给方案和风险，再等确认。
-- 信息不足会导致做错时，先一次性问清；进入执行后独立排查到结果。
+五、大改先给方案。需求明确就直接做；涉及大改、配置、规则、部署链路、线上数据时，先给方案和风险再等确认。
 
 ------
 
-## 三、项目事实
+## 三、开发规范
 
-### 产品信息
+### 总则
 
-- 产品：抖音数据日报平台。
-- 域名：`dydata.cc` / `dydata.vercel.app`。
-
-### 技术栈与部署
-
-- 技术栈：Next.js App Router + Tailwind CSS + shadcn/ui + Supabase + Vercel。
-- 部署：Vercel 是唯一正式部署平台；`main` 分支 push 会触发线上部署。仓库里的 OpenNext/Cloudflare 配置只按历史残留或实验配置处理，不能改成正式部署方案。
-- 主库：Supabase `gcrhhxaopomtposmahsw`，新加坡区。
-
-### 环境变量
-
-- 公开：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`。
-- 服务端：`SUPABASE_SERVICE_ROLE_KEY`、`FEISHU_WEBHOOK_URL`、`FEISHU_APP_ID`、`FEISHU_APP_SECRET`、`FEISHU_APP_ENCRYPT_KEY`、`FEISHU_APP_VERIFICATION_TOKEN`、`CRON_SECRET`、`REMIND_SECRET`、`AI_BASE_URL`、`AI_API_KEY`、`AI_MODEL`、`DYDATA_PERF_LOG`。
-- 数据库/CLI：`SUPABASE_DB_URL`、`SUPABASE_ACCESS_TOKEN` 只用于迁移或临时 SQL，不进代码。
-- 默认值以 `.env.example` 和实际 `.env.local` 为准，不从旧记忆抄。
-
-### 权限模型
-
-- 数据库 `role` 只有三种：`owner` / `admin` / `member`。
-- 业务统一看 `businessRole`：`owner` / `team_admin` / `group_leader` / `member`。
-- `owner` 全局权限；`team_admin` = `admin` + `manage_members=true`；`group_leader` = `admin` + 是某组 `leader_user_id`；其他为 `member`。
-- 权限开关统一来自 `PERMISSION_KEYS`。`admin` 和 `member` 可授权范围相同，区别在默认值。
-- 首个 `owner`：`1305085564@qq.com`。
-
-------
-
-## 四、页面与路由
-
-### 公开页面
-
-- `/`、登录注册、找回/重置密码。
-
-### 登录后页面
-
-- `/dashboard`、`/growth`、`/violations`、`/video-review`、`/content-tools`。
-
-### 管理后台
-
-- `/admin` 重定向到 `/admin/content`；核心顶部入口是 `/admin/content`、`/admin/videos`、`/admin/analytics`、`/admin/fulfillment`。
-- 仍存在但不是核心顶部入口：`/admin/settings`、`/admin/modules`、`/admin/ai-config`、`/admin/guidance`、`/admin/advice`。
-- `/content-tools/rewrite-v3` 只做兼容重定向到 `/content-tools/rewrite`。
-- `/playground/navigation` 是开发预览页，不当正式业务入口。
-
-### 定时任务
-
-- Vercel 当前只注册两个 cron：`/api/supabase-keepalive` 每天 14:30（北京时间），`/api/notifications/cleanup` 每天 02:00（北京时间）。
-- cron 鉴权兼容 `CRON_SECRET` 和 `REMIND_SECRET`，实现看 `src/lib/cron-auth.ts`。
-- `/api/remind`、`/api/report`、`/api/smart-alert`、`/api/admin/first-screen-monitor` 等接口有 cron 鉴权，但没有出现在 `vercel.json` 时，只能当手动或外部触发，不能说 Vercel 正在自动跑。
-
-------
-
-## 五、开发规范
+- 项目规则以本文件和当前代码为准；旧设计文档、历史记忆、任务摘要只能当线索，不能直接照搬。
 
 ### 架构与性能
 
@@ -128,16 +72,9 @@
 - 使用项目封装 UI 组件前，先看 `components/ui/*` 的真实 Props，不能套原版 shadcn/Radix 写法。
 - UI 联动要覆盖加载、空状态、折叠、选中、hover/focus 分支。
 
-### 提交链路专项规则（2026-07-27 连续生产事故教训）
+### 提交链路
 
-凡涉及"组员提交/替换/重试"类接口，动手前必须对照以下检查项：
-
-1. **含新字段必须发布三连**：① 生产执行 migration → ② 刷新 PostgREST schema cache → ③ 真实角色 API 实测。三步缺任一不算完成，日志里必须写明三步均已完成。
-2. **delete + insert 替换模式，先确认 DELETE RLS 存在**：在 `supabase/migrations/` 里 grep 该表的 `FOR DELETE` policy。无策略时，delete 静默成功但影响 0 行，insert 随即撞唯一约束——错误表面是"重复键"，根因是"旧数据未删"。涉及 `video_tags`、`video_metrics_snapshots`、`video_content_segments` 等表时尤其注意。
-3. **rollbackSafely 返回值不能丢弃**：调用后必须 `const rbErr = await rollbackSafely(...); if (rbErr) console.error("[接口名] rollback failed", rbErr);`。回滚失败时第一个业务错误仍然返回给调用方，rollback 错误另行记录，两者都不能丢。
-4. **多表回滚操作走 service role**：`video_metrics_snapshots`、`video_tags` 等无成员 DELETE RLS 的表，回滚删除必须用 `adminSupabase`，不能用 `supabase`（user client），否则 delete 静默 0 行，造成半提交残留。
-5. **稳定 PK 重试必须覆盖五种状态**：用 `buildSubmissionRecordId` 生成固定 ID 的提交接口，验收时必须人工模拟：active（正常更新）、trashed（恢复后更新）、purged（应拒绝，返回 409）、他人占用（返回 409）、并发提交（两个相同请求同时到达），五种都要覆盖，不能只测正常路径。
-6. **成员相关修复，必须用普通组员账号验收全链路**：任何影响成员权限或提交的修复，验收方式必须是用真实普通组员（有 `team_id` 或 `group_id` 的 `member` 账号）走完完整提交流程，不能只用 owner/admin 测。测试账号见 `~/.claude/projects/-Users-mac-Projects-dydata/memory/测试账号-选题库.md`（待补充提交链路专用账号）。
+涉及「组员提交/替换/重试」类接口报错 → 整读 `docs/reference/纠错索引.md`
 
 ### 废弃机制
 
@@ -146,26 +83,14 @@
 - SOP 5 卡点状态追踪、审核中心、全域矩阵未作为当前 dashboard 入口上线。
 - 旧 AI 配置入口 `/admin/ai-channels`、`/admin/ai-features` 统一重定向到 `/admin/ai-config`。
 
-------
+### 部署禁令
 
-## 六、部署与 Git
-
-### 禁止误操作
-
-- 所有代理在本地主项目目录工作，禁止沙箱 / worktree / 隔离环境；改动不是本地立刻可见的，必须明文提醒阿禅。
-- 任务完成后提醒阿禅需要 push，不阻塞流程。
-- 禁止把 Git remote 改成 HTTPS；本仓库默认 SSH remote：`git@github.com:1305085564-hue/dydata.git`。
-- `git config user.email` 必须是 `1305085564@qq.com`。
-
-### Git 收尾
-
-- push / pull / fetch 前先检查 `git remote -v`、`ssh -T git@github.com`、`git ls-remote origin`。
-- SSH 失败先修 SSH，不改 HTTPS 兜底。
-- push 后必须汇报本次文件、提交号、验证结果，并核对云端 `main` 已是该提交；缺任一项都不能称为已发布。
+- 禁沙箱/worktree；禁改 HTTPS remote；`git user.email` 必须 `1305085564@qq.com`；改动未 push 必须明确提醒阿禅。
+- push/pull/fetch 操作流程 → `docs/reference/部署与Git规范.md`
 
 ------
 
-## 七、协作分工
+## 四、协作分工
 
 ### 三方代理
 
