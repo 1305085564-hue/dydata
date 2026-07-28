@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ComponentType } from "react";
-import { BarChart3, CalendarCheck, FileText, FolderOpen, Gauge } from "lucide-react";
+import { BarChart3, CalendarCheck, FileText, FolderOpen, Gauge, Users } from "lucide-react";
 
 import type { UserRole } from "@/types";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 export type AdminPanelKey =
   | "overview"
   | "analytics"
+  | "collaboration"
   | "content"
   | "videos"
   | "fulfillment";
@@ -48,6 +49,19 @@ export const ADMIN_SECONDARY_NAV_ITEMS: AdminSecondaryNavItem[] = [
     tone: "success",
     group: "daily",
     match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
+    requiresAdmin: true,
+  },
+  {
+    href: "/admin/collaboration",
+    panel: "collaboration",
+    label: "协作管理",
+    description: "按岗位查看团队成员产量与运营带人情况。",
+    icon: Users,
+    tone: "neutral",
+    group: "daily",
+    match: (pathname) =>
+      pathname === "/admin/collaboration" ||
+      pathname.startsWith("/admin/collaboration/"),
     requiresAdmin: true,
   },
   {

@@ -23,6 +23,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getShanghaiDateString } from "@/lib/remind-submission";
 import { ContentFilters, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
+import { AttributionEditDialog } from "./attribution-edit-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 import { ChevronDown, MoreHorizontal, Sparkles, Trash2, ArrowDown, ArrowUp, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -1289,6 +1290,12 @@ export function ContentList({
                                   </Button>
                                 );
                               })()}
+
+                              {(permissionInfo?.businessRole === "owner" || permissionInfo?.businessRole === "team_admin") &&
+                                getShanghaiDateString(new Date(video.published_at ?? video.uploaded_at ?? video.created_at)) >= "2026-07-27" && (
+                                  <AttributionEditDialog video={video} onSuccess={onRefresh} />
+                                )}
+
                               {canManageLifecycle && (
                                 <DropdownMenu>
                                   <DropdownMenuTrigger

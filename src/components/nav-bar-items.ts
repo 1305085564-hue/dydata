@@ -114,6 +114,12 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       icon: LineChart,
       match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
     },
+    {
+      href: "/admin/collaboration",
+      label: "协作管理",
+      icon: UsersRound,
+      match: (pathname) => pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
+    },
   ];
 
   groups.push({
@@ -145,12 +151,14 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     },
   ];
 
-  groups.push({
-    key: "admin-center",
-    label: "管理中心",
-    icon: Settings,
-    children: adminChildren,
-  });
+  if (input.showAdmin) {
+    groups.push({
+      key: "admin-center",
+      label: "管理中心",
+      icon: Settings,
+      children: adminChildren,
+    });
+  }
 
   return groups;
 }

@@ -34,6 +34,7 @@ test("管理员 5 大分组结构完整解析", () => {
         children: [
           { href: "/growth", label: "数据分析" },
           { href: "/admin/analytics", label: "经营分析" },
+          { href: "/admin/collaboration", label: "协作管理" },
         ],
       },
       {
@@ -61,7 +62,7 @@ test("非管理员只能看到基础分组，管理中心若全无权限则自�
   const flatItems = getNavItems({ showAdmin: false });
   assert.deepEqual(
     flatItems.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/growth"]
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration"]
   );
 });
 
@@ -73,7 +74,7 @@ test("统一主导航按具体权限暴露管理子项", () => {
   });
   assert.deepEqual(
     contentOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/growth"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config"],
   );
 
   const videosOnly = getNavItems({
@@ -83,7 +84,7 @@ test("统一主导航按具体权限暴露管理子项", () => {
   });
   assert.deepEqual(
     videosOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/videos", "/growth"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config"],
   );
 });
 
@@ -92,7 +93,7 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
 
   assert.deepEqual(
     items.map((item) => item.href),
-    ["/dashboard", "/topics", "/growth"]
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration"]
   );
 });
 

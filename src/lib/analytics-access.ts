@@ -96,6 +96,16 @@ function canAccessDailyManagementPath(pathname: string, role: UserRole | Busines
   ) {
     return role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data");
   }
+  if (
+    pathname === "/admin/collaboration" ||
+    pathname.startsWith("/admin/collaboration/")
+  ) {
+    return (
+      role === "owner" ||
+      hasPermission(role, permissions, "view_analytics") ||
+      hasPermission(role, permissions, "view_all_data")
+    );
+  }
   return pathname === "/admin";
 }
 

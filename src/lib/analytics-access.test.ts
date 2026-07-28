@@ -59,6 +59,14 @@ test("发布管理页面允许负责人组长和有数据权限的成员访问",
   assert.equal(canAccessAdminPath("/admin/fulfillment", "member"), false);
 });
 
+test("协作管理允许 owner 和具备分析或全量数据权限的角色访问", () => {
+  assert.equal(canAccessAdminPath("/admin/collaboration", "owner"), true);
+  assert.equal(canAccessAdminPath("/admin/collaboration/person", "group_leader"), true);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "member", { view_analytics: true }), true);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "member", { view_all_data: true }), true);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "member"), false);
+});
+
 test("负责人可访问系统设置里的成员权限和团队分组，AI 配置仍只给 owner", () => {
   assert.equal(canAccessAdminPath("/admin/modules", "team_admin"), true);
   assert.equal(canAccessAdminPath("/admin/settings", "team_admin"), true);
