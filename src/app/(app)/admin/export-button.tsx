@@ -14,6 +14,10 @@ export function ExportButton() {
   const [loading, setLoading] = useState(false);
 
   async function handleExport() {
+    if (from && to && from > to) {
+      feedbackToast.error("开始日期不能晚于结束日期");
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams();
