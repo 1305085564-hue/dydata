@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ShieldAlert, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { ExemptionDialog } from "@/app/(app)/admin/豁免弹窗";
 
 interface PermissionGuardProps {
   moduleTitle: string;
@@ -18,7 +16,9 @@ export function PermissionGuard({
   requiredRoleLabel = "团队管理员或组长",
   description,
 }: PermissionGuardProps) {
-  const [exemptionDialogOpen, setExemptionDialogOpen] = useState(false);
+  const handlePermissionApply = () => {
+    feedbackToast.error(`权限申请通道尚未接入，请联系管理员开通「${moduleTitle}」权限`);
+  };
 
   return (
     <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
@@ -37,7 +37,7 @@ export function PermissionGuard({
             暂无「{moduleTitle}」权限
           </h2>
           <p className="text-[13px] leading-relaxed text-zinc-500">
-            {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，可直接提交查看豁免申请。`}
+            {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系管理员开通对应权限。`}
           </p>
         </div>
 
@@ -45,9 +45,7 @@ export function PermissionGuard({
         <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:items-center sm:justify-center">
           <Button
             type="button"
-            onClick={() => {
-              feedbackToast.success(`已提交「${moduleTitle}」访问权限申请，请等待管理员审批`);
-            }}
+            onClick={handlePermissionApply}
             className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-semibold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-95 transition-all"
           >
             <Send className="mr-1.5 size-4 stroke-[1.8]" />

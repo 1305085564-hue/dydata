@@ -2,6 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildReviewExemptionResponse } from "./route";
+import type { AdminActor } from "@/app/api/admin/auth-helper";
+
+function mockAdminActor(overrides: Partial<AdminActor> = {}): AdminActor {
+  return {
+    userId: "reviewer-1",
+    role: "admin",
+    businessRole: "team_admin",
+    permissions: {},
+    name: "审核员",
+    ...overrides,
+  };
+}
 
 test("豁免审核 API 使用用户会话客户端调用 RPC", async () => {
   const sessionClient = { marker: "user-session-client" };
@@ -9,7 +21,7 @@ test("豁免审核 API 使用用户会话客户端调用 RPC", async () => {
   const response = await buildReviewExemptionResponse(
     { request_id: "123e4567-e89b-42d3-a456-426614174000", action: "approved" },
     {
-      requireSignedInUser: async () => ({ supabase: sessionClient, user: { id: "reviewer-1" } }) as never,
+      requireOwnerOrAdminActor: async () => ({ supabase: sessionClient, actor: mockAdminActor(), scope: { kind: "team" } }) as never,
       reviewExemptionRequestAtomically: async (input) => {
         receivedClient = input.supabase;
         return { ok: true as const, data: { request_id: input.requestId } };
@@ -25,7 +37,7 @@ test("豁免审核 API 把数据库越权固定映射为 403", async () => {
   const response = await buildReviewExemptionResponse(
     { request_id: "123e4567-e89b-42d3-a456-426614174000", action: "approved" },
     {
-      requireSignedInUser: async () => ({ supabase: {}, user: { id: "reviewer-1" } }) as never,
+      requireOwnerOrAdminActor: async () => ({ supabase: {}, user: { id: "reviewer-1" } }) as never,
       reviewExemptionRequestAtomically: async () => ({
         ok: false as const,
         status: 403,

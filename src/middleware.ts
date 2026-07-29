@@ -170,7 +170,13 @@ export async function middleware(request: NextRequest) {
         return response;
       }
     } catch {
-      // 校验失败时保守处理：允许通过，让页面层自行处理
+      // 校验失败时应重定向到登录页
+      const response = buildLoginRedirect(request, { expired: true });
+      listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
+        response.cookies.delete(cookieName);
+      });
+      response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
+      return response;
     }
   }
 

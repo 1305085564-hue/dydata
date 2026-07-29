@@ -49,14 +49,17 @@ function parseApplyExemptionPayload(input: unknown): { data: ApplyExemptionPaylo
   return { data: { exemptionType, startDate, endDate, reason } };
 }
 
-export async function POST(request: Request) {
+export async function buildApplyExemptionResponse(
+  request: Request,
+  deps: { requireSignedInUser: typeof requireSignedInUser } = { requireSignedInUser },
+) {
   const body = await readJsonBody(request);
   if ("response" in body) return body.response;
 
   const payload = parseApplyExemptionPayload(body.data);
   if ("response" in payload) return payload.response;
 
-  const auth = await requireSignedInUser();
+  const auth = await deps.requireSignedInUser();
   if ("response" in auth) return auth.response;
 
   const { data: profile, error: profileError } = await auth.supabase
@@ -68,6 +71,30 @@ export async function POST(request: Request) {
   if (profileError || !profile) {
     if (profileError) console.error("[exemptions] failed to load applicant profile", profileError);
     return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
+  }
+
+  // 防重：仅拦截完全相同（申请人+团队+类型+起止日期）且仍处于 pending 的申请，不影响不同日期/类型的新申请，也不影响已处理过的历史申请
+  let duplicateQuery = auth.supabase
+    .from("exemption_request")
+    .select("id, request_status, exemption_type")
+    .eq("applicant_user_id", auth.user.id)
+    .eq("team_id", profile.team_id)
+    .eq("exemption_type", payload.data.exemptionType)
+    .eq("start_date", payload.data.startDate)
+    .eq("request_status", "pending");
+
+  duplicateQuery =
+    payload.data.endDate == null
+      ? duplicateQuery.is("end_date", null)
+      : duplicateQuery.eq("end_date", payload.data.endDate);
+
+  const { data: existing } = await duplicateQuery
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json({ error: "已有未处理的相同豁免申请，请勿重复提交" }, { status: 409 });
   }
 
   const { data, error } = await auth.supabase
@@ -90,4 +117,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ data }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  return buildApplyExemptionResponse(request);
 }
