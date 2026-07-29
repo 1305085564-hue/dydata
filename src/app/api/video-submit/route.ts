@@ -294,8 +294,8 @@ export async function POST(request: NextRequest) {
     recognized_fields: asset.recognized_fields ?? null,
   }));
 
-  const curveScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
-  const retentionScreenshotUrl = normalized.assets.find((asset) => asset.role === "screenshot_2")?.url ?? null;
+  const curveScreenshotUrl = normalized.assets.find((asset) => asset.screenshot_type === "curve")?.url ?? null;
+  const retentionScreenshotUrl = normalized.assets.find((asset) => asset.screenshot_type === "retention")?.url ?? null;
 
   const snapshotPayload = {
     video_id: persistedVideo.id,

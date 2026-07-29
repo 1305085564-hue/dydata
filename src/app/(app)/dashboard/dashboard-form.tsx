@@ -73,7 +73,7 @@ function stripSuffix(val: string | null, suffix: string): string {
   return val.replace(suffix, "");
 }
 
-function getInitialOcrState(existingData?: DashboardReportData | null): OcrFormState {
+export function getInitialOcrState(existingData?: DashboardReportData | null): OcrFormState {
   return {
     play_count: existingData?.play_count != null ? String(existingData.play_count) : "",
     likes: existingData?.likes != null ? String(existingData.likes) : "0",
@@ -96,7 +96,13 @@ function normalizeImportedValues(values: ScreenshotImportEditableValues): OcrFor
   };
 }
 
-export function DashboardForm({
+export function DashboardForm(props: Props) {
+  const { accounts, defaultAccountId, existingData } = props;
+  const formKey = existingData?.id ?? `new-${defaultAccountId ?? accounts[0]?.id ?? "default"}`;
+  return <DashboardFormInner key={formKey} {...props} />;
+}
+
+function DashboardFormInner({
   accounts,
   defaultAccountId,
   today,
@@ -108,7 +114,6 @@ export function DashboardForm({
   const [successMsg, setSuccessMsg] = useState("已提交");
   const [ocrValues, setOcrValues] = useState<OcrFormState>(() => getInitialOcrState(existingData));
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const formKey = existingData?.id ?? `new-${defaultAccountId ?? accounts[0]?.id ?? "default"}`;
   const selectedAccountId = defaultAccountId ?? accounts[0]?.id ?? "";
   const isFloatingActionBar = actionBarMode === "floating";
   const submitButtonLabel = isPending
@@ -151,7 +156,6 @@ export function DashboardForm({
   return (
     <div className="relative">
       <form
-        key={formKey}
         onSubmit={handleSubmit}
         className={`space-y-4 sm:space-y-5 ${isFloatingActionBar ? "pb-32 sm:pb-40 xl:pb-44" : "pb-4 sm:pb-0"}`}
       >

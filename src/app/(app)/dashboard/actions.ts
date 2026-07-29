@@ -18,6 +18,18 @@ function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
 }
 
+function parseRequiredNumber(value: string | null | undefined, fieldName: string): number {
+  const trimmed = value?.trim();
+  if (trimmed === "") {
+    throw new Error(`必填数字字段 ${fieldName} 不能为空`);
+  }
+  const num = Number(trimmed);
+  if (!Number.isFinite(num)) {
+    throw new Error(`字段 ${fieldName} 必须是有效数字`);
+  }
+  return num;
+}
+
 export async function submitReport(formData: FormData) {
   const supabase = await createClient();
 
@@ -32,16 +44,26 @@ export async function submitReport(formData: FormData) {
   const account_id = formData.get("account_id") as string;
   const title = formData.get("title") as string;
   const report_date = formData.get("report_date") as string;
-  const play_count = Number(formData.get("play_count"));
+  let play_count: number;
+  let likes: number;
+  let comments: number;
+  let shares: number;
+  let favorites: number;
+  let follower_gain: number;
+  try {
+    play_count = parseRequiredNumber(formData.get("play_count") as string | null, "play_count");
+    likes = parseRequiredNumber(formData.get("likes") as string | null, "likes");
+    comments = parseRequiredNumber(formData.get("comments") as string | null, "comments");
+    shares = parseRequiredNumber(formData.get("shares") as string | null, "shares");
+    favorites = parseRequiredNumber(formData.get("favorites") as string | null, "favorites");
+    follower_gain = parseRequiredNumber(formData.get("follower_gain") as string | null, "follower_gain");
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "数字字段解析失败" };
+  }
   const completion_rate = formData.get("completion_rate") ? `${formData.get("completion_rate")}%` : null;
   const avg_play_duration = formData.get("avg_play_duration") ? `${formData.get("avg_play_duration")}秒` : null;
   const bounce_rate_2s = formData.get("bounce_rate_2s") ? `${formData.get("bounce_rate_2s")}%` : null;
   const completion_rate_5s = formData.get("completion_rate_5s") ? `${formData.get("completion_rate_5s")}%` : null;
-  const likes = Number(formData.get("likes"));
-  const comments = Number(formData.get("comments"));
-  const shares = Number(formData.get("shares"));
-  const favorites = Number(formData.get("favorites"));
-  const follower_gain = Number(formData.get("follower_gain"));
   const followerConvertRaw = formData.get("follower_convert") as string;
   const follower_convert = followerConvertRaw ? Number(followerConvertRaw) : null;
   const content = (formData.get("content") as string) || null;
@@ -75,6 +97,8 @@ export async function submitReport(formData: FormData) {
     .eq("report_date", report_date)
     .maybeSingle();
 
+  const uploadedAt = new Date().toISOString();
+
   const payload = {
     user_id: user.id,
     account_id,
@@ -94,6 +118,7 @@ export async function submitReport(formData: FormData) {
     follower_convert,
     content,
     published_at,
+    uploaded_at: uploadedAt,
   };
 
   const { error } = existing

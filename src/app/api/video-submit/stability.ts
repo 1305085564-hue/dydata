@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { SubmissionAssetMeta } from "@/types";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 export interface NormalizedVideoSubmitMetrics {
   play_count: number;
@@ -67,7 +68,7 @@ export function normalizeInteger(value: unknown, fallback = 0) {
 }
 
 export function getTodayDateString(now: Date = new Date()) {
-  return now.toISOString().split("T")[0];
+  return formatShanghaiDateOnly(now);
 }
 
 export function normalizeVideoIdLike(value: unknown) {

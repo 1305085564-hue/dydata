@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
-import { formatDateOnly } from "./shared";
+import { formatShanghaiDateOnly } from "./shared";
 
 type DashboardActivitySupabase = SupabaseClient;
 
@@ -42,10 +42,10 @@ export async function loadDashboardActivityData({
     return { monthSubmittedDates: [], monthReports: [], history: [] };
   }
 
-  const today = formatDateOnly(new Date());
+  const today = formatShanghaiDateOnly(new Date());
   const monthStart = new Date();
   monthStart.setDate(1);
-  const monthStartDate = formatDateOnly(monthStart);
+  const monthStartDate = formatShanghaiDateOnly(monthStart);
 
   const [{ data: history }, { data: monthDateRows }, { data: monthHistory }] = await Promise.all([
     supabase
