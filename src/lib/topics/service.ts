@@ -48,7 +48,7 @@ export interface TopicWorkSummary {
 export interface TopicPoolQueryOptions {
   view: TopicPoolView;
   timeRange: TopicTimeRange;
-  topicId: string | null;
+  topicIds: string[];
   page: number;
   pageSize: number;
 }
@@ -205,10 +205,16 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
     return { ok: false, status: 400, message: "time_range 只能是 3d、1w、1m 或 3m" };
   }
 
-  const rawTopicId = searchParams.get("topic_id");
-  const topicId = rawTopicId?.trim() || null;
-  if (topicId && !isUuidLike(topicId)) {
-    return { ok: false, status: 400, message: "topic_id 格式不正确" };
+  const topicIdsRaw = searchParams.getAll("topic_id");
+  const topicIds: string[] = [];
+  for (const raw of topicIdsRaw) {
+    const trimmed = raw.trim();
+    if (trimmed && !isUuidLike(trimmed)) {
+      return { ok: false, status: 400, message: "topic_id 格式不正确" };
+    }
+    if (trimmed) {
+      topicIds.push(trimmed);
+    }
   }
 
   return {
@@ -216,7 +222,7 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
     options: {
       view,
       timeRange,
-      topicId,
+      topicIds,
       page: normalizePositiveInteger(searchParams.get("page"), 1, 10000),
       pageSize: normalizePositiveInteger(searchParams.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
     },
@@ -726,7 +732,9 @@ export async function loadTopicPool(
     query = query.gte("created_at", since);
   }
 
-  if (options.topicId) query = query.eq("topic_id", options.topicId);
+  if (options.topicIds.length > 0) {
+    query = query.in("topic_id", options.topicIds);
+  }
   if (options.view === "my_created") query = query.eq("created_by", userId);
 
   const { data, error, count } = await query;

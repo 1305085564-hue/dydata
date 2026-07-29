@@ -171,7 +171,18 @@ test("选题池参数只接受约定视图和时间范围", () => {
     options: {
       view: "my_claims",
       timeRange: "1w",
-      topicId: "123e4567-e89b-12d3-a456-426614174001",
+      topicIds: ["123e4567-e89b-12d3-a456-426614174001"],
+      page: 1,
+      pageSize: 50,
+    },
+  });
+
+  assert.deepEqual(buildPoolQueryOptions(new URLSearchParams("view=my_claims&time_range=1w&topic_id=123e4567-e89b-12d3-a456-426614174001&topic_id=123e4567-e89b-12d3-a456-426614174002")), {
+    ok: true,
+    options: {
+      view: "my_claims",
+      timeRange: "1w",
+      topicIds: ["123e4567-e89b-12d3-a456-426614174001", "123e4567-e89b-12d3-a456-426614174002"],
       page: 1,
       pageSize: 50,
     },
@@ -222,7 +233,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
       kind: "all",
       visibleUserIds: ["user-1"],
     } as DataAccessScope,
-    { view: "my_claims", timeRange: "3d", page: 1, pageSize: 50, topicId: null },
+    { view: "my_claims", timeRange: "3d", page: 1, pageSize: 50, topicIds: [] },
   );
 
   assert.equal(result.ok, true);

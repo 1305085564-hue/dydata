@@ -214,10 +214,20 @@ export function VideoList({
     [snapshotRows]
   );
 
-  const snapshotMap = useMemo(
-    () => new Map(snapshots24h.map((snapshot) => [snapshot.video_id, snapshot])),
-    [snapshots24h]
-  );
+  const snapshotMap = useMemo(() => {
+    const sorted = [...snapshots24h].sort((a, b) => {
+      const aTime = a.captured_at ? new Date(a.captured_at).getTime() : 0;
+      const bTime = b.captured_at ? new Date(b.captured_at).getTime() : 0;
+      return bTime - aTime;
+    });
+    const map = new Map();
+    for (const snapshot of sorted) {
+      if (!map.has(snapshot.video_id)) {
+        map.set(snapshot.video_id, snapshot);
+      }
+    }
+    return map;
+  }, [snapshots24h]);
 
   const sortedVideos = useMemo(
     () => [...videoRows].sort((a, b) => {

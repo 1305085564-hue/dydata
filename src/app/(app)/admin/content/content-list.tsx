@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { getShanghaiDateString } from "@/lib/remind-submission";
-import { ContentFilters, type ContentFilterValue } from "./content-filters";
+import { ContentFilters, INITIAL_FILTERS, type ContentFilterValue } from "./content-filters";
 import { ContentDetailDialog } from "./content-detail-dialog";
 import { AttributionEditDialog } from "./attribution-edit-dialog";
 import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
@@ -316,18 +316,7 @@ export function ContentList({
   permissionInfo,
   onRefresh,
 }: ContentListProps) {
-  const [filters, setFilters] = useState<ContentFilterValue>({
-    profileId: "all",
-    accountId: "all",
-    startDate: "",
-    endDate: "",
-    status: "all",
-    hasSnapshot: "all",
-    reviewed: "all",
-    feedbackStatus: "all",
-    rankScope: "all",
-    sortMode: "latest",
-  });
+  const [filters, setFilters] = useState<ContentFilterValue>(INITIAL_FILTERS);
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isBatchGenerating, setIsBatchGenerating] = useState(false);
@@ -416,7 +405,7 @@ export function ContentList({
       reviewed: "all",
       feedbackStatus: "all",
       rankScope: "all",
-      sortMode: "latest",
+      sortMode: "priority",
     };
     handleFilter(defaultFilters);
   }, [handleFilter]);
@@ -1327,7 +1316,7 @@ export function ContentList({
                 {/* Sentinel for auto-load */}
                 {hasMore && (
                   <TableRow>
-                    <TableCell colSpan={canManageLifecycle ? 9 : 8} className="p-0">
+                    <TableCell colSpan={canManageLifecycle ? 12 : 11} className="p-0">
                       <div ref={sentinelRef} className="h-4" />
                     </TableCell>
                   </TableRow>

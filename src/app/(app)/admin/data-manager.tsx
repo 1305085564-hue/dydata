@@ -285,7 +285,7 @@ export function DataManager({
         setLocalReports((current) => {
           if (current.some((report) => report.id === removedReport.id)) return current;
           return [...current, removedReport].sort((left, right) =>
-            left.uploaded_at.localeCompare(right.uploaded_at),
+            right.uploaded_at.localeCompare(left.uploaded_at),
           );
         });
         feedbackToast.error(result.error);

@@ -50,7 +50,7 @@ interface ContentFiltersProps {
   onFilter: (value: ContentFilterValue) => void;
 }
 
-const INITIAL_FILTERS: ContentFilterValue = {
+export const INITIAL_FILTERS: ContentFilterValue = {
   profileId: "all",
   accountId: "all",
   startDate: "",
@@ -60,7 +60,7 @@ const INITIAL_FILTERS: ContentFilterValue = {
   reviewed: "all",
   feedbackStatus: "all",
   rankScope: "all",
-  sortMode: "latest",
+  sortMode: "priority",
 };
 
 const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [

@@ -51,6 +51,15 @@ interface TopicInfo {
   sort_order: number;
 }
 
+type TopicSortMode = "default" | "play_desc" | "claims_desc" | "newest";
+
+const TOPIC_SORT_OPTIONS = [
+  { id: "default", label: "默认排序" },
+  { id: "play_desc", label: "均播最高" },
+  { id: "claims_desc", label: "认领热度" },
+  { id: "newest", label: "最新录入" },
+] as const satisfies ReadonlyArray<{ id: TopicSortMode; label: string }>;
+
 function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
   return item.sub_topic_claims?.find((c) => c.user_id === currentUserId && c.status !== "returned") ?? null;
 }
@@ -111,7 +120,7 @@ export default function TopicPoolPage() {
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [viewPopoverOpen, setViewPopoverOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<"default" | "play_desc" | "claims_desc" | "newest">("default");
+  const [sortBy, setSortBy] = useState<TopicSortMode>("default");
   const [viewDensity, setViewDensity] = useState<"grid" | "compact">("grid");
   const [groupBy, setGroupBy] = useState<"none" | "topic">("none");
   const [searchQuery, setSearchQuery] = useState("");
@@ -255,8 +264,10 @@ export default function TopicPoolPage() {
       params.append("page", String(page));
       params.append("page_size", String(pageSize));
 
-      if (selectedTopicIds.length === 1) {
-        params.append("topic_id", selectedTopicIds[0]);
+      if (selectedTopicIds.length > 0) {
+        selectedTopicIds.forEach((id) => {
+          params.append("topic_id", id);
+        });
       }
 
       const json = await fetchTopicPoolResponse(`/api/topics/pool?${params.toString()}`);
@@ -611,7 +622,7 @@ export default function TopicPoolPage() {
                     onClick={() => {
                       setActiveTab("pool");
                       setCurrentPage(1);
-                      setCurrentView(opt.id as any);
+                      setCurrentView(opt.id as "all" | "my_claims" | "my_created");
                     }}
                     className={cn(
                       "flex items-center gap-1.5 text-[13px] font-bold transition-all cursor-pointer px-3.5 py-1.5 rounded-lg select-none",
@@ -801,16 +812,11 @@ export default function TopicPoolPage() {
                             排序方式
                           </div>
                           <div className="grid grid-cols-4 gap-1.5">
-                            {[
-                              { id: "default", label: "默认排序" },
-                              { id: "play_desc", label: "均播最高" },
-                              { id: "claims_desc", label: "认领热度" },
-                              { id: "newest", label: "最新录入" }
-                            ].map((opt) => (
+                            {TOPIC_SORT_OPTIONS.map((opt) => (
                               <button
                                 key={opt.id}
                                 type="button"
-                                onClick={() => setSortBy(opt.id as any)}
+                                onClick={() => setSortBy(opt.id)}
                                 className={cn(
                                   "h-8 rounded-lg border text-[11.5px] font-medium transition-all cursor-pointer text-center px-1",
                                   sortBy === opt.id
