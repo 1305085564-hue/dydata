@@ -30,6 +30,7 @@ type AdminCandidateRow = {
   id: string;
   role: UserRole;
   permissions: Permissions | null;
+  team_id: string | null;
 };
 
 export async function buildPermissionRequestApplyResponse(
@@ -62,7 +63,7 @@ export async function buildPermissionRequestApplyResponse(
 
   const { data: requesterProfile, error: requesterError } = await admin
     .from("profiles")
-    .select("id, name")
+    .select("id, name, team_id")
     .eq("id", user.id)
     .single();
 
@@ -73,7 +74,7 @@ export async function buildPermissionRequestApplyResponse(
 
   const { data: adminProfiles, error: adminError } = await admin
     .from("profiles")
-    .select("id, role, permissions")
+    .select("id, role, permissions, team_id")
     .in("role", ["owner", "admin"]);
 
   if (adminError) {
@@ -87,8 +88,10 @@ export async function buildPermissionRequestApplyResponse(
         id: profile.id,
         role: profile.role,
         permissions: profile.permissions,
+        team_id: profile.team_id,
       });
-      return businessRole === "owner" || businessRole === "team_admin";
+      if (businessRole === "owner") return true;
+      return businessRole === "team_admin" && profile.team_id === requesterProfile.team_id;
     })
     .map((profile) => profile.id);
 

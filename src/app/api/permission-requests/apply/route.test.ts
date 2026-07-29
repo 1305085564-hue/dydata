@@ -33,7 +33,7 @@ test("未登录调用返回 401，不发通知", async () => {
   assert.equal(emitCalled, false);
 });
 
-test("正常登录用户申请会调用 emit 通知 owner/team_admin", async () => {
+test("正常登录用户申请会调用 emit 通知 owner 和同团队 team_admin", async () => {
   const emitInputs: Array<Record<string, unknown>> = [];
   const res = await buildPermissionRequestApplyResponse(
     makeRequest({ moduleTitle: "转化中心", currentPath: "/conversion-hub" }),
@@ -46,14 +46,15 @@ test("正常登录用户申请会调用 emit 通知 owner/team_admin", async () 
               return {
                 select: () => ({
                   eq: (_col: string, val: string) => ({
-                    single: async () => ({ data: { id: val, name: "组员小李" }, error: null }),
+                    single: async () => ({ data: { id: val, name: "组员小李", team_id: "team-a" }, error: null }),
                   }),
                   in: async () => ({
                     data: [
-                      { id: "owner-1", role: "owner", permissions: {} },
-                      { id: "admin-1", role: "admin", permissions: { manage_members: true } },
-                      { id: "admin-2", role: "admin", permissions: { manage_members: false } },
-                      { id: "member-1", role: "member", permissions: {} },
+                      { id: "owner-1", role: "owner", permissions: {}, team_id: null },
+                      { id: "same-team-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-a" },
+                      { id: "other-team-admin", role: "admin", permissions: { manage_members: true }, team_id: "team-b" },
+                      { id: "group-leader", role: "admin", permissions: { manage_members: false }, team_id: "team-a" },
+                      { id: "member-1", role: "member", permissions: {}, team_id: "team-a" },
                     ],
                     error: null,
                   }),
@@ -75,7 +76,7 @@ test("正常登录用户申请会调用 emit 通知 owner/team_admin", async () 
   assert.equal(body.ok, true);
   assert.equal(emitInputs.length, 1);
   const emitted = emitInputs[0];
-  assert.deepEqual(new Set(emitted.recipients as string[]), new Set(["owner-1", "admin-1"]));
+  assert.deepEqual(new Set(emitted.recipients as string[]), new Set(["owner-1", "same-team-admin"]));
   assert.equal(emitted.category, "todo");
   assert.equal(emitted.sourceType, "permission_request");
   assert.equal(emitted.sourceId, "member-1:转化中心");
