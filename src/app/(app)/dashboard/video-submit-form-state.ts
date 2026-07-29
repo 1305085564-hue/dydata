@@ -88,3 +88,7 @@ export function shouldAutoRedirectToGrowthAfterSubmit({
 }) {
   return mode === "create" && bizDate === today && !submittedViewActive && !hasInitialSummary;
 }
+
+export function preserveBizDateWhenPublishedAtChanges(currentBizDate: string) {
+  return currentBizDate;
+}

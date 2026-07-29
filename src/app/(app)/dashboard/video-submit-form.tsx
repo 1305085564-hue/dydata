@@ -58,6 +58,7 @@ import {
   addRoleOverride as addSubmissionRoleOverride,
   normalizeOptionalText,
   removeRoleOverride as removeSubmissionRoleOverride,
+  preserveBizDateWhenPublishedAtChanges,
   setOperatorToSelf as resolveSelfOperatorUserId,
   setOperatorUser as resolveSelectedOperatorUserId,
   shouldAutoRedirectToGrowthAfterSubmit,
@@ -211,13 +212,12 @@ const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
 
 function createInitialMeta(today: string, userId: string): FormMetaState {
   const publishedAt = getDefaultPublishedAtValue();
-  const defaultBizDate = getDatePartFromDateTimeLocal(publishedAt) ?? today;
 
   return {
     videoUrl: "",
     videoTitle: "",
     content: "",
-    bizDate: defaultBizDate,
+    bizDate: today,
     publishedAt,
     publishedAtText: "",
     anomalyStatus: "normal",
@@ -232,11 +232,6 @@ function createInitialMeta(today: string, userId: string): FormMetaState {
     operatorUserId: userId,
     roleOverrides: [],
   };
-}
-
-function getDatePartFromDateTimeLocal(value: string) {
-  const [datePart = ""] = value.split("T");
-  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : null;
 }
 
 function parseMetric(value: string, fallback = 0) {
@@ -2172,10 +2167,9 @@ export function VideoSubmitForm({
                                     nextPublishedAtText: meta.publishedAtText,
                                     changedField: "published_at",
                                   });
-                                  const nextBizDate = !isBackfillMode && !initialSummary ? getDatePartFromDateTimeLocal(nextPublishedAt) : null;
                                   setMeta((current) => ({
                                     ...current,
-                                    bizDate: nextBizDate ?? current.bizDate,
+                                    bizDate: preserveBizDateWhenPublishedAtChanges(current.bizDate),
                                     publishedAt: synced.publishedAt,
                                     publishedAtText: synced.publishedAtText,
                                   }));

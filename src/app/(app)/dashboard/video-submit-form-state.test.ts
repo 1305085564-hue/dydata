@@ -7,6 +7,7 @@ import {
   removeRoleOverride,
   setOperatorToSelf,
   setOperatorUser,
+  preserveBizDateWhenPublishedAtChanges,
   shouldAutoRedirectToGrowthAfterSubmit,
 } from "./video-submit-form-state";
 
@@ -119,5 +120,16 @@ test("非今日提交不自动跳转 growth", () => {
       hasInitialSummary: false,
     }),
     false,
+  );
+});
+
+test("选择发布时间不应改动归属日期", () => {
+  assert.equal(
+    preserveBizDateWhenPublishedAtChanges("2026-07-29", "2026-07-28T19:00"),
+    "2026-07-29",
+  );
+  assert.equal(
+    preserveBizDateWhenPublishedAtChanges("2026-07-15", "2026-07-15T08:30"),
+    "2026-07-15",
   );
 });
