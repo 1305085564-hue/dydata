@@ -44,6 +44,7 @@ import {
 } from "../join-request-actions";
 
 import { ExemptionDialog } from "../豁免弹窗";
+import { findFocusMember } from "@/lib/admin/find-focus-member";
 
 import type { BusinessRole } from "@/lib/business-role";
 import type { ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
@@ -120,6 +121,7 @@ interface TeamV2ContentProps {
   };
   pendingRequests: PendingRequest[];
   defaultDate: string;
+  focusMemberId?: string;
 }
 
 type AiSuggestion = {
@@ -154,12 +156,13 @@ export function AdminModulesContentV2({
   teams: initialTeams,
   teamManagement,
   pendingRequests: initialPendingRequests,
+  focusMemberId,
 }: TeamV2ContentProps) {
   const router = useRouter();
   const [localTeams, setLocalTeams] = useState<TeamOption[]>(initialTeams);
   const [localProfiles, setLocalProfiles] = useState<ProfileSummary[]>(allProfiles);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
-  
+
   const [selectedTeamId, setSelectedTeamId] = useState<string>("__all__");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   
@@ -214,6 +217,20 @@ export function AdminModulesContentV2({
     void fetchEmails();
     return () => { active = false; };
   }, []);
+
+  const appliedFocusMemberId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusMemberId) return;
+    if (appliedFocusMemberId.current === focusMemberId) return;
+    const member = findFocusMember(localProfiles, focusMemberId);
+    if (!member) return;
+    appliedFocusMemberId.current = focusMemberId;
+    setSelectedTeamId("__all__");
+    setSelectedGroupId(null);
+    setSearchQuery("");
+    setActiveMemberId(member.id);
+    setDraftPermissions({ ...member.permissions });
+  }, [focusMemberId, localProfiles]);
 
   const filteredProfiles = useMemo(() => {
     return localProfiles.filter(p => {

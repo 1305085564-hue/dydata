@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ShieldAlert, ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -16,8 +18,30 @@ export function PermissionGuard({
   requiredRoleLabel = "团队管理员或组长",
   description,
 }: PermissionGuardProps) {
-  const handlePermissionApply = () => {
-    feedbackToast.error(`权限申请通道尚未接入，请联系管理员开通「${moduleTitle}」权限`);
+  const pathname = usePathname();
+  const [isApplying, setIsApplying] = useState(false);
+
+  const handlePermissionApply = async () => {
+    if (isApplying) return;
+    setIsApplying(true);
+    try {
+      const res = await fetch("/api/permission-requests/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moduleTitle, currentPath: pathname }),
+      });
+      if (!res.ok) throw new Error("申请失败");
+      const payload = await res.json();
+      if (payload.warning) {
+        feedbackToast.error(payload.warning);
+      } else {
+        feedbackToast.success("已通知管理员，请等待处理。");
+      }
+    } catch {
+      feedbackToast.error("申请发送失败，请联系管理员。");
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
@@ -46,10 +70,11 @@ export function PermissionGuard({
           <Button
             type="button"
             onClick={handlePermissionApply}
-            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-semibold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-95 transition-all"
+            disabled={isApplying}
+            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-semibold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-95 transition-all disabled:opacity-70"
           >
             <Send className="mr-1.5 size-4 stroke-[1.8]" />
-            申请查看权限
+            {isApplying ? "正在发送…" : "申请查看权限"}
           </Button>
 
           <Link href="/dashboard">

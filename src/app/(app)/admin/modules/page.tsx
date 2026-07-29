@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 interface AdminModulesPageProps {
-  searchParams: Promise<{ date?: string; focus?: string }>;
+  searchParams: Promise<{ date?: string; focus?: string; member?: string }>;
 }
 
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
@@ -50,13 +50,19 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
       ]}
     >
       <Suspense fallback={<TeamV2Skeleton />}>
-        <ModulesDataContainer searchDate={params.date} />
+        <ModulesDataContainer searchDate={params.date} focusMemberId={params.member} />
       </Suspense>
     </AdminWorkspaceLayout>
   );
 }
 
-async function ModulesDataContainer({ searchDate }: { searchDate?: string }) {
+async function ModulesDataContainer({
+  searchDate,
+  focusMemberId,
+}: {
+  searchDate?: string;
+  focusMemberId?: string;
+}) {
   const supabase = await createClient();
   
   // 并发加载完整的团队管理上下文和入团审批请求
@@ -86,6 +92,7 @@ async function ModulesDataContainer({ searchDate }: { searchDate?: string }) {
       teamManagement={data.teamManagement}
       pendingRequests={pendingJoinRequests}
       defaultDate={data.queryDate}
+      focusMemberId={focusMemberId}
     />
   );
 }
