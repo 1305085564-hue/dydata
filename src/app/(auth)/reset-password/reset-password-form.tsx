@@ -18,6 +18,17 @@ import { Label } from "@/components/ui/label";
 
 import { AuthShell } from "../_components/auth-shell";
 
+function isRecoverySession(accessToken: string): boolean {
+  try {
+    const part = accessToken.split('.')[1];
+    const padded = part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(padded)) as { amr?: Array<{ method: string }> };
+    return Array.isArray(payload.amr) && payload.amr.some(a => a.method === 'otp');
+  } catch {
+    return false;
+  }
+}
+
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const next = sanitizeNextPath(searchParams?.get("next"), "");
@@ -34,7 +45,8 @@ export function ResetPasswordForm() {
     void createClient().auth.getSession()
       .then(({ data, error }) => {
         if (!active) return;
-        setRecoveryState(!error && data.session ? "ready" : "invalid");
+        const valid = !error && data.session != null && isRecoverySession(data.session.access_token);
+        setRecoveryState(valid ? "ready" : "invalid");
       })
       .catch(() => {
         if (active) setRecoveryState("invalid");
@@ -69,11 +81,7 @@ export function ResetPasswordForm() {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-        feedbackToast.error("密码已重置，但当前会话退出失败，请关闭页面后重新登录");
-        return;
-      }
+      await supabase.auth.signOut();
       window.location.assign(buildLoginPath(next, { reset: "success" }));
     } catch (error) {
       feedbackToast.error(getResetPasswordErrorMessage((error as Error).message));

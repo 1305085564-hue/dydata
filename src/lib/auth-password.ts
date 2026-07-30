@@ -2,13 +2,14 @@ export const FORGOT_PASSWORD_SUCCESS_MESSAGE = "如果该邮箱已注册，我�
 
 type LoginPathOptions = {
   registered?: "1";
-  reset?: "success" | "expired";
+  reset?: "success" | "expired" | "pkce";
 };
 
 export function getLoginNotice(params: { registered?: string; reset?: string; from?: string }) {
   if (params.registered === "1") return "注册成功，请登录";
   if (params.reset === "success") return "密码已重置，请重新登录";
   if (params.reset === "expired") return "重置链接已失效，请重新发送";
+  if (params.reset === "pkce") return "重置链接只能在发送时的设备上打开，请换回原设备或重新发送";
   return null;
 }
 

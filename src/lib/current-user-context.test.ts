@@ -14,7 +14,7 @@ test("登录态读取通过请求级缓存复用", () => {
   assert.match(currentUser, /cache\(async/);
   assert.match(currentUser, /authError: authResult\.error/);
   assert.match(permissions, /getCurrentUserContext\(\)/);
-  assert.match(permissions, /assertSupabaseQuerySucceeded\(authError/);
+  assert.match(permissions, /if \(authError \|\| !user\) return null/);
   assert.match(nav, /getCurrentUserContext\(\)/);
   assert.match(joinBanner, /getCurrentUserContext\(\)/);
 });

@@ -1,5 +1,4 @@
 import { getCurrentUserContext } from "@/lib/current-user-context";
-import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { getMyPendingRequest } from "@/lib/team-join/service";
 
 export type JoinBannerData = {
@@ -18,9 +17,7 @@ export type JoinBannerData = {
 
 export async function loadJoinBanner(): Promise<JoinBannerData> {
   const { supabase, user, authError } = await getCurrentUserContext();
-  assertSupabaseQuerySucceeded(authError, "验证加入团队登录状态失败");
-
-  if (!user) {
+  if (authError || !user) {
     return { shouldRender: false };
   }
 
