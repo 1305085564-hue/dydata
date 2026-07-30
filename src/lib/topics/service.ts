@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 
-export const TOPIC_POOL_VIEWS = ["all", "my_claims", "my_created"] as const;
+export const TOPIC_POOL_VIEWS = [
+  "all",
+  "my_claims",
+  "my_created",
+  "trending",
+  "high_potential",
+  "never_worked",
+] as const;
 export const TOPIC_TIME_RANGES = ["3d", "1w", "1m", "3m"] as const;
 export const TOPIC_CLAIM_STATUSES = ["candidate", "scripting", "returned"] as const;
 export const TOPIC_WORK_SORTS = ["best", "recent"] as const;
@@ -198,7 +205,11 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
   | ApiFailure {
   const view = searchParams.get("view") ?? "all";
   if (!isOneOf(TOPIC_POOL_VIEWS, view)) {
-    return { ok: false, status: 400, message: "view 只能是 all、my_claims 或 my_created" };
+    return {
+      ok: false,
+      status: 400,
+      message: "view 只能是 all、my_claims、my_created、trending、high_potential 或 never_worked",
+    };
   }
 
   const timeRange = searchParams.get("time_range") ?? "1m";
@@ -693,6 +704,245 @@ export function filterTopicClaimsByScope<T extends { user_id?: string | null }>(
   return applyScope(rows, scope);
 }
 
+type ScoreMode = "trending" | "high_potential";
+
+function calcFlowScore(avgPlayCount: number | null) {
+  const playCount = avgPlayCount ?? 0;
+  if (playCount >= 200_000) return 0.6;
+  if (playCount >= 100_000) return 0.5;
+  if (playCount >= 50_000) return 0.4;
+  if (playCount >= 30_000) return 0.3;
+  return 0.1;
+}
+
+function calcTimeScore(daysSinceLastWork: number, mode: ScoreMode) {
+  if (mode === "trending") {
+    if (daysSinceLastWork <= 3) return 0.4;
+    if (daysSinceLastWork <= 7) return 0.3;
+    return 0.2;
+  }
+  if (daysSinceLastWork > 60) return 0.4;
+  if (daysSinceLastWork > 45) return 0.3;
+  return 0.2;
+}
+
+function calcTopicScore(avgPlayCount: number | null, daysSinceLastWork: number, mode: ScoreMode) {
+  return calcFlowScore(avgPlayCount) + calcTimeScore(daysSinceLastWork, mode);
+}
+
+function buildTopicPoolItem(
+  item: Record<string, unknown>,
+  scope: DataAccessScope,
+  summary: TopicWorkSummary,
+  extra: Record<string, unknown> = {},
+) {
+  const visibleClaims = Array.isArray(item.sub_topic_claims)
+    ? filterTopicClaimsByScope(
+        item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>,
+        scope,
+      )
+    : [];
+  return {
+    ...item,
+    sub_topic_claims: visibleClaims,
+    summary,
+    claimCount: visibleClaims.filter((claim) => claim.status !== "returned").length,
+    ...extra,
+  };
+}
+
+async function loadScoredTopicPool(
+  supabase: TopicSupabase,
+  scope: DataAccessScope,
+  options: TopicPoolQueryOptions,
+  mode: ScoreMode,
+): Promise<ApiResult<unknown>> {
+  let subTopicsQuery = supabase
+    .from("sub_topics")
+    .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)")
+    .order("created_at", { ascending: false });
+  if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
+
+  const { data: subTopics, error: subTopicsError } = await subTopicsQuery;
+  if (subTopicsError) return { ok: false, status: 500, message: subTopicsError.message };
+
+  const allSubTopics = (subTopics ?? []) as Array<Record<string, unknown>>;
+  const subTopicIds = allSubTopics.map((item) => String(item.id));
+  if (subTopicIds.length === 0) {
+    return {
+      ok: true,
+      value: { items: [], pagination: { page: options.page, pageSize: options.pageSize, totalItems: 0 } },
+    };
+  }
+
+  let worksQuery = supabase
+    .from("videos")
+    .select("topic_id, user_id, uploaded_at, video_metrics_snapshots(play_count)")
+    .eq("lifecycle_state", "active")
+    .in("topic_id", subTopicIds);
+  if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+
+  const { data: works, error: worksError } = await worksQuery;
+  if (worksError) return { ok: false, status: 500, message: worksError.message };
+
+  const worksBySubTopic = new Map<string, { latestUploadedAt: string; playCounts: number[] }>();
+  const scopedWorks = applyScope(
+    (works ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>,
+    scope,
+  );
+  for (const work of scopedWorks) {
+    const subTopicId = String(work.topic_id ?? "");
+    if (!subTopicId) continue;
+    const uploadedAt = typeof work.uploaded_at === "string" ? work.uploaded_at : "";
+    const snapshots = Array.isArray(work.video_metrics_snapshots)
+      ? work.video_metrics_snapshots as Array<{ play_count?: number | null }>
+      : [];
+    const playCount = snapshots.reduce(
+      (maximum, snapshot) => Math.max(maximum, Number(snapshot.play_count ?? 0)),
+      0,
+    );
+    const aggregate = worksBySubTopic.get(subTopicId);
+    if (!aggregate) {
+      worksBySubTopic.set(subTopicId, { latestUploadedAt: uploadedAt, playCounts: [playCount] });
+      continue;
+    }
+    if (uploadedAt > aggregate.latestUploadedAt) aggregate.latestUploadedAt = uploadedAt;
+    aggregate.playCounts.push(playCount);
+  }
+
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const scored: Array<{
+    item: Record<string, unknown>;
+    score: number;
+    daysSinceLastWork: number;
+    avgPlayCount: number | null;
+  }> = [];
+  for (const item of allSubTopics) {
+    const aggregate = worksBySubTopic.get(String(item.id));
+    if (!aggregate) continue;
+    const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= 1_000);
+    const avgPlayCount = qualifiedPlayCounts.length
+      ? Math.round(qualifiedPlayCounts.reduce((total, playCount) => total + playCount, 0) / qualifiedPlayCounts.length)
+      : null;
+    const latestTimestamp = Date.parse(aggregate.latestUploadedAt);
+    const daysSinceLastWork = Number.isFinite(latestTimestamp)
+      ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
+      : 999;
+    if (mode === "trending" && daysSinceLastWork > 30) continue;
+    if (mode === "high_potential" && daysSinceLastWork <= 30) continue;
+    scored.push({
+      item,
+      score: calcTopicScore(avgPlayCount, daysSinceLastWork, mode),
+      daysSinceLastWork,
+      avgPlayCount,
+    });
+  }
+
+  scored.sort(
+    (left, right) =>
+      right.score - left.score ||
+      (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) ||
+      String(left.item.id).localeCompare(String(right.item.id)),
+  );
+
+  const totalItems = scored.length;
+  const from = (options.page - 1) * options.pageSize;
+  const pageItems = scored.slice(from, from + options.pageSize);
+  let summaries: Map<string, TopicWorkSummary>;
+  try {
+    summaries = await loadTopicSummaries(
+      supabase,
+      pageItems.map(({ item }) => String(item.id)),
+      scope,
+    );
+  } catch (error) {
+    return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      items: pageItems.map(({ item, score, daysSinceLastWork, avgPlayCount }) =>
+        buildTopicPoolItem(
+          item,
+          scope,
+          summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
+          {
+            _score: score,
+            _daysSinceLastWork: daysSinceLastWork,
+            _avgPlayCount: avgPlayCount,
+          },
+        ),
+      ),
+      pagination: { page: options.page, pageSize: options.pageSize, totalItems },
+    },
+  };
+}
+
+async function loadNeverWorkedTopics(
+  supabase: TopicSupabase,
+  scope: DataAccessScope,
+  options: TopicPoolQueryOptions,
+): Promise<ApiResult<unknown>> {
+  let subTopicsQuery = supabase
+    .from("sub_topics")
+    .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)")
+    .order("created_at", { ascending: false });
+  if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
+
+  const { data: subTopics, error: subTopicsError } = await subTopicsQuery;
+  if (subTopicsError) return { ok: false, status: 500, message: subTopicsError.message };
+
+  const allSubTopics = (subTopics ?? []) as Array<Record<string, unknown>>;
+  const subTopicIds = allSubTopics.map((item) => String(item.id));
+  if (subTopicIds.length === 0) {
+    return {
+      ok: true,
+      value: { items: [], pagination: { page: options.page, pageSize: options.pageSize, totalItems: 0 } },
+    };
+  }
+
+  let worksQuery = supabase
+    .from("videos")
+    .select("topic_id, user_id")
+    .eq("lifecycle_state", "active")
+    .in("topic_id", subTopicIds);
+  if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+
+  const { data: works, error: worksError } = await worksQuery;
+  if (worksError) return { ok: false, status: 500, message: worksError.message };
+
+  const workedIds = new Set(
+    applyScope(
+      (works ?? []) as Array<{ topic_id?: string | null; user_id?: string | null }>,
+      scope,
+    )
+      .map((work) => work.topic_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const neverWorked = allSubTopics.filter((item) => !workedIds.has(String(item.id)));
+  const from = (options.page - 1) * options.pageSize;
+  const pageItems = neverWorked.slice(from, from + options.pageSize);
+
+  return {
+    ok: true,
+    value: {
+      items: pageItems.map((item) =>
+        buildTopicPoolItem(item, scope, calculateTopicWorkSummary([]), {
+          _daysSinceLastWork: null,
+          _avgPlayCount: null,
+        }),
+      ),
+      pagination: {
+        page: options.page,
+        pageSize: options.pageSize,
+        totalItems: neverWorked.length,
+      },
+    },
+  };
+}
+
 export async function loadSubTopicDetail(supabase: TopicSupabase, id: string, scope: DataAccessScope): Promise<ApiResult<unknown>> {
   const { data: subTopic, error } = await supabase
     .from("sub_topics")
@@ -731,6 +981,10 @@ export async function loadTopicPool(
   scope: DataAccessScope,
   options: TopicPoolQueryOptions,
 ): Promise<ApiResult<unknown>> {
+  if (options.view === "trending") return loadScoredTopicPool(supabase, scope, options, "trending");
+  if (options.view === "high_potential") return loadScoredTopicPool(supabase, scope, options, "high_potential");
+  if (options.view === "never_worked") return loadNeverWorkedTopics(supabase, scope, options);
+
   const from = (options.page - 1) * options.pageSize;
   const to = from + options.pageSize - 1;
   const since = timeRangeStartIso(options.timeRange);
@@ -789,18 +1043,11 @@ export async function loadTopicPool(
     ok: true,
     value: {
       items: items.map((item) => {
-        const visibleClaims = Array.isArray(item.sub_topic_claims)
-          ? filterTopicClaimsByScope(
-              item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>,
-              scope
-            )
-          : [];
-        return {
-          ...item,
-          sub_topic_claims: visibleClaims,
-          summary: summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
-          claimCount: visibleClaims.filter((claim) => claim.status !== "returned").length,
-        };
+        return buildTopicPoolItem(
+          item,
+          scope,
+          summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
+        );
       }),
       pagination: {
         page: options.page,

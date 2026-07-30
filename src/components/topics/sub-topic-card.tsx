@@ -44,6 +44,9 @@ export interface SubTopicItem {
   summary: TopicSummary;
   claimCount: number;
   sub_topic_claims?: SubTopicClaim[];
+  _score?: number;
+  _daysSinceLastWork?: number | null;
+  _avgPlayCount?: number | null;
 }
 
 interface SubTopicCardProps {
@@ -234,7 +237,7 @@ export function SubTopicCard({
             "hover:border-zinc-300 hover:shadow-sm hover:-translate-y-0.5 active:scale-[0.995]"
           )}
         >
-          {/* 卡片顶栏：母题/情感标签 */}
+          {/* 卡片顶栏：母题/情感标签 & 智能推荐徽标 */}
           <div className="flex items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               {item.topic_groups && (
@@ -250,6 +253,50 @@ export function SubTopicCard({
                 </span>
               )}
             </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {item._avgPlayCount !== undefined && item._avgPlayCount !== null && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-semibold border tabular-nums",
+                    item._avgPlayCount >= 30000
+                      ? "bg-[#C9604D]/10 text-[#C9604D] border-[#C9604D]/20"
+                      : item._avgPlayCount > 0
+                      ? "bg-[#6FAA7D]/10 text-[#6FAA7D] border-[#6FAA7D]/20"
+                      : "bg-zinc-100 text-zinc-400 border-zinc-200"
+                  )}
+                  title={`均播量：${item._avgPlayCount.toLocaleString()}`}
+                >
+                  均播 {item._avgPlayCount >= 10000 ? `${(item._avgPlayCount / 10000).toFixed(1)}万` : item._avgPlayCount.toLocaleString()}
+                </span>
+              )}
+              {item._daysSinceLastWork !== undefined && item._daysSinceLastWork !== null && item._daysSinceLastWork <= 30 && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-medium border",
+                    item._daysSinceLastWork <= 3
+                      ? "bg-[#D97757]/10 text-[#D97757] border-[#D97757]/20 font-semibold"
+                      : item._daysSinceLastWork <= 7
+                      ? "bg-zinc-100 text-zinc-600 border-zinc-200"
+                      : "bg-zinc-50 text-zinc-400 border-zinc-200/60"
+                  )}
+                >
+                  {item._daysSinceLastWork <= 3 ? `🔥 ${item._daysSinceLastWork}天前` : `${item._daysSinceLastWork}天前`}
+                </span>
+              )}
+              {item._daysSinceLastWork !== undefined && item._daysSinceLastWork !== null && item._daysSinceLastWork > 30 && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-medium border",
+                    item._daysSinceLastWork > 60
+                      ? "bg-[#5F82A8]/12 text-[#5F82A8] border-[#5F82A8]/25 font-semibold"
+                      : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                  )}
+                >
+                  {item._daysSinceLastWork > 60 ? `💤 已${item._daysSinceLastWork}天未做` : `已${item._daysSinceLastWork}天未做`}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* 标题 & Hook 区域：点击统一打开详情弹窗 */}
@@ -261,6 +308,12 @@ export function SubTopicCard({
             {item.hook && (
               <p className="text-[12.5px] text-zinc-500 line-clamp-2 leading-relaxed font-normal">
                 {item.hook}
+              </p>
+            )}
+
+            {item._daysSinceLastWork === null && (
+              <p className="text-[11px] text-zinc-400 font-normal pt-0.5">
+                录入于 {Math.max(0, Math.floor((Date.now() - new Date(item.created_at).getTime()) / 86400000))} 天前 · 尚无作品
               </p>
             )}
           </div>

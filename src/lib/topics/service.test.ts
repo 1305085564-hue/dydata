@@ -186,6 +186,20 @@ function createFakeSupabase(results: Record<string, Array<{ data?: unknown; erro
   };
 }
 
+function createScope(kind: DataAccessScope["kind"] = "all", visibleUserIds = ["user-1"]) {
+  return {
+    userId: "user-1",
+    role: kind === "all" ? "owner" : "member",
+    businessRole: kind === "all" ? "owner" : "member",
+    permissions: {},
+    accessLevel: kind === "all" ? 4 : 1,
+    teamId: null,
+    groupId: null,
+    kind,
+    visibleUserIds,
+  } as DataAccessScope;
+}
+
 test("候选上限最多允许 5 条，已有同一候选时保持幂等", () => {
   assert.deepEqual(validateCandidateClaimLimit({ currentCandidateCount: 4, alreadyCandidate: false }), {
     ok: true,
@@ -279,7 +293,7 @@ test("选题池参数只接受约定视图和时间范围", () => {
   assert.deepEqual(buildPoolQueryOptions(new URLSearchParams("view=bad")), {
     ok: false,
     status: 400,
-    message: "view 只能是 all、my_claims 或 my_created",
+    message: "view 只能是 all、my_claims、my_created、trending、high_potential 或 never_worked",
   });
 
   assert.deepEqual(buildPoolQueryOptions(new URLSearchParams("topic_id=not-a-uuid")), {
@@ -287,6 +301,119 @@ test("选题池参数只接受约定视图和时间范围", () => {
     status: 400,
     message: "topic_id 格式不正确",
   });
+
+  for (const view of ["trending", "high_potential", "never_worked"]) {
+    assert.equal(buildPoolQueryOptions(new URLSearchParams(`view=${view}`)).ok, true);
+  }
+});
+
+test("近期高热只保留 30 天内作品，按综合分排序并沿用分类与权限筛选", async () => {
+  const now = Date.now();
+  const daysAgo = (days: number) => new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
+  const topicId = "123e4567-e89b-12d3-a456-426614174001";
+  const fake = createFakeSupabase({
+    sub_topics: [{
+      data: [
+        { id: "sub-hot", topic_id: topicId, title: "近三天高播放", sub_topic_claims: [] },
+        { id: "sub-warm", topic_id: topicId, title: "一周内中播放", sub_topic_claims: [] },
+        { id: "sub-old", topic_id: topicId, title: "三十天外", sub_topic_claims: [] },
+      ],
+    }],
+    videos: [
+      { data: [
+        { topic_id: "sub-hot", user_id: "user-1", uploaded_at: daysAgo(2), video_metrics_snapshots: [{ play_count: 200_000 }] },
+        { topic_id: "sub-warm", user_id: "user-1", uploaded_at: daysAgo(6), video_metrics_snapshots: [{ play_count: 50_000 }] },
+        { topic_id: "sub-old", user_id: "user-1", uploaded_at: daysAgo(31), video_metrics_snapshots: [{ play_count: 500_000 }] },
+      ] },
+      { data: [] },
+    ],
+  });
+
+  const result = await loadTopicPool(
+    fake.client as never,
+    "user-1",
+    createScope("self"),
+    { view: "trending", timeRange: "1m", page: 1, pageSize: 20, topicIds: [topicId] },
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const value = result.value as { items: Array<Record<string, unknown>>; pagination: Record<string, number> };
+  assert.deepEqual(value.items.map((item) => item.id), ["sub-hot", "sub-warm"]);
+  assert.deepEqual(value.items.map((item) => item._score), [1, 0.7]);
+  assert.deepEqual(value.pagination, { page: 1, pageSize: 20, totalItems: 2 });
+
+  const subTopicsQuery = fake.queries.find((query) => query.table === "sub_topics");
+  const worksQuery = fake.queries.find((query) => query.table === "videos");
+  assert.deepEqual(subTopicsQuery?.calls.find((call) => call.method === "in")?.args, ["topic_id", [topicId]]);
+  assert.deepEqual(worksQuery?.calls.find((call) => call.method === "in" && call.args[0] === "user_id")?.args, ["user_id", ["user-1"]]);
+});
+
+test("高潜待挖只保留 30 天外作品，同等播放量时沉睡越久越靠前", async () => {
+  const now = Date.now();
+  const daysAgo = (days: number) => new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
+  const fake = createFakeSupabase({
+    sub_topics: [{
+      data: [
+        { id: "sub-40", title: "四十天未做", sub_topic_claims: [] },
+        { id: "sub-70", title: "七十天未做", sub_topic_claims: [] },
+        { id: "sub-recent", title: "刚做过", sub_topic_claims: [] },
+      ],
+    }],
+    videos: [
+      { data: [
+        { topic_id: "sub-40", user_id: "user-1", uploaded_at: daysAgo(40), video_metrics_snapshots: [{ play_count: 100_000 }] },
+        { topic_id: "sub-70", user_id: "user-1", uploaded_at: daysAgo(70), video_metrics_snapshots: [{ play_count: 100_000 }] },
+        { topic_id: "sub-recent", user_id: "user-1", uploaded_at: daysAgo(3), video_metrics_snapshots: [{ play_count: 100_000 }] },
+      ] },
+      { data: [] },
+    ],
+  });
+
+  const result = await loadTopicPool(
+    fake.client as never,
+    "user-1",
+    createScope(),
+    { view: "high_potential", timeRange: "1m", page: 1, pageSize: 1, topicIds: [] },
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const value = result.value as { items: Array<Record<string, unknown>>; pagination: Record<string, number> };
+  assert.deepEqual(value.items.map((item) => item.id), ["sub-70"]);
+  assert.equal(value.items[0]?._score, 0.9);
+  assert.deepEqual(value.pagination, { page: 1, pageSize: 1, totalItems: 2 });
+});
+
+test("从未做过按当前可见范围排除已有作品，并在过滤后分页", async () => {
+  const fake = createFakeSupabase({
+    videos: [{ data: [{ topic_id: "sub-worked", user_id: "user-1" }] }],
+    sub_topics: [{
+      data: [
+        { id: "sub-worked", title: "已经做过", created_at: "2026-07-30T03:00:00.000Z", sub_topic_claims: [] },
+        { id: "sub-newest", title: "最新未做", created_at: "2026-07-30T02:00:00.000Z", sub_topic_claims: [] },
+        { id: "sub-older", title: "较早未做", created_at: "2026-07-30T01:00:00.000Z", sub_topic_claims: [] },
+      ],
+    }],
+  });
+
+  const result = await loadTopicPool(
+    fake.client as never,
+    "user-1",
+    createScope("self"),
+    { view: "never_worked", timeRange: "1m", page: 2, pageSize: 1, topicIds: [] },
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  const value = result.value as { items: Array<Record<string, unknown>>; pagination: Record<string, number> };
+  assert.deepEqual(value.items.map((item) => item.id), ["sub-older"]);
+  assert.equal(value.items[0]?._daysSinceLastWork, null);
+  assert.equal(value.items[0]?._avgPlayCount, null);
+  assert.deepEqual(value.pagination, { page: 2, pageSize: 1, totalItems: 2 });
+
+  const worksQuery = fake.queries.find((query) => query.table === "videos");
+  assert.deepEqual(worksQuery?.calls.find((call) => call.method === "in" && call.args[0] === "user_id")?.args, ["user_id", ["user-1"]]);
 });
 
 test("我的认领视图按有效认领 id 在数据库层过滤，不按子题创建时间过滤", async () => {

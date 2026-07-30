@@ -39,8 +39,7 @@ import {
   X,
   LayoutGrid,
   List,
-  Layers,
-  User
+  Layers
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -50,6 +49,15 @@ interface TopicInfo {
   name: string;
   sort_order: number;
 }
+
+export type ActiveView =
+  | "trending"        // 1 推荐选题（近期高热 + AI 建议两段式）
+  | "high_potential"  // 2 高潜待挖
+  | "never_worked"    // 3 从未做过
+  | "my_claims"       // 4 脚本中
+  | "all"             // 5 全部选题
+  | "my_created"      // 6 个人选题
+  | "comparison";     // 7 趋势变化
 
 type TopicSortMode = "default" | "play_desc" | "claims_desc" | "newest";
 
@@ -108,13 +116,8 @@ export default function TopicPoolPage() {
   const [topicsList, setTopicsList] = useState<TopicInfo[]>([]);
   const [topicsError, setTopicsError] = useState<string | null>(null);
 
-  // 主页视图 Tab
-  const [activeTab, setActiveTab] = useState<"pool" | "comparison" | "recommendations">("pool");
-  
-  // 推荐选题与趋势变化 Modal / Popover 状态
-  const [recModalOpen, setRecModalOpen] = useState(false);
-  const [compModalOpen, setCompModalOpen] = useState(false);
-  const [compPopoverOpen, setCompPopoverOpen] = useState(false);
+  // 7 扁平智能 Tab 视角
+  const [activeView, setActiveView] = useState<ActiveView>("trending");
 
   // 筛选与 Popover 控制状态
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
@@ -132,8 +135,7 @@ export default function TopicPoolPage() {
     );
   }, []);
 
-  // 视图基础过滤状态
-  const [currentView, setCurrentView] = useState<"all" | "my_claims" | "my_created">("all");
+  // 视图基础过滤与分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -154,7 +156,7 @@ export default function TopicPoolPage() {
   const [collapsedTopicIds, setCollapsedTopicIds] = useState<Set<string>>(new Set());
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
-  // 系统推荐 (Item 1, 2, 3, 4) state
+  // 系统推荐 state
   const [recData, setRecData] = useState<RecommendationResponse | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [ignoredRecKeys, setIgnoredRecKeys] = useState<Set<string>>(new Set());
@@ -167,14 +169,12 @@ export default function TopicPoolPage() {
   const [tuneTopicId, setTuneTopicId] = useState("");
   const [isSubmittingAdopt, setIsSubmittingAdopt] = useState(false);
 
-  // 横向对比 (Item 5, 6, 7, 8) state
+  // 横向对比 state
   const [comparisonDimension, setComparisonDimension] = useState<"topic" | "account">("topic");
   const [comparisonDays, setComparisonDays] = useState<number>(30);
   const [comparisonTopicId, setComparisonTopicId] = useState<string>("");
   const [comparisonRows, setComparisonRows] = useState<ComparisonRow[]>([]);
   const [loadingComparison, setLoadingComparison] = useState(false);
-
-  const pageSize = 50;
 
   useEffect(() => {
     const getUserId = async () => {
@@ -202,8 +202,9 @@ export default function TopicPoolPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const urlView = new URLSearchParams(window.location.search).get("view");
-    if (urlView === "all" || urlView === "my_claims" || urlView === "my_created") {
-      setCurrentView(urlView);
+    const validViews: ActiveView[] = ["trending", "high_potential", "never_worked", "my_claims", "all", "my_created", "comparison"];
+    if (urlView && validViews.includes(urlView as ActiveView)) {
+      setActiveView(urlView as ActiveView);
     }
   }, []);
 
@@ -250,18 +251,28 @@ export default function TopicPoolPage() {
     }
   }, []);
 
-  // 加载选题池列表
-  const fetchPoolData = useCallback(async (page: number, append = false) => {
+  // 获取各 Tab 最佳 PageSize
+  const getPageSize = useCallback((view: ActiveView): number => {
+    if (view === "trending" || view === "high_potential") return 8;
+    if (view === "never_worked") return 20;
+    return 50;
+  }, []);
+
+  // 加载选题池数据
+  const fetchPoolData = useCallback(async (page: number, append = false, targetView?: ActiveView) => {
+    const viewToFetch = targetView || activeView;
+    if (viewToFetch === "comparison") return true;
+
     if (page === 1) setLoading(true);
     else setLoadingMore(true);
     if (page === 1) setPoolError(null);
 
     try {
       const params = new URLSearchParams();
-      params.append("view", currentView);
+      params.append("view", viewToFetch);
       params.append("time_range", "1m");
       params.append("page", String(page));
-      params.append("page_size", String(pageSize));
+      params.append("page_size", String(getPageSize(viewToFetch)));
 
       if (selectedTopicIds.length > 0) {
         selectedTopicIds.forEach((id) => {
@@ -291,7 +302,7 @@ export default function TopicPoolPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [currentView, selectedTopicIds]);
+  }, [activeView, getPageSize, selectedTopicIds]);
 
   // 加载系统推荐
   const fetchRecommendations = useCallback(async () => {
@@ -340,16 +351,24 @@ export default function TopicPoolPage() {
   const loadAll = useCallback(async () => {
     setCurrentPage(1);
     await Promise.all([
-      fetchPoolData(1, false),
+      fetchPoolData(1, false, activeView),
       fetchMyClaims(),
       fetchRecommendations(),
-      fetchComparison()
+      activeView === "comparison" ? fetchComparison() : Promise.resolve()
     ]);
-  }, [fetchMyClaims, fetchPoolData, fetchRecommendations, fetchComparison]);
+  }, [activeView, fetchComparison, fetchMyClaims, fetchPoolData, fetchRecommendations]);
 
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
+    if (activeView === "comparison") {
+      void fetchComparison();
+    } else {
+      void fetchPoolData(1, false, activeView);
+    }
+    void fetchMyClaims();
+    if (activeView === "trending") {
+      void fetchRecommendations();
+    }
+  }, [activeView, selectedTopicIds, fetchComparison, fetchMyClaims, fetchPoolData, fetchRecommendations]);
 
   useEffect(() => {
     const handleRefresh = () => {
@@ -359,7 +378,7 @@ export default function TopicPoolPage() {
     return () => window.removeEventListener("refresh-topics", handleRefresh);
   }, [loadAll]);
 
-  // 触发 5/5 认领上限替换弹窗 (智能高亮挂机最久)
+  // 触发 5/5 认领上限替换弹窗
   const candidateClaims = useMemo(() => {
     return myClaims.filter(
       (item) => getMyClaim(item, currentUserId) !== null
@@ -455,7 +474,7 @@ export default function TopicPoolPage() {
       setAdoptModalOpen(false);
       setAdoptingRec(null);
       setAdoptingRecKey(null);
-      setActiveTab("pool");
+      setActiveView("trending");
       void loadAll();
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
@@ -467,7 +486,7 @@ export default function TopicPoolPage() {
 
   const handleLoadMore = async () => {
     const nextPage = currentPage + 1;
-    const succeeded = await fetchPoolData(nextPage, true);
+    const succeeded = await fetchPoolData(nextPage, true, activeView);
     setCurrentPage((page) => resolvePageAfterLoad(page, succeeded));
   };
 
@@ -494,7 +513,7 @@ export default function TopicPoolPage() {
     }
 
     if (sortBy === "play_desc") {
-      result.sort((a, b) => (b.summary.averagePlayCount ?? 0) - (a.summary.averagePlayCount ?? 0));
+      result.sort((a, b) => (b._avgPlayCount ?? b.summary.averagePlayCount ?? 0) - (a._avgPlayCount ?? a.summary.averagePlayCount ?? 0));
     } else if (sortBy === "claims_desc") {
       result.sort((a, b) => (b.claimCount ?? 0) - (a.claimCount ?? 0));
     } else if (sortBy === "newest") {
@@ -527,7 +546,7 @@ export default function TopicPoolPage() {
     return Object.values(groups).sort((a, b) => a.sortOrder - b.sortOrder);
   }, [filteredAndSortedItems]);
 
-  // 折叠母题偏好持久化 (localStorage)
+  // 折叠母题偏好持久化
   const toggleCollapseGroup = (topicId: string) => {
     setCollapsedTopicIds((prev) => {
       const next = new Set(prev);
@@ -559,9 +578,44 @@ export default function TopicPoolPage() {
     (s) => !ignoredRecKeys.has(getRecommendationKey(s))
   );
 
+  const getEmptyStateProps = useCallback((view: ActiveView) => {
+    switch (view) {
+      case "trending":
+        return {
+          title: "最近 30 天还没有作品数据",
+          description: "先发几条视频，积累数据后这里会自动出现推荐。"
+        };
+      case "high_potential":
+        return {
+          title: "暂无沉睡的高潜选题",
+          description: "最近 30 天内所有有历史作品的选题都还在活跃期。"
+        };
+      case "never_worked":
+        return {
+          title: "所有选题均已有作品",
+          description: "选题库里所有选题都已经有作品了，继续录入新灵感吧。"
+        };
+      case "my_claims":
+        return {
+          title: "暂无脚本中的选题",
+          description: "你还没有认领任何选题，去「推荐选题」或「全部选题」中认领吧。"
+        };
+      case "my_created":
+        return {
+          title: "暂无个人录入选题",
+          description: "你还没有录入过个人选题，点击右上角「录入选题」开始添加吧。"
+        };
+      default:
+        return {
+          title: "暂无相关选题",
+          description: "当前筛选条件下没有查找到符合要求的选题。"
+        };
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
-      {/* 分类 / 认领失败独立重试提示栏 */}
+      {/* 错误提示栏 */}
       <AnimatePresence>
         {topicsError && (
           <motion.div
@@ -585,10 +639,10 @@ export default function TopicPoolPage() {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className="flex items-center justify-between rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/5 px-4 py-2.5 text-[12.5px] text-zinc-700"
+            className="flex items-center justify-between rounded-xl border border-[#D97757]/25 bg-[#D97757]/5 px-4 py-2.5 text-[12.5px] text-zinc-700"
           >
             <div className="flex items-center gap-1.5">
-              <AlertTriangle className="size-4 shrink-0 text-[#D99E55]" />
+              <AlertTriangle className="size-4 shrink-0 text-[#D97757]" />
               <span>认领状态加载失败：{claimsError}</span>
             </div>
             <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px]">
@@ -599,152 +653,53 @@ export default function TopicPoolPage() {
         )}
       </AnimatePresence>
 
-      {/* L1 工作区主面板 (Unified L1 White Workbench Panel) */}
+      {/* L1 工作区主面板 */}
       <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 md:p-6 shadow-xs space-y-6">
-        {/* 控制台顶栏：Tab 筛选与合一控制器 */}
+        {/* 控制台顶栏：7 扁平智能 Tab 控制器 */}
         <div className="flex items-center justify-between gap-4 pb-1 flex-wrap">
-          {/* 左侧：Tab 菜单 + 三合一筛选口 + 划入伸缩搜索 */}
+          {/* 左侧：7 扁平 Tab + 筛选 + 搜索 */}
           <div className="flex items-center gap-3 flex-wrap">
-            {/* 主焦点组：核心业务视角切换器 (Primary Focus - Unified 3-Way Segmented Control) */}
-            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 shadow-2xs">
+            {/* 7 个扁平 Tab 栏 */}
+            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 shadow-2xs overflow-x-auto">
               {[
-                { id: "all", label: "全部选题", icon: Compass },
+                { id: "trending", label: "推荐选题", icon: Sparkles },
+                { id: "high_potential", label: "高潜待挖", icon: Compass },
+                { id: "never_worked", label: "从未做过", icon: Plus },
+                { id: "my_claims", label: "脚本中", icon: Clock },
+                { id: "all", label: "全部选题", icon: LayoutGrid },
                 { id: "my_created", label: "个人选题", icon: Film },
-                { id: "my_claims", label: "脚本中", icon: Clock }
+                { id: "comparison", label: "趋势变化", icon: BarChart3 }
               ].map((opt) => {
                 const Icon = opt.icon;
-                const isSelected = activeTab === "pool" && currentView === opt.id;
+                const isSelected = activeView === opt.id;
                 return (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => {
-                      setActiveTab("pool");
+                      setActiveView(opt.id as ActiveView);
                       setCurrentPage(1);
-                      setCurrentView(opt.id as "all" | "my_claims" | "my_created");
                     }}
                     className={cn(
-                      "flex items-center gap-1.5 text-[13px] font-bold transition-all cursor-pointer px-3.5 py-1.5 rounded-lg select-none",
+                      "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap",
                       isSelected
                         ? "bg-white text-zinc-900 font-bold shadow-xs border border-zinc-200/90 ring-1 ring-zinc-950/5"
-                        : "text-zinc-500 hover:text-zinc-800"
+                        : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-200/50"
                     )}
                   >
-                    <Icon className={cn("size-4 shrink-0", isSelected ? "text-zinc-900" : "text-zinc-400")} />
+                    <Icon className={cn("size-3.5 shrink-0", isSelected ? "text-[#D97757]" : "text-zinc-400")} />
                     <span>{opt.label}</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* 次焦点组：辅助决策工具 (Secondary Focus - Subdued & Subtle Control) */}
-            <div className="flex items-center gap-1 bg-zinc-50/70 p-1 rounded-xl border border-zinc-200/40">
-              <button
-                type="button"
-                onClick={() => setRecModalOpen(true)}
-                className={cn(
-                  "flex items-center gap-1.5 text-[12px] font-medium transition-all cursor-pointer px-2.5 py-1.5 rounded-lg select-none relative",
-                  recModalOpen
-                    ? "bg-white text-zinc-800 font-semibold shadow-2xs border border-zinc-200/60"
-                    : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/60"
-                )}
-              >
-                <Sparkles className="size-3.5 text-[#D97757]/80 shrink-0" />
-                <span>推荐选题</span>
-                {visibleSuggestions.length > 0 && (
-                  <span className="ml-0.5 rounded-full bg-[#D97757]/80 px-1.5 py-0.2 text-[9.5px] text-white font-medium">
-                    {visibleSuggestions.length}
-                  </span>
-                )}
-              </button>
-
-              {/* 趋势变化：划入/Hover 展开母题/账号维度 Dropover 子选项 (次焦点 2) */}
-              <div
-                className="relative group"
-                onMouseEnter={() => setCompPopoverOpen(true)}
-                onMouseLeave={() => setCompPopoverOpen(false)}
-              >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCompModalOpen(true);
-                    setCompPopoverOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 text-[12px] font-medium transition-all cursor-pointer px-2.5 py-1.5 rounded-lg select-none",
-                    compModalOpen
-                      ? "bg-white text-zinc-800 font-semibold shadow-2xs border border-zinc-200/60"
-                      : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100/60"
-                  )}
-                >
-                  <BarChart3 className="size-3.5 text-zinc-500 shrink-0" />
-                  <span>趋势变化</span>
-                  <ChevronDown className="size-3 text-zinc-400 group-hover:rotate-180 transition-transform duration-200" />
-                </button>
-
-                <AnimatePresence>
-                  {compPopoverOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 4, scale: 0.96 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute left-0 top-full pt-1.5 z-30 w-48"
-                    >
-                      <div className="bg-white rounded-2xl shadow-xl border border-zinc-200/90 p-1.5 space-y-1 text-xs">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setComparisonDimension("topic");
-                            setCompModalOpen(true);
-                            setCompPopoverOpen(false);
-                          }}
-                          className={cn(
-                            "flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all cursor-pointer text-left group/item",
-                            comparisonDimension === "topic" ? "bg-zinc-100/90 text-zinc-900 font-semibold shadow-2xs" : "text-zinc-600 hover:bg-zinc-50"
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Layers className="size-3.5 text-zinc-500 group-hover/item:text-zinc-900 transition-colors shrink-0" />
-                            <div className="flex flex-col">
-                              <span className="font-semibold leading-tight">母题维度</span>
-                              <span className="text-[10px] text-zinc-400 font-normal">统计母题爆款率</span>
-                            </div>
-                          </div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setComparisonDimension("account");
-                            setCompModalOpen(true);
-                            setCompPopoverOpen(false);
-                          }}
-                          className={cn(
-                            "flex w-full items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all cursor-pointer text-left group/item",
-                            comparisonDimension === "account" ? "bg-zinc-100/90 text-zinc-900 font-semibold shadow-2xs" : "text-zinc-600 hover:bg-zinc-50"
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <User className="size-3.5 text-zinc-500 group-hover/item:text-zinc-900 transition-colors shrink-0" />
-                            <div className="flex flex-col">
-                              <span className="font-semibold leading-tight">账号维度</span>
-                              <span className="text-[10px] text-zinc-400 font-normal">评估矩阵号播放</span>
-                            </div>
-                          </div>
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* 划入（Hover）即时展开的“三合一筛选与视图” Popover 入口 */}
-            {activeTab === "pool" && (
+            {/* 筛选与搜索 (非趋势变化页展示) */}
+            {activeView !== "comparison" && (
               <div className="flex items-center gap-2">
                 <div className="h-4 w-[1px] bg-zinc-200 shrink-0" />
 
+                {/* “筛选与视图” Popover 入口 */}
                 <div
                   className="relative group"
                   onMouseEnter={() => setFilterPopoverOpen(true)}
@@ -772,7 +727,7 @@ export default function TopicPoolPage() {
                         transition={{ duration: 0.15 }}
                         className="absolute left-0 top-full mt-1.5 z-30 w-[380px] bg-white rounded-xl shadow-md border border-zinc-200 p-4 space-y-4 text-xs"
                       >
-                        {/* 分区 1：母题分类（4 列 2 行 4x2 胶囊矩阵，可多选与取消，不选即全选） */}
+                        {/* 母题分类 */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-[11.5px] font-semibold text-zinc-400 uppercase tracking-wider">
                             <span>母题分类</span>
@@ -805,7 +760,7 @@ export default function TopicPoolPage() {
 
                         <div className="h-[1px] bg-zinc-100" />
 
-                        {/* 分区 2：排序方式（单行一字排开 4 项） */}
+                        {/* 排序方式 */}
                         <div className="space-y-2">
                           <div className="text-[11.5px] font-semibold text-zinc-400 uppercase tracking-wider">
                             排序方式
@@ -831,7 +786,7 @@ export default function TopicPoolPage() {
 
                         <div className="h-[1px] bg-zinc-100" />
 
-                        {/* 分区 3：视图密度与分组结构 (在一行左右分开) */}
+                        {/* 视图密度与分组结构 */}
                         <div className="grid grid-cols-2 gap-3 pt-0.5">
                           <div className="space-y-1.5">
                             <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
@@ -897,7 +852,7 @@ export default function TopicPoolPage() {
                   </AnimatePresence>
                 </div>
 
-                {/* 撤回项 3 还原：默认紧凑 Icon 按钮，划入/聚焦平滑展开为搜索框 */}
+                {/* 搜索框 */}
                 <div
                   className={cn(
                     "relative flex items-center transition-all duration-300 ease-out group",
@@ -933,9 +888,9 @@ export default function TopicPoolPage() {
             )}
           </div>
 
-          {/* 控制栏右侧：5位动态点阵候选位 + 录入选题主 CTA */}
+          {/* 右侧：5位动态点阵候选位 + 录入选题主 CTA */}
           <div className="flex items-center gap-4">
-            {activeTab === "pool" && (
+            {activeView !== "comparison" && (
               <div
                 className={cn(
                   "flex items-center gap-2 rounded-xl border px-3 py-1.5 transition-all duration-200",
@@ -980,8 +935,140 @@ export default function TopicPoolPage() {
           </div>
         </div>
 
-        {/* 视图 1：选题池 View */}
-        {activeTab === "pool" && (
+        {/* 智能 Tab 主内容展现区 */}
+        {activeView === "comparison" ? (
+          /* Tab 7：趋势变化 */
+          <div className="space-y-5 pt-2">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 shadow-2xs">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-zinc-200/80 shadow-2xs">
+                  <button
+                    onClick={() => setComparisonDimension("topic")}
+                    className={cn(
+                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
+                      comparisonDimension === "topic" ? "bg-zinc-900 text-white font-semibold shadow-2xs" : "text-zinc-500 hover:text-zinc-800"
+                    )}
+                  >
+                    母题维度
+                  </button>
+                  <button
+                    onClick={() => setComparisonDimension("account")}
+                    className={cn(
+                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
+                      comparisonDimension === "account" ? "bg-zinc-900 text-white font-semibold shadow-2xs" : "text-zinc-500 hover:text-zinc-800"
+                    )}
+                  >
+                    账号维度
+                  </button>
+                </div>
+
+                {comparisonDimension === "account" && topicsList.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-[12px]">
+                    <span className="text-zinc-500 font-medium">对比母题：</span>
+                    <select
+                      value={comparisonTopicId}
+                      onChange={(e) => setComparisonTopicId(e.target.value)}
+                      className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 outline-none focus:border-[#5F82A8]"
+                    >
+                      {topicsList.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[12px]">
+                <Calendar className="size-3.5 text-zinc-400" />
+                <span className="text-zinc-500 font-medium">时间筛选：</span>
+                <select
+                  value={comparisonDays}
+                  onChange={(e) => setComparisonDays(Number(e.target.value))}
+                  className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] outline-none"
+                >
+                  <option value={7}>近 7 天</option>
+                  <option value={14}>近 14 天</option>
+                  <option value={30}>近 30 天</option>
+                </select>
+              </div>
+            </div>
+
+            {comparisonRows.length > 0 && (
+              <div className="rounded-xl bg-zinc-100/70 p-3.5 border border-zinc-200/50 text-[12px] text-zinc-700 flex items-center gap-1.5">
+                <Info className="size-4 text-[#5F82A8] shrink-0" />
+                <span>
+                  对比数据解读：基于当前列表分布中位数（达标率中位数：{(comparisonMedians.qualifiedRateMedian * 100).toFixed(1)}%，均播中位数：{comparisonMedians.avgPlayMedian.toLocaleString()}）。低于中位数标绿，高于中位数标红。
+                </span>
+              </div>
+            )}
+
+            {loadingComparison ? (
+              <TopicPoolSkeleton />
+            ) : comparisonRows.length === 0 ? (
+              <div className="py-12 text-center border border-dashed border-zinc-200 rounded-2xl bg-white space-y-2">
+                <EmptyState title="暂无对比样本" description="当前筛选条件下缺少足够的作品发布样本。" />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[13px]">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium">
+                      <tr>
+                        <th className="py-3.5 px-6">{comparisonDimension === "topic" ? "母题分类" : "账号名称"}</th>
+                        <th className="py-3.5 px-6">作品样本数</th>
+                        <th className="py-3.5 px-6">爆款达标率</th>
+                        <th className="py-3.5 px-6">平均播放量</th>
+                        <th className="py-3.5 px-6">最高播放量</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {comparisonRows.map((row, idx) => {
+                        const name = comparisonDimension === "account"
+                          ? (row.accountName || row.topicName || `账号 ${idx + 1}`)
+                          : (row.topicName || row.accountName || `母题 ${idx + 1}`);
+                        const rowKey = comparisonDimension === "account"
+                          ? `acc-${row.accountId || idx}-${idx}`
+                          : `top-${row.topicId || idx}-${idx}`;
+
+                        const isLowConfidence = row.lowConfidence || row.workCount < 3;
+                        const isRateHigher = row.qualifiedRate >= comparisonMedians.qualifiedRateMedian;
+                        const isPlayHigher = row.avgPlayCount >= comparisonMedians.avgPlayMedian;
+
+                        return (
+                          <tr key={rowKey} className={cn("hover:bg-zinc-50/60", isLowConfidence && "opacity-70 bg-zinc-50/30")}>
+                            <td className="py-3.5 px-6 font-semibold text-zinc-900 flex items-center gap-1.5">
+                              <span className={cn(isLowConfidence && "text-zinc-500")}>{name}</span>
+                              {isLowConfidence && (
+                                <span className="rounded bg-zinc-200 px-1.5 py-0.2 text-[10px] text-zinc-500 font-normal shrink-0">
+                                  样本少仅供参考
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-6 tabular-nums text-zinc-700">{row.workCount} 条</td>
+                            <td className="py-3.5 px-6 font-semibold tabular-nums">
+                              <span className={isRateHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
+                                {(row.qualifiedRate * 100).toFixed(1)}%
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-6 font-semibold tabular-nums">
+                              <span className={isPlayHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
+                                {row.avgPlayCount >= 10000 ? `${(row.avgPlayCount / 10000).toFixed(1)}w` : row.avgPlayCount.toLocaleString()}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-6 tabular-nums text-zinc-800">
+                              {row.bestPlayCount >= 10000 ? `${(row.bestPlayCount / 10000).toFixed(1)}w` : row.bestPlayCount.toLocaleString()}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Tab 1-6 子题卡片列表 */
           <div className="space-y-6">
             <AnimatePresence mode="wait">
               {loading && items.length === 0 ? (
@@ -998,14 +1085,36 @@ export default function TopicPoolPage() {
                   exit={{ opacity: 0 }}
                   className="flex flex-col items-center justify-center p-12 border border-dashed border-zinc-200 bg-white rounded-2xl space-y-3 text-center"
                 >
-                  <EmptyState title="暂无相关选题" description="当前筛选条件下没有查找到符合要求的选题。" />
-                  <Button size="sm" onClick={() => triggerGlobalTopicCreate()} className="bg-[#D97757] text-white">
-                    <Plus className="size-4 mr-1" />
-                    立即新建选题
-                  </Button>
+                  <EmptyState {...getEmptyStateProps(activeView)} />
+                  {activeView === "never_worked" && (
+                    <Button size="sm" onClick={() => triggerGlobalTopicCreate()} className="bg-[#D97757] text-white">
+                      <Plus className="size-4 mr-1" />
+                      录入选题
+                    </Button>
+                  )}
                 </motion.div>
               ) : (
-                <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-5">
+                <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                  {/* 近期高热 / 高潜 / 从未做过 Header 提示语 */}
+                  {activeView === "trending" && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 pb-1">
+                      <span className="font-semibold text-zinc-800">近期高热选题</span>
+                      <span>· 最近 30 天表现优异的团队选题方向</span>
+                    </div>
+                  )}
+                  {activeView === "high_potential" && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 pb-1">
+                      <span className="font-semibold text-zinc-800">高潜沉睡选题</span>
+                      <span>· 30 天以上未发新作品但历史表现突出的机会选题</span>
+                    </div>
+                  )}
+                  {activeView === "never_worked" && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 pb-1">
+                      <span className="font-semibold text-zinc-800">从未做过选题</span>
+                      <span>· 选题库中尚无任何关联作品的储备灵感</span>
+                    </div>
+                  )}
+
                   {groupBy === "topic" ? (
                     /* 按母题分组结构渲染 */
                     <div className="space-y-6">
@@ -1141,9 +1250,94 @@ export default function TopicPoolPage() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Tab 1 下半区：AI 选题建议 (两段式布局) */}
+            {activeView === "trending" && (
+              <div className="pt-6 border-t border-zinc-200/80 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="size-4.5 text-[#D97757]" />
+                    <h2 className="text-[15px] font-semibold text-zinc-900">
+                      AI 建议 <span className="text-[12.5px] font-normal text-zinc-500">（基于近期爆款样本生成，尚未入库）</span>
+                    </h2>
+                  </div>
+                  {recData?.evidenceSummary && (
+                    <span className="text-[12px] text-zinc-400 font-normal">
+                      {recData.evidenceSummary}
+                    </span>
+                  )}
+                </div>
+
+                {loadingRecommendations ? (
+                  <TopicPoolSkeleton />
+                ) : visibleSuggestions.length === 0 ? (
+                  <div className="py-8 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50 space-y-1">
+                    <p className="text-xs text-zinc-500">暂无 AI 建议，系统在积累更多爆款样本后会自动为你提炼新创意。</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {visibleSuggestions.map((rec) => {
+                      const key = getRecommendationKey(rec);
+                      return (
+                        <div
+                          key={key}
+                          className="flex flex-col justify-between rounded-xl border border-zinc-200/90 bg-[#FBF9F7] border-l-2 border-l-[#D97757] p-4 transition-all hover:border-zinc-300 hover:shadow-xs min-w-0"
+                        >
+                          <div className="space-y-2.5">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="rounded bg-[#D97757]/10 text-[#D97757] px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap shrink-0">
+                                {rec.category || "爆款推荐"}
+                              </span>
+                              {rec.expectedPerformance && (
+                                <span className="text-[11px] font-normal text-zinc-500 bg-white/80 px-2 py-0.5 rounded border border-zinc-200/60 whitespace-nowrap shrink-0">
+                                  预期表现: {rec.expectedPerformance}
+                                </span>
+                              )}
+                            </div>
+
+                            <h3 className="text-[14.5px] font-semibold text-zinc-900 leading-snug">{rec.title}</h3>
+
+                            {rec.angle && (
+                              <div className="border-l-2 border-zinc-300/80 pl-3 py-0.5 text-[12px] text-zinc-600 leading-relaxed">
+                                <span className="font-medium text-zinc-800 block mb-0.5">切入角度：</span>
+                                “{rec.angle}”
+                              </div>
+                            )}
+
+                            {rec.evidence && (
+                              <div className="text-[11.5px] text-zinc-500 flex items-start gap-1">
+                                <Info className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
+                                <span>依据：{rec.evidence}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-end gap-2 pt-2 border-t border-zinc-200/40">
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              onClick={() => setIgnoredRecKeys((prev) => new Set(prev).add(key))}
+                              className="h-7 text-zinc-400 hover:text-zinc-600 text-[12px]"
+                            >
+                              忽略
+                            </Button>
+                            <Button
+                              size="xs"
+                              onClick={() => handleOpenAdoptModal(rec, key)}
+                              className="h-7 px-3 bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium rounded-lg text-[12px] cursor-pointer"
+                            >
+                              采纳微调
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-
       </div>
 
       {/* 3:4 全局沉浸中心弹窗 */}
@@ -1161,7 +1355,7 @@ export default function TopicPoolPage() {
         onRefresh={() => void loadAll()}
       />
 
-      {/* 升级版 5/5 满额替换决策 Dialog */}
+      {/* 5/5 满额替换决策 Dialog */}
       <Dialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
         <DialogContent className="sm:max-w-md p-5 rounded-3xl">
           <DialogHeader>
@@ -1289,267 +1483,6 @@ export default function TopicPoolPage() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* 沉浸式“推荐选题”大弹窗 (黄金视口 max-w-[960px], 2张一行) */}
-      <Dialog open={recModalOpen} onOpenChange={setRecModalOpen}>
-        <DialogContent className="!max-w-[960px] sm:!max-w-[960px] w-[92vw] max-h-[86vh] overflow-y-auto rounded-2xl p-6 bg-white border border-zinc-200/90 shadow-xl space-y-4">
-          <DialogHeader className="pb-1 space-y-1">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4.5 text-[#D97757]" />
-                <DialogTitle className="text-base font-semibold text-zinc-900">推荐选题</DialogTitle>
-              </div>
-              {recData && (
-                <div className="flex items-center gap-3 text-[11.5px] text-zinc-400 font-normal">
-                  {typeof recData.sampleCount === "number" && recData.sampleCount > 0 && <span>样本数: {recData.sampleCount} 条</span>}
-                  {recData.marketDate && <span>热点日期: {recData.marketDate}</span>}
-                </div>
-              )}
-            </div>
-            <DialogDescription className="text-[12px] text-zinc-500 font-normal leading-relaxed text-left">
-              {recData?.evidenceSummary
-                ? `推荐依据：${recData.evidenceSummary}`
-                : "基于团队全网爆款视频样本与数据趋势生成的选题提炼。采纳后将自动转换为正式子题放入选题池。"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-
-            {loadingRecommendations ? (
-              <TopicPoolSkeleton />
-            ) : visibleSuggestions.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-zinc-200 rounded-xl bg-white space-y-2">
-                <EmptyState title="暂无推荐选题" description="先积累更多作品数据，AI 将持续学习并自动生成复刻建议。" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
-                {visibleSuggestions.map((rec) => {
-                  const key = getRecommendationKey(rec);
-                  return (
-                    <div
-                      key={key}
-                      className="flex flex-col justify-between rounded-xl border border-zinc-200/90 bg-white p-4.5 transition-colors hover:border-zinc-300 shadow-2xs min-w-0"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="rounded bg-zinc-100 px-2.5 py-0.5 text-[11px] font-semibold text-zinc-700 whitespace-nowrap shrink-0">
-                            {rec.category || "爆款推荐"}
-                          </span>
-                          {rec.expectedPerformance && (
-                            <span className="text-[11px] font-normal text-zinc-500 bg-zinc-100/70 px-2 py-0.5 rounded whitespace-nowrap shrink-0">
-                              预期表现: {rec.expectedPerformance}
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="text-[14.5px] font-semibold text-zinc-900 leading-snug">{rec.title}</h3>
-
-                        {rec.angle && (
-                          <div className="border-l-2 border-zinc-300 pl-3 py-0.5 text-[12px] text-zinc-600 leading-relaxed">
-                            <span className="font-medium text-zinc-800 block mb-0.5">切入角度：</span>
-                            “{rec.angle}”
-                          </div>
-                        )}
-
-                        {rec.evidence && (
-                          <div className="text-[11.5px] text-zinc-500 flex items-start gap-1">
-                            <Info className="size-3.5 text-zinc-400 shrink-0 mt-0.5" />
-                            <span>依据：{rec.evidence}</span>
-                          </div>
-                        )}
-
-                        {rec.referenceVideos && rec.referenceVideos.length > 0 && (
-                          <div className="space-y-1.5 pt-1">
-                            <span className="text-[11px] font-normal text-zinc-400 flex items-center gap-1">
-                              <Film className="size-3 text-zinc-400" />
-                              参考视频 ({rec.referenceVideos.length})
-                            </span>
-                            <div className="space-y-1">
-                              {rec.referenceVideos.slice(0, 2).map((vid, idx) => {
-                                const playVal = vid.playCount24h ?? vid.playCount;
-                                return (
-                                  <div key={idx} className="flex items-center justify-between text-[11px] text-zinc-600 bg-zinc-50/80 px-2 py-1 rounded">
-                                    <span className="truncate max-w-[200px]">{vid.title || "爆款原片"}</span>
-                                    {playVal !== undefined && (
-                                      <span className="text-zinc-400 tabular-nums">
-                                        {playVal >= 10000 ? `${(playVal / 10000).toFixed(1)}w` : playVal}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-3 flex items-center justify-end gap-2 pt-1">
-                        <Button
-                          size="xs"
-                          variant="ghost"
-                          onClick={() => setIgnoredRecKeys((prev) => new Set(prev).add(key))}
-                          className="h-7 text-zinc-400 hover:text-zinc-600 text-[12px]"
-                        >
-                          忽略
-                        </Button>
-                        <Button
-                          size="xs"
-                          onClick={() => handleOpenAdoptModal(rec, key)}
-                          className="h-7 px-3 bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium rounded-lg text-[12px] cursor-pointer"
-                        >
-                          采纳微调
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* 沉浸式“趋势变化”大弹窗 (精细视口 max-w-[1040px]) */}
-      <Dialog open={compModalOpen} onOpenChange={setCompModalOpen}>
-        <DialogContent className="!max-w-[1040px] sm:!max-w-[1040px] w-[92vw] max-h-[86vh] overflow-y-auto rounded-2xl p-6 bg-white border border-zinc-200 shadow-xl space-y-4.5">
-          <DialogHeader className="flex flex-row items-center justify-between border-b border-zinc-100 pb-3.5">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="size-4.5 text-zinc-900" />
-              <DialogTitle className="text-base font-semibold text-zinc-900">趋势变化</DialogTitle>
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-4 shadow-2xs">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
-                  <button
-                    onClick={() => setComparisonDimension("topic")}
-                    className={cn(
-                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
-                      comparisonDimension === "topic" ? "bg-white text-zinc-900 font-semibold shadow-2xs" : "text-zinc-500"
-                    )}
-                  >
-                    母题维度
-                  </button>
-                  <button
-                    onClick={() => setComparisonDimension("account")}
-                    className={cn(
-                      "px-3 py-1 text-[12px] font-medium rounded-md cursor-pointer transition-all",
-                      comparisonDimension === "account" ? "bg-white text-zinc-900 font-semibold shadow-2xs" : "text-zinc-500"
-                    )}
-                  >
-                    账号维度
-                  </button>
-                </div>
-
-                {comparisonDimension === "account" && topicsList.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-[12px]">
-                    <span className="text-zinc-500 font-medium">对比母题：</span>
-                    <select
-                      value={comparisonTopicId}
-                      onChange={(e) => setComparisonTopicId(e.target.value)}
-                      className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 outline-none focus:border-[#5F82A8]"
-                    >
-                      {topicsList.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1.5 text-[12px]">
-                <Calendar className="size-3.5 text-zinc-400" />
-                <span className="text-zinc-500 font-medium">时间筛选：</span>
-                <select
-                  value={comparisonDays}
-                  onChange={(e) => setComparisonDays(Number(e.target.value))}
-                  className="h-7.5 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] outline-none"
-                >
-                  <option value={7}>近 7 天</option>
-                  <option value={14}>近 14 天</option>
-                  <option value={30}>近 30 天</option>
-                </select>
-              </div>
-            </div>
-
-            {comparisonRows.length > 0 && (
-              <div className="rounded-xl bg-zinc-100/70 p-3.5 border border-zinc-200/50 text-[12px] text-zinc-700 flex items-center gap-1.5">
-                <Info className="size-4 text-[#5F82A8] shrink-0" />
-                <span>
-                  对比数据解读：基于当前列表分布中位数（达标率中位数：{(comparisonMedians.qualifiedRateMedian * 100).toFixed(1)}%，均播中位数：{comparisonMedians.avgPlayMedian.toLocaleString()}）。低于中位数标绿，高于中位数标红。
-                </span>
-              </div>
-            )}
-
-            {loadingComparison ? (
-              <TopicPoolSkeleton />
-            ) : comparisonRows.length === 0 ? (
-              <div className="py-12 text-center border border-dashed border-zinc-200 rounded-2xl bg-white space-y-2">
-                <EmptyState title="暂无对比样本" description="当前筛选条件下缺少足够的作品发布样本。" />
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[13px]">
-                    <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-medium">
-                      <tr>
-                        <th className="py-3.5 px-6">{comparisonDimension === "topic" ? "母题分类" : "账号名称"}</th>
-                        <th className="py-3.5 px-6">作品样本数</th>
-                        <th className="py-3.5 px-6">爆款达标率</th>
-                        <th className="py-3.5 px-6">平均播放量</th>
-                        <th className="py-3.5 px-6">最高播放量</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {comparisonRows.map((row, idx) => {
-                        const name = comparisonDimension === "account"
-                          ? (row.accountName || row.topicName || `账号 ${idx + 1}`)
-                          : (row.topicName || row.accountName || `母题 ${idx + 1}`);
-                        const rowKey = comparisonDimension === "account"
-                          ? `acc-${row.accountId || idx}-${idx}`
-                          : `top-${row.topicId || idx}-${idx}`;
-
-                        const isLowConfidence = row.lowConfidence || row.workCount < 3;
-                        const isRateHigher = row.qualifiedRate >= comparisonMedians.qualifiedRateMedian;
-                        const isPlayHigher = row.avgPlayCount >= comparisonMedians.avgPlayMedian;
-
-                        return (
-                          <tr key={rowKey} className={cn("hover:bg-zinc-50/60", isLowConfidence && "opacity-70 bg-zinc-50/30")}>
-                            <td className="py-3.5 px-6 font-semibold text-zinc-900 flex items-center gap-1.5">
-                              <span className={cn(isLowConfidence && "text-zinc-500")}>{name}</span>
-                              {isLowConfidence && (
-                                <span className="rounded bg-zinc-200 px-1.5 py-0.2 text-[10px] text-zinc-500 font-normal shrink-0">
-                                  样本少仅供参考
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3.5 px-6 tabular-nums text-zinc-700">{row.workCount} 条</td>
-                            <td className="py-3.5 px-6 font-semibold tabular-nums">
-                              <span className={isRateHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
-                                {(row.qualifiedRate * 100).toFixed(1)}%
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-6 font-semibold tabular-nums">
-                              <span className={isPlayHigher ? "text-[#C9604D]" : "text-[#6FAA7D]"}>
-                                {row.avgPlayCount >= 10000 ? `${(row.avgPlayCount / 10000).toFixed(1)}w` : row.avgPlayCount.toLocaleString()}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-6 tabular-nums text-zinc-800">
-                              {row.bestPlayCount >= 10000 ? `${(row.bestPlayCount / 10000).toFixed(1)}w` : row.bestPlayCount.toLocaleString()}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </div>
