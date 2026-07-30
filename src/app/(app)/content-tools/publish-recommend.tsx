@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -133,8 +134,12 @@ export function PublishRecommend({ accounts }: PublishRecommendProps) {
           </div>
 
           {data.recommendations.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-[13px] text-zinc-500">
-              当前范围内暂无足够发布时间数据。
+            <div className="rounded-2xl border border-zinc-200 bg-white py-10">
+              <EmptyState
+                title="暂无足够发布时间数据"
+                description="当前分析窗口内样本数据不足，可选择更长的时间范围或切换账号。"
+                action={{ label: "刷新推荐", onClick: () => void loadRecommendations() }}
+              />
             </div>
           ) : (
             <div className="grid gap-4 xl:grid-cols-2">

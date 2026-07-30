@@ -169,6 +169,10 @@ test("dashboard summary 返回 conversionTop3", async () => {
           },
         ],
       }),
+    getUserProfile: async () => ({
+      businessRole: "owner",
+      permissions: { manage_violations: true, view_conversion_hub: true },
+    }),
   });
 
   const json = await response.json();
@@ -186,4 +190,48 @@ test("dashboard summary 返回 conversionTop3", async () => {
       usage_count: 4,
     },
   ]);
+  assert.deepEqual(json.data.safeTop3, [
+    {
+      id: "safe-1",
+      script_text: "安全 1",
+      pass_count: 9,
+      fail_count: 1,
+      pass_rate: 90,
+    },
+  ]);
+});
+
+test("dashboard summary 拒绝没有违规和转化查看权限的普通成员", async () => {
+  const response = await buildDashboardSummaryResponse({
+    getAuthenticatedContext: async () => ({ user: { id: "member-1" } }),
+    createAdminClient: () => createDashboardSummarySupabase({}),
+    getUserProfile: async () => ({
+      businessRole: "member",
+      permissions: {
+        manage_violations: false,
+        view_conversion_hub: false,
+      },
+    }),
+  } as never);
+
+  assert.equal(response.status, 403);
+});
+
+test("dashboard summary 允许具备转化中心查看权限的用户", async () => {
+  const response = await buildDashboardSummaryResponse({
+    getAuthenticatedContext: async () => ({ user: { id: "conversion-reader-1" } }),
+    createAdminClient: () => createDashboardSummarySupabase({
+      videos: [],
+      violation_cases: [],
+    }),
+    getUserProfile: async () => ({
+      businessRole: "member",
+      permissions: {
+        manage_violations: false,
+        view_conversion_hub: true,
+      },
+    }),
+  } as never);
+
+  assert.equal(response.status, 200);
 });

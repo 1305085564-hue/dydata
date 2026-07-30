@@ -71,6 +71,7 @@ export type ApiFailure = {
   ok: false;
   status: number;
   message: string;
+  work_count?: number;
 };
 
 export type ApiSuccess<T> = {
@@ -581,7 +582,7 @@ export async function deleteSubTopic(supabase: TopicSupabase, userId: string, id
     .eq("topic_id", id);
   if (worksError) return { ok: false, status: 500, message: worksError.message };
   if ((count ?? 0) > 0) {
-    return { ok: false, status: 409, message: "已有作品关联，不能删除该子题" };
+    return { ok: false, status: 409, message: "已有作品关联，不能删除该子题", work_count: count ?? 0 };
   }
 
   const { error } = await supabase.from("sub_topics").delete().eq("id", id);
@@ -621,6 +622,42 @@ export async function claimSubTopic(supabase: TopicSupabase, userId: string, sub
     .single();
   if (error) return { ok: false, status: 500, message: error.message };
   return { ok: true, value: data };
+}
+
+export async function replaceSubTopicClaim(
+  supabase: TopicSupabase,
+  userId: string,
+  returnedSubTopicId: string,
+  targetSubTopicId: string,
+): Promise<ApiResult<unknown>> {
+  if (!returnedSubTopicId || !targetSubTopicId || returnedSubTopicId === targetSubTopicId) {
+    return { ok: false, status: 400, message: "替换选题参数不合法" };
+  }
+  const { data: oldClaim, error: oldError } = await supabase.from("sub_topic_claims")
+    .select("id, status").eq("sub_topic_id", returnedSubTopicId).eq("user_id", userId)
+    .in("status", ["candidate", "scripting"]).maybeSingle();
+  if (oldError) return { ok: false, status: 500, message: oldError.message };
+  if (!oldClaim) return { ok: false, status: 404, message: "未找到可替换的原认领" };
+  const { data: targetClaim, error: targetError } = await supabase.from("sub_topic_claims")
+    .select("id").eq("sub_topic_id", targetSubTopicId).eq("user_id", userId)
+    .in("status", ["candidate", "scripting"]).maybeSingle();
+  if (targetError) return { ok: false, status: 500, message: targetError.message };
+  if (targetClaim) return { ok: false, status: 409, message: "目标选题已被认领" };
+  const { count, error: countError } = await supabase.from("sub_topic_claims")
+    .select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "candidate");
+  if (countError) return { ok: false, status: 500, message: countError.message };
+  const effectiveCount = Math.max(0, (count ?? 0) - ((oldClaim as { status: string }).status === "candidate" ? 1 : 0));
+  const limit = validateCandidateClaimLimit({ currentCandidateCount: effectiveCount, alreadyCandidate: false });
+  if (!limit.ok) return limit;
+  const { data: inserted, error: insertError } = await supabase.from("sub_topic_claims")
+    .insert({ sub_topic_id: targetSubTopicId, user_id: userId, status: "candidate" }).select("*").single();
+  if (insertError || !inserted) return { ok: false, status: 409, message: insertError?.message || "认领新选题失败" };
+  const { data: returned, error: returnError } = await supabase.from("sub_topic_claims")
+    .update({ status: "returned", returned_at: new Date().toISOString() })
+    .eq("sub_topic_id", returnedSubTopicId).eq("user_id", userId).in("status", ["candidate", "scripting"]).select("*").maybeSingle();
+  if (!returnError && returned) return { ok: true, value: { claim: inserted, returned } };
+  await supabase.from("sub_topic_claims").delete().eq("id", (inserted as { id: string }).id);
+  return { ok: false, status: 409, message: "放回原选题失败，已撤销新认领" };
 }
 
 export async function changeClaimStatus(

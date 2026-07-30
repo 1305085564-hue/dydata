@@ -364,6 +364,99 @@ test("detail service 在 violation_cases miss 后读取 videos 异常详情", as
   assert.equal(result.data?.admin_conclusion, "申诉内容");
 });
 
+test("多选 guidanceMethods 用 .in() 过滤而非 .eq()", async () => {
+  const inCalls: Array<{ column: string; values: string[] }> = [];
+  const eqCalls: Array<{ column: string; value: unknown }> = [];
+
+  const client = {
+    from(table: string) {
+      assert.equal(table, "violation_cases");
+
+      const rows = [
+        { id: "oral-1", script_text: "口播", guidance_method: "oral", purpose: "violation", is_deleted: false, status: "verified", created_at: "2026-07-15T08:00:00.000Z" },
+        { id: "visual-1", script_text: "画面", guidance_method: "visual", purpose: "violation", is_deleted: false, status: "verified", created_at: "2026-07-15T08:00:00.000Z" },
+        { id: "profile-1", script_text: "人设", guidance_method: "profile", purpose: "violation", is_deleted: false, status: "verified", created_at: "2026-07-15T08:00:00.000Z" },
+      ];
+      let filtered = rows.slice();
+
+      const builder = {
+        select() { return builder; },
+        eq(column: string, value: unknown) {
+          eqCalls.push({ column, value });
+          filtered = filtered.filter((row) => row[column as keyof typeof row] === value);
+          return builder;
+        },
+        in(column: string, values: string[]) {
+          inCalls.push({ column, values });
+          filtered = filtered.filter((row) => values.includes(String(row[column as keyof typeof row] ?? "")));
+          return builder;
+        },
+        ilike() { return builder; },
+        order() { return builder; },
+        async range() { return { data: filtered, error: null, count: filtered.length }; },
+      };
+
+      return builder;
+    },
+  };
+
+  const { payload, errorMessage } = await loadViolationsList({
+    supabase: client,
+    view: "staff",
+    page: 1,
+    pageSize: 20,
+    from: 0,
+    to: 19,
+    sort: null,
+    order: "desc",
+    guidanceMethods: ["oral", "visual"],
+  });
+
+  assert.equal(errorMessage, null);
+  // guidanceMethods 应该走 .in() 而非 .eq()
+  assert.ok(inCalls.some((c) => c.column === "guidance_method"), "应使用 .in() 过滤 guidance_method");
+  assert.deepEqual(
+    inCalls.find((c) => c.column === "guidance_method")?.values,
+    ["oral", "visual"],
+  );
+  // 不应走 .eq() 过滤 guidance_method
+  assert.ok(!eqCalls.some((c) => c.column === "guidance_method"), "不应使用 .eq() 过滤 guidance_method");
+  assert.deepEqual(payload?.data.map((r) => r.id).sort(), ["oral-1", "visual-1"]);
+});
+
+test("单个 guidanceMethod 也走 .in() 保持一致", async () => {
+  const inCalls: Array<{ column: string; values: string[] }> = [];
+
+  const client = {
+    from(table: string) {
+      assert.equal(table, "violation_cases");
+      const builder = {
+        select() { return builder; },
+        eq() { return builder; },
+        in(column: string, values: string[]) { inCalls.push({ column, values }); return builder; },
+        ilike() { return builder; },
+        order() { return builder; },
+        async range() { return { data: [], error: null, count: 0 }; },
+      };
+      return builder;
+    },
+  };
+
+  await loadViolationsList({
+    supabase: client,
+    view: "staff",
+    page: 1,
+    pageSize: 20,
+    from: 0,
+    to: 19,
+    sort: null,
+    order: "desc",
+    guidanceMethods: ["oral"],
+  });
+
+  assert.ok(inCalls.some((c) => c.column === "guidance_method" && c.values.length === 1));
+});
+
 test("test record service 会单独读取该案例的测试记录", async () => {
   const client: DetailClientLike = {
     from(table: string) {

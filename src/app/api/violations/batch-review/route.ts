@@ -13,6 +13,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 type BatchReviewAction = "approve" | "reject";
 
 type ReviewSnapshot = {
+  source_table?: "violation_cases" | "knowledge_cases";
   id: string;
   status: string;
   usage_state: string | null;
@@ -154,44 +155,35 @@ export async function buildBatchReviewViolationsResponse(
   const adminSupabase = deps.createAdminClient ? deps.createAdminClient() : supabase;
 
   for (const id of payload.data.ids) {
-    const { data: snapshot, error: snapshotError } = await adminSupabase
+    const violationResult = await adminSupabase
       .from("violation_cases")
       .select(REVIEW_SNAPSHOT_SELECT)
       .eq("id", id)
       .eq("is_deleted", false)
       .single();
 
-    if (snapshotError || !snapshot) {
-      failed += 1;
-      errors.push(`${id}: 审批失败`);
+    if (violationResult.data && !violationResult.error) {
+      const updatePayload = { ...basePatch, ...(payload.data.action === "approve" && payload.data.conclusion ? { admin_conclusion: payload.data.conclusion } : {}), reviewed_by: user.id, reviewed_at: reviewedAt };
+      const { data, error } = await adminSupabase.from("violation_cases").update(updatePayload).eq("id", id).eq("is_deleted", false).select("id").single();
+      if (error || !data) { failed += 1; errors.push(`${id}: 审批失败`); continue; }
+      success += 1;
+      snapshots.push(violationResult.data as ReviewSnapshot);
       continue;
     }
 
-    const updatePayload = {
-      ...basePatch,
-      ...(payload.data.action === "approve" && payload.data.conclusion
-        ? { admin_conclusion: payload.data.conclusion }
-        : {}),
-      reviewed_by: user.id,
-      reviewed_at: reviewedAt,
-    };
-
-    const { data, error } = await adminSupabase
-      .from("violation_cases")
-      .update(updatePayload)
+    const knowledgeResult = await adminSupabase
+      .from("knowledge_cases")
+      .select("id,status,admin_insight,revision_note,deprecated_reason,verified_by,verified_at,revision_requested_by,revision_requested_at")
       .eq("id", id)
-      .eq("is_deleted", false)
-      .select("id")
       .single();
-
-    if (error || !data) {
-      failed += 1;
-      errors.push(`${id}: 审批失败`);
-      continue;
-    }
-
+    if (knowledgeResult.error || !knowledgeResult.data) { failed += 1; errors.push(`${id}: 审批失败`); continue; }
+    const knowledgePatch = payload.data.action === "approve"
+      ? { status: "verified", admin_insight: payload.data.conclusion, verified_by: user.id, verified_at: reviewedAt, revision_requested_by: null, revision_requested_at: null, revision_note: null, deprecated_reason: null }
+      : { status: "needs_revision", revision_requested_by: user.id, revision_requested_at: reviewedAt, revision_note: payload.data.conclusion };
+    const { data, error } = await adminSupabase.from("knowledge_cases").update(knowledgePatch).eq("id", id).select("id").single();
+    if (error || !data) { failed += 1; errors.push(`${id}: 审批失败`); continue; }
     success += 1;
-    snapshots.push(snapshot as ReviewSnapshot);
+    snapshots.push({ ...(knowledgeResult.data as ReviewSnapshot), source_table: "knowledge_cases" });
   }
 
   return NextResponse.json({

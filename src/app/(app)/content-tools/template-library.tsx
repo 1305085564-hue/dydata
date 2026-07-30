@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -134,8 +135,12 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
           </div>
 
           {data.categories.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-200 px-4 py-8 text-center text-[13px] text-zinc-500">
-              当前范围内暂无可提炼模板的爆款样本。
+            <div className="rounded-2xl border border-zinc-200 bg-white py-10">
+              <EmptyState
+                title="暂无可提炼的爆款模板"
+                description="当前范围内暂无符合爆款系数门槛的样本，可调整筛选时间或账号范围后重试。"
+                action={{ label: "刷新模板", onClick: () => void loadTemplates() }}
+              />
             </div>
           ) : (
             data.categories.map((category) => (

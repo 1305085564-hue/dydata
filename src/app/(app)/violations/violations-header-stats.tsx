@@ -1,7 +1,8 @@
 import { loadViolationDashboardSummary } from "@/lib/violations/read-model";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function ViolationsHeaderStats() {
+export async function ViolationsHeaderStats({ canViewDashboard }: { canViewDashboard: boolean }) {
+  if (!canViewDashboard) return null;
   const { data } = await loadViolationDashboardSummary({
     supabase: createAdminClient() as never,
   });

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { __internal as aiClientInternal } from "@/lib/ai/client";
+import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
+import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import {
   requireOwnerActor,
   toBoolean,
@@ -16,7 +18,7 @@ type AiConfigEntity =
   | "feature_binding"
   | "rewrite_model_view"
   | "rewrite_model_route";
-type AiConfigAction = "create" | "update" | "delete" | "test_key";
+type AiConfigAction = "create" | "update" | "delete" | "test_key" | "swap_key_priority";
 
 type AiConfigBody = {
   action?: unknown;
@@ -51,7 +53,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -84,19 +86,6 @@ function providerPatch(data: Record<string, unknown>, mode: "create" | "update")
   if (data.priority !== undefined) patch.priority = toPriority(data.priority, 100);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.name || !patch.base_url)) throw new Error("供应商缺少 name/base_url");
-  return patch;
-}
-
-function keyPatch(data: Record<string, unknown>, mode: "create" | "update") {
-  const patch: Record<string, unknown> = {};
-  if (mode === "create" || data.provider_id !== undefined) patch.provider_id = toTrimmedString(data.provider_id);
-  if (mode === "create" || data.label !== undefined) patch.label = toTrimmedString(data.label);
-  if (mode === "create" || data.api_key !== undefined) patch.api_key = toTrimmedString(data.api_key);
-  if (data.priority !== undefined) patch.priority = toPriority(data.priority, 100);
-  if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
-  if (mode === "create" && (!patch.provider_id || !patch.label || !patch.api_key)) {
-    throw new Error("Key 缺少 provider_id/label/api_key");
-  }
   return patch;
 }
 
@@ -256,7 +245,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
 
 async function applyMutation(
   supabase: SupabaseClient,
-  action: Exclude<AiConfigAction, "test_key">,
+  action: Extract<AiConfigAction, "create" | "update" | "delete">,
   entity: AiConfigEntity,
   data: Record<string, unknown>
 ) {
@@ -279,7 +268,7 @@ async function applyMutation(
     entity === "provider"
       ? providerPatch(data, action)
       : entity === "key"
-        ? keyPatch(data, action)
+        ? buildAiKeyPatch(data, action)
       : entity === "model"
         ? modelPatch(data, action)
         : entity === "feature_binding"
@@ -444,6 +433,16 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (action === "swap_key_priority") {
+    try {
+      await swapKeyPriority(auth.supabase as never, asRecord(body.data));
+      aiClientInternal.resetCache();
+      return NextResponse.json(await loadAiConfig(auth.supabase));
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "交换 Key 顺位失败" }, { status: 400 });
+    }
+  }
+
   const entity = parseEntity(body.entity);
   if (!entity) {
     return NextResponse.json({ error: "entity 不正确" }, { status: 400 });
@@ -457,4 +456,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "保存 AI 配置失败" }, { status: 400 });
   }
 }
-

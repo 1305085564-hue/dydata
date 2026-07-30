@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  canViewViolationDashboard,
   getAuthenticatedContext,
+  getUserProfile,
+  jsonForbidden,
   jsonServerError,
   jsonUnauthorized,
 } from "@/lib/violations/api";
@@ -13,18 +16,31 @@ type MinimalDashboardSupabase = {
 };
 
 type DashboardSummaryDeps = {
-  getAuthenticatedContext: () => Promise<{ user: { id: string } | null }>;
+  getAuthenticatedContext: () => Promise<{ supabase?: MinimalDashboardSupabase; user: { id: string } | null }>;
   createAdminClient: () => MinimalDashboardSupabase;
+  getUserProfile?: (supabase: MinimalDashboardSupabase, userId: string) => Promise<{
+    businessRole: "owner" | "team_admin" | "group_leader" | "member";
+    permissions: Record<string, boolean>;
+  } | null>;
 };
 
 const defaultDeps: DashboardSummaryDeps = {
   getAuthenticatedContext: getAuthenticatedContext as DashboardSummaryDeps["getAuthenticatedContext"],
   createAdminClient: createAdminClient as unknown as DashboardSummaryDeps["createAdminClient"],
+  getUserProfile: getUserProfile as unknown as DashboardSummaryDeps["getUserProfile"],
 };
 
 export async function buildDashboardSummaryResponse(deps: DashboardSummaryDeps = defaultDeps) {
-  const { user } = await deps.getAuthenticatedContext();
+  const { supabase: userSupabase, user } = await deps.getAuthenticatedContext();
   if (!user) return jsonUnauthorized();
+  const getUserProfileForRequest = deps.getUserProfile ?? defaultDeps.getUserProfile!;
+  const profile = await getUserProfileForRequest(
+    (userSupabase ?? deps.createAdminClient()) as MinimalDashboardSupabase,
+    user.id,
+  );
+  if (!profile || !canViewViolationDashboard(profile as never)) {
+    return jsonForbidden("缺少违规案例或转化数据查看权限");
+  }
 
   const supabase = deps.createAdminClient();
   const { data, errorMessage } = await loadViolationDashboardSummary({ supabase });

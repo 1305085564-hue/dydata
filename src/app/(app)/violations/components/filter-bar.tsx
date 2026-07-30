@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useTransition } from "react";
+import { useCallback, useMemo, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RotateCcw } from "lucide-react";
 import {
@@ -16,6 +16,7 @@ const ALL_GUIDANCE_METHODS = Object.keys(
 /** 员工排序选项 — 不再分 violation / conversion 两套，合并展示 */
 const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
   { key: "pass_rate", label: "通过率" },
+  { key: "conversion_rate", label: "转化率" },
   { key: "usage_count", label: "使用次数" },
   { key: "created_at", label: "最新提交" },
 ];
@@ -28,9 +29,10 @@ export function FilterBar() {
   const activeSort = (searchParams.get("sort") ?? "pass_rate") as SortKey;
   const activeOrder = (searchParams.get("order") ?? "desc") as "asc" | "desc";
   const rawGuidance = searchParams.get("guidance_method");
-  const activeGuidanceMethods: GuidanceMethod[] = rawGuidance
-    ? (rawGuidance.split(",").filter(Boolean) as GuidanceMethod[])
-    : [];
+  const activeGuidanceMethods: GuidanceMethod[] = useMemo(
+    () => rawGuidance ? rawGuidance.split(",").filter(Boolean) as GuidanceMethod[] : [],
+    [rawGuidance],
+  );
 
   const createQueryString = useCallback(
     (updates: Record<string, string | null>) => {
@@ -64,7 +66,7 @@ export function FilterBar() {
         ? activeGuidanceMethods.filter((m) => m !== method)
         : [...activeGuidanceMethods, method];
       const query = createQueryString({
-        guidance_method: next.length > 0 ? next[0] : null,
+        guidance_method: next.length > 0 ? next.join(",") : null,
       });
       startTransition(() => {
         router.push(`?${query}`, { scroll: false });

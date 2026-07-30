@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowRight, FilePlus2, Settings2, TrendingUp } from "lucide-react";
+import { FilePlus2, Settings2, TrendingUp } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 
 import { createClient } from "@/lib/supabase/server";
@@ -53,6 +53,8 @@ export default async function ViolationsPage({
   const isOwner = role === "owner";
   const canManageViolations =
     isOwner || hasPermission(businessRole, permissions, "manage_violations");
+  const canViewDashboard = canManageViolations
+    || hasPermission(businessRole, permissions, "view_conversion_hub");
 
   const resolved = await searchParams;
   const query = readParam(resolved, "q");
@@ -90,7 +92,7 @@ export default async function ViolationsPage({
                 "审核员工上传的话术，把有效案例沉淀进知识库；高风险先处理，缺数据其次。"
               ) : (
                 <Suspense fallback={<span>正在计算团队案例指标...</span>}>
-                  <ViolationsHeaderStats />
+                  <ViolationsHeaderStats canViewDashboard={canViewDashboard} />
                 </Suspense>
               )}
             </div>
@@ -147,6 +149,7 @@ export default async function ViolationsPage({
             query={query}
             isOwner={isOwner}
             canManageViolations={canManageViolations}
+            canViewDashboard={canViewDashboard}
           />
         )}
       </Suspense>

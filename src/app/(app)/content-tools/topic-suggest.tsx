@@ -170,8 +170,17 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            {data.suggestions.map((item) => (
+          {data.suggestions.length === 0 ? (
+            <div className="rounded-2xl border border-zinc-200 bg-white py-12">
+              <EmptyState
+                title="暂无选题建议数据"
+                description="可尝试调整账号范围或扩大会员统计天数后重新生成。"
+                action={{ label: "重新生成", onClick: () => void loadSuggestions() }}
+              />
+            </div>
+          ) : (
+            <div className="grid gap-4 xl:grid-cols-2">
+              {data.suggestions.map((item) => (
               <Card key={item.title} className="border-zinc-200 bg-white">
                 <CardHeader>
                   <CardDescription>{item.category}</CardDescription>
@@ -217,6 +226,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
               </Card>
             ))}
           </div>
+          )}
         </>
       ) : null}
     </div>

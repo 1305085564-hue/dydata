@@ -31,16 +31,18 @@ function createBatchReviewSupabase(rows: CaseRow[]) {
 
   return {
     from(table: string) {
-      assert.equal(table, "violation_cases");
+      assert.ok(table === "violation_cases" || table === "knowledge_cases");
 
       const findTarget = () => rows.find((row) => row.id === pendingId && row.is_deleted === pendingDeleted);
 
       return {
         select(query: string) {
-          assert.equal(
-            query,
-            "id,status,usage_state,risk_level,admin_conclusion,suggested_action",
-          );
+          if (table === "violation_cases") {
+            assert.equal(
+              query,
+              "id,status,usage_state,risk_level,admin_conclusion,suggested_action",
+            );
+          }
 
           return {
             eq(column: string, value: unknown) {
@@ -49,6 +51,9 @@ function createBatchReviewSupabase(rows: CaseRow[]) {
               return this;
             },
             async single() {
+              if (table === "knowledge_cases") {
+                return { data: null, error: { message: "not found" } };
+              }
               const target = findTarget();
               if (!target) {
                 return { data: null, error: { message: "not found" } };
@@ -68,6 +73,14 @@ function createBatchReviewSupabase(rows: CaseRow[]) {
           };
         },
         update(payload: Record<string, unknown>) {
+          if (table === "knowledge_cases") {
+            return {
+              eq() { return this; },
+              select() {
+                return { async single() { return { data: null, error: { message: "not found" } }; } };
+              },
+            };
+          }
           return {
             eq(column: string, value: unknown) {
               if (column === "id") pendingId = String(value);

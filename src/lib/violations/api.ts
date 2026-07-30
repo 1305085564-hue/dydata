@@ -106,6 +106,22 @@ export function hasPermission(role: UserRole, permissions: Permissions, key: Per
   return hasUnifiedPermission(role, permissions, key);
 }
 
+type ViolationAccessProfile = {
+  businessRole: BusinessRole;
+  permissions: Permissions;
+};
+
+export function canAccessPrivateViolationCases(profile: ViolationAccessProfile) {
+  return profile.businessRole === "owner"
+    || profile.businessRole === "team_admin"
+    || hasUnifiedPermission(profile.businessRole, profile.permissions, "manage_violations");
+}
+
+export function canViewViolationDashboard(profile: ViolationAccessProfile) {
+  return canAccessPrivateViolationCases(profile)
+    || hasUnifiedPermission(profile.businessRole, profile.permissions, "view_conversion_hub");
+}
+
 export async function getAuthenticatedContext() {
   const supabase = await createClient();
   const {

@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowUp, ArrowDown, Zap, Plus, ShieldCheck, CheckCircle2, AlertTriangle, Loader2, Tag } from "lucide-react";
 import { ModelDialog, KeyDialog } from "./providers-dialogs";
@@ -49,7 +48,7 @@ type ModelFamilyGroup = {
 };
 
 export default function ModelsClient() {
-  const { bundle, isLoading, mutateEntity, testKeyConnection } = useAiConfig();
+  const { bundle, isLoading, mutateEntity, swapKeyPriority, testKeyConnection } = useAiConfig();
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
 
   const [modelModal, setModelModal] = useState<{ open: boolean; keyId: string | null; initialModelId?: string }>({
@@ -156,8 +155,7 @@ export default function ModelsClient() {
     currentPriority: number,
     targetPriority: number
   ) => {
-    await mutateEntity("update", "key", { id: currentKeyId, priority: targetPriority });
-    await mutateEntity("update", "key", { id: targetKeyId, priority: currentPriority });
+    await swapKeyPriority(currentKeyId, targetKeyId, currentPriority, targetPriority);
   };
 
   const handleSetGlobalDefault = async (modelId: string) => {
@@ -203,11 +201,16 @@ export default function ModelsClient() {
             onChange={(e) => handleSetGlobalDefault(e.target.value)}
           >
             <option value="" disabled>-- 选择全局默认主型号 --</option>
-            {bundle.models.map((m) => (
-              <option key={m.id} value={m.model_id}>
-                {m.display_name || m.model_id} ({m.model_id})
-              </option>
-            ))}
+            {bundle.models.map((m) => {
+              const key = bundle.keys.find((k) => k.id === m.key_id);
+              const provider = bundle.providers.find((p) => p.id === key?.provider_id);
+              const isEnabled = m.is_enabled && (key ? key.is_enabled : true) && (provider ? provider.is_enabled : true);
+              return (
+                <option key={m.id} value={m.model_id} disabled={!isEnabled} className={!isEnabled ? "text-zinc-400" : ""}>
+                  {m.display_name || m.model_id} ({m.model_id}){!isEnabled ? " (已停用)" : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -339,12 +342,12 @@ export default function ModelsClient() {
 
                           <TableCell>
                             {isHealthy ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-full font-medium">
-                                <CheckCircle2 className="size-3" /> 正常
+                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-medium">
+                                <CheckCircle2 className="size-3 text-emerald-600" /> 正常
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D] bg-[#C9604D]/10 px-2 py-0.5 rounded-full font-medium" title={keyItem.lastErrorMessage || undefined}>
-                                <AlertTriangle className="size-3" /> 异常/离线
+                              <span className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-full font-medium" title={keyItem.lastErrorMessage || undefined}>
+                                <AlertTriangle className="size-3 text-red-600" /> 异常/离线
                               </span>
                             )}
                           </TableCell>

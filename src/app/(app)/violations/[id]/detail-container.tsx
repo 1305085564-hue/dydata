@@ -26,6 +26,7 @@ import {
 import { resolveConfidence } from "@/lib/case-library/confidence";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
 import { loadViolationCaseDetail, loadViolationCaseTestRecords } from "@/lib/violations/read-model";
+import { canAccessPrivateViolationCases, getUserProfile } from "@/lib/violations/api";
 import type {
   ViolationAccount,
   ViolationDetail,
@@ -60,13 +61,16 @@ type DetailRow = ViolationDetail & {
   platforms?: string[] | null;
 };
 
-async function loadCase(id: string): Promise<DetailRow | null> {
+async function loadCase(id: string, userId: string): Promise<DetailRow | null> {
+  const userClient = await createClient();
+  const profile = await getUserProfile(userClient, userId);
+  const canViewPrivate = profile ? canAccessPrivateViolationCases(profile) : false;
   const { data, errorMessage } = await loadViolationCaseDetail({
-    supabase: await createClient() as never,
-    fallbackDetailClient: createAdminClient() as never,
+    supabase: (canViewPrivate ? createAdminClient() : userClient) as never,
     id,
   });
   if (errorMessage) throw new Error(errorMessage);
+  if (!data || (!canViewPrivate && data.status !== "verified")) return null;
   return data as DetailRow | null;
 }
 
@@ -449,7 +453,7 @@ export async function DetailContainer({
 }: DetailContainerProps) {
   let caseItem: DetailRow | null = null;
   try {
-    caseItem = await loadCase(id);
+    caseItem = await loadCase(id, user.id);
   } catch {
     notFound();
   }

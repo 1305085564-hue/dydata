@@ -27,6 +27,12 @@ type KnowledgeCaseRow = {
   id: string;
   status: string;
   deprecated_reason: string | null;
+  admin_insight?: string | null;
+  revision_note?: string | null;
+  verified_by?: string | null;
+  verified_at?: string | null;
+  revision_requested_by?: string | null;
+  revision_requested_at?: string | null;
 };
 
 function createRequest(body: unknown) {
@@ -212,6 +218,51 @@ test("restore 可撤销 DELETE 下架的 knowledge_cases", async () => {
   assert.equal(json.failed, 0);
   assert.equal(rows[0].status, "verified");
   assert.equal(rows[0].deprecated_reason, null);
+});
+
+test("restore 可把 knowledge_cases 审核字段恢复到审核前快照", async () => {
+  const rows: KnowledgeCaseRow[] = [{
+    id: "knowledge-1",
+    status: "verified",
+    deprecated_reason: null,
+    admin_insight: "审核结论",
+    revision_note: null,
+    verified_by: "owner-1",
+    verified_at: "2026-07-30T10:00:00.000Z",
+    revision_requested_by: null,
+    revision_requested_at: null,
+  }];
+  const response = await buildRestoreViolationReviewResponse(
+    createRequest({ snapshots: [{
+      source_table: "knowledge_cases",
+      id: "knowledge-1",
+      status: "submitted",
+      deprecated_reason: null,
+      admin_insight: null,
+      revision_note: "原补充说明",
+      verified_by: null,
+      verified_at: null,
+      revision_requested_by: "reviewer-old",
+      revision_requested_at: "2026-07-29T10:00:00.000Z",
+    }] }),
+    {
+      getAuthenticatedContext: async () => ({ supabase: createRestoreSupabase([], rows), user: { id: "owner-1" } }),
+      requireViolationAdmin: async () => ({ ok: true, profile: { id: "owner-1" } }),
+      createAdminClient: () => createRestoreSupabase([], rows),
+    },
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(rows[0], {
+    id: "knowledge-1",
+    status: "submitted",
+    deprecated_reason: null,
+    admin_insight: null,
+    revision_note: "原补充说明",
+    verified_by: null,
+    verified_at: null,
+    revision_requested_by: "reviewer-old",
+    revision_requested_at: "2026-07-29T10:00:00.000Z",
+  });
 });
 
 test("restore 多条恢复时跳过不存在 ID 并返回 errors", async () => {

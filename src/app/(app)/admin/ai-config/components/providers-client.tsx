@@ -4,7 +4,6 @@ import { useState } from "react";
 import { AiProvider, AiProviderKey, AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
 import { Plus, Pencil, Trash2, Zap, Server, CheckCircle2, AlertTriangle, Loader2, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { ProviderDialog, KeyDialog, ModelDialog } from "./providers-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
@@ -183,12 +182,12 @@ export default function ProvidersClient() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {isHealthy ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-full font-medium">
-                                    <CheckCircle2 className="size-3" /> 正常
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-medium">
+                                    <CheckCircle2 className="size-3 text-emerald-600" /> 正常
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D] bg-[#C9604D]/10 px-2 py-0.5 rounded-full font-medium" title={keyItem.last_error_message || undefined}>
-                                    <AlertTriangle className="size-3" /> 异常/离线
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-full font-medium" title={keyItem.last_error_message || undefined}>
+                                    <AlertTriangle className="size-3 text-red-600" /> 异常/离线
                                   </span>
                                 )}
 

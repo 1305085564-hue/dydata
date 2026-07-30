@@ -390,7 +390,7 @@ export async function loadViolationsList({
   search,
   sort,
   order,
-  guidanceMethod,
+  guidanceMethods,
   visualTagIds,
   loadCaseIdsByVisualTagIds,
   purpose = "violation",
@@ -407,7 +407,7 @@ export async function loadViolationsList({
   search?: string | null;
   sort: SortKey | null;
   order: SortDirection;
-  guidanceMethod?: string | null;
+  guidanceMethods?: string[];
   visualTagIds?: string[];
   loadCaseIdsByVisualTagIds?: LoadCaseIdsByVisualTagIds;
   purpose?: "violation" | "conversion" | null;
@@ -462,8 +462,9 @@ export async function loadViolationsList({
     query = query.ilike("script_text", `%${search}%`);
   }
 
-  if (guidanceMethod) {
-    query = query.eq("guidance_method", guidanceMethod);
+  const validMethods = guidanceMethods?.filter(Boolean) ?? [];
+  if (validMethods.length > 0) {
+    query = query.in("guidance_method", validMethods);
   }
 
   if (visualTagCaseIds && visualTagCaseIds.length > 0) {
@@ -702,15 +703,6 @@ function executeSummaryQuery(query: SummaryQuery) {
   return query as unknown as Promise<QueryResult<Record<string, unknown>>>;
 }
 
-function mapVideoDashboardCaseRows(rows: Record<string, unknown>[]): DashboardCaseRow[] {
-  return rows.map((row) => ({
-    id: String(row.id ?? ""),
-    script_text: typeof row.content === "string" ? row.content : null,
-    pass_count: 0,
-    fail_count: 3,
-  }));
-}
-
 function mapVideoRecentRows(rows: Record<string, unknown>[]): DashboardRecentRow[] {
   return rows.map((row) => ({
     id: String(row.id ?? ""),
@@ -732,9 +724,11 @@ export async function loadViolationDashboardSummary({
 
   const [casesResult, weekViolationsResult, weekAllResult, recentResult, conversionResult] =
     await Promise.all([
-      executeSummaryQuery(fromSummaryTable(supabase, "videos")
-        .select("id, content, anomaly_status, punish_type")
-        .in("anomaly_status", [...VIDEO_ABNORMAL_STATUS_VALUES])),
+      executeSummaryQuery(fromSummaryTable(supabase, "violation_cases")
+        .select("id, script_text, pass_count, fail_count")
+        .eq("is_deleted", false)
+        .eq("purpose", "violation")
+        .eq("status", "verified")),
 
       executeSummaryQuery(fromSummaryTable(supabase, "videos")
         .select("id", { count: "exact", head: true })
@@ -777,8 +771,8 @@ export async function loadViolationDashboardSummary({
 
   return {
     data: {
-      dangerousTop3: selectDangerousTop3(mapVideoDashboardCaseRows(casesResult.data ?? [])),
-      safeTop3: selectSafeTop3(mapVideoDashboardCaseRows(casesResult.data ?? [])),
+      dangerousTop3: selectDangerousTop3((casesResult.data ?? []) as DashboardCaseRow[]),
+      safeTop3: selectSafeTop3((casesResult.data ?? []) as DashboardCaseRow[]),
       conversionTop3: selectConversionTop3((conversionResult.data ?? []) as DashboardConversionRow[]),
       weeklyStats: {
         newViolations: weekViolationsResult.count ?? 0,

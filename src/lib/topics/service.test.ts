@@ -9,14 +9,102 @@ import {
   buildPoolQueryOptions,
   buildWorthRedoingTopics,
   calculateTopicWorkSummary,
+  deleteSubTopic,
   filterTopicClaimsByScope,
   loadTopicPool,
   matchTopicGroup,
   rankSuggestedSubTopics,
+  replaceSubTopicClaim,
   validateRecommendationSubTopicInput,
   validateCandidateClaimLimit,
   validateSubTopicInput,
+  type ApiFailure,
 } from "./service";
+
+test("替换认领时新认领失败，原认领保持不变", async () => {
+  const oldClaim = { id: "claim-old", status: "candidate" };
+  const client = {
+    from(table: string) {
+      assert.equal(table, "sub_topic_claims");
+      return {
+        select(_columns: string, options?: { head?: boolean }) {
+          let target = "";
+          const query = {
+            eq(column: string, value: string) {
+              if (column === "sub_topic_id") target = value;
+              return query;
+            },
+            in() { return query; },
+            maybeSingle: async () => target === "old" ? { data: oldClaim, error: null } : { data: null, error: null },
+            then(resolve: (value: { count: number; error: null }) => unknown) {
+              return Promise.resolve({ count: options?.head ? 1 : 0, error: null }).then(resolve);
+            },
+          };
+          return query;
+        },
+        insert() {
+          return { select() { return { single: async () => ({ data: null, error: { message: "claim failed" } }) }; } };
+        },
+      };
+    },
+  };
+
+  const result = await replaceSubTopicClaim(client as never, "user-1", "old", "new");
+  assert.equal(result.ok, false);
+  assert.equal(oldClaim.status, "candidate");
+});
+
+test("替换认领成功时先创建新认领，再放回原认领", async () => {
+  const claims = [
+    { id: "claim-old", sub_topic_id: "old", user_id: "user-1", status: "candidate" },
+  ];
+  const client = {
+    from(table: string) {
+      assert.equal(table, "sub_topic_claims");
+      return {
+        select(_columns: string, options?: { head?: boolean }) {
+          let target = "";
+          const query = {
+            eq(column: string, value: string) { if (column === "sub_topic_id") target = value; return query; },
+            in() { return query; },
+            maybeSingle: async () => ({ data: claims.find((claim) => claim.sub_topic_id === target && claim.status !== "returned") ?? null, error: null }),
+            then(resolve: (value: { count: number; error: null }) => unknown) {
+              return Promise.resolve({ count: options?.head ? claims.filter((claim) => claim.status === "candidate").length : 0, error: null }).then(resolve);
+            },
+          };
+          return query;
+        },
+        insert(payload: { sub_topic_id: string; user_id: string; status: string }) {
+          const inserted = { id: "claim-new", ...payload };
+          claims.push(inserted);
+          return { select() { return { single: async () => ({ data: inserted, error: null }) }; } };
+        },
+        update(payload: { status: string }) {
+          let target = "";
+          const query = {
+            eq(column: string, value: string) { if (column === "sub_topic_id") target = value; return query; },
+            in() { return query; },
+            select() {
+              return { maybeSingle: async () => {
+                const claim = claims.find((item) => item.sub_topic_id === target);
+                if (claim) claim.status = payload.status;
+                return { data: claim ?? null, error: null };
+              } };
+            },
+          };
+          return query;
+        },
+      };
+    },
+  };
+
+  const result = await replaceSubTopicClaim(client as never, "user-1", "old", "new");
+  assert.equal(result.ok, true);
+  assert.deepEqual(claims.map(({ sub_topic_id, status }) => ({ sub_topic_id, status })), [
+    { sub_topic_id: "old", status: "returned" },
+    { sub_topic_id: "new", status: "candidate" },
+  ]);
+});
 
 test("选题认领信息只返回当前业务可见成员", () => {
   const claims = [
@@ -399,4 +487,54 @@ test("采纳 AI 建议要求标题和切入角度，并保留可选分类和标�
     status: 400,
     message: "angle 为必填项",
   });
+});
+
+test("deleteSubTopic 409 响应包含 work_count", async () => {
+  const client = {
+    from(table: string) {
+      if (table === "sub_topics") {
+        let selectMode = true;
+        const builder = {
+          select() { return builder; },
+          eq(_col: string, _val: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
+            if (selectMode) return builder;
+            return { error: null };
+          },
+          delete() {
+            selectMode = false;
+            return builder;
+          },
+          async maybeSingle() {
+            return { data: { id: "sub-1", created_by: "user-1" }, error: null };
+          },
+        };
+        return builder;
+      }
+      if (table === "videos") {
+        return {
+          select(_cols: string, _opts?: unknown) { // eslint-disable-line @typescript-eslint/no-unused-vars
+            return {
+              eq() {
+                return {
+                  eq() {
+                    return { count: 3, error: null };
+                  },
+                };
+              },
+            };
+          },
+        };
+      }
+      throw new Error(`unexpected table: ${table}`);
+    },
+  };
+
+  const result = await deleteSubTopic(client as never, "user-1", "sub-1");
+
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.status, 409);
+    assert.equal((result as ApiFailure).work_count, 3);
+    assert.match(result.message, /已有作品关联/);
+  }
 });

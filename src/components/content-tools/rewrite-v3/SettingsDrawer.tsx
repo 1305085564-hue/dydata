@@ -213,11 +213,14 @@ export function SettingsDrawer({
                     className="w-full bg-zinc-100/50 border border-transparent focus:bg-white focus:border-zinc-200 rounded-lg p-2 text-[12px] outline-none focus:ring-1 focus:ring-zinc-900/10"
                   >
                     <option value="">跟随全局配置</option>
-                    {bootstrap.modelViews.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.label}
-                      </option>
-                    ))}
+                    {bootstrap.modelViews.map((item) => {
+                      const disabled = (item as { is_enabled?: boolean; isEnabled?: boolean }).is_enabled === false || (item as { is_enabled?: boolean; isEnabled?: boolean }).isEnabled === false;
+                      return (
+                        <option key={item.id} value={item.id} disabled={disabled} className={disabled ? "text-zinc-400" : ""}>
+                          {item.label}{disabled ? " (已停用)" : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                 </label>
               )}

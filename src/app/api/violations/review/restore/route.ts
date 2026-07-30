@@ -25,6 +25,12 @@ type KnowledgeCaseReviewSnapshot = {
   status: string;
   source_table: "knowledge_cases";
   deprecated_reason: string | null;
+  admin_insight?: string | null;
+  revision_note?: string | null;
+  verified_by?: string | null;
+  verified_at?: string | null;
+  revision_requested_by?: string | null;
+  revision_requested_at?: string | null;
 };
 
 type ReviewSnapshot = ViolationReviewSnapshot | KnowledgeCaseReviewSnapshot;
@@ -95,6 +101,12 @@ function normalizeSnapshot(snapshot: ReviewSnapshot): ReviewSnapshot {
       id: snapshot.id.trim(),
       status: snapshot.status.trim(),
       deprecated_reason: snapshot.deprecated_reason ?? null,
+      admin_insight: snapshot.admin_insight ?? null,
+      revision_note: snapshot.revision_note ?? null,
+      verified_by: snapshot.verified_by ?? null,
+      verified_at: snapshot.verified_at ?? null,
+      revision_requested_by: snapshot.revision_requested_by ?? null,
+      revision_requested_at: snapshot.revision_requested_at ?? null,
     };
   }
 
@@ -171,6 +183,12 @@ export async function buildRestoreViolationReviewResponse(
         .update({
           status: snapshot.status,
           deprecated_reason: snapshot.deprecated_reason,
+          admin_insight: snapshot.admin_insight ?? null,
+          revision_note: snapshot.revision_note ?? null,
+          verified_by: snapshot.verified_by ?? null,
+          verified_at: snapshot.verified_at ?? null,
+          revision_requested_by: snapshot.revision_requested_by ?? null,
+          revision_requested_at: snapshot.revision_requested_at ?? null,
         })
         .eq("id", snapshot.id)
         .select("id")

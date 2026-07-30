@@ -119,7 +119,6 @@ export default function TopicPoolPage() {
   // 筛选与 Popover 控制状态
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
-  const [viewPopoverOpen, setViewPopoverOpen] = useState(false);
   const [sortBy, setSortBy] = useState<TopicSortMode>("default");
   const [viewDensity, setViewDensity] = useState<"grid" | "compact">("grid");
   const [groupBy, setGroupBy] = useState<"none" | "topic">("none");
@@ -398,11 +397,11 @@ export default function TopicPoolPage() {
     if (!selectedReturnId || !targetClaimId || isReplacing) return;
     setIsReplacing(true);
     try {
-      const returnRes = await fetch(`/api/topics/sub-topics/${selectedReturnId}/return`, { method: "POST" });
-      if (!returnRes.ok) throw new Error("放回旧选题失败");
-
-      const claimRes = await fetch(`/api/topics/sub-topics/${targetClaimId}/claim`, { method: "POST" });
-      if (!claimRes.ok) throw new Error("认领新选题失败");
+      const replaceRes = await fetch("/api/topics/sub-topics/replace-claim", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returned_sub_topic_id: selectedReturnId, target_sub_topic_id: targetClaimId }),
+      });
+      if (!replaceRes.ok) throw new Error("替换认领失败");
 
       feedbackToast.success("已替换旧选题并成功认领！");
       setReplaceDialogOpen(false);

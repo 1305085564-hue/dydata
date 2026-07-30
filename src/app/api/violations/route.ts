@@ -96,7 +96,10 @@ export async function buildViolationsListResponse(
   const requestedView = searchParams.get("view")?.trim() ?? null;
   const sortValue = searchParams.get("sort")?.trim() ?? null;
   const orderValue = searchParams.get("order")?.trim().toLowerCase() ?? "desc";
-  const guidanceMethod = searchParams.get("guidance_method")?.trim() ?? null;
+  const guidanceMethods = searchParams.get("guidance_method")
+    ?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) ?? [];
   const visualTagIds = searchParams.get("visual_tag_ids")?.trim() ?? null;
 
   if (requestedView && !isCaseLibraryView(requestedView)) {
@@ -113,7 +116,7 @@ export async function buildViolationsListResponse(
   }
   const orderDir = orderValue as SortDirection;
 
-  if (guidanceMethod && !(GUIDANCE_METHODS as readonly string[]).includes(guidanceMethod)) {
+  if (guidanceMethods.some((m) => !(GUIDANCE_METHODS as readonly string[]).includes(m))) {
     return jsonBadRequest("guidance_method 不合法");
   }
 
@@ -164,7 +167,7 @@ export async function buildViolationsListResponse(
     search,
     sort: normalizedSort,
     order: orderDir,
-    guidanceMethod,
+    guidanceMethods,
     visualTagIds: visualTagIdList,
     loadCaseIdsByVisualTagIds,
   });

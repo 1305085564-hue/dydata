@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 const defaultProviderForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProvider>;
 const defaultKeyForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProviderKey>;
@@ -45,6 +46,14 @@ export function ProviderDialog({
   }, [provider, open]);
 
   const handleSubmit = async () => {
+    if (!formData.name?.trim()) {
+      feedbackToast.error("请输入渠道名称");
+      return;
+    }
+    if (!formData.base_url?.trim()) {
+      feedbackToast.error("请输入 Base URL");
+      return;
+    }
     setLoading(true);
     try {
       await onSave(formData as Record<string, unknown>);
@@ -135,13 +144,22 @@ export function KeyDialog({
   }, [apiKey, providerId, open, bundle]);
 
   const handleSubmit = async () => {
+    if (!formData.label?.trim()) {
+      feedbackToast.error("请输入 Key / 分组名称");
+      return;
+    }
+    if (!apiKey?.id && !apiKeyValue.trim()) {
+      feedbackToast.error("请输入 API Key");
+      return;
+    }
     setLoading(true);
     try {
-      await onSave({
+      const payload: Record<string, unknown> = {
         ...formData,
         provider_id: selectedProviderId || providerId,
-        api_key: apiKeyValue,
-      } as Record<string, unknown>);
+      };
+      if (!apiKey?.id || apiKeyValue.trim()) payload.api_key = apiKeyValue;
+      await onSave(payload);
     } finally {
       setLoading(false);
     }
@@ -163,8 +181,8 @@ export function KeyDialog({
               onChange={(e) => setSelectedProviderId(e.target.value)}
             >
               {bundle?.providers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.base_url})
+                <option key={p.id} value={p.id} disabled={!p.is_enabled} className={!p.is_enabled ? "text-zinc-400" : ""}>
+                  {p.name} ({p.base_url}){!p.is_enabled ? " (已停用)" : ""}
                 </option>
               ))}
             </select>
@@ -262,6 +280,10 @@ export function ModelDialog({
   }, [model, keyId, initialModelId, open, bundle]);
 
   const handleSubmit = async () => {
+    if (!formData.model_id?.trim()) {
+      feedbackToast.error("请输入或点选模型标识");
+      return;
+    }
     setLoading(true);
     try {
       await onSave({
@@ -291,9 +313,10 @@ export function ModelDialog({
             >
               {bundle?.keys.map((k) => {
                 const provider = bundle.providers.find((p) => p.id === k.provider_id);
+                const isEnabled = k.is_enabled && (provider ? provider.is_enabled : true);
                 return (
-                  <option key={k.id} value={k.id}>
-                    {k.label} ({provider?.name || "未知渠道"})
+                  <option key={k.id} value={k.id} disabled={!isEnabled} className={!isEnabled ? "text-zinc-400" : ""}>
+                    {k.label} ({provider?.name || "未知渠道"}){!isEnabled ? " (已停用)" : ""}
                   </option>
                 );
               })}

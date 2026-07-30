@@ -21,6 +21,7 @@ import { 锁定图占位 } from "@/components/growth/锁定图占位";
 import { AppShell } from "@/components/app-shell";
 import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/lib/utils";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import {
   GROWTH_DIMENSION_RULES,
   GROWTH_RATE_UNLOCK_SAMPLE_COUNT,
@@ -120,12 +121,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   const [trendError, setTrendError] = useState<string | null>(null);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
-  const todayStr = useMemo(() => {
-    const d = new Date();
-    const offset = d.getTimezoneOffset();
-    const localTime = new Date(d.getTime() - offset * 60 * 1000);
-    return localTime.toISOString().slice(0, 10);
-  }, []);
+  const todayStr = useMemo(() => formatShanghaiDateOnly(), []);
 
   const loadTrend = useCallback(async () => {
     setLoadingTrend(true);

@@ -35,6 +35,8 @@ import {
   Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { formatShanghaiDateTime } from "@/lib/日报";
 import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
 
 interface ClaimInfo {
@@ -340,15 +342,12 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     setIsReplacing(true);
 
     try {
-      const returnRes = await fetch(`/api/topics/sub-topics/${selectedReturnId}/return`, {
-        method: "POST"
+      const replaceRes = await fetch("/api/topics/sub-topics/replace-claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returned_sub_topic_id: selectedReturnId, target_sub_topic_id: subTopicId }),
       });
-      if (!returnRes.ok) throw new Error("放回旧选题失败");
-
-      const claimRes = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
-        method: "POST"
-      });
-      if (!claimRes.ok) throw new Error("认领新选题失败");
+      if (!replaceRes.ok) throw new Error("替换认领失败");
 
       feedbackToast.success("已替换旧选题并成功认领！");
       setReplaceDialogOpen(false);
@@ -615,7 +614,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             )}
             <span className="flex items-center gap-1.5">
               <span className="text-zinc-400">录入时间:</span>
-              <strong className="text-zinc-600 font-normal">{new Date(detail.created_at).toLocaleDateString()}</strong>
+              <strong className="text-zinc-600 font-normal">{formatShanghaiDateOnly(new Date(detail.created_at))}</strong>
             </span>
           </div>
         </div>
@@ -677,7 +676,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     <span className="font-medium">
                       {c.status === "scripting" ? "⚠️ 脚本写作中" : "候选思考中"}
                     </span>
-                    <span>{new Date(c.claimedAt).toLocaleDateString()}</span>
+                    <span>{formatShanghaiDateOnly(new Date(c.claimedAt))}</span>
                   </div>
                 </div>
               ))}
@@ -745,7 +744,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                       <div className="flex items-center gap-3.5 text-[11px] text-zinc-500">
                         {w.account_name && <span>账号: {w.account_name}</span>}
                         {(w.uploadedAt || w.uploaded_at) && (
-                          <span>发布时间: {new Date(w.uploadedAt || w.uploaded_at || "").toLocaleDateString()}</span>
+                          <span>发布时间: {formatShanghaiDateOnly(new Date(w.uploadedAt || w.uploaded_at || ""))}</span>
                         )}
                       </div>
                     </div>
@@ -944,7 +943,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               const isSelected = selectedReturnId === item.id;
               const claimRecord = item.sub_topic_claims?.find((c) => c.user_id === currentUserId);
               const claimedAtText = claimRecord?.claimed_at
-                ? new Date(claimRecord.claimed_at).toLocaleString()
+                ? formatShanghaiDateTime(claimRecord.claimed_at)
                 : "已认领";
 
               return (

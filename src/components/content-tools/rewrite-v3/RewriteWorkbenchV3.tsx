@@ -323,22 +323,33 @@ export function RewriteWorkbenchV3() {
                     <span>自动推荐模型</span>
                     {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#5F82A8]" />}
                   </button>
-                  {state.bootstrap.modelViews.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => { actions.setSelectedModelViewId(item.id); setModelDropdownOpen(false); }}
-                      className={cn(
-                        "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
-                        state.selectedModelViewId === item.id
-                          ? "bg-[#5F82A8]/10 text-[#4c6785]"
-                          : "text-zinc-700 hover:bg-zinc-50"
-                      )}
-                      title={item.description || item.label}
-                    >
-                      <span className="truncate pr-2">{item.label}</span>
-                      {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#5F82A8] shrink-0" />}
-                    </button>
-                  ))}
+                  {state.bootstrap.modelViews.map((item) => {
+                    const disabled = (item as { is_enabled?: boolean; isEnabled?: boolean }).is_enabled === false || (item as { is_enabled?: boolean; isEnabled?: boolean }).isEnabled === false;
+                    return (
+                      <button
+                        key={item.id}
+                        disabled={disabled}
+                        onClick={() => {
+                          if (!disabled) {
+                            actions.setSelectedModelViewId(item.id);
+                            setModelDropdownOpen(false);
+                          }
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
+                          disabled
+                            ? "opacity-50 cursor-not-allowed text-zinc-400"
+                            : state.selectedModelViewId === item.id
+                            ? "bg-[#5F82A8]/10 text-[#4c6785]"
+                            : "text-zinc-700 hover:bg-zinc-50"
+                        )}
+                        title={disabled ? "已停用" : (item.description || item.label)}
+                      >
+                        <span className="truncate pr-2">{item.label}{disabled ? " (已停用)" : ""}</span>
+                        {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#5F82A8] shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

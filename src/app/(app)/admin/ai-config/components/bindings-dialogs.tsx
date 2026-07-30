@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 const defaultBindingForm = { is_enabled: true, output_token_limit: 3600, context_message_limit: 30 } satisfies Partial<AiFeatureBinding>;
 
@@ -32,6 +33,14 @@ export function BindingDialog({
   }, [binding, open]);
 
   const handleSubmit = async () => {
+    if (!formData.feature_key?.trim()) {
+      feedbackToast.error("请输入功能标识 (Key)");
+      return;
+    }
+    if (!formData.label?.trim()) {
+      feedbackToast.error("请输入功能名称");
+      return;
+    }
     setLoading(true);
     try {
       await onSave(formData as Record<string, unknown>);
@@ -78,9 +87,10 @@ export function BindingDialog({
               {bundle?.models.map((model) => {
                 const key = bundle.keys.find((item) => item.id === model.key_id);
                 const provider = bundle.providers.find((item) => item.id === key?.provider_id);
-                const label = `${provider?.name || "未知"} / ${key?.label || "未知"} / ${model.display_name || model.model_id}`;
+                const isEnabled = model.is_enabled && (key ? key.is_enabled : true) && (provider ? provider.is_enabled : true);
+                const label = `${provider?.name || "未知"} / ${key?.label || "未知"} / ${model.display_name || model.model_id}${!isEnabled ? " (已停用)" : ""}`;
                 return (
-                  <option key={model.id} value={model.id}>
+                  <option key={model.id} value={model.id} disabled={!isEnabled} className={!isEnabled ? "text-zinc-400" : ""}>
                     {label}
                   </option>
                 );

@@ -26,6 +26,7 @@ interface ViolationsStaffDataContainerProps {
   query: string;
   isOwner: boolean;
   canManageViolations: boolean;
+  canViewDashboard: boolean;
 }
 
 type DangerousItem = {
@@ -67,14 +68,15 @@ async function loadCases(params: {
     search: params.query,
     sort: params.sort,
     order: params.order,
-    guidanceMethod: params.guidanceMethods[0] ?? null,
+    guidanceMethods: params.guidanceMethods,
   });
 
   if (errorMessage || !payload) throw new Error(errorMessage ?? "加载避坑案例失败");
   return payload.data as ViolationCase[];
 }
 
-async function loadDashboard(): Promise<DashboardData> {
+async function loadDashboard(canViewDashboard: boolean): Promise<DashboardData> {
+  if (!canViewDashboard) return null;
   const { data } = await loadViolationDashboardSummary({
     supabase: createAdminClient() as never,
   });
@@ -113,6 +115,7 @@ export async function ViolationsStaffDataContainer({
   query,
   isOwner,
   canManageViolations,
+  canViewDashboard,
 }: ViolationsStaffDataContainerProps) {
   const supabase = await createClient();
 
@@ -123,7 +126,7 @@ export async function ViolationsStaffDataContainer({
   try {
     [cases, dashboard] = await Promise.all([
       loadCases({ supabase, sort: activeSort, order: activeOrder, guidanceMethods, query }),
-      loadDashboard(),
+      loadDashboard(canViewDashboard),
     ]);
   } catch (loadError) {
     error = loadError instanceof Error ? loadError.message : "加载失败";

@@ -172,6 +172,31 @@ export function useAiConfig() {
     }
   }, [mutate]);
 
+  const swapKeyPriority = useCallback(async (
+    keyId: string,
+    targetKeyId: string,
+    keyPriority: number,
+    targetPriority: number,
+  ) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "swap_key_priority",
+          data: { key_id: keyId, target_key_id: targetKeyId, key_priority: keyPriority, target_priority: targetPriority },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "交换顺位失败");
+      mutate(data as AiConfigBundle);
+      return true;
+    } catch (error) {
+      feedbackToast.error(error instanceof Error ? error.message : "交换顺位失败");
+      return false;
+    }
+  }, [mutate]);
+
   useEffect(() => {
     if (!cachedBundle) {
       void loadData();
@@ -184,8 +209,8 @@ export function useAiConfig() {
     error,
     mutate,
     mutateEntity,
+    swapKeyPriority,
     testKeyConnection,
     refresh: () => loadData(true),
   };
 }
-

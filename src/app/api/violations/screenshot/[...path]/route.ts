@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  canAccessPrivateViolationCases,
   getAuthenticatedContext,
+  getUserProfile,
   jsonBadRequest,
   jsonNotFound,
   jsonServerError,
@@ -14,11 +16,13 @@ import {
 type ScreenshotRouteDeps = {
   createAdminClient: typeof createAdminClient;
   getAuthenticatedContext: typeof getAuthenticatedContext;
+  getUserProfile?: typeof getUserProfile;
 };
 
 const defaultDeps: ScreenshotRouteDeps = {
   createAdminClient,
   getAuthenticatedContext,
+  getUserProfile,
 };
 
 type PublishDraftScreenshotRow = {
@@ -27,12 +31,14 @@ type PublishDraftScreenshotRow = {
   status: string | null;
 };
 
+type CaseScreenshotRow = PublishDraftScreenshotRow;
+
 export async function buildViolationScreenshotResponse(
   _request: NextRequest,
   context: { params: Promise<{ path: string[] }> },
   deps: ScreenshotRouteDeps = defaultDeps,
 ) {
-  const { user } = await deps.getAuthenticatedContext();
+  const { supabase, user } = await deps.getAuthenticatedContext();
 
   if (!user) {
     return jsonUnauthorized();
@@ -45,13 +51,18 @@ export async function buildViolationScreenshotResponse(
   }
 
   const adminSupabase = deps.createAdminClient();
-  const [caseResult, publishDraftResult] = await Promise.all([
+  const [violationCaseResult, knowledgeCaseResult, publishDraftResult] = await Promise.all([
     adminSupabase
       .from("violation_cases")
-      .select("id")
+      .select("id, submitted_by, status")
       .contains("screenshot_paths", [objectPath])
       .eq("is_deleted", false)
       .eq("purpose", "violation")
+      .limit(1),
+    adminSupabase
+      .from("knowledge_cases")
+      .select("id, submitted_by, status")
+      .contains("screenshot_paths", [objectPath])
       .limit(1),
     adminSupabase
       .from("publish_drafts")
@@ -61,17 +72,27 @@ export async function buildViolationScreenshotResponse(
       .limit(5),
   ]);
 
-  if (caseResult.error || publishDraftResult.error) {
+  if (violationCaseResult.error || knowledgeCaseResult.error || publishDraftResult.error) {
     return jsonServerError("校验截图关联失败");
   }
 
-  const caseRows = caseResult.data ?? [];
+  const caseRows = [
+    ...((violationCaseResult.data ?? []) as CaseScreenshotRow[]),
+    ...((knowledgeCaseResult.data ?? []) as CaseScreenshotRow[]),
+  ];
+  const getUserProfileForRequest = deps.getUserProfile ?? defaultDeps.getUserProfile!;
+  const profile = caseRows.length > 0
+    ? await getUserProfileForRequest(supabase, user.id)
+    : null;
+  const canViewPrivate = profile ? canAccessPrivateViolationCases(profile) : false;
   const publishDraftRows = (publishDraftResult.data ?? []) as PublishDraftScreenshotRow[];
-  const belongsToCurrentUserUpload = objectPath.startsWith(`${user.id}/`);
+  const belongsToVerifiedCase = caseRows.some((row) => row.status === "verified");
+  const belongsToOwnCase = caseRows.some((row) => row.submitted_by === user.id);
+  const belongsToPrivateCase = canViewPrivate && caseRows.length > 0;
   const belongsToApprovedDraft = publishDraftRows.some((row) => row.status === "approved");
   const belongsToOwnDraft = publishDraftRows.some((row) => row.submitted_by === user.id);
 
-  if (!belongsToCurrentUserUpload && caseRows.length === 0 && !belongsToApprovedDraft && !belongsToOwnDraft) {
+  if (!belongsToVerifiedCase && !belongsToOwnCase && !belongsToPrivateCase && !belongsToApprovedDraft && !belongsToOwnDraft) {
     return jsonNotFound("截图不存在");
   }
 

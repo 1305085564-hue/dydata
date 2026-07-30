@@ -102,8 +102,8 @@ function RewriteRouteDialog({
   modelViewId: string | null;
   onOpenChange: (open: boolean) => void;
   onSave: (data: Record<string, unknown>) => Promise<void>;
-  viewOptions: Array<{ id: string; label: string }>;
-  modelOptions: Array<{ id: string; label: string }>;
+  viewOptions: Array<{ id: string; label: string; isEnabled?: boolean }>;
+  modelOptions: Array<{ id: string; label: string; isEnabled?: boolean }>;
 }) {
   const [formData, setFormData] = useState<RouteDraft>(defaultRouteDraft);
   const [loading, setLoading] = useState(false);
@@ -144,7 +144,9 @@ function RewriteRouteDialog({
             >
               <option value="">请选择</option>
               {viewOptions.map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
+                <option key={option.id} value={option.id} disabled={!option.isEnabled} className={!option.isEnabled ? "text-zinc-400" : ""}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </div>
@@ -158,7 +160,9 @@ function RewriteRouteDialog({
             >
               <option value="">自动分配</option>
               {modelOptions.map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
+                <option key={option.id} value={option.id} disabled={!option.isEnabled} className={!option.isEnabled ? "text-zinc-400" : ""}>
+                  {option.label}
+                </option>
               ))}
             </select>
           </div>
@@ -226,9 +230,11 @@ export default function BindingsClient() {
     return bundle.models.map((model) => {
       const key = bundle.keys.find((item) => item.id === model.key_id);
       const provider = bundle.providers.find((item) => item.id === key?.provider_id);
+      const isEnabled = model.is_enabled && (key ? key.is_enabled : true) && (provider ? provider.is_enabled : true);
       return {
         id: model.id,
-        label: `${provider?.name || "未知"} / ${key?.label || "未知"} / ${model.display_name || model.model_id}`,
+        label: `${provider?.name || "未知"} / ${key?.label || "未知"} / ${model.display_name || model.model_id}${!isEnabled ? " (已停用)" : ""}`,
+        isEnabled,
       };
     });
   }, [bundle]);
@@ -237,7 +243,11 @@ export default function BindingsClient() {
     if (!bundle) return [];
     return [...bundle.rewriteModelViews]
       .sort((left, right) => left.sort_order - right.sort_order)
-      .map((view) => ({ id: view.id, label: `${view.label} / ${view.key}` }));
+      .map((view) => ({
+        id: view.id,
+        label: `${view.label} / ${view.key}${!view.is_enabled ? " (已停用)" : ""}`,
+        isEnabled: view.is_enabled,
+      }));
   }, [bundle]);
 
   if (isLoading || !bundle) {

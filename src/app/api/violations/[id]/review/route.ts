@@ -12,6 +12,7 @@ import {
 import { validateReviewViolationPayload } from "@/lib/violations/validation";
 
 type ReviewSnapshot = {
+  source_table?: "violation_cases";
   id: string;
   status: string;
   usage_state: string | null;
@@ -20,7 +21,21 @@ type ReviewSnapshot = {
   suggested_action: string | null;
 };
 
+type KnowledgeReviewSnapshot = {
+  source_table: "knowledge_cases";
+  id: string;
+  status: string;
+  admin_insight: string | null;
+  revision_note: string | null;
+  deprecated_reason: string | null;
+  verified_by: string | null;
+  verified_at: string | null;
+  revision_requested_by: string | null;
+  revision_requested_at: string | null;
+};
+
 const REVIEW_SNAPSHOT_SELECT = "id,status,usage_state,risk_level,admin_conclusion,suggested_action";
+const KNOWLEDGE_REVIEW_SNAPSHOT_SELECT = "id,status,admin_insight,revision_note,deprecated_reason,verified_by,verified_at,revision_requested_by,revision_requested_at";
 export const REVIEW_RESULT_SELECT =
   "id, created_at, submitted_by, script_text, is_violation, category, account_id, account_name_snapshot, team_id, scene_description, screenshot_paths, result, tags, pass_count, fail_count, status, risk_level, admin_conclusion, suggested_action, reviewed_by, reviewed_at, is_deleted, purpose, script_format, total_views, total_follows, usage_count, weighted_conversion_rate, platforms, guidance_method, promotion_level, usage_state, source_video_id, source_metadata, highlighted_sections";
 
@@ -113,54 +128,57 @@ export async function buildReviewViolationResponse(
     .eq("is_deleted", false)
     .single();
 
-  if (snapshotError || !snapshot) {
-    return jsonNotFound("案例不存在或复核失败");
-  }
+  if (!snapshotError && snapshot) {
+    const { data, error } = await reviewCasesTable
+      .update({
+        status: validation.data.status,
+        risk_level: validation.data.risk_level,
+        ...(validation.data.usage_state ? { usage_state: validation.data.usage_state } : {}),
+        ...(validation.data.promotion_level ? { promotion_level: validation.data.promotion_level } : {}),
+        admin_conclusion: validation.data.admin_conclusion,
+        suggested_action: validation.data.suggested_action,
+        reviewed_by: user.id,
+        reviewed_at: reviewedAt,
+        ...(validation.data.highlighted_sections !== undefined ? { highlighted_sections: validation.data.highlighted_sections.map((section) => ({ ...section, created_at: reviewedAt })) } : {}),
+      })
+      .eq("id", id)
+      .eq("is_deleted", false)
+      .select(REVIEW_RESULT_SELECT)
+      .single();
 
-  const { data, error } = await reviewCasesTable
-    .update({
-      status: validation.data.status,
-      risk_level: validation.data.risk_level,
-      ...(validation.data.usage_state ? { usage_state: validation.data.usage_state } : {}),
-      ...(validation.data.promotion_level ? { promotion_level: validation.data.promotion_level } : {}),
-      admin_conclusion: validation.data.admin_conclusion,
-      suggested_action: validation.data.suggested_action,
-      reviewed_by: user.id,
-      reviewed_at: reviewedAt,
-      ...(validation.data.highlighted_sections !== undefined
-        ? {
-            highlighted_sections: validation.data.highlighted_sections.map((section) => ({
-              ...section,
-              created_at: reviewedAt,
-            })),
-          }
-        : {}),
-    })
-    .eq("id", id)
-    .eq("is_deleted", false)
-    .select(REVIEW_RESULT_SELECT)
-    .single();
-
-  if (error || !data) {
-    return jsonNotFound("案例不存在或复核失败");
-  }
-
-  if (validation.data.reason_tag_ids) {
-    const reasonTagTable = adminSupabase.from("violation_case_reason_tags") as MinimalReasonTagTable;
-    await reasonTagTable.delete().eq("case_id", id);
-    if (validation.data.reason_tag_ids.length > 0) {
-      const rows = validation.data.reason_tag_ids.map((tagId) => ({ case_id: id, tag_id: tagId }));
-      const { error: insertError } = await reasonTagTable.insert(rows);
-      if (insertError) {
-        return jsonValidationError("保存踩雷点标签失败", insertError);
+    if (error || !data) return jsonNotFound("案例不存在或复核失败");
+    if (validation.data.reason_tag_ids) {
+      const reasonTagTable = adminSupabase.from("violation_case_reason_tags") as MinimalReasonTagTable;
+      await reasonTagTable.delete().eq("case_id", id);
+      if (validation.data.reason_tag_ids.length > 0) {
+        const { error: insertError } = await reasonTagTable.insert(validation.data.reason_tag_ids.map((tagId) => ({ case_id: id, tag_id: tagId })));
+        if (insertError) return jsonValidationError("保存踩雷点标签失败", insertError);
       }
     }
+    return NextResponse.json({ data, snapshot: snapshot as ReviewSnapshot });
   }
 
-  return NextResponse.json({
-    data,
-    snapshot: snapshot as ReviewSnapshot,
-  });
+  const knowledgeCasesTable = adminSupabase.from("knowledge_cases") as MinimalReviewCaseTable;
+  const { data: knowledgeSnapshot, error: knowledgeSnapshotError } = await knowledgeCasesTable
+    .select(KNOWLEDGE_REVIEW_SNAPSHOT_SELECT)
+    .eq("id", id)
+    .single();
+  if (knowledgeSnapshotError || !knowledgeSnapshot) return jsonNotFound("案例不存在或复核失败");
+
+  const knowledgePatch = validation.data.status === "verified"
+    ? { status: "verified", admin_insight: validation.data.admin_conclusion, verified_by: user.id, verified_at: reviewedAt, revision_requested_by: null, revision_requested_at: null, revision_note: null, deprecated_reason: null }
+    : validation.data.status === "rejected"
+      ? { status: "needs_revision", revision_requested_by: user.id, revision_requested_at: reviewedAt, revision_note: validation.data.admin_conclusion }
+      : { status: "deprecated", deprecated_reason: validation.data.admin_conclusion ?? "admin_archived" };
+  const { data, error } = await knowledgeCasesTable
+    .update({
+      ...knowledgePatch,
+    })
+    .eq("id", id)
+    .select(KNOWLEDGE_REVIEW_SNAPSHOT_SELECT)
+    .single();
+  if (error || !data) return jsonNotFound("案例不存在或复核失败");
+  return NextResponse.json({ data, snapshot: { ...(knowledgeSnapshot as KnowledgeReviewSnapshot), source_table: "knowledge_cases" } });
 }
 
 export async function PATCH(
