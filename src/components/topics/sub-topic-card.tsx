@@ -231,7 +231,7 @@ export function SubTopicCard({
           }}
           className={cn(
             "group relative flex flex-col justify-between rounded-xl border border-zinc-200 bg-white p-3.5 transition-all duration-200 cursor-pointer min-h-[106px] h-auto space-y-2",
-            "hover:border-zinc-300 hover:shadow-sm hover:-translate-y-0.5 active:scale-[0.995]"
+            "hover:border-zinc-300 hover:shadow-xs hover:-translate-y-0.5 active:scale-[0.97]"
           )}
         >
           {/* 顶行：【流量与团队数据】(靠字号字重与等宽数字拉开视觉阶梯，通透无彩色大框) */}
@@ -307,20 +307,20 @@ export function SubTopicCard({
           <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100/90 text-xs">
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
               {item.topic_groups && (
-                <span className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600">
+                <span className="inline-flex items-center gap-1 rounded bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600 border-0">
                   <Layers className="size-2.5 text-zinc-400 shrink-0" />
                   <span className="truncate max-w-[90px]">{item.topic_groups.name}</span>
                 </span>
               )}
               {item.emotion_tag && (
-                <span className="inline-flex items-center gap-0.5 rounded bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600">
+                <span className="inline-flex items-center gap-0.5 rounded bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600 border-0">
                   <Flame className="size-2.5 text-zinc-400 shrink-0" />
                   <span>{item.emotion_tag}</span>
                 </span>
               )}
             </div>
 
-            {/* 独立 Action 按钮 (未选中静默，选中高亮强调) */}
+            {/* 独立 Action 按钮 (带 active:scale-[0.97] 物理沉降) */}
             <div className="flex items-center gap-1.5 shrink-0">
               {isClaimedByMe ? (
                 <button
@@ -329,7 +329,7 @@ export function SubTopicCard({
                   onClick={handleClaimToggle}
                   title="点击放回选题池"
                   aria-label={`已认领：${item.title}，点击放回选题池`}
-                  className="inline-flex h-6.5 items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 shadow-2xs transition-colors hover:bg-emerald-100 hover:border-emerald-400 cursor-pointer"
+                  className="inline-flex h-6.5 items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 shadow-2xs active:scale-[0.97] transition-all duration-150 hover:bg-emerald-100 hover:border-emerald-400 cursor-pointer"
                 >
                   {isClaiming ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3 stroke-[2.5]" />}
                   已认领
@@ -340,7 +340,7 @@ export function SubTopicCard({
                   disabled={isClaiming}
                   onClick={handleClaimToggle}
                   className={cn(
-                    "flex h-6.5 items-center justify-center rounded-md border px-2.5 text-[11px] font-normal active:scale-95 transition-all duration-150 cursor-pointer",
+                    "flex h-6.5 items-center justify-center rounded-md border px-2.5 text-[11px] font-normal active:scale-[0.97] transition-all duration-150 cursor-pointer",
                     isLimitReached
                       ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
                       : "border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:bg-[#D97757] hover:text-white hover:border-[#D97757] hover:font-medium"

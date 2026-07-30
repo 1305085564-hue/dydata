@@ -1193,6 +1193,15 @@ export default function TopicPoolPage() {
                     /* 无分组平铺模式 (默认) */
                     viewDensity === "compact" ? (
                       <div className="rounded-2xl border border-zinc-200/80 bg-white overflow-hidden shadow-2xs divide-y divide-zinc-100">
+                        {/* 统一工整单行模式表头 */}
+                        <div className="flex h-8 items-center justify-between gap-3 px-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-50/80 border-b border-zinc-200/80 select-none">
+                          <div className="w-[84px] shrink-0">状态/认领</div>
+                          <div className="flex-1 min-w-0">选题标题与黄金切口</div>
+                          <div className="w-[120px] shrink-0">母题与标签</div>
+                          <div className="w-[110px] shrink-0 text-end">均播 / 热度</div>
+                          <div className="w-7 shrink-0 text-end">详情</div>
+                        </div>
+
                         {filteredAndSortedItems.map((subTopic) => (
                           <SubTopicCard
                             key={subTopic.id}
