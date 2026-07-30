@@ -3,14 +3,12 @@ import { getCurrentUserContext } from "@/lib/current-user-context";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
 import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
-import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { NavBarClient } from "./nav-bar-client";
 
 export async function NavBar() {
   const { supabase, user, authError } = await getCurrentUserContext();
-  assertSupabaseQuerySucceeded(authError, "验证导航登录状态失败");
-
-  if (!user) return null;
+  // auth 失败（token 过期等）按未登录处理，不抛异常
+  if (authError || !user) return null;
 
   const [profileResult, permissionInfo, accountsResult] = await Promise.all([
     supabase

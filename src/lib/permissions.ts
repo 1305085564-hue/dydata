@@ -30,8 +30,7 @@ function isMissingAccessLevelColumn(error: { message?: string } | null | undefin
 
 const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> => {
   const { user, authError } = await getCurrentUserContext();
-  assertSupabaseQuerySucceeded(authError, "验证登录状态失败");
-  if (!user) return null;
+  if (authError || !user) return null;
 
   const adminSupabase = createAdminClient();
   const primary = await adminSupabase

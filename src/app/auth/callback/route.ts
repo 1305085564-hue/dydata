@@ -3,6 +3,14 @@ import { NextResponse } from "next/server";
 import { sanitizeNextPath } from "@/lib/auth-password";
 import { createClient } from "@/lib/supabase/server";
 
+function classifyCallbackError(error: Error): "pkce" | "expired" {
+  const msg = error.message.toLowerCase();
+  if (msg.includes("verifier") || msg.includes("pkce") || msg.includes("code_verifier")) {
+    return "pkce";
+  }
+  return "expired";
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
@@ -31,7 +39,8 @@ export async function GET(request: Request) {
   }
 
   if (error) {
-    return NextResponse.redirect(new URL("/login?reset=expired", url.origin));
+    const kind = classifyCallbackError(error);
+    return NextResponse.redirect(new URL(`/login?reset=${kind}`, url.origin));
   }
 
   return NextResponse.redirect(new URL(next, url.origin));

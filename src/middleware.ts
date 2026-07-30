@@ -194,5 +194,7 @@ export const config = {
     "/api/:path*",
     "/login",
     "/register",
+    "/forgot-password",
+    "/auth/logout",
   ],
 };
