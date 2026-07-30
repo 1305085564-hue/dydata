@@ -298,3 +298,4 @@ After fixing a bug:
 - [ ] All existing tests pass
 - [ ] Build succeeds
 - [ ] The original bug scenario is verified end-to-end
+- [ ] 给出具体的验证命令（eslint / test / build）

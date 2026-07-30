@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { Loader2, X } from "lucide-react";
+import { Eye, EyeOff, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,7 +35,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full relative overflow-hidden rounded-md transition-all duration-150 active:scale-[0.98]" disabled={pending} type="submit">
+    <Button className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-all duration-150 active:scale-[0.98] shadow-sm hover:shadow" disabled={pending} type="submit">
       {pending ? (
         <span className="flex items-center justify-center gap-1.5">
           <Loader2 className="size-3.5 animate-spin" />
@@ -55,6 +55,8 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   const forgotPasswordHref = buildAuthPathWithNext("/forgot-password", next);
   const registerHref = buildAuthPathWithNext("/register", next);
   const [showExpiredAlert, setShowExpiredAlert] = useState(isExpired);
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
   const [state, formAction] = useActionState(action, { ...initialState, email: initialEmail });
   const [email, setEmail] = useState(initialEmail);
@@ -73,6 +75,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
     if (state.error) {
       setPassword("");
       feedbackToast.error(getLoginErrorMessage(state.error));
+      passwordInputRef.current?.focus();
     }
   }, [state.error]);
 
@@ -84,14 +87,14 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
     <AuthShell title="回到工作台">
       <form action={formAction} className="space-y-5">
         {showExpiredAlert && (
-          <div className="flex items-start gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5">
-            <span className="mt-0.5 text-[12px] font-medium text-[#8F641B] dark:text-[#D99E55]">
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
+            <span className="text-[12px] font-medium text-[#8F641B] dark:text-[#D99E55]">
               登录会话已过期，请重新登录
             </span>
             <button
               type="button"
               onClick={() => setShowExpiredAlert(false)}
-              className="ml-auto mt-0.5 shrink-0 text-[#8F641B] transition-colors hover:text-[#6F4D13] dark:text-[#D99E55] dark:hover:text-[#E2B46F]"
+              className="shrink-0 text-[#8F641B] transition-colors hover:text-[#6F4D13] dark:text-[#D99E55] dark:hover:text-[#E2B46F] p-0.5"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
@@ -110,12 +113,21 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
             required
             type="email"
             value={email}
+            className="h-9 text-[13px]"
           />
         </div>
 
         <div className="space-y-2">
-          <div className="flex flex-col gap-2 relative">
+          <div className="flex items-center justify-between">
             <Label htmlFor="password">密码</Label>
+            <Link
+              className="text-[12px] text-zinc-500 hover:text-[#D97757] transition-colors"
+              href={forgotPasswordHref}
+            >
+              忘记密码
+            </Link>
+          </div>
+          <div className="relative">
             <Input
               autoComplete="current-password"
               id="password"
@@ -123,20 +135,26 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
               onChange={(event) => setPassword(event.target.value)}
               placeholder="请输入密码"
               required
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
+              ref={passwordInputRef}
+              aria-invalid={Boolean(state.error)}
+              className="h-9 pr-9 text-[13px]"
             />
-            <Link
-              className="absolute right-0 top-0 active:translate-y-0 text-[12px] text-zinc-500 hover:text-zinc-700"
-              href={forgotPasswordHref}
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 focus:outline-none transition-colors p-0.5 rounded"
+              aria-label={showPassword ? "隐藏密码" : "显示密码"}
+              tabIndex={-1}
             >
-              忘记密码
-            </Link>
+              {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </button>
           </div>
         </div>
 
         <label
-          className="flex items-center gap-2 text-[13px] text-zinc-500"
+          className="flex items-center gap-2 text-[13px] text-zinc-500 cursor-pointer select-none"
           htmlFor="keep-logged-in"
         >
           <Checkbox
@@ -152,7 +170,7 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
 
         <p className="text-center text-[13px] text-zinc-500">
           还没有账号？
-          <Link className="ml-1 text-zinc-700 underline underline-offset-4" href={registerHref}>
+          <Link className="ml-1 text-zinc-700 hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
             去注册
           </Link>
         </p>

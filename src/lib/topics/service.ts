@@ -48,6 +48,7 @@ export interface TopicWorkMetricInput {
 export interface TopicWorkSummary {
   qualifiedWorkCount: number;
   averagePlayCount: number | null;
+  bestPlayCount: number | null;
   bestCopy: string | null;
   latestCopy: string | null;
 }
@@ -338,6 +339,7 @@ export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWo
   return {
     qualifiedWorkCount: qualified.length,
     averagePlayCount: qualified.length ? Math.round(totalPlayCount / qualified.length) : null,
+    bestPlayCount: best?.playCount ?? null,
     bestCopy: best?.content ?? null,
     latestCopy: latest?.content ?? null,
   };
@@ -831,11 +833,13 @@ async function loadScoredTopicPool(
       : 999;
     if (mode === "trending" && daysSinceLastWork > 30) continue;
     if (mode === "high_potential" && daysSinceLastWork <= 30) continue;
+    const maxPlayCount = qualifiedPlayCounts.length ? Math.max(...qualifiedPlayCounts) : null;
     scored.push({
       item,
       score: calcTopicScore(avgPlayCount, daysSinceLastWork, mode),
       daysSinceLastWork,
       avgPlayCount,
+      bestPlayCount: maxPlayCount,
     });
   }
 
@@ -863,7 +867,7 @@ async function loadScoredTopicPool(
   return {
     ok: true,
     value: {
-      items: pageItems.map(({ item, score, daysSinceLastWork, avgPlayCount }) =>
+      items: pageItems.map(({ item, score, daysSinceLastWork, avgPlayCount, bestPlayCount }) =>
         buildTopicPoolItem(
           item,
           scope,
@@ -872,6 +876,7 @@ async function loadScoredTopicPool(
             _score: score,
             _daysSinceLastWork: daysSinceLastWork,
             _avgPlayCount: avgPlayCount,
+            _bestPlayCount: bestPlayCount,
           },
         ),
       ),

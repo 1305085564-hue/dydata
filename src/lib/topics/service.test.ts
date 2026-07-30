@@ -462,7 +462,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         id: "sub-old",
         title: "很早创建但仍在认领的选题",
         sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
-        summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestCopy: null, latestCopy: null },
+        summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
         claimCount: 1,
       },
     ],
@@ -479,6 +479,7 @@ test("子题汇总只统计播放量不低于 1000 的作品", () => {
 
   assert.equal(summary.qualifiedWorkCount, 2);
   assert.equal(summary.averagePlayCount, 2000);
+  assert.equal(summary.bestPlayCount, 3000);
   assert.equal(summary.bestCopy, "更好文案");
   assert.equal(summary.latestCopy, "更好文案");
 });
