@@ -72,6 +72,43 @@ function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null;
 }
 
+export type ProviderKeyHealthStatus = "disabled" | "untested" | "healthy" | "unhealthy";
+
+function parseHealthTimestamp(value?: string | null) {
+  if (!value?.trim()) return null;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+export function getProviderKeyHealthStatus(input: {
+  isEnabled: boolean;
+  lastSuccessAt?: string | null;
+  lastFailureAt?: string | null;
+  unhealthyUntil?: string | null;
+  now?: number;
+}): ProviderKeyHealthStatus {
+  if (!input.isEnabled) return "disabled";
+
+  const lastSuccessAt = parseHealthTimestamp(input.lastSuccessAt);
+  const lastFailureAt = parseHealthTimestamp(input.lastFailureAt);
+  const hasInvalidTimestamp =
+    (Boolean(input.lastSuccessAt?.trim()) && lastSuccessAt === null) ||
+    (Boolean(input.lastFailureAt?.trim()) && lastFailureAt === null);
+  if (hasInvalidTimestamp) return "unhealthy";
+
+  if (lastSuccessAt === null && lastFailureAt === null) return "untested";
+  if (lastFailureAt !== null && (lastSuccessAt === null || lastFailureAt > lastSuccessAt)) {
+    return "unhealthy";
+  }
+
+  if (input.unhealthyUntil?.trim()) {
+    const unhealthyUntil = parseHealthTimestamp(input.unhealthyUntil);
+    if (unhealthyUntil === null || unhealthyUntil > (input.now ?? Date.now())) return "unhealthy";
+  }
+
+  return "healthy";
+}
+
 export function isProviderKeyHealthy(input: {
   isEnabled: boolean;
   consecutiveFailures?: number | null;

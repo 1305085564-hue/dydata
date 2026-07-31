@@ -178,6 +178,16 @@ export function useAiConfig() {
     keyPriority: number,
     targetPriority: number,
   ) => {
+    // 乐观更新本地 cachedBundle
+    if (cachedBundle) {
+      const nextKeys = cachedBundle.keys.map((k) => {
+        if (k.id === keyId) return { ...k, priority: targetPriority };
+        if (k.id === targetKeyId) return { ...k, priority: keyPriority };
+        return k;
+      });
+      mutate({ ...cachedBundle, keys: nextKeys });
+    }
+
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
         method: "POST",
@@ -192,10 +202,35 @@ export function useAiConfig() {
       mutate(data as AiConfigBundle);
       return true;
     } catch (error) {
+      void loadData(true);
       feedbackToast.error(error instanceof Error ? error.message : "交换顺位失败");
       return false;
     }
-  }, [mutate]);
+  }, [mutate, loadData]);
+
+  const testAllKeys = useCallback(async () => {
+    if (!cachedBundle || cachedBundle.keys.length === 0) {
+      feedbackToast.error("当前暂无可测试的 API Key");
+      return { okCount: 0, failCount: 0 };
+    }
+    feedbackToast.loading("正在并发检测全池 API 密钥健康状态...");
+    const results = await Promise.all(
+      cachedBundle.keys.map(async (key) => {
+        const firstModel = cachedBundle?.models.find((m) => m.key_id === key.id);
+        const res = await testKeyConnection(key.id, firstModel?.model_id);
+        return { keyId: key.id, ok: res?.ok ?? false };
+      })
+    );
+    const okCount = results.filter((r) => r.ok).length;
+    const failCount = results.length - okCount;
+
+    if (failCount === 0) {
+      feedbackToast.success(`检测完成：全池 ${okCount} 个 API Key 全部健康在线！`);
+    } else {
+      feedbackToast.warning(`检测完成：${okCount} 个健康在线，${failCount} 个离线/响应异常`);
+    }
+    return { okCount, failCount };
+  }, [testKeyConnection]);
 
   useEffect(() => {
     if (!cachedBundle) {
@@ -211,6 +246,7 @@ export function useAiConfig() {
     mutateEntity,
     swapKeyPriority,
     testKeyConnection,
+    testAllKeys,
     refresh: () => loadData(true),
   };
 }

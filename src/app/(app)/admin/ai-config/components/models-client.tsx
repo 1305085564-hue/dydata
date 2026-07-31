@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
+import { AiProviderKeyModel, useAiConfig, AiConfigBundle } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowUp, ArrowDown, Zap, Plus, ShieldCheck, CheckCircle2, AlertTriangle, Loader2, Tag } from "lucide-react";
+import { Zap, Plus, ShieldCheck, CheckCircle2, AlertTriangle, Loader2, Tag, GripVertical } from "lucide-react";
 import { ModelDialog, KeyDialog } from "./providers-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 
 // 智能模型系列映射
 function getModelFamily(modelId: string): { familyId: string; familyName: string } {
@@ -36,6 +37,7 @@ type KeyItem = {
   unhealthyUntil: string | null;
   consecutiveFailures: number;
   lastSuccessAt: string | null;
+  lastFailureAt: string | null;
   lastErrorMessage: string | null;
   models: Array<{ modelEntity: AiProviderKeyModel; modelId: string; displayName: string }>;
 };
@@ -48,8 +50,15 @@ type ModelFamilyGroup = {
 };
 
 export default function ModelsClient() {
-  const { bundle, isLoading, mutateEntity, swapKeyPriority, testKeyConnection } = useAiConfig();
+  const { bundle, isLoading, mutate, mutateEntity, swapKeyPriority, testKeyConnection, testAllKeys } = useAiConfig();
   const [testingKeyId, setTestingKeyId] = useState<string | null>(null);
+  const [isTestingAll, setIsTestingAll] = useState(false);
+
+  // 拖拽状态变量
+  const [draggedKeyId, setDraggedKeyId] = useState<string | null>(null);
+  const [dropTargetKeyId, setDropTargetKeyId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<"above" | "below">("above");
+  const [recentlyMovedKeyId, setRecentlyMovedKeyId] = useState<string | null>(null);
 
   const [modelModal, setModelModal] = useState<{ open: boolean; keyId: string | null; initialModelId?: string }>({
     open: false,
@@ -102,6 +111,7 @@ export default function ModelsClient() {
           unhealthyUntil: key.unhealthy_until,
           consecutiveFailures: key.consecutive_failures,
           lastSuccessAt: key.last_success_at,
+          lastFailureAt: key.last_failure_at,
           lastErrorMessage: key.last_error_message,
           models: [],
         });
@@ -149,13 +159,61 @@ export default function ModelsClient() {
     );
   }
 
+  // 0ms 瞬间响应的顺位调整（两两 swap）
   const handleSwapPriority = async (
     currentKeyId: string,
     targetKeyId: string,
     currentPriority: number,
     targetPriority: number
   ) => {
+    setRecentlyMovedKeyId(currentKeyId);
+    setTimeout(() => setRecentlyMovedKeyId(null), 1200);
     await swapKeyPriority(currentKeyId, targetKeyId, currentPriority, targetPriority);
+  };
+
+  // 0ms 瞬间响应的多项拖拽重排
+  const handleReorderKeysInFamily = async (famKeys: KeyItem[], draggedId: string, dropTargetId: string, position: "above" | "below") => {
+    if (draggedId === dropTargetId || !bundle) return;
+
+    const fromIdx = famKeys.findIndex((k) => k.keyId === draggedId);
+    let toIdx = famKeys.findIndex((k) => k.keyId === dropTargetId);
+
+    if (fromIdx === -1 || toIdx === -1) return;
+    if (position === "below") toIdx += 1;
+    if (fromIdx < toIdx) toIdx -= 1;
+
+    if (fromIdx === toIdx) return;
+
+    // 拷贝并重新排列组内 keys
+    const newFamKeys = [...famKeys];
+    const [draggedItem] = newFamKeys.splice(fromIdx, 1);
+    newFamKeys.splice(toIdx, 0, draggedItem);
+
+    // 收集所有修改过的 keys 的优先级映射
+    const priorityMap = new Map<string, number>();
+    famKeys.forEach((oldK, idx) => {
+      priorityMap.set(newFamKeys[idx].keyId, oldK.priority);
+    });
+
+    // 1. 0ms 瞬间乐观更新本地 bundle 状态
+    const updatedKeys = bundle.keys.map((k) => {
+      if (priorityMap.has(k.id)) {
+        return { ...k, priority: priorityMap.get(k.id)! };
+      }
+      return k;
+    });
+
+    mutate({ ...bundle, keys: updatedKeys });
+
+    setRecentlyMovedKeyId(draggedId);
+    setTimeout(() => setRecentlyMovedKeyId(null), 1200);
+
+    // 2. 提交后端持久化：两两进行必要的 priority 变更
+    const targetKey = famKeys[toIdx > fromIdx ? toIdx : toIdx];
+    const sourceKey = famKeys[fromIdx];
+    if (targetKey && sourceKey) {
+      await swapKeyPriority(draggedId, targetKey.keyId, sourceKey.priority, targetKey.priority);
+    }
   };
 
   const handleSetGlobalDefault = async (modelId: string) => {
@@ -182,6 +240,12 @@ export default function ModelsClient() {
     setTestingKeyId(null);
   };
 
+  const handleTestAll = async () => {
+    setIsTestingAll(true);
+    await testAllKeys();
+    setIsTestingAll(false);
+  };
+
   const handleDeleteModel = async () => {
     if (!deleteConfirm.id) return;
     await mutateEntity("delete", "model", { id: deleteConfirm.id });
@@ -190,13 +254,13 @@ export default function ModelsClient() {
 
   return (
     <div className="space-y-5">
-      {/* 规范 2.2：自然色差无分割线 Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl">
+      {/* 规范 2.2：自然色差 Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl border border-zinc-200/50">
         <div className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-[#D97757]" />
           <span className="text-[13px] font-medium text-zinc-900">全局默认主模型：</span>
           <select
-            className="h-8 px-2.5 text-[12px] rounded-lg border-0 bg-white font-medium text-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D97757]/40"
+            className="h-8 px-2.5 text-[12px] rounded-lg border border-zinc-200 bg-white font-medium text-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D97757]/40"
             value={currentDefaultModelId || ""}
             onChange={(e) => handleSetGlobalDefault(e.target.value)}
           >
@@ -204,10 +268,13 @@ export default function ModelsClient() {
             {bundle.models.map((m) => {
               const key = bundle.keys.find((k) => k.id === m.key_id);
               const provider = bundle.providers.find((p) => p.id === key?.provider_id);
+              const isKeyHealthy = key?.is_enabled && (!key.unhealthy_until || new Date(key.unhealthy_until).getTime() <= Date.now());
               const isEnabled = m.is_enabled && (key ? key.is_enabled : true) && (provider ? provider.is_enabled : true);
+              const statusPrefix = !isEnabled ? "- [已停用]" : isKeyHealthy ? "• [正常]" : "× [异常]";
+
               return (
                 <option key={m.id} value={m.model_id} disabled={!isEnabled} className={!isEnabled ? "text-zinc-400" : ""}>
-                  {m.display_name || m.model_id} ({m.model_id}){!isEnabled ? " (已停用)" : ""}
+                  {statusPrefix} {m.display_name || m.model_id} ({provider?.name || "未知渠道"})
                 </option>
               );
             })}
@@ -215,12 +282,23 @@ export default function ModelsClient() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isTestingAll}
+            onClick={handleTestAll}
+            className="h-7 text-[12px] gap-1 bg-white border-zinc-200 hover:bg-zinc-100 text-zinc-700"
+          >
+            {isTestingAll ? <Loader2 className="size-3 animate-spin text-[#D97757]" /> : <Zap className="size-3 text-[#D97757] fill-[#D97757]" />}
+            一键全池健康检测
+          </Button>
+
           {bundle.providers.length === 0 ? (
-            <Button size="sm" className="h-7 text-[12px] gap-1" onClick={() => setKeyModal({ open: true, providerId: null })}>
+            <Button size="sm" className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#C46A4D] text-white" onClick={() => setKeyModal({ open: true, providerId: null })}>
               <Plus className="size-3" /> 首次配置渠道与 Key
             </Button>
           ) : (
-            <Button size="sm" className="h-7 text-[12px] gap-1" onClick={() => setModelModal({ open: true, keyId: bundle.keys[0]?.id || null })}>
+            <Button size="sm" className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#C46A4D] text-white" onClick={() => setModelModal({ open: true, keyId: bundle.keys[0]?.id || null })}>
               <Plus className="size-3" /> 给系列添加型号
             </Button>
           )}
@@ -229,9 +307,9 @@ export default function ModelsClient() {
 
       {/* 模型系列卡片列表 */}
       {familyGroups.length === 0 ? (
-        <div className="rounded-2xl bg-zinc-50/70 p-12 text-center space-y-3">
+        <div className="rounded-2xl bg-zinc-50/70 p-12 text-center space-y-3 border border-zinc-200/80">
           <p className="text-[13px] text-zinc-500">暂无配置。请添加你的 API Key 和对应的模型系列。</p>
-          <Button size="sm" onClick={() => setKeyModal({ open: true, providerId: null })}>
+          <Button size="sm" className="bg-[#D97757] hover:bg-[#C46A4D] text-white" onClick={() => setKeyModal({ open: true, providerId: null })}>
             <Plus className="size-4 mr-1.5" /> 添加首个 API Key
           </Button>
         </div>
@@ -244,18 +322,18 @@ export default function ModelsClient() {
               <div
                 key={fam.familyId}
                 className={cn(
-                  "rounded-2xl bg-white overflow-hidden transition-all border border-zinc-200/80",
+                  "rounded-2xl bg-white overflow-hidden transition-all border border-zinc-200/80 shadow-sm",
                   hasGlobalDefault && "ring-1 ring-[#D97757]/30"
                 )}
               >
-                {/* 规范 119：依靠 zinc-50/80 与 white 自然色差分层，无需 border-b 横划杠 */}
-                <div className="p-4 px-5 bg-zinc-50/80 space-y-2.5">
+                {/* 系列 Card Header */}
+                <div className="p-4 px-5 bg-zinc-50/80 space-y-2.5 border-b border-zinc-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <span className="font-semibold text-[14px] text-zinc-900">{fam.familyName}</span>
                       {hasGlobalDefault && (
                         <span className="text-[11px] font-medium bg-[#D97757]/10 text-[#D97757] px-2 py-0.5 rounded-full">
-                          包含全局默认模型
+                          全局默认
                         </span>
                       )}
                     </div>
@@ -263,7 +341,7 @@ export default function ModelsClient() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 text-[12px] gap-1 bg-white border-zinc-200/80"
+                      className="h-7 text-[12px] gap-1 bg-white border-zinc-200 hover:bg-zinc-100"
                       onClick={() => {
                         const firstKeyId = fam.keys[0]?.keyId || bundle.keys[0]?.id || null;
                         setModelModal({ open: true, keyId: firstKeyId });
@@ -284,7 +362,7 @@ export default function ModelsClient() {
                         className={cn(
                           "font-mono text-[11px] px-2 py-0.5 rounded-md",
                           mId === currentDefaultModelId
-                            ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                            ? "bg-[#D97757]/10 text-[#D97757] font-semibold border border-[#D97757]/30"
                             : "bg-white text-zinc-600 border border-zinc-200/60"
                         )}
                       >
@@ -296,9 +374,10 @@ export default function ModelsClient() {
 
                 {/* 顺位列表表格 */}
                 <Table>
-                  <TableHeader className="bg-transparent">
-                    <TableRow className="hover:bg-transparent border-0">
-                      <TableHead className="w-[70px] text-[12px] pl-5">顺位</TableHead>
+                  <TableHeader className="bg-zinc-50/30">
+                    <TableRow className="hover:bg-transparent border-b border-zinc-200/60">
+                      <TableHead className="w-[40px] px-2 text-center text-[12px]"></TableHead>
+                      <TableHead className="w-[60px] text-[12px] pl-2">顺位</TableHead>
                       <TableHead className="text-[12px]">供应商 / Key 名称</TableHead>
                       <TableHead className="text-[12px]">Base URL</TableHead>
                       <TableHead className="text-[12px]">API Key 掩码</TableHead>
@@ -310,17 +389,79 @@ export default function ModelsClient() {
                     {fam.keys.map((keyItem, idx) => {
                       const isFirst = idx === 0;
                       const isLast = idx === fam.keys.length - 1;
-                      const isHealthy = keyItem.isEnabled && (!keyItem.unhealthyUntil || new Date(keyItem.unhealthyUntil).getTime() <= Date.now());
+                      const healthStatus = getProviderKeyHealthStatus({
+                        isEnabled: keyItem.isEnabled,
+                        lastSuccessAt: keyItem.lastSuccessAt,
+                        lastFailureAt: keyItem.lastFailureAt,
+                        unhealthyUntil: keyItem.unhealthyUntil,
+                      });
+
+                      const isDragging = draggedKeyId === keyItem.keyId;
+                      const isDropTarget = dropTargetKeyId === keyItem.keyId;
+                      const isRecentlyMoved = recentlyMovedKeyId === keyItem.keyId;
 
                       return (
-                        <TableRow key={keyItem.keyId} className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0">
-                          <TableCell className="pl-5 font-mono">
+                        <TableRow
+                          key={keyItem.keyId}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            setDraggedKeyId(keyItem.keyId);
+                            e.dataTransfer.setData("text/plain", keyItem.keyId);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          onDragEnd={() => {
+                            setDraggedKeyId(null);
+                            setDropTargetKeyId(null);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "move";
+
+                            if (draggedKeyId && draggedKeyId !== keyItem.keyId) {
+                              setDropTargetKeyId(keyItem.keyId);
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const midY = rect.top + rect.height / 2;
+                              setDropPosition(e.clientY < midY ? "above" : "below");
+                            }
+                          }}
+                          onDragLeave={() => {
+                            if (dropTargetKeyId === keyItem.keyId) {
+                              setDropTargetKeyId(null);
+                            }
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const draggedId = e.dataTransfer.getData("text/plain");
+                            if (draggedId && draggedId !== keyItem.keyId) {
+                              handleReorderKeysInFamily(fam.keys, draggedId, keyItem.keyId, dropPosition);
+                            }
+                            setDraggedKeyId(null);
+                            setDropTargetKeyId(null);
+                          }}
+                          className={cn(
+                            "text-[13px] border-b border-zinc-200/60 last:border-b-0 transition-colors select-none group",
+                            isDragging && "opacity-40 bg-zinc-100/70 border-dashed border-zinc-300",
+                            !isDragging && isDropTarget && dropPosition === "above" && "border-t-2 border-t-[#D97757] bg-[#D97757]/5",
+                            !isDragging && isDropTarget && dropPosition === "below" && "border-b-2 border-b-[#D97757] bg-[#D97757]/5",
+                            !isDragging && !isDropTarget && isRecentlyMoved && "bg-[#D97757]/10 transition-colors duration-1000",
+                            !isDragging && !isDropTarget && !isRecentlyMoved && "hover:bg-zinc-50/70"
+                          )}
+                        >
+                          {/* 拖拽手柄列 */}
+                          <TableCell className="w-[40px] px-2 text-center">
+                            <div className="inline-flex items-center justify-center p-1 rounded hover:bg-zinc-200/60 cursor-grab active:cursor-grabbing text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                              <GripVertical className="size-4" />
+                            </div>
+                          </TableCell>
+
+                          {/* 顺位数字 Badge */}
+                          <TableCell className="pl-2 font-mono">
                             <span
                               className={cn(
-                                "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-bold",
+                                "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-bold transition-transform duration-200",
                                 isFirst
-                                  ? "bg-[#D97757] text-white"
-                                  : "bg-zinc-100 text-zinc-500"
+                                  ? "bg-[#D97757] text-white shadow-sm scale-105"
+                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200/60"
                               )}
                             >
                               {idx + 1}
@@ -341,9 +482,17 @@ export default function ModelsClient() {
                           </TableCell>
 
                           <TableCell>
-                            {isHealthy ? (
+                            {healthStatus === "healthy" ? (
                               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-medium">
                                 <CheckCircle2 className="size-3 text-emerald-600" /> 正常
+                              </span>
+                            ) : healthStatus === "untested" ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                                未测试
+                              </span>
+                            ) : healthStatus === "disabled" ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                                已停用
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-full font-medium" title={keyItem.lastErrorMessage || undefined}>
@@ -356,51 +505,15 @@ export default function ModelsClient() {
                             <div className="flex items-center justify-end gap-1">
                               <Button
                                 variant="ghost"
-                                size="icon"
-                                className="size-7 text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
-                                disabled={isFirst}
-                                title="提升顺位"
-                                onClick={() =>
-                                  handleSwapPriority(
-                                    keyItem.keyId,
-                                    fam.keys[idx - 1].keyId,
-                                    keyItem.priority,
-                                    fam.keys[idx - 1].priority
-                                  )
-                                }
-                              >
-                                <ArrowUp className="size-3.5" />
-                              </Button>
-
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-7 text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
-                                disabled={isLast}
-                                title="降低顺位"
-                                onClick={() =>
-                                  handleSwapPriority(
-                                    keyItem.keyId,
-                                    fam.keys[idx + 1].keyId,
-                                    keyItem.priority,
-                                    fam.keys[idx + 1].priority
-                                  )
-                                }
-                              >
-                                <ArrowDown className="size-3.5" />
-                              </Button>
-
-                              <Button
-                                variant="ghost"
                                 size="sm"
-                                className="h-7 text-[12px] gap-1 text-zinc-600 hover:text-[#D97757]"
+                                className="h-7 text-[12px] gap-1 text-zinc-600 hover:text-[#D97757] hover:bg-[#D97757]/10 active:scale-95"
                                 disabled={testingKeyId === keyItem.keyId}
                                 onClick={() => handleTest(keyItem.keyId, keyItem.models[0]?.modelId)}
                               >
                                 {testingKeyId === keyItem.keyId ? (
-                                  <Loader2 className="size-3 animate-spin" />
+                                  <Loader2 className="size-3 animate-spin text-[#D97757]" />
                                 ) : (
-                                  <Zap className="size-3 fill-current" />
+                                  <Zap className="size-3 fill-current text-[#D97757]" />
                                 )}
                                 测试
                               </Button>

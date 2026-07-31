@@ -9,22 +9,50 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { cn } from "@/lib/utils";
 
 const defaultProviderForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProvider>;
 const defaultKeyForm = { is_enabled: true, priority: 50 } satisfies Partial<AiProviderKey>;
 const defaultModelForm = { is_enabled: true } satisfies Partial<AiProviderKeyModel>;
 
-// 预设常见通用模型（防冷启动）
-const POPULAR_PRESET_MODELS = [
-  "claude-3-5-sonnet-20241022",
-  "claude-3-5-haiku-20241022",
-  "gpt-4o",
-  "gpt-4o-mini",
-  "deepseek-chat",
-  "deepseek-reasoner",
-  "gemini-1.5-pro",
-  "gemini-1.5-flash",
-  "qwen-max",
+// 2026 最新主流大模型预设库
+const LATEST_2026_MODEL_GROUPS = [
+  {
+    groupName: "DeepSeek 系列 (2026)",
+    items: [
+      { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro (1M上下文)" },
+      { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash" },
+      { id: "deepseek-chat", name: "DeepSeek V3" },
+      { id: "deepseek-reasoner", name: "DeepSeek R1 (深度推理)" },
+    ],
+  },
+  {
+    groupName: "OpenAI / ChatGPT (2026)",
+    items: [
+      { id: "gpt-5.6-sol", name: "GPT-5.6 Sol (旗舰全能)" },
+      { id: "gpt-5.6-terra", name: "GPT-5.6 Terra" },
+      { id: "gpt-4o", name: "GPT-4o" },
+      { id: "o3-mini", name: "OpenAI o3-mini" },
+      { id: "o1", name: "OpenAI o1" },
+    ],
+  },
+  {
+    groupName: "Claude 系列 (2026)",
+    items: [
+      { id: "claude-5-opus", name: "Claude 5 Opus (最强编程)" },
+      { id: "claude-5-sonnet", name: "Claude 5 Sonnet" },
+      { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet" },
+    ],
+  },
+  {
+    groupName: "Google & 国产主流 (2026)",
+    items: [
+      { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
+      { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite" },
+      { id: "qwen-3.8-max", name: "通义千问 3.8-Max" },
+      { id: "kimi-k1.5", name: "Kimi K1.5" },
+    ],
+  },
 ];
 
 export function ProviderDialog({
@@ -259,15 +287,19 @@ export function ModelDialog({
   const { bundle } = useAiConfig();
   const [formData, setFormData] = useState<Partial<AiProviderKeyModel>>(defaultModelForm);
   const [selectedKeyId, setSelectedKeyId] = useState<string>("");
+  const [presetTab, setPresetTab] = useState<"used" | "latest">("used");
   const [loading, setLoading] = useState(false);
 
-  // 汇总已用过的所有历史模型
-  const allHistoryModels = useMemo(() => {
-    const set = new Set<string>(POPULAR_PRESET_MODELS);
-    bundle?.models.forEach((m) => {
-      if (m.model_id) set.add(m.model_id.trim());
+  // 自动搜集全站当前已配置/使用过的模型（去重）
+  const usedModels = useMemo(() => {
+    if (!bundle) return [];
+    const map = new Map<string, string>();
+    bundle.models.forEach((m) => {
+      if (m.model_id && !map.has(m.model_id)) {
+        map.set(m.model_id, m.display_name || m.model_id);
+      }
     });
-    return Array.from(set);
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [bundle]);
 
   useEffect(() => {
@@ -330,26 +362,77 @@ export function ModelDialog({
               id="model-id"
               value={formData.model_id || ""}
               onChange={(e) => setFormData({ ...formData, model_id: e.target.value })}
-              placeholder="例如: claude-3-5-sonnet-20241022"
+              placeholder="例如: deepseek-v4-pro"
               disabled={!!model?.id}
             />
           </div>
 
-          {/* 历史与预设模型快捷点选 */}
+          {/* 快捷点选: 常用已用模型 VS 2026 最新主流模型 */}
           {!model?.id && (
-            <div className="space-y-1.5">
-              <div className="text-[12px] text-zinc-500 font-medium">快捷点选常用与历史模型：</div>
-              <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto p-1 bg-zinc-50 rounded-lg border border-zinc-100">
-                {allHistoryModels.map((m) => (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-zinc-500 font-medium">快捷一键填选模型：</span>
+                <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/60">
                   <button
-                    key={m}
                     type="button"
-                    className="text-[11px] px-2 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] transition-colors font-mono"
-                    onClick={() => setFormData({ ...formData, model_id: m, display_name: m })}
+                    className={cn(
+                      "px-2 py-0.5 text-[11px] rounded-md transition-all font-medium",
+                      presetTab === "used" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
+                    )}
+                    onClick={() => setPresetTab("used")}
                   >
-                    {m}
+                    📌 本站已用模型 ({usedModels.length})
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    className={cn(
+                      "px-2 py-0.5 text-[11px] rounded-md transition-all font-medium",
+                      presetTab === "latest" ? "bg-white text-[#D97757] shadow-2xs font-semibold" : "text-zinc-500 hover:text-zinc-800"
+                    )}
+                    onClick={() => setPresetTab("latest")}
+                  >
+                    ⚡ 2026 最新主流
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-[160px] overflow-y-auto p-2 bg-zinc-50/80 rounded-xl border border-zinc-200/60">
+                {presetTab === "used" ? (
+                  usedModels.length === 0 ? (
+                    <div className="text-center py-4 text-[12px] text-zinc-400">暂无已添加的模型，请切换到【2026 最新主流】点选</div>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {usedModels.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="text-[11px] px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all font-medium shadow-2xs"
+                          onClick={() => setFormData({ ...formData, model_id: item.id, display_name: item.name })}
+                        >
+                          {item.name} <span className="font-mono text-[10px] text-zinc-400">({item.id})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  LATEST_2026_MODEL_GROUPS.map((group) => (
+                    <div key={group.groupName} className="space-y-1">
+                      <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">{group.groupName}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {group.items.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className="text-[11px] px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all font-medium shadow-2xs"
+                            onClick={() => setFormData({ ...formData, model_id: item.id, display_name: item.name })}
+                          >
+                            {item.name} <span className="font-mono text-[10px] text-zinc-400">({item.id})</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

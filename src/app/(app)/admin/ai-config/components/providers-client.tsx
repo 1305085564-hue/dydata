@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { AiProvider, AiProviderKey, AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
-import { Plus, Pencil, Trash2, Zap, Server, CheckCircle2, AlertTriangle, Loader2, Key } from "lucide-react";
+import { Plus, Pencil, Trash2, Zap, Server, CheckCircle2, AlertTriangle, Loader2, Key, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProviderDialog, KeyDialog, ModelDialog } from "./providers-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getProviderKeyHealthStatus } from "@/lib/ai/provider-routing";
 
 export default function ProvidersClient() {
   const { bundle, isLoading, mutateEntity, testKeyConnection } = useAiConfig();
@@ -163,7 +164,12 @@ export default function ProvidersClient() {
                       </TableRow>
                     ) : (
                       providerKeys.map((keyItem) => {
-                        const isHealthy = keyItem.is_enabled && (!keyItem.unhealthy_until || new Date(keyItem.unhealthy_until).getTime() <= Date.now());
+                        const healthStatus = getProviderKeyHealthStatus({
+                          isEnabled: keyItem.is_enabled && p.is_enabled,
+                          lastSuccessAt: keyItem.last_success_at,
+                          lastFailureAt: keyItem.last_failure_at,
+                          unhealthyUntil: keyItem.unhealthy_until,
+                        });
                         const keyModelsCount = bundle.models.filter((m) => m.key_id === keyItem.id).length;
 
                         return (
@@ -181,9 +187,17 @@ export default function ProvidersClient() {
 
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {isHealthy ? (
+                                {healthStatus === "healthy" ? (
                                   <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full font-medium">
                                     <CheckCircle2 className="size-3 text-emerald-600" /> 正常
+                                  </span>
+                                ) : healthStatus === "untested" ? (
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                                    未测试
+                                  </span>
+                                ) : healthStatus === "disabled" ? (
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                                    已停用
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-full font-medium" title={keyItem.last_error_message || undefined}>
@@ -223,6 +237,15 @@ export default function ProvidersClient() {
 
                             <TableCell className="text-right pr-5">
                               <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-7 text-zinc-500 hover:text-[#D97757]"
+                                  onClick={() => setModelModal({ open: true, keyId: keyItem.id, data: null })}
+                                  title="管理此 Key 关联的模型"
+                                >
+                                  <Tag className="size-3.5" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"

@@ -10,9 +10,9 @@ import { Sparkles, Route, Server } from "lucide-react";
 export type AIConfigTabKey = "models" | "bindings" | "providers" | "rewrite";
 
 const TAB_ITEMS: Array<{ key: "models" | "bindings" | "providers"; label: string; icon: typeof Sparkles }> = [
-  { key: "models", label: "模型与顺位 (Failover)", icon: Sparkles },
-  { key: "bindings", label: "业务与场景路由", icon: Route },
-  { key: "providers", label: "渠道与密钥池", icon: Server },
+  { key: "models", label: "模型顺位", icon: Sparkles },
+  { key: "bindings", label: "场景路由", icon: Route },
+  { key: "providers", label: "渠道密钥", icon: Server },
 ];
 
 const ModelsClient = dynamic(() => import("./components/models-client"), {
