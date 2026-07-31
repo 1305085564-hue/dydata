@@ -1,0 +1,5 @@
+-- This migration was applied to production before its original local file was
+-- removed during the video-review cleanup. Keep the version placeholder so
+-- Supabase can compare local and remote migration histories safely.
+--
+-- The original DDL must not be restored or rerun from this placeholder.
