@@ -167,7 +167,7 @@ test("feature config 优先读取 ai_feature_bindings 并覆盖旧 ai_feature_co
   const db: FakeDb = {
     ai_feature_bindings: [
       {
-        feature_key: "growth_insight",
+        feature_key: "content_analysis",
         provider_key_model_id: "pkm-new",
         system_prompt: "新版提示词",
         is_enabled: true,
@@ -175,7 +175,7 @@ test("feature config 优先读取 ai_feature_bindings 并覆盖旧 ai_feature_co
     ],
     ai_feature_config: [
       {
-        feature_key: "growth_insight",
+        feature_key: "content_analysis",
         channel_id: "channel-old",
         model: "old-model",
         system_prompt: "旧版提示词",
@@ -186,7 +186,7 @@ test("feature config 优先读取 ai_feature_bindings 并覆盖旧 ai_feature_co
   __internal.setServiceClientForTests(createFakeService(db));
 
   try {
-    const config = await __internal.getFeatureConfigForTests("growth_insight");
+    const config = await __internal.getFeatureConfigForTests("content_analysis");
 
     assert.equal(config?.source, "binding");
     assert.equal(config?.providerKeyModelId, "pkm-new");
@@ -203,6 +203,34 @@ test("feature config 在没有 binding 时回退旧 ai_feature_config", async ()
     ai_feature_bindings: [],
     ai_feature_config: [
       {
+        feature_key: "content_analysis",
+        channel_id: "channel-old",
+        model: "legacy-model",
+        system_prompt: "旧版内容分析提示词",
+        is_enabled: true,
+      },
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("content_analysis");
+
+    assert.equal(config?.source, "legacy");
+    assert.equal(config?.providerKeyModelId, null);
+    assert.equal(config?.channelId, "channel-old");
+    assert.equal(config?.model, "legacy-model");
+    assert.equal(config?.systemPrompt, "旧版内容分析提示词");
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("已删除功能即使旧表仍有配置也不能调用或掉进环境变量兜底", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [],
+    ai_feature_config: [
+      {
         feature_key: "video_diagnose",
         channel_id: "channel-old",
         model: "legacy-model",
@@ -214,37 +242,9 @@ test("feature config 在没有 binding 时回退旧 ai_feature_config", async ()
   __internal.setServiceClientForTests(createFakeService(db));
 
   try {
-    const config = await __internal.getFeatureConfigForTests("video_diagnose");
-
-    assert.equal(config?.source, "legacy");
-    assert.equal(config?.providerKeyModelId, null);
-    assert.equal(config?.channelId, "channel-old");
-    assert.equal(config?.model, "legacy-model");
-    assert.equal(config?.systemPrompt, "旧版视频诊断提示词");
-  } finally {
-    __internal.setServiceClientForTests(null);
-  }
-});
-
-test("归档功能即使旧表仍有配置也不能调用或掉进环境变量兜底", async () => {
-  const db: FakeDb = {
-    ai_feature_bindings: [],
-    ai_feature_config: [
-      {
-        feature_key: "smart_alert",
-        channel_id: "channel-old",
-        model: "legacy-model",
-        system_prompt: "旧版智能预警提示词",
-        is_enabled: true,
-      },
-    ],
-  };
-  __internal.setServiceClientForTests(createFakeService(db));
-
-  try {
     await assert.rejects(
-      callAi({ featureKey: "smart_alert", messages: [{ role: "user", content: "hello" }] }),
-      /智能预警已归档/,
+      callAi({ featureKey: "video_diagnose", messages: [{ role: "user", content: "hello" }] }),
+      /未注册的 AI 功能：video_diagnose/,
     );
   } finally {
     __internal.setServiceClientForTests(null);
@@ -268,7 +268,7 @@ test("正式功能被归档后会在运行时阻断，不会继续使用旧映�
   const db: FakeDb = {
     ai_feature_bindings: [
       {
-        feature_key: "growth_insight",
+        feature_key: "content_analysis",
         provider_key_model_id: "pkm-1",
         system_prompt: "旧配置仍在",
         is_enabled: false,
@@ -281,7 +281,7 @@ test("正式功能被归档后会在运行时阻断，不会继续使用旧映�
 
   try {
     await assert.rejects(
-      callAi({ featureKey: "growth_insight", messages: [{ role: "user", content: "hello" }] }),
+      callAi({ featureKey: "content_analysis", messages: [{ role: "user", content: "hello" }] }),
       /该 AI 功能已归档/,
     );
   } finally {

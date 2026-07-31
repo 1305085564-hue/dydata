@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Plus, Info, Sparkles, GitFork, Star, Archive, ArchiveRestore, CircleAlert } from "lucide-react";
+import { Pencil, Trash2, Plus, Info, Sparkles, GitFork, Star, Archive, ArchiveRestore } from "lucide-react";
 import { BindingDialog } from "./bindings-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -294,8 +294,6 @@ export default function BindingsClient() {
 
   const views = [...bundle.rewriteModelViews].sort((a, b) => a.sort_order - b.sort_order);
   const businessControls = bundle.featureControls.filter((control) => control.group === "business");
-  const reviewControls = bundle.featureControls.filter((control) => control.group === "review");
-  const archivedControls = bundle.featureControls.filter((control) => control.group === "archived");
 
   return (
     <div className="space-y-6">
@@ -372,23 +370,6 @@ export default function BindingsClient() {
           </Table>
         </div>
       </div>
-
-      {(reviewControls.length > 0 || archivedControls.length > 0) && (
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="border border-zinc-200/80 bg-white px-4 py-3 rounded-xl">
-            <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-900"><CircleAlert className="size-4 text-amber-500" />待核验</div>
-            <div className="mt-2 space-y-2">
-              {reviewControls.map((control) => <div key={control.key} className="text-[12px]"><span className="text-zinc-800">{control.label}</span><span className="ml-2 text-zinc-500">{control.description}</span></div>)}
-            </div>
-          </div>
-          <div className="border border-zinc-200/80 bg-zinc-50/70 px-4 py-3 rounded-xl">
-            <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-700"><Archive className="size-4 text-zinc-500" />已归档</div>
-            <div className="mt-2 space-y-2">
-              {archivedControls.map((control) => <div key={control.key} className="text-[12px]"><span className="text-zinc-700">{control.label}</span><span className="ml-2 text-zinc-500">{control.archivedReason}</span></div>)}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 第二板块：文案改写场景模型路由 (依靠 24px 留白美学切割，无需物理 border-t) */}
       <div className="space-y-3 pt-3">

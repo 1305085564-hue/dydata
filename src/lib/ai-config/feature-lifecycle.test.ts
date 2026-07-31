@@ -13,16 +13,16 @@ test("归档功能通过单个数据库事务执行，避免快照与状态写�
   };
 
   await changeAiFeatureLifecycle(client, {
-    featureKey: "growth_insight",
-    label: "成长诊断",
+    featureKey: "ocr_screenshot",
+    label: "截图识别",
     action: "archive",
   });
 
   assert.deepEqual(calls, [{
     name: "manage_ai_feature_lifecycle",
     args: {
-      p_feature_key: "growth_insight",
-      p_label: "成长诊断",
+      p_feature_key: "ocr_screenshot",
+      p_label: "截图识别",
       p_action: "archive",
     },
   }]);
@@ -38,16 +38,16 @@ test("恢复功能同样走事务，并让数据库按最新快照还原此前�
   };
 
   await changeAiFeatureLifecycle(client, {
-    featureKey: "growth_insight",
-    label: "成长诊断",
+    featureKey: "ocr_screenshot",
+    label: "截图识别",
     action: "restore",
   });
 
   assert.deepEqual(calls[0], {
     name: "manage_ai_feature_lifecycle",
     args: {
-      p_feature_key: "growth_insight",
-      p_label: "成长诊断",
+      p_feature_key: "ocr_screenshot",
+      p_label: "截图识别",
       p_action: "restore",
     },
   });
@@ -62,8 +62,8 @@ test("数据库事务错误会原样反馈给管理接口", async () => {
 
   await assert.rejects(
     changeAiFeatureLifecycle(client, {
-      featureKey: "growth_insight",
-      label: "成长诊断",
+      featureKey: "ocr_screenshot",
+      label: "截图识别",
       action: "archive",
     }),
     /事务回滚/,

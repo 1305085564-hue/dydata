@@ -44,34 +44,23 @@ test("admin system settings GET 返回当前履约飞书开关", async () => {
   assert.equal(payload.feishuFulfillmentReminderEnabled, false);
 });
 
-test("admin system settings GET 在 system_settings 缺表时回退 ai_feature_config", async () => {
+test("admin system settings GET 缺少系统配置表时明确失败，不读取旧 AI 配置", async () => {
+  const readTables: string[] = [];
   const response = await buildAdminSystemSettingsGetResponse({
     requireAdminServiceClient: async () =>
       ({
         supabase: {
           from: (table: string) => {
-            if (table === "system_settings") {
-              return {
-                select: () => ({
-                  eq: () => ({
-                    maybeSingle: async () => ({
-                      data: null,
-                      error: {
-                        code: "PGRST205",
-                        message: "Could not find the table 'public.system_settings' in the schema cache",
-                      },
-                    }),
-                  }),
-                }),
-              };
-            }
-
+            readTables.push(table);
             return {
               select: () => ({
                 eq: () => ({
                   maybeSingle: async () => ({
-                    data: { is_enabled: true },
-                    error: null,
+                    data: null,
+                    error: {
+                      code: "PGRST205",
+                      message: "Could not find the table 'public.system_settings' in the schema cache",
+                    },
                   }),
                 }),
               }),
@@ -84,9 +73,8 @@ test("admin system settings GET 在 system_settings 缺表时回退 ai_feature_c
   });
 
   assert.ok(response);
-  assert.equal(response.status, 200);
-  const payload = await response.json();
-  assert.equal(payload.feishuFulfillmentReminderEnabled, true);
+  assert.equal(response.status, 500);
+  assert.deepEqual(readTables, ["system_settings"]);
 });
 
 test("admin system settings POST 写入开关", async () => {
@@ -127,7 +115,7 @@ test("admin system settings POST 写入开关", async () => {
   assert.equal(payload.feishuFulfillmentReminderEnabled, true);
 });
 
-test("admin system settings POST 在 system_settings 缺表时回退 ai_feature_config", async () => {
+test("admin system settings POST 缺少系统配置表时明确失败，不写入旧 AI 配置", async () => {
   const writes: Array<{ table: string; payload: Record<string, unknown> }> = [];
 
   const response = await buildAdminSystemSettingsPostResponse(
@@ -143,16 +131,12 @@ test("admin system settings POST 在 system_settings 缺表时回退 ai_feature_
             from: (table: string) => ({
               upsert: async (payload: Record<string, unknown>) => {
                 writes.push({ table, payload });
-                if (table === "system_settings") {
-                  return {
-                    error: {
-                      code: "PGRST205",
-                      message: "Could not find the table 'public.system_settings' in the schema cache",
-                    },
-                  };
-                }
-
-                return { error: null };
+                return {
+                  error: {
+                    code: "PGRST205",
+                    message: "Could not find the table 'public.system_settings' in the schema cache",
+                  },
+                };
               },
             }),
           },
@@ -163,10 +147,7 @@ test("admin system settings POST 在 system_settings 缺表时回退 ai_feature_
   );
 
   assert.ok(response);
-  assert.equal(response.status, 200);
-  assert.equal(writes.length, 2);
+  assert.equal(response.status, 500);
+  assert.equal(writes.length, 1);
   assert.equal(writes[0]?.table, "system_settings");
-  assert.equal(writes[1]?.table, "ai_feature_config");
-  assert.equal(writes[1]?.payload.feature_key, "feishu_fulfillment_reminder");
-  assert.equal(writes[1]?.payload.is_enabled, false);
 });

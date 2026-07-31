@@ -7,7 +7,6 @@ import {
 } from "../../fulfillment/_shared";
 
 export const FEISHU_FULFILLMENT_REMINDER_KEY = "feishu_fulfillment_reminder_enabled";
-const FEISHU_FULFILLMENT_REMINDER_FALLBACK_FEATURE_KEY = "feishu_fulfillment_reminder";
 
 type SystemSettingsPayload = {
   feishuFulfillmentReminderEnabled: boolean;
@@ -50,11 +49,6 @@ const defaultDeps: SettingsRouteDeps = {
   requireOwnerOrTeamAdminRole,
 };
 
-function isMissingSystemSettingsTableError(error: { code?: string | null; message?: string | null } | null | undefined) {
-  const message = error?.message ?? "";
-  return error?.code === "PGRST205" || message.includes("public.system_settings");
-}
-
 export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDeps = defaultDeps) {
   const auth = await deps.requireAdminServiceClient();
   const forbidden = deps.requireOwnerOrTeamAdminRole(auth);
@@ -67,24 +61,8 @@ export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDep
     .eq("key", FEISHU_FULFILLMENT_REMINDER_KEY)
     .maybeSingle();
 
-  if (result.error && !isMissingSystemSettingsTableError(result.error)) {
+  if (result.error) {
     return NextResponse.json({ error: result.error.message || "读取系统配置失败" }, { status: 500 });
-  }
-
-  if (isMissingSystemSettingsTableError(result.error)) {
-    const fallback = await auth.supabase
-      .from("ai_feature_config")
-      .select("is_enabled")
-      .eq("feature_key", FEISHU_FULFILLMENT_REMINDER_FALLBACK_FEATURE_KEY)
-      .maybeSingle();
-
-    if (fallback.error) {
-      return NextResponse.json({ error: fallback.error.message || "读取系统配置失败" }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      feishuFulfillmentReminderEnabled: fallback.data?.is_enabled === true,
-    });
   }
 
   return NextResponse.json({
@@ -118,23 +96,8 @@ export async function buildAdminSystemSettingsPostResponse(
     { onConflict: "key" },
   );
 
-  if (result.error && !isMissingSystemSettingsTableError(result.error)) {
+  if (result.error) {
     return NextResponse.json({ error: result.error.message || "更新系统配置失败" }, { status: 500 });
-  }
-
-  if (isMissingSystemSettingsTableError(result.error)) {
-    const fallback = await auth.supabase.from("ai_feature_config").upsert(
-      {
-        feature_key: FEISHU_FULFILLMENT_REMINDER_FALLBACK_FEATURE_KEY,
-        label: "飞书自动催交",
-        is_enabled: payload.data.feishuFulfillmentReminderEnabled,
-      },
-      { onConflict: "feature_key" },
-    );
-
-    if (fallback.error) {
-      return NextResponse.json({ error: fallback.error.message || "更新系统配置失败" }, { status: 500 });
-    }
   }
 
   return NextResponse.json({

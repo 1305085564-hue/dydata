@@ -14,8 +14,8 @@ test("同时兼容 CRON_SECRET 和 REMIND_SECRET", () => {
   process.env.REMIND_SECRET = "remind-secret";
 
   assert.deepEqual(getCronSecrets(), ["cron-secret", "remind-secret"]);
-  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/report?secret=cron-secret")), true);
-  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/report?secret=remind-secret")), true);
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/supabase-keepalive?secret=cron-secret")), true);
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/supabase-keepalive?secret=remind-secret")), true);
 });
 
 test("会忽略空白和重复密钥", () => {
@@ -23,16 +23,16 @@ test("会忽略空白和重复密钥", () => {
   process.env.REMIND_SECRET = "same-secret";
 
   assert.deepEqual(getCronSecrets(), ["same-secret"]);
-  assert.equal(getRequestSecret(createRequest("https://dydata.cc/api/report?secret=%20same-secret%20")), "same-secret");
+  assert.equal(getRequestSecret(createRequest("https://dydata.cc/api/supabase-keepalive?secret=%20same-secret%20")), "same-secret");
 });
 
 test("缺少有效密钥或请求密钥不匹配时拒绝访问", () => {
   delete process.env.CRON_SECRET;
   delete process.env.REMIND_SECRET;
-  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/report?secret=anything")), false);
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/supabase-keepalive?secret=anything")), false);
 
   process.env.CRON_SECRET = "cron-secret";
   delete process.env.REMIND_SECRET;
-  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/report?secret=wrong-secret")), false);
-  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/report")), false);
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/supabase-keepalive?secret=wrong-secret")), false);
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/supabase-keepalive")), false);
 });

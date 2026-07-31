@@ -6,10 +6,10 @@ import { buildAiFeatureControls } from "./feature-controls";
 test("功能总控以代码目录为准，并把内部绑定合并成业务可读状态", () => {
   const controls = buildAiFeatureControls([
     {
-      id: "binding-growth",
-      feature_key: "growth_insight",
+      id: "binding-ocr",
+      feature_key: "ocr_screenshot",
       provider_key_model_id: "model-1",
-      system_prompt: "诊断提示词",
+      system_prompt: "截图识别提示词",
       output_token_limit: 2400,
       context_message_limit: 12,
       is_enabled: true,
@@ -19,15 +19,15 @@ test("功能总控以代码目录为准，并把内部绑定合并成业务可�
     },
   ]);
 
-  assert.deepEqual(controls.find((control) => control.key === "growth_insight"), {
-    key: "growth_insight",
-    label: "成长诊断",
-    description: "成长页面的 AI 诊断",
+  assert.deepEqual(controls.find((control) => control.key === "ocr_screenshot"), {
+    key: "ocr_screenshot",
+    label: "截图识别",
+    description: "首页日报截图识别与指标回填",
     group: "business",
     routing: "binding",
-    bindingId: "binding-growth",
+    bindingId: "binding-ocr",
     providerKeyModelId: "model-1",
-    systemPrompt: "诊断提示词",
+    systemPrompt: "截图识别提示词",
     outputTokenLimit: 2400,
     contextMessageLimit: 12,
     isEnabled: true,
@@ -37,7 +37,7 @@ test("功能总控以代码目录为准，并把内部绑定合并成业务可�
   });
 });
 
-test("归档目录中的功能即使遗留记录显示启用，也必须显示为已归档", () => {
+test("已删除功能即使数据库仍有遗留记录，也不能出现在业务总控", () => {
   const controls = buildAiFeatureControls([
     {
       id: "binding-alert",
@@ -53,10 +53,7 @@ test("归档目录中的功能即使遗留记录显示启用，也必须显示�
     },
   ]);
 
-  const control = controls.find((item) => item.key === "smart_alert");
-  assert.equal(control?.lifecycleState, "archived");
-  assert.equal(control?.isEnabled, false);
-  assert.match(control?.archivedReason ?? "", /不调用 AI/);
+  assert.equal(controls.some((item) => item.key === "smart_alert"), false);
 });
 
 test("没有专属绑定的正式功能仍显示自动策略，不要求管理员创建内部 key", () => {

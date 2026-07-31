@@ -8,26 +8,6 @@ export type StructuredAiMessageContent = string | Array<{ type?: unknown; text?:
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type MinimalSupabaseClient = ReturnType<typeof createClient<any>>;
 
-export type SingleVideoSuggestion = {
-  target: "hook" | "mid" | "cta";
-  problem: string;
-  action: string;
-  example?: string;
-};
-
-export type SingleVideoInsightResult = {
-  verdict: string;
-  key_problem: {
-    time_range: string | null;
-    drop_rate: number | null;
-    script_fragment: string | null;
-    diagnosis: string;
-  };
-  suggestions: SingleVideoSuggestion[];
-  confidence: "high" | "medium" | "low";
-  evidence: string[];
-};
-
 export type PeriodDirection = {
   tag: string;
   evidence: string;
@@ -164,25 +144,6 @@ export function toAiErrorMessage(error: unknown) {
   }
 
   return "未知错误";
-}
-
-export function renderSingleVideoInsight(result: SingleVideoInsightResult) {
-  const suggestionLines = result.suggestions.map((item, index) => {
-    const parts = [`${index + 1}. [${item.target}] ${item.problem}`, `改法：${item.action}`];
-    if (item.example) {
-      parts.push(`示例：${item.example}`);
-    }
-    return parts.join("｜");
-  });
-
-  return [
-    `结论：${result.verdict}`,
-    `核心问题：${result.key_problem.time_range ?? "无明确掉点"}｜掉幅${result.key_problem.drop_rate ?? "无"}%｜${result.key_problem.diagnosis}`,
-    `脚本片段：${result.key_problem.script_fragment ?? "无"}`,
-    `建议：${suggestionLines.join("\n")}`,
-    `置信度：${result.confidence}`,
-    `证据：${result.evidence.join("；")}`,
-  ].join("\n");
 }
 
 export function renderPeriodInsight(result: PeriodInsightResult) {

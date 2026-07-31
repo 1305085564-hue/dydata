@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import {
   extractJsonString,
   normalizeMessageContent,
-  renderSingleVideoInsight,
   renderPeriodInsight,
   toAiErrorMessage,
 } from "./shared";
@@ -31,33 +30,6 @@ test("extractJsonString 支持 fenced json 与裸对象", () => {
   assert.equal(extractJsonString('```json\n{"foo":1}\n```'), '{"foo":1}');
   assert.equal(extractJsonString('前缀 {"bar":2} 后缀'), '{"bar":2}');
   assert.equal(extractJsonString("无 JSON"), null);
-});
-
-test("renderSingleVideoInsight 把结构化结果压成可读文本", () => {
-  const text = renderSingleVideoInsight({
-    verdict: "播放3200但2秒跳出58%",
-    key_problem: {
-      time_range: "0-3秒",
-      drop_rate: 58,
-      script_fragment: "先铺背景才说结论",
-      diagnosis: "开头3秒信息密度不足",
-    },
-    suggestions: [
-      {
-        target: "hook",
-        problem: "前3秒跳出58%",
-        action: "前2秒先抛结论+收益数字",
-        example: "今天最强主线不是机器人，是半导体回流",
-      },
-    ],
-    confidence: "medium",
-    evidence: ["播放3200", "2秒跳出58%", "5秒完播41%"],
-  });
-
-  assert.match(text, /播放3200但2秒跳出58%/);
-  assert.match(text, /0-3秒/);
-  assert.match(text, /前3秒跳出58%/);
-  assert.match(text, /今天最强主线不是机器人/);
 });
 
 test("renderPeriodInsight 输出重点方向与样本提醒", () => {
