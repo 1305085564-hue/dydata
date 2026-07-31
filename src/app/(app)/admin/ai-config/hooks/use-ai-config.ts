@@ -46,6 +46,26 @@ export type AiFeatureBinding = {
   output_token_limit: number;
   context_message_limit: number;
   is_enabled: boolean;
+  lifecycle_state: "active" | "archived";
+  archived_at: string | null;
+  archived_reason: string | null;
+};
+
+export type AiFeatureControl = {
+  key: string;
+  label: string;
+  description: string;
+  group: "business" | "rewrite" | "review" | "archived";
+  routing: "binding" | "rewrite" | "system";
+  bindingId: string | null;
+  providerKeyModelId: string | null;
+  systemPrompt: string | null;
+  outputTokenLimit: number;
+  contextMessageLimit: number;
+  isEnabled: boolean;
+  lifecycleState: "active" | "archived";
+  archivedAt: string | null;
+  archivedReason: string | null;
 };
 
 export type RewriteModelView = {
@@ -79,6 +99,7 @@ export type AiConfigBundle = {
   keys: AiProviderKey[];
   models: AiProviderKeyModel[];
   featureBindings: AiFeatureBinding[];
+  featureControls: AiFeatureControl[];
   rewriteModelViews: RewriteModelView[];
   rewriteModelRoutes: RewriteModelRoute[];
 };
@@ -142,6 +163,30 @@ export function useAiConfig() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "保存配置失败";
       feedbackToast.error(msg);
+      return false;
+    }
+  }, [mutate]);
+
+  const mutateFeatureControl = useCallback(async (
+    action: "save_feature_control" | "archive_feature" | "restore_feature",
+    data: Record<string, unknown>,
+    successMessage: string,
+  ) => {
+    try {
+      const res = await fetchWithTimeout("/api/admin/ai-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, data }),
+      });
+      const responseData = await res.json();
+      if (!res.ok || responseData.error) {
+        throw new Error(responseData.error || "保存业务功能失败");
+      }
+      mutate(responseData as AiConfigBundle);
+      feedbackToast.success(successMessage);
+      return true;
+    } catch (err) {
+      feedbackToast.error(err instanceof Error ? err.message : "保存业务功能失败");
       return false;
     }
   }, [mutate]);
@@ -244,6 +289,9 @@ export function useAiConfig() {
     error,
     mutate,
     mutateEntity,
+    saveFeatureControl: (data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data, "业务功能已保存"),
+    archiveFeature: (featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }, "已停止使用并保留恢复记录"),
+    restoreFeature: (featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }, "业务功能已恢复"),
     swapKeyPriority,
     testKeyConnection,
     testAllKeys,

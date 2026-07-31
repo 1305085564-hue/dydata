@@ -10,6 +10,7 @@ import {
   markProviderKeySuccess,
   selectHealthyProviderKeyModel,
 } from "./provider-routing";
+import { resolveAiFeatureAccess } from "./feature-catalog";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
 
 type TextContent = string;
@@ -88,6 +89,7 @@ type FeatureConfig = {
   providerKeyModelId: string | null;
   systemPrompt: string | null;
   isEnabled: boolean;
+  lifecycleState: "active" | "archived";
   source: "binding" | "legacy";
 };
 
@@ -97,6 +99,7 @@ type AiFeatureConfigRow = {
   model: string | null;
   system_prompt: string | null;
   is_enabled: boolean;
+  lifecycle_state?: "active" | "archived" | null;
 };
 
 type AiFeatureBindingRow = {
@@ -104,6 +107,7 @@ type AiFeatureBindingRow = {
   provider_key_model_id: string | null;
   system_prompt: string | null;
   is_enabled: boolean;
+  lifecycle_state?: "active" | "archived" | null;
 };
 
 type UpstreamResponseBody = {
@@ -224,6 +228,7 @@ function mapFeatureConfig(row: AiFeatureConfigRow): FeatureConfig {
     providerKeyModelId: null,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
+    lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
     source: "legacy",
   };
 }
@@ -236,6 +241,7 @@ function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
     providerKeyModelId: row.provider_key_model_id,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
+    lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
     source: "binding",
   };
 }
@@ -278,7 +284,7 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
 
   const { data: bindingData, error: bindingError } = await supabase
     .from("ai_feature_bindings")
-    .select("feature_key, provider_key_model_id, system_prompt, is_enabled");
+    .select("feature_key, provider_key_model_id, system_prompt, is_enabled, lifecycle_state");
 
   const configs = new Map<string, FeatureConfig>();
   if (!bindingError && bindingData?.length) {
@@ -290,7 +296,7 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
 
   const { data, error } = await supabase
     .from("ai_feature_config")
-    .select("feature_key, channel_id, model, system_prompt, is_enabled");
+    .select("feature_key, channel_id, model, system_prompt, is_enabled, lifecycle_state");
 
   if (!error && data?.length) {
     for (const row of data as AiFeatureConfigRow[]) {
@@ -799,7 +805,15 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
   let preferredChannelId: string | null = options.channelId?.trim() || null;
   let preferredProviderChannel: ChannelConfig | null = null;
   if (options.featureKey) {
+    const access = resolveAiFeatureAccess(options.featureKey);
+    if (!access.allowed) {
+      throw new Error(access.reason);
+    }
+
     const featureConfig = await getFeatureConfig(options.featureKey);
+    if (featureConfig?.lifecycleState === "archived") {
+      throw new Error("该 AI 功能已归档");
+    }
     if (featureConfig && !featureConfig.isEnabled) {
       throw new Error("该 AI 功能已禁用");
     }

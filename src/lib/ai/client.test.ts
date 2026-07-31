@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { __internal } from "./client";
+import { __internal, callAi } from "./client";
 
 type Row = Record<string, unknown>;
 type FakeDb = Record<string, Row[]>;
@@ -221,6 +221,69 @@ test("feature config 在没有 binding 时回退旧 ai_feature_config", async ()
     assert.equal(config?.channelId, "channel-old");
     assert.equal(config?.model, "legacy-model");
     assert.equal(config?.systemPrompt, "旧版视频诊断提示词");
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("归档功能即使旧表仍有配置也不能调用或掉进环境变量兜底", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [],
+    ai_feature_config: [
+      {
+        feature_key: "smart_alert",
+        channel_id: "channel-old",
+        model: "legacy-model",
+        system_prompt: "旧版智能预警提示词",
+        is_enabled: true,
+      },
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    await assert.rejects(
+      callAi({ featureKey: "smart_alert", messages: [{ role: "user", content: "hello" }] }),
+      /智能预警已归档/,
+    );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("未注册功能不能依赖旧表或默认渠道静默执行", async () => {
+  __internal.setServiceClientForTests(createFakeService({ ai_feature_bindings: [], ai_feature_config: [] }));
+
+  try {
+    await assert.rejects(
+      callAi({ featureKey: "unregistered_feature", messages: [{ role: "user", content: "hello" }] }),
+      /未注册的 AI 功能：unregistered_feature/,
+    );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("正式功能被归档后会在运行时阻断，不会继续使用旧映射", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      {
+        feature_key: "growth_insight",
+        provider_key_model_id: "pkm-1",
+        system_prompt: "旧配置仍在",
+        is_enabled: false,
+        lifecycle_state: "archived",
+      },
+    ],
+    ai_feature_config: [],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    await assert.rejects(
+      callAi({ featureKey: "growth_insight", messages: [{ role: "user", content: "hello" }] }),
+      /该 AI 功能已归档/,
+    );
   } finally {
     __internal.setServiceClientForTests(null);
   }

@@ -86,3 +86,11 @@ test("AI Key 顺位在读取后发生冲突时不产生半更新", async () => {
   assert.deepEqual(fake.priorities, { "key-a": 99, "key-b": 2 });
   assert.equal(fake.getUpdateCount(), 0);
 });
+
+test("AI 功能总控只接受系统目录中的保存、归档和恢复动作", () => {
+  assert.match(source, /"save_feature_control"/);
+  assert.match(source, /"archive_feature"/);
+  assert.match(source, /"restore_feature"/);
+  assert.match(source, /buildAiFeatureControls/);
+  assert.match(source, /getAiFeatureCatalogEntry/);
+});

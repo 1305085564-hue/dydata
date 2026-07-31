@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { __internal as aiClientInternal } from "@/lib/ai/client";
+import { getAiFeatureCatalogEntry } from "@/lib/ai/feature-catalog";
 import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
 import { requireOwnerActor, toNullableString } from "../../ai-channels/_shared";
 
@@ -19,6 +20,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const featureKey = decodeURIComponent(rawFeatureKey ?? "").trim();
   if (!featureKey) {
     return NextResponse.json({ error: "缺少 feature_key" }, { status: 400 });
+  }
+  const feature = getAiFeatureCatalogEntry(featureKey);
+  if (!feature || featureKey !== "content_rewrite") {
+    return NextResponse.json({ error: "请在 AI 总控中管理业务功能" }, { status: 409 });
   }
 
   let body: Record<string, unknown>;

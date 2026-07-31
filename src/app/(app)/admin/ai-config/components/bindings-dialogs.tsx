@@ -2,48 +2,46 @@
 
 import { useEffect, useState } from "react";
 
-import { AiFeatureBinding, useAiConfig } from "../hooks/use-ai-config";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { type AiFeatureControl, useAiConfig } from "../hooks/use-ai-config";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { feedbackToast } from "@/components/ui/feedback-toast";
-
-const defaultBindingForm = { is_enabled: true, output_token_limit: 3600, context_message_limit: 30 } satisfies Partial<AiFeatureBinding>;
 
 export function BindingDialog({
-  binding,
+  control,
   open,
   onOpenChange,
   onSave,
 }: {
-  binding: Partial<AiFeatureBinding> | null;
+  control: AiFeatureControl | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { bundle } = useAiConfig();
-  const [formData, setFormData] = useState<Partial<AiFeatureBinding>>(defaultBindingForm);
+  const [providerKeyModelId, setProviderKeyModelId] = useState<string | null>(null);
+  const [isEnabled, setIsEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setFormData(binding ? { ...defaultBindingForm, ...binding } : defaultBindingForm);
-  }, [binding, open]);
+    setProviderKeyModelId(control?.providerKeyModelId ?? null);
+    setIsEnabled(control?.isEnabled ?? true);
+  }, [control, open]);
 
   const handleSubmit = async () => {
-    if (!formData.feature_key?.trim()) {
-      feedbackToast.error("请输入功能标识 (Key)");
-      return;
-    }
-    if (!formData.label?.trim()) {
-      feedbackToast.error("请输入功能名称");
-      return;
-    }
+    if (!control) return;
     setLoading(true);
     try {
-      await onSave(formData as Record<string, unknown>);
+      const saved = await onSave({
+        feature_key: control.key,
+        provider_key_model_id: providerKeyModelId,
+        system_prompt: control.systemPrompt,
+        output_token_limit: control.outputTokenLimit,
+        context_message_limit: control.contextMessageLimit,
+        is_enabled: isEnabled,
+      });
+      if (saved) onOpenChange(false);
     } finally {
       setLoading(false);
     }
@@ -53,96 +51,42 @@ export function BindingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{binding?.id ? "编辑功能绑定" : "添加功能绑定"}</DialogTitle>
+          <DialogTitle>设置{control?.label ?? "业务功能"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-5 py-3">
+          <p className="text-[13px] leading-5 text-zinc-500">{control?.description}</p>
           <div className="space-y-2">
-            <Label htmlFor="feature-key">功能标识 (Key)</Label>
-            <Input
-              id="feature-key"
-              value={formData.feature_key || ""}
-              onChange={(e) => setFormData({ ...formData, feature_key: e.target.value })}
-              placeholder="例如: video_diagnose"
-              disabled={!!binding?.id}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="feature-label">功能名称</Label>
-            <Input
-              id="feature-label"
-              value={formData.label || ""}
-              onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-              placeholder="例如: 视频诊断"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="binding-model">绑定模型</Label>
+            <Label htmlFor="binding-model">模型策略</Label>
             <select
               id="binding-model"
-              className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
-              value={formData.provider_key_model_id || ""}
-              onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
+              className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
+              value={providerKeyModelId ?? ""}
+              onChange={(event) => setProviderKeyModelId(event.target.value || null)}
             >
-              <option value="">自动分配 (Failover)</option>
+              <option value="">自动选择当前健康模型</option>
               {bundle?.models.map((model) => {
                 const key = bundle.keys.find((item) => item.id === model.key_id);
                 const provider = bundle.providers.find((item) => item.id === key?.provider_id);
-                const isEnabled = model.is_enabled && (key ? key.is_enabled : true) && (provider ? provider.is_enabled : true);
-                const label = `${provider?.name || "未知"} / ${key?.label || "未知"} / ${model.display_name || model.model_id}${!isEnabled ? " (已停用)" : ""}`;
+                const enabled = model.is_enabled && (key?.is_enabled ?? true) && (provider?.is_enabled ?? true);
                 return (
-                  <option key={model.id} value={model.id} disabled={!isEnabled} className={!isEnabled ? "text-zinc-400" : ""}>
-                    {label}
+                  <option key={model.id} value={model.id} disabled={!enabled}>
+                    {provider?.name || "未知渠道"} / {model.display_name || model.model_id}{!enabled ? "（已停用）" : ""}
                   </option>
                 );
               })}
             </select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="system-prompt">System Prompt (可选)</Label>
-            <Textarea
-              id="system-prompt"
-              className="min-h-[100px]"
-              value={formData.system_prompt || ""}
-              onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
-              placeholder="自定义系统提示词，留空则使用代码中的默认值"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="context-message-limit">上下文轮数限制</Label>
-              <Input
-                id="context-message-limit"
-                type="number"
-                value={formData.context_message_limit ?? 30}
-                onChange={(e) => setFormData({ ...formData, context_message_limit: Number.parseInt(e.target.value, 10) || 30 })}
-              />
+          <div className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2.5">
+            <div>
+              <Label>允许使用</Label>
+              <p className="mt-0.5 text-[12px] text-zinc-500">关闭后，该功能不会再向 AI 发起请求。</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="output-token-limit">输出 Token 限制</Label>
-              <Input
-                id="output-token-limit"
-                type="number"
-                value={formData.output_token_limit ?? 3600}
-                onChange={(e) => setFormData({ ...formData, output_token_limit: Number.parseInt(e.target.value, 10) || 3600 })}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between pt-2">
-            <Label>是否启用</Label>
-            <Switch
-              aria-label="是否启用"
-              checked={formData.is_enabled ?? true}
-              onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
-            />
+            <Switch aria-label={`启用${control?.label ?? "业务功能"}`} checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            取消
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            保存
-          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
+          <Button onClick={handleSubmit} disabled={loading}>保存</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

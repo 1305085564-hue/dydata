@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AiFeatureBinding, useAiConfig, type RewriteModelRoute, type RewriteModelView } from "../hooks/use-ai-config";
+import { type AiFeatureControl, useAiConfig, type RewriteModelRoute, type RewriteModelView } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Plus, Info, Sparkles, GitFork, Star } from "lucide-react";
+import { Pencil, Trash2, Plus, Info, Sparkles, GitFork, Star, Archive, ArchiveRestore, CircleAlert } from "lucide-react";
 import { BindingDialog } from "./bindings-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -195,11 +195,12 @@ function RewriteRouteDialog({
 }
 
 export default function BindingsClient() {
-  const { bundle, isLoading, mutateEntity } = useAiConfig();
-  const [bindingModal, setBindingModal] = useState<{ open: boolean; data: Partial<AiFeatureBinding> | null }>({
+  const { bundle, isLoading, mutateEntity, saveFeatureControl, archiveFeature, restoreFeature } = useAiConfig();
+  const [bindingModal, setBindingModal] = useState<{ open: boolean; data: AiFeatureControl | null }>({
     open: false,
     data: null,
   });
+  const [archiveControl, setArchiveControl] = useState<AiFeatureControl | null>(null);
 
   const [viewModal, setViewModal] = useState<{ open: boolean; data: ViewDraft | null }>({ open: false, data: null });
   const [routeModal, setRouteModal] = useState<{ open: boolean; modelViewId: string | null; data: RouteDraft | null }>({ open: false, modelViewId: null, data: null });
@@ -259,7 +260,7 @@ export default function BindingsClient() {
   }
 
   const getModelName = (providerKeyModelId: string | null) => {
-    if (!providerKeyModelId) return "自动继承 (全局默认模型)";
+    if (!providerKeyModelId) return "自动选择健康模型";
     const model = bundle.models.find((m) => m.id === providerKeyModelId);
     if (!model) return "未知模型";
     const key = bundle.keys.find((k) => k.id === model.key_id);
@@ -268,10 +269,7 @@ export default function BindingsClient() {
   };
 
   const handleSaveBinding = async (data: Record<string, unknown>) => {
-    const action = bindingModal.data?.id ? "update" : "create";
-    if (action === "update") data.id = bindingModal.data?.id;
-    const ok = await mutateEntity(action, "feature_binding", data);
-    if (ok) setBindingModal({ open: false, data: null });
+    return saveFeatureControl(data);
   };
 
   const handleSaveView = async (data: Record<string, unknown>) => {
@@ -295,114 +293,102 @@ export default function BindingsClient() {
   };
 
   const views = [...bundle.rewriteModelViews].sort((a, b) => a.sort_order - b.sort_order);
+  const businessControls = bundle.featureControls.filter((control) => control.group === "business");
+  const reviewControls = bundle.featureControls.filter((control) => control.group === "review");
+  const archivedControls = bundle.featureControls.filter((control) => control.group === "archived");
 
   return (
     <div className="space-y-6">
-      {/* 规范 2.2：极简浅灰槽底提示 */}
       <div className="flex items-center gap-2 text-[12px] text-zinc-600 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl">
         <Info className="size-4 text-[#5F82A8] shrink-0" />
-        <span>未单独绑定的功能全自动继承全局主模型。在此可为特定业务场景与改写模式设定专属模型。</span>
+        <span>只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。</span>
       </div>
 
-      {/* 第一板块：通用特例业务功能绑定 */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-zinc-900 font-semibold text-[14px]">
             <Sparkles className="size-4 text-zinc-500" />
-            <span>通用业务功能绑定 (Feature Bindings)</span>
+            <span>业务功能</span>
           </div>
-          <Button size="sm" className="h-7 text-[12px] gap-1" onClick={() => setBindingModal({ open: true, data: null })}>
-            <Plus className="size-3" /> 添加业务绑定
-          </Button>
         </div>
 
         <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200/80">
           <Table>
             <TableHeader className="bg-zinc-50/80">
               <TableRow className="hover:bg-transparent border-0">
-                <TableHead className="w-[180px] text-[12px] pl-5">功能标识 (Feature Key)</TableHead>
-                <TableHead className="w-[180px] text-[12px]">功能名称</TableHead>
-                <TableHead className="text-[12px]">指定模型</TableHead>
-                <TableHead className="w-[140px] text-[12px]">上下文/输出限制</TableHead>
-                <TableHead className="w-[90px] text-[12px]">状态</TableHead>
+                <TableHead className="text-[12px] pl-5">功能</TableHead>
+                <TableHead className="text-[12px]">模型策略</TableHead>
+                <TableHead className="w-[96px] text-[12px]">状态</TableHead>
                 <TableHead className="w-[100px] text-right text-[12px] pr-5">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {bundle.featureBindings.length === 0 ? (
+              {businessControls.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-zinc-400 text-[13px]">
-                    暂无特例绑定，全站功能均自动使用全局默认模型。
+                  <TableCell colSpan={4} className="h-24 text-center text-zinc-400 text-[13px]">
+                    暂无可管理的业务功能。
                   </TableCell>
                 </TableRow>
               ) : (
-                bundle.featureBindings.map((binding) => {
-                  const isDefault = binding.feature_key === "default";
-
-                  return (
-                    <TableRow key={binding.id} className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0">
-                      <TableCell className="font-mono text-[12px] text-zinc-700 pl-5">
-                        {binding.feature_key}
-                      </TableCell>
-                      <TableCell className="font-medium text-zinc-900">
-                        <div className="flex items-center gap-1.5">
-                          {binding.label}
-                          {isDefault && (
-                            <span className="text-[10px] bg-[#D97757]/10 text-[#D97757] font-semibold px-1.5 py-0.2 rounded-full">
-                              全局默认
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center gap-1 text-[12px] text-zinc-700 bg-zinc-100/80 px-2 py-0.5 rounded-md font-mono">
-                          <Sparkles className="size-3 text-[#D97757]" />
-                          {getModelName(binding.provider_key_model_id)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-[12px] text-zinc-500 font-mono">
-                        {binding.context_message_limit} 轮 / {binding.output_token_limit} tk
-                      </TableCell>
-                      <TableCell>
-                        <Switch
-                          aria-label={`启用绑定 ${binding.label}`}
-                          className="scale-75 origin-left"
-                          checked={binding.is_enabled}
-                          onCheckedChange={(c) => mutateEntity("update", "feature_binding", { id: binding.id, is_enabled: c })}
-                        />
-                      </TableCell>
-                      <TableCell className="text-right pr-5">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7 text-zinc-500 hover:text-zinc-700"
-                            onClick={() => setBindingModal({ open: true, data: binding })}
-                          >
-                            <Pencil className="size-3.5" />
+                businessControls.map((control) => (
+                  <TableRow key={control.key} className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0">
+                    <TableCell className="pl-5">
+                      <div className="font-medium text-zinc-900">{control.label}</div>
+                      <div className="mt-0.5 text-[12px] text-zinc-500">{control.description}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1 text-[12px] text-zinc-700 bg-zinc-100/80 px-2 py-0.5 rounded-md">
+                        <Sparkles className="size-3 text-[#D97757]" />
+                        {getModelName(control.providerKeyModelId)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn("text-[12px] font-medium", control.isEnabled ? "text-emerald-700" : "text-zinc-500")}>
+                        {control.lifecycleState === "archived" ? "已停止" : control.isEnabled ? "使用中" : "已关闭"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right pr-5">
+                      <div className="flex items-center justify-end gap-1">
+                        {control.lifecycleState === "archived" ? (
+                          <Button variant="ghost" size="icon" title={`恢复${control.label}`} aria-label={`恢复${control.label}`} className="size-7 text-zinc-500 hover:text-zinc-700" onClick={() => restoreFeature(control.key)}>
+                            <ArchiveRestore className="size-3.5" />
                           </Button>
-                          {!isDefault && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-zinc-500 hover:text-[#C9604D]"
-                              onClick={() =>
-                                setDeleteConfirm({ open: true, id: binding.id, entity: "feature_binding", title: `删除功能绑定 ${binding.label}` })
-                              }
-                            >
-                              <Trash2 className="size-3.5" />
+                        ) : (
+                          <>
+                            <Button variant="ghost" size="icon" title={`设置${control.label}`} aria-label={`设置${control.label}`} className="size-7 text-zinc-500 hover:text-zinc-700" onClick={() => setBindingModal({ open: true, data: control })}>
+                              <Pencil className="size-3.5" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                            <Button variant="ghost" size="icon" title={`停止使用${control.label}`} aria-label={`停止使用${control.label}`} className="size-7 text-zinc-500 hover:text-[#C9604D]" onClick={() => setArchiveControl(control)}>
+                              <Archive className="size-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
         </div>
       </div>
+
+      {(reviewControls.length > 0 || archivedControls.length > 0) && (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="border border-zinc-200/80 bg-white px-4 py-3 rounded-xl">
+            <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-900"><CircleAlert className="size-4 text-amber-500" />待核验</div>
+            <div className="mt-2 space-y-2">
+              {reviewControls.map((control) => <div key={control.key} className="text-[12px]"><span className="text-zinc-800">{control.label}</span><span className="ml-2 text-zinc-500">{control.description}</span></div>)}
+            </div>
+          </div>
+          <div className="border border-zinc-200/80 bg-zinc-50/70 px-4 py-3 rounded-xl">
+            <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-700"><Archive className="size-4 text-zinc-500" />已归档</div>
+            <div className="mt-2 space-y-2">
+              {archivedControls.map((control) => <div key={control.key} className="text-[12px]"><span className="text-zinc-700">{control.label}</span><span className="ml-2 text-zinc-500">{control.archivedReason}</span></div>)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 第二板块：文案改写场景模型路由 (依靠 24px 留白美学切割，无需物理 border-t) */}
       <div className="space-y-3 pt-3">
@@ -599,7 +585,7 @@ export default function BindingsClient() {
 
       <BindingDialog
         open={bindingModal.open}
-        binding={bindingModal.data}
+        control={bindingModal.data}
         onOpenChange={(c) => setBindingModal({ ...bindingModal, open: c })}
         onSave={handleSaveBinding}
       />
@@ -621,6 +607,20 @@ export default function BindingsClient() {
         cancelText="取消"
         onConfirm={handleDelete}
         onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
+      />
+      <ConfirmDialog
+        open={!!archiveControl}
+        title={`停止使用${archiveControl?.label ?? "该功能"}`}
+        description="系统会保存当前模型映射和历史设置，并立即阻止该功能发起 AI 请求。恢复前不会删除任何配置。"
+        confirmText="停止使用"
+        cancelText="取消"
+        onConfirm={async () => {
+          if (archiveControl) await archiveFeature(archiveControl.key);
+          setArchiveControl(null);
+        }}
+        onOpenChange={(open) => {
+          if (!open) setArchiveControl(null);
+        }}
       />
     </div>
   );

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { __internal as aiClientInternal } from "@/lib/ai/client";
+import { getAiFeatureCatalogEntry } from "@/lib/ai/feature-catalog";
+import { buildAiFeatureControls, type AiFeatureBindingControlRow } from "@/lib/ai-config/feature-controls";
+import { changeAiFeatureLifecycle } from "@/lib/ai-config/feature-lifecycle";
 import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
+import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
 import {
   requireOwnerActor,
   toBoolean,
@@ -18,7 +22,15 @@ type AiConfigEntity =
   | "feature_binding"
   | "rewrite_model_view"
   | "rewrite_model_route";
-type AiConfigAction = "create" | "update" | "delete" | "test_key" | "swap_key_priority";
+type AiConfigAction =
+  | "create"
+  | "update"
+  | "delete"
+  | "test_key"
+  | "swap_key_priority"
+  | "save_feature_control"
+  | "archive_feature"
+  | "restore_feature";
 
 type AiConfigBody = {
   action?: unknown;
@@ -53,7 +65,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -96,19 +108,6 @@ function modelPatch(data: Record<string, unknown>, mode: "create" | "update") {
   if (data.display_name !== undefined) patch.display_name = toNullableString(data.display_name);
   if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
   if (mode === "create" && (!patch.key_id || !patch.model_id)) throw new Error("模型缺少 key_id/model_id");
-  return patch;
-}
-
-function featureBindingPatch(data: Record<string, unknown>, mode: "create" | "update") {
-  const patch: Record<string, unknown> = {};
-  if (mode === "create" || data.feature_key !== undefined) patch.feature_key = toTrimmedString(data.feature_key);
-  if (mode === "create" || data.label !== undefined) patch.label = toTrimmedString(data.label);
-  if (data.provider_key_model_id !== undefined) patch.provider_key_model_id = toNullableString(data.provider_key_model_id);
-  if (data.system_prompt !== undefined) patch.system_prompt = toNullableString(data.system_prompt);
-  if (data.output_token_limit !== undefined) patch.output_token_limit = toPriority(data.output_token_limit, 3600);
-  if (data.context_message_limit !== undefined) patch.context_message_limit = toPriority(data.context_message_limit, 30);
-  if (data.is_enabled !== undefined) patch.is_enabled = toBoolean(data.is_enabled);
-  if (mode === "create" && (!patch.feature_key || !patch.label)) throw new Error("功能绑定缺少 feature_key/label");
   return patch;
 }
 
@@ -214,7 +213,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
     supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, created_at").order("created_at", { ascending: true }),
-    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, system_prompt, output_token_limit, context_message_limit, is_enabled, created_at, updated_at").order("created_at", { ascending: true }),
+    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, system_prompt, output_token_limit, context_message_limit, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
     supabase.from("rewrite_model_views").select("id, key, label, description, sort_order, is_enabled, is_default, created_at, updated_at").order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("rewrite_model_routes").select("id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, created_at, updated_at").order("priority", { ascending: true }).order("weight", { ascending: false }).order("created_at", { ascending: true }),
   ]);
@@ -238,6 +237,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
     })),
     models: modelsResult.data ?? [],
     featureBindings: featureBindingsResult.data ?? [],
+    featureControls: buildAiFeatureControls((featureBindingsResult.data ?? []) as AiFeatureBindingControlRow[]),
     rewriteModelViews: rewriteModelViewsResult.data ?? [],
     rewriteModelRoutes: rewriteModelRoutesResult.data ?? [],
   };
@@ -249,6 +249,10 @@ async function applyMutation(
   entity: AiConfigEntity,
   data: Record<string, unknown>
 ) {
+  if (entity === "feature_binding") {
+    throw new Error("业务功能由 AI 总控统一管理，不能直接修改内部绑定");
+  }
+
   const table = {
     provider: "ai_providers",
     key: "ai_provider_keys",
@@ -271,9 +275,7 @@ async function applyMutation(
         ? buildAiKeyPatch(data, action)
       : entity === "model"
         ? modelPatch(data, action)
-        : entity === "feature_binding"
-          ? featureBindingPatch(data, action)
-          : entity === "rewrite_model_view"
+        : entity === "rewrite_model_view"
             ? rewriteModelViewPatch(data, action)
             : await rewriteModelRoutePatch(supabase, data, action);
 
@@ -295,6 +297,48 @@ async function applyMutation(
       .eq("is_default", true);
     if (clearError) throw new Error(clearError.message);
   }
+}
+
+function requireManageableBusinessFeature(data: Record<string, unknown>) {
+  const featureKey = toTrimmedString(data.feature_key);
+  const feature = getAiFeatureCatalogEntry(featureKey);
+  if (!feature || feature.group !== "business" || feature.routing !== "binding") {
+    throw new Error("该功能不支持在业务总控中调整");
+  }
+  return feature;
+}
+
+async function saveFeatureControl(supabase: SupabaseClient, data: Record<string, unknown>) {
+  const feature = requireManageableBusinessFeature(data);
+  const patch = {
+    feature_key: feature.key,
+    label: feature.label,
+    provider_key_model_id: toNullableString(data.provider_key_model_id),
+    system_prompt: toNullableString(data.system_prompt),
+    output_token_limit: toPriority(data.output_token_limit, 3600),
+    context_message_limit: toPriority(data.context_message_limit, 30),
+    is_enabled: data.is_enabled === undefined ? true : toBoolean(data.is_enabled),
+    lifecycle_state: "active",
+    archived_at: null,
+    archived_reason: null,
+  };
+  const { error } = await supabase.from("ai_feature_bindings").upsert(patch, { onConflict: "feature_key" });
+  if (error) throw new Error(error.message);
+  return feature;
+}
+
+async function changeFeatureLifecycle(
+  supabase: SupabaseClient,
+  data: Record<string, unknown>,
+  action: "archive" | "restore",
+) {
+  const feature = requireManageableBusinessFeature(data);
+  await changeAiFeatureLifecycle(supabase as never, {
+    featureKey: feature.key,
+    label: feature.label,
+    action,
+  });
+  return feature;
 }
 
 export async function GET() {
@@ -440,6 +484,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "交换 Key 顺位失败" }, { status: 400 });
+    }
+  }
+
+  if (action === "save_feature_control" || action === "archive_feature" || action === "restore_feature") {
+    try {
+      const data = asRecord(body.data);
+      const feature = action === "save_feature_control"
+        ? await saveFeatureControl(auth.supabase, data)
+        : await changeFeatureLifecycle(auth.supabase, data, action === "archive_feature" ? "archive" : "restore");
+      clearFeaturePromptCache(feature.key);
+      aiClientInternal.resetCache();
+      return NextResponse.json(await loadAiConfig(auth.supabase));
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "保存业务功能失败" }, { status: 400 });
     }
   }
 
