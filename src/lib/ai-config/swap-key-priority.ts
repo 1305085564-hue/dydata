@@ -51,15 +51,23 @@ export async function swapKeyPriority(supabase: KeyPrioritySupabase, data: Recor
   const key = rows.find((row) => row.id === keyId);
   const target = rows.find((row) => row.id === targetKeyId);
   if (!key || !target) throw new Error("待交换的 API Key 不存在");
-  if (key.priority !== keyPriority || target.priority !== targetPriority) {
-    throw new Error("顺位已变化，请刷新后重试");
+  const hasProvidedPriority = Number.isFinite(keyPriority) && Number.isFinite(targetPriority);
+  if (hasProvidedPriority) {
+    const matchesOriginal = key.priority === keyPriority && target.priority === targetPriority;
+    const matchesOptimistic = key.priority === targetPriority && target.priority === keyPriority;
+    if (!matchesOriginal && !matchesOptimistic) {
+      throw new Error("顺位已变化，请刷新后重试");
+    }
   }
 
-  const firstResult = await updatePriority(supabase, keyId, keyPriority, targetPriority);
+  const currentKeyPriority = key.priority;
+  const currentTargetPriority = target.priority;
+
+  const firstResult = await updatePriority(supabase, keyId, currentKeyPriority, currentTargetPriority);
   if (firstResult.error) throw new Error(firstResult.error.message);
   if (!firstResult.data) throw new Error("顺位已变化，请刷新后重试");
 
-  const secondResult = await updatePriority(supabase, targetKeyId, targetPriority, keyPriority);
+  const secondResult = await updatePriority(supabase, targetKeyId, currentTargetPriority, currentKeyPriority);
   if (secondResult.error || !secondResult.data) {
     await updatePriority(supabase, keyId, targetPriority, keyPriority);
     throw new Error(secondResult.error?.message ?? "顺位已变化，请刷新后重试");
