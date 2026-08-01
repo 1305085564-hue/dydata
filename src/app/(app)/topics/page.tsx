@@ -122,6 +122,8 @@ export default function TopicPoolPage() {
   // 筛选与 Popover 控制状态
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+  const [recDropdownOpen, setRecDropdownOpen] = useState(false);
+  const [libDropdownOpen, setLibDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState<TopicSortMode>("default");
   const [viewDensity, setViewDensity] = useState<"grid" | "compact">("grid");
   const [groupBy, setGroupBy] = useState<"none" | "topic">("none");
@@ -659,39 +661,226 @@ export default function TopicPoolPage() {
         <div className="flex items-center justify-between gap-4 pb-1 flex-wrap">
           {/* 左侧：7 扁平 Tab + 筛选 + 搜索 */}
           <div className="flex items-center gap-3 flex-wrap">
-            {/* 7 个扁平 Tab 栏 */}
-            <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-xl border border-zinc-200/80 shadow-2xs overflow-x-auto">
-              {[
-                { id: "trending", label: "推荐选题", icon: Sparkles },
-                { id: "high_potential", label: "高潜待挖", icon: Compass },
-                { id: "never_worked", label: "从未做过", icon: Plus },
-                { id: "my_claims", label: "脚本中", icon: Clock },
-                { id: "all", label: "全部选题", icon: LayoutGrid },
-                { id: "my_created", label: "个人选题", icon: Film },
-                { id: "comparison", label: "趋势变化", icon: BarChart3 }
-              ].map((opt) => {
-                const Icon = opt.icon;
-                const isSelected = activeView === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveView(opt.id as ActiveView);
-                      setCurrentPage(1);
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap",
-                      isSelected
-                        ? "bg-white text-zinc-900 font-bold shadow-xs border border-zinc-200/90 ring-1 ring-zinc-950/5"
-                        : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-200/50"
-                    )}
-                  >
-                    <Icon className={cn("size-3.5 shrink-0", isSelected ? "text-[#D97757]" : "text-zinc-400")} />
-                    <span>{opt.label}</span>
-                  </button>
-                );
-              })}
+            {/* 4 胶囊折叠智能分段控制器 */}
+            <div className="flex items-center gap-1 bg-zinc-100/90 p-1 rounded-xl border border-zinc-200/80 shadow-2xs relative">
+              {/* 胶囊 1：推荐/智能选题 ▾ (滑入展开 / 防断连桥) */}
+              <div
+                className="relative group/rec"
+                onMouseEnter={() => setRecDropdownOpen(true)}
+                onMouseLeave={() => setRecDropdownOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeView === "trending") setActiveView("high_potential");
+                    else if (activeView === "high_potential") setActiveView("never_worked");
+                    else setActiveView("trending");
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "relative flex items-center gap-1 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap z-10 font-medium",
+                    ["trending", "high_potential", "never_worked"].includes(activeView)
+                      ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
+                  )}
+                >
+                  <Sparkles className={cn("size-3.5 shrink-0 transition-colors", ["trending", "high_potential", "never_worked"].includes(activeView) ? "text-[#D97757]" : "text-zinc-400")} />
+                  <span>
+                    {activeView === "trending" && "推荐选题"}
+                    {activeView === "high_potential" && "高潜待挖"}
+                    {activeView === "never_worked" && "从未做过"}
+                    {!["trending", "high_potential", "never_worked"].includes(activeView) && "推荐选题"}
+                  </span>
+                  <ChevronDown className={cn("size-3 text-zinc-400 ml-0.5 transition-transform duration-200", recDropdownOpen && "rotate-180 text-zinc-700")} />
+                </button>
+
+                <AnimatePresence>
+                  {recDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute left-0 top-full pt-2 z-30 w-52 before:absolute before:inset-x-0 before:-top-2 before:h-4 before:z-[-1]"
+                    >
+                      <div className="bg-white/98 rounded-2xl shadow-xl shadow-zinc-950/10 border border-zinc-200/90 p-1.5 space-y-1 text-xs backdrop-blur-md">
+                        <div className="px-2 py-1 text-[10px] font-semibold text-zinc-400 tracking-wider flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1">
+                          <span>✨ 智能推荐视角</span>
+                        </div>
+                        {[
+                          { id: "trending", label: "推荐选题", desc: "近期高热作品", icon: Sparkles },
+                          { id: "high_potential", label: "高潜待挖", desc: "沉睡爆款潜力", icon: Compass },
+                          { id: "never_worked", label: "从未做过", desc: "全新灵感储备", icon: Plus }
+                        ].map((opt) => {
+                          const Icon = opt.icon;
+                          const isAct = activeView === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setActiveView(opt.id as ActiveView);
+                                setCurrentPage(1);
+                                setRecDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between p-2 rounded-xl text-left transition-all duration-150 cursor-pointer group/item border",
+                                isAct
+                                  ? "bg-zinc-100/90 border-zinc-200/90 text-zinc-950 font-bold shadow-2xs"
+                                  : "bg-transparent border-transparent text-zinc-600 hover:bg-zinc-100/90 hover:border-zinc-200/80 hover:shadow-xs hover:text-zinc-950"
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "p-1 rounded-md transition-all duration-150 border border-transparent",
+                                  isAct
+                                    ? "bg-white text-[#D97757] shadow-2xs border-zinc-200/80 font-bold"
+                                    : "bg-zinc-100 text-zinc-400 group-hover/item:bg-white group-hover/item:text-zinc-800 group-hover/item:shadow-2xs group-hover/item:border-zinc-200/80"
+                                )}>
+                                  <Icon className="size-3.5" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[12.5px] leading-tight font-medium group-hover/item:font-semibold">{opt.label}</span>
+                                  <span className="text-[10px] text-zinc-400 font-normal leading-tight mt-0.5 group-hover/item:text-zinc-500">{opt.desc}</span>
+                                </div>
+                              </div>
+                              {isAct && <Check className="size-3.5 text-[#D97757] stroke-[2.5]" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* 胶囊 2：全部/个人选题 ▾ (加深冷灰 Hover 区分度) */}
+              <div
+                className="relative group/lib"
+                onMouseEnter={() => setLibDropdownOpen(true)}
+                onMouseLeave={() => setLibDropdownOpen(false)}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeView === "all") setActiveView("my_created");
+                    else setActiveView("all");
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "relative flex items-center gap-1 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap z-10 font-medium",
+                    ["all", "my_created"].includes(activeView)
+                      ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
+                  )}
+                >
+                  <LayoutGrid className={cn("size-3.5 shrink-0 transition-colors", ["all", "my_created"].includes(activeView) ? "text-[#D97757]" : "text-zinc-400")} />
+                  <span>
+                    {activeView === "all" && "全部选题"}
+                    {activeView === "my_created" && "个人选题"}
+                    {!["all", "my_created"].includes(activeView) && "全部选题"}
+                  </span>
+                  <ChevronDown className={cn("size-3 text-zinc-400 ml-0.5 transition-transform duration-200", libDropdownOpen && "rotate-180 text-zinc-700")} />
+                </button>
+
+                <AnimatePresence>
+                  {libDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute left-0 top-full pt-2 z-30 w-52 before:absolute before:inset-x-0 before:-top-2 before:h-4 before:z-[-1]"
+                    >
+                      <div className="bg-white/98 rounded-2xl shadow-xl shadow-zinc-950/10 border border-zinc-200/90 p-1.5 space-y-1 text-xs backdrop-blur-md">
+                        <div className="px-2 py-1 text-[10px] font-semibold text-zinc-400 tracking-wider flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1">
+                          <span>📂 选题库范围</span>
+                        </div>
+                        {[
+                          { id: "all", label: "全部选题", desc: "全站公开优质库", icon: LayoutGrid },
+                          { id: "my_created", label: "个人选题", desc: "我创作录入的选题", icon: Film }
+                        ].map((opt) => {
+                          const Icon = opt.icon;
+                          const isAct = activeView === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => {
+                                setActiveView(opt.id as ActiveView);
+                                setCurrentPage(1);
+                                setLibDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between p-2 rounded-xl text-left transition-all duration-150 cursor-pointer group/item border",
+                                isAct
+                                  ? "bg-zinc-100/90 border-zinc-200/90 text-zinc-950 font-bold shadow-2xs"
+                                  : "bg-transparent border-transparent text-zinc-600 hover:bg-zinc-100/90 hover:border-zinc-200/80 hover:shadow-xs hover:text-zinc-950"
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={cn(
+                                  "p-1 rounded-md transition-all duration-150 border border-transparent",
+                                  isAct
+                                    ? "bg-white text-[#D97757] shadow-2xs border-zinc-200/80 font-bold"
+                                    : "bg-zinc-100 text-zinc-400 group-hover/item:bg-white group-hover/item:text-zinc-800 group-hover/item:shadow-2xs group-hover/item:border-zinc-200/80"
+                                )}>
+                                  <Icon className="size-3.5" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-[12.5px] leading-tight font-medium group-hover/item:font-semibold">{opt.label}</span>
+                                  <span className="text-[10px] text-zinc-400 font-normal leading-tight mt-0.5 group-hover/item:text-zinc-500">{opt.desc}</span>
+                                </div>
+                              </div>
+                              {isAct && <Check className="size-3.5 text-[#D97757] stroke-[2.5]" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* 胶囊 3：脚本中 (独立认领切态) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView("my_claims");
+                  setCurrentPage(1);
+                  setRecDropdownOpen(false);
+                  setLibDropdownOpen(false);
+                }}
+                className={cn(
+                  "relative flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap font-medium",
+                  activeView === "my_claims"
+                    ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
+                )}
+              >
+                <Clock className={cn("size-3.5 shrink-0", activeView === "my_claims" ? "text-[#D97757]" : "text-zinc-400")} />
+                <span>脚本中</span>
+              </button>
+
+              {/* 胶囊 4：趋势变化 (独立分析切态) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView("comparison");
+                  setCurrentPage(1);
+                  setRecDropdownOpen(false);
+                  setLibDropdownOpen(false);
+                }}
+                className={cn(
+                  "relative flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap font-medium",
+                  activeView === "comparison"
+                    ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                    : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
+                )}
+              >
+                <BarChart3 className={cn("size-3.5 shrink-0", activeView === "comparison" ? "text-[#D97757]" : "text-zinc-400")} />
+                <span>趋势变化</span>
+              </button>
             </div>
 
             {/* 筛选与搜索 (非趋势变化页展示) */}
