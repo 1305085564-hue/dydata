@@ -310,14 +310,14 @@ export default function BindingsClient() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200/80">
+        <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200/80 w-full overflow-x-auto">
           <Table>
             <TableHeader className="bg-zinc-50/80">
               <TableRow className="hover:bg-transparent border-0">
                 <TableHead className="text-[12px] pl-5">功能</TableHead>
                 <TableHead className="text-[12px]">模型策略</TableHead>
                 <TableHead className="w-[96px] text-[12px]">状态</TableHead>
-                <TableHead className="w-[100px] text-right text-[12px] pr-5">操作</TableHead>
+                <TableHead className="w-[140px] text-right text-[12px] pr-5">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -331,7 +331,14 @@ export default function BindingsClient() {
                 businessControls.map((control) => (
                   <TableRow key={control.key} className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0">
                     <TableCell className="pl-5">
-                      <div className="font-medium text-zinc-900">{control.label}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-zinc-900">{control.label}</span>
+                        {control.key === "ocr_screenshot" && (
+                          <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200/80 text-[10px] h-4.5 px-1.5 font-normal">
+                            首页核心
+                          </Badge>
+                        )}
+                      </div>
                       <div className="mt-0.5 text-[12px] text-zinc-500">{control.description}</div>
                     </TableCell>
                     <TableCell>
@@ -341,23 +348,58 @@ export default function BindingsClient() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className={cn("text-[12px] font-medium", control.isEnabled ? "text-emerald-700" : "text-zinc-500")}>
-                        {control.lifecycleState === "archived" ? "已停止" : control.isEnabled ? "使用中" : "已关闭"}
-                      </span>
+                      {control.lifecycleState === "archived" ? (
+                        <Badge variant="outline" className="bg-zinc-100 text-zinc-600 border-zinc-200/80 text-[11px] font-normal">
+                          已停止
+                        </Badge>
+                      ) : control.isEnabled ? (
+                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
+                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          使用中
+                        </span>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200/80 text-[11px] font-normal">
+                          已关闭
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="text-right pr-5">
                       <div className="flex items-center justify-end gap-1">
                         {control.lifecycleState === "archived" ? (
-                          <Button variant="ghost" size="icon" title={`恢复${control.label}`} aria-label={`恢复${control.label}`} className="size-7 text-zinc-500 hover:text-zinc-700" onClick={() => restoreFeature(control.key)}>
-                            <ArchiveRestore className="size-3.5" />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title={`恢复${control.label}`}
+                            aria-label={`恢复${control.label}`}
+                            className="h-7 px-2 text-[12px] text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                            onClick={() => restoreFeature(control.key)}
+                          >
+                            <ArchiveRestore className="size-3.5 mr-1 text-zinc-500" />
+                            恢复
                           </Button>
                         ) : (
                           <>
-                            <Button variant="ghost" size="icon" title={`设置${control.label}`} aria-label={`设置${control.label}`} className="size-7 text-zinc-500 hover:text-zinc-700" onClick={() => setBindingModal({ open: true, data: control })}>
-                              <Pencil className="size-3.5" />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title={`设置${control.label}`}
+                              aria-label={`设置${control.label}`}
+                              className="h-7 px-2 text-[12px] text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                              onClick={() => setBindingModal({ open: true, data: control })}
+                            >
+                              <Pencil className="size-3.5 mr-1 text-zinc-400" />
+                              设置
                             </Button>
-                            <Button variant="ghost" size="icon" title={`停止使用${control.label}`} aria-label={`停止使用${control.label}`} className="size-7 text-zinc-500 hover:text-[#C9604D]" onClick={() => setArchiveControl(control)}>
-                              <Archive className="size-3.5" />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title={`停止使用${control.label}`}
+                              aria-label={`停止使用${control.label}`}
+                              className="h-7 px-2 text-[12px] text-zinc-500 hover:text-[#C9604D] hover:bg-red-50/50"
+                              onClick={() => setArchiveControl(control)}
+                            >
+                              <Archive className="size-3.5 mr-1 opacity-70" />
+                              停止
                             </Button>
                           </>
                         )}
@@ -369,6 +411,14 @@ export default function BindingsClient() {
             </TableBody>
           </Table>
         </div>
+
+        <div className="flex items-start gap-2.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-200/80 p-3 rounded-xl">
+          <Info className="size-4 text-zinc-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-medium text-zinc-700">历史配置说明：</span>
+            旧版智能预警、成长建议旧配置、视频诊断旧配置等 5 项历史废弃配置已于系统重构升级中安全下线清理。当前展示的功能均为活跃或主线业务功能。
+          </div>
+        </div>
       </div>
 
       {/* 第二板块：文案改写场景模型路由 (依靠 24px 留白美学切割，无需物理 border-t) */}
@@ -376,7 +426,7 @@ export default function BindingsClient() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-zinc-900 font-semibold text-[14px]">
             <GitFork className="size-4 text-zinc-500" />
-            <span>文案改写工具模式路由 (Rewrite Routes)</span>
+            <span>文案改写模型分配规则</span>
           </div>
         </div>
 
@@ -473,7 +523,7 @@ export default function BindingsClient() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl overflow-hidden bg-white border border-zinc-200/80">
+                  <div className="rounded-xl overflow-hidden bg-white border border-zinc-200/80 w-full overflow-x-auto">
                     <Table>
                       <TableHeader className="bg-zinc-50/80">
                         <TableRow className="hover:bg-transparent border-0">
@@ -591,8 +641,16 @@ export default function BindingsClient() {
       />
       <ConfirmDialog
         open={!!archiveControl}
-        title={`停止使用${archiveControl?.label ?? "该功能"}`}
-        description="系统会保存当前模型映射和历史设置，并立即阻止该功能发起 AI 请求。恢复前不会删除任何配置。"
+        title={
+          archiveControl?.key === "ocr_screenshot"
+            ? `停止使用 ${archiveControl?.label}（警告：首页核心功能）`
+            : `停止使用${archiveControl?.label ?? "该功能"}`
+        }
+        description={
+          archiveControl?.key === "ocr_screenshot"
+            ? "警告：截图识别是首页日报填报的核心依赖！停止使用后，用户在首页将无法自动解析上传的截图图片。确认要停止该功能吗？"
+            : "系统会保存当前模型映射和历史设置，并阻止前台发起该 AI 功能请求。恢复前不会删除任何配置。"
+        }
         confirmText="停止使用"
         cancelText="取消"
         onConfirm={async () => {
