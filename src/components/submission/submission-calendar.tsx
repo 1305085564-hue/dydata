@@ -178,7 +178,7 @@ export function SubmissionCalendar({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm space-y-3 select-none",
+        "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-3 select-none",
         className,
       )}
     >
@@ -189,7 +189,7 @@ export function SubmissionCalendar({
           <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">选择日期</h3>
         </div>
         
-        <div className="flex items-center gap-0.5 rounded-full bg-zinc-100 p-0.5 border border-zinc-200/60">
+        <div className="flex items-center gap-0.5 rounded-full bg-zinc-100 p-0.5 border border-zinc-200">
           <button
             type="button"
             onClick={handlePrevMonth}
@@ -198,7 +198,7 @@ export function SubmissionCalendar({
           >
             <ChevronLeft className="size-3.5 stroke-[2]" />
           </button>
-          <span className="font-mono text-[11.5px] font-semibold text-zinc-800 tabular-nums px-1.5">
+          <span className="text-[11.5px] font-semibold text-zinc-800 tabular-nums px-1.5">
             {monthLabel}
           </span>
           <button

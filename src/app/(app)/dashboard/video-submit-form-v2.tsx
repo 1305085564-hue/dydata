@@ -232,7 +232,7 @@ export function VideoSubmitFormV2({
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm",
+        "rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm",
         shakeError && "animate-shake"
       )}
     >

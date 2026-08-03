@@ -153,7 +153,7 @@ export function CollaborationWorkbench({
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-200/60">
           <div className="flex items-center gap-3">
             {/* 快捷翻月控制组 */}
-            <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-zinc-200/80 shadow-2xs">
+            <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-zinc-200 shadow-2xs">
               <button
                 type="button"
                 onClick={handlePrevMonth}

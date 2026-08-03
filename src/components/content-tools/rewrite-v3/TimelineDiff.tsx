@@ -156,7 +156,7 @@ export function TimelineDiff({
               className={cn(
                 'px-2 py-0.5 text-[12px] font-medium rounded-lg transition-all active:scale-[0.98]',
                 diffMode === 'vs-latest'
-                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/20'
+                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
                   : 'text-zinc-500 hover:text-zinc-900'
               )}
               title="对比所选版本与当前最新版本"
@@ -168,7 +168,7 @@ export function TimelineDiff({
               className={cn(
                 'px-2 py-0.5 text-[12px] font-medium rounded-lg transition-all active:scale-[0.98]',
                 diffMode === 'vs-previous'
-                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/20'
+                  ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200'
                   : 'text-zinc-500 hover:text-zinc-900'
               )}
               title="对比所选版本与它的前一版 (按住 Alt / Option 临时切换)"

@@ -107,7 +107,7 @@ export default function ProvidersClient() {
             const providerKeys = bundle.keys.filter((k) => k.provider_id === p.id);
 
             return (
-              <div key={p.id} className="rounded-2xl border border-zinc-200/80 bg-white overflow-hidden transition-all">
+              <div key={p.id} className="rounded-2xl border border-zinc-200 bg-white overflow-hidden transition-all">
                 {/* 规范 119：依靠 zinc-50/80 与 white 色差天然分层，无 border-b 横划线 */}
                 <div className="flex flex-wrap items-center justify-between gap-3 p-4 px-5 bg-zinc-50/80">
                   <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export default function ProvidersClient() {
                       checked={p.is_enabled}
                       onCheckedChange={(checked) => mutateEntity("update", "provider", { id: p.id, is_enabled: checked })}
                     />
-                    <Button variant="outline" size="sm" className="h-7 text-[12px] bg-white border-zinc-200/80" onClick={() => setProviderModal({ open: true, data: p })}>
+                    <Button variant="outline" size="sm" className="h-7 text-[12px] bg-white border-zinc-200" onClick={() => setProviderModal({ open: true, data: p })}>
                       <Pencil className="size-3 mr-1" /> 编辑
                     </Button>
                     <Button size="sm" className="h-7 text-[12px] gap-1" onClick={() => setKeyModal({ open: true, providerId: p.id, data: null })}>
@@ -192,11 +192,11 @@ export default function ProvidersClient() {
                                     <CheckCircle2 className="size-3 text-emerald-600" /> 正常
                                   </span>
                                 ) : healthStatus === "untested" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full font-medium">
                                     未测试
                                   </span>
                                 ) : healthStatus === "disabled" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full font-medium">
                                     已停用
                                   </span>
                                 ) : (

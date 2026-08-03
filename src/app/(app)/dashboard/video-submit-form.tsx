@@ -1767,7 +1767,7 @@ export function VideoSubmitForm({
           >
             <div className="mx-auto max-w-4xl space-y-3.5 py-0">
               {/* 1. 局部双态自管理容器 */}
-              <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-7 shadow-xs">
+              <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-7 shadow-xs">
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <span className="text-[13px] font-medium text-zinc-700">核心指标与截图</span>
@@ -1885,7 +1885,7 @@ export function VideoSubmitForm({
               {/* 2. 视频信息及基础元数据表单（与上卡片 100% 物理齐平对齐） */}
               <div
                 ref={metaSectionRef}
-                className="relative rounded-2xl border border-zinc-200/80 bg-white p-7 shadow-xs"
+                className="relative rounded-2xl border border-zinc-200 bg-white p-7 shadow-xs"
               >
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 items-stretch">
                   {/* 【左栏：内容创作区 (1fr 动态自适应高度，与右侧虚线框永远底部齐平)】 */}

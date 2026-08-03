@@ -62,7 +62,7 @@ export function ThresholdsConfigPanel({
   };
 
   return (
-    <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-xs">
+    <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-xs">
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-zinc-100">
         <div className="flex items-center gap-3">
           <span className="flex size-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-[#D97757]">

@@ -90,7 +90,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                 'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.98]',
                 isActive
                   ? 'bg-[#5F82A8]/15 border-[#5F82A8]/30 text-[#4c6785] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
-                  : 'bg-white border-zinc-200/60 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+                  : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
               )}
             >
               <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#5F82A8]' : 'text-zinc-500')} />
@@ -121,7 +121,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full right-4 mt-1.5 w-[320px] rounded-lg border border-zinc-200/50 bg-white/95 backdrop-blur-xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-top-1.5 duration-200"
+          className="absolute top-full right-4 mt-1.5 w-[320px] rounded-lg border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-top-1.5 duration-200"
         >
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100">
             <span className="text-[12px] font-medium text-zinc-900">全部技能舱</span>
@@ -154,7 +154,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                             'group flex items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.98]',
                             isActive
                               ? 'bg-[#5F82A8]/15 border-[#5F82A8]/30 text-[#4c6785]'
-                              : 'bg-white border-zinc-200/50 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50/85'
+                              : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50/85'
                           )}
                         >
                           <div className="min-w-0 flex-1">

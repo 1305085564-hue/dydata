@@ -509,7 +509,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       )}
 
       {/* L1 唯一纯白主画板 (L1 White Surface Artboard) */}
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-7 sm:p-9 md:p-10 shadow-xs space-y-12">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-7 sm:p-9 md:p-10 shadow-xs space-y-12">
         
         {/* L1-A: 选题核心描述区 */}
         <div className="space-y-5">

@@ -114,7 +114,7 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[94vw] h-[640px] aspect-[5/4] p-0 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[94vw] h-[640px] aspect-[5/4] p-0 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
         <DialogHeader className="p-5 pb-3.5 border-b border-zinc-100 flex flex-row items-center justify-between shrink-0 bg-zinc-50/40">
@@ -133,7 +133,7 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
               <div>
                 <div className="flex items-center gap-2">
                   <DialogTitle className="text-[18px] font-semibold text-zinc-900">{data.name}</DialogTitle>
-                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200/60">
+                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200">
                     个人协作档案
                   </span>
                 </div>
@@ -201,25 +201,25 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
 
                   {data.operatorSummary ? (
                     <div className="grid grid-cols-2 gap-2 text-center pt-1">
-                      <div className="rounded-lg border border-zinc-200/70 bg-white p-2">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-2">
                         <div className="text-[10px] text-zinc-500">总播放</div>
                         <div className="text-[13px] font-semibold text-zinc-900 tabular-nums mt-0.5">
                           {formatBigNumber(data.operatorSummary.totalPlay)}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-zinc-200/70 bg-white p-2">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-2">
                         <div className="text-[10px] text-zinc-500">人均播放</div>
                         <div className="text-[13px] font-semibold text-zinc-900 tabular-nums mt-0.5">
                           {formatBigNumber(data.operatorSummary.avgPlay)}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-zinc-200/70 bg-white p-2">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-2">
                         <div className="text-[10px] text-zinc-500">导粉</div>
                         <div className="text-[13px] font-semibold text-zinc-900 tabular-nums mt-0.5">
                           {data.operatorSummary.totalFollowerConvert.toLocaleString("zh-CN")}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-zinc-200/70 bg-white p-2">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-2">
                         <div className="text-[10px] text-zinc-500">爆款数</div>
                         <div className="text-[13px] font-semibold text-amber-700 tabular-nums mt-0.5">
                           {data.operatorSummary.hitCount}
@@ -305,20 +305,20 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                                 {rec.roles.map((r) => {
                                   if (r === "writer") {
                                     return (
-                                      <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200/60">
+                                      <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200">
                                         文案
                                       </span>
                                     );
                                   }
                                   if (r === "editor") {
                                     return (
-                                      <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200/60">
+                                      <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200">
                                         剪辑
                                       </span>
                                     );
                                   }
                                   return (
-                                    <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200/60">
+                                    <span key={r} className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 border border-zinc-200">
                                       运营
                                     </span>
                                   );

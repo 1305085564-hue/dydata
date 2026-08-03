@@ -266,7 +266,7 @@ export function SettingsDrawer({
                   {privateSkills.map((skill) => (
                     <div
                       key={skill.id}
-                      className="group flex items-center justify-between rounded-lg border border-zinc-200/50 bg-white p-2.5 transition-all hover:border-zinc-300"
+                      className="group flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-2.5 transition-all hover:border-zinc-300"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
@@ -304,7 +304,7 @@ export function SettingsDrawer({
           <div className="space-y-4 animate-in fade-in duration-200">
             <div className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">上下文管理</div>
 
-            <div className="border border-zinc-200/50 bg-white p-4 rounded-lg space-y-3 shadow-sm">
+            <div className="border border-zinc-200 bg-white p-4 rounded-lg space-y-3 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] font-medium text-zinc-900">携带历史对话轮数</span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-700">

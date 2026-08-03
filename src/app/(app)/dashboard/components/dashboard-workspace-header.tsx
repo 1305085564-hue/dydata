@@ -156,7 +156,7 @@ export function DashboardWorkspaceHeader({
           {/* 高阶精致日历 Popover 浮层（拓宽为 w-[330px]，舒展大方） */}
           {isCalendarOpen && (
             <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-              <div className="w-[330px] rounded-2xl border border-zinc-200/90 bg-white/98 p-2.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
+              <div className="w-[330px] rounded-2xl border border-zinc-200 bg-white/98 p-2.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
                 <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}

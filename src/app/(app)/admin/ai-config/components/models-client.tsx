@@ -322,7 +322,7 @@ export default function ModelsClient() {
               <div
                 key={fam.familyId}
                 className={cn(
-                  "rounded-2xl bg-white overflow-hidden transition-all border border-zinc-200/80 shadow-sm",
+                  "rounded-2xl bg-white overflow-hidden transition-all border border-zinc-200 shadow-sm",
                   hasGlobalDefault && "ring-1 ring-[#D97757]/30"
                 )}
               >
@@ -363,7 +363,7 @@ export default function ModelsClient() {
                           "font-mono text-[11px] px-2 py-0.5 rounded-md",
                           mId === currentDefaultModelId
                             ? "bg-[#D97757]/10 text-[#D97757] font-semibold border border-[#D97757]/30"
-                            : "bg-white text-zinc-600 border border-zinc-200/60"
+                            : "bg-white text-zinc-600 border border-zinc-200"
                         )}
                       >
                         {mId}
@@ -461,7 +461,7 @@ export default function ModelsClient() {
                                 "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-bold transition-transform duration-200",
                                 isFirst
                                   ? "bg-[#D97757] text-white shadow-sm scale-105"
-                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200/60"
+                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200"
                               )}
                             >
                               {idx + 1}
@@ -487,11 +487,11 @@ export default function ModelsClient() {
                                 <CheckCircle2 className="size-3 text-emerald-600" /> 正常
                               </span>
                             ) : healthStatus === "untested" ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full font-medium">
                                 未测试
                               </span>
                             ) : healthStatus === "disabled" ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full font-medium">
                                 已停用
                               </span>
                             ) : (

@@ -310,7 +310,7 @@ export function UnifiedCommandHub({
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
               "absolute right-0 top-full mt-2 z-50 flex w-[420px] max-h-[580px] flex-col overflow-hidden rounded-2xl border bg-white/95 shadow-2xl shadow-zinc-900/12 backdrop-blur-2xl ring-1 ring-black/5",
-              "border-zinc-200/90"
+              "border-zinc-200"
             )}
           >
             {/* Header & Spring Segmented Controller */}
@@ -659,7 +659,7 @@ export function UnifiedCommandHub({
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={cn(
                               "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-zinc-900 transition-colors",
-                              "border-zinc-200/80 dark:border-zinc-800"
+                              "border-zinc-200 dark:border-zinc-800"
                             )}
                           >
                             <button
@@ -775,7 +775,7 @@ export function UnifiedCommandHub({
                               transition={{ type: "spring", stiffness: 450, damping: 28 }}
                               className={cn(
                                 "relative rounded-xl border p-3.5 bg-white dark:bg-zinc-900 transition-colors",
-                                !isUnread ? "border-zinc-200/50 dark:border-zinc-800/50 opacity-70" : "border-zinc-200 dark:border-zinc-700/80"
+                                !isUnread ? "border-zinc-200 dark:border-zinc-800/50 opacity-70" : "border-zinc-200 dark:border-zinc-700/80"
                               )}
                             >
                               <div className="flex items-start gap-2.5">
@@ -871,7 +871,7 @@ export function UnifiedCommandHub({
             {/* Footer summary & shortcut bar */}
             <div className="shrink-0 flex items-center justify-between border-t border-zinc-100 bg-zinc-50/70 px-4 py-2.5 text-[11px] text-zinc-400">
               <span className="font-normal">待处理提醒已同步至团队控制台</span>
-              <div className="hidden sm:flex items-center gap-2 font-mono text-[10px] text-zinc-400">
+              <div className="hidden sm:flex items-center gap-2 tabular-nums text-[10px] text-zinc-400">
                 <span className="inline-flex items-center gap-1 bg-zinc-200/60 px-1.5 py-0.5 rounded-md">
                   <kbd className="font-sans">1-3</kbd> 切换页签
                 </span>

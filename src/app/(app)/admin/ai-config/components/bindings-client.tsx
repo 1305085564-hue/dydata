@@ -310,7 +310,7 @@ export default function BindingsClient() {
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200/80 w-full overflow-x-auto">
+        <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200 w-full overflow-x-auto">
           <Table>
             <TableHeader className="bg-zinc-50/80">
               <TableRow className="hover:bg-transparent border-0">
@@ -349,7 +349,7 @@ export default function BindingsClient() {
                     </TableCell>
                     <TableCell>
                       {control.lifecycleState === "archived" ? (
-                        <Badge variant="outline" className="bg-zinc-100 text-zinc-600 border-zinc-200/80 text-[11px] font-normal">
+                        <Badge variant="outline" className="bg-zinc-100 text-zinc-600 border-zinc-200 text-[11px] font-normal">
                           已停止
                         </Badge>
                       ) : control.isEnabled ? (
@@ -412,7 +412,7 @@ export default function BindingsClient() {
           </Table>
         </div>
 
-        <div className="flex items-start gap-2.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-200/80 p-3 rounded-xl">
+        <div className="flex items-start gap-2.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-200 p-3 rounded-xl">
           <Info className="size-4 text-zinc-400 shrink-0 mt-0.5" />
           <div>
             <span className="font-medium text-zinc-700">历史配置说明：</span>
@@ -431,7 +431,7 @@ export default function BindingsClient() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 items-start min-h-[460px]">
-          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-zinc-200/80 rounded-2xl">
+          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-zinc-200 rounded-2xl">
             <div className="flex justify-between items-center px-2 py-1">
               <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">改写视图</h2>
               <Button
@@ -494,7 +494,7 @@ export default function BindingsClient() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 border border-zinc-200/80 rounded-2xl">
+          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 border border-zinc-200 rounded-2xl">
             {activeViewId && (() => {
               const view = bundle.rewriteModelViews.find((v) => v.id === activeViewId);
               if (!view) return <div className="text-zinc-500 text-[12px] py-10 text-center">模型视图已不存在</div>;
@@ -523,7 +523,7 @@ export default function BindingsClient() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl overflow-hidden bg-white border border-zinc-200/80 w-full overflow-x-auto">
+                  <div className="rounded-xl overflow-hidden bg-white border border-zinc-200 w-full overflow-x-auto">
                     <Table>
                       <TableHeader className="bg-zinc-50/80">
                         <TableRow className="hover:bg-transparent border-0">

@@ -66,7 +66,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
                 {isActive && (
                   <motion.div
                     layoutId="activeTabPill"
-                    className="absolute inset-0 z-[-1] rounded-lg bg-zinc-800/85 border border-zinc-700/40"
+                    className="absolute inset-0 z-[-1] rounded-lg bg-zinc-800/85 border border-zinc-700"
                     transition={{
                       type: "spring",
                       stiffness: 400,

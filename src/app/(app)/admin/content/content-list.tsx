@@ -1411,7 +1411,7 @@ export function ContentList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
           <span className="text-[13px] font-medium text-zinc-700">
             已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
           </span>

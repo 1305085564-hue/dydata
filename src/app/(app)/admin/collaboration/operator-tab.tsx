@@ -198,7 +198,7 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                           {op.name}
                         </button>
                         {isSelfAccountOnly && (
-                          <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200/60">
+                          <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200">
                             自运营
                           </span>
                         )}
@@ -250,7 +250,7 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                   {/* 展开子区域：与父行亲密融合，底部与下一行拉开留白隔断 */}
                   {isExpanded && (
                     <div className="bg-zinc-50/90 px-12 pt-1 pb-5 border-b border-zinc-200/80 transition-all duration-200">
-                      <div className="rounded-xl border border-zinc-200/80 bg-white overflow-hidden shadow-2xs">
+                      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-2xs">
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="border-b border-zinc-100 bg-zinc-50/80 text-zinc-500 text-left">

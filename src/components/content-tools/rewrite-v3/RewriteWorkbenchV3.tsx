@@ -310,7 +310,7 @@ export function RewriteWorkbenchV3() {
               </button>
 
               {modelDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1.5 w-56 rounded-lg border border-zinc-200/50 bg-white/95 backdrop-blur-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="absolute top-full left-0 mt-1.5 w-56 rounded-lg border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <button
                     onClick={() => { actions.setSelectedModelViewId(''); setModelDropdownOpen(false); }}
                     className={cn(

@@ -119,14 +119,14 @@ export function ChatInspector({
                   )}
                 >
                   {!isUser && (
-                    <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 border border-zinc-200/60 bg-white text-zinc-500 text-[12px]">
+                    <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 border border-zinc-200 bg-white text-zinc-500 text-[12px]">
                       <Bot className="h-3.5 w-3.5" />
                     </div>
                   )}
 
                   {/* 气泡与排版 */}
                   {isUser ? (
-                    <div className="max-w-[85%] text-[13px] leading-relaxed px-3.5 py-2.5 rounded-lg rounded-tr-none bg-white border border-zinc-200/60 text-zinc-700 font-normal shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-text">
+                    <div className="max-w-[85%] text-[13px] leading-relaxed px-3.5 py-2.5 rounded-lg rounded-tr-none bg-white border border-zinc-200 text-zinc-700 font-normal shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-text">
                       <div className="whitespace-pre-wrap">{msg.content}</div>
                     </div>
                   ) : (
@@ -148,7 +148,7 @@ export function ChatInspector({
       </div>
 
       {/* 对话输入和控制区 */}
-      <div className="shrink-0 bg-white/80 backdrop-blur-md border-t border-zinc-200/50 p-4 relative z-20">
+      <div className="shrink-0 bg-white/80 backdrop-blur-md border-t border-zinc-200 p-4 relative z-20">
         <div className="max-w-xl mx-auto space-y-2">
 
           {/* 轻量技能条 */}

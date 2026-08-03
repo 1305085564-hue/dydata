@@ -80,7 +80,7 @@ export function ProcessedList({ items, pendingBackend = false, onOpenDetail }: P
                 {entry.script_text}
               </p>
               <div className="mt-0.5 flex items-center gap-x-2 text-[12px] text-zinc-500 font-normal">
-                <span className="text-[11px] font-medium leading-none" style={{ color: meta.color }}>
+                <span className="text-[11px] font-medium leading-normal" style={{ color: meta.color }}>
                   {meta.label}
                 </span>
                 <span className="text-zinc-300">·</span>

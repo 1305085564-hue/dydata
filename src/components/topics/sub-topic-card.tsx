@@ -175,7 +175,7 @@ export function SubTopicCard({
                   "flex h-6.5 items-center justify-center rounded-md border px-2.5 text-[11px] font-normal transition-all active:scale-95 cursor-pointer",
                   isLimitReached
                     ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
-                    : "border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:bg-[#D97757] hover:text-white hover:border-[#D97757]"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-[#D97757] hover:text-white hover:border-[#D97757]"
                 )}
                 title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
               >
@@ -322,7 +322,7 @@ export function SubTopicCard({
                     "flex h-6.5 items-center justify-center rounded-md border px-2.5 text-[11px] font-normal active:scale-95 transition-all duration-150 cursor-pointer",
                     isLimitReached
                       ? "border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757] hover:text-white"
-                      : "border-zinc-200/80 bg-zinc-50 text-zinc-500 hover:bg-[#D97757] hover:text-white hover:border-[#D97757] hover:font-medium"
+                      : "border-zinc-200 bg-zinc-50 text-zinc-500 hover:bg-[#D97757] hover:text-white hover:border-[#D97757] hover:font-medium"
                   )}
                   title={isLimitReached ? "候选选题已达 5 条上限（点击选择替换）" : "认领此选题"}
                 >

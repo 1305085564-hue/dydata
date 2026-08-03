@@ -88,7 +88,7 @@ export function MyClaimDrawer({
         <span className="w-2 h-2 rounded-full bg-[#D97757]" />
         <Layers className="w-3.5 h-3.5 text-zinc-500" />
         <span className="text-xs font-medium text-zinc-800">我的选题槽位</span>
-        <div className="flex items-center gap-1 text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 font-semibold">
+        <div className="flex items-center gap-1 text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 font-normal">
           <span>{candidateCount}</span>
           <span className="text-zinc-400">/</span>
           <span>5</span>
@@ -199,7 +199,7 @@ export function MyClaimDrawer({
                       className="group p-3 rounded-lg border border-zinc-200 bg-zinc-50/50 hover:bg-white hover:border-zinc-300 transition-all cursor-pointer"
                     >
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <span className="text-xs font-semibold text-zinc-900 group-hover:text-[#D97757] line-clamp-1">
+                        <span className="text-xs font-normal text-zinc-600 group-hover:text-[#D97757] line-clamp-1">
                           {sub?.title || "选题名"}
                         </span>
                         <span
@@ -217,7 +217,7 @@ export function MyClaimDrawer({
                       </p>
 
                       <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
-                        <span className="text-zinc-500 font-mono font-normal">
+                        <span className="text-zinc-500 font-normal tabular-nums">
                           {claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString() : "时间未知"}
                         </span>
                         <div className="flex items-center gap-1.5">

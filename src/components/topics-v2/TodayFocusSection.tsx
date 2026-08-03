@@ -48,7 +48,7 @@ function FocusCard({
           <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-normal bg-zinc-100 text-zinc-600 truncate min-w-0">
             {item.topics?.name || "常规"} {item.topic_groups?.name ? `· ${item.topic_groups.name}` : ""}
           </span>
-          {item.emotion_tag && <span className="text-xs text-zinc-400 font-mono shrink-0">#{item.emotion_tag}</span>}
+          {item.emotion_tag && <span className="text-xs text-zinc-400 shrink-0">#{item.emotion_tag}</span>}
         </div>
 
         <h3 className="text-base font-semibold text-zinc-900 group-hover:text-[#D97757] transition-colors duration-150 line-clamp-2 mb-1.5">
@@ -62,11 +62,11 @@ function FocusCard({
         <div className="grid grid-cols-2 gap-2 bg-zinc-50 rounded-lg p-2.5 mb-4 border border-zinc-100 text-xs">
           <div>
             <div className="text-zinc-500 text-xs font-normal">合格作品均播</div>
-            <div className="font-semibold font-mono text-zinc-800 text-sm mt-0.5">{formatPlayCount(item.summary.averagePlayCount)}</div>
+            <div className="font-semibold tabular-nums text-zinc-800 text-sm mt-0.5">{formatPlayCount(item.summary.averagePlayCount)}</div>
           </div>
           <div>
             <div className="text-zinc-500 text-xs font-normal">最高播放</div>
-            <div className="font-semibold font-mono text-emerald-600 text-sm mt-0.5">{formatPlayCount(item.summary.bestPlayCount)}</div>
+            <div className="font-semibold tabular-nums text-emerald-600 text-sm mt-0.5">{formatPlayCount(item.summary.bestPlayCount)}</div>
           </div>
         </div>
       </div>
@@ -133,7 +133,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
           </div>
           <p className="text-xs text-zinc-500 mt-0.5 font-normal">按近期成绩与历史高均播但久未重做的真实信号整理。</p>
         </div>
-        <span className="text-xs text-zinc-500 font-mono">最多展示 6 条聚焦</span>
+        <span className="text-xs text-zinc-500 tabular-nums">最多展示 6 条聚焦</span>
       </div>
 
       {error ? (
@@ -181,7 +181,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
                 <span className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">{claim.displayName || "团队成员"}</span>
                 <span className="text-zinc-500 ml-1.5">认领了《{claim.subTopic?.title || "子题"}》</span>
               </div>
-              <span className="text-xs font-mono text-zinc-500 shrink-0 font-normal">{formatDate(claim.claimedAt)}</span>
+              <span className="text-xs text-zinc-500 shrink-0 font-normal tabular-nums">{formatDate(claim.claimedAt)}</span>
             </button>
           ))}
         </ActivityPanel>
@@ -203,7 +203,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
                 <span className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">《{work.videoTitle}》</span>
                 {work.subTopic?.title && <span className="text-zinc-500 ml-1 truncate">(对应: {work.subTopic.title})</span>}
               </div>
-              <span className="text-xs font-mono text-zinc-500 shrink-0 font-normal">{formatDate(work.uploadedAt)}</span>
+              <span className="text-xs text-zinc-500 shrink-0 font-normal tabular-nums">{formatDate(work.uploadedAt)}</span>
             </button>
           ))}
         </ActivityPanel>
@@ -230,9 +230,9 @@ function ActivityPanel({
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-100">
         <div className="flex items-center gap-1.5">
           {icon}
-          <h4 className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">{title}</h4>
+          <h4 className="text-xs font-normal text-zinc-600 uppercase tracking-wider">{title}</h4>
         </div>
-        <span className="text-xs font-mono text-zinc-500 font-normal">{count} 条</span>
+        <span className="text-xs text-zinc-500 font-normal tabular-nums">{count} 条</span>
       </div>
       {count === 0 ? <div className="text-xs text-zinc-500 py-3 text-center font-normal">{empty}</div> : <div className="space-y-1">{children}</div>}
     </div>

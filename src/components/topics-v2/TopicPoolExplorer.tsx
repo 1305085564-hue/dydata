@@ -394,7 +394,7 @@ export function TopicPoolExplorer({
                 </div>
 
                 <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs min-w-0">
-                  <div className="text-zinc-500 text-xs font-mono truncate min-w-0 pr-2">
+                  <div className="text-zinc-500 text-xs tabular-nums truncate min-w-0 pr-2">
                     热度: <span className="font-semibold text-zinc-700">{item.claimCount || 0}</span>
                     {summary?.averagePlayCount ? (
                       <span className="ml-2">
@@ -467,7 +467,7 @@ export function TopicPoolExplorer({
                       {sub.topics?.name || "常规"}
                       {sub.topic_groups?.name ? ` / ${sub.topic_groups.name}` : ""}
                     </td>
-                    <td className="py-3 px-3 text-zinc-600 font-mono">
+                    <td className="py-3 px-3 text-zinc-600 tabular-nums">
                       <div>均播: <span className="font-semibold text-[#D97757]">{summary?.averagePlayCount ? `${(summary.averagePlayCount / 10000).toFixed(1)}万` : "无"}</span></div>
                       <div className="text-xs text-zinc-500 font-normal">
                         热度: {item.claimCount || 0} 人认领
@@ -531,7 +531,7 @@ export function TopicPoolExplorer({
           >
             上一页
           </button>
-          <span className="font-mono text-zinc-700 font-medium">第 {currentPage} 页</span>
+          <span className="text-zinc-700 font-medium tabular-nums">第 {currentPage} 页</span>
           <button
             type="button"
             disabled={currentPage * 50 >= totalCount}

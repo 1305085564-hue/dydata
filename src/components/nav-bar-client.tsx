@@ -287,7 +287,7 @@ export function NavBarClient({
         className={cn(
           "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "border-zinc-200/90 bg-white/95 py-2.5 backdrop-blur-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]"
+            ? "border-zinc-200 bg-white/95 py-2.5 backdrop-blur-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]"
             : "border-zinc-200/50 bg-zinc-50/80 py-3.5 backdrop-blur-md"
         )}
       >
@@ -415,7 +415,7 @@ export function NavBarClient({
                           onMouseEnter={() => handleDropdownOpen(group.key)}
                           onMouseLeave={handleDropdownCloseLater}
                         >
-                          <div className="w-56 rounded-2xl border border-zinc-200/90 bg-white/95 p-1.5 shadow-xl shadow-zinc-900/5 backdrop-blur-xl ring-1 ring-black/5">
+                          <div className="w-56 rounded-2xl border border-zinc-200 bg-white/95 p-1.5 shadow-xl shadow-zinc-900/5 backdrop-blur-xl ring-1 ring-black/5">
                             <div className="space-y-0.5">
                               {group.children.map((child: NavSubItem) => {
                                 const active = child.match(pathname);
@@ -635,7 +635,7 @@ export function NavBarClient({
                           className={cn(
                             "flex h-9 items-center justify-between rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200",
                             active
-                              ? "bg-white text-[#5F82A8] font-semibold shadow-sm border border-zinc-200/60"
+                              ? "bg-white text-[#5F82A8] font-semibold shadow-sm border border-zinc-200"
                               : "text-zinc-700 hover:bg-white/60 hover:text-zinc-900"
                           )}
                         >
@@ -675,4 +675,3 @@ export function NavBarClient({
 
 
 /* [规范对齐] 批次三：顶栏导航指示器改为下划线 */
-

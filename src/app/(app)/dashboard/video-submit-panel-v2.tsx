@@ -150,7 +150,7 @@ export function VideoSubmitPanelV2({
       {/* 1. 工作舱顶部：月度出勤状态卡 & 快捷切账号 */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* 左侧 2 栏：日历与打卡概览 (L1 容器白底 + 1px 细边) */}
-        <Card className="lg:col-span-2 border-zinc-200/80 bg-white shadow-sm rounded-2xl">
+        <Card className="lg:col-span-2 border-zinc-200 bg-white shadow-sm rounded-2xl">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-100 pb-4 mb-4">
               <div>
@@ -193,7 +193,7 @@ export function VideoSubmitPanelV2({
         </Card>
 
         {/* 右侧 1 栏：今日状态面板与快捷卡片 */}
-        <Card className="border-zinc-200/80 bg-white shadow-sm rounded-2xl flex flex-col justify-between">
+        <Card className="border-zinc-200 bg-white shadow-sm rounded-2xl flex flex-col justify-between">
           <CardContent className="p-6 flex-1 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
@@ -289,7 +289,7 @@ export function VideoSubmitPanelV2({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center min-h-[220px]"
+            className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center min-h-[220px]"
           >
             <div className="size-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 mb-3 border border-green-100">
               <CheckCircle2 className="size-6" />

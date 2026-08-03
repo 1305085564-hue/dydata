@@ -129,7 +129,7 @@ export function SmartReplaceModal({
           {error && <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-normal">{error}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="text-xs font-semibold text-zinc-700 mb-1">
+            <div className="text-xs font-normal text-zinc-600 mb-1">
               请选择要被替换放回的选题：
             </div>
 
@@ -160,7 +160,7 @@ export function SmartReplaceModal({
                         className="mt-0.5 text-[#D97757] focus:ring-[#D97757]"
                       />
                       <div>
-                        <div className="text-xs font-semibold text-zinc-900">
+                        <div className="text-xs font-normal text-zinc-600">
                           {sub?.title || "已认领子题"}
                         </div>
                         <div className="text-xs text-zinc-500 line-clamp-1 mt-0.5 font-normal">
@@ -170,7 +170,7 @@ export function SmartReplaceModal({
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-normal px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
+                      <span className="text-xs font-normal tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
                         {daysIdle === 0 ? "今天认领" : `已挂机 ${daysIdle} 天`}
                       </span>
                     </div>

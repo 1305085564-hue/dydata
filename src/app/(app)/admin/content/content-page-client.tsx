@@ -301,7 +301,7 @@ export function ContentPageClient({
       className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200/80 bg-gradient-to-b from-zinc-50/80 via-white to-white p-5 shadow-xs"
     >
       {/* 顶栏控制条：Sticky 毛玻璃与环境融合 */}
-      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200/60 bg-white/85 p-2.5 backdrop-blur-md transition-all duration-200 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)]">
+      <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/85 p-2.5 backdrop-blur-md transition-all duration-200 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)]">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100/60 p-0.5 shadow-inner">
             <button

@@ -372,7 +372,7 @@ export function ModelDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-zinc-500 font-medium">快捷一键填选模型：</span>
-                <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/60">
+                <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200">
                   <button
                     type="button"
                     className={cn(

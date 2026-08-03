@@ -46,7 +46,7 @@ export function PermissionGuard({
 
   return (
     <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-zinc-200/80 bg-white/90 p-8 shadow-xl shadow-zinc-900/5 backdrop-blur-xl">
+      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-zinc-200 bg-white/90 p-8 shadow-xl shadow-zinc-900/5 backdrop-blur-xl">
         {/* 顶部微图标舱 */}
         <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-zinc-100/80 text-zinc-700 ring-1 ring-black/5">
           <ShieldAlert className="size-7 stroke-[1.5]" />

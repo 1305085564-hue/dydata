@@ -580,7 +580,7 @@ export function ContentDiagnosisWorkbench({
             <h1 className="max-w-md truncate text-[16px] font-semibold text-zinc-900 leading-tight">
               {video?.video_title || "视频复盘归因舱"}
             </h1>
-            <p className="mt-1 text-[11px] text-zinc-500 leading-none">
+            <p className="mt-1 text-[11px] text-zinc-500 leading-normal">
               成员：{video?.profiles?.name || "未知"} · 账号：{video?.accounts?.name || "未知"}
             </p>
           </div>
@@ -626,7 +626,7 @@ export function ContentDiagnosisWorkbench({
                     }}
                     className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-all ${
                       selectedRef === r
-                        ? "border border-zinc-200/50 bg-white text-zinc-950 shadow-sm"
+                        ? "border border-zinc-200 bg-white text-zinc-950 shadow-sm"
                         : "text-zinc-500 hover:text-zinc-700"
                     }`}
                   >
@@ -843,7 +843,7 @@ export function ContentDiagnosisWorkbench({
                         if (!entry) return null;
                         const formatted = val != null ? (RATE_METRICS.has(key as MetricKey) ? `${val.toFixed(1)}%` : key === "avg_play_duration" ? `${val.toFixed(1)}s` : val.toLocaleString()) : "—";
                         return (
-                          <div key={key} className="flex justify-between border-b border-zinc-200/50 py-1 text-[11px] leading-none">
+                          <div key={key} className="flex justify-between border-b border-zinc-200/50 py-1 text-[11px] leading-normal">
                             <span className="text-zinc-400">{entry.label}</span>
                             <span className="font-semibold text-zinc-700 tabular-nums">{formatted}</span>
                           </div>
@@ -1273,7 +1273,7 @@ function CompareMetricCard({
       
       {current != null && reference != null && (
         <div className="space-y-1 pt-1">
-          <div className="flex items-center gap-1.5 text-[11px] leading-none text-zinc-500">
+          <div className="flex items-center gap-1.5 text-[11px] leading-normal text-zinc-500">
             <span className="w-5 shrink-0">本条</span>
             <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden relative">
               <div
@@ -1282,7 +1282,7 @@ function CompareMetricCard({
               />
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] leading-none text-zinc-500">
+          <div className="flex items-center gap-1.5 text-[11px] leading-normal text-zinc-500">
             <span className="w-5 shrink-0 text-zinc-400">参照</span>
             <div className="flex-1 h-1 bg-zinc-100 rounded-full overflow-hidden relative">
               <div

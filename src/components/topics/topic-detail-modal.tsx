@@ -451,7 +451,7 @@ export function TopicDetailModal({
             {/* 数据沉淀段：双卡对比 (最高播放 vs 最近发布) */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                <h3 className="text-xs font-normal text-zinc-600 uppercase tracking-wider">
                   作品效果沉淀与文案对比
                 </h3>
                 <Link
@@ -479,7 +479,7 @@ export function TopicDetailModal({
                   {bestWork && (
                     <div className="rounded-md bg-white shadow-sm p-3.5 space-y-2.5 shadow-2xs">
                       <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#D97757]">
+                        <div className="flex items-center gap-1.5 text-xs font-normal text-zinc-600">
                           <Award className="size-4" />
                           <span>爆款最高播放</span>
                         </div>
@@ -505,7 +505,7 @@ export function TopicDetailModal({
                   {latestWork && (
                     <div className="rounded-md bg-white shadow-sm p-3.5 space-y-2.5 shadow-2xs">
                       <div className="flex items-center justify-between border-b border-zinc-100 pb-2">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#5F82A8]">
+                        <div className="flex items-center gap-1.5 text-xs font-normal text-zinc-600">
                           <Clock className="size-4" />
                           <span>最新发布版本</span>
                         </div>

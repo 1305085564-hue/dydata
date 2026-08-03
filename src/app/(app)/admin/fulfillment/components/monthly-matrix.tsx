@@ -124,7 +124,7 @@ export function MonthlyMatrix({
     <TooltipProvider delay={100}>
       <div className="space-y-3">
         {/* 折叠头部 */}
-        <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-zinc-200/60 bg-white px-4 py-3 text-left transition-colors duration-150 select-none hover:bg-zinc-50/50">
+        <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors duration-150 select-none hover:bg-zinc-50/50">
           <button
             type="button"
             aria-expanded={expanded}
@@ -171,7 +171,7 @@ export function MonthlyMatrix({
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-zinc-200/60">
-                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200/60 bg-white px-3 py-2 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200 bg-white px-3 py-2 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
                       成员
                     </th>
                     {dayNumbers.map((day) => {
@@ -197,7 +197,7 @@ export function MonthlyMatrix({
                 <tbody>
                   {members.map((member) => (
                     <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/10 transition-colors">
-                      <td className="sticky left-0 z-10 border-r border-zinc-200/60 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
+                      <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
                         <div className="flex flex-col">
                           <span className="text-[13px] font-medium text-zinc-900">{member.userName}</span>
                           <span className="text-[12px] text-zinc-500">{member.groupName ?? member.teamName ?? ""}</span>

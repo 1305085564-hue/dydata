@@ -147,7 +147,7 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="text-xs font-mono text-zinc-500 font-normal">样本作品 {sampleTotal} 条</div>
+          <div className="text-xs text-zinc-500 font-normal tabular-nums">样本作品 {sampleTotal} 条</div>
           {data.map((item) => {
             const labelName = dimension === "topic" ? item.topicName || "常规母题" : `${item.accountName || "未命名账号"}`;
             const qualPercent = Math.round(item.qualifiedRate * 100);
@@ -160,7 +160,7 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
               >
                 <div className="w-full md:w-56 shrink-0 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-semibold text-zinc-900 text-xs truncate min-w-0">{labelName}</span>
+                    <span className="font-normal text-zinc-600 text-xs truncate min-w-0">{labelName}</span>
                     {item.lowConfidence && (
                       <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1 shrink-0">
                         <AlertTriangle className="w-3 h-3 text-amber-600" />
@@ -168,7 +168,7 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
                       </span>
                     )}
                   </div>
-                  <div className="text-xs font-mono text-zinc-500 mt-0.5 font-normal">
+                  <div className="text-xs text-zinc-500 mt-0.5 font-normal tabular-nums">
                     作品 {item.workCount} 条 · 达标 {item.qualifiedCount} 条
                   </div>
                 </div>
@@ -186,10 +186,10 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6 text-xs text-right shrink-0 font-mono">
+                <div className="flex items-center gap-6 text-xs text-right shrink-0 tabular-nums">
                   <div>
                     <div className="text-xs text-zinc-500 font-normal">平均播放</div>
-                    <div className="font-semibold text-zinc-800 text-xs mt-0.5">{format(item.avgPlayCount)}</div>
+                    <div className="font-normal text-zinc-600 text-xs mt-0.5">{format(item.avgPlayCount)}</div>
                   </div>
                   <div>
                     <div className="text-xs text-zinc-500 font-normal">最高播放</div>

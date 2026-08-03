@@ -653,7 +653,7 @@ export default function TopicPoolPage() {
       </AnimatePresence>
 
       {/* L1 工作区主面板 */}
-      <div className="rounded-2xl border border-zinc-200/80 bg-white p-5 md:p-6 shadow-xs space-y-6">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 md:p-6 shadow-xs space-y-6">
         {/* 控制台顶栏：7 扁平智能 Tab 控制器 */}
         <div className="flex items-center justify-between gap-4 pb-1 flex-wrap">
           {/* 左侧：7 扁平 Tab + 筛选 + 搜索 */}
@@ -677,7 +677,7 @@ export default function TopicPoolPage() {
                   className={cn(
                     "relative flex items-center gap-1 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap z-10 font-medium",
                     ["trending", "high_potential", "never_worked"].includes(activeView)
-                      ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                      ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200"
                       : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
                   )}
                 >
@@ -700,7 +700,7 @@ export default function TopicPoolPage() {
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                       className="absolute left-0 top-full pt-2 z-30 w-52 before:absolute before:inset-x-0 before:-top-2 before:h-4 before:z-[-1]"
                     >
-                      <div className="bg-white/98 rounded-2xl shadow-xl shadow-zinc-950/10 border border-zinc-200/90 p-1.5 space-y-1 text-xs backdrop-blur-md">
+                      <div className="bg-white/98 rounded-2xl shadow-xl shadow-zinc-950/10 border border-zinc-200 p-1.5 space-y-1 text-xs backdrop-blur-md">
                         <div className="px-2 py-1 text-[10px] font-semibold text-zinc-400 tracking-wider flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1">
                           <span>✨ 智能推荐视角</span>
                         </div>
@@ -731,8 +731,8 @@ export default function TopicPoolPage() {
                                 <div className={cn(
                                   "p-1 rounded-md transition-all duration-150 border border-transparent",
                                   isAct
-                                    ? "bg-white text-[#D97757] shadow-2xs border-zinc-200/80 font-bold"
-                                    : "bg-zinc-100 text-zinc-400 group-hover/item:bg-white group-hover/item:text-zinc-800 group-hover/item:shadow-2xs group-hover/item:border-zinc-200/80"
+                                    ? "bg-white text-[#D97757] shadow-2xs border-zinc-200 font-bold"
+                                    : "bg-zinc-100 text-zinc-400 group-hover/item:bg-white group-hover/item:text-zinc-800 group-hover/item:shadow-2xs group-hover/item:border-zinc-200"
                                 )}>
                                   <Icon className="size-3.5" />
                                 </div>
@@ -767,7 +767,7 @@ export default function TopicPoolPage() {
                   className={cn(
                     "relative flex items-center gap-1 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap z-10 font-medium",
                     ["all", "my_created"].includes(activeView)
-                      ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                      ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200"
                       : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
                   )}
                 >
@@ -789,7 +789,7 @@ export default function TopicPoolPage() {
                       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                       className="absolute left-0 top-full pt-2 z-30 w-52 before:absolute before:inset-x-0 before:-top-2 before:h-4 before:z-[-1]"
                     >
-                      <div className="bg-white/98 rounded-2xl shadow-xl shadow-zinc-950/10 border border-zinc-200/90 p-1.5 space-y-1 text-xs backdrop-blur-md">
+                      <div className="bg-white/98 rounded-2xl shadow-xl shadow-zinc-950/10 border border-zinc-200 p-1.5 space-y-1 text-xs backdrop-blur-md">
                         <div className="px-2 py-1 text-[10px] font-semibold text-zinc-400 tracking-wider flex items-center justify-between border-b border-zinc-100 pb-1.5 mb-1">
                           <span>📂 选题库范围</span>
                         </div>
@@ -819,8 +819,8 @@ export default function TopicPoolPage() {
                                 <div className={cn(
                                   "p-1 rounded-md transition-all duration-150 border border-transparent",
                                   isAct
-                                    ? "bg-white text-[#D97757] shadow-2xs border-zinc-200/80 font-bold"
-                                    : "bg-zinc-100 text-zinc-400 group-hover/item:bg-white group-hover/item:text-zinc-800 group-hover/item:shadow-2xs group-hover/item:border-zinc-200/80"
+                                    ? "bg-white text-[#D97757] shadow-2xs border-zinc-200 font-bold"
+                                    : "bg-zinc-100 text-zinc-400 group-hover/item:bg-white group-hover/item:text-zinc-800 group-hover/item:shadow-2xs group-hover/item:border-zinc-200"
                                 )}>
                                   <Icon className="size-3.5" />
                                 </div>
@@ -851,7 +851,7 @@ export default function TopicPoolPage() {
                 className={cn(
                   "relative flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap font-medium",
                   activeView === "my_claims"
-                    ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                    ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200"
                     : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
                 )}
               >
@@ -871,7 +871,7 @@ export default function TopicPoolPage() {
                 className={cn(
                   "relative flex items-center gap-1.5 text-[13px] transition-all cursor-pointer px-3 py-1.5 rounded-lg select-none whitespace-nowrap font-medium",
                   activeView === "comparison"
-                    ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200/90"
+                    ? "text-zinc-950 font-bold bg-white shadow-2xs border border-zinc-200"
                     : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200"
                 )}
               >
@@ -978,7 +978,7 @@ export default function TopicPoolPage() {
                             <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                               视图密度
                             </div>
-                            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
+                            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200">
                               <button
                                 type="button"
                                 onClick={() => setViewDensity("grid")}
@@ -1008,7 +1008,7 @@ export default function TopicPoolPage() {
                             <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                               分组结构
                             </div>
-                            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200/50">
+                            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg border border-zinc-200">
                               <button
                                 type="button"
                                 onClick={() => setGroupBy("none")}
@@ -1127,7 +1127,7 @@ export default function TopicPoolPage() {
           <div className="space-y-5 pt-2">
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 shadow-2xs">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-zinc-200/80 shadow-2xs">
+                <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-zinc-200 shadow-2xs">
                   <button
                     onClick={() => setComparisonDimension("topic")}
                     className={cn(
@@ -1330,7 +1330,7 @@ export default function TopicPoolPage() {
 
                             {!isCollapsed && (
                               viewDensity === "compact" ? (
-                                <div className="rounded-2xl border border-zinc-200/80 bg-white overflow-hidden shadow-2xs divide-y divide-zinc-100">
+                                <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-2xs divide-y divide-zinc-100">
                                   {group.items.map((subTopic) => (
                                     <SubTopicCard
                                       key={subTopic.id}
@@ -1378,7 +1378,7 @@ export default function TopicPoolPage() {
                   ) : (
                     /* 无分组平铺模式 (默认) */
                     viewDensity === "compact" ? (
-                      <div className="rounded-2xl border border-zinc-200/80 bg-white overflow-hidden shadow-2xs divide-y divide-zinc-100">
+                      <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-2xs divide-y divide-zinc-100">
                         {/* 统一工整单行模式表头 */}
                         <div className="flex h-8 items-center justify-between gap-3 px-3 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-50/80 border-b border-zinc-200/80 select-none">
                           <div className="w-[84px] shrink-0">状态/认领</div>
@@ -1476,7 +1476,7 @@ export default function TopicPoolPage() {
                       return (
                         <div
                           key={key}
-                          className="flex flex-col justify-between rounded-xl border border-zinc-200/90 bg-[#FBF9F7] border-l-2 border-l-[#D97757] p-4 transition-all hover:border-zinc-300 hover:shadow-xs min-w-0"
+                          className="flex flex-col justify-between rounded-xl border border-zinc-200 bg-[#FBF9F7] border-l-2 border-l-[#D97757] p-4 transition-all hover:border-zinc-300 hover:shadow-xs min-w-0"
                         >
                           <div className="space-y-2.5">
                             <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1576,7 +1576,7 @@ export default function TopicPoolPage() {
                     "flex flex-col p-3 rounded-2xl border cursor-pointer transition-all duration-150 relative space-y-1",
                     isSelected
                       ? "border-[#D97757] bg-[#D97757]/8 shadow-xs"
-                      : "border-zinc-200/80 bg-white hover:bg-zinc-50"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50"
                   )}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -1662,7 +1662,7 @@ export default function TopicPoolPage() {
             )}
 
             {adoptingRec?.angle && (
-              <div className="rounded-xl bg-zinc-50 p-3 border border-zinc-200/60 text-xs text-zinc-600 space-y-0.5">
+              <div className="rounded-xl bg-zinc-50 p-3 border border-zinc-200 text-xs text-zinc-600 space-y-0.5">
                 <span className="font-semibold text-zinc-800">原推荐切入角度：</span>
                 <p>“{adoptingRec.angle}”</p>
               </div>

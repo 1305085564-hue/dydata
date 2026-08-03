@@ -229,7 +229,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               onChange={(e) => setInputText(e.target.value)}
               placeholder="例如：揭秘庄家吸筹的三种常见假象"
               className={cn(
-                "w-full h-9.5 rounded-xl border border-zinc-200/90 bg-white px-3 text-[13px] text-zinc-900 placeholder-zinc-400 outline-none",
+                "w-full h-9.5 rounded-xl border border-zinc-200 bg-white px-3 text-[13px] text-zinc-900 placeholder-zinc-400 outline-none",
                 "transition-all duration-200 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/15"
               )}
             />

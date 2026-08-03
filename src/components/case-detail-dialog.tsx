@@ -543,7 +543,7 @@ export function CaseDetailDialog({
                         >
                           <AlertTriangle className="size-3 text-rose-500" />
                           标记选中文案为违规段落:
-                          <span className="max-w-[150px] truncate bg-rose-200/50 px-1 rounded font-mono">
+                          <span className="max-w-[150px] truncate bg-rose-200/50 px-1 rounded">
                             “{selectedText}”
                           </span>
                         </button>

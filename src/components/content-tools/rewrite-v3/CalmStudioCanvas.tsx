@@ -354,7 +354,7 @@ export function CalmStudioCanvas({
 
               {/* Hover 时浮现的极简 Magic Action Bar */}
               {hoveredParagraphId === para.id && !isEditing && (
-                <div className="absolute right-3 top-[-14px] flex items-center bg-white border border-zinc-200/70 p-0.5 rounded-lg shadow-md z-20 animate-in fade-in slide-in-from-bottom-1 duration-150 select-none text-[12px]">
+                <div className="absolute right-3 top-[-14px] flex items-center bg-white border border-zinc-200 p-0.5 rounded-lg shadow-md z-20 animate-in fade-in slide-in-from-bottom-1 duration-150 select-none text-[12px]">
                   {/* 1. 引用到对话 */}
                   <button
                     onClick={() => handleQuote(index, para.content)}

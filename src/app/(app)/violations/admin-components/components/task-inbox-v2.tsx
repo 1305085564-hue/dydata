@@ -202,7 +202,7 @@ function TaskRow({
               <span className="text-zinc-300">·</span>
               <span
                 className={cn(
-                  "rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-none",
+                  "rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-normal",
                   TONE.danger.badge
                 )}
               >
@@ -910,12 +910,12 @@ export function TaskInbox({
         entries: inbox.high_risk_pending,
         emptyHint: "✓ 目前安全 · 无高风险踩雷话术待确认",
         headerTag: counts.high_risk_pending > 0 ? (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D] leading-none">
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D] leading-normal">
             <span className="size-1 rounded-full bg-[#C9604D]" />
             优先处理
           </span>
         ) : (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#6FAA7D] leading-none">
+          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#6FAA7D] leading-normal">
             <span className="size-1 rounded-full bg-[#6FAA7D]" />
             目前安全
           </span>

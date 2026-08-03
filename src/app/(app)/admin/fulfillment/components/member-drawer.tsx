@@ -353,7 +353,7 @@ export function MemberDrawer({
                   <span className="size-2 rounded-full bg-amber-400" />
                   员工发起申诉
                 </h4>
-                <div className="text-[13px] text-zinc-700 bg-white border border-zinc-200/60 p-2.5 rounded-lg italic">
+                <div className="text-[13px] text-zinc-700 bg-white border border-zinc-200 p-2.5 rounded-lg italic">
                   “{dateAppeal.reason}”
                 </div>
                 <p className="text-[12px] text-zinc-500">
@@ -412,7 +412,7 @@ export function MemberDrawer({
                       </span>
                     </div>
                     {dayRecord.reason ? (
-                      <div className="rounded-lg border border-zinc-200/60 bg-white p-2.5">
+                      <div className="rounded-lg border border-zinc-200 bg-white p-2.5">
                         <p className="text-[12px] text-zinc-500">打标备注原因</p>
                         <p className="mt-1 text-[13px] text-zinc-700 leading-normal">{dayRecord.reason}</p>
                       </div>

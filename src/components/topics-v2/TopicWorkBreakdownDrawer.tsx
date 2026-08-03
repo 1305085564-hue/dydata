@@ -186,7 +186,7 @@ export function TopicWorkBreakdownDrawer({
                 <span>{subTopicInfo?.topics?.name || "常规母题"}</span>
                 {subTopicInfo?.topic_groups?.name && <span>· {subTopicInfo.topic_groups.name}</span>}
                 {subTopicInfo?.emotion_tag && (
-                  <span className="bg-zinc-100 px-1.5 py-0.5 rounded text-xs font-mono text-zinc-600 font-normal">
+                  <span className="bg-zinc-100 px-1.5 py-0.5 rounded text-xs text-zinc-600 font-normal">
                     #{subTopicInfo.emotion_tag}
                   </span>
                 )}
@@ -235,12 +235,12 @@ export function TopicWorkBreakdownDrawer({
               {/* 撞车动态 */}
               <section>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-xs font-normal text-zinc-600 uppercase tracking-wider flex items-center gap-1.5">
                     <TrendingUp className="w-3.5 h-3.5 text-zinc-500" />
                     <span>撞车动态</span>
                   </h4>
                   {claimsData && (
-                    <span className="text-xs font-mono text-zinc-500 font-normal">
+                    <span className="text-xs text-zinc-500 font-normal tabular-nums">
                       候选 {claimsData.candidateCount} · 脚本中 {claimsData.scriptingCount}
                     </span>
                   )}
@@ -286,7 +286,7 @@ export function TopicWorkBreakdownDrawer({
               ) : (
                 worksData?.summary && (
                   <section>
-                    <h4 className="text-xs font-semibold text-zinc-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <h4 className="text-xs font-normal text-zinc-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <Video className="w-3.5 h-3.5 text-zinc-500" />
                       <span>合格作品数据汇总</span>
                     </h4>
@@ -303,7 +303,7 @@ export function TopicWorkBreakdownDrawer({
               {worksData?.summary?.bestCopy && (
                 <section className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 text-xs">
                   <div className="text-xs font-medium text-zinc-500 mb-1.5">最高播放作品文案摘录</div>
-                  <p className="text-zinc-700 line-clamp-4 leading-relaxed font-mono bg-white p-2.5 rounded-lg border border-zinc-200 font-normal">
+                  <p className="text-zinc-700 line-clamp-4 leading-relaxed bg-white p-2.5 rounded-lg border border-zinc-200 font-normal">
                     {worksData.summary.bestCopy}
                   </p>
                 </section>
@@ -312,8 +312,8 @@ export function TopicWorkBreakdownDrawer({
               {/* 历史关联作品 */}
               <section>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold text-zinc-700 uppercase tracking-wider">历史关联作品</h4>
-                  <span className="text-xs font-mono text-zinc-500 font-normal">{worksData?.pagination.totalItems ?? 0} 条</span>
+                  <h4 className="text-xs font-normal text-zinc-600 uppercase tracking-wider">历史关联作品</h4>
+                  <span className="text-xs text-zinc-500 font-normal tabular-nums">{worksData?.pagination.totalItems ?? 0} 条</span>
                 </div>
                 {worksData?.items.length === 0 ? (
                   <div className="text-xs text-zinc-500 py-4 text-center border border-dashed border-zinc-200 rounded-lg bg-zinc-50/50 font-normal">
@@ -329,13 +329,13 @@ export function TopicWorkBreakdownDrawer({
                         <div>
                           <div className="font-semibold text-zinc-900 line-clamp-1">《{item.videoTitle}》</div>
                           {item.uploadedAt && (
-                            <div className="text-xs text-zinc-500 font-mono mt-0.5 font-normal">
+                            <div className="text-xs text-zinc-500 mt-0.5 font-normal tabular-nums">
                               发布时间: {new Date(item.uploadedAt).toLocaleDateString()}
                             </div>
                           )}
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="font-semibold text-zinc-800 font-mono">{formatPlayCount(item.playCount)}</div>
+                          <div className="font-semibold text-zinc-800 tabular-nums">{formatPlayCount(item.playCount)}</div>
                           <div className="text-xs text-zinc-500 font-normal">播放量</div>
                         </div>
                       </div>
@@ -401,7 +401,7 @@ function Metric({ label, value, accent = false }: { label: string; value: string
   return (
     <div>
       <div className="text-xs text-zinc-500 font-normal">{label}</div>
-      <div className={`font-semibold text-sm mt-0.5 font-mono ${accent ? "text-emerald-600" : "text-zinc-800"}`}>
+      <div className={`font-semibold text-sm mt-0.5 tabular-nums ${accent ? "text-emerald-600" : "text-zinc-800"}`}>
         {value}
       </div>
     </div>
