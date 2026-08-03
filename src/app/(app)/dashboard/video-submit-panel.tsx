@@ -633,13 +633,18 @@ export function VideoSubmitPanel({
                     <button
                       type="button"
                       onClick={openDatePicker}
-                      className="group inline-flex items-center gap-2 rounded-lg px-0 py-1 text-left transition-opacity duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:opacity-80"
-                      aria-label="选择填报日期"
+                      className="group inline-flex items-center gap-2.5 rounded-xl border border-zinc-200/90 bg-zinc-50/80 px-3.5 py-2 text-left transition-all duration-150 ease-out hover:border-[#D97757] hover:bg-white active:scale-[0.98] shadow-2xs cursor-pointer"
+                      aria-label="选择填报日期或补交历史"
                     >
-                      <span className="text-[24px] font-medium tabular-nums tracking-tight text-zinc-900">
-                        {activeBizDate}
-                      </span>
-                      <CalendarDays className="size-5 stroke-[1.5] text-[#D97757]" />
+                      <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
+                      <div className="flex flex-col leading-none space-y-1">
+                        <span className="text-[20px] font-bold tabular-nums tracking-tight text-zinc-900 font-mono">
+                          {activeBizDate}
+                        </span>
+                        <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                          切换日期 / 历史补填 ▾
+                        </span>
+                      </div>
                     </button>
                     <input
                       ref={dateInputRef}

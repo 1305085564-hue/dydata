@@ -137,24 +137,31 @@ export function DashboardWorkspaceHeader({
             onClick={() => setIsCalendarOpen((prev) => !prev)}
             aria-expanded={isCalendarOpen}
             className={cn(
-              "group inline-flex h-9 items-center gap-2 rounded-xl border px-3.5 text-[13px] font-medium tracking-tight shadow-xs transition-all duration-200 outline-none select-none",
+              "group inline-flex items-center gap-2.5 rounded-xl border px-3 py-1.5 text-left shadow-2xs transition-all duration-200 outline-none select-none cursor-pointer",
               isCalendarOpen
-                ? "border-[#5F82A8] bg-white text-zinc-950 ring-2 ring-[#5F82A8]/20 font-semibold scale-[1.02]"
-                : "border-zinc-200/80 bg-white/90 text-zinc-700 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 active:scale-95"
+                ? "border-[#D97757] bg-white ring-2 ring-[#D97757]/20 scale-[1.02]"
+                : "border-zinc-200/90 bg-zinc-50/80 hover:border-[#D97757] hover:bg-white active:scale-[0.97]"
             )}
-            aria-label="选择填报日期"
+            aria-label="切换日期或补交历史"
           >
             <CalendarDays
               className={cn(
-                "size-4 stroke-[1.8] transition-colors duration-150",
-                isCalendarOpen ? "text-[#5F82A8]" : "text-zinc-500 group-hover:text-[#D97757]"
+                "size-4.5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform duration-150",
+                isCalendarOpen && "scale-110"
               )}
             />
-            <span className="font-mono tabular-nums text-zinc-900 font-semibold">{activeBizDate}</span>
+            <div className="flex flex-col leading-none space-y-0.5 min-w-0">
+              <span className="font-mono text-[14px] font-bold tabular-nums text-zinc-900 tracking-tight">
+                {activeBizDate}
+              </span>
+              <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                切换日期 / 历史补填
+              </span>
+            </div>
             <ChevronDown
               className={cn(
-                "size-3.5 stroke-[1.8] text-zinc-400 transition-transform duration-200",
-                isCalendarOpen && "rotate-180 text-[#5F82A8]"
+                "size-3.5 stroke-[1.8] text-zinc-400 shrink-0 transition-transform duration-200 group-hover:text-zinc-700",
+                isCalendarOpen && "rotate-180 text-[#D97757]"
               )}
             />
           </button>
