@@ -1,5 +1,14 @@
 export type TopicPoolRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
+export function countMyCandidates(
+  items: Array<{ sub_topic_claims?: Array<{ user_id?: string | null; status?: string | null }> | null }>,
+  currentUserId: string,
+) {
+  return items.filter((item) => item.sub_topic_claims?.some(
+    (claim) => claim.user_id === currentUserId && claim.status === "candidate",
+  )).length;
+}
+
 export async function fetchTopicPoolResponse(
   url: string,
   request: TopicPoolRequest = fetch,
@@ -149,4 +158,3 @@ export function parseSubTopicWorksResponse(data: unknown) {
   const pageSize = typeof paginationObj?.pageSize === "number" ? paginationObj.pageSize : DETAIL_PAGE_SIZE;
   return { items, similarReferences, total, page, pageSize };
 }
-

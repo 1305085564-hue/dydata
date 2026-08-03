@@ -4,14 +4,18 @@ import type { DataAccessScope } from "../data-access-scope";
 
 import {
   buildClaimActivity,
+  buildFocusTopics,
+  buildMyClaim,
   buildTopicComparisonQueryOptions,
   buildTopicComparisonRows,
   buildPoolQueryOptions,
+  sortTopicPoolItems,
   buildWorthRedoingTopics,
   calculateTopicWorkSummary,
   deleteSubTopic,
   filterTopicClaimsByScope,
   loadTopicPool,
+  loadTopicOptions,
   matchTopicGroup,
   rankSuggestedSubTopics,
   replaceSubTopicClaim,
@@ -212,6 +216,108 @@ test("候选上限最多允许 5 条，已有同一候选时保持幂等", () =>
     status: 409,
     message: "候选选题最多保留 5 条，请先放回一个选题",
   });
+});
+
+test("myClaim 只选择当前用户的有效认领，不从团队第一条认领猜测", () => {
+  const rows = [
+    { id: "claim-other", sub_topic_id: "sub-1", user_id: "user-2", status: "scripting", claimed_at: "2026-08-01T00:00:00.000Z" },
+    { id: "claim-me", sub_topic_id: "sub-1", user_id: "user-1", status: "candidate", claimed_at: null },
+  ];
+
+  assert.deepEqual(buildMyClaim(rows, "user-1", "sub-1"), {
+    id: "claim-me",
+    subTopicId: "sub-1",
+    status: "candidate",
+    claimedAt: null,
+  });
+  assert.equal(buildMyClaim(rows, "user-3", "sub-1"), null);
+});
+
+test("选题池排序作用于完整结果集且空 Hook 不会让搜索崩溃", () => {
+  const items = [
+    { id: "old", title: "旧选题", hook: null, created_at: "2026-07-01T00:00:00.000Z", claimCount: 5, summary: { averagePlayCount: 1000 } },
+    { id: "new", title: "新选题", hook: "突破信号", created_at: "2026-08-01T00:00:00.000Z", claimCount: 1, summary: { averagePlayCount: 2000 } },
+  ];
+
+  assert.deepEqual(sortTopicPoolItems(items, "latest").map((item) => item.id), ["new", "old"]);
+  assert.deepEqual(sortTopicPoolItems(items, "avg_play").map((item) => item.id), ["new", "old"]);
+  assert.deepEqual(sortTopicPoolItems(items, "claim_count").map((item) => item.id), ["old", "new"]);
+});
+
+test("母题 options 按 sort_order 返回完整列表", async () => {
+  const fake = createFakeSupabase({
+    topics: [{
+      data: [
+        { id: "topic-2", name: "第二母题", sort_order: 20 },
+        { id: "topic-1", name: "第一母题", sort_order: 10 },
+        { id: "topic-empty", name: "", sort_order: 30 },
+      ],
+    }],
+  });
+
+  const result = await loadTopicOptions(fake.client as never);
+
+  assert.deepEqual(result, {
+    ok: true,
+    value: {
+      topics: [
+        { id: "topic-1", name: "第一母题" },
+        { id: "topic-2", name: "第二母题" },
+      ],
+    },
+  });
+  assert.deepEqual(fake.queries[0]?.calls.find((call) => call.method === "order")?.args, ["sort_order", { ascending: true }]);
+});
+
+test("替换不允许把 scripting 认领当成可替换候选", async () => {
+  const client = {
+    from() {
+      return {
+        select() {
+          return {
+            eq() { return this; },
+            in() { return this; },
+            maybeSingle: async () => ({ data: { id: "claim-1", status: "scripting" }, error: null }),
+          };
+        },
+      };
+    },
+  };
+
+  const result = await replaceSubTopicClaim(client as never, "user-1", "old", "new");
+  assert.deepEqual(result, {
+    ok: false,
+    status: 409,
+    message: "脚本中的选题不能替换，请先放回或完成脚本",
+  });
+});
+
+test("聚焦选题按近期成绩和历史高均播久未重做分组，并去重", () => {
+  const focus = buildFocusTopics([
+    {
+      id: "sub-recent",
+      title: "近期成绩",
+      hook: null,
+      topics: { id: "topic-1", name: "母题" },
+      topic_groups: null,
+      works: [
+        { uploadedAt: "2026-08-01T00:00:00.000Z", recentSnapshotAt: "2026-08-01T01:00:00.000Z", playCount: 3000 },
+        { uploadedAt: "2026-07-28T00:00:00.000Z", recentSnapshotAt: "2026-07-28T01:00:00.000Z", playCount: 1000 },
+      ],
+    },
+    {
+      id: "sub-stale",
+      title: "历史高均播",
+      hook: null,
+      topics: { id: "topic-1", name: "母题" },
+      topic_groups: null,
+      works: [{ uploadedAt: "2026-05-01T00:00:00.000Z", recentSnapshotAt: null, playCount: 50000 }],
+    },
+  ], new Date("2026-08-03T00:00:00.000Z"), 3);
+
+  assert.deepEqual(focus.map((item) => item.id), ["sub-recent", "sub-stale"]);
+  assert.equal(focus[0]?.reasonType, "recent_success");
+  assert.equal(focus[1]?.reasonType, "historical_high_avg_stale");
 });
 
 test("手动录入选题允许不填写钩子", () => {
@@ -464,6 +570,9 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
         summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
         claimCount: 1,
+        candidateCount: 1,
+        scriptingCount: 0,
+        myClaim: null,
       },
     ],
     pagination: { page: 1, pageSize: 50, totalItems: 1 },
@@ -577,21 +686,21 @@ test("值得再做只保留有达标作品的子题并按平均播放倒序", ()
       title: "普通选题",
       topics: { name: "母题一" },
       topic_groups: { name: "分组一" },
-      summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestCopy: null, latestCopy: null },
+      summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
     },
     {
       id: "sub-2",
       title: "值得复拍",
       topics: { name: "母题二" },
       topic_groups: { name: "分组二" },
-      summary: { qualifiedWorkCount: 1, averagePlayCount: 5000, bestCopy: "最佳文案", latestCopy: "最佳文案" },
+      summary: { qualifiedWorkCount: 1, averagePlayCount: 5000, bestPlayCount: 5000, bestCopy: "最佳文案", latestCopy: "最佳文案" },
     },
     {
       id: "sub-3",
       title: "更值得复拍",
       topics: { name: "母题三" },
       topic_groups: null,
-      summary: { qualifiedWorkCount: 2, averagePlayCount: 8000, bestCopy: "更佳文案", latestCopy: "新文案" },
+      summary: { qualifiedWorkCount: 2, averagePlayCount: 8000, bestPlayCount: 8000, bestCopy: "更佳文案", latestCopy: "新文案" },
     },
   ]);
 

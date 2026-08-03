@@ -4,9 +4,18 @@ import test from "node:test";
 import {
   fetchTopicPoolResponse,
   resolvePageAfterLoad,
+  countMyCandidates,
   type RecommendationResponse,
   type ComparisonRow
 } from "./topic-helpers";
+
+test("候选槽位只计算 candidate，不把 scripting 算入 5 条上限", () => {
+  assert.equal(countMyCandidates([
+    { sub_topic_claims: [{ user_id: "user-1", status: "candidate" }] },
+    { sub_topic_claims: [{ user_id: "user-1", status: "scripting" }] },
+    { sub_topic_claims: [{ user_id: "user-2", status: "candidate" }] },
+  ] as never, "user-1"), 1);
+});
 
 test("选题池接口失败时抛错，避免显示成暂无选题", async () => {
   await assert.rejects(

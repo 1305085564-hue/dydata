@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ux-journey-architect": {
+      "source": "Cornjebus/neo-user-journey",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "8366d9dc584fea2cdb8e1d6db0d59bbe705ff5a5145546149bce17d1a9c89345"
+    }
+  }
+}

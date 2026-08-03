@@ -103,10 +103,13 @@ export function NavBarClient({
     };
   }, []);
 
-  // Close dropdown on pathname change or Escape key press
+  // Close dropdown on pathname change
   useEffect(() => {
-    setActiveDropdownGroup(null);
-    setIsMobileMenuOpen(false);
+    const timer = setTimeout(() => {
+      setActiveDropdownGroup(null);
+      setIsMobileMenuOpen(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   useEffect(() => {
@@ -314,7 +317,7 @@ export function NavBarClient({
   
               {/* 5-Group Primary Navigation Links */}
               <div
-                className="hidden min-w-0 items-center gap-1.5 md:flex"
+                className="hidden min-w-0 items-center gap-1 lg:gap-1.5 lg:flex"
                 aria-label="主导航"
               >
                 {navGroups.map((group) => {
@@ -540,7 +543,7 @@ export function NavBarClient({
                 onClick={() => setIsMobileMenuOpen((current) => !current)}
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-navigation-menu"
-                className="flex size-8.5 items-center justify-center rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/70 active:scale-95 md:hidden group"
+                className="flex size-8.5 items-center justify-center rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/70 active:scale-95 lg:hidden group"
                 title="导航菜单"
                 aria-label="导航菜单"
               >

@@ -14,6 +14,7 @@ import {
   fetchTopicPoolResponse,
   resolvePageAfterLoad,
   getRecommendationKey,
+  countMyCandidates,
   type RecommendationSuggestion,
   type RecommendationResponse,
   type ComparisonRow
@@ -74,10 +75,6 @@ function getMyClaim(item: { sub_topic_claims?: SubTopicClaim[] | null }, current
 
 function isClaimedByMe(item: { sub_topic_claims?: SubTopicClaim[] | null }, currentUserId: string) {
   return !!getMyClaim(item, currentUserId);
-}
-
-function countMyCandidates(items: Array<{ sub_topic_claims?: SubTopicClaim[] | null }>, currentUserId: string) {
-  return items.filter((item) => getMyClaim(item, currentUserId) !== null).length;
 }
 
 function formatTopicName5(rawName: string): string {
@@ -383,7 +380,7 @@ export default function TopicPoolPage() {
   // 触发 5/5 认领上限替换弹窗
   const candidateClaims = useMemo(() => {
     return myClaims.filter(
-      (item) => getMyClaim(item, currentUserId) !== null
+      (item) => getMyClaim(item, currentUserId)?.status === "candidate"
     );
   }, [myClaims, currentUserId]);
 

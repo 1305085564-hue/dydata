@@ -11,7 +11,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   if (!auth.ok) return auth.response;
 
   const { id } = await context.params;
-  const result = await loadSubTopicDetail(auth.context.supabase, id, auth.context.permissionContext.scope);
+  const result = await loadSubTopicDetail(
+    auth.context.supabase,
+    id,
+    auth.context.userId,
+    auth.context.permissionContext.scope,
+  );
   return jsonResult(result);
 }
 

@@ -9,15 +9,17 @@ export const TOPIC_POOL_VIEWS = [
   "high_potential",
   "never_worked",
 ] as const;
-export const TOPIC_TIME_RANGES = ["3d", "1w", "1m", "3m"] as const;
+export const TOPIC_TIME_RANGES = ["3d", "1w", "1m", "3m", "all"] as const;
 export const TOPIC_CLAIM_STATUSES = ["candidate", "scripting", "returned"] as const;
 export const TOPIC_WORK_SORTS = ["best", "recent"] as const;
+export const TOPIC_POOL_SORTS = ["latest", "avg_play", "claim_count"] as const;
 export const TOPIC_COMPARISON_DIMENSIONS = ["topic", "account"] as const;
 
 export type TopicPoolView = (typeof TOPIC_POOL_VIEWS)[number];
 export type TopicTimeRange = (typeof TOPIC_TIME_RANGES)[number];
 export type TopicClaimStatus = (typeof TOPIC_CLAIM_STATUSES)[number];
 export type TopicWorkSort = (typeof TOPIC_WORK_SORTS)[number];
+export type TopicPoolSort = (typeof TOPIC_POOL_SORTS)[number];
 export type TopicComparisonDimension = (typeof TOPIC_COMPARISON_DIMENSIONS)[number];
 
 type TopicSupabase = SupabaseClient;
@@ -27,10 +29,15 @@ export interface TopicGroupOption {
   name: string;
 }
 
+export interface TopicOption {
+  id: string;
+  name: string;
+}
+
 export interface SuggestedSubTopicCandidate {
   id: string;
   title: string;
-  hook: string;
+  hook: string | null;
   topicName: string | null;
   groupName: string | null;
 }
@@ -59,6 +66,8 @@ export interface TopicPoolQueryOptions {
   topicIds: string[];
   page: number;
   pageSize: number;
+  q?: string | null;
+  sort?: TopicPoolSort;
 }
 
 export interface TopicComparisonQueryOptions {
@@ -167,11 +176,14 @@ function daysForTimeRange(range: TopicTimeRange) {
   if (range === "3d") return 3;
   if (range === "1w") return 7;
   if (range === "1m") return 30;
+  if (range === "3m") return 90;
+  if (range === "all") return null;
   return 90;
 }
 
 function timeRangeStartIso(range: TopicTimeRange, now = Date.now()) {
-  return new Date(now - daysForTimeRange(range) * 24 * 60 * 60 * 1000).toISOString();
+  const days = daysForTimeRange(range);
+  return days === null ? null : new Date(now - days * 24 * 60 * 60 * 1000).toISOString();
 }
 
 function tokenize(value: string) {
@@ -213,10 +225,16 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
     };
   }
 
-  const timeRange = searchParams.get("time_range") ?? "1m";
+  const timeRange = searchParams.get("time_range") ?? "all";
   if (!isOneOf(TOPIC_TIME_RANGES, timeRange)) {
-    return { ok: false, status: 400, message: "time_range 只能是 3d、1w、1m 或 3m" };
+    return { ok: false, status: 400, message: "time_range 只能是 3d、1w、1m、3m 或 all" };
   }
+
+  const sortParam = searchParams.get("sort") ?? undefined;
+  if (sortParam && !isOneOf(TOPIC_POOL_SORTS, sortParam)) {
+    return { ok: false, status: 400, message: "sort 只能是 latest、avg_play 或 claim_count" };
+  }
+  const sort: TopicPoolSort | undefined = sortParam ? sortParam as TopicPoolSort : undefined;
 
   const topicIdsRaw = searchParams.getAll("topic_id");
   const topicIds: string[] = [];
@@ -230,6 +248,8 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
     }
   }
 
+  const query = normalizeText(searchParams.get("q"), 100);
+
   return {
     ok: true,
     options: {
@@ -238,6 +258,8 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
       topicIds,
       page: normalizePositiveInteger(searchParams.get("page"), 1, 10000),
       pageSize: normalizePositiveInteger(searchParams.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
+      ...(query ? { q: query } : {}),
+      ...(sort ? { sort } : {}),
     },
   };
 }
@@ -420,6 +442,121 @@ export function buildWorthRedoingTopics(
     .sort((a, b) => (b.summary.averagePlayCount ?? 0) - (a.summary.averagePlayCount ?? 0));
 }
 
+export interface FocusTopicWorkInput {
+  uploadedAt: string | null;
+  recentSnapshotAt: string | null;
+  playCount: number | null;
+  content?: string | null;
+}
+
+export interface FocusTopicInput {
+  id: string;
+  title: string;
+  hook: string | null;
+  topics: { id: string; name: string } | null;
+  topic_groups: { id: string; name: string } | null;
+  works: FocusTopicWorkInput[];
+}
+
+export interface FocusTopicOutput extends Omit<FocusTopicInput, "works"> {
+  reasonType: "recent_success" | "historical_high_avg_stale";
+  reasonText: string;
+  latestWorkedAt: string | null;
+  daysSinceLastWork: number | null;
+  summary: TopicWorkSummary;
+}
+
+function formatFocusPlayCount(value: number | null) {
+  if (value === null) return "暂无";
+  return value >= 10_000 ? `${(value / 10_000).toFixed(1)}万` : value.toLocaleString("zh-CN");
+}
+
+function latestValidDate(values: Array<string | null>) {
+  return values
+    .filter((value): value is string => {
+      if (!value) return false;
+      return Number.isFinite(Date.parse(value));
+    })
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
+}
+
+function buildFocusSummary(works: FocusTopicWorkInput[]): TopicWorkSummary {
+  return calculateTopicWorkSummary(works.map((work) => ({
+    playCount: work.playCount,
+    content: work.content ?? null,
+    uploadedAt: work.uploadedAt,
+  })));
+}
+
+export function buildFocusTopics(rows: FocusTopicInput[], now = new Date(), perReason = 3): FocusTopicOutput[] {
+  const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000;
+  const recentCandidates: FocusTopicOutput[] = [];
+  const historicalCandidates: FocusTopicOutput[] = [];
+
+  for (const row of rows) {
+    const historicalWorks = row.works.filter((work) => (work.playCount ?? 0) >= 1_000);
+    const recentWorks = historicalWorks.filter((work) => {
+      const snapshotTime = work.recentSnapshotAt ? Date.parse(work.recentSnapshotAt) : Number.NaN;
+      return Number.isFinite(snapshotTime) && snapshotTime >= cutoff;
+    });
+
+    if (recentWorks.length > 0) {
+      const summary = buildFocusSummary(recentWorks);
+      recentCandidates.push({
+        id: row.id,
+        title: row.title,
+        hook: row.hook,
+        topics: row.topics,
+        topic_groups: row.topic_groups,
+        reasonType: "recent_success",
+        reasonText: `近 30 天 ${summary.qualifiedWorkCount} 条合格作品，均播 ${formatFocusPlayCount(summary.averagePlayCount)}`,
+        latestWorkedAt: latestValidDate(recentWorks.map((work) => work.uploadedAt)),
+        daysSinceLastWork: 0,
+        summary,
+      });
+      continue;
+    }
+
+    if (historicalWorks.length === 0) continue;
+    const latestWorkedAt = latestValidDate(historicalWorks.map((work) => work.uploadedAt));
+    const latestTime = latestWorkedAt ? Date.parse(latestWorkedAt) : Number.NaN;
+    if (Number.isFinite(latestTime) && latestTime >= cutoff) continue;
+    const summary = buildFocusSummary(historicalWorks);
+    const daysSinceLastWork = Number.isFinite(latestTime)
+      ? Math.max(0, Math.floor((now.getTime() - latestTime) / (24 * 60 * 60 * 1000)))
+      : null;
+    historicalCandidates.push({
+      id: row.id,
+      title: row.title,
+      hook: row.hook,
+      topics: row.topics,
+      topic_groups: row.topic_groups,
+      reasonType: "historical_high_avg_stale",
+      reasonText: `历史均播 ${formatFocusPlayCount(summary.averagePlayCount)}，${daysSinceLastWork ?? "较久"} 天未重做`,
+      latestWorkedAt,
+      daysSinceLastWork,
+      summary,
+    });
+  }
+
+  recentCandidates.sort((left, right) =>
+    (right.summary.averagePlayCount ?? 0) - (left.summary.averagePlayCount ?? 0) ||
+    (Date.parse(right.latestWorkedAt ?? "") || 0) - (Date.parse(left.latestWorkedAt ?? "") || 0) ||
+    left.id.localeCompare(right.id),
+  );
+  const recentIds = new Set(recentCandidates.slice(0, perReason).map((item) => item.id));
+  historicalCandidates.sort((left, right) =>
+    (right.summary.averagePlayCount ?? 0) - (left.summary.averagePlayCount ?? 0) ||
+    (right.daysSinceLastWork ?? 0) - (left.daysSinceLastWork ?? 0) ||
+    left.id.localeCompare(right.id),
+  );
+
+  return [
+    ...recentCandidates.slice(0, perReason),
+    ...historicalCandidates.filter((item) => !recentIds.has(item.id)).slice(0, perReason),
+  ];
+}
+
 export function validateRecommendationSubTopicInput(body: unknown) {
   if (!body || typeof body !== "object") {
     return { ok: false as const, status: 400, message: "请求体格式不正确" };
@@ -480,6 +617,26 @@ export async function loadTopicGroups(supabase: TopicSupabase, topicId: string):
 
   if (error) throw new Error(error.message);
   return ((data ?? []) as Array<{ id: string; name: string }>).filter((row) => row.id && row.name);
+}
+
+export async function loadTopicOptions(supabase: TopicSupabase): Promise<ApiResult<{ topics: TopicOption[] }>> {
+  const { data, error } = await supabase
+    .from("topics")
+    .select("id, name, sort_order")
+    .order("sort_order", { ascending: true });
+
+  if (error) return { ok: false, status: 500, message: error.message };
+
+  const topics = ((data ?? []) as Array<{ id?: unknown; name?: unknown; sort_order?: unknown }>)
+    .filter((row) => typeof row.id === "string" && typeof row.name === "string" && row.name.trim())
+    .sort((left, right) => {
+      const leftOrder = typeof left.sort_order === "number" ? left.sort_order : Number.MAX_SAFE_INTEGER;
+      const rightOrder = typeof right.sort_order === "number" ? right.sort_order : Number.MAX_SAFE_INTEGER;
+      return leftOrder - rightOrder || String(left.name).localeCompare(String(right.name), "zh-Hans-CN");
+    })
+    .map((row) => ({ id: row.id as string, name: row.name as string }));
+
+  return { ok: true, value: { topics } };
 }
 
 export async function createSubTopic(supabase: TopicSupabase, userId: string, body: unknown): Promise<ApiResult<unknown>> {
@@ -651,6 +808,9 @@ export async function replaceSubTopicClaim(
     .in("status", ["candidate", "scripting"]).maybeSingle();
   if (oldError) return { ok: false, status: 500, message: oldError.message };
   if (!oldClaim) return { ok: false, status: 404, message: "未找到可替换的原认领" };
+  if ((oldClaim as { status?: string }).status !== "candidate") {
+    return { ok: false, status: 409, message: "脚本中的选题不能替换，请先放回或完成脚本" };
+  }
   const { data: targetClaim, error: targetError } = await supabase.from("sub_topic_claims")
     .select("id").eq("sub_topic_id", targetSubTopicId).eq("user_id", userId)
     .in("status", ["candidate", "scripting"]).maybeSingle();
@@ -706,6 +866,73 @@ export function filterTopicClaimsByScope<T extends { user_id?: string | null }>(
   return applyScope(rows, scope);
 }
 
+export interface CurrentUserClaim {
+  id: string;
+  subTopicId: string;
+  status: Extract<TopicClaimStatus, "candidate" | "scripting">;
+  claimedAt: string | null;
+}
+
+export function buildMyClaim(
+  rows: Array<{ id?: unknown; sub_topic_id?: unknown; user_id?: unknown; status?: unknown; claimed_at?: unknown }>,
+  userId: string,
+  subTopicId: string,
+): CurrentUserClaim | null {
+  const match = rows
+    .filter((row) => (
+      row.user_id === userId &&
+      row.sub_topic_id === subTopicId &&
+      (row.status === "candidate" || row.status === "scripting") &&
+      typeof row.id === "string"
+    ))
+    .sort((left, right) => {
+      const statusOrder = Number(right.status === "scripting") - Number(left.status === "scripting");
+      if (statusOrder !== 0) return statusOrder;
+      return (Date.parse(String(right.claimed_at ?? "")) || 0) - (Date.parse(String(left.claimed_at ?? "")) || 0);
+    })[0];
+
+  if (!match || typeof match.id !== "string" || typeof match.status !== "string") return null;
+  return {
+    id: match.id,
+    subTopicId,
+    status: match.status as Extract<TopicClaimStatus, "candidate" | "scripting">,
+    claimedAt: typeof match.claimed_at === "string" ? match.claimed_at : null,
+  };
+}
+
+type SortableTopicPoolItem = {
+  id: string;
+  created_at?: string | null;
+  title?: string | null;
+  hook?: string | null;
+  claimCount?: number;
+  summary?: { averagePlayCount?: number | null } | null;
+};
+
+export function sortTopicPoolItems<T extends SortableTopicPoolItem>(items: T[], sort: TopicPoolSort): T[] {
+  return [...items].sort((left, right) => {
+    if (sort === "avg_play") {
+      const difference = (right.summary?.averagePlayCount ?? 0) - (left.summary?.averagePlayCount ?? 0);
+      if (difference !== 0) return difference;
+    } else if (sort === "claim_count") {
+      const difference = (right.claimCount ?? 0) - (left.claimCount ?? 0);
+      if (difference !== 0) return difference;
+    } else {
+      const difference = (Date.parse(String(right.created_at ?? "")) || 0) - (Date.parse(String(left.created_at ?? "")) || 0);
+      if (difference !== 0) return difference;
+    }
+    return left.id.localeCompare(right.id);
+  });
+}
+
+export function matchesTopicPoolQuery(item: { title?: unknown; hook?: unknown }, query: string | null | undefined) {
+  if (!query) return true;
+  const needle = query.toLocaleLowerCase();
+  const title = typeof item.title === "string" ? item.title.toLocaleLowerCase() : "";
+  const hook = typeof item.hook === "string" ? item.hook.toLocaleLowerCase() : "";
+  return title.includes(needle) || hook.includes(needle);
+}
+
 type ScoreMode = "trending" | "high_potential";
 
 function calcFlowScore(avgPlayCount: number | null) {
@@ -734,27 +961,32 @@ function calcTopicScore(avgPlayCount: number | null, daysSinceLastWork: number, 
 
 function buildTopicPoolItem(
   item: Record<string, unknown>,
+  userId: string,
   scope: DataAccessScope,
   summary: TopicWorkSummary,
   extra: Record<string, unknown> = {},
-) {
-  const visibleClaims = Array.isArray(item.sub_topic_claims)
-    ? filterTopicClaimsByScope(
-        item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>,
-        scope,
-      )
+): SortableTopicPoolItem & Record<string, unknown> {
+  const rawClaims = Array.isArray(item.sub_topic_claims)
+    ? item.sub_topic_claims as Array<{ id?: unknown; sub_topic_id?: unknown; user_id?: string | null; status?: string; claimed_at?: unknown }>
     : [];
+  const visibleClaims = filterTopicClaimsByScope(rawClaims, scope);
+  const activeVisibleClaims = visibleClaims.filter((claim) => claim.status === "candidate" || claim.status === "scripting");
   return {
     ...item,
+    id: String(item.id ?? ""),
     sub_topic_claims: visibleClaims,
     summary,
-    claimCount: visibleClaims.filter((claim) => claim.status !== "returned").length,
+    myClaim: buildMyClaim(rawClaims, userId, String(item.id)),
+    claimCount: activeVisibleClaims.length,
+    candidateCount: activeVisibleClaims.filter((claim) => claim.status === "candidate").length,
+    scriptingCount: activeVisibleClaims.filter((claim) => claim.status === "scripting").length,
     ...extra,
   };
 }
 
 async function loadScoredTopicPool(
   supabase: TopicSupabase,
+  userId: string,
   scope: DataAccessScope,
   options: TopicPoolQueryOptions,
   mode: ScoreMode,
@@ -819,6 +1051,7 @@ async function loadScoredTopicPool(
     score: number;
     daysSinceLastWork: number;
     avgPlayCount: number | null;
+    bestPlayCount: number | null;
   }> = [];
   for (const item of allSubTopics) {
     const aggregate = worksBySubTopic.get(String(item.id));
@@ -833,6 +1066,7 @@ async function loadScoredTopicPool(
       : 999;
     if (mode === "trending" && daysSinceLastWork > 30) continue;
     if (mode === "high_potential" && daysSinceLastWork <= 30) continue;
+    if (!matchesTopicPoolQuery(item, options.q)) continue;
     const maxPlayCount = qualifiedPlayCounts.length ? Math.max(...qualifiedPlayCounts) : null;
     scored.push({
       item,
@@ -843,12 +1077,24 @@ async function loadScoredTopicPool(
     });
   }
 
-  scored.sort(
-    (left, right) =>
-      right.score - left.score ||
-      (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) ||
-      String(left.item.id).localeCompare(String(right.item.id)),
-  );
+  scored.sort((left, right) => {
+    if (options.sort === "avg_play") {
+      return (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) || String(left.item.id).localeCompare(String(right.item.id));
+    }
+    if (options.sort === "claim_count") {
+      const leftClaims = Array.isArray(left.item.sub_topic_claims)
+        ? (left.item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>).filter((claim) => claim.status === "candidate" || claim.status === "scripting")
+        : [];
+      const rightClaims = Array.isArray(right.item.sub_topic_claims)
+        ? (right.item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>).filter((claim) => claim.status === "candidate" || claim.status === "scripting")
+        : [];
+      return rightClaims.length - leftClaims.length || String(left.item.id).localeCompare(String(right.item.id));
+    }
+    if (options.sort === "latest") {
+      return (Date.parse(String(right.item.created_at ?? "")) || 0) - (Date.parse(String(left.item.created_at ?? "")) || 0) || String(left.item.id).localeCompare(String(right.item.id));
+    }
+    return right.score - left.score || (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) || String(left.item.id).localeCompare(String(right.item.id));
+  });
 
   const totalItems = scored.length;
   const from = (options.page - 1) * options.pageSize;
@@ -870,6 +1116,7 @@ async function loadScoredTopicPool(
       items: pageItems.map(({ item, score, daysSinceLastWork, avgPlayCount, bestPlayCount }) =>
         buildTopicPoolItem(
           item,
+          userId,
           scope,
           summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
           {
@@ -887,6 +1134,7 @@ async function loadScoredTopicPool(
 
 async function loadNeverWorkedTopics(
   supabase: TopicSupabase,
+  userId: string,
   scope: DataAccessScope,
   options: TopicPoolQueryOptions,
 ): Promise<ApiResult<unknown>> {
@@ -926,29 +1174,40 @@ async function loadNeverWorkedTopics(
       .map((work) => work.topic_id)
       .filter((id): id is string => Boolean(id)),
   );
-  const neverWorked = allSubTopics.filter((item) => !workedIds.has(String(item.id)));
+  const neverWorked = allSubTopics
+    .filter((item) => !workedIds.has(String(item.id)))
+    .filter((item) => matchesTopicPoolQuery(item, options.q));
+  const builtItems = neverWorked.map((item) =>
+    buildTopicPoolItem(item, userId, scope, calculateTopicWorkSummary([]), {
+      _daysSinceLastWork: null,
+      _avgPlayCount: null,
+    }),
+  );
+  const sortedItems = options.sort
+    ? sortTopicPoolItems(builtItems as Array<SortableTopicPoolItem & Record<string, unknown>>, options.sort)
+    : builtItems;
   const from = (options.page - 1) * options.pageSize;
-  const pageItems = neverWorked.slice(from, from + options.pageSize);
+  const pageItems = sortedItems.slice(from, from + options.pageSize);
 
   return {
     ok: true,
     value: {
-      items: pageItems.map((item) =>
-        buildTopicPoolItem(item, scope, calculateTopicWorkSummary([]), {
-          _daysSinceLastWork: null,
-          _avgPlayCount: null,
-        }),
-      ),
+      items: pageItems,
       pagination: {
         page: options.page,
         pageSize: options.pageSize,
-        totalItems: neverWorked.length,
+        totalItems: sortedItems.length,
       },
     },
   };
 }
 
-export async function loadSubTopicDetail(supabase: TopicSupabase, id: string, scope: DataAccessScope): Promise<ApiResult<unknown>> {
+export async function loadSubTopicDetail(
+  supabase: TopicSupabase,
+  id: string,
+  userId: string,
+  scope: DataAccessScope,
+): Promise<ApiResult<unknown>> {
   const { data: subTopic, error } = await supabase
     .from("sub_topics")
     .select("*, topics(id, name), topic_groups(id, name)")
@@ -959,23 +1218,28 @@ export async function loadSubTopicDetail(supabase: TopicSupabase, id: string, sc
 
   const { data: claims, error: claimsError } = await supabase
     .from("sub_topic_claims")
-    .select("user_id, status, claimed_at")
+    .select("id, sub_topic_id, user_id, status, claimed_at")
     .eq("sub_topic_id", id)
     .in("status", ["candidate", "scripting"])
     .order("claimed_at", { ascending: false });
   if (claimsError) return { ok: false, status: 500, message: claimsError.message };
 
-  const claimant = (claims ?? []).sort((left, right) => {
-    const statusOrder = Number(right.status === "scripting") - Number(left.status === "scripting");
-    return statusOrder || 0;
-  })[0] as { user_id?: string | null } | undefined;
+  const claimRows = (claims ?? []) as Array<{
+    id?: unknown;
+    sub_topic_id?: unknown;
+    user_id?: unknown;
+    status?: unknown;
+    claimed_at?: unknown;
+  }>;
+  const myClaim = buildMyClaim(claimRows, userId, id);
 
   const works = await loadSubTopicWorks(supabase, id, scope, { sort: "best", page: 1, pageSize: 20 });
+  if (!works.ok) return works;
   return {
     ok: true,
     value: {
-      subTopic: { ...subTopic, claimant_user_id: claimant?.user_id ?? null },
-      works: works.ok ? works.value : null,
+      subTopic: { ...subTopic, myClaim },
+      works: works.value,
     },
   };
 }
@@ -986,18 +1250,16 @@ export async function loadTopicPool(
   scope: DataAccessScope,
   options: TopicPoolQueryOptions,
 ): Promise<ApiResult<unknown>> {
-  if (options.view === "trending") return loadScoredTopicPool(supabase, scope, options, "trending");
-  if (options.view === "high_potential") return loadScoredTopicPool(supabase, scope, options, "high_potential");
-  if (options.view === "never_worked") return loadNeverWorkedTopics(supabase, scope, options);
+  if (options.view === "trending") return loadScoredTopicPool(supabase, userId, scope, options, "trending");
+  if (options.view === "high_potential") return loadScoredTopicPool(supabase, userId, scope, options, "high_potential");
+  if (options.view === "never_worked") return loadNeverWorkedTopics(supabase, userId, scope, options);
 
   const from = (options.page - 1) * options.pageSize;
-  const to = from + options.pageSize - 1;
   const since = timeRangeStartIso(options.timeRange);
   let query = supabase
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(from, to);
+    .order("created_at", { ascending: false });
 
   if (options.view === "my_claims") {
     // “我正在做的”看的是我的认领记录，不按子题创建时间过滤；
@@ -1024,8 +1286,8 @@ export async function loadTopicPool(
     }
     query = query.in("id", claimedIds);
   } else {
-    // 全部 / 我提交的：按子题创建时间做时间范围过滤
-    query = query.gte("created_at", since);
+    // 全部 / 我提交的：时间范围只限制子题录入时间；all 代表全部历史。
+    if (since) query = query.gte("created_at", since);
   }
 
   if (options.topicIds.length > 0) {
@@ -1033,10 +1295,11 @@ export async function loadTopicPool(
   }
   if (options.view === "my_created") query = query.eq("created_by", userId);
 
-  const { data, error, count } = await query;
+  const { data, error } = await query;
   if (error) return { ok: false, status: 500, message: error.message };
 
-  const items = (data ?? []) as Array<Record<string, unknown>>;
+  const items = ((data ?? []) as Array<Record<string, unknown>>)
+    .filter((item) => matchesTopicPoolQuery(item, options.q));
 
   let summaries: Map<string, TopicWorkSummary>;
   try {
@@ -1044,20 +1307,25 @@ export async function loadTopicPool(
   } catch (error) {
     return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
   }
+  const builtItems = items.map((item) => buildTopicPoolItem(
+    item,
+    userId,
+    scope,
+    summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
+  ));
+  const sortedItems = options.sort
+    ? sortTopicPoolItems(builtItems as Array<SortableTopicPoolItem & Record<string, unknown>>, options.sort)
+    : builtItems;
+  const pageItems = sortedItems.slice(from, from + options.pageSize);
+
   return {
     ok: true,
     value: {
-      items: items.map((item) => {
-        return buildTopicPoolItem(
-          item,
-          scope,
-          summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
-        );
-      }),
+      items: pageItems,
       pagination: {
         page: options.page,
         pageSize: options.pageSize,
-        totalItems: count ?? items.length,
+        totalItems: sortedItems.length,
       },
     },
   };
@@ -1095,10 +1363,15 @@ export async function loadTopicSummaries(supabase: TopicSupabase, subTopicIds: s
   return summaryMap;
 }
 
-export async function loadActiveTopics(supabase: TopicSupabase, scope: DataAccessScope, limit = 8): Promise<ApiResult<unknown>> {
+export async function loadActiveTopics(
+  supabase: TopicSupabase,
+  userId: string,
+  scope: DataAccessScope,
+  limit = 8,
+): Promise<ApiResult<unknown>> {
   let claimsQuery = supabase
     .from("sub_topic_claims")
-    .select("*, sub_topics(id, title, hook, created_by, topics(id, name), topic_groups(id, name))")
+    .select("*, profiles(name), sub_topics(id, title, hook, created_by, topics(id, name), topic_groups(id, name))")
     .neq("status", "returned")
     .order("claimed_at", { ascending: false });
   if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
@@ -1115,6 +1388,58 @@ export async function loadActiveTopics(supabase: TopicSupabase, scope: DataAcces
   if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
   const { data: works, error: worksError } = await worksQuery;
   if (worksError) return { ok: false, status: 500, message: worksError.message };
+
+  let focusWorksQuery = supabase
+    .from("videos")
+    .select("topic_id, user_id, uploaded_at, video_metrics_snapshots(play_count, snapshot_type, captured_at)")
+    .eq("lifecycle_state", "active")
+    .not("topic_id", "is", null);
+  if (scope.kind !== "all") focusWorksQuery = focusWorksQuery.in("user_id", scope.visibleUserIds);
+  const { data: focusWorks, error: focusWorksError } = await focusWorksQuery;
+  if (focusWorksError) return { ok: false, status: 500, message: "加载今日聚焦作品失败" };
+
+  const { data: focusSubTopics, error: focusSubTopicsError } = await supabase
+    .from("sub_topics")
+    .select("id, title, hook, topics(id, name), topic_groups(id, name)")
+    .order("created_at", { ascending: false });
+  if (focusSubTopicsError) return { ok: false, status: 500, message: "加载今日聚焦选题失败" };
+
+  const focusRows: FocusTopicInput[] = (focusSubTopics ?? []).flatMap((raw) => {
+    const item = raw as Record<string, unknown>;
+    if (typeof item.id !== "string" || typeof item.title !== "string") return [];
+    const topic = Array.isArray(item.topics) ? item.topics[0] : item.topics;
+    const group = Array.isArray(item.topic_groups) ? item.topic_groups[0] : item.topic_groups;
+    const topicRef = topic && typeof topic === "object" && typeof (topic as { id?: unknown }).id === "string" && typeof (topic as { name?: unknown }).name === "string"
+      ? { id: (topic as { id: string }).id, name: (topic as { name: string }).name }
+      : null;
+    const groupRef = group && typeof group === "object" && typeof (group as { id?: unknown }).id === "string" && typeof (group as { name?: unknown }).name === "string"
+      ? { id: (group as { id: string }).id, name: (group as { name: string }).name }
+      : null;
+    const topicWorks = ((focusWorks ?? []) as Array<Record<string, unknown>>)
+      .filter((work) => work.topic_id === item.id)
+      .map((work) => {
+        const snapshots = Array.isArray(work.video_metrics_snapshots)
+          ? (work.video_metrics_snapshots as Array<Record<string, unknown>>)
+          : [];
+        const latest24h = snapshots
+          .filter((snapshot) => snapshot.snapshot_type === "24h" && typeof snapshot.captured_at === "string")
+          .sort((left, right) => (Date.parse(String(right.captured_at)) || 0) - (Date.parse(String(left.captured_at)) || 0))[0];
+        return {
+          uploadedAt: typeof work.uploaded_at === "string" ? work.uploaded_at : null,
+          recentSnapshotAt: typeof latest24h?.captured_at === "string" ? latest24h.captured_at : null,
+          playCount: typeof latest24h?.play_count === "number" ? latest24h.play_count : null,
+        };
+      });
+    return [{
+      id: item.id,
+      title: item.title,
+      hook: typeof item.hook === "string" ? item.hook : null,
+      topics: topicRef,
+      topic_groups: groupRef,
+      works: topicWorks,
+    }];
+  });
+  const focusTopics = buildFocusTopics(focusRows, new Date(), 3);
 
   const { data: created, error: createdError } = await supabase
     .from("sub_topics")
@@ -1159,6 +1484,7 @@ export async function loadActiveTopics(supabase: TopicSupabase, scope: DataAcces
       recentlyWorked: (works ?? []).slice(0, limit),
       recentlyCreated: created ?? [],
       worthRedoing,
+      focusTopics,
     },
   };
 }
