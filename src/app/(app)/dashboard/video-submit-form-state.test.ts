@@ -8,7 +8,7 @@ import {
   setOperatorUser,
   preserveBizDateWhenPublishedAtChanges,
   shouldAutoRedirectToGrowthAfterSubmit,
-} from "./video-submit-form-state.ts";
+} from "./video-submit-form-state";
 
 test("添加外协只打开待选状态，取消外协会恢复为本人", () => {
   const userId = "user-self";
@@ -111,11 +111,11 @@ test("非今日提交不自动跳转 growth", () => {
 
 test("选择发布时间不应改动归属日期", () => {
   assert.equal(
-    preserveBizDateWhenPublishedAtChanges("2026-07-29", "2026-07-28T19:00"),
+    preserveBizDateWhenPublishedAtChanges("2026-07-29"),
     "2026-07-29",
   );
   assert.equal(
-    preserveBizDateWhenPublishedAtChanges("2026-07-15", "2026-07-15T08:30"),
+    preserveBizDateWhenPublishedAtChanges("2026-07-15"),
     "2026-07-15",
   );
 });

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Search, Check, X, FileText, Scissors, Rocket } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -484,6 +485,11 @@ export function VideoSubmitForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [shakeForm, setShakeForm] = useState(false);
+  const triggerFormShake = useCallback(() => {
+    setShakeForm(true);
+    setTimeout(() => setShakeForm(false), 500);
+  }, []);
   const [submittedVideo, setSubmittedVideo] = useState<Video | null>(null);
   const [qualityCheck, setQualityCheck] = useState<{
     data: SampleQualityResponse | null;
@@ -1266,23 +1272,27 @@ export function VideoSubmitForm({
     setHasAttemptedSubmit(true);
 
     if (!account) {
+      triggerFormShake();
       feedbackToast.error("请先选择提交账号");
       return;
     }
 
     if (!submitCheck.ok || !issueSummary.canSubmit) {
+      triggerFormShake();
       feedbackToast.error(issueHintText || issueSummary.reason || submitCheck.reason || "当前还不能提交");
       scrollToIssueAnchor(issueSummary.firstIssueAnchor);
       return;
     }
 
     if (!meta.topicTag) {
+      triggerFormShake();
       feedbackToast.error("请选择话题标签");
       scrollToIssueAnchor("topicTag");
       return;
     }
 
     if (parseMetric(fields.follower_convert.value) > 0 && !scriptText.trim()) {
+      triggerFormShake();
       feedbackToast.error("导粉数 > 0 时，请填写导粉话术文案");
       return;
     }
@@ -1751,12 +1761,13 @@ export function VideoSubmitForm({
             id="video-submit-form"
             onSubmit={handleSubmit}
             initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            variants={shakeVariants}
+            animate={shakeForm ? "animate" : { opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="mx-auto max-w-4xl space-y-3.5 py-0">
               {/* 1. 局部双态自管理容器 */}
-              <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-7">
+              <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-7 shadow-xs">
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
                     <span className="text-[13px] font-medium text-zinc-700">核心指标与截图</span>
@@ -1874,7 +1885,7 @@ export function VideoSubmitForm({
               {/* 2. 视频信息及基础元数据表单（与上卡片 100% 物理齐平对齐） */}
               <div
                 ref={metaSectionRef}
-                className="relative rounded-xl border border-zinc-200 bg-white p-7"
+                className="relative rounded-2xl border border-zinc-200/80 bg-white p-7 shadow-xs"
               >
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 items-stretch">
                   {/* 【左栏：内容创作区 (1fr 动态自适应高度，与右侧虚线框永远底部齐平)】 */}
@@ -2298,7 +2309,7 @@ function VideoStatusSegmented({
       role="radiogroup"
       aria-label="视频状态"
       onKeyDown={handleKeyDown}
-      className="inline-flex h-9 items-center rounded-full border border-zinc-200 bg-zinc-50 p-0.5"
+      className="inline-flex h-9 items-center rounded-lg bg-zinc-100 p-1"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
@@ -2310,10 +2321,10 @@ function VideoStatusSegmented({
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium tracking-tight transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[12px] font-medium tracking-tight transition-all duration-150 ease-out",
               isActive
-                ? cn("bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]", option.activeTextClass)
-                : "text-zinc-500 hover:text-zinc-700",
+                ? cn("bg-white text-zinc-950 shadow-sm font-semibold", option.activeTextClass)
+                : "text-zinc-500 hover:text-zinc-900",
             )}
           >
             <span className={cn("size-1.5 rounded-full", option.dotClass, !isActive && "opacity-60")} />
