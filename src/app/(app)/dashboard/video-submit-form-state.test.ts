@@ -3,26 +3,12 @@ import test from "node:test";
 
 import {
   addRoleOverride,
-  getActiveNonSelfRoles,
   removeRoleOverride,
   setOperatorToSelf,
   setOperatorUser,
   preserveBizDateWhenPublishedAtChanges,
   shouldAutoRedirectToGrowthAfterSubmit,
-} from "./video-submit-form-state";
-
-test("只有实际指派给他人的岗位进入外协暴露集合", () => {
-  const userId = "user-self";
-  assert.deepEqual(
-    getActiveNonSelfRoles({
-      userId,
-      scriptAuthorUserId: userId,
-      videoEditorUserId: null,
-      operatorUserId: "user-operator",
-    }),
-    ["operator"],
-  );
-});
+} from "./video-submit-form-state.ts";
 
 test("添加外协只打开待选状态，取消外协会恢复为本人", () => {
   const userId = "user-self";

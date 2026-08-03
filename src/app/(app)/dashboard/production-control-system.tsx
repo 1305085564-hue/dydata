@@ -119,14 +119,6 @@ export function ProductionControlSystem({
           onDashboardAction={openDashboardTool}
           hasPendingExemption={hasPendingExemption}
           submittedDates={submittedDates}
-          accounts={accounts}
-          selectedAccountId={selectedAccountId}
-          onSelectedAccountChange={(accountId) => {
-            setSelectedAccountId(accountId);
-            setDashboardAccount(accountId);
-          }}
-          userDisplayName={userDisplayName}
-          userRole={userRole}
         />
 
         <DataReportStage

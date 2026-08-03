@@ -7,19 +7,11 @@ import {
   BookOpen,
   CalendarDays,
   ChevronDown,
-  Eye,
   History,
 } from "lucide-react";
 import { QuickExemptionButton } from "./quick-exemption-button";
 import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { cn } from "@/lib/utils";
-
-interface AccountOption {
-  id: string;
-  name: string;
-  display_name: string;
-  content_direction: string | null;
-}
 
 interface DashboardWorkspaceHeaderProps {
   today: string;
@@ -28,11 +20,6 @@ interface DashboardWorkspaceHeaderProps {
   onDashboardAction: (key: string) => void;
   hasPendingExemption: boolean;
   submittedDates: string[];
-  accounts?: AccountOption[];
-  selectedAccountId?: string;
-  onSelectedAccountChange?: (accountId: string) => void;
-  userDisplayName?: string;
-  userRole?: string;
 }
 
 export function DashboardWorkspaceHeader({

@@ -9,20 +9,11 @@ export type SubmissionRoleAssignments = {
   operatorUserId: string | null;
 };
 
+
 function getAssignmentKey(role: SubmissionAssigneeRole): keyof SubmissionRoleAssignments {
   if (role === "script_author") return "scriptAuthorUserId";
   if (role === "video_editor") return "videoEditorUserId";
   return "operatorUserId";
-}
-
-export function getActiveNonSelfRoles({
-  userId,
-  ...assignments
-}: { userId: string } & SubmissionRoleAssignments): SubmissionAssigneeRole[] {
-  return SUBMISSION_ASSIGNEE_ROLES.filter((role) => {
-    const assigneeId = assignments[getAssignmentKey(role)];
-    return Boolean(assigneeId) && assigneeId !== userId;
-  });
 }
 
 export function addRoleOverride({
