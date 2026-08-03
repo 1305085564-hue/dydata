@@ -6,6 +6,7 @@ interface QuickExemptionButtonProps {
   hasPending: boolean;
   today: string;
   submittedDates: string[];
+  pendingDates?: string[];
   initialSelectedDates: string[];
   variant?: "card" | "subtle";
 }
@@ -19,23 +20,39 @@ export function QuickExemptionButton({
   hasPending,
   today,
   submittedDates,
+  pendingDates = [],
   initialSelectedDates,
   variant = "card",
 }: QuickExemptionButtonProps) {
+  const subtlePending =
+    "!h-auto !min-h-0 !border-0 !bg-amber-50/60 !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-amber-800 transition-all duration-150 ease-out hover:!bg-amber-100/80 [&>svg]:size-[14px] [&>svg]:text-amber-600 [&>svg]:animate-pulse";
   const subtle =
-    "!h-auto !min-h-0 !border-0 !bg-transparent !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-zinc-500 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:!translate-y-0 hover:!bg-zinc-100 hover:!border-0 hover:text-zinc-700 focus-visible:bg-zinc-100 focus-visible:text-zinc-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5 [&>svg]:size-[14px] [&>svg]:text-zinc-500 [&>svg]:transition-colors hover:[&>svg]:text-zinc-700";
-const card =
-    "!h-8 !min-h-0 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-900/5";
+    "!h-auto !min-h-0 !border-0 !bg-transparent !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-zinc-500 transition-all duration-150 ease-out hover:!bg-zinc-100 hover:!border-0 hover:text-zinc-950 focus-visible:bg-zinc-100 focus-visible:text-zinc-950 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5 [&>svg]:size-[14px] [&>svg]:text-zinc-500 [&>svg]:transition-colors hover:[&>svg]:text-zinc-700";
+  const cardPending =
+    "!h-8 !min-h-0 rounded-lg border border-amber-300/80 bg-amber-50/70 px-2.5 text-[12px] font-medium text-amber-800 transition-all duration-150 ease-out hover:bg-amber-100/90 active:scale-95 [&>svg]:text-amber-600 [&>svg]:animate-pulse";
+  const card =
+    "!h-8 !min-h-0 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 transition-all duration-150 ease-out hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 active:scale-95 focus-visible:ring-1 focus-visible:ring-zinc-900/5";
+
+  const resolvedPendingDates = pendingDates.length > 0 ? pendingDates : hasPending ? [today] : [];
 
   return (
     <申请豁免弹窗
       hasPending={hasPending}
       today={today}
       submittedDates={submittedDates}
+      pendingDates={resolvedPendingDates}
       initialSelectedDates={initialSelectedDates}
-      triggerClassName={variant === "subtle" ? subtle : card}
+      triggerClassName={
+        hasPending
+          ? variant === "subtle"
+            ? subtlePending
+            : cardPending
+          : variant === "subtle"
+            ? subtle
+            : card
+      }
       triggerVariant="button"
-      triggerTitle={hasPending ? "审批中" : "申请豁免"}
+      triggerTitle={hasPending ? "申请审批中" : "申请豁免"}
     />
   );
 }

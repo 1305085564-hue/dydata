@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Bell, ShieldAlert } from "lucide-react";
+import { Bell, ShieldAlert, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ interface Props {
   submittedDates: string[];
   waiveDates?: string[];
   leaveDates?: string[];
+  pendingDates?: string[];
   triggerClassName?: string;
   triggerVariant?: "button" | "card";
   triggerTitle?: string;
@@ -33,6 +34,7 @@ function ExemptionModal({
   submittedDates,
   waiveDates = [],
   leaveDates = [],
+  pendingDates = [],
   triggerClassName,
   triggerVariant = "button",
   triggerTitle,
@@ -41,6 +43,7 @@ function ExemptionModal({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [category, setCategory] = useState<"leave" | "waive">("leave");
   const [reason, setReason] = useState("");
   const [localHasPending, setLocalHasPending] = useState(hasPending);
   const [isPending, startTransition] = useTransition();
@@ -50,8 +53,35 @@ function ExemptionModal({
   function handleOpen() {
     if (localHasPending) return;
     setSelectedDates(Array.from(new Set(initialSelectedDates.filter(Boolean))).sort());
+    setCategory("leave");
     setReason("");
     setOpen(true);
+  }
+
+  // 快捷一键勾选近 7 天所有漏交/未交日期
+  function handleSelectAllUnsubmitted() {
+    const dates: string[] = [];
+    const todayDate = new Date(`${today}T00:00:00`);
+    for (let index = 0; index < 7; index += 1) {
+      const dateObj = new Date(todayDate);
+      dateObj.setDate(dateObj.getDate() - index);
+      const year = dateObj.getFullYear();
+      const month = `${dateObj.getMonth() + 1}`.padStart(2, "0");
+      const day = `${dateObj.getDate()}`.padStart(2, "0");
+      const dateStr = `${year}-${month}-${day}`;
+
+      if (
+        !submittedDates.includes(dateStr) &&
+        !waiveDates.includes(dateStr) &&
+        !leaveDates.includes(dateStr) &&
+        !pendingDates.includes(dateStr)
+      ) {
+        dates.push(dateStr);
+      }
+    }
+    const newSelected = Array.from(new Set([...selectedDates, ...dates])).sort();
+    setSelectedDates(newSelected);
+    feedbackToast.success(`已一键选中近 7 天未交的 ${dates.length} 个日期`);
   }
 
   // 弹窗打开时加载催交次数
@@ -89,7 +119,7 @@ function ExemptionModal({
 
   function handleSubmit() {
     if (selectedDates.length === 0) {
-      feedbackToast.error("请选择需要申请豁免的日期");
+      feedbackToast.error("请选择申请日期");
       return;
     }
 
@@ -100,6 +130,7 @@ function ExemptionModal({
 
     const submittedDates = [...selectedDates];
     const submittedReason = reason.trim();
+    const submittedCategory = category;
 
     setLocalHasPending(true);
     setOpen(false);
@@ -108,7 +139,7 @@ function ExemptionModal({
     startTransition(async () => {
       const result = await submitExemptionRequest({
         mode: "range",
-        category: "waive",
+        category: submittedCategory,
         reason: submittedReason,
         dates: submittedDates,
       });
@@ -123,7 +154,7 @@ function ExemptionModal({
     });
   }
 
-  const resolvedTitle = triggerTitle ?? (localHasPending ? "申请审批中" : "申请豁免");
+  const resolvedTitle = triggerTitle ?? (localHasPending ? "申请审批中" : "申请豁免/请假");
   const resolvedDescription =
     triggerDescription ?? (localHasPending ? "当前有申请正在等待审批" : "发起免交或请假申请");
 
@@ -139,7 +170,7 @@ function ExemptionModal({
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
- : "h-8 border-zinc-200 px-3 text-[12px] font-medium text-zinc-700 shadow-sm transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-white active:translate-y-0",
+            : "h-8 border-zinc-200 px-3 text-[12px] font-medium text-zinc-700 shadow-xs transition-all duration-150 ease-out hover:border-zinc-300 hover:bg-white active:scale-95",
           triggerClassName,
         )}
       >
@@ -164,22 +195,28 @@ function ExemptionModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200/90 bg-white/98 p-0 shadow-2xl backdrop-blur-xl sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader className="px-6 pb-2 pt-6">
-            <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-700">
-              选择豁免日期
+            <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
+              申请请假或豁免
             </DialogTitle>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-6 px-6 pb-6 lg:grid-cols-2">
             <div className="space-y-3">
-              <p className="text-[13px] leading-[1.7] text-zinc-500">
-                点击日历上的漏交、未交或未来日期，只会提交你点中的那些日期。
-                <br />
-                <span className="font-medium text-[#D97757]">
-                  注：不会再自动补成连续区间。
-                </span>
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[12.5px] leading-[1.7] text-zinc-500">
+                  点击日历点选离散日期（不自动补区间）
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSelectAllUnsubmitted}
+                  className="group inline-flex items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50/80 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-all duration-150 hover:bg-amber-100/90 active:scale-95 cursor-pointer shrink-0"
+                >
+                  <Zap className="size-3 stroke-[2] text-[#D97757] transition-transform group-hover:scale-110" />
+                  一键全选（七日）
+                </button>
+              </div>
 
               <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-1">
                 <SubmissionCalendar
@@ -187,6 +224,7 @@ function ExemptionModal({
                   submittedDates={submittedDates}
                   waiveDates={waiveDates}
                   leaveDates={leaveDates}
+                  pendingDates={pendingDates}
                   selectedDates={selectedDates}
                   onDateSelect={(date) => toggleDate(date)}
                   className="border-none bg-transparent shadow-none"
@@ -195,17 +233,53 @@ function ExemptionModal({
               </div>
             </div>
 
-            <div className="flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-[13px] font-medium text-zinc-700">已选豁免日期</p>
+            <div className="flex flex-col justify-between space-y-5">
+              <div className="space-y-3.5">
+                {/* 申请类型单行微型分段切换 (Compact Category Segmented Control) */}
+                <div className="space-y-1.5">
+                  <p className="flex items-center gap-1.5 text-[13px] font-medium text-zinc-700">
+                    申请类型
+                    <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
+                  </p>
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-zinc-100 p-0.5 border border-zinc-200/60 select-none">
+                    <button
+                      type="button"
+                      onClick={() => setCategory("leave")}
+                      title="病假/事假/外勤（计入考核天数）"
+                      className={cn(
+                        "flex h-7 items-center justify-center rounded-md text-[12.5px] transition-all duration-150 ease-out cursor-pointer",
+                        category === "leave"
+                          ? "bg-white text-zinc-950 font-semibold shadow-2xs"
+                          : "text-zinc-500 hover:text-zinc-800"
+                      )}
+                    >
+                      请假（该交不交）
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCategory("waive")}
+                      title="账号限流/停用/放假（剔除考核分母）"
+                      className={cn(
+                        "flex h-7 items-center justify-center rounded-md text-[12.5px] transition-all duration-150 ease-out cursor-pointer",
+                        category === "waive"
+                          ? "bg-white text-zinc-950 font-semibold shadow-2xs"
+                          : "text-zinc-500 hover:text-zinc-800"
+                      )}
+                    >
+                      豁免（不该交不交）
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="text-[13px] font-medium text-zinc-700">已选日期</p>
                   {selectedDates.length > 0 ? (
-                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                      <div className="flex flex-wrap gap-2">
+                    <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+                      <div className="flex flex-wrap gap-1.5">
                         {selectedDates.map((date) => (
                           <span
                             key={date}
-                            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-[12px] font-medium tabular-nums text-zinc-700"
+                            className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-[12px] font-medium tabular-nums text-zinc-700 shadow-2xs"
                           >
                             {date}
                           </span>
@@ -213,7 +287,7 @@ function ExemptionModal({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-[13px] text-zinc-500">
+                    <div className="flex h-16 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-[12.5px] text-zinc-400">
                       尚未选择任何日期
                     </div>
                   )}
@@ -250,25 +324,29 @@ function ExemptionModal({
                     <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                   </p>
                   <textarea
-                    className="h-[120px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-700 shadow-sm transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-500 focus:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5"
+                    className="h-[100px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-700 shadow-2xs transition-all duration-150 ease-out placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5"
                     maxLength={100}
-                    placeholder="请简述豁免原因，如：外出拍摄、周末双休、账号限流等（最多100字）"
+                    placeholder={
+                      category === "leave"
+                        ? "请简述请假原因，如：个人病假、事假、外出拍摄等（最多100字）"
+                        : "请简述豁免原因，如：账号限流封禁、账号转让、公司统一放假等（最多100字）"
+                    }
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                   />
-                  <p className="text-right text-[12px] tabular-nums text-zinc-500">{reason.length}/100</p>
+                  <p className="text-right text-[12px] tabular-nums text-zinc-400">{reason.length}/100</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 px-6">
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 px-6 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950">
                   取消
                 </Button>
                 <Button
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending}
-                  className="h-11 bg-[#D97757] px-8 text-white shadow-sm transition-[background-color,box-shadow,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] hover:bg-[#C96442] active:translate-y-0"
+                  className="h-11 bg-[#D97757] px-8 font-medium text-white shadow-sm transition-all duration-150 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.97]"
                 >
                   {isPending ? "提交中..." : "提交申请"}
                 </Button>
