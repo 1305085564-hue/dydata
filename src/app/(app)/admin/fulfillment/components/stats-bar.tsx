@@ -15,7 +15,7 @@ export function StatsBar({ stats }: StatsBarProps) {
       <div className="rounded-xl border border-zinc-200 bg-white p-5 transition-colors duration-150 hover:border-zinc-300">
         <div className="flex h-full min-h-[80px] flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-normal tracking-wider text-zinc-500 uppercase">今日待处理</span>
+            <span className="text-[12px] font-normal tracking-wider text-zinc-500">今日待处理</span>
             {hasPending ? (
               <span className="relative flex h-2 w-2">
                 <span 
@@ -28,11 +28,16 @@ export function StatsBar({ stats }: StatsBarProps) {
               <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
             )}
           </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className="text-[24px] font-semibold tabular-nums tracking-tight leading-none text-zinc-900">
-              {stats.pendingToday}
-            </span>
-            <span className="text-[12px] font-normal text-zinc-500">人未处理</span>
+          <div className="mt-4 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[24px] font-semibold tabular-nums tracking-tight leading-none text-zinc-900">
+                {stats.pendingToday}
+              </span>
+              <span className="text-[12px] font-normal text-zinc-500">人未处理</span>
+            </div>
+            <div className="text-right text-[12px] text-zinc-500 font-normal">
+              已确认 <span className="tabular-nums font-medium text-zinc-800">{stats.publishedToday + stats.leaveToday + stats.waivedToday + stats.absentToday}</span> / {stats.totalMembers} 人
+            </div>
           </div>
         </div>
       </div>
@@ -41,20 +46,23 @@ export function StatsBar({ stats }: StatsBarProps) {
       <div className="rounded-xl border border-zinc-200 bg-white p-5 transition-all duration-200 hover:border-zinc-300">
         <div className="flex flex-col justify-between h-full min-h-[80px]">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-normal tracking-wider text-zinc-500 uppercase">连续未发人数</span>
+            <span className="text-[12px] font-normal tracking-wider text-zinc-500">连续未发人数</span>
             {stats.consecutiveMissingMembers > 0 ? (
               <span className="inline-flex items-center gap-1 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] font-normal text-[#D99E55]">
                 需要关注
               </span>
             ) : null}
           </div>
-          <div className="mt-4 flex items-baseline gap-2">
-            <span className={`text-[18px] font-semibold tabular-nums tracking-tight leading-none ${
-              stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-zinc-900"
-            }`}>
-              {stats.consecutiveMissingMembers}
-            </span>
-            <span className="text-[12px] font-normal text-zinc-500">人连续未发视频</span>
+          <div className="mt-4 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-[24px] font-semibold tabular-nums tracking-tight leading-none ${
+                stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-zinc-900"
+              }`}>
+                {stats.consecutiveMissingMembers}
+              </span>
+              <span className="text-[12px] font-normal text-zinc-500">人未发视频</span>
+            </div>
+            <span className="text-[12px] text-zinc-400 font-normal">需重点跟进</span>
           </div>
         </div>
       </div>

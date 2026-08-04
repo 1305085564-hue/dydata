@@ -72,7 +72,7 @@ export default async function ViolationsPage({
     <div className="mx-auto w-full max-w-7xl space-y-6">
       <Breadcrumb
         items={[
-          { label: "数据台", href: "/dashboard" },
+          { label: "内容中心" },
           { label: "避坑案例" },
         ]}
       />

@@ -133,14 +133,13 @@ export function MemberDrawer({
       toast.success("标记成功");
       setActiveAction(null);
       setReason("");
-      onOpenChange(false);
       onActionComplete();
     } catch {
       toast.error("网络错误，标记失败");
     } finally {
       setIsSubmitting(false);
     }
-  }, [member, effectiveDate, activeAction, reason, onOpenChange, onActionComplete]);
+  }, [member, effectiveDate, activeAction, reason, onActionComplete]);
 
   const handleRemoveMark = useCallback(async () => {
     if (!member || !effectiveDate) return;
@@ -161,7 +160,6 @@ export function MemberDrawer({
       }
       toast.success("删除标记成功");
       setRemoveConfirmOpen(false);
-      onOpenChange(false);
       onActionComplete();
     } catch {
       toast.error("网络错误，删除标记失败");

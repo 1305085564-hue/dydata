@@ -1,11 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   canChangeMemberRole,
-  canRemoveMemberTarget,
   isProfileWriteApplied,
   sanitizePermissions,
 } from "@/app/(app)/admin/权限管理";
 import { canManagePermissionsForTarget } from "@/lib/business-role";
+import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { toOptionalString, toTrimmedString } from "./utils";
@@ -40,6 +40,8 @@ export async function kickUser(
 ): Promise<ToolExecutionResult> {
   const userId = toOptionalString(params.userId);
   if (!userId) return { success: false, error: "缺少 userId" };
+  const reason = toTrimmedString(params.reason);
+  if (!reason) return { success: false, error: "归档必须填写原因" };
 
   const service = createAdminClient();
   const [profilesResult, { data: reports }, { data: exemptions }] = await Promise.all([
@@ -51,22 +53,10 @@ export async function kickUser(
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
   const { actor, target: profile } = profilesResult;
   if (!profile) return { success: false, error: "用户不存在" };
-  if (
-    !canRemoveMemberTarget({
-      actorRole: context.actorRole,
-      actorId: context.actorId,
-      actorPermissions: context.actorPermissions,
-      actorTeamId: actor?.team_id ?? null,
-      targetId: userId,
-      targetRole: profile.role,
-      targetPermissions: profile.permissions ?? {},
-      targetTeamId: profile.team_id ?? null,
-    })
-  ) {
-    return { success: false, error: context.actorRole === "owner" ? "不能踢出该用户" : "负责人只能踢出本团队组员" };
-  }
+  if (context.actorRole !== "owner") return { success: false, error: "只有 owner 可以归档账号" };
+  if (context.actorId === userId) return { success: false, error: "不能归档自己" };
 
-  const backupSql = `INSERT INTO profiles_backup SELECT * FROM profiles WHERE id = '${userId}';`;
+  const backupSql = `UPDATE profiles SET membership_status='active' WHERE id = '${userId}';`;
   const affectedData = {
     user: profile,
     metricsCount: reports?.length ?? 0,
@@ -82,30 +72,33 @@ export async function kickUser(
     };
   }
 
-  const { error: banError } = await service.auth.admin.updateUserById(userId, {
-    ban_duration: "876000h",
+  const lifecycle = await archiveMemberWithClient({
+    client: service,
+    actor: {
+      id: context.actorId,
+      role: context.actorRole,
+      permissions: context.actorPermissions,
+    },
+    targetId: userId,
+    reason,
+    archivedAt: new Date().toISOString(),
   });
-  if (banError) return { success: false, error: banError.message, backupSql, beforeSnapshot: profile, affectedData };
-
-  const { data: updatedProfile, error } = await service
-    .from("profiles")
-    .update({ role: "member", permissions: {} })
-    .eq("id", userId)
-    .select("id")
-    .single();
-  if (error) return { success: false, error: error.message, backupSql, beforeSnapshot: profile, affectedData };
-  if (!isProfileWriteApplied(updatedProfile)) {
-    return { success: false, error: "踢出用户未生效，请刷新后重试", backupSql, beforeSnapshot: profile, affectedData };
+  if (!lifecycle.ok) {
+    return {
+      success: false,
+      error: lifecycle.error,
+      backupSql,
+      beforeSnapshot: profile,
+      affectedData,
+    };
   }
-
-  const { data: after } = await service.from("profiles").select("id, role, permissions").eq("id", userId).single();
 
   return {
     success: true,
     data: { userId },
     backupSql,
     beforeSnapshot: profile,
-    afterSnapshot: after,
+    afterSnapshot: lifecycle.afterSnapshot,
     affectedData,
   };
 }

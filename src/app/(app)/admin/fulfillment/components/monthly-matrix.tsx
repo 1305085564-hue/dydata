@@ -6,6 +6,12 @@ import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react"
 import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface FulfillmentAppeal {
   id: string;
@@ -24,6 +30,7 @@ interface MonthlyMatrixProps {
   onCellClick: (member: FulfillmentMemberSummary, date: string) => void;
   onMonthChange: (year: number, month: number) => void;
   appeals?: FulfillmentAppeal[];
+  onQuickMarkCell?: (userId: string, date: string, action: "confirmed_published" | "leave" | "waived" | "absent") => Promise<void>;
 }
 
 function getDaysInMonth(year: number, month: number) {
@@ -78,8 +85,9 @@ export function MonthlyMatrix({
   onCellClick,
   onMonthChange,
   appeals = [],
+  onQuickMarkCell,
 }: MonthlyMatrixProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
   const dayNumbers = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
 
@@ -170,8 +178,8 @@ export function MonthlyMatrix({
             <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-200/60">
-                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200 bg-white px-3 py-2 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                  <tr className="border-b border-zinc-200/60 bg-zinc-50/50">
+                    <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200 bg-white px-3 py-1.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
                       成员
                     </th>
                     {dayNumbers.map((day) => {
@@ -180,7 +188,7 @@ export function MonthlyMatrix({
                       return (
                         <th
                           key={day}
-                          className={`min-w-[28px] px-0.5 py-2 text-center text-[12px] font-normal tabular-nums ${
+                          className={`min-w-[28px] px-0.5 py-1.5 text-center text-[12px] font-normal tabular-nums ${
                             isToday ? "text-[#D97757] font-medium" : "text-zinc-500"
                           }`}
                         >
@@ -188,7 +196,7 @@ export function MonthlyMatrix({
                         </th>
                       );
                     })}
-                    <th className="min-w-[72px] border-l border-zinc-200/60 px-3 py-2 text-right text-[12px] font-normal text-zinc-500">
+                    <th className="min-w-[72px] border-l border-zinc-200/60 px-3 py-1.5 text-right text-[12px] font-normal text-zinc-500">
                       实发/应发
                     </th>
                   </tr>
@@ -196,11 +204,13 @@ export function MonthlyMatrix({
 
                 <tbody>
                   {members.map((member) => (
-                    <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/10 transition-colors">
-                      <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-2 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
-                        <div className="flex flex-col">
+                    <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
+                      <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-1 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <span className="text-[13px] font-medium text-zinc-900">{member.userName}</span>
-                          <span className="text-[12px] text-zinc-500">{member.groupName ?? member.teamName ?? ""}</span>
+                          {(member.groupName || member.teamName) && (
+                            <span className="text-[12px] text-zinc-400">{member.groupName ?? member.teamName}</span>
+                          )}
                         </div>
                       </td>
                       {dayNumbers.map((day) => {
@@ -211,62 +221,113 @@ export function MonthlyMatrix({
                         const appeal = appealMap.get(`${member.userId}_${dateKey}`);
 
                         return (
-                          <td key={day} className="px-0.5 py-1.5">
-                            <Tooltip>
-                              <TooltipTrigger
-                                render={
-                                  <button
-                                    type="button"
-                                    onClick={() => onCellClick(member, dateKey)}
-                                    className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-110 hover:z-10 ${getStatusColor(status)} ${
-                                      isToday ? "ring-1 ring-[#D97757] ring-offset-1 z-10" : ""
-                                    } ${appeal ? "ring-1.5 ring-amber-500 ring-offset-0.5" : ""}`}
-                                  />
-                                }
-                              />
-                              <TooltipContent
-                                className="z-50 flex w-60 flex-col items-start gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-[12px] text-white shadow-lg"
-                                align="center"
-                                side="top"
-                              >
-                                <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
-                                  <span className="font-medium text-zinc-50">{dateKey}</span>
-                                  <span className="font-medium text-zinc-500">{member.userName}</span>
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                  <span className={`size-2 rounded-full ${getStatusColor(status)}`} />
-                                  <span className="font-normal">{getStatusLabel(status)}</span>
-                                  {record && record.publishedCount > 0 && (
-                                    <span className="text-zinc-500 tabular-nums">({record.publishedCount} 条视频)</span>
-                                  )}
-                                </div>
-                                
-                                {record?.reason && (
-                                  <div className="w-full rounded border border-zinc-300 bg-zinc-100 p-1.5 text-zinc-500">
-                                    <span className="block text-[12px] font-normal text-zinc-500">打标原因：</span>
-                                    <p className="mt-0.5 leading-[1.6] text-zinc-100">{record.reason}</p>
-                                    {record.markedByName && (
-                                      <span className="mt-1 block text-right text-[12px] text-zinc-500">— 标记人: {record.markedByName}</span>
+                          <td key={day} className="px-0.5 py-1">
+                            <DropdownMenu>
+                              <Tooltip>
+                                <TooltipTrigger
+                                  render={
+                                    <DropdownMenuTrigger
+                                      render={
+                                        <button
+                                          type="button"
+                                          className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-110 hover:z-10 ${getStatusColor(status)} ${
+                                            isToday ? "ring-1 ring-[#D97757] ring-offset-1 z-10" : ""
+                                          } ${appeal ? "ring-1.5 ring-amber-500 ring-offset-0.5" : ""}`}
+                                        />
+                                      }
+                                    />
+                                  }
+                                />
+                                <TooltipContent
+                                  className="z-50 flex w-60 flex-col items-start gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-[12px] text-white shadow-lg"
+                                  align="center"
+                                  side="top"
+                                >
+                                  <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
+                                    <span className="font-medium text-zinc-50">{dateKey}</span>
+                                    <span className="font-medium text-zinc-500">{member.userName}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className={`size-2 rounded-full ${getStatusColor(status)}`} />
+                                    <span className="font-normal">{getStatusLabel(status)}</span>
+                                    {record && record.publishedCount > 0 && (
+                                      <span className="text-zinc-500 tabular-nums">({record.publishedCount} 条视频)</span>
                                     )}
                                   </div>
-                                )}
-
-                                {appeal && (
-                                  <div className="w-full border border-amber-500/20 bg-amber-500/10 p-1.5 rounded text-amber-200 mt-1">
-                                    <div className="flex items-center gap-1 font-normal">
-                                      <span className="size-1 bg-amber-400 rounded-full" />
-                                      员工申诉 ({appeal.status === "pending" ? "待处理" : appeal.status === "approved" ? "申诉通过" : "被驳回"})
+                                  <span className="mt-1 text-[11px] text-zinc-400">点击弹出快捷改判菜单 ➔</span>
+                                  
+                                  {record?.reason && (
+                                    <div className="w-full rounded border border-zinc-300 bg-zinc-100 p-1.5 text-zinc-500">
+                                      <span className="block text-[12px] font-normal text-zinc-500">打标原因：</span>
+                                      <p className="mt-0.5 leading-[1.6] text-zinc-100">{record.reason}</p>
+                                      {record.markedByName && (
+                                        <span className="mt-1 block text-right text-[12px] text-zinc-500">— 标记人: {record.markedByName}</span>
+                                      )}
                                     </div>
-                                    <p className="mt-1 text-[12px] italic leading-[1.7] text-zinc-100">
-                                      &ldquo;{appeal.reason}&rdquo;
-                                    </p>
-                                    {appeal.handler_name && (
-                                      <span className="mt-1 block text-right text-[12px] text-zinc-500">处理人: {appeal.handler_name}</span>
-                                    )}
-                                  </div>
+                                  )}
+
+                                  {appeal && (
+                                    <div className="w-full border border-amber-500/20 bg-amber-500/10 p-1.5 rounded text-amber-200 mt-1">
+                                      <div className="flex items-center gap-1 font-normal">
+                                        <span className="size-1 bg-amber-400 rounded-full" />
+                                        员工申诉 ({appeal.status === "pending" ? "待处理" : appeal.status === "approved" ? "申诉通过" : "被驳回"})
+                                      </div>
+                                      <p className="mt-1 text-[12px] italic leading-[1.7] text-zinc-100">
+                                        &ldquo;{appeal.reason}&rdquo;
+                                      </p>
+                                      {appeal.handler_name && (
+                                        <span className="mt-1 block text-right text-[12px] text-zinc-500">处理人: {appeal.handler_name}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+
+                              <DropdownMenuContent align="center" className="w-36 bg-white border border-zinc-200 p-1 shadow-md text-[12px]">
+                                <div className="px-2 py-1 text-[11px] font-medium text-zinc-400 border-b border-zinc-100 mb-1">
+                                  快捷改判 ({member.userName} · {day}日)
+                                </div>
+                                {onQuickMarkCell && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={() => void onQuickMarkCell(member.userId, dateKey, "confirmed_published")}
+                                      className="cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 py-1.5"
+                                    >
+                                      <span className="size-2 rounded-full bg-[#6FAA7D]" />
+                                      确认已发
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => void onQuickMarkCell(member.userId, dateKey, "leave")}
+                                      className="cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 py-1.5"
+                                    >
+                                      <span className="size-2 rounded-full bg-[#5F82A8]" />
+                                      标记请假
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => void onQuickMarkCell(member.userId, dateKey, "waived")}
+                                      className="cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 py-1.5"
+                                    >
+                                      <span className="size-2 rounded-full bg-[#5F82A8]/50" />
+                                      标记豁免
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => void onQuickMarkCell(member.userId, dateKey, "absent")}
+                                      className="cursor-pointer hover:bg-red-50 text-red-600 flex items-center gap-1.5 py-1.5"
+                                    >
+                                      <span className="size-2 rounded-full bg-[#C9604D]" />
+                                      确认缺勤
+                                    </DropdownMenuItem>
+                                    <div className="border-t border-zinc-100 my-1" />
+                                  </>
                                 )}
-                              </TooltipContent>
-                            </Tooltip>
+                                <DropdownMenuItem
+                                  onClick={() => onCellClick(member, dateKey)}
+                                  className="cursor-pointer hover:bg-zinc-50 text-zinc-600 font-medium py-1.5"
+                                >
+                                  📄 查看完整抽屉
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         );
                       })}

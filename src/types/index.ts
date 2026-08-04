@@ -1,5 +1,6 @@
 export type UserRole = "member" | "admin" | "owner";
 export type UserStatus = "active" | "exempt";
+export type MembershipStatus = "active" | "archived";
 export type ExemptType = "permanent" | "temporary";
 export type ExemptionCategory = "waive" | "leave";
 export type LeaderboardRange = "today" | "week" | "month";
@@ -75,6 +76,11 @@ export interface Profile {
   email?: string | null;
   role: UserRole;
   status: UserStatus;
+  membership_status?: MembershipStatus;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
+  archive_snapshot?: Record<string, unknown> | null;
   exempt_type: ExemptType | null;
   exempt_start_date: string | null;
   exempt_end_date: string | null;

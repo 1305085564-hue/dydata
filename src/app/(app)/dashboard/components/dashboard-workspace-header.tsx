@@ -1,10 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Activity,
-  BookOpen,
   CalendarDays,
   ChevronDown,
   History,
@@ -96,16 +94,6 @@ export function DashboardWorkspaceHeader({
                   </button>
                 );
               })}
-              <Link
-                href="/violations"
-                className="group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium text-zinc-600 transition-all duration-200 ease-out hover:bg-zinc-200/80 hover:text-zinc-950 hover:scale-105 hover:font-semibold focus-visible:bg-zinc-200/80 focus-visible:text-zinc-950 focus-visible:outline-none"
-              >
-                <BookOpen
-                  size={15}
-                  className="stroke-[1.6] text-zinc-500 transition-all duration-200 group-hover:text-zinc-900 group-hover:scale-110"
-                />
-                避坑案例
-              </Link>
               <QuickExemptionButton
                 hasPending={hasPendingExemption}
                 today={today}

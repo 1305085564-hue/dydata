@@ -56,6 +56,7 @@ export async function fetchFulfillmentSettings(request: FulfillmentRequest = fet
 interface FulfillmentWorkbenchProps {
   initialData: FulfillmentCalendarData;
   initialRange: TimeRangePreset;
+  currentUserId?: string;
 }
 
 function formatTodayDateOnly() {
@@ -145,8 +146,17 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
   };
 }
 
-export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentWorkbenchProps) {
+export function FulfillmentWorkbench({ initialData, initialRange, currentUserId }: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
+
+  // 默认定位到当前登录用户所属的团队，若无则定位到首个有团队名的团队
+  const defaultTeam = useMemo(() => {
+    if (currentUserId) {
+      const userMember = initialData.members.find((m) => m.userId === currentUserId);
+      if (userMember?.teamName) return userMember.teamName;
+    }
+    return initialData.members.find((m) => m.teamName)?.teamName ?? null;
+  }, [currentUserId, initialData.members]);
 
   // 1. 核心状态：日历数据与范围
   const [calendarData, setCalendarData] = useState<FulfillmentCalendarData>(initialData);
@@ -166,7 +176,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
 
   // 4. 选择与抽屉状态
-  const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(defaultTeam);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -395,15 +405,47 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
 
       if (nextMember) {
         queueIndexRef.current = nextIndex;
-        setTimeout(() => {
-          setSelectedMember(nextMember);
-          setSelectedDate(today);
-          setSource("queue");
-          setSheetOpen(true);
-        }, 200);
+        setSelectedMember(nextMember);
+        setSelectedDate(today);
+      } else {
+        setSheetOpen(false);
+        toast.success("当前待处理异常已全部审批完毕！");
       }
+    } else {
+      setSheetOpen(false);
     }
   }, [source, today, calendarData.year, calendarData.month, fetchAppeals]);
+
+  const handleQuickMarkCell = useCallback(
+    async (userId: string, date: string, action: MarkAction) => {
+      try {
+        const res = await fetch("/api/admin/fulfillment/mark", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            recordDate: date,
+            status: action,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "改判失败" }));
+          toast.error(err.error || "改判失败");
+          return;
+        }
+        toast.success("改判成功");
+        fetchAppeals();
+        const calendarRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+        if (calendarRes.ok) {
+          const refreshResult = await calendarRes.json();
+          setCalendarData(refreshResult.data);
+        }
+      } catch {
+        toast.error("网络错误，改判失败");
+      }
+    },
+    [calendarData.year, calendarData.month, fetchAppeals]
+  );
 
   // 11. 快速与批量打标的乐观更新机制
   const handleQuickMark = useCallback(
@@ -740,6 +782,7 @@ export function FulfillmentWorkbench({ initialData, initialRange }: FulfillmentW
             onCellClick={handleMatrixCellClick}
             onMonthChange={handleMonthChange}
             appeals={appeals}
+            onQuickMarkCell={handleQuickMarkCell}
           />
         )}
       </section>

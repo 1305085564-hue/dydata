@@ -44,7 +44,7 @@ const TOOL_META: Record<
   getUserInfo: { actionType: "query", actionCategory: "user_management", targetType: "user", description: "查看成员信息" },
   getAnomalousData: { actionType: "query", actionCategory: "data_correction", targetType: "metrics", description: "查看异常数据" },
   getTaskStatus: { actionType: "query", actionCategory: "task_management", targetType: "task", description: "查看任务状态" },
-  kickUser: { actionType: "delete", actionCategory: "user_management", targetType: "user", description: "移出成员" },
+  kickUser: { actionType: "delete", actionCategory: "user_management", targetType: "user", description: "归档账号" },
   changeUserRole: { actionType: "modify", actionCategory: "user_management", targetType: "user", description: "修改成员角色" },
   updateUserPermissions: { actionType: "modify", actionCategory: "user_management", targetType: "user", description: "修改成员权限" },
   deleteMetrics: { actionType: "delete", actionCategory: "data_correction", targetType: "video_metrics", description: "删除错误数据" },

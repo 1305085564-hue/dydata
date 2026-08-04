@@ -36,8 +36,12 @@ import {
 import type { Permissions, UserRole } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import {
+  archiveMemberWithClient,
+  removeMemberFromTeamWithClient,
+  restoreMemberWithClient,
+} from "@/lib/member-lifecycle-service";
+import {
   buildMemberTeamTransferPatch,
-  buildRemovedMemberProfilePatch,
   canChangeMemberRole,
   canRemoveMemberTarget,
   isProfileWriteApplied,
@@ -521,7 +525,7 @@ export async function updateMemberTeam(
 
   const { data: profileRows, error: profileError } = await adminSupabase
     .from("profiles")
-    .select("id, role, name, permissions, team_id, group_id")
+    .select("id, role, name, permissions, team_id, group_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
   if (profileError) return { error: profileError.message };
 
@@ -542,6 +546,36 @@ export async function updateMemberTeam(
 
   if (decision.error) return { error: decision.error };
   if (!decision.shouldApply) return {};
+
+  if (target.membership_status === "archived") {
+    return { error: "已归档账号不能调配团队，请先恢复账号" };
+  }
+
+  if (newTeamId === null) {
+    const result = await removeMemberFromTeamWithClient({
+      client: adminSupabase,
+      actor: {
+        id: perm.userId,
+        role: perm.role,
+        permissions: perm.permissions,
+      },
+      targetId: targetUserId,
+    });
+    if (!result.ok) return { error: result.error };
+
+    if (result.changed) {
+      await writeAuditLog(
+        supabase,
+        perm.userId,
+        "remove_from_team",
+        targetUserId,
+        `将 ${target.name} 移出团队，账号仍可登录，数据保留`,
+      );
+      revalidatePath("/admin");
+      revalidatePath("/admin/modules");
+    }
+    return {};
+  }
 
   const oldTeamId = target.team_id ?? null;
   const { data: updatedProfile, error } = await adminSupabase
@@ -591,64 +625,75 @@ export async function removeMemberFromTeam(
   return updateMemberTeam(targetUserId, null);
 }
 
-export async function removeMember(targetUserId: string): Promise<{ error?: string }> {
+export async function archiveMember(
+  targetUserId: string,
+  reason: string,
+): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
-  if (targetUserId === perm.userId) return { error: "不能移除自己" };
+  if (perm.role !== "owner") return { error: "只有 owner 可以归档账号" };
+  if (targetUserId === perm.userId) return { error: "不能归档自己" };
+  if (!reason?.trim()) return { error: "归档必须填写原因" };
 
   const supabase = await createClient();
   const adminSupabase = createAdminClient();
 
-  const { data: profileRows, error: profileError } = await adminSupabase
-    .from("profiles")
-    .select("id, role, name, permissions, team_id")
-    .in("id", [perm.userId, targetUserId]);
-  if (profileError) return { error: profileError.message };
-
-  const actor = profileRows?.find((profile) => profile.id === perm.userId);
-  const target = profileRows?.find((profile) => profile.id === targetUserId);
-  if (!target) return { error: "用户不存在" };
-  if (!canRemoveMemberTarget({
-    actorRole: perm.role,
-    actorId: perm.userId,
-    actorPermissions: perm.permissions,
-    actorTeamId: actor?.team_id ?? null,
+  const result = await archiveMemberWithClient({
+    client: adminSupabase,
+    actor: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+    },
     targetId: targetUserId,
-    targetRole: target.role as UserRole,
-    targetPermissions: (target.permissions ?? {}) as Permissions,
-    targetTeamId: target.team_id ?? null,
-  })) {
-    return { error: perm.role === "admin" ? "负责人只能移除本团队组员" : "不能移除该用户" };
+    reason,
+    archivedAt: new Date().toISOString(),
+  });
+  if (!result.ok) return { error: result.error };
+
+  if (result.changed) {
+    await writeAuditLog(
+      supabase,
+      perm.userId,
+      "archive_member",
+      targetUserId,
+      `归档成员：${result.target.name ?? targetUserId}；原因：${reason.trim()}`,
+    );
   }
 
-  const { error: banError } = await adminSupabase.auth.admin.updateUserById(targetUserId, {
-    ban_duration: "876000h",
+  revalidatePath("/admin");
+  revalidatePath("/admin/modules");
+  return {};
+}
+
+export async function restoreMember(targetUserId: string): Promise<{ error?: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (perm.role !== "owner") return { error: "只有 owner 可以恢复账号" };
+  if (targetUserId === perm.userId) return { error: "不能恢复自己" };
+
+  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+  const result = await restoreMemberWithClient({
+    client: adminSupabase,
+    actor: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+    },
+    targetId: targetUserId,
   });
-  if (banError) return { error: banError.message };
+  if (!result.ok) return { error: result.error };
 
-  const teamId = target.team_id ?? null;
-  const { data: updatedProfile, error } = await adminSupabase
-    .from("profiles")
-    .update(buildRemovedMemberProfilePatch())
-    .eq("id", targetUserId)
-    .select("id")
-    .single();
-
-  if (error) return { error: error.message };
-  if (!isProfileWriteApplied(updatedProfile)) return { error: "成员移除未生效，请刷新后重试" };
-
-  const metadataError = await syncAuthUserTeamMetadata(adminSupabase, targetUserId, null, null);
-  if (metadataError) return { error: metadataError.message };
-
-  await adminSupabase.from("member_change_log").insert({
-    user_id: targetUserId,
-    team_id: teamId,
-    action_type: "remove",
-    operator_id: perm.userId,
-  }).then(() => {}, () => {});
-
-  await writeAuditLog(supabase, perm.userId, "remove_member", targetUserId, `移除成员: ${target.name}`);
+  if (result.changed) {
+    await writeAuditLog(
+      supabase,
+      perm.userId,
+      "restore_member",
+      targetUserId,
+      `恢复成员：${result.target.name ?? targetUserId}；恢复后未分配团队、普通成员、空权限`,
+    );
+  }
 
   revalidatePath("/admin");
   revalidatePath("/admin/modules");

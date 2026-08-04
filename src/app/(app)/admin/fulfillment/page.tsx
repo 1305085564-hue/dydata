@@ -59,20 +59,37 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
   return (
     <AdminWorkspaceLayout indexItems={[]} width="wide">
-      <div className="space-y-4">
+      <div className="pt-3 sm:pt-5 space-y-4">
         <div>
-          <p className="text-[12px] tracking-[0.12em] text-zinc-500">发布管理</p>
-          <h1 className="mt-1 text-[24px] font-semibold tracking-tight text-zinc-900">发布管理工作台</h1>
+          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900">发布管理</h1>
         </div>
         <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
-          <FulfillmentDataContainer year={year} month={month} visibleUserIds={scope.visibleUserIds} range={range} />
+          <FulfillmentDataContainer
+            year={year}
+            month={month}
+            visibleUserIds={scope.visibleUserIds}
+            currentUserId={permissionInfo.userId}
+            range={range}
+          />
         </Suspense>
       </div>
     </AdminWorkspaceLayout>
   );
 }
 
-async function FulfillmentDataContainer({ year, month, visibleUserIds, range }: { year: number, month: number, visibleUserIds: string[], range: TimeRangePreset }) {
+async function FulfillmentDataContainer({
+  year,
+  month,
+  visibleUserIds,
+  currentUserId,
+  range,
+}: {
+  year: number;
+  month: number;
+  visibleUserIds: string[];
+  currentUserId: string;
+  range: TimeRangePreset;
+}) {
   const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
-  return <FulfillmentWorkbench initialData={data} initialRange={range} />;
+  return <FulfillmentWorkbench initialData={data} initialRange={range} currentUserId={currentUserId} />;
 }

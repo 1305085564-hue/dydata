@@ -218,9 +218,9 @@ type ConfirmationCopy = {
 
 const HIGH_RISK_CONFIRMATION_COPY: Record<string, ConfirmationCopy> = {
   kickUser: {
-    answer: "我将踢出该用户",
+    answer: "我将归档该账号",
     riskTitle: "为什么要确认",
-    riskDetail: "踢出后该用户立即失去登录权限，填报数据保留但不再关联活跃账号。",
+    riskDetail: "归档后该账号立即失去登录权限，团队归属和管理权限会被清空，但全部业务历史数据保留。",
     impactTitle: "影响范围",
     nextAction: "确认后立即执行；取消则一切照旧。",
   },
@@ -566,8 +566,8 @@ function buildKickUserConfirmation(result: ToolExecutionResult): AssistantPresen
   const userName = toDisplayText(user.name);
 
   return {
-    answer: `我将把 ${userName} 踢出后台。`,
-    historyTitle: truncateTitle(userName !== "-" ? `踢出 ${userName}` : "踢出用户"),
+    answer: `我将归档 ${userName} 的账号。`,
+    historyTitle: truncateTitle(userName !== "-" ? `归档 ${userName}` : "归档账号"),
     details: {
       sections: compactSections([
         buildRiskSection(copy),
@@ -899,8 +899,8 @@ function buildMutationSuccessPresentation(
       };
     case "kickUser":
       return {
-        answer: "账号处理已完成。",
-        historyTitle: "账号处理完成",
+        answer: "账号已归档，历史数据仍保留。",
+        historyTitle: "账号归档完成",
       };
     case "deleteMetrics": {
       const before = (result.beforeSnapshot ?? {}) as Record<string, unknown>;
@@ -958,7 +958,7 @@ const TOOL_DISPLAY_NAME: Record<AdminAiToolName, string> = {
   getUserInfo: "用户信息查询",
   getAnomalousData: "异常数据查询",
   getTaskStatus: "任务状态查询",
-  kickUser: "踢出用户",
+  kickUser: "归档账号",
   changeUserRole: "角色变更",
   updateUserPermissions: "权限修改",
   deleteMetrics: "删除错误数据",

@@ -9,6 +9,7 @@ import {
   Lightbulb,
   UsersRound,
   Settings,
+  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BusinessRole } from "@/lib/business-role";
@@ -86,10 +87,10 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
     },
     {
-      href: "/admin/fulfillment",
-      label: "发布管理",
-      icon: CalendarDays,
-      match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
+      href: "/violations",
+      label: "避坑案例",
+      icon: BookOpen,
+      match: (pathname) => pathname === "/violations" || pathname.startsWith("/violations/"),
     },
   ];
 
@@ -148,6 +149,12 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       label: "AI 配置",
       icon: Sparkles,
       match: (pathname) => pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/"),
+    },
+    {
+      href: "/admin/fulfillment",
+      label: "发布管理",
+      icon: CalendarDays,
+      match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
     },
   ];
 

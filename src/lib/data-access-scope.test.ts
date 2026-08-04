@@ -62,6 +62,45 @@ test("buildDataAccessScope 查询可见成员失败时抛错，不退化成只�
   );
 });
 
+test("visibleUserIds 保留归档历史成员，activeVisibleUserIds 只返回 active", async () => {
+  const profileRows = [
+    { id: "owner-1", membership_status: "active" },
+    { id: "archived-1", membership_status: "archived" },
+    { id: "legacy-1" },
+  ];
+  const client = {
+    from(table: string) {
+      const query = {
+        select() { return query; },
+        eq() { return query; },
+        in() { return query; },
+        then(resolve: (value: unknown) => void) {
+          return Promise.resolve({
+            data: table === "profiles" ? profileRows : [],
+            error: null,
+          }).then(resolve);
+        },
+      };
+      return query;
+    },
+  };
+
+  const scope = await buildDataAccessScope(client as never, "owner-1", {
+    profile: {
+      ...baseProfile,
+      id: "owner-1",
+      role: "owner",
+      team_id: null,
+      group_id: null,
+      led_group_ids: [],
+      business_role: "owner",
+    },
+  });
+
+  assert.deepEqual(scope?.visibleUserIds, ["owner-1", "archived-1", "legacy-1"]);
+  assert.deepEqual(scope?.activeVisibleUserIds, ["owner-1", "legacy-1"]);
+});
+
 test("inferAccessLevel prefers explicit level and falls back to legacy role permissions", () => {
   assert.equal(inferAccessLevel("member", {}, 2), 2);
   assert.equal(inferAccessLevel("owner", {}), 4);
@@ -95,6 +134,7 @@ test("canAccessOwner only allows visible owners unless scope is all", () => {
     groupId: "g1",
     kind: "group",
     visibleUserIds: ["u1", "u2"],
+    activeVisibleUserIds: ["u1", "u2"],
   };
 
   assert.equal(canAccessOwner(scope, "u2"), true);
@@ -113,6 +153,7 @@ test("filterRowsByDataScope keeps only visible owners for scoped roles", () => {
     groupId: "group-1",
     kind: "team",
     visibleUserIds: ["leader-1", "member-1", "member-2"],
+    activeVisibleUserIds: ["leader-1", "member-1", "member-2"],
   };
   const rows = [
     { id: "a", user_id: "leader-1" },
