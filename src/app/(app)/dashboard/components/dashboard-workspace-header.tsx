@@ -72,7 +72,7 @@ export function DashboardWorkspaceHeader({
             <Activity size={14} className="text-zinc-700" /> 数据台
           </div>
           <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <h2 className="text-[24px] font-bold tracking-tight text-zinc-900">
+            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-900">
               今日提交
             </h2>
             <nav
@@ -138,7 +138,7 @@ export function DashboardWorkspaceHeader({
               )}
             />
             <div className="flex flex-col leading-none space-y-0.5 min-w-0">
-              <span className="font-mono text-[14px] font-bold tabular-nums text-zinc-900 tracking-tight">
+              <span className="font-mono text-[14px] font-semibold tabular-nums text-zinc-900 tracking-tight">
                 {activeBizDate}
               </span>
               <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">

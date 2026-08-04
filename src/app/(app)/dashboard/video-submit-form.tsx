@@ -1585,7 +1585,7 @@ export function VideoSubmitForm({
                 />
               </svg>
             </div>
-            <h3 className="text-[18px] font-medium tracking-tight text-zinc-700">
+            <h3 className="text-[18px] font-semibold tracking-tight text-zinc-700">
               数据提交成功
             </h3>
             <p className="mt-2 text-[13px] text-zinc-500">

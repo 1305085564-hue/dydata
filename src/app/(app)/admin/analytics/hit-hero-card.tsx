@@ -71,7 +71,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
               </span>
             ) : null}
           </div>
-          <h2 className="mt-2 line-clamp-1 text-[18px] font-medium tracking-tight text-zinc-900">
+          <h2 className="mt-2 line-clamp-1 text-[18px] font-semibold tracking-tight text-zinc-900">
             {top.title || "未命名视频"}
           </h2>
           <p className="mt-1 text-[12px] text-zinc-500 tabular-nums">

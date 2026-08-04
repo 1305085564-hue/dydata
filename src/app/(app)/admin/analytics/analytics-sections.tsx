@@ -78,7 +78,7 @@ export function AnalyticsSections({
                   >
                     {index + 1}
                   </div>
-                  <h2 className="text-[18px] font-medium tracking-tight text-zinc-900">
+                  <h2 className="text-[18px] font-semibold tracking-tight text-zinc-900">
                     {section.title}
                   </h2>
                 </div>

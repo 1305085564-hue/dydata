@@ -38,7 +38,7 @@ export function VitalsStrip({ cells, note }: VitalsStripProps) {
                 {cell.lockHint ?? "待解锁"}
               </p>
             ) : (
-              <p className="mt-1 text-[18px] font-medium tabular-nums leading-tight text-zinc-900">{cell.value}</p>
+              <p className="mt-1 text-[18px] font-semibold tabular-nums leading-tight text-zinc-900">{cell.value}</p>
             )}
             {cell.hint ? <p className="mt-1 text-[12px] leading-[1.5] text-zinc-500">{cell.hint}</p> : null}
             {cell.explanation ? (

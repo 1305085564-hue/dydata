@@ -231,7 +231,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
     <div className="space-y-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.72fr)]">
         <div className="space-y-1">
-          <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">时间维度分析</h3>
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">时间维度分析</h3>
           <p className="max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
             保留 7 x 24 热力图结构，用播放中位数观察一周内各发布时间的表现；悬停可预览，点击可锁定右侧详情。
           </p>
@@ -290,13 +290,13 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
           <div className="mb-4 grid gap-2 md:grid-cols-4">
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">有效样本数</p>
-              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{heatmapData.totalEligible}</p>
+              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{heatmapData.totalEligible}</p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">已同时具备播放数据和可解析发布时间</p>
             </div>
 
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">未纳入统计数</p>
-              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{excludedCount}</p>
+              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{excludedCount}</p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">
                 {excludedReasons.length > 0 ? excludedReasons.join("；") : "当前无排除样本"}
               </p>
@@ -304,7 +304,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
 
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">推荐窗口置信度</p>
-              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">
+              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">
                 {recommendationMeta.confidence ? recommendationMeta.confidence : "暂无"}
               </p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">
@@ -316,7 +316,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
 
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">最高播放中位数</p>
-              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
+              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">用于定义热力图颜色强弱</p>
             </div>
           </div>
@@ -469,7 +469,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   {activeIsRecommended ? "属于推荐窗口" : "不属于推荐窗口"}
                 </div>
                 <div>
-                  <h4 className="text-[18px] font-medium tracking-tight text-zinc-900">
+                  <h4 className="text-[18px] font-semibold tracking-tight text-zinc-900">
                     {WEEKDAYS[activeCell.weekdayIndex]}
                   </h4>
                   <p className="mt-0.5 text-[13px] text-zinc-500">{formatHourRange(activeCell.hour)}</p>
@@ -479,7 +479,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               <div className="space-y-2.5">
                 <div className="rounded-xl border border-zinc-200 bg-white p-3">
                   <p className="text-[12px] tracking-[0.12em] text-zinc-500">当前时段</p>
-                  <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">
+                  <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">
                     {WEEKDAYS[activeCell.weekdayIndex]} {formatHourRange(activeCell.hour)}
                   </p>
                 </div>
@@ -487,15 +487,15 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                 <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
                   <div className="rounded-xl border border-zinc-200 bg-white p-3">
                     <p className="text-[12px] tracking-[0.12em] text-zinc-500">样本数</p>
-                    <p className="mt-0.5 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{activeSummary.count} 条</p>
+                    <p className="mt-0.5 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{activeSummary.count} 条</p>
                   </div>
                   <div className="rounded-xl border border-zinc-200 bg-white p-3">
                     <p className="text-[12px] tracking-[0.12em] text-zinc-500">播放中位数</p>
-                    <p className="mt-0.5 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(activeSummary.medianPlay)}</p>
+                    <p className="mt-0.5 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(activeSummary.medianPlay)}</p>
                   </div>
                   <div className="rounded-xl border border-zinc-200 bg-white p-3">
                     <p className="text-[12px] tracking-[0.12em] text-zinc-500">总播放</p>
-                    <p className="mt-0.5 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(activeSummary.totalPlay)}</p>
+                    <p className="mt-0.5 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(activeSummary.totalPlay)}</p>
                   </div>
                 </div>
               </div>

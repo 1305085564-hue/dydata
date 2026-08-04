@@ -133,7 +133,7 @@ export function MonthlyMatrix({
             className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
           >
             <span className="flex min-w-0 items-center gap-3">
-              <span className="text-[18px] font-medium text-zinc-900">月度矩阵</span>
+              <span className="text-[18px] font-semibold text-zinc-900">月度矩阵</span>
               <span className="truncate text-[12px] text-zinc-500">
                 {year}年{month}月 · {members.length} 人
               </span>

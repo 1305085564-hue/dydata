@@ -241,7 +241,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader>
-            <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-700">修改日报</DialogTitle>
+            <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-700">修改日报</DialogTitle>
           </DialogHeader>
           {editingReport && (
             <DashboardForm

@@ -42,7 +42,7 @@ export function RankBoard({
         ) : (
           <span className="size-2 rounded-full bg-[#6FAA7D] shrink-0" />
         )}
-        <h3 className="text-[18px] font-medium text-zinc-900">
+        <h3 className="text-[18px] font-semibold text-zinc-900">
           {title}
         </h3>
         {subtitle ? (

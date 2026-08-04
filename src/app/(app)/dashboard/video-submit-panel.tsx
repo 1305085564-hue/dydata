@@ -618,7 +618,7 @@ export function VideoSubmitPanel({
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
             <div className="space-y-4 px-6 py-6 sm:px-8 sm:py-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-[24px] font-medium tracking-tight text-zinc-900">今日提交</h2>
+                <h2 className="text-[24px] font-semibold tracking-tight text-zinc-900">今日提交</h2>
                 {watchConclusion && (
                   <div className="text-[13px] text-zinc-500 max-w-sm text-right">
                     {watchConclusion}
@@ -638,7 +638,7 @@ export function VideoSubmitPanel({
                     >
                       <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
                       <div className="flex flex-col leading-none space-y-1">
-                        <span className="text-[20px] font-bold tabular-nums tracking-tight text-zinc-900 font-mono">
+                        <span className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-900 font-mono">
                           {activeBizDate}
                         </span>
                         <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
@@ -810,7 +810,7 @@ export function VideoSubmitPanel({
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                     <div className="space-y-1">
-                      <div className="text-[18px] font-medium text-zinc-700">
+                      <div className="text-[18px] font-semibold text-zinc-700">
                         {activeBizDate} 已标记为{activeDateStatus.label}
                       </div>
                       <p className="text-[13px] leading-[1.7] text-zinc-500">

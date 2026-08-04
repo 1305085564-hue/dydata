@@ -347,7 +347,7 @@ export function CaseDetailDialog({
         <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4 backdrop-blur-md">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-[18px] font-medium leading-[1.5] text-zinc-900">
+              <DialogTitle className="text-[18px] font-semibold leading-[1.5] text-zinc-900">
                 话术详情
               </DialogTitle>
               <p className="mt-1 text-[12px] text-zinc-500">
@@ -795,7 +795,7 @@ function StatBlock({
       <p className="text-[12px] uppercase tracking-[0.18em] text-zinc-500">{label}</p>
       <p
         className={cn(
-          "mt-0.5 text-[18px] font-medium tabular-nums",
+          "mt-0.5 text-[18px] font-semibold tabular-nums",
           accent ? "text-[#D97757]" : "text-zinc-900",
         )}
       >

@@ -40,7 +40,7 @@ export function ErrorState({
         <span className="absolute inline-flex size-3 rounded-full bg-[#C9604D]/15" />
       </div>
       <div className="mt-2 space-y-1">
-        <p className="flex items-center justify-center gap-1.5 text-[18px] font-medium text-zinc-900">
+        <p className="flex items-center justify-center gap-1.5 text-[18px] font-semibold text-zinc-900">
           <AlertCircle className="size-4 stroke-[1.5] text-[#C9604D]" />
           {title}
         </p>

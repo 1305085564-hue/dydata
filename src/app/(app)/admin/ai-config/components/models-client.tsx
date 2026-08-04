@@ -458,7 +458,7 @@ export default function ModelsClient() {
                           <TableCell className="pl-2 font-mono">
                             <span
                               className={cn(
-                                "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-bold transition-transform duration-200",
+                                "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-medium transition-transform duration-200",
                                 isFirst
                                   ? "bg-[#D97757] text-white shadow-sm scale-105"
                                   : "bg-zinc-100 text-zinc-600 border border-zinc-200"

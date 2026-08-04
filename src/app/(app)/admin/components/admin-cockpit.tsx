@@ -335,7 +335,7 @@ function ReviewBatchCard({
             </h3>
             <span
               className={cn(
-                "text-[18px] font-medium leading-none tabular-nums",
+                "text-[18px] font-semibold leading-none tabular-nums",
                 totalAll === 0 ? "text-zinc-500" : "text-zinc-900",
               )}
             >
@@ -670,7 +670,7 @@ function MetricLinks({ metrics }: { metrics: QueueMetricSummary }) {
         >
           <span className="text-[12px] text-zinc-500">{it.hint}</span>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-[18px] font-medium tabular-nums text-zinc-900">
+            <span className="text-[18px] font-semibold tabular-nums text-zinc-900">
               {it.value}
             </span>
             <span className="text-[12px] text-zinc-500">{it.label}</span>

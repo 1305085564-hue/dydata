@@ -987,7 +987,7 @@ export function ContentDetailDialog({
         <SheetHeader className="gap-3 px-6 pt-6 pb-4">
           <div className="flex items-start justify-between pr-10">
             <div>
-              <SheetTitle className="text-[18px] font-medium tracking-tight">
+              <SheetTitle className="text-[18px] font-semibold tracking-tight">
                 {video?.video_title || "内容详情"}
               </SheetTitle>
               {video && (
@@ -1387,7 +1387,7 @@ export function ContentDetailDialog({
                           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
                           className="mt-3 space-y-4"
                         >
-                          <p className="text-[18px] font-medium leading-[1.6] text-zinc-900">
+                          <p className="text-[18px] font-semibold leading-[1.6] text-zinc-900">
                             {analysisResult.data_summary}
                           </p>
 

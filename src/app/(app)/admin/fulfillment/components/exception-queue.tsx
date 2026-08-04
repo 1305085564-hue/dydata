@@ -163,7 +163,7 @@ export function ExceptionQueue({
       {/* 标题 */}
       <div className="flex items-center gap-2">
         <AlertCircle className="size-4 text-[#D99E55]" />
-        <h2 className="text-[18px] font-medium text-zinc-900">
+        <h2 className="text-[18px] font-semibold text-zinc-900">
           待处理异常
           <span className="ml-1.5 text-[12px] tabular-nums text-zinc-500">
             {members.length}

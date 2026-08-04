@@ -224,13 +224,13 @@ export function VideoSubmitPanelV2({
                 <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-zinc-50 p-3 border border-zinc-100">
                   <div>
                     <span className="text-[12px] text-zinc-400">24h 播放量</span>
-                    <p className="text-[18px] font-bold text-zinc-900">
+                    <p className="text-[18px] font-semibold text-zinc-900">
                       {summary.playCount !== null ? summary.playCount.toLocaleString() : "0"}
                     </p>
                   </div>
                   <div>
                     <span className="text-[12px] text-zinc-400">完播率</span>
-                    <p className="text-[18px] font-bold text-zinc-900">
+                    <p className="text-[18px] font-semibold text-zinc-900">
                       {summary.completionRate || "0%"}
                     </p>
                   </div>

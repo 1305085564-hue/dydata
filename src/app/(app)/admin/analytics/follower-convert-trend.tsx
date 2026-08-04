@@ -101,7 +101,7 @@ export function FollowerConvertTrend({ reports }: FollowerConvertTrendProps) {
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-0.5">
-          <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">导粉趋势</h3>
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">导粉趋势</h3>
           <p className="text-[12px] text-zinc-500">按最近 {preset === "7d" ? "7" : "30"} 天查看团队导粉变化</p>
         </div>
         <div className="inline-flex w-fit rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">

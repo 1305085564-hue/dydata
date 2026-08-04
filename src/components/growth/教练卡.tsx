@@ -20,7 +20,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
       <div className="flex items-center gap-2.5">
         <Lightbulb className="h-5 w-5 stroke-[1.5] text-[#D99E55]" />
         <div>
-          <h3 className="text-[18px] font-medium leading-tight text-zinc-900">下一条视频 · 一个建议</h3>
+          <h3 className="text-[18px] font-semibold leading-tight text-zinc-900">下一条视频 · 一个建议</h3>
           <p className="mt-1 text-[12px] text-zinc-500">样本攒够之前不给诊断，只给团队验证过的写法。</p>
         </div>
       </div>

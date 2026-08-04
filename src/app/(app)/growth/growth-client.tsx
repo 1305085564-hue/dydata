@@ -165,7 +165,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-50 border border-zinc-200 text-zinc-500 mb-5">
             <Sparkles className="h-8 w-8 text-[#D97757]" />
           </div>
-          <h2 className="text-[18px] font-medium text-zinc-900 leading-[1.4]">
+          <h2 className="text-[18px] font-semibold text-zinc-900 leading-[1.4]">
             开启内容成长体检
           </h2>
           <p className="mt-3 text-[13px] text-zinc-500 leading-[1.6]">
@@ -259,7 +259,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       {/* 顶部身份栏与阶段标识 */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 pb-5">
         <div>
-          <h1 className="text-[24px] font-medium tracking-tight text-zinc-900 leading-none">
+          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900 leading-none">
             数据分析
           </h1>
           <p className="mt-2 text-[13px] text-zinc-500">
@@ -315,7 +315,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               <span className="text-[12px] font-medium text-zinc-500 uppercase tracking-widest">
                 VERDICT · 首屏体检焦点
               </span>
-              <h2 className="text-[24px] font-medium text-zinc-900 leading-[1.4]">
+              <h2 className="text-[24px] font-semibold text-zinc-900 leading-[1.4]">
                 你现在最该补的是「<span className="text-[#D97757]">{verdict.weakestDimension}</span>」
               </h2>
               {phase === "observation" ? (
@@ -363,7 +363,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <span className="text-[12px] font-medium uppercase tracking-widest text-zinc-500">
             体检暂停
           </span>
-          <h2 className="mt-2 text-[24px] font-medium text-zinc-900 leading-[1.4]">
+          <h2 className="mt-2 text-[24px] font-semibold text-zinc-900 leading-[1.4]">
             数据停在 {stage.lastReportDate ? 格式化为月日(stage.lastReportDate) : "很久以前"}，近 30 天没有新日报
           </h2>
           <p className="mt-2 text-[13px] text-zinc-500 leading-[1.6]">
@@ -452,7 +452,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <section className="grid gap-6 lg:grid-cols-[340px_1fr]">
         <div className="rounded-2xl border border-zinc-200 bg-white p-5">
           <div className="mb-4">
-            <h3 className="text-[18px] font-medium text-zinc-900 leading-tight">能力画像</h3>
+            <h3 className="text-[18px] font-semibold text-zinc-900 leading-tight">能力画像</h3>
             <p className="mt-1 text-[12px] text-zinc-500">
               {phase === "accumulation" ? "六维能力轮廓，随日报积累点亮。" : "看清六维能力相较于团队的相对表现。"}
             </p>
@@ -473,7 +473,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2.5 mb-4">
               <Users className="h-5 w-5 stroke-[1.5] text-[#5F82A8]" />
               <div>
-                <h4 className="text-[18px] font-medium text-zinc-900 leading-tight">同伴 · 追赶视角</h4>
+                <h4 className="text-[18px] font-semibold text-zinc-900 leading-tight">同伴 · 追赶视角</h4>
                 <p className="text-[12px] text-zinc-500 mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
               </div>
             </div>
@@ -495,7 +495,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2.5 mb-4">
               <Users className="h-5 w-5 text-[#5F82A8]" />
               <div>
-                <h4 className="text-[18px] font-medium text-zinc-900 leading-tight">该学谁 · 双人对比</h4>
+                <h4 className="text-[18px] font-semibold text-zinc-900 leading-tight">该学谁 · 双人对比</h4>
                 <p className="text-[12px] text-zinc-500 mt-1">对比同题材高表现同事，吸收实操经验。</p>
               </div>
             </div>
@@ -554,7 +554,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         ) : (
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-4">
             <div>
-              <h3 className="text-[18px] font-medium text-zinc-900 leading-tight">排行榜 · 全局排行</h3>
+              <h3 className="text-[18px] font-semibold text-zinc-900 leading-tight">排行榜 · 全局排行</h3>
               <p className="mt-1 text-[12px] text-zinc-500">团队已满 5 人，启用榜单形态。对比高表现同事，检验相对位置。</p>
             </div>
             {/* 榜单只有数字，补上"学他怎么写"的定性内容（旧页功能，避免榜单化后丢失） */}

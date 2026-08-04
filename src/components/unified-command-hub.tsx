@@ -430,7 +430,7 @@ export function UnifiedCommandHub({
                           待审申请
                         </div>
                         <div className="mt-1 flex items-baseline gap-2">
-                          <span className="text-[24px] font-medium tabular-nums text-zinc-900">
+                          <span className="text-[24px] font-semibold tabular-nums text-zinc-900">
                             {pendingApprovals.length}
                           </span>
                           <span className="text-[12px] font-medium text-zinc-500">

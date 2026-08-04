@@ -292,7 +292,7 @@ export function VideoDetailDialog({
             <section className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1">
-                  <div className="text-[18px] font-medium text-zinc-900">
+                  <div className="text-[18px] font-semibold text-zinc-900">
                     {video.video_title?.trim() || "未命名视频"}
                   </div>
                   <div className="text-[12px] text-zinc-500">

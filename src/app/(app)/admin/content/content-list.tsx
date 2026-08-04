@@ -1065,11 +1065,11 @@ export function ContentList({
                           {/* 排名 */}
                           <TableCell className="py-3 text-center text-[13px] tabular-nums text-zinc-500 w-12">
                             {filters.sortMode === "priority" && index === 0 ? (
-                              <span className="font-bold text-[#D99E55] text-[13px] drop-shadow-[0_1px_1px_rgba(217,158,85,0.15)]">1</span>
+                              <span className="font-medium text-[#D99E55] text-[13px] drop-shadow-[0_1px_1px_rgba(217,158,85,0.15)]">1</span>
                             ) : filters.sortMode === "priority" && index === 1 ? (
-                              <span className="font-bold text-zinc-800 text-[13px]">2</span>
+                              <span className="font-medium text-zinc-800 text-[13px]">2</span>
                             ) : filters.sortMode === "priority" && index === 2 ? (
-                              <span className="font-bold text-[#B87333] text-[13px]">3</span>
+                              <span className="font-medium text-[#B87333] text-[13px]">3</span>
                             ) : (
                               <span className="text-[12px] font-medium text-zinc-400 group-hover:text-zinc-700 transition-colors">{index + 1}</span>
                             )}

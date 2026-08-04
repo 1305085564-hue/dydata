@@ -10,7 +10,7 @@ export function 视频结论卡({ videos }: 视频结论卡Props) {
           <p className="text-[12px] tracking-[0.12em] text-zinc-500">
             Video Signals
           </p>
-          <h2 className="text-[18px] font-medium tracking-tight text-zinc-900">本周经营洞察</h2>
+          <h2 className="text-[18px] font-semibold tracking-tight text-zinc-900">本周经营洞察</h2>
           <p className="text-[13px] leading-[1.7] text-zinc-500">当前仓库里的旧版结论卡文件损坏，这里先保留稳定可用入口。</p>
         </div>
         <div className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] text-zinc-500">

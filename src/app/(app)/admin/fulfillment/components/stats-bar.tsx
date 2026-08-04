@@ -49,7 +49,7 @@ export function StatsBar({ stats }: StatsBarProps) {
             ) : null}
           </div>
           <div className="mt-4 flex items-baseline gap-2">
-            <span className={`text-[18px] font-medium tabular-nums tracking-tight leading-none ${
+            <span className={`text-[18px] font-semibold tabular-nums tracking-tight leading-none ${
               stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-zinc-900"
             }`}>
               {stats.consecutiveMissingMembers}

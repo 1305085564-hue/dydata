@@ -204,7 +204,7 @@ function TestsSummary({ caseItem, records }: { caseItem: DetailRow; records: Vio
       </div>
 
       <div>
-        <h3 className="text-[18px] font-medium text-zinc-900">同事追加测试</h3>
+        <h3 className="text-[18px] font-semibold text-zinc-900">同事追加测试</h3>
         <div className="mt-3 space-y-2">
           {records.length ? (
             records.map((record) => (
@@ -507,7 +507,7 @@ export async function DetailContainer({
           </div>
         </div>
 
-        <p className="mt-6 whitespace-pre-wrap text-[18px] font-medium leading-[1.6] text-zinc-900">
+        <p className="mt-6 whitespace-pre-wrap text-[18px] font-semibold leading-[1.6] text-zinc-900">
           {caseItem.script_text}
         </p>
 

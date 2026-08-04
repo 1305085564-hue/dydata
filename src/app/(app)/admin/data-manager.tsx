@@ -809,7 +809,7 @@ export function DataManager({
               <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-[18px] font-medium text-zinc-900">{group.profileName}</h3>
+                    <h3 className="text-[18px] font-semibold text-zinc-900">{group.profileName}</h3>
                     <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[12px] text-zinc-700">
                       {group.accountCount} 个账号
                     </Badge>
@@ -932,7 +932,7 @@ export function DataManager({
       <Dialog open={!!contentDialog} onOpenChange={() => setContentDialog(null)}>
         <DialogContent className="max-w-lg border-zinc-200">
           <DialogHeader>
-            <DialogTitle className="text-[18px] font-medium text-zinc-900">{contentDialog?.title}</DialogTitle>
+            <DialogTitle className="text-[18px] font-semibold text-zinc-900">{contentDialog?.title}</DialogTitle>
           </DialogHeader>
           <p className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700">
             {contentDialog?.content}

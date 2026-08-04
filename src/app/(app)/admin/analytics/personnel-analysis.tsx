@@ -192,7 +192,7 @@ export function PersonnelAnalysis({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
-          <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">{title}</h3>
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">{title}</h3>
           <p className="text-[13px] text-zinc-500">改为双列紧凑卡片后，桌面端能同时看到更多成员对比。</p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-zinc-50 shadow-sm p-1">
@@ -297,7 +297,7 @@ function PersonRankCard({
             <div className="flex items-end justify-between gap-2">
               <div>
                 <p className="text-[12px] tracking-[0.12em] text-zinc-500">均播对比</p>
-                <p className="mt-0.5 text-[18px] font-medium text-zinc-900 tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
+                <p className="mt-0.5 text-[18px] font-semibold text-zinc-900 tabular-nums tracking-tight">{formatPlayCountCompact(person.avgPlay)}</p>
               </div>
               <div className="text-right">
                 <p className="text-[12px] text-zinc-500">稳定性</p>

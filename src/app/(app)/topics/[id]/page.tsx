@@ -520,7 +520,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   {detail.topics.name}
                 </span>
               )}
-              <h1 className="text-[24px] font-bold text-zinc-900 leading-[1.33] tracking-tight">
+              <h1 className="text-[24px] font-semibold text-zinc-900 leading-[1.33] tracking-tight">
                 {detail.title}
               </h1>
             </div>
@@ -625,7 +625,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <User className="size-4 text-[#D97757]" />
-              <h2 className="text-[16px] font-bold text-zinc-900">
+              <h2 className="text-[16px] font-semibold text-zinc-900">
                 认领撞车动态
               </h2>
             </div>
@@ -690,7 +690,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Video className="size-4 text-[#5F82A8]" />
-              <h2 className="text-[16px] font-bold text-zinc-900">
+              <h2 className="text-[16px] font-semibold text-zinc-900">
                 已关联创作作品 ({worksTotal})
               </h2>
             </div>
@@ -750,7 +750,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                     {snap && (
                       <div className="text-right tabular-nums">
-                        <div className="font-bold text-zinc-900">
+                        <div className="font-semibold text-zinc-900">
                           {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount.toLocaleString()} 播放
                         </div>
                         <div className="text-[11px] text-zinc-500">{likesCount.toLocaleString()} 点赞</div>
@@ -826,7 +826,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-lg p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-zinc-900 text-[16px] font-bold">编辑选题</DialogTitle>
+            <DialogTitle className="text-zinc-900 text-[16px] font-semibold">编辑选题</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
             <div className="space-y-1">
@@ -878,7 +878,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md p-5 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-zinc-900 text-[15px] font-bold flex items-center gap-2">
+            <DialogTitle className="text-zinc-900 text-[15px] font-semibold flex items-center gap-2">
               <AlertTriangle className="size-4 text-[#C9604D]" />
               <span>删除选题确认</span>
             </DialogTitle>

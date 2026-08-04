@@ -128,7 +128,7 @@ export function StepConversionData({ data, onChange }: StepConversionDataProps) 
           </p>
           <p className="mt-2 flex items-baseline gap-1 leading-none tabular-nums">
             {conversionRate === null ? (
-              <span className="text-[18px] font-medium text-zinc-500">—</span>
+              <span className="text-[18px] font-semibold text-zinc-500">—</span>
             ) : (
               <>
                 <MotionNumber

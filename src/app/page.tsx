@@ -25,7 +25,7 @@ export default function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D97757]">
               <Zap className="size-4 fill-white text-white" />
             </div>
-            <span className="text-[18px] font-medium tracking-tight text-zinc-900">
+            <span className="text-[18px] font-semibold tracking-tight text-zinc-900">
               DYData
             </span>
             <span className="text-[12px] font-normal uppercase tracking-[0.25em] text-zinc-500">
@@ -39,7 +39,7 @@ export default function HomePage() {
           {/* Left */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h1 className="text-[24px] font-medium leading-tight tracking-tight text-zinc-900">
+              <h1 className="text-[24px] font-semibold leading-tight tracking-tight text-zinc-900">
                 抖音数据日报平台
               </h1>
               <p className="max-w-lg text-[13px] leading-[1.7] text-zinc-700">
@@ -132,7 +132,7 @@ export default function HomePage() {
         {/* Features */}
         <section className="border-t border-zinc-200 py-24 2xl:py-28">
           <div className="mb-16 space-y-4 text-center">
-            <h2 className="text-[24px] font-medium text-zinc-900">
+            <h2 className="text-[24px] font-semibold text-zinc-900">
               一套系统，覆盖内容团队全链路
             </h2>
             <div className="mx-auto h-1 w-12 rounded-full bg-[#D97757]" />
@@ -144,7 +144,7 @@ export default function HomePage() {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-[#D97757]">
                 <FileText className="size-6 stroke-[1.5]" />
               </div>
-              <h3 className="text-[18px] font-medium text-zinc-900">日报填报</h3>
+              <h3 className="text-[18px] font-semibold text-zinc-900">日报填报</h3>
               <p className="mt-3 text-[13px] leading-[1.7] text-zinc-700">
                 每日数据一键提交，多账号统一管理，再也不漏报。支持自定义填报字段与自动提醒。
               </p>
@@ -155,7 +155,7 @@ export default function HomePage() {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-[#D97757]">
                 <PieChart className="size-6 stroke-[1.5]" />
               </div>
-              <h3 className="text-[18px] font-medium text-zinc-900">经营分析</h3>
+              <h3 className="text-[18px] font-semibold text-zinc-900">经营分析</h3>
               <p className="mt-3 text-[13px] leading-[1.7] text-zinc-700">
                 实时看板、趋势图、排行榜，数据驱动决策。多维度对比分析，一眼洞察核心增长点。
               </p>
@@ -166,7 +166,7 @@ export default function HomePage() {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-[#D97757]">
                 <Clock className="size-6 stroke-[1.5]" />
               </div>
-              <h3 className="text-[18px] font-medium text-zinc-900">AI 助手</h3>
+              <h3 className="text-[18px] font-semibold text-zinc-900">AI 助手</h3>
               <p className="mt-3 text-[13px] leading-[1.7] text-zinc-700">
                 智能文案改写、违规检测、内容方向建议。基于行业大数据的 AI 指导，让创作更精准。
               </p>

@@ -25,7 +25,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
             <span className="text-[12px] font-medium uppercase tracking-widest text-zinc-500">
               成长进度 · 累积期
             </span>
-            <h2 className="text-[24px] font-medium leading-[1.4] text-zinc-900">
+            <h2 className="text-[24px] font-semibold leading-[1.4] text-zinc-900">
               再积累 {remaining} 份日报，解锁你的第一份完整体检
             </h2>
           </div>

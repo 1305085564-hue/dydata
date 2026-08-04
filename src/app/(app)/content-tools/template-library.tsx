@@ -146,7 +146,7 @@ export function TemplateLibrary({ accounts }: TemplateLibraryProps) {
             data.categories.map((category) => (
               <div key={category.category} className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-[18px] font-medium text-zinc-900">{category.category}</h3>
+                  <h3 className="text-[18px] font-semibold text-zinc-900">{category.category}</h3>
                   <div className="text-[12px] text-zinc-500">模板 {category.templates.length} 个</div>
                 </div>
                 <div className="grid gap-4 xl:grid-cols-2">

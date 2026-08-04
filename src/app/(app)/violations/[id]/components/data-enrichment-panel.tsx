@@ -146,7 +146,7 @@ export function DataEnrichmentPanel({
       <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileCheck className="size-4.5 text-[#D97757]" />
-          <h2 className="text-[18px] font-medium text-zinc-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
+          <h2 className="text-[18px] font-semibold text-zinc-900">黄金知识沉淀台 (Data Enrichment Desk)</h2>
         </div>
         <button onClick={onClose} aria-label="关闭知识沉淀台" className="rounded-lg p-1 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700">
           <X className="size-4" />

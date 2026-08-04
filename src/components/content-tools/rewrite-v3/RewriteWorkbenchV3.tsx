@@ -171,7 +171,7 @@ export function RewriteWorkbenchV3() {
       <div className="flex h-full w-full items-center justify-center bg-zinc-50">
         <div className="max-w-md bg-white border border-zinc-200 p-6 rounded-lg shadow-xl space-y-4">
           <div className="text-[12px] font-medium uppercase tracking-[0.2em] text-rose-500">初始化异常</div>
-          <h3 className="text-[18px] font-medium text-zinc-900">{state.errorState.title}</h3>
+          <h3 className="text-[18px] font-semibold text-zinc-900">{state.errorState.title}</h3>
           <p className="text-[13px] text-zinc-500 leading-relaxed">{state.errorState.message}</p>
           <button
             onClick={() => window.location.reload()}

@@ -291,7 +291,7 @@ export function ReviewDecisionPanel({
     <section className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
       <header className="flex items-center gap-2">
         <span className="size-1.5 rounded-full bg-[#D97757]" />
-        <h2 className="text-[18px] font-medium leading-[1.6] text-zinc-900">审核决策</h2>
+        <h2 className="text-[18px] font-semibold leading-[1.6] text-zinc-900">审核决策</h2>
         <span className="text-[12px] text-zinc-500">
           {initialStatus === "submitted"
             ? "员工等你判断能否纳入知识库"

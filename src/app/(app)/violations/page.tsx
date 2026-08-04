@@ -84,7 +84,7 @@ export default async function ViolationsPage({
             <p className="text-[12px] font-normal uppercase tracking-[0.25em] text-zinc-500">
               避坑案例
             </p>
-            <h1 className="mt-2 text-[24px] font-medium leading-[1.33] tracking-tight text-zinc-900">
+            <h1 className="mt-2 text-[24px] font-semibold leading-[1.33] tracking-tight text-zinc-900">
               {isManageView ? "审核工作台" : "找话术 · 看避坑"}
             </h1>
             <div className="mt-2 max-w-2xl text-[13px] leading-[1.7] text-zinc-500">

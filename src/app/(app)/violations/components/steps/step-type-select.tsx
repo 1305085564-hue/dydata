@@ -42,7 +42,7 @@ export function StepTypeSelect({ value, onPick }: StepTypeSelectProps) {
         <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">
           起步
         </p>
-        <h2 className="text-[18px] font-medium leading-tight text-zinc-900">
+        <h2 className="text-[18px] font-semibold leading-tight text-zinc-900">
           先告诉我们这一条的来由
         </h2>
         <p className="text-[12px] leading-[1.7] text-zinc-500">

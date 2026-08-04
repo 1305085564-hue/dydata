@@ -188,7 +188,7 @@ function DashboardFormInner({
                     </DialogTrigger>
                     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
                       <DialogHeader>
-                        <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-700">截图识别导入</DialogTitle>
+                        <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-700">截图识别导入</DialogTitle>
                         <DialogDescription className="text-[13px] leading-[1.7] text-zinc-500">
                           支持 jpg、png、webp。识别结果可以逐项修改，确认后才会写回主表单。
                         </DialogDescription>
@@ -321,7 +321,7 @@ function DashboardFormInner({
                         min={0}
                         placeholder="32100"
                         required
-                        className="h-12 rounded-xl border-zinc-200 bg-zinc-50 text-[18px] font-medium text-zinc-900"
+                        className="h-12 rounded-xl border-zinc-200 bg-zinc-50 text-[18px] font-semibold text-zinc-900"
                         value={ocrValues.play_count}
                         onChange={(e) => updateOcrValue("play_count", e.target.value)}
                       />
@@ -334,7 +334,7 @@ function DashboardFormInner({
                         type="number"
                         min={0}
                         required
-                        className="h-12 rounded-xl border-zinc-200 bg-zinc-50 text-[18px] font-medium text-zinc-900"
+                        className="h-12 rounded-xl border-zinc-200 bg-zinc-50 text-[18px] font-semibold text-zinc-900"
                         value={ocrValues.follower_gain}
                         onChange={(e) => updateOcrValue("follower_gain", e.target.value)}
                       />

@@ -249,37 +249,37 @@ export function MemberDrawer({
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">应发天数</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-900">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-900">
                     {member.totalDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">实发天数</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#6FAA7D]">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#6FAA7D]">
                     {member.publishedDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">发布率</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-900">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-900">
                     {member.fulfillmentRate}%
                   </p>
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">请假</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#5F82A8]">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#5F82A8]">
                     {member.leaveDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">豁免</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#5F82A8]">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#5F82A8]">
                     {member.waivedDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">缺勤</p>
-                  <p className="mt-1 text-[18px] font-medium tabular-nums text-[#C9604D]">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#C9604D]">
                     {member.absentDays}
                   </p>
                 </div>

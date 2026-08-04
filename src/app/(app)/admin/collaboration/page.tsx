@@ -46,7 +46,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
       <div className="space-y-4">
         <div>
           <p className="text-[12px] tracking-[0.12em] text-zinc-500">协作管理</p>
-          <h1 className="mt-1 text-[24px] font-medium tracking-tight text-zinc-900">协作管理</h1>
+          <h1 className="mt-1 text-[24px] font-semibold tracking-tight text-zinc-900">协作管理</h1>
         </div>
         <Suspense
           key={`${year}-${month}-${tab}`}

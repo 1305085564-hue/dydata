@@ -80,7 +80,7 @@ function PreviewShell({
         )}
       >
         <DialogHeader className="px-5 pb-3 pt-5">
-          <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-900">
+          <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-900">
             {title}
           </DialogTitle>
           {subtitle ? (
@@ -201,13 +201,13 @@ export function VideoPreviewDialog({
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-md border border-zinc-100 bg-zinc-50 px-4 py-3">
           <p className="text-[12px] text-zinc-500">本条 24h 播放</p>
-          <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-900">
+          <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-900">
             {(row.current_play_count ?? 0).toLocaleString()}
           </p>
         </div>
         <div className="rounded-md border border-zinc-100 bg-zinc-50 px-4 py-3">
           <p className="text-[12px] text-zinc-500">上一条 24h 播放</p>
-          <p className="mt-1 text-[18px] font-medium tabular-nums text-zinc-900">
+          <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-900">
             {(row.previous_play_count ?? 0).toLocaleString()}
           </p>
         </div>

@@ -814,7 +814,7 @@ export function ContentDiagnosisWorkbench({
               <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-1.5 text-[#5F82A8]">
                   <History className="size-4" />
-                  <span className="text-[11.5px] font-bold tracking-wider uppercase">上次复盘诊断对比</span>
+                  <span className="text-[11.5px] font-medium tracking-wider uppercase">上次复盘诊断对比</span>
                 </div>
                 <button
                   onClick={() => setShowPreviousFeedback(false)}
@@ -826,7 +826,7 @@ export function ContentDiagnosisWorkbench({
               <div className="space-y-2.5 text-[12px] text-zinc-700">
                 <div>
                   <span className="text-[11px] text-zinc-450 block">上次核心问题：</span>
-                  <p className="font-bold text-zinc-850 text-[12.5px]">{previousFeedback.previous.one_line}</p>
+                  <p className="font-medium text-zinc-850 text-[12.5px]">{previousFeedback.previous.one_line}</p>
                 </div>
                 {previousFeedback.previous.message_for_member && (
                   <div>
@@ -860,7 +860,7 @@ export function ContentDiagnosisWorkbench({
 
           {scriptSegments.length > 0 && (
             <div className="space-y-3">
-              <h3 className="flex items-center justify-between text-[11.5px] font-bold tracking-wider text-zinc-400">
+              <h3 className="flex items-center justify-between text-[11.5px] font-medium tracking-wider text-zinc-400">
                 <span>分段台词脚本 (点击句子引用)</span>
                 {video?.video_url && (
                   <a
@@ -926,7 +926,7 @@ export function ContentDiagnosisWorkbench({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-[#D97757]">
                   <Sparkles className="size-4 animate-pulse" />
-                  <span className="text-[11.5px] font-bold tracking-wider">AI 辅助诊断思路</span>
+                  <span className="text-[11.5px] font-medium tracking-wider">AI 辅助诊断思路</span>
                 </div>
                 <button
                   onClick={() => setAnalysisResult(null)}
@@ -994,7 +994,7 @@ export function ContentDiagnosisWorkbench({
 
           <div className="space-y-4 pt-1">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11.5px] font-bold tracking-wider text-zinc-400">
+              <h3 className="text-[11.5px] font-medium tracking-wider text-zinc-400">
                 四、诊断反馈下发
               </h3>
               <div className="text-[11px] text-zinc-400 min-h-5 flex items-center gap-1">
@@ -1198,13 +1198,13 @@ export function ContentDiagnosisWorkbench({
 
             {/* 科技杂志级混排文本 - 像素级水平对齐版 */}
             <div className="flex items-center gap-1.5 select-none leading-none">
-              <span className="text-[11px] font-bold tracking-wider text-zinc-400">
+              <span className="text-[11px] font-medium tracking-wider text-zinc-400">
                 诊断
               </span>
-              <span className="text-[13px] font-extrabold text-[#D97757] tabular-nums">
+              <span className="text-[13px] font-semibold text-[#D97757] tabular-nums">
                 {currentIndex + 1}
               </span>
-              <span className="text-[13px] text-zinc-300 font-light">/</span>
+              <span className="text-[13px] text-zinc-300 font-normal">/</span>
               <span className="text-[13px] font-semibold text-zinc-500 tabular-nums">
                 {anomalyVideos.length}
               </span>
@@ -1263,7 +1263,7 @@ function CompareMetricCard({
         )}
       </div>
       <div className="flex items-baseline justify-between gap-1">
-        <span className="text-[18px] font-bold tabular-nums text-zinc-900 leading-tight">
+        <span className="text-[18px] font-semibold tabular-nums text-zinc-900 leading-tight">
           {current != null ? formatter(current) : "缺数据"}
         </span>
         <span className="text-[11px] text-zinc-400 tabular-nums">
@@ -1335,9 +1335,9 @@ function AttributionFindingRow({
     <div className="flex items-start gap-4 border-b border-zinc-200/50 last:border-b-0 py-4 px-1 text-left bg-transparent transition-colors">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap leading-none">
-          <span className="text-[12.5px] font-bold text-zinc-850">{finding.metric_label}</span>
+          <span className="text-[12.5px] font-medium text-zinc-850">{finding.metric_label}</span>
           <div className="flex items-center leading-none">
-            <span className="text-[13.5px] font-extrabold text-zinc-800 tabular-nums">
+            <span className="text-[13.5px] font-semibold text-zinc-800 tabular-nums">
               {finding.value != null ? finding.value.toFixed(1) : "-"}
               {RATE_METRICS.has(finding.metric) && finding.value != null ? "%" : ""}
             </span>
@@ -1346,7 +1346,7 @@ function AttributionFindingRow({
               {RATE_METRICS.has(finding.metric) && finding.ref_value != null ? "%" : ""}
             </span>
             {finding.delta != null && finding.delta !== 0 && (
-              <span className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-md ml-2 tabular-nums border ${
+              <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-md ml-2 tabular-nums border ${
                 finding.delta > 0
                   ? "bg-[#6FAA7D]/6 border-[#6FAA7D]/20 text-[#6FAA7D]"
                   : "bg-[#C9604D]/6 border-[#C9604D]/20 text-[#C9604D]"

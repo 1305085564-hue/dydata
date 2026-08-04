@@ -142,7 +142,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
             <div className="rounded-2xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-[18px] font-medium text-zinc-900">爆款依据</div>
+                  <div className="text-[18px] font-semibold text-zinc-900">爆款依据</div>
                   <div className="mt-1 text-[12px] text-zinc-500">
                     样本 {data.sampleCount} 条 · 热点日期 {data.marketDate ?? "暂无"}
                   </div>
@@ -161,7 +161,7 @@ export function TopicSuggest({ accounts }: TopicSuggestProps) {
               </div>
             </div>
             <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-              <div className="text-[18px] font-medium text-zinc-900">使用建议</div>
+              <div className="text-[18px] font-semibold text-zinc-900">使用建议</div>
               <ul className="mt-3 space-y-2 text-[13px] leading-[1.7] text-zinc-500">
                 <li>• 优先挑 1 个热点题材 + 1 个历史高胜率角度组合。</li>
                 <li>• 参考视频只抄结构，不直接复刻标题或原句。</li>

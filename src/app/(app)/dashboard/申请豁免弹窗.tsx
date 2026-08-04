@@ -197,7 +197,7 @@ function ExemptionModal({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white/98 p-0 shadow-2xl backdrop-blur-xl sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader className="px-6 pb-2 pt-6">
-            <DialogTitle className="text-[18px] font-medium tracking-tight text-zinc-800">
+            <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">
               申请请假或豁免
             </DialogTitle>
           </DialogHeader>

@@ -55,7 +55,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
-          <h3 className="text-[18px] font-medium tracking-tight text-zinc-900">AI 结构化洞察</h3>
+          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">AI 结构化洞察</h3>
           <p className="text-[13px] leading-[1.7] text-zinc-500">基于业务数据自动生成的分析结论与建议行动。</p>
         </div>
 
@@ -146,7 +146,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     <div>
                       <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#6FAA7D]">最佳验证方向</h4>
                       <div className="flex items-center gap-2">
-                        <span className="text-[18px] font-medium tracking-tight text-zinc-900">{insight.best_direction.tag}</span>
+                        <span className="text-[18px] font-semibold tracking-tight text-zinc-900">{insight.best_direction.tag}</span>
                       </div>
                     </div>
 
@@ -177,7 +177,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     <div>
                       <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#C9604D]">需规避方向</h4>
                       <div className="flex items-center gap-2">
-                        <span className="text-[18px] font-medium tracking-tight text-zinc-900">{insight.worst_direction.tag}</span>
+                        <span className="text-[18px] font-semibold tracking-tight text-zinc-900">{insight.worst_direction.tag}</span>
                       </div>
                     </div>
 
@@ -207,7 +207,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     </div>
                     <div>
                       <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-zinc-500">下期核心战役</h4>
-                      <p className="text-[18px] font-medium leading-[1.7] text-zinc-900">{insight.next_period_focus}</p>
+                      <p className="text-[18px] font-semibold leading-[1.7] text-zinc-900">{insight.next_period_focus}</p>
                     </div>
                   </div>
 
@@ -265,7 +265,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
             <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
               <Sparkles className="size-8 stroke-[1.5] text-zinc-500" />
             </div>
-            <h3 className="mb-2 text-[18px] font-medium text-zinc-900">准备好挖掘数据价值了吗？</h3>
+            <h3 className="mb-2 text-[18px] font-semibold text-zinc-900">准备好挖掘数据价值了吗？</h3>
             <p className="text-[13px] text-zinc-500 leading-[1.7] max-w-md mx-auto">
               基于您选择的分析周期，AI 将深度挖掘爆款特征、分析滑铁卢原因，并为您提取下期可执行的焦点策略。
             </p>
