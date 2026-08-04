@@ -112,7 +112,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
         <div className="flex items-center justify-between mb-4">
           <div className="h-6 w-48 bg-zinc-200 rounded-md animate-pulse" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3].map((item) => (
             <div key={item} className="h-56 bg-zinc-100 rounded-xl border border-zinc-200 p-5 animate-pulse" />
           ))}
@@ -156,7 +156,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {(data?.focusTopics ?? []).map((item) => (
             <FocusCard key={item.id} item={item} claimingId={claimingId} onClaim={handleClaim} onSelectTopic={onSelectTopic} />
           ))}
