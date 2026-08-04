@@ -269,7 +269,7 @@ export function TopicHubV2() {
     <div className="min-h-screen bg-zinc-50 text-zinc-800 p-4 sm:p-6 lg:p-8 font-sans antialiased">
       {/* Toast 轻提示 (z-[70] 层级高于所有抽屉弹窗) */}
       {toastMsg && (
-        <div className="fixed top-5 right-5 z-[70] animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div
             className={`px-4 py-2.5 rounded-xl shadow-xl backdrop-blur-xl text-xs font-medium flex items-center gap-2 ${
               toastMsg.type === "error"
@@ -317,7 +317,7 @@ export function TopicHubV2() {
               <span>/</span>
               <span className="text-[#5F82A8] font-semibold">选题指挥舱 Topic Hub V2</span>
             </div>
-            <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">
+            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
               爆款选题指挥舱
             </h1>
           </div>

@@ -66,7 +66,7 @@ function FocusCard({
           </div>
           <div>
             <div className="text-zinc-500 text-xs font-normal">最高播放</div>
-            <div className="font-semibold tabular-nums text-emerald-600 text-sm mt-0.5">{formatPlayCount(item.summary.bestPlayCount)}</div>
+            <div className="font-semibold tabular-nums text-zinc-900 text-sm mt-0.5">{formatPlayCount(item.summary.bestPlayCount)}</div>
           </div>
         </div>
       </div>
@@ -76,7 +76,7 @@ function FocusCard({
           {item.summary.qualifiedWorkCount} 条成片 · {formatDate(item.latestWorkedAt)}
         </span>
         {isScripting ? (
-          <span className="px-2.5 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-xs font-medium shrink-0">脚本中</span>
+          <span className="px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-700 border border-zinc-200/80 text-xs font-medium shrink-0">脚本中</span>
         ) : (
           <button
             type="button"
@@ -152,8 +152,22 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
           </button>
         </div>
       ) : data?.focusTopics.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-8 text-center">
-          <p className="text-sm text-zinc-500 font-normal">暂无满足条件的近期聚焦选题</p>
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-8 text-center shadow-xs">
+          <div className="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-semibold text-zinc-800 mb-1">暂无匹配的近期聚焦选题</h3>
+          <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-4 font-normal leading-relaxed">
+            近期未检测到高均播或久未重做的异常强信号。您可浏览下方选题大盘全量库或手动刷新最新信号。
+          </p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>刷新最新信号</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

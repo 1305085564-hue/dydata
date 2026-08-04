@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   ExternalLink,
@@ -35,6 +36,7 @@ export function TopicWorkBreakdownDrawer({
   onReturnClaim,
 }: TopicWorkBreakdownDrawerProps) {
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [subTopicInfo, setSubTopicInfo] = useState<SubTopicItem | null>(null);
   const [worksData, setWorksData] = useState<TopicWorksResponse | null>(null);
   const [claimsData, setClaimsData] = useState<TopicClaimsDetailResponse | null>(null);
@@ -46,15 +48,41 @@ export function TopicWorkBreakdownDrawer({
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    const targetEl = previousActiveElement.current;
+    onClose();
+    if (targetEl && typeof targetEl.focus === "function") {
+      window.setTimeout(() => {
+        try {
+          targetEl.focus();
+        } catch {
+          // ignore
+        }
+      }, 50);
+    }
+  }, [onClose]);
+
   // Focus Management & Esc Key Support
   useEffect(() => {
     if (subTopicId) {
       previousActiveElement.current = document.activeElement as HTMLElement | null;
-      closeBtnRef.current?.focus();
+      try {
+        closeBtnRef.current?.focus();
+      } catch {
+        // ignore
+      }
     }
     return () => {
       if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
-        previousActiveElement.current.focus();
+        try {
+          previousActiveElement.current.focus();
+        } catch {
+          // ignore
+        }
       }
     };
   }, [subTopicId]);
@@ -62,12 +90,12 @@ export function TopicWorkBreakdownDrawer({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && subTopicId) {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [subTopicId, onClose]);
+  }, [subTopicId, handleClose]);
 
   const loadData = useCallback(async () => {
     if (!subTopicId) return;
@@ -135,7 +163,7 @@ export function TopicWorkBreakdownDrawer({
     if (subTopicId) void loadData();
   }, [loadData, subTopicId]);
 
-  if (!subTopicId) return null;
+  if (!subTopicId || !mounted || typeof window === "undefined" || !document?.body) return null;
 
   const claim =
     subTopicInfo?.myClaim && (subTopicInfo.myClaim.status === "candidate" || subTopicInfo.myClaim.status === "scripting")
@@ -154,30 +182,37 @@ export function TopicWorkBreakdownDrawer({
       : null
   );
 
-  const runAction = async (handler: (id: string) => Promise<void>) => {
+  const handleAction = async () => {
+    if (!action.canExecute || submitting) return;
     try {
       setSubmitting(true);
-      await handler(subTopicId);
+      if (action.actionType === "claim") {
+        await onClaim(subTopicId);
+      } else if (action.actionType === "start_scripting") {
+        await onStartScripting(subTopicId);
+      } else if (action.actionType === "return_claim") {
+        await onReturnClaim(subTopicId);
+      }
       await loadData();
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
+  return createPortal(
     <>
-      {/* 遮罩：z-[60] */}
+      {/* 遮罩：z-[75] 脱离局部 context 提升到最高 body */}
       <div
-        className="fixed inset-0 bg-zinc-950/20 backdrop-blur-xs z-[60] transition-opacity"
-        onClick={onClose}
+        className="fixed inset-0 bg-zinc-950/20 backdrop-blur-xs z-[75] transition-opacity"
+        onClick={handleClose}
         aria-hidden="true"
       />
-      {/* 抽屉面板：z-[61] */}
+      {/* 抽屉面板：z-[80] 并通过 top-[var(--app-top-offset,57px)] 完美避开顶栏导航遮挡 */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed inset-y-0 right-0 z-[61] w-full max-w-xl bg-white/95 backdrop-blur-xl border-l border-zinc-200 shadow-2xl p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,57px)] bottom-0 right-0 z-[80] w-full max-w-xl bg-white/95 backdrop-blur-xl border-l border-zinc-200 shadow-2xl p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
       >
         <div>
           <div className="flex items-start justify-between pb-4 border-b border-zinc-100 mb-4 pt-1">
@@ -191,14 +226,14 @@ export function TopicWorkBreakdownDrawer({
                   </span>
                 )}
               </div>
-              <h3 id="drawer-title" className="text-lg font-bold text-zinc-900 leading-snug">
+              <h3 id="drawer-title" className="text-lg font-semibold text-zinc-900 leading-snug">
                 {subTopicInfo?.title || "子题详情"}
               </h3>
             </div>
             <button
               ref={closeBtnRef}
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 active:scale-[0.97] transition-all shrink-0"
               title="关闭详情"
               aria-label="关闭详情"
@@ -265,7 +300,7 @@ export function TopicWorkBreakdownDrawer({
                           <span
                             className={
                               item.status === "scripting"
-                                ? "bg-amber-100 text-amber-900 font-medium px-2 py-0.5 rounded text-xs"
+                                ? "bg-zinc-100 text-zinc-700 font-medium px-2 py-0.5 rounded text-xs"
                                 : "bg-zinc-200/70 text-zinc-700 font-normal px-2 py-0.5 rounded text-xs"
                             }
                           >
@@ -351,22 +386,22 @@ export function TopicWorkBreakdownDrawer({
         <div className="pt-4 mt-6 border-t border-zinc-200 space-y-2">
           <div className="flex items-center gap-2">
             {!action.canClaim && action.label === "脚本中" ? (
-              <span className="flex-1 py-2 text-center rounded-lg border border-amber-200 bg-amber-50 text-amber-900 font-medium text-xs">
+              <span className="flex-1 py-2 text-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-700 font-medium text-xs">
                 脚本撰写中
               </span>
             ) : action.canStartScripting ? (
               <button
                 type="button"
-                onClick={() => void runAction(onStartScripting)}
+                onClick={() => void handleAction()}
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 active:scale-[0.97] text-amber-900 font-medium text-xs transition-all disabled:opacity-50"
+                className="flex-1 py-2 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 active:scale-[0.97] text-zinc-700 font-medium text-xs transition-all disabled:opacity-50"
               >
                 开始写脚本
               </button>
             ) : action.canClaim ? (
               <button
                 type="button"
-                onClick={() => void runAction(onClaim)}
+                onClick={() => void handleAction()}
                 disabled={submitting}
                 className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
               >
@@ -376,7 +411,7 @@ export function TopicWorkBreakdownDrawer({
             {action.canReturn && (
               <button
                 type="button"
-                onClick={() => void runAction(onReturnClaim)}
+                onClick={() => void handleAction()}
                 disabled={submitting}
                 className="px-4 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 active:scale-[0.97] text-zinc-700 font-medium text-xs transition-all disabled:opacity-50"
               >
@@ -393,7 +428,8 @@ export function TopicWorkBreakdownDrawer({
           </a>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -401,7 +437,7 @@ function Metric({ label, value, accent = false }: { label: string; value: string
   return (
     <div>
       <div className="text-xs text-zinc-500 font-normal">{label}</div>
-      <div className={`font-semibold text-sm mt-0.5 tabular-nums ${accent ? "text-emerald-600" : "text-zinc-800"}`}>
+      <div className={`font-semibold text-sm mt-0.5 tabular-nums ${accent ? "text-[#D97757]" : "text-zinc-800"}`}>
         {value}
       </div>
     </div>

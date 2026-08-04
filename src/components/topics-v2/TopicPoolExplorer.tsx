@@ -419,7 +419,7 @@ export function TopicPoolExplorer({
                       type="button"
                       disabled={operatingId === sub.id}
                       onClick={(e) => handleClaim(e, sub.id)}
-                      className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-900 text-zinc-700 text-xs font-medium transition-colors shrink-0"
+                      className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-900 text-zinc-700 text-xs font-medium opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all shrink-0"
                       aria-label="认领写此题"
                     >
                       认领
@@ -453,7 +453,7 @@ export function TopicPoolExplorer({
                   <tr
                     key={sub.id}
                     onClick={() => onSelectTopic(sub.id)}
-                    className="hover:bg-zinc-50/80 transition-colors cursor-pointer"
+                    className="group hover:bg-zinc-50/80 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-3 max-w-xs">
                       <div className="font-semibold text-zinc-900 truncate hover:text-[#D97757]">
@@ -503,7 +503,7 @@ export function TopicPoolExplorer({
                           type="button"
                           disabled={operatingId === sub.id}
                           onClick={(e) => handleClaim(e, sub.id)}
-                          className="px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium transition-colors"
+                          className="px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all"
                           aria-label="认领"
                         >
                           认领

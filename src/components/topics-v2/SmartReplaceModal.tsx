@@ -94,9 +94,9 @@ export function SmartReplaceModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="replace-modal-title"
-          className="w-full max-w-lg bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-150"
+          className="w-full max-w-lg max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-150"
         >
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100 shrink-0">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs">
                 <AlertTriangle className="w-3.5 h-3.5" />
@@ -117,7 +117,7 @@ export function SmartReplaceModal({
             </button>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 shrink-0">
             <p className="text-xs text-zinc-500 mb-2 font-normal">
               即将认领新选题：<span className="font-semibold text-zinc-900">《{targetTopic.title}》</span>
             </p>
@@ -126,14 +126,14 @@ export function SmartReplaceModal({
             </div>
           </div>
 
-          {error && <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-normal">{error}</div>}
+          {error && <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-normal shrink-0">{error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="text-xs font-normal text-zinc-600 mb-1">
+          <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
+            <div className="text-xs font-normal text-zinc-600 shrink-0">
               请选择要被替换放回的选题：
             </div>
 
-            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+            <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
               {candidateClaims.map((claim) => {
                 const sub = claim.subTopic;
                 const isSelected = selectedReturnId === claim.subTopicId;
