@@ -40,7 +40,7 @@ function FocusCard({
   return (
     <div
       onClick={() => onSelectTopic(item.id)}
-      className="group relative bg-white border border-zinc-200 rounded-xl p-3.5 shadow-xs hover:shadow-md hover:border-zinc-300 transition-all duration-200 cursor-pointer flex flex-col justify-between"
+      className="group relative bg-white border border-zinc-200 rounded-xl p-4.5 shadow-xs hover:shadow-md hover:border-zinc-300 transition-all duration-200 cursor-pointer flex flex-col justify-between"
     >
       <div>
         {/* 保持最干净的顶栏：仅母题/分组与情绪标签，不加任何额外新标签 */}
@@ -54,12 +54,12 @@ function FocusCard({
         <h3 className="text-base font-semibold text-zinc-900 group-hover:text-[#D97757] transition-colors duration-150 line-clamp-2 mb-1.5">
           {item.title}
         </h3>
-        <p className="text-xs text-zinc-500 line-clamp-1 mb-2.5 leading-relaxed font-normal">
+        <p className="text-xs text-zinc-500 line-clamp-2 mb-4 leading-relaxed font-normal">
           "{item.hook || "暂无 Hook"}"
         </p>
 
         {/* 仅保留唯一的【数据指标网格】，彻底剔除重复的推荐信号框与额外新标签 */}
-        <div className="grid grid-cols-2 gap-1.5 bg-zinc-50 rounded-lg px-2 py-1.5 mb-3 border border-zinc-100 text-xs">
+        <div className="grid grid-cols-2 gap-2 bg-zinc-50 rounded-lg p-2.5 mb-4 border border-zinc-100 text-xs">
           <div>
             <div className="text-zinc-500 text-xs font-normal">合格作品均播</div>
             <div className="font-semibold tabular-nums text-zinc-800 text-sm mt-0.5">{formatPlayCount(item.summary.averagePlayCount)}</div>
@@ -112,7 +112,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
         <div className="flex items-center justify-between mb-4">
           <div className="h-6 w-48 bg-zinc-200 rounded-md animate-pulse" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((item) => (
             <div key={item} className="h-56 bg-zinc-100 rounded-xl border border-zinc-200 p-5 animate-pulse" />
           ))}
@@ -156,7 +156,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(data?.focusTopics ?? []).map((item) => (
             <FocusCard key={item.id} item={item} claimingId={claimingId} onClaim={handleClaim} onSelectTopic={onSelectTopic} />
           ))}

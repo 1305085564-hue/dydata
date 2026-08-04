@@ -93,7 +93,7 @@ export function TopicHubV2() {
     try {
       setActiveLoading(true);
       setActiveError(null);
-      const data = await fetchTopicJson("/api/topics/active?limit=4");
+      const data = await fetchTopicJson("/api/topics/active?limit=6");
       setActiveTopics(parseActiveTopicsResponse(data) as ActiveTopicsResponse);
     } catch (err) {
       if (err instanceof TopicRequestError && err.status === 401) setAuthError(true);

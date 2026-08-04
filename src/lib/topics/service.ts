@@ -1463,7 +1463,7 @@ export async function loadActiveTopics(
       works: topicWorks,
     }];
   });
-  const focusTopics = buildFocusTopics(focusRows, new Date(), limit).slice(0, limit);
+  const focusTopics = buildFocusTopics(focusRows, new Date(), 3);
 
   const { data: created, error: createdError } = await supabase
     .from("sub_topics")
