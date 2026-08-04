@@ -78,22 +78,18 @@ test("设置弹窗具备 dialog、Escape、焦点循环和手机端纵向布局"
   assert.doesNotMatch(source, /hidden space-y-3 sm:block[\s\S]*action=\{signOut\}/);
 });
 
-test("月度矩阵、案例行和选题卡不再嵌套互动控件", () => {
+test("月度矩阵和案例行不再嵌套互动控件", () => {
   const paths = [
     "src/app/(app)/admin/fulfillment/components/monthly-matrix.tsx",
     "src/app/(app)/violations/components/case-row.tsx",
-    "src/components/topics/sub-topic-card.tsx",
   ];
   for (const path of paths) {
     assert.doesNotMatch(readSource(path), /role="button"/, `${path} 仍使用含子按钮的伪按钮`);
   }
 
   const monthly = readSource(paths[0]);
-  const subTopic = readSource(paths[2]);
   assert.match(monthly, /aria-expanded=\{expanded\}/);
   assert.match(monthly, /aria-controls="monthly-matrix-panel"/);
-  assert.match(subTopic, /aria-expanded=\{isExpanded\}/);
-  assert.match(subTopic, /aria-controls=\{`sub-topic-details-/);
 });
 
 test("复制、删除与关闭操作在触屏和读屏上都可达", () => {

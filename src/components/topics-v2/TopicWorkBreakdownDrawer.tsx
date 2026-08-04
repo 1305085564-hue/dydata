@@ -183,14 +183,14 @@ export function TopicWorkBreakdownDrawer({
   );
 
   const handleAction = async () => {
-    if (!action.canExecute || submitting) return;
+    if (!(action.canClaim || action.canStartScripting || action.canReturn) || submitting) return;
     try {
       setSubmitting(true);
-      if (action.actionType === "claim") {
+      if (action.canClaim) {
         await onClaim(subTopicId);
-      } else if (action.actionType === "start_scripting") {
+      } else if (action.canStartScripting) {
         await onStartScripting(subTopicId);
-      } else if (action.actionType === "return_claim") {
+      } else if (action.canReturn) {
         await onReturnClaim(subTopicId);
       }
       await loadData();
