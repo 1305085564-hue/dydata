@@ -88,6 +88,18 @@ export function sanitizeNextPath(next: string | null | undefined, fallback = "/l
   return next;
 }
 
+export function getCallbackNextPath(type: string | null, requestedNext: string | null) {
+  const safeNext = sanitizeNextPath(requestedNext, "");
+
+  if (type === "recovery") {
+    const isResetPasswordPath =
+      safeNext === "/reset-password" || safeNext.startsWith("/reset-password?");
+    return isResetPasswordPath ? safeNext : "/reset-password";
+  }
+
+  return safeNext || "/login";
+}
+
 export function buildAuthPathWithNext(path: string, next: string | null | undefined) {
   const safeNext = sanitizeNextPath(next, "");
   if (!safeNext) return path;

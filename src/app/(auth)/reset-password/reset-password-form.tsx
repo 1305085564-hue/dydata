@@ -29,6 +29,27 @@ function isRecoverySession(accessToken: string): boolean {
   }
 }
 
+export function ResetPasswordErrorNotice({
+  href,
+  message,
+}: {
+  href: string;
+  message: string;
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className="space-y-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] text-red-700"
+      role="alert"
+    >
+      <p>{message}</p>
+      <Link className="font-medium underline underline-offset-4" href={href}>
+        重新发送重置邮件
+      </Link>
+    </div>
+  );
+}
+
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const next = sanitizeNextPath(searchParams?.get("next"), "");
@@ -38,6 +59,7 @@ export function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [recoveryState, setRecoveryState] = useState<"checking" | "ready" | "invalid">("checking");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -76,6 +98,7 @@ export function ResetPasswordForm() {
     }
 
     setSubmitting(true);
+    setSubmitError(null);
 
     try {
       const supabase = createClient();
@@ -84,7 +107,9 @@ export function ResetPasswordForm() {
       await supabase.auth.signOut();
       window.location.assign(buildLoginPath(next, { reset: "success" }));
     } catch (error) {
-      feedbackToast.error(getResetPasswordErrorMessage((error as Error).message));
+      const message = getResetPasswordErrorMessage(error instanceof Error ? error.message : null);
+      setSubmitError(message);
+      feedbackToast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -104,9 +129,10 @@ export function ResetPasswordForm() {
     return (
       <AuthShell title="重置链接已失效" subtitle="请重新发送重置邮件后再设置新密码">
         <div className="space-y-5 text-center">
-          <Link className="text-[13px] text-zinc-700 underline underline-offset-4" href={forgotPasswordHref}>
-            重新发送重置邮件
-          </Link>
+          <ResetPasswordErrorNotice
+            href={forgotPasswordHref}
+            message="重置链接无效或已过期，请重新发送重置邮件"
+          />
           <p className="text-[13px] text-zinc-500">
             <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
               返回登录
@@ -120,41 +146,50 @@ export function ResetPasswordForm() {
   return (
     <AuthShell title="设置新密码" subtitle="输入并确认你的新密码">
       <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="password">新密码</Label>
-            <Input
-              autoComplete="new-password"
-              id="password"
-              name="password"
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="至少 6 位密码"
-              required
-              type="password"
-              value={password}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">确认新密码</Label>
-            <Input
-              autoComplete="new-password"
-              id="confirmPassword"
-              name="confirmPassword"
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="请再次输入新密码"
-              required
-              type="password"
-              value={confirmPassword}
-            />
-          </div>
-          <Button className="w-full" disabled={submitting} type="submit">
-            {submitting ? "提交中" : "确认重置密码"}
-          </Button>
-          <p className="text-center text-[13px] text-zinc-500">
-            <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
-              返回登录
-            </Link>
-          </p>
-        </form>
+        {submitError ? (
+          <ResetPasswordErrorNotice href={forgotPasswordHref} message={submitError} />
+        ) : null}
+        <div className="space-y-2">
+          <Label htmlFor="password">新密码</Label>
+          <Input
+            autoComplete="new-password"
+            id="password"
+            name="password"
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setSubmitError(null);
+            }}
+            placeholder="至少 6 位密码"
+            required
+            type="password"
+            value={password}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">确认新密码</Label>
+          <Input
+            autoComplete="new-password"
+            id="confirmPassword"
+            name="confirmPassword"
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              setSubmitError(null);
+            }}
+            placeholder="请再次输入新密码"
+            required
+            type="password"
+            value={confirmPassword}
+          />
+        </div>
+        <Button className="w-full" disabled={submitting} type="submit">
+          {submitting ? "提交中" : "确认重置密码"}
+        </Button>
+        <p className="text-center text-[13px] text-zinc-500">
+          <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
+            返回登录
+          </Link>
+        </p>
+      </form>
     </AuthShell>
   );
 }

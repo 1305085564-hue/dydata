@@ -10,7 +10,10 @@ import {
   sanitizeNextPath,
 } from "@/lib/auth-password";
 import { ForgotPasswordForm } from "./forgot-password-form";
-import { ResetPasswordForm } from "../reset-password/reset-password-form";
+import {
+  ResetPasswordErrorNotice,
+  ResetPasswordForm,
+} from "../reset-password/reset-password-form";
 
 test("sanitizeNextPath 只允许站内路径", () => {
   assert.equal(sanitizeNextPath("/reset-password"), "/reset-password");
@@ -50,4 +53,18 @@ test("重置密码表单包含两次密码输入与确认按钮", () => {
   const html = renderToStaticMarkup(<ResetPasswordForm />);
 
   assert.match(html, /正在验证重置链接/);
+});
+
+test("重置密码失败提示包含清晰错误和重新发送入口", () => {
+  const html = renderToStaticMarkup(
+    <ResetPasswordErrorNotice
+      href="/forgot-password"
+      message="重置链接无效或已过期，请重新发送重置邮件"
+    />,
+  );
+
+  assert.match(html, /role="alert"/);
+  assert.match(html, /重置链接无效或已过期，请重新发送重置邮件/);
+  assert.match(html, /href="\/forgot-password"/);
+  assert.match(html, /重新发送重置邮件/);
 });
