@@ -83,6 +83,12 @@
 
 涉及「组员提交/替换/重试」类接口报错 → 整读 `docs/reference/纠错索引.md`
 
+### 数据库工具链
+
+- 执行 SQL：`psql "$SQL_DSN" -c "..."`
+- 执行 migration 文件：`psql "$SQL_DSN" -f supabase/migrations/xxx.sql`
+- 查 migration 状态：`supabase --workdir ~/Projects/dydata migration list --linked`
+
 ### 部署禁令
 
 - 禁沙箱/worktree；禁改 HTTPS remote；`git user.email` 必须 `1305085564@qq.com`；改动未 push 必须明确提醒阿禅。
