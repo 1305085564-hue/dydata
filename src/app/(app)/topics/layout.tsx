@@ -1,7 +1,7 @@
 "use client";
 
 import { triggerGlobalTopicCreate } from "@/components/topics/global-topic-create";
-import { Lightbulb, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -19,20 +19,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
   }, []);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      {/* 顶部标题 */}
-      <div className="pb-1">
-        <div className="space-y-1">
-          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900 flex items-center gap-2">
-            <Lightbulb className="size-6 text-[#D97757] stroke-[1.8]" />
-            <span>选题库</span>
-          </h1>
-          <p className="text-[13px] text-zinc-500">
-            归纳创作灵感，认领并跟进选题制作，沉淀爆款文案。
-          </p>
-        </div>
-      </div>
-
+    <div className="mx-auto max-w-7xl space-y-6 pt-2 sm:pt-4">
       {/* 主面板页面 */}
       <div className="min-h-[500px]">
         {children}

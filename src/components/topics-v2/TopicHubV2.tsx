@@ -16,7 +16,7 @@ import {
   parseTopicPoolResponse,
   TopicRequestError,
 } from "@/lib/topics/v2-client-contract";
-import { RefreshCw, Lock, CheckCircle2, AlertTriangle } from "lucide-react";
+import { RefreshCw, Lock, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
 import { TodayFocusSection } from "./TodayFocusSection";
 import { MyClaimDrawer } from "./MyClaimDrawer";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
@@ -287,64 +287,65 @@ export function TopicHubV2() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* 未登录拦截 Banner */}
-        {authError && (
-          <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-6 text-center shadow-xs">
-            <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto mb-3">
-              <Lock className="w-5 h-5" />
+      {/* 未登录整页阻断拦截 */}
+      {authError ? (
+        <div className="min-h-[60vh] flex items-center justify-center p-4">
+          <div className="bg-white border border-zinc-200 rounded-2xl p-8 max-w-md w-full text-center shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50/80 border border-amber-200/60 text-[#D97757] flex items-center justify-center mx-auto mb-4 shadow-2xs">
+              <Lock className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-semibold text-zinc-900 mb-1">
-              需要登录后再体验选题库
+            <h3 className="text-lg font-semibold text-zinc-900 mb-1.5 tracking-tight">
+              需要登录后再体验选题指挥舱
             </h3>
-            <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
+            <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-6 leading-relaxed">
               为了确保选题防撞车、认领权限与数据隔离，请先登录系统账号后再访问选题指挥舱。
             </p>
             <a
               href="/login"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-semibold shadow-xs transition-all"
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all"
             >
-              前往登录账号
+              <span>前往登录账号</span>
             </a>
           </div>
-        )}
-
-        {/* 全局顶栏 */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200/80">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 mb-1">
-              <span>选题库</span>
-              <span>/</span>
-              <span className="text-[#5F82A8] font-semibold">选题指挥舱 Topic Hub V2</span>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* 全局顶栏：黄金大标题 Header */}
+          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-zinc-200/80">
+            <div>
+              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mb-1 flex items-center gap-2">
+                <Lightbulb className="w-6 h-6 text-[#D97757] stroke-[1.8]" />
+                <span>选题库</span>
+              </h1>
+              <p className="text-xs text-zinc-500 font-normal">
+                归纳创作灵感，认领并跟进选题制作，沉淀爆款文案。
+              </p>
             </div>
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
-              爆款选题指挥舱
-            </h1>
-          </div>
 
-          <div className="flex items-center gap-3">
-            {/* 我的认领位抽屉 */}
-            <MyClaimDrawer
-              claims={myClaims}
-              loading={claimsLoading}
-              error={claimsError}
-              onRetry={fetchMyClaims}
-              onStartScripting={handleStartScripting}
-              onReturnClaim={handleReturnClaim}
-              onSelectTopic={(id) => setInspectTopicId(id)}
-            />
+            <div className="flex items-center gap-3 shrink-0">
+              {/* 我的认领位抽屉 */}
+              <MyClaimDrawer
+                claims={myClaims}
+                loading={claimsLoading}
+                error={claimsError}
+                onRetry={fetchMyClaims}
+                onStartScripting={handleStartScripting}
+                onReturnClaim={handleReturnClaim}
+                onSelectTopic={(id) => setInspectTopicId(id)}
+              />
 
-            <button
-              type="button"
-              onClick={refreshAll}
-              className="p-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 active:scale-[0.97] text-zinc-600 hover:text-zinc-900 transition-all shadow-2xs"
-              title="刷新最新数据"
-              aria-label="刷新最新数据"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-        </header>
+              <button
+                type="button"
+                onClick={refreshAll}
+                disabled={activeLoading || poolLoading || claimsLoading}
+                className="p-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 active:scale-[0.97] text-zinc-600 hover:text-zinc-900 transition-all shadow-2xs disabled:opacity-60"
+                title="刷新最新数据"
+                aria-label="刷新最新数据"
+              >
+                <RefreshCw className={`w-4 h-4 ${(activeLoading || poolLoading || claimsLoading) ? "animate-spin text-[#D97757]" : ""}`} />
+              </button>
+            </div>
+          </header>
 
         {/* 1. 第一优先级：今日最值得写的选题 */}
         <TodayFocusSection
@@ -391,6 +392,7 @@ export function TopicHubV2() {
         {/* 3. 选题效果横向对比 */}
         <TopicComparisonMatrix topics={topicsOptions} topicsError={topicsOptionsError} />
       </div>
+      )}
 
       {/* 4. 爆款剖析侧滑抽屉 */}
       <TopicWorkBreakdownDrawer

@@ -117,7 +117,7 @@ export function TopicPoolExplorer({
   };
 
   return (
-    <section className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs">
+    <section id="topic-pool-explorer" className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs">
       {/* 极简控制栏 */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-100">
         <div className="flex flex-wrap items-center gap-2.5">
@@ -345,9 +345,33 @@ export function TopicPoolExplorer({
           </button>
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="py-16 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
-          <p className="text-sm font-medium text-zinc-600">未找到符合条件的选题</p>
-          <p className="text-xs text-zinc-500 mt-1 font-normal">尝试调整搜索或母题筛选条件</p>
+        <div className="py-16 px-4 text-center border border-dashed border-zinc-200 rounded-2xl bg-white shadow-xs">
+          <div className="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
+            <Search className="w-5 h-5" />
+          </div>
+          {totalCount === 0 && !searchQuery && selectedTopicIds.length === 0 ? (
+            <>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-1">还没有选题</h3>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-4 font-normal leading-relaxed">
+                还没有选题，点右上角录入第一个
+              </p>
+              <button
+                type="button"
+                onClick={onCreateClick}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>录入第一个选题</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-1">未找到符合条件的选题</h3>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto font-normal leading-relaxed">
+                尝试调整搜索词、母题多选或时间范围筛选条件
+              </p>
+            </>
+          )}
         </div>
       ) : displayMode === "grid" ? (
         /* 网格视图：实体轻边框 border-zinc-200 */
@@ -518,31 +542,33 @@ export function TopicPoolExplorer({
         </div>
       )}
 
-      {/* 分页条 */}
-      <div className="flex items-center justify-between pt-4 mt-4 border-t border-zinc-100 text-xs text-zinc-500 font-normal">
-        <span>共 {totalCount} 条记录，本页 {visibleItems.length} 条</span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={currentPage <= 1}
-            onClick={() => onPageChange(currentPage - 1)}
-            className="px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 disabled:opacity-40"
-            aria-label="上一页"
-          >
-            上一页
-          </button>
-          <span className="text-zinc-700 font-medium tabular-nums">第 {currentPage} 页</span>
-          <button
-            type="button"
-            disabled={currentPage * 50 >= totalCount}
-            onClick={() => onPageChange(currentPage + 1)}
-            className="px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 disabled:opacity-40"
-            aria-label="下一页"
-          >
-            下一页
-          </button>
+      {/* 分页条（有数据时才显示） */}
+      {totalCount > 0 && (
+        <div className="flex items-center justify-between pt-4 mt-4 border-t border-zinc-100 text-xs text-zinc-500 font-normal">
+          <span>共 {totalCount} 条记录，本页 {visibleItems.length} 条</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => onPageChange(currentPage - 1)}
+              className="px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 disabled:opacity-40"
+              aria-label="上一页"
+            >
+              上一页
+            </button>
+            <span className="text-zinc-700 font-medium tabular-nums">第 {currentPage} 页</span>
+            <button
+              type="button"
+              disabled={currentPage * 50 >= totalCount}
+              onClick={() => onPageChange(currentPage + 1)}
+              className="px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 disabled:opacity-40"
+              aria-label="下一页"
+            >
+              下一页
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

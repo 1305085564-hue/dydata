@@ -122,18 +122,12 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
   }
 
   return (
-    <section className="mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-2 border-b border-zinc-200">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#D97757]/10 text-[#D97757]">
-              <Sparkles className="w-3.5 h-3.5" />
-            </span>
-            <h2 className="text-lg font-semibold text-zinc-900 tracking-tight">今日聚焦</h2>
-          </div>
-          <p className="text-xs text-zinc-500 mt-0.5 font-normal">按近期成绩与历史高均播但久未重做的真实信号整理。</p>
-        </div>
-        <span className="text-xs text-zinc-500 tabular-nums">最多展示 6 条聚焦</span>
+    <section className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D97757]/10 text-[#D97757]">
+          <Sparkles className="w-3 h-3" />
+        </span>
+        <h2 className="text-base font-semibold text-zinc-900 tracking-tight">今日聚焦</h2>
       </div>
 
       {error ? (
@@ -156,18 +150,10 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
           <div className="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-5 h-5" />
           </div>
-          <h3 className="text-sm font-semibold text-zinc-800 mb-1">暂无匹配的近期聚焦选题</h3>
-          <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-4 font-normal leading-relaxed">
-            近期未检测到高均播或久未重做的异常强信号。您可浏览下方选题大盘全量库或手动刷新最新信号。
+          <h3 className="text-sm font-semibold text-zinc-800 mb-1">暂无推荐数据</h3>
+          <p className="text-xs text-zinc-500 max-w-sm mx-auto font-normal leading-relaxed">
+            还没有推荐数据，先去下方选题池看看
           </p>
-          <button
-            type="button"
-            onClick={onRetry}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>刷新最新信号</span>
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

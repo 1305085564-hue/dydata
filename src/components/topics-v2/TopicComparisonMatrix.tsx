@@ -53,15 +53,12 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
 
   return (
     <section className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs mb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-100">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#5F82A8]/10 text-[#5F82A8]">
-              <BarChart2 className="w-3.5 h-3.5" />
-            </span>
-            <h2 className="text-base font-semibold text-zinc-900">选题效果横向对比矩阵</h2>
-          </div>
-          <p className="text-xs text-zinc-500 mt-0.5 font-normal">按母题或指定母题下的账号比较真实作品表现。</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-100">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5F82A8]/10 text-[#5F82A8]">
+            <BarChart2 className="w-3 h-3" />
+          </span>
+          <h2 className="text-base font-semibold text-zinc-900">选题效果横向对比</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center p-1 bg-zinc-100/80 rounded-lg text-xs font-medium text-zinc-600">
@@ -142,8 +139,14 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
           </button>
         </div>
       ) : data.length === 0 ? (
-        <div className="py-12 text-center text-xs text-zinc-500 font-normal border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
-          该时间段内暂无作品快照数据
+        <div className="py-12 px-4 text-center border border-dashed border-zinc-200 rounded-2xl bg-white shadow-xs">
+          <div className="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
+            <BarChart2 className="w-5 h-5" />
+          </div>
+          <h3 className="text-sm font-semibold text-zinc-800 mb-1">暂无对比数据</h3>
+          <p className="text-xs text-zinc-500 max-w-sm mx-auto font-normal leading-relaxed">
+            {dimension === "account" ? "需要至少 2 个账号有作品后才能对比" : "需要至少 2 个账号有作品后才能对比"}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
