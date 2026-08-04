@@ -19,9 +19,9 @@ export interface MemberArchiveSnapshot {
 export interface MemberLifecycleProfile {
   id: string;
   role: UserRole;
-  permissions?: Permissions | null;
-  team_id?: string | null;
-  group_id?: string | null;
+  permissions: Permissions | null;
+  team_id: string | null;
+  group_id: string | null;
   membership_status?: MembershipStatus | string | null;
 }
 
@@ -76,6 +76,17 @@ export function isMissingMembershipStatusError(error: { message?: string } | nul
     message.includes("column membership_status does not exist") ||
     message.includes("Could not find the 'membership_status' column")
   );
+}
+
+export type MembershipAccessStatus = MembershipStatus | "unavailable";
+
+export function resolveMembershipStatusFromQuery(input: {
+  data: { membership_status?: unknown } | null;
+  error: { message?: string } | null;
+}): MembershipAccessStatus {
+  if (isMissingMembershipStatusError(input.error)) return "active";
+  if (input.error || !input.data) return "unavailable";
+  return normalizeMembershipStatus(input.data.membership_status);
 }
 
 export async function loadWithMembershipFallback<T>(input: {

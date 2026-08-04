@@ -3,9 +3,11 @@ export const FORGOT_PASSWORD_SUCCESS_MESSAGE = "如果该邮箱已注册，我�
 type LoginPathOptions = {
   registered?: "1";
   reset?: "success" | "expired" | "pkce";
+  archived?: "1";
 };
 
-export function getLoginNotice(params: { registered?: string; reset?: string; from?: string }) {
+export function getLoginNotice(params: { registered?: string; reset?: string; from?: string; archived?: string }) {
+  if (params.archived === "1") return "账号已归档，请联系 owner 恢复";
   if (params.registered === "1") return "注册成功，请登录";
   if (params.reset === "success") return "密码已重置，请重新登录";
   if (params.reset === "expired") return "重置链接已失效，请重新发送";
@@ -41,6 +43,7 @@ export function getLoginErrorMessage(message: string | null | undefined) {
   const userFacingMessages = new Set([
     "请输入邮箱和密码。",
     "未找到账号资料，请联系管理员。",
+    "账号已归档，请联系 owner 恢复",
     "邮箱或密码不正确",
     "尝试次数过多，请稍后再试",
     "邮箱尚未验证，请先完成邮箱验证",
@@ -62,6 +65,10 @@ export function getLoginErrorMessage(message: string | null | undefined) {
 
   if (normalized.includes("email not confirmed")) {
     return "邮箱尚未验证，请先完成邮箱验证";
+  }
+
+  if (normalized.includes("banned") || normalized.includes("user is banned")) {
+    return "账号已归档，请联系 owner 恢复";
   }
 
   return "登录失败，请稍后重试";
@@ -113,6 +120,7 @@ export function buildLoginPath(next: string | null | undefined, options: LoginPa
   const params = new URLSearchParams();
   if (options.registered) params.set("registered", options.registered);
   if (options.reset) params.set("reset", options.reset);
+  if (options.archived) params.set("archived", options.archived);
 
   const safeNext = sanitizeNextPath(next, "");
   if (safeNext) params.set("next", safeNext);

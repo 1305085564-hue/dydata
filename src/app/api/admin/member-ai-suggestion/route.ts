@@ -36,6 +36,7 @@ type MemberProfile = {
   name: string | null;
   role: string | null;
   team_id: string | null;
+  membership_status?: string | null;
 };
 
 type ToolResult = Awaited<ReturnType<typeof getAnomalousData>>;
@@ -180,7 +181,7 @@ function buildMemberSuggestionPrompt(input: {
 async function loadMemberProfile(memberId: string, deps: RouteDeps) {
   const { data, error } = await deps.createAdminClient()
     .from("profiles")
-    .select("id, name, role, team_id")
+    .select("id, name, role, team_id, membership_status")
     .eq("id", memberId)
     .single<MemberProfile>();
 
@@ -232,7 +233,12 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: "owner 不支持生成成员建议" }, { status: 400 });
   }
 
-  if (!scope.visibleUserIds.includes(member.id)) {
+  if (member.membership_status === "archived") {
+    return NextResponse.json({ error: "已归档账号不支持生成成员建议" }, { status: 400 });
+  }
+
+  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
+  if (!activeVisibleUserIds.includes(member.id)) {
     return NextResponse.json({ error: "无权查看该成员" }, { status: 403 });
   }
 

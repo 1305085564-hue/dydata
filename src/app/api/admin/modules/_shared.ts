@@ -14,6 +14,7 @@ export async function requireAdminModulesAccess() {
     ok: true as const,
     userId: permissionInfo.userId,
     visibleUserIds: scope.visibleUserIds,
+    activeVisibleUserIds: scope.activeVisibleUserIds ?? scope.visibleUserIds,
     canViewAllUsers: scope.kind === "all",
   };
 }

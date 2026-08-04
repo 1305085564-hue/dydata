@@ -26,7 +26,7 @@ export interface DataAccessScope {
   groupId: string | null;
   kind: DataAccessScopeKind;
   visibleUserIds: string[];
-  activeVisibleUserIds: string[];
+  activeVisibleUserIds?: string[];
 }
 
 export interface BuildDataAccessScopeOptions {
@@ -102,7 +102,7 @@ async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promis
       .eq("id", userId)
       .single();
 
-    if (!result.error) return (result.data as ScopeProfileInput | null) ?? null;
+    if (!result.error) return (result.data as unknown as ScopeProfileInput | null) ?? null;
     if (!isMissingAccessLevelColumn(result.error) && !isMissingMembershipStatusError(result.error)) {
       assertSupabaseQuerySucceeded(result.error, "加载权限资料失败");
     }
@@ -163,15 +163,15 @@ export async function buildDataAccessScope(
 
   if (kind === "all") {
     const result = await loadWithMembershipFallback({
-      loadWithMembership: () => adminSupabase.from("profiles").select("id, membership_status"),
-      loadWithoutMembership: () => adminSupabase.from("profiles").select("id"),
+      loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status"),
+      loadWithoutMembership: async () => adminSupabase.from("profiles").select("id"),
     });
     assertSupabaseQuerySucceeded(result.error, "加载全公司可见成员失败");
     visibleRows = (result.data ?? []) as typeof visibleRows;
   } else if (kind === "team" && effectiveTeamId) {
     const result = await loadWithMembershipFallback({
-      loadWithMembership: () => adminSupabase.from("profiles").select("id, membership_status").eq("team_id", effectiveTeamId),
-      loadWithoutMembership: () => adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId),
+      loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status").eq("team_id", effectiveTeamId),
+      loadWithoutMembership: async () => adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId),
     });
     assertSupabaseQuerySucceeded(result.error, "加载团队可见成员失败");
     visibleRows = (result.data ?? []) as typeof visibleRows;
@@ -180,8 +180,8 @@ export async function buildDataAccessScope(
     const visibleGroupIds = ledGroupIds.length > 0 ? ledGroupIds : profile.group_id ? [profile.group_id] : [];
     const result = visibleGroupIds.length > 0
       ? await loadWithMembershipFallback({
-          loadWithMembership: () => adminSupabase.from("profiles").select("id, membership_status").in("group_id", visibleGroupIds),
-          loadWithoutMembership: () => adminSupabase.from("profiles").select("id").in("group_id", visibleGroupIds),
+          loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status").in("group_id", visibleGroupIds),
+          loadWithoutMembership: async () => adminSupabase.from("profiles").select("id").in("group_id", visibleGroupIds),
         })
       : { data: [], error: null };
     assertSupabaseQuerySucceeded(result.error, "加载小组可见成员失败");
@@ -222,6 +222,10 @@ export async function buildDataAccessScope(
 export function canAccessOwner(scope: DataAccessScope, ownerUserId: string | null | undefined) {
   if (scope.kind === "all") return true;
   return typeof ownerUserId === "string" && scope.visibleUserIds.includes(ownerUserId);
+}
+
+export function getActiveVisibleUserIds(scope: Pick<DataAccessScope, "activeVisibleUserIds" | "visibleUserIds">) {
+  return scope.activeVisibleUserIds ?? scope.visibleUserIds;
 }
 
 export function filterRowsByDataScope<T>(

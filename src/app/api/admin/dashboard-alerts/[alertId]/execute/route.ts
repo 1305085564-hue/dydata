@@ -42,6 +42,7 @@ function toDashboardScope(scope: DataAccessScope): DashboardAlertScope | null {
     businessRole: scope.businessRole,
     teamId: scope.teamId,
     visibleUserIds: scope.visibleUserIds,
+    activeVisibleUserIds: scope.activeVisibleUserIds ?? scope.visibleUserIds,
   };
 }
 

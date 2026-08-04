@@ -5,7 +5,7 @@ import {
   type AlertReport,
 } from "@/lib/smart-alert";
 
-import type { Alert, AlertDetectorContext } from "./types";
+import { getAlertActiveUserIds, type Alert, type AlertDetectorContext } from "./types";
 
 type ReportRow = {
   user_id: string | null;
@@ -33,7 +33,8 @@ function extractAccount(row: ReportRow["accounts"]) {
 }
 
 export async function detectPlaybackAlerts({ supabase, scope, now = new Date() }: AlertDetectorContext): Promise<Alert[]> {
-  if (scope.visibleUserIds.length === 0) {
+  const activeVisibleUserIds = getAlertActiveUserIds(scope);
+  if (activeVisibleUserIds.length === 0) {
     return [];
   }
 
@@ -42,7 +43,7 @@ export async function detectPlaybackAlerts({ supabase, scope, now = new Date() }
   const { data, error } = await supabase
     .from("daily_reports")
     .select("user_id, report_date, play_count, account_id, submitter, accounts(id, name, content_direction)")
-    .in("user_id", scope.visibleUserIds)
+    .in("user_id", activeVisibleUserIds)
     .gte("report_date", since)
     .lte("report_date", today)
     .order("report_date", { ascending: false });

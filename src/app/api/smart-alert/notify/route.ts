@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { isCronAuthorized } from "@/lib/cron-auth";
 import { buildFeishuAlertCard, dedupeAlerts, generateSmartAlerts, type SmartAlert } from "@/lib/smart-alert";
 import { emit } from "@/lib/notifications/server";
+import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 
 type AlertLogRow = {
   id: string;
@@ -17,6 +18,7 @@ type ProfileRow = {
   id: string;
   name: string;
   status: string | null;
+  membership_status?: string | null;
 };
 
 type ReportRow = {
@@ -97,13 +99,16 @@ export async function GET(request: NextRequest) {
   const since = new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0];
   const auditSince = new Date(Date.now() - 2 * 86400000).toISOString();
 
-  const [{ data: reports, error: reportsError }, { data: profiles, error: profilesError }, { data: auditLogs, error: auditError }] = await Promise.all([
+  const [{ data: reports, error: reportsError }, profilesResult, { data: auditLogs, error: auditError }] = await Promise.all([
     supabase
       .from("daily_reports")
       .select("user_id, report_date, play_count, account_id, submitter, accounts(id, name, content_direction)")
       .gte("report_date", since)
       .order("report_date", { ascending: false }),
-    supabase.from("profiles").select("id, name, status"),
+    loadWithMembershipFallback({
+      loadWithMembership: async () => supabase.from("profiles").select("id, name, status, membership_status"),
+      loadWithoutMembership: async () => supabase.from("profiles").select("id, name, status"),
+    }),
     supabase
       .from("audit_logs")
       .select("id, action, target, detail, created_at")
@@ -111,6 +116,8 @@ export async function GET(request: NextRequest) {
       .gte("created_at", auditSince)
       .order("created_at", { ascending: false }),
   ]);
+  const profilesError = profilesResult.error;
+  const profiles = filterActiveMemberships((profilesResult.data ?? []) as ProfileRow[]);
 
   if (reportsError) {
     return NextResponse.json({ error: reportsError.message }, { status: 500 });
@@ -124,7 +131,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: auditError.message }, { status: 500 });
   }
 
-  const normalizedReports = ((reports ?? []) as ReportRow[]).map((report) => {
+  const activeProfileIds = new Set(profiles.map((profile) => profile.id));
+  const normalizedReports = ((reports ?? []) as ReportRow[])
+    .filter((report) => activeProfileIds.has(report.user_id))
+    .map((report) => {
     const account = extractAccount(report.accounts);
 
     return {
@@ -136,7 +146,7 @@ export async function GET(request: NextRequest) {
       reportDate: report.report_date,
       playCount: report.play_count ?? 0,
     };
-  });
+    });
 
   const normalizedProfiles = ((profiles ?? []) as ProfileRow[]).map((profile) => ({
     userId: profile.id,

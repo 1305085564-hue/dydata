@@ -19,6 +19,9 @@ type AdminToolProfile = {
   status?: string | null;
 };
 
+export const ARCHIVE_ROLLBACK_GUIDANCE =
+  "归档同时涉及 Auth 封禁和 profile 多字段修改，禁止直接 SQL 回滚，请使用 restoreMember 正式恢复流程。";
+
 async function loadActorAndTargetProfiles(service: ReturnType<typeof createAdminClient>, actorId: string, targetId: string) {
   const { data, error } = await service
     .from("profiles")
@@ -56,7 +59,7 @@ export async function kickUser(
   if (context.actorRole !== "owner") return { success: false, error: "只有 owner 可以归档账号" };
   if (context.actorId === userId) return { success: false, error: "不能归档自己" };
 
-  const backupSql = `UPDATE profiles SET membership_status='active' WHERE id = '${userId}';`;
+  const backupSql = ARCHIVE_ROLLBACK_GUIDANCE;
   const affectedData = {
     user: profile,
     metricsCount: reports?.length ?? 0,

@@ -12,6 +12,7 @@ test("admin governance 把可见成员范围传给日报加载器", async () => 
         ok: true,
         userId: "admin-1",
         visibleUserIds: ["admin-1", "member-1"],
+        activeVisibleUserIds: ["admin-1", "member-1"],
         canViewAllUsers: false,
       }),
       createClient: async () => ({}) as never,

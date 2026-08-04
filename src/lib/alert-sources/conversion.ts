@@ -1,6 +1,6 @@
 import { getShanghaiDateString, shiftDateString } from "@/lib/remind-submission";
 
-import type { Alert, AlertDetectorContext } from "./types";
+import { getAlertActiveUserIds, type Alert, type AlertDetectorContext } from "./types";
 
 type ReportRow = {
   user_id: string | null;
@@ -10,7 +10,8 @@ type ReportRow = {
 };
 
 export async function detectConversionAlerts({ supabase, scope, now = new Date() }: AlertDetectorContext): Promise<Alert[]> {
-  if (scope.visibleUserIds.length === 0) {
+  const activeVisibleUserIds = getAlertActiveUserIds(scope);
+  if (activeVisibleUserIds.length === 0) {
     return [];
   }
 
@@ -19,7 +20,7 @@ export async function detectConversionAlerts({ supabase, scope, now = new Date()
   const { data, error } = await supabase
     .from("daily_reports")
     .select("user_id, report_date, follower_convert, submitter")
-    .in("user_id", scope.visibleUserIds)
+    .in("user_id", activeVisibleUserIds)
     .gte("report_date", previousWeekStart)
     .lte("report_date", today);
 

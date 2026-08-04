@@ -39,9 +39,9 @@ import {
   archiveMemberWithClient,
   removeMemberFromTeamWithClient,
   restoreMemberWithClient,
+  transferMemberToTeamWithClient,
 } from "@/lib/member-lifecycle-service";
 import {
-  buildMemberTeamTransferPatch,
   canChangeMemberRole,
   canRemoveMemberTarget,
   isProfileWriteApplied,
@@ -438,11 +438,12 @@ export async function updatePermissions(
 
   const { data: target, error: targetError } = await adminSupabase
     .from("profiles")
-    .select("role, team_id")
+    .select("role, team_id, membership_status")
     .eq("id", targetUserId)
     .maybeSingle();
   if (targetError) return { error: targetError.message };
   if (!target) return { error: "用户不存在" };
+  if (target.membership_status === "archived") return { error: "已归档账号不能修改权限，请先恢复账号" };
 
   const decision = resolvePermissionUpdate({
     actorRole: perm.role,
@@ -491,26 +492,6 @@ async function getTeamNameMap(
 function formatTeamName(teamId: string | null, teamNames: Map<string, string>) {
   if (!teamId) return "未分配";
   return teamNames.get(teamId) ?? teamId;
-}
-
-async function syncAuthUserTeamMetadata(
-  adminSupabase: ReturnType<typeof createAdminClient>,
-  userId: string,
-  teamId: string | null,
-  teamName: string | null,
-) {
-  const { data: userData, error: fetchError } = await adminSupabase.auth.admin.getUserById(userId);
-  if (fetchError) return fetchError;
-
-  const userMetadata = {
-    ...(userData.user?.user_metadata ?? {}),
-    team_id: teamId,
-    team_name: teamName,
-  };
-  const { error } = await adminSupabase.auth.admin.updateUserById(userId, {
-    user_metadata: userMetadata,
-  });
-  return error;
 }
 
 export async function updateMemberTeam(
@@ -578,33 +559,21 @@ export async function updateMemberTeam(
   }
 
   const oldTeamId = target.team_id ?? null;
-  const { data: updatedProfile, error } = await adminSupabase
-    .from("profiles")
-    .update(buildMemberTeamTransferPatch(newTeamId))
-    .eq("id", targetUserId)
-    .select("id")
-    .single();
-
-  if (error) return { error: error.message };
-  if (!isProfileWriteApplied(updatedProfile)) return { error: "团队调配未生效，请刷新后重试" };
-
   const teamNames = await getTeamNameMap(adminSupabase, [oldTeamId, newTeamId]);
   const oldTeamName = formatTeamName(oldTeamId, teamNames);
   const newTeamName = formatTeamName(newTeamId, teamNames);
-  const metadataError = await syncAuthUserTeamMetadata(
-    adminSupabase,
-    targetUserId,
+  const result = await transferMemberToTeamWithClient({
+    client: adminSupabase,
+    actor: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+    },
+    targetId: targetUserId,
     newTeamId,
-    newTeamId ? newTeamName : null,
-  );
-  if (metadataError) return { error: metadataError.message };
-
-  await adminSupabase.from("member_change_log").insert({
-    user_id: targetUserId,
-    team_id: newTeamId,
-    action_type: "transfer_team",
-    operator_id: perm.userId,
-  }).then(() => {}, () => {});
+    newTeamName,
+  });
+  if (!result.ok) return { error: result.error };
 
   await writeAuditLog(
     supabase,
@@ -716,13 +685,14 @@ export async function resetMemberPassword(
   const adminSupabase = createAdminClient();
   const { data: profileRows, error: profileError } = await adminSupabase
     .from("profiles")
-    .select("id, role, name, permissions, team_id")
+    .select("id, role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
   if (profileError) return { error: profileError.message };
 
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
+  if (target.membership_status === "archived") return { error: "已归档账号不能重置密码，请先恢复账号" };
   if (!canRemoveMemberTarget({
     actorRole: perm.role,
     actorId: perm.userId,
@@ -764,13 +734,14 @@ export async function changeRole(
 
   const { data: profileRows, error: profileError } = await adminSupabase
     .from("profiles")
-    .select("id, role, name, permissions, team_id")
+    .select("id, role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
   if (profileError) return { error: profileError.message };
 
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
+  if (target.membership_status === "archived") return { error: "已归档账号不能修改角色，请先恢复账号" };
   if (target.role === "owner") return { error: "不能修改其他创始人" };
 
   if (

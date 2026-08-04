@@ -1,4 +1,4 @@
-import type { Alert, AlertDetectorContext } from "./types";
+import { getAlertActiveUserIds, type Alert, type AlertDetectorContext } from "./types";
 
 type PendingInsightRow = {
   id: string;
@@ -32,7 +32,8 @@ function getAgeHours(createdAt: string, now: Date) {
 }
 
 export async function detectTaskAlerts({ supabase, scope, now = new Date() }: AlertDetectorContext): Promise<Alert[]> {
-  if (scope.visibleUserIds.length === 0) {
+  const activeVisibleUserIds = getAlertActiveUserIds(scope);
+  if (activeVisibleUserIds.length === 0) {
     return [];
   }
 
@@ -51,7 +52,7 @@ export async function detectTaskAlerts({ supabase, scope, now = new Date() }: Al
       .from("videos")
       .select("id, user_id, video_title, uploaded_at, created_at")
       .eq("lifecycle_state", "active")
-      .in("user_id", scope.visibleUserIds)
+      .in("user_id", activeVisibleUserIds)
       .gte("created_at", oneDayAgoIso)
       .lte("created_at", oneHourAgoIso),
   ]);
@@ -91,7 +92,7 @@ export async function detectTaskAlerts({ supabase, scope, now = new Date() }: Al
     const video = bundleVideoId ? videoById.get(bundleVideoId) ?? null : null;
     const ownerUserId = bundleUserId ?? video?.user_id ?? null;
 
-    if (scope.businessRole !== "owner" && (!ownerUserId || !scope.visibleUserIds.includes(ownerUserId))) {
+    if (!ownerUserId || !activeVisibleUserIds.includes(ownerUserId)) {
       continue;
     }
 

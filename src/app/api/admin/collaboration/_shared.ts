@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { UUID_PATTERN } from "@/app/api/production/_shared";
+import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { getAccountBaseline, median } from "@/lib/video-metrics";
 
@@ -613,9 +614,13 @@ export async function loadAttributionReport(supabase: SupabaseClient, reportId: 
 export async function assertProfilesExist(supabase: SupabaseClient, userIds: string[]) {
   const ids = unique(userIds);
   if (ids.length === 0) return true;
-  const result = await supabase.from("profiles").select("id").in("id", ids);
+  const result = await loadWithMembershipFallback({
+    loadWithMembership: async () => supabase.from("profiles").select("id, membership_status").in("id", ids),
+    loadWithoutMembership: async () => supabase.from("profiles").select("id").in("id", ids),
+  });
   assertSupabaseQuerySucceeded(result.error, "校验归属成员失败");
-  return unique((result.data ?? []).map((row) => row.id)).length === ids.length;
+  const rows = (result.data ?? []) as Array<{ id: string; membership_status?: string | null }>;
+  return unique(filterActiveMemberships(rows).map((row) => row.id)).length === ids.length;
 }
 
 export async function updateAttributionAtomically(

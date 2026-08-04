@@ -10,6 +10,7 @@ import { buildSubmissionRecordId } from "./stability";
 import { resolveSubmissionVideoWriteMode } from "./submission-video-lifecycle";
 import { syncAbnormalVideoCase } from "./abnormal-case";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
+import { filterActiveMemberships, isMissingMembershipStatusError, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import {
   DAILY_REPORT_WRITE_SELECT,
   SNAPSHOT_WRITE_SELECT,
@@ -170,14 +171,31 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const profileResult = await supabase
     .from("profiles")
-    .select("name, team_id, group_id")
+    .select("name, team_id, group_id, membership_status")
     .eq("id", user.id)
     .single();
+  const fallbackProfileResult = profileResult.error && isMissingMembershipStatusError(profileResult.error)
+    ? await supabase
+      .from("profiles")
+      .select("name, team_id, group_id")
+      .eq("id", user.id)
+      .single()
+    : null;
+  const profile = (fallbackProfileResult?.data ?? profileResult.data) as {
+    name: string | null;
+    team_id: string | null;
+    group_id: string | null;
+    membership_status?: string | null;
+  } | null;
+  const profileError = fallbackProfileResult?.error ?? profileResult.error;
 
   if (profileError) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
+  }
+  if (profile?.membership_status === "archived") {
+    return NextResponse.json({ error: "已归档账号不能提交视频" }, { status: 403 });
   }
 
   const submitter = profile?.name ?? "未知";
@@ -185,24 +203,33 @@ export async function POST(request: NextRequest) {
   const externalAssigneeIds = [...new Set(Object.values(roleUserIds).filter((id) => id !== user.id))];
 
   if (externalAssigneeIds.length) {
-    const { data: assigneeProfiles, error: assigneeProfilesError } = await createAdminClient()
-      .from("profiles")
-      .select("id, team_id, group_id, status")
-      .in("id", externalAssigneeIds);
+    const assigneeProfilesResult = await loadWithMembershipFallback({
+      loadWithMembership: async () => createAdminClient()
+        .from("profiles")
+        .select("id, team_id, group_id, membership_status")
+        .in("id", externalAssigneeIds),
+      loadWithoutMembership: async () => createAdminClient()
+        .from("profiles")
+        .select("id, team_id, group_id")
+        .in("id", externalAssigneeIds),
+    });
+    const assigneeProfiles = filterActiveMemberships(
+      (assigneeProfilesResult.data ?? []) as Array<{ id: string; team_id: string | null; group_id: string | null; membership_status?: string | null }>,
+    );
 
     const validAssigneeIds = new Set(
-      (assigneeProfiles ?? [])
+      assigneeProfiles
         .filter((assignee) => {
           const isInSameOrganization = profile?.team_id
             ? assignee.team_id === profile.team_id
             : profile?.group_id
               ? assignee.group_id === profile.group_id
               : false;
-          return assignee.status === "active" && isInSameOrganization;
+          return isInSameOrganization;
         })
         .map((assignee) => assignee.id),
     );
-    if (assigneeProfilesError || externalAssigneeIds.some((id) => !validAssigneeIds.has(id))) {
+    if (assigneeProfilesResult.error || externalAssigneeIds.some((id) => !validAssigneeIds.has(id))) {
       return NextResponse.json({ error: "责任人必须是当前团队或小组中的在职成员" }, { status: 403 });
     }
   }

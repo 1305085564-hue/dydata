@@ -163,16 +163,17 @@ export async function buildAttributionResponse(
     if (report.user_id === auth.actor.userId) {
       return NextResponse.json({ ok: false, error: "不能修改自己提交的日报" }, { status: 403 });
     }
-    if (!context.scope.visibleUserIds.includes(report.user_id)) {
-      return NextResponse.json({ ok: false, error: "不能修改当前权限范围外的日报" }, { status: 403 });
+    const activeVisibleUserIds = context.scope.activeVisibleUserIds ?? context.scope.visibleUserIds;
+    if (!activeVisibleUserIds.includes(report.user_id)) {
+      return NextResponse.json({ ok: false, error: "不能修改已归档或当前权限范围外的日报" }, { status: 403 });
     }
     const assignedUserIds = [
       parsed.data.scriptAuthorUserId,
       parsed.data.videoEditorUserId,
       parsed.data.operatorUserId,
     ].filter((value): value is string => value !== null);
-    if (assignedUserIds.some((userId) => !context.scope.visibleUserIds.includes(userId))) {
-      return NextResponse.json({ ok: false, error: "归属成员超出当前权限范围" }, { status: 403 });
+    if (assignedUserIds.some((userId) => !activeVisibleUserIds.includes(userId))) {
+      return NextResponse.json({ ok: false, error: "归属成员超出当前可操作范围" }, { status: 403 });
     }
     if (!(await deps.assertProfilesExist(supabase, assignedUserIds))) {
       return NextResponse.json({ ok: false, error: "归属成员不存在" }, { status: 400 });

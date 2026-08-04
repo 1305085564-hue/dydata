@@ -24,6 +24,7 @@ type LoginFormProps = {
   action: (state: LoginFormState, formData: FormData) => Promise<LoginFormState>;
   initialEmail?: string;
   notice?: string | null;
+  archived?: boolean;
 };
 
 const initialState: LoginFormState = {
@@ -48,13 +49,15 @@ function SubmitButton() {
   );
 }
 
-export function LoginForm({ action, initialEmail = "", notice = null }: LoginFormProps) {
+export function LoginForm({ action, initialEmail = "", notice = null, archived = false }: LoginFormProps) {
   const searchParams = useSearchParams();
   const isExpired = searchParams?.get("expired") === "1";
+  const isArchived = archived || searchParams?.get("archived") === "1";
   const next = sanitizeNextPath(searchParams?.get("next"), "");
   const forgotPasswordHref = buildAuthPathWithNext("/forgot-password", next);
   const registerHref = buildAuthPathWithNext("/register", next);
   const [showExpiredAlert, setShowExpiredAlert] = useState(isExpired);
+  const [showArchivedAlert, setShowArchivedAlert] = useState(isArchived);
   const [showPassword, setShowPassword] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +69,10 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   useEffect(() => {
     setShowExpiredAlert(isExpired);
   }, [isExpired]);
+
+  useEffect(() => {
+    setShowArchivedAlert(isArchived);
+  }, [isArchived]);
 
   useEffect(() => {
     if (state.email) setEmail(state.email);
@@ -86,6 +93,21 @@ export function LoginForm({ action, initialEmail = "", notice = null }: LoginFor
   return (
     <AuthShell title="回到工作台">
       <form action={formAction} className="space-y-5">
+        {showArchivedAlert && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#B86B5C]/30 bg-[#B86B5C]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
+            <span className="text-[12px] font-medium text-[#8F3F32] dark:text-[#D98A7B]">
+              账号已归档，请联系 owner 恢复
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowArchivedAlert(false)}
+              className="shrink-0 text-[#8F3F32] transition-colors hover:text-[#6F2F25] dark:text-[#D98A7B] dark:hover:text-[#E6A69A] p-0.5"
+              aria-label="关闭提示"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
         {showExpiredAlert && (
           <div className="flex items-center justify-between gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
             <span className="text-[12px] font-medium text-[#8F641B] dark:text-[#D99E55]">

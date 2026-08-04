@@ -25,6 +25,7 @@ test("team-management route 仅在按需加载时返回团队分组数据", asyn
       ok: true,
       userId: "owner-1",
       visibleUserIds: ["owner-1", "member-1", "admin-2"],
+      activeVisibleUserIds: ["owner-1", "member-1", "admin-2"],
       canViewAllUsers: true,
     }),
     loadTeamManagement: async () => {

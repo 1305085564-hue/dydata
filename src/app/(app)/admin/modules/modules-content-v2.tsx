@@ -4,13 +4,14 @@ import { useState, useEffect, useTransition, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { 
   UsersRound, Plus, Trash2, ShieldAlert, Sparkles, X,
-  Search, KeyRound, Settings, RefreshCw
+  Search, KeyRound, Settings, RefreshCw, Archive, RotateCcw
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
@@ -32,7 +33,9 @@ import {
   changeRole, 
   resetMemberPassword, 
   updateMemberTeam, 
-  removeMember,
+  removeMemberFromTeam,
+  archiveMember,
+  restoreMember,
   createGroup,
   assignMembersToGroup, 
   removeMemberFromGroup 
@@ -66,6 +69,12 @@ interface ProfileSummary {
   team_name: string | null;
   permissions: Permissions | null;
   status?: string | null;
+  membership_status?: "active" | "archived" | string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archived_by_name?: string | null;
+  archive_reason?: string | null;
+  archive_snapshot?: Record<string, unknown> | null;
   exempt_type?: string | null;
   exempt_start_date?: string | null;
   exempt_end_date?: string | null;
@@ -106,6 +115,7 @@ interface TeamV2ContentProps {
     canEditPermissions: boolean;
   };
   allProfiles: ProfileSummary[];
+  archivedProfiles?: ProfileSummary[];
   teams: TeamOption[];
   teamManagement: {
     access: {
@@ -153,6 +163,7 @@ export function AdminModulesContentV2({
   currentUserBusinessRole,
   permissionManagerCapabilities,
   allProfiles,
+  archivedProfiles: initialArchivedProfiles = [],
   teams: initialTeams,
   teamManagement,
   pendingRequests: initialPendingRequests,
@@ -161,7 +172,9 @@ export function AdminModulesContentV2({
   const router = useRouter();
   const [localTeams, setLocalTeams] = useState<TeamOption[]>(initialTeams);
   const [localProfiles, setLocalProfiles] = useState<ProfileSummary[]>(allProfiles);
+  const [localArchivedProfiles, setLocalArchivedProfiles] = useState<ProfileSummary[]>(initialArchivedProfiles);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
+  const [memberView, setMemberView] = useState<"active" | "archived">("active");
 
   const [selectedTeamId, setSelectedTeamId] = useState<string>("__all__");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
@@ -175,6 +188,9 @@ export function AdminModulesContentV2({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [removeTarget, setRemoveTarget] = useState<ProfileSummary | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<ProfileSummary | null>(null);
+  const [archiveReason, setArchiveReason] = useState("");
+  const [restoreTarget, setRestoreTarget] = useState<ProfileSummary | null>(null);
   const [deleteTeamTarget, setDeleteTeamTarget] = useState<TeamOption | null>(null);
   
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
@@ -191,6 +207,11 @@ export function AdminModulesContentV2({
 
   const [isPending, startTransition] = useTransition();
   const [isSavingPermissions, startSavingPermissions] = useTransition();
+
+  useEffect(() => {
+    setLocalProfiles(allProfiles);
+    setLocalArchivedProfiles(initialArchivedProfiles);
+  }, [allProfiles, initialArchivedProfiles]);
 
   const hasFetchedEmails = useRef(false);
   useEffect(() => {
@@ -233,7 +254,15 @@ export function AdminModulesContentV2({
   }, [focusMemberId, localProfiles]);
 
   const filteredProfiles = useMemo(() => {
-    return localProfiles.filter(p => {
+    const source = memberView === "archived" ? localArchivedProfiles : localProfiles;
+    return source.filter(p => {
+      if (memberView === "archived") {
+        if (!searchQuery.trim()) return true;
+        const query = searchQuery.toLowerCase().trim();
+        return [p.name, p.email || "", p.archive_reason || ""].some((value) =>
+          value.toLowerCase().includes(query),
+        );
+      }
       if (selectedTeamId !== "__all__") {
         if (p.team_id !== selectedTeamId) return false;
       }
@@ -251,7 +280,7 @@ export function AdminModulesContentV2({
       }
       return true;
     });
-  }, [localProfiles, selectedTeamId, selectedGroupId, searchQuery]);
+  }, [localProfiles, localArchivedProfiles, memberView, selectedTeamId, selectedGroupId, searchQuery]);
 
   const activeMember = useMemo(() => {
     return localProfiles.find(p => p.id === activeMemberId) ?? null;
@@ -421,27 +450,89 @@ export function AdminModulesContentV2({
     });
   };
 
-  const handleRemoveMember = () => {
+  const handleRemoveMemberFromTeam = () => {
     if (!removeTarget) return;
     const target = removeTarget;
     setRemoveTarget(null);
-    
     const prevProfiles = localProfiles;
-    setLocalProfiles(prev => prev.filter(p => p.id !== target.id));
-    if (activeMemberId === target.id) {
-      setActiveMemberId(null);
-    }
-    feedbackToast.success(`正在将成员 ${target.name} 移出团队`);
+    setLocalProfiles(prev => prev.map((profile) => profile.id === target.id
+      ? { ...profile, team_id: null, group_id: null, team_name: null }
+      : profile));
+    feedbackToast.success(`正在将 ${target.name} 移出团队`);
 
     startTransition(async () => {
-      const res = await removeMember(target.id);
+      const res = await removeMemberFromTeam(target.id);
       if (res.error) {
         setLocalProfiles(prevProfiles);
+        setRemoveTarget(target);
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success("成员移出并禁用成功");
+        feedbackToast.success("已移出团队，账号仍可登录且数据保留");
         router.refresh();
       }
+    });
+  };
+
+  const handleArchiveMember = () => {
+    if (!archiveTarget) return;
+    const target = archiveTarget;
+    const reason = archiveReason.trim();
+    if (!reason) {
+      feedbackToast.error("归档必须填写原因");
+      return;
+    }
+
+    const previousProfiles = localProfiles;
+    setArchiveTarget(null);
+    setArchiveReason("");
+    setLocalProfiles((prev) => prev.filter((profile) => profile.id !== target.id));
+    if (activeMemberId === target.id) setActiveMemberId(null);
+
+    startTransition(async () => {
+      const res = await archiveMember(target.id, reason);
+      if (res.error) {
+        setLocalProfiles(previousProfiles);
+        setArchiveTarget(target);
+        setArchiveReason(reason);
+        feedbackToast.error(res.error);
+        return;
+      }
+      feedbackToast.success("账号已归档，历史数据仍保留");
+      router.refresh();
+    });
+  };
+
+  const handleRestoreMember = () => {
+    if (!restoreTarget) return;
+    const target = restoreTarget;
+    const previousArchivedProfiles = localArchivedProfiles;
+    const previousProfiles = localProfiles;
+    setRestoreTarget(null);
+    setLocalArchivedProfiles((prev) => prev.filter((profile) => profile.id !== target.id));
+    setLocalProfiles((prev) => [
+      ...prev,
+      {
+        ...target,
+        role: "member",
+        membership_status: "active",
+        team_id: null,
+        group_id: null,
+        team_name: null,
+        permissions: {},
+      },
+    ]);
+
+    startTransition(async () => {
+      const res = await restoreMember(target.id);
+      if (res.error) {
+        setLocalArchivedProfiles(previousArchivedProfiles);
+        setLocalProfiles(previousProfiles);
+        setRestoreTarget(target);
+        feedbackToast.error(res.error);
+        return;
+      }
+      feedbackToast.success("账号已恢复，请重新分配团队和权限");
+      router.refresh();
     });
   };
 
@@ -819,9 +910,39 @@ export function AdminModulesContentV2({
                 className="h-9.5 pl-9 pr-4 text-[13px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-xl"
               />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1" role="tablist" aria-label="成员状态">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={memberView === "active"}
+                  onClick={() => setMemberView("active")}
+                  className={cn(
+                    "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition-colors",
+                    memberView === "active" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800",
+                  )}
+                >
+                  <UsersRound className="size-3.5" />
+                  正常成员
+                  <span className="tabular-nums">{localProfiles.length}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={memberView === "archived"}
+                  onClick={() => { setMemberView("archived"); setActiveMemberId(null); }}
+                  className={cn(
+                    "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition-colors",
+                    memberView === "archived" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800",
+                  )}
+                >
+                  <Archive className="size-3.5" />
+                  已归档账号
+                  <span className="tabular-nums">{localArchivedProfiles.length}</span>
+                </button>
+              </div>
               <span className="text-[12px] tabular-nums text-zinc-500 uppercase tracking-wider">
-                展示 {filteredProfiles.length} / {localProfiles.length} 人
+                展示 {filteredProfiles.length} / {memberView === "active" ? localProfiles.length : localArchivedProfiles.length} 人
               </span>
             </div>
           </div>
@@ -844,9 +965,17 @@ export function AdminModulesContentV2({
           ) : (
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredProfiles.map(member => {
+                const isArchivedView = memberView === "archived";
                 const isAdmin = member.role === "admin";
                 const isCurrentMemberActive = activeMemberId === member.id;
                 const groupAsLeader = teamManagement.groups.find(g => g.leader_user_id === member.id);
+                const archiveSnapshot = member.archive_snapshot ?? {};
+                const archivedTeamName = typeof archiveSnapshot.team_name === "string"
+                  ? archiveSnapshot.team_name
+                  : "未分配";
+                const archivedRole = typeof archiveSnapshot.role === "string"
+                  ? archiveSnapshot.role === "admin" ? "管理员" : "成员"
+                  : "成员";
                 
                 return (
                   <div
@@ -860,9 +989,13 @@ export function AdminModulesContentV2({
                   >
                     <button
                       type="button"
+                      disabled={isArchivedView}
                       aria-current={isCurrentMemberActive ? "true" : undefined}
-                      className="space-y-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                      onClick={() => handleSelectMember(member)}
+                      className={cn(
+                        "space-y-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40",
+                        isArchivedView && "cursor-default",
+                      )}
+                      onClick={() => { if (!isArchivedView) handleSelectMember(member); }}
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -879,11 +1012,18 @@ export function AdminModulesContentV2({
 
                         <span className={cn(
                           "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-[12px] font-medium tracking-tight border",
-                          isAdmin
+                          isArchivedView
+                            ? "bg-zinc-100 border-zinc-200 text-zinc-600"
+                            : isAdmin
                             ? "bg-white border-[#D97757]/30 text-zinc-900"
                             : "bg-zinc-100 border-transparent text-zinc-700"
                         )}>
-                          {isAdmin ? (
+                          {isArchivedView ? (
+                            <>
+                              <Archive className="size-3" />
+                              已归档
+                            </>
+                          ) : isAdmin ? (
                             <>
                               <span className="size-1.5 rounded-full bg-[#D97757]" />
                               管理员
@@ -894,9 +1034,13 @@ export function AdminModulesContentV2({
 
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
-                          {member.team_name || "未分配团队"}
+                          {isArchivedView ? archivedTeamName : member.team_name || "未分配团队"}
                         </span>
-                        {groupAsLeader ? (
+                        {isArchivedView ? (
+                          <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
+                            归档前角色：{archivedRole}
+                          </span>
+                        ) : groupAsLeader ? (
                           <span className="inline-flex items-center rounded-lg bg-[#5F82A8]/15 px-2 py-0.5 text-[12px] text-[#5F82A8] font-medium">
                             组长 : {groupAsLeader.name}
                           </span>
@@ -906,7 +1050,7 @@ export function AdminModulesContentV2({
                           </span>
                         ) : null}
                         
-                        {member.exempt_type && (
+                        {!isArchivedView && member.exempt_type && (
                           <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
                             已豁免
                           </span>
@@ -914,6 +1058,25 @@ export function AdminModulesContentV2({
                       </div>
                     </button>
 
+                    {isArchivedView ? (
+                      <div className="mt-4 space-y-2 border-t border-zinc-100 pt-3">
+                        <div className="space-y-1 text-[12px] text-zinc-500">
+                          <p>归档时间：{member.archived_at ? new Date(member.archived_at).toLocaleString("zh-CN") : "未知"}</p>
+                          <p>归档人：{member.archived_by_name || member.archived_by || "未知"}</p>
+                          <p className="line-clamp-2">原因：{member.archive_reason || "未填写"}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setRestoreTarget(member)}
+                          disabled={!isOwner || isPending}
+                          className="h-8 w-full rounded-lg border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                        >
+                          <RotateCcw className="size-3.5" />
+                          恢复账号
+                        </Button>
+                      </div>
+                    ) : (
                     <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 opacity-100 transition-opacity pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto">
                       <div className="flex items-center gap-1.5">
                         {isOwner && member.id !== currentUserId && (
@@ -969,6 +1132,7 @@ export function AdminModulesContentV2({
                         </div>
                       )}
                     </div>
+                    )}
                   </div>
                 );
               })}
@@ -1167,34 +1331,50 @@ export function AdminModulesContentV2({
                 </div>
               )}
 
-              {isOwner && activeMember.id !== currentUserId && (
+              {(isOwner || permissionManagerCapabilities.canRemoveMember) && activeMember.id !== currentUserId && activeMember.role !== "owner" && (
                 <div className="space-y-3.5 border-t border-zinc-200 pt-6">
                   <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-zinc-500">高级管理</h4>
                   
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setPasswordResetTarget(activeMember)}
-                      className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
-                    >
-                      重置账户密码
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setExemptionMemberId(activeMember.id)}
-                      className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
-                    >
-                      {activeMember.exempt_type ? "调整豁免配置" : "开启日报豁免"}
-                    </Button>
-                  </div>
+                  {isOwner && (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setPasswordResetTarget(activeMember)}
+                        className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                      >
+                        重置账户密码
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setExemptionMemberId(activeMember.id)}
+                        className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                      >
+                        {activeMember.exempt_type ? "调整日报豁免" : "开启日报豁免"}
+                      </Button>
+                    </div>
+                  )}
 
-                  <Button
-                    variant="outline"
-                    onClick={() => setRemoveTarget(activeMember)}
-                    className="h-9 w-full rounded-xl border-[#C9604D]/35 hover:border-[#C9604D]/50 text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
-                  >
-                    移出并封禁该成员
-                  </Button>
+                  {permissionManagerCapabilities.canRemoveMember && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setRemoveTarget(activeMember)}
+                      className="h-9 w-full rounded-xl border-zinc-300 text-zinc-700 hover:bg-zinc-50 text-[12px]"
+                    >
+                      <UsersRound className="size-3.5" />
+                      移出团队
+                    </Button>
+                  )}
+
+                  {isOwner && (
+                    <Button
+                      variant="outline"
+                      onClick={() => { setArchiveTarget(activeMember); setArchiveReason(""); }}
+                      className="h-9 w-full rounded-xl border-[#C9604D]/35 hover:border-[#C9604D]/50 text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
+                    >
+                      <Archive className="size-3.5" />
+                      归档账号
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -1309,13 +1489,69 @@ export function AdminModulesContentV2({
 
       <ConfirmDialog
         open={removeTarget !== null}
-        title="确认移出成员"
-        description={removeTarget ? `确定将 ${removeTarget.name} 移出本团队吗？该用户账户将被封禁且移出所有架构。` : ""}
-        confirmText="确认移出并封禁"
-        destructive
+        title="确认移出团队"
+        description={removeTarget ? `确定将 ${removeTarget.name} 移出本团队吗？账号仍可登录，数据保留，之后可以重新分配团队。` : ""}
+        confirmText="确认移出团队"
         loading={isPending}
-        onConfirm={handleRemoveMember}
+        onConfirm={handleRemoveMemberFromTeam}
         onOpenChange={(o) => { if (!o) setRemoveTarget(null); }}
+      />
+
+      <Dialog
+        open={archiveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !isPending) {
+            setArchiveTarget(null);
+            setArchiveReason("");
+          }
+        }}
+      >
+        <DialogContent className="rounded-2xl border border-zinc-200 bg-white">
+          <DialogHeader>
+            <DialogTitle>归档账号</DialogTitle>
+            <DialogDescription>
+              {archiveTarget ? `归档 ${archiveTarget.name} 后将立即禁止登录，清空团队与权限；日报、视频、账号和审计历史会保留。` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="archive-reason">归档原因</Label>
+            <Textarea
+              id="archive-reason"
+              value={archiveReason}
+              onChange={(event) => setArchiveReason(event.target.value)}
+              placeholder="请填写归档原因"
+              maxLength={500}
+              disabled={isPending}
+            />
+            <p className="text-right text-[12px] text-zinc-500">{archiveReason.length}/500</p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setArchiveTarget(null); setArchiveReason(""); }}
+              disabled={isPending}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleArchiveMember}
+              disabled={isPending || !archiveReason.trim()}
+            >
+              {isPending ? "归档中..." : "确认归档"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={restoreTarget !== null}
+        title="恢复账号"
+        description={restoreTarget ? `确认恢复 ${restoreTarget.name} 吗？恢复后账号可登录，但会保持未分配团队、普通成员和空权限。` : ""}
+        confirmText="确认恢复"
+        loading={isPending}
+        onConfirm={handleRestoreMember}
+        onOpenChange={(open) => { if (!open) setRestoreTarget(null); }}
       />
 
       <ExemptionDialog

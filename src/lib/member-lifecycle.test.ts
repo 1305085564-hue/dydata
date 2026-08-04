@@ -8,6 +8,7 @@ import {
   canRestoreMember,
   filterActiveMemberships,
   normalizeMembershipStatus,
+  resolveMembershipStatusFromQuery,
   type MemberLifecycleProfile,
 } from "./member-lifecycle";
 
@@ -51,7 +52,7 @@ test("归档快照保留旧归属与权限，但写入最低权限和空团队",
     archivedAt: "2026-08-04T12:00:00.000Z",
     snapshot: {
       role: activeMember.role,
-      permissions: activeMember.permissions,
+      permissions: activeMember.permissions ?? {},
       team_id: activeMember.team_id,
       group_id: activeMember.group_id,
       team_name: "内容一部",
@@ -101,4 +102,15 @@ test("当前成员过滤排除 archived，但迁移前缺少字段的记录按 a
   ];
 
   assert.deepEqual(filterActiveMemberships(rows).map((row) => row.id), ["active-1", "legacy-1"]);
+});
+
+test("归档会话拦截状态在字段缺失时兼容 active，其他核验失败时拒绝放行", () => {
+  assert.equal(resolveMembershipStatusFromQuery({ data: { membership_status: "archived" }, error: null }), "archived");
+  assert.equal(resolveMembershipStatusFromQuery({ data: { membership_status: "active" }, error: null }), "active");
+  assert.equal(
+    resolveMembershipStatusFromQuery({ data: null, error: { message: "column membership_status does not exist" } }),
+    "active",
+  );
+  assert.equal(resolveMembershipStatusFromQuery({ data: null, error: { message: "profiles unavailable" } }), "unavailable");
+  assert.equal(resolveMembershipStatusFromQuery({ data: null, error: null }), "unavailable");
 });

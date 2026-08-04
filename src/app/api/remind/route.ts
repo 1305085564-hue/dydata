@@ -11,6 +11,7 @@ import {
 } from "@/lib/remind-submission";
 import { buildReminderContent } from "@/lib/飞书提醒";
 import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
+import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import type { ExemptionCategory, ExemptionRequestStatus, UserStatus } from "@/types";
 
 const REMIND_SOURCE_LABEL = "Vercel Cron /api/remind v2";
@@ -20,6 +21,7 @@ type ProfileRow = {
   name: string;
   role: string;
   status: UserStatus | null;
+  membership_status?: string | null;
   exempt_type: "permanent" | "temporary" | null;
   exempt_start_date: string | null;
   exempt_end_date: string | null;
@@ -102,17 +104,25 @@ export async function GET(request: NextRequest) {
   const sevenDaysAgo = shiftDateString(today, -7);
 
   const [
-    { data: profiles, error: profilesError },
+    profilesResult,
     { data: accounts, error: accountsError },
     { data: reports, error: reportsError },
     { data: exemptionRequests, error: exemptionRequestsError },
   ] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select(
-        "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
-      )
-      .eq("role", "member"),
+    loadWithMembershipFallback({
+      loadWithMembership: async () => supabase
+        .from("profiles")
+        .select(
+          "id, name, role, status, membership_status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+        )
+        .eq("role", "member"),
+      loadWithoutMembership: async () => supabase
+        .from("profiles")
+        .select(
+          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+        )
+        .eq("role", "member"),
+    }),
     supabase.from("accounts").select("id, profile_id"),
     supabase
       .from("daily_reports")
@@ -126,6 +136,9 @@ export async function GET(request: NextRequest) {
       .lte("start_date", today)
       .or(`end_date.is.null,end_date.gte.${sevenDaysAgo}`),
   ]);
+
+  const profilesError = profilesResult.error;
+  const profiles = filterActiveMemberships((profilesResult.data ?? []) as ProfileRow[]);
 
   // exemption_request 查询失败不应阻断主流程
   const activeExemptionRequests = (exemptionRequests ?? []) as ExemptionRequestRow[];

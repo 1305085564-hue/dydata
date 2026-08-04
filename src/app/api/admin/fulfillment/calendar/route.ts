@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
+import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { requireAdminServiceClient, requireOwnerOrAdminRole } from "../_shared";
 
 export async function GET(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await loadFulfillmentCalendar(year, month, auth.scope.visibleUserIds);
+    const data = await loadFulfillmentCalendar(year, month, getActiveVisibleUserIds(auth.scope));
     return NextResponse.json({ data });
   } catch (error) {
     console.error("[fulfillment/calendar] failed to load calendar", error);

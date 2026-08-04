@@ -5,7 +5,7 @@ import {
   readJsonBody,
   requireAdminServiceClient,
   requireOwnerOrAdminRole,
-  requireVisibleUsers,
+  requireActiveVisibleUsers,
   unwrapRpc,
 } from "../../_shared";
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: appealOwnerResult.error?.message || "申诉不存在" }, { status: 404 });
   }
 
-  const scoped = requireVisibleUsers(auth, [appealOwnerResult.data.user_id]);
+  const scoped = requireActiveVisibleUsers(auth, [appealOwnerResult.data.user_id]);
   if (scoped) return scoped;
 
   const result = await auth.supabase.rpc("handle_fulfillment_appeal", {

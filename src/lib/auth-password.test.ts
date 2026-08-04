@@ -31,6 +31,7 @@ test("空值和外部地址回退到安全默认路径", () => {
 
 test("认证错误不会直接暴露服务端原文", () => {
   assert.equal(getLoginErrorMessage("Invalid login credentials"), "邮箱或密码不正确");
+  assert.equal(getLoginErrorMessage("User is banned"), "账号已归档，请联系 owner 恢复");
   assert.equal(getLoginErrorMessage("database exploded"), "登录失败，请稍后重试");
   assert.equal(getResetPasswordErrorMessage("Auth session missing"), "重置链接已失效，请重新发送");
   assert.equal(getForgotPasswordErrorMessage("network unavailable"), "邮件发送失败，请检查网络后重试");

@@ -1,7 +1,7 @@
 import { getShanghaiDateString, shiftDateString } from "@/lib/remind-submission";
 import { countIssueSeverities, normalizeSampleQualityIssues } from "@/lib/sample-quality";
 
-import type { Alert, AlertDetectorContext } from "./types";
+import { getAlertActiveUserIds, type Alert, type AlertDetectorContext } from "./types";
 
 type VideoRow = {
   id: string;
@@ -38,6 +38,7 @@ function toShanghaiDate(value: string | null | undefined) {
 }
 
 async function loadUploadOcrFailureAlerts(context: AlertDetectorContext): Promise<Alert[]> {
+  const activeVisibleUserIds = getAlertActiveUserIds(context.scope);
   const since = new Date((context.now ?? new Date()).getTime() - 24 * 60 * 60 * 1000).toISOString();
   const { data: issueRows, error } = await context.supabase
     .from("sample_quality_issues")
@@ -60,7 +61,7 @@ async function loadUploadOcrFailureAlerts(context: AlertDetectorContext): Promis
     .from("daily_reports")
     .select("id, user_id, title, report_date, submitter")
     .in("id", reportIds)
-    .in("user_id", context.scope.visibleUserIds);
+    .in("user_id", activeVisibleUserIds);
 
   if (reportError) {
     throw new Error(reportError.message);
@@ -108,7 +109,8 @@ async function loadUploadOcrFailureAlerts(context: AlertDetectorContext): Promis
 }
 
 export async function detectUploadAlerts({ supabase, scope, now = new Date() }: AlertDetectorContext): Promise<Alert[]> {
-  if (scope.visibleUserIds.length === 0) {
+  const activeVisibleUserIds = getAlertActiveUserIds(scope);
+  if (activeVisibleUserIds.length === 0) {
     return [];
   }
 
@@ -118,7 +120,7 @@ export async function detectUploadAlerts({ supabase, scope, now = new Date() }: 
     .from("videos")
     .select("id, user_id, uploaded_at, created_at, video_title")
     .eq("lifecycle_state", "active")
-    .in("user_id", scope.visibleUserIds)
+    .in("user_id", activeVisibleUserIds)
     .gte("created_at", new Date(`${yesterday}T00:00:00+08:00`).toISOString())
     .lte("created_at", now.toISOString());
 

@@ -88,6 +88,7 @@ async function ModulesDataContainer({
       currentUserPermissions={data.perm.permissions}
       permissionManagerCapabilities={data.permissionManagerCapabilities}
       allProfiles={data.allProfiles}
+      archivedProfiles={data.archivedProfiles ?? []}
       teams={data.teams}
       teamManagement={data.teamManagement}
       pendingRequests={pendingJoinRequests}

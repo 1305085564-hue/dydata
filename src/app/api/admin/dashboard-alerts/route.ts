@@ -22,13 +22,13 @@ function buildDashboardAlertsCacheKey(input: {
   userId: string;
   businessRole: "owner" | "team_admin";
   teamId: string | null;
-  visibleUserIds: string[];
+  activeVisibleUserIds: string[];
 }) {
   return [
     input.userId,
     input.businessRole,
     input.teamId ?? "",
-    [...input.visibleUserIds].sort().join(","),
+    [...input.activeVisibleUserIds].sort().join(","),
   ].join("|");
 }
 
@@ -42,6 +42,7 @@ function toDashboardScope(scope: DataAccessScope): DashboardAlertScope | null {
     businessRole: scope.businessRole,
     teamId: scope.teamId,
     visibleUserIds: scope.visibleUserIds,
+    activeVisibleUserIds: scope.activeVisibleUserIds ?? scope.visibleUserIds,
   };
 }
 
@@ -93,7 +94,7 @@ export async function buildDashboardAlertsResponse(
     userId: resolved.scope.actorUserId,
     businessRole: resolved.scope.businessRole,
     teamId: resolved.scope.teamId,
-    visibleUserIds: resolved.scope.visibleUserIds,
+    activeVisibleUserIds: resolved.scope.activeVisibleUserIds ?? resolved.scope.visibleUserIds,
   });
   const cached = dashboardAlertsCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {

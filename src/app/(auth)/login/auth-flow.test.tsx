@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { LoginForm } from "./login-form";
@@ -10,6 +11,8 @@ import {
   getLoginNotice,
   getResetPasswordErrorMessage,
 } from "@/lib/auth-password";
+
+const loginPageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 
 test("登录表单会保留传入邮箱并显示忘记密码入口", () => {
   const html = renderToStaticMarkup(
@@ -35,6 +38,14 @@ test("登录表单包含保持登录选项", () => {
   assert.match(html, /保持登录状态（30天免密）/);
 });
 
+test("登录表单首屏显示归档账号提示", () => {
+  const html = renderToStaticMarkup(
+    <LoginForm action={async () => ({ error: null, email: "" })} archived />,
+  );
+
+  assert.match(html, /账号已归档，请联系 owner 恢复/);
+});
+
 test("登录成功后所有角色都默认进入 dashboard", () => {
   assert.equal(getPostLoginRedirectPath("owner"), "/dashboard");
   assert.equal(getPostLoginRedirectPath("admin"), "/dashboard");
@@ -52,12 +63,22 @@ test("登录页提示文案会按 query 参数返回", () => {
   assert.equal(getLoginNotice({ registered: "1" }), "注册成功，请登录");
   assert.equal(getLoginNotice({ reset: "success" }), "密码已重置，请重新登录");
   assert.equal(getLoginNotice({ reset: "expired" }), "重置链接已失效，请重新发送");
+  assert.equal(getLoginNotice({ archived: "1" }), "账号已归档，请联系 owner 恢复");
   assert.equal(getLoginNotice({}), null);
 });
 
 test("登录失败提示不会直接暴露认证服务原始错误", () => {
   assert.equal(getLoginErrorMessage("Invalid login credentials"), "邮箱或密码不正确");
+  assert.equal(getLoginErrorMessage("User is banned"), "账号已归档，请联系 owner 恢复");
+  assert.equal(getLoginErrorMessage("账号已归档，请联系 owner 恢复"), "账号已归档，请联系 owner 恢复");
   assert.equal(getLoginErrorMessage("unexpected backend detail"), "登录失败，请稍后重试");
+});
+
+test("登录成功后仍会检查 membership_status，并登出归档账号", () => {
+  assert.match(loginPageSource, /select\("role, membership_status"\)/);
+  assert.match(loginPageSource, /isMissingMembershipStatusError/);
+  assert.match(loginPageSource, /membership_status[\s\S]*archived/);
+  assert.match(loginPageSource, /supabase\.auth\.signOut\(\)/);
 });
 
 test("忘记密码成功提示统一隐藏邮箱是否存在", () => {

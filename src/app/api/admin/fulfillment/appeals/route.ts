@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { filterScopedRows } from "../../cockpit/_shared";
+import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { requireAdminServiceClient, requireOwnerOrAdminRole } from "../_shared";
 
 const APPEAL_STATUSES = new Set(["pending", "approved", "rejected"]);
@@ -24,9 +25,7 @@ export async function GET(request: NextRequest) {
     query = query.eq("status", status);
   }
 
-  if (auth.scope.kind !== "all") {
-    query = query.in("user_id", auth.scope.visibleUserIds);
-  }
+  query = query.in("user_id", getActiveVisibleUserIds(auth.scope));
 
   query = query.limit(limit);
 

@@ -9,6 +9,7 @@ import {
   KEEP_LOGGED_IN_COOKIE_NAME,
 } from "@/lib/supabase/session-cookie";
 import { hasInvalidUuidPathParameter } from "@/lib/api-path-validation";
+import { resolveMembershipStatusFromQuery } from "@/lib/member-lifecycle";
 
 const CLEAR_SITE_DATA_QUERY = "__clear_site_data";
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -77,11 +78,47 @@ function getProtectedReturnPath(request: NextRequest) {
   return `${nextUrl.pathname}${search ? `?${search}` : ""}`;
 }
 
-function buildLoginRedirect(request: NextRequest, options: { expired?: boolean } = {}) {
+function buildLoginRedirect(request: NextRequest, options: { expired?: boolean; archived?: boolean } = {}) {
   const loginUrl = new URL("/login", request.url);
   if (options.expired) loginUrl.searchParams.set("expired", "1");
+  if (options.archived) loginUrl.searchParams.set("archived", "1");
   loginUrl.searchParams.set("next", getProtectedReturnPath(request));
   return NextResponse.redirect(loginUrl);
+}
+
+function clearAuthCookies(response: NextResponse, request: NextRequest) {
+  listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
+    response.cookies.delete(cookieName);
+  });
+  response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
+}
+
+export function buildAccountBlockedResponse(
+  request: NextRequest,
+  options: { api: boolean; archived: boolean },
+) {
+  const response = options.api
+    ? NextResponse.json(
+        { error: options.archived ? "账号已归档，请联系 owner 恢复" : "无法确认账号状态，请重新登录" },
+        { status: options.archived ? 403 : 401 },
+      )
+    : buildLoginRedirect(request, { expired: !options.archived, archived: options.archived });
+  clearAuthCookies(response, request);
+  return response;
+}
+
+export function buildMembershipUnavailableResponse(
+  _request: NextRequest,
+  options: { api: boolean },
+) {
+  const response = options.api
+    ? NextResponse.json(
+        { error: "暂时无法确认账号状态，请稍后重试" },
+        { status: 503 },
+      )
+    : new NextResponse("暂时无法确认账号状态，请稍后重试", { status: 503 });
+  response.headers.set("Retry-After", "15");
+  return response;
 }
 
 
@@ -138,12 +175,8 @@ export async function middleware(request: NextRequest) {
 
   if (!hasAuthCookie && isProtectedAppRoute) {
     const response = buildLoginRedirect(request, { expired: hasLegacySupabaseAuthCookie });
-    if (hasLegacySupabaseAuthCookie) {
-      allSupabaseAuthCookieNames.forEach((cookieName) => {
-        response.cookies.delete(cookieName);
-      });
-    }
-    response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
+    if (hasLegacySupabaseAuthCookie) clearAuthCookies(response, request);
+    else response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
     return response;
   }
 
@@ -156,27 +189,33 @@ export async function middleware(request: NextRequest) {
   });
 
   // 有 cookie 时进一步校验 session 是否有效
-  if (hasAuthCookie && isProtectedAppRoute) {
+  if (hasAuthCookie && (isProtectedAppRoute || isApiRoute)) {
     try {
       const supabase = createClientFromRequest(request, response);
       const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
+      if (error) {
+        return buildMembershipUnavailableResponse(request, { api: isApiRoute });
+      }
+      if (!data.session) {
         // session 无效或过期，清除 cookie 并重定向到登录页
-        const response = buildLoginRedirect(request, { expired: true });
-        listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
-          response.cookies.delete(cookieName);
-        });
-        response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
-        return response;
+        return buildAccountBlockedResponse(request, { api: isApiRoute, archived: false });
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("membership_status")
+        .eq("id", data.session.user.id)
+        .maybeSingle();
+      const membershipStatus = resolveMembershipStatusFromQuery({ data: profile, error: profileError });
+      if (membershipStatus === "archived") {
+        return buildAccountBlockedResponse(request, { api: isApiRoute, archived: true });
+      }
+      if (membershipStatus === "unavailable") {
+        return buildMembershipUnavailableResponse(request, { api: isApiRoute });
       }
     } catch {
-      // 校验失败时应重定向到登录页
-      const response = buildLoginRedirect(request, { expired: true });
-      listSupabaseAuthCookieNames(request.cookies.getAll()).forEach((cookieName) => {
-        response.cookies.delete(cookieName);
-      });
-      response.cookies.delete(KEEP_LOGGED_IN_COOKIE_NAME);
-      return response;
+      // 无法核验状态时拒绝本次请求，但保留现有会话，避免短暂故障造成误登出。
+      return buildMembershipUnavailableResponse(request, { api: isApiRoute });
     }
   }
 

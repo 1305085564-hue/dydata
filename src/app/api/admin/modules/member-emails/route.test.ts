@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildAdminModuleMemberEmailsResponse } from "./route";
+import { buildAdminModuleMemberEmailsResponse } from "./response";
 
 test("member-emails route 以后置方式返回邮箱补全数据", async () => {
   let requestedUserIds: string[] | null | undefined;
@@ -9,7 +9,8 @@ test("member-emails route 以后置方式返回邮箱补全数据", async () => 
     requireModuleAccess: async () => ({
       ok: true,
       userId: "admin-1",
-      visibleUserIds: ["admin-1", "member-1"],
+      visibleUserIds: ["admin-1", "member-1", "archived-1"],
+      activeVisibleUserIds: ["admin-1", "member-1"],
       canViewAllUsers: false,
     }),
     loadMemberEmails: async (userIds) => {

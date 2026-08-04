@@ -7,6 +7,7 @@ import {
   parseRemovePayload,
   requireOwnerOrAdminRole,
   requireOwnerOrTeamAdminRole,
+  requireActiveVisibleUsers,
   requireVisibleUsers,
 } from "./_shared";
 
@@ -104,7 +105,18 @@ test("全局配置不把 group_leader 的原始 admin 角色当成全局管理�
   assert.equal(ownerResponse, null);
 });
 
-test("fulfillment 写接口不能操作不可见成员", async () => {
+test("fulfillment 当前写操作只能操作 active 成员，owner 也不能绕过", () => {
+  const allowed = requireActiveVisibleUsers({
+    scope: { kind: "team", visibleUserIds: [USER_ID, USER_ID_2], activeVisibleUserIds: [USER_ID] },
+  } as never, [USER_ID]);
+  assert.equal(allowed, null);
+
+  const archived = requireActiveVisibleUsers({
+    scope: { kind: "all", visibleUserIds: [USER_ID, USER_ID_2], activeVisibleUserIds: [USER_ID] },
+  } as never, [USER_ID_2]);
+  assert.equal(archived?.status, 403);
+});
+test("fulfillment 历史接口不能读取不可见成员", () => {
   const allowed = requireVisibleUsers({
     scope: { kind: "team", visibleUserIds: [USER_ID] },
   } as never, [USER_ID]);

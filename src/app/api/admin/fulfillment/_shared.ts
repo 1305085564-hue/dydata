@@ -113,6 +113,21 @@ export function requireOwnerOrTeamAdminRole(auth: Awaited<ReturnType<typeof requ
   return null;
 }
 
+export function requireActiveVisibleUsers(
+  auth: Awaited<ReturnType<typeof requireAdminServiceClient>>,
+  userIds: string[],
+) {
+  if ("response" in auth) return auth.response;
+
+  const activeVisibleUserIds = new Set(auth.scope.activeVisibleUserIds ?? auth.scope.visibleUserIds);
+  const hasInactiveOrInvisibleUser = userIds.some((userId) => !activeVisibleUserIds.has(userId));
+  if (hasInactiveOrInvisibleUser) {
+    return NextResponse.json({ error: "不能操作已归档或当前管理范围外的成员" }, { status: 403 });
+  }
+
+  return null;
+}
+
 export function requireVisibleUsers(
   auth: Awaited<ReturnType<typeof requireAdminServiceClient>>,
   userIds: string[],

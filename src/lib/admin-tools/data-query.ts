@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import type { ToolExecutionResult } from "./types";
 import { toOptionalString, toTrimmedString, toDateString } from "./utils";
 
@@ -59,13 +60,22 @@ export async function getAnomalousData(params: Record<string, unknown>): Promise
 
   if (type === "no_submission") {
     const date = end || new Date().toISOString().slice(0, 10);
-    const [{ data: profiles }, { data: reports }] = await Promise.all([
-      supabase.from("profiles").select("id, name, status").eq("role", "member"),
+    const [profilesResult, { data: reports }] = await Promise.all([
+      loadWithMembershipFallback({
+        loadWithMembership: async () => supabase.from("profiles").select("id, name, status, membership_status").eq("role", "member"),
+        loadWithoutMembership: async () => supabase.from("profiles").select("id, name, status").eq("role", "member"),
+      }),
       supabase.from("daily_reports").select("user_id").eq("report_date", date),
     ]);
 
     const submitted = new Set((reports ?? []).map((item) => item.user_id));
-    const anomalies = (profiles ?? [])
+    const profiles = filterActiveMemberships((profilesResult.data ?? []) as Array<{
+      id: string;
+      name: string;
+      status: string | null;
+      membership_status?: string | null;
+    }>);
+    const anomalies = profiles
       .filter((profile) => (profile.status ?? "active") === "active" && !submitted.has(profile.id))
       .map((profile) => ({
         date,

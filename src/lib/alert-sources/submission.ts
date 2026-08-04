@@ -1,4 +1,6 @@
 import { getAnomalousData } from "@/lib/admin-tools/data-query";
+import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
+import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { getShanghaiDateString, shiftDateString } from "@/lib/remind-submission";
 import { detectNoSubmission, type AlertProfile, type AlertReport } from "@/lib/smart-alert";
 
@@ -10,6 +12,7 @@ type ProfileRow = {
   id: string;
   name: string;
   status: string | null;
+  membership_status?: string | null;
 };
 
 type ReportRow = {
@@ -66,7 +69,8 @@ function isAlertArray(value: unknown): value is Array<Record<string, unknown>> {
 }
 
 export async function detectSubmissionAlerts({ supabase, scope, now = new Date() }: AlertDetectorContext): Promise<Alert[]> {
-  if (scope.visibleUserIds.length === 0) {
+  const activeVisibleUserIds = getActiveVisibleUserIds(scope);
+  if (activeVisibleUserIds.length === 0) {
     return [];
   }
 
@@ -74,32 +78,39 @@ export async function detectSubmissionAlerts({ supabase, scope, now = new Date()
   const since = shiftDateString(today, -6);
   const tomorrow = shiftDateString(today, 1);
 
-  const [{ data: profilesRaw, error: profilesError }, { data: reportsRaw, error: reportsError }, { data: exemptionsRaw, error: exemptionsError }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, name, status")
-      .eq("role", "member")
-      .in("id", scope.visibleUserIds),
+  const [profilesResult, { data: reportsRaw, error: reportsError }, { data: exemptionsRaw, error: exemptionsError }] = await Promise.all([
+    loadWithMembershipFallback({
+      loadWithMembership: async () => supabase
+        .from("profiles")
+        .select("id, name, status, membership_status")
+        .eq("role", "member")
+        .in("id", activeVisibleUserIds),
+      loadWithoutMembership: async () => supabase
+        .from("profiles")
+        .select("id, name, status")
+        .eq("role", "member")
+        .in("id", activeVisibleUserIds),
+    }),
     supabase
       .from("daily_reports")
       .select("user_id, account_id, report_date")
-      .in("user_id", scope.visibleUserIds)
+      .in("user_id", activeVisibleUserIds)
       .gte("report_date", since)
       .lte("report_date", today),
     supabase
       .from("exemption_grant")
       .select("user_id, end_date")
       .eq("status", "active")
-      .in("user_id", scope.visibleUserIds)
+      .in("user_id", activeVisibleUserIds)
       .gte("end_date", today)
       .lte("end_date", tomorrow),
   ]);
 
-  if (profilesError) throw new Error(profilesError.message);
+  if (profilesResult.error) throw new Error(profilesResult.error.message);
   if (reportsError) throw new Error(reportsError.message);
   if (exemptionsError) throw new Error(exemptionsError.message);
 
-  const profiles = (profilesRaw ?? []) as ProfileRow[];
+  const profiles = filterActiveMemberships((profilesResult.data ?? []) as ProfileRow[]);
   const reports = (reportsRaw ?? []) as ReportRow[];
   const profileNameById = new Map(profiles.map((profile) => [profile.id, profile.name]));
 
@@ -176,7 +187,7 @@ export async function detectSubmissionAlerts({ supabase, scope, now = new Date()
     if (isAlertArray(rawAnomalies)) {
       for (const row of rawAnomalies) {
         const userId = typeof row.userId === "string" ? row.userId : null;
-        if (!userId || !scope.visibleUserIds.includes(userId)) continue;
+        if (!userId || !activeVisibleUserIds.includes(userId)) continue;
         const userName = typeof row.userName === "string" ? row.userName : profileNameById.get(userId) ?? "未知成员";
         alerts.push({
           id: `submission:deadline:${userId}:${today}`,

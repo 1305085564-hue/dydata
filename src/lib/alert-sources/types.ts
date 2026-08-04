@@ -37,6 +37,11 @@ export interface DashboardAlertScope {
   businessRole: Extract<BusinessRole, "owner" | "team_admin">;
   teamId: string | null;
   visibleUserIds: string[];
+  activeVisibleUserIds?: string[];
+}
+
+export function getAlertActiveUserIds(scope: DashboardAlertScope) {
+  return scope.activeVisibleUserIds ?? scope.visibleUserIds;
 }
 
 export interface AlertDetectorContext {

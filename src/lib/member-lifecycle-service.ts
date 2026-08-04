@@ -241,7 +241,7 @@ function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): Record<s
 async function writeProfile(
   client: MemberLifecycleClient,
   targetId: string,
-  patch: Record<string, unknown>,
+  patch: object,
 ) {
   const result = await client
     .from("profiles")
@@ -259,17 +259,22 @@ async function writeMemberChangeLog(
   input: {
     targetId: string;
     teamId: string | null;
-    actionType: "remove_from_team" | "archive" | "restore";
+    actionType: "remove_from_team" | "transfer_team" | "archive" | "restore";
     operatorId: string;
     reason?: string | null;
   },
 ) {
   const result = await client.from("member_change_log").insert({
-    user_id: input.targetId,
-    team_id: input.teamId,
+    profile_id: input.targetId,
+    change_type: input.actionType,
     action_type: input.actionType,
-    operator_id: input.operatorId,
-    action_reason: input.reason ?? null,
+    change_payload: {
+      team_id: input.teamId,
+      action_reason: input.reason ?? null,
+    },
+    audit_fields: {
+      operator_id: input.operatorId,
+    },
   });
   return result.error;
 }
@@ -287,6 +292,101 @@ async function rollback(
     }
   }
   return errors;
+}
+
+export async function transferMemberToTeamWithClient(input: {
+  client: MemberLifecycleClient;
+  actor: MemberLifecycleActor;
+  targetId: string;
+  newTeamId: string;
+  newTeamName: string;
+}): Promise<MemberLifecycleOperationResult> {
+  const loaded = await loadTargetProfile(input.client, input.targetId);
+  if (!loaded.profile) {
+    return operationFailure("transfer_team", "加载成员资料", new Error(loaded.error ?? "用户不存在"));
+  }
+
+  const target = loaded.profile;
+  if (input.actor.id === target.id) return operationFailure("transfer_team", "校验", new Error("不能调配自己"));
+  if (target.role === "owner") return operationFailure("transfer_team", "校验", new Error("不能调配创始人"));
+  if (normalizeMembershipStatus(target.membership_status) === "archived") {
+    return operationFailure("transfer_team", "校验", new Error("已归档账号不能调配团队，请先恢复账号"));
+  }
+  if (target.team_id === input.newTeamId && target.group_id === null) {
+    return {
+      ok: true,
+      changed: false,
+      target,
+      beforeSnapshot: toProfileSnapshot(target),
+      afterSnapshot: toProfileSnapshot(target),
+    };
+  }
+
+  const beforeSnapshot = toProfileSnapshot(target);
+  const auth = await loadAuthUserSnapshot(input.client, target.id);
+  if (!auth.ok) return operationFailure("transfer_team", "读取 Auth 用户", auth.error);
+
+  const profileWrite = await writeProfile(input.client, target.id, {
+    team_id: input.newTeamId,
+    group_id: null,
+  });
+  if (profileWrite.error) return operationFailure("transfer_team", "成员资料写入", profileWrite.error);
+
+  const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
+    teamId: input.newTeamId,
+    teamName: input.newTeamName,
+    groupId: null,
+    groupName: null,
+    metadata: auth.value.metadata,
+  });
+  if (metadataError) {
+    const rollbackErrors = await rollback([
+      {
+        label: "恢复成员团队归属",
+        run: async () => (await writeProfile(input.client, target.id, {
+          team_id: target.team_id ?? null,
+          group_id: target.group_id ?? null,
+        })).error,
+      },
+      {
+        label: "恢复 Auth 团队元数据",
+        run: () => restoreAuthUserMetadata(input.client, target.id, auth.value.metadata),
+      },
+    ]);
+    return operationFailure("transfer_team", "Auth 团队元数据同步", metadataError, rollbackErrors);
+  }
+
+  const logError = await writeMemberChangeLog(input.client, {
+    targetId: target.id,
+    teamId: input.newTeamId,
+    actionType: "transfer_team",
+    operatorId: input.actor.id,
+  });
+  if (logError) {
+    const rollbackErrors = await rollback([
+      {
+        label: "恢复成员团队归属",
+        run: async () => (await writeProfile(input.client, target.id, {
+          team_id: target.team_id ?? null,
+          group_id: target.group_id ?? null,
+        })).error,
+      },
+      {
+        label: "恢复 Auth 团队元数据",
+        run: () => restoreAuthUserMetadata(input.client, target.id, auth.value.metadata),
+      },
+    ]);
+    return operationFailure("transfer_team", "成员变更日志写入", logError, rollbackErrors);
+  }
+
+  return {
+    ok: true,
+    changed: true,
+    target,
+    beforeSnapshot,
+    afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId, group_id: null },
+    affectedData: { userId: target.id, teamId: input.newTeamId },
+  };
 }
 
 export async function removeMemberFromTeamWithClient(input: {

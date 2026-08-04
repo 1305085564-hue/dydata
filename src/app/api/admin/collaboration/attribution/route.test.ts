@@ -6,6 +6,7 @@ import { buildAttributionResponse } from "../handlers";
 const actorId = "123e4567-e89b-42d3-a456-426614174001";
 const reportId = "123e4567-e89b-42d3-a456-426614174010";
 const targetId = "123e4567-e89b-42d3-a456-426614174002";
+const archivedReportOwnerId = "123e4567-e89b-42d3-a456-426614174003";
 
 function request() {
   return new Request("https://dydata.cc/api/admin/collaboration/attribution", {
@@ -20,7 +21,7 @@ function request() {
   });
 }
 
-function deps(reportOwnerId: string, videoUpdated = false) {
+function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?: string[]) {
   let updateCalled = false;
   return {
     value: {
@@ -36,7 +37,10 @@ function deps(reportOwnerId: string, videoUpdated = false) {
       }),
       buildPermissionContextForActor: async () => ({
         permissionInfo: {} as never,
-        scope: { visibleUserIds: [actorId, targetId, reportOwnerId] } as never,
+        scope: {
+          visibleUserIds: [actorId, targetId, reportOwnerId],
+          activeVisibleUserIds: activeVisibleUserIds ?? [actorId, targetId, reportOwnerId],
+        } as never,
       }),
       createAdminClient: () => ({}) as never,
       loadAttributionReport: async () => ({
@@ -74,4 +78,13 @@ test("视频软配对失败时事务仍成功并明确返回 videoUpdated false"
     message: "视频侧未找到对应记录，仅更新了日报",
   });
   assert.equal(injected.wasUpdateCalled(), true);
+});
+
+test("补录接口保留归档成员历史可见，但拒绝继续修改其日报", async () => {
+  const injected = deps(archivedReportOwnerId, false, [actorId, targetId]);
+  const response = await buildAttributionResponse(request(), injected.value);
+
+  assert.equal(response.status, 403);
+  assert.deepEqual(await response.json(), { ok: false, error: "不能修改已归档或当前权限范围外的日报" });
+  assert.equal(injected.wasUpdateCalled(), false);
 });

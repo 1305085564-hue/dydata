@@ -59,6 +59,7 @@ function toDashboardScope(rawScope: Awaited<ReturnType<typeof buildDataAccessSco
     businessRole: rawScope.businessRole,
     teamId: rawScope.teamId,
     visibleUserIds: rawScope.visibleUserIds,
+    activeVisibleUserIds: rawScope.activeVisibleUserIds ?? rawScope.visibleUserIds,
   };
 }
 

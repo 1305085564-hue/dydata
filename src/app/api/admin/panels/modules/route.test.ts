@@ -11,6 +11,7 @@ test("admin panels modules 只返回当前管理范围内的成员与团队", as
         ok: true,
         userId: "admin-1",
         visibleUserIds: ["admin-1", "member-1"],
+        activeVisibleUserIds: ["admin-1", "member-1"],
         canViewAllUsers: false,
       }),
       createClient: async () => ({}) as never,

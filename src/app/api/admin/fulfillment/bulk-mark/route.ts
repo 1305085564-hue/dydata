@@ -5,7 +5,7 @@ import {
   readJsonBody,
   requireAdminServiceClient,
   requireOwnerOrAdminRole,
-  requireVisibleUsers,
+  requireActiveVisibleUsers,
   unwrapRpc,
 } from "../_shared";
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const forbidden = requireOwnerOrAdminRole(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
-  const scoped = requireVisibleUsers(auth, payload.data.userIds);
+  const scoped = requireActiveVisibleUsers(auth, payload.data.userIds);
   if (scoped) return scoped;
 
   const result = await auth.supabase.rpc("mark_fulfillment_status_batch", {

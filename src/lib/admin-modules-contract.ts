@@ -1,5 +1,6 @@
 import { normalizePermissionsForBusinessRole, type BusinessRole } from "@/lib/business-role";
-import type { ExemptType, ExemptionCategory, Permissions, UserRole } from "@/types";
+import { normalizeMembershipStatus } from "@/lib/member-lifecycle";
+import type { ExemptType, ExemptionCategory, MembershipStatus, Permissions, UserRole } from "@/types";
 
 interface ExemptionFields {
   exempt_type?: ExemptType | null;
@@ -16,6 +17,12 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   status: string | null;
   permissions: Permissions;
   email: string | null;
+  membership_status?: MembershipStatus;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archived_by_name?: string | null;
+  archive_reason?: string | null;
+  archive_snapshot?: Record<string, unknown> | null;
   team_id?: string | null;
   group_id?: string | null;
   team_name: string | null;
@@ -27,6 +34,11 @@ export interface AdminModuleMemberProfileLike extends ExemptionFields {
   role: UserRole;
   status?: string | null;
   permissions?: Permissions | null;
+  membership_status?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
+  archive_snapshot?: Record<string, unknown> | null;
   team_id?: string | null;
   group_id?: string | null;
 }
@@ -60,6 +72,11 @@ export function buildAdminModuleMemberSummaries(
       status: profile.status ?? null,
       permissions: normalizePermissionsForBusinessRole(businessRole, profile.permissions ?? {}),
       email: null,
+      membership_status: normalizeMembershipStatus(profile.membership_status),
+      archived_at: profile.archived_at ?? null,
+      archived_by: profile.archived_by ?? null,
+      archive_reason: profile.archive_reason ?? null,
+      archive_snapshot: profile.archive_snapshot ?? null,
       team_id: profile.team_id ?? null,
       group_id: profile.group_id ?? null,
       team_name: profile.team_id ? (teamNameById.get(profile.team_id) ?? null) : null,

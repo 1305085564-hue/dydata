@@ -289,6 +289,6 @@ test("低风险成功：retryDailyReview 返回执行信息", () => {
 
 test("取消态 historyTitle 用中文工具名", () => {
   const presentation = buildCancelledPresentation("kickUser");
-  assert.match(presentation.historyTitle, /踢出用户/);
+  assert.match(presentation.historyTitle, /归档账号/);
   assert.match(presentation.historyTitle, /已取消/);
 });

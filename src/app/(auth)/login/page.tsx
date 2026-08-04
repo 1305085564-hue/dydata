@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { getLoginErrorMessage, getLoginNotice } from "@/lib/auth-password";
+import { isMissingMembershipStatusError } from "@/lib/member-lifecycle";
 import { createClient } from "@/lib/supabase/server";
 import {
   KEEP_LOGGED_IN_COOKIE_NAME,
@@ -29,6 +30,7 @@ interface LoginPageProps {
     reset?: string;
     from?: string;
     next?: string;
+    archived?: string;
   }>;
 }
 
@@ -56,14 +58,31 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       return { error: getLoginErrorMessage(error?.message), email };
     }
 
-    const { data: profile, error: profileError } = await supabase
+    const profileResult = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, membership_status")
       .eq("id", data.user.id)
       .single();
+    const fallbackProfileResult = profileResult.error && isMissingMembershipStatusError(profileResult.error)
+      ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single()
+      : null;
+    const profile = (fallbackProfileResult?.data ?? profileResult.data) as {
+      role: string;
+      membership_status?: string | null;
+    } | null;
+    const profileError = fallbackProfileResult?.error ?? profileResult.error;
 
     if (profileError || !profile) {
+      await supabase.auth.signOut();
       return { error: "未找到账号资料，请联系管理员。", email };
+    }
+    if (profile.membership_status === "archived") {
+      await supabase.auth.signOut();
+      return { error: "账号已归档，请联系 owner 恢复", email };
     }
 
     const cookieStore = await cookies();
@@ -82,5 +101,5 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect(getPostLoginRedirectPath(profile.role, params.next));
   }
 
-  return <LoginForm action={loginAction} notice={getLoginNotice(params)} />;
+  return <LoginForm action={loginAction} notice={getLoginNotice(params)} archived={params.archived === "1"} />;
 }

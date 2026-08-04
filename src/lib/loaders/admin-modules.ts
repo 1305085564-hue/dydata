@@ -1,8 +1,8 @@
 import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
-import { loadProfilesWithExemptionFallback } from "@/app/(app)/admin/资料加载";
 import { normalizePermissionsForBusinessRole, resolveBusinessRole } from "@/lib/business-role";
 import type { BusinessRole } from "@/lib/business-role";
+import { isMissingMembershipStatusError, isActiveMembership, filterArchivedMemberships } from "@/lib/member-lifecycle";
 import {
   buildAdminModuleMemberSummaries,
   hydrateAdminModuleMemberEmails,
@@ -22,7 +22,7 @@ import {
   type TeamManagementProfile,
 } from "@/lib/team-management";
 import { getTeamOptions } from "@/lib/teams";
-import type { Permissions, UserRole } from "@/types";
+import type { MembershipStatus, Permissions, UserRole } from "@/types";
 
 import { shiftDateOnly } from "./shared";
 
@@ -30,6 +30,11 @@ type AdminSupabase = Awaited<ReturnType<typeof createClient>>;
 
 type AdminModuleProfileRow = AdminModuleMemberProfileLike & {
   created_at?: string | null;
+  membership_status?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
+  archive_snapshot?: Record<string, unknown> | null;
 };
 
 export interface AdminModulesData {
@@ -38,6 +43,7 @@ export interface AdminModulesData {
   perm: { role: UserRole; businessRole: BusinessRole; permissions: Permissions };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
   allProfiles: AdminModuleMemberSummary[];
+  archivedProfiles?: AdminModuleMemberSummary[];
   teams: Array<{ id: string; name: string }>;
   teamManagement: {
     access: TeamManagementAccess;
@@ -198,29 +204,97 @@ async function loadAdminModulesBaseContext({
 async function loadAdminModuleProfiles(
   adminSupabase: ReturnType<typeof createAdminClient>,
 ): Promise<AdminModuleProfileRow[]> {
-  const { data: profiles } = await loadProfilesWithExemptionFallback({
-    loadWithExemption: async () =>
-      adminSupabase
-        .from("profiles")
-        .select(
-          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category, permissions, team_id, group_id, created_at"
-        )
-        .order("created_at", { ascending: true }),
-    loadWithoutExemption: async () =>
-      adminSupabase
-        .from("profiles")
-        .select("id, name, role, status, permissions, team_id, group_id, created_at")
-        .order("created_at", { ascending: true }) as never,
-  });
+  const baseFields = "id, name, role, status, permissions, team_id, group_id, created_at";
+  const exemptionFields = "exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+  const lifecycleFields = "membership_status, archived_at, archived_by, archive_reason, archive_snapshot";
+  const variants = [
+    `${baseFields}, ${exemptionFields}, ${lifecycleFields}`,
+    `${baseFields}, ${lifecycleFields}`,
+    `${baseFields}, ${exemptionFields}`,
+    baseFields,
+  ];
 
-  return ((profiles ?? []) as AdminModuleProfileRow[]).map((profile) => ({
+  let lastError: { message?: string } | null = null;
+  for (const select of variants) {
+    const result = await adminSupabase
+      .from("profiles")
+      .select(select)
+      .order("created_at", { ascending: true });
+
+    if (!result.error) {
+      return ((result.data ?? []) as unknown as AdminModuleProfileRow[]).map((profile) => ({
+        ...profile,
+        role: profile.role as UserRole,
+        permissions: (profile.permissions ?? {}) as Permissions,
+        status: profile.status ?? null,
+        membership_status: profile.membership_status ?? "active",
+        archived_at: profile.archived_at ?? null,
+        archived_by: profile.archived_by ?? null,
+        archive_reason: profile.archive_reason ?? null,
+        archive_snapshot: profile.archive_snapshot ?? null,
+        team_id: profile.team_id ?? null,
+        group_id: profile.group_id ?? null,
+        exempt_type: profile.exempt_type ?? null,
+        exempt_start_date: profile.exempt_start_date ?? null,
+        exempt_end_date: profile.exempt_end_date ?? null,
+        exempt_reason: profile.exempt_reason ?? null,
+        exemption_category: profile.exemption_category ?? null,
+      }));
+    }
+
+    lastError = result.error;
+    const knownCompatibilityError =
+      isMissingMembershipStatusError(result.error) ||
+      [
+        "exempt_type",
+        "exempt_start_date",
+        "exempt_end_date",
+        "exempt_reason",
+        "exemption_category",
+        "team_id",
+        "group_id",
+      ].some((column) => result.error?.message?.includes(column));
+    if (!knownCompatibilityError) break;
+  }
+
+  throw new Error(lastError?.message ?? "加载成员资料失败");
+}
+
+async function hydrateArchivedByNames(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  profiles: AdminModuleMemberSummary[],
+) {
+  const ids = Array.from(new Set(
+    profiles
+      .map((profile) => profile.archived_by)
+      .filter((id): id is string => Boolean(id)),
+  ));
+  if (ids.length === 0) return profiles;
+
+  const result = await adminSupabase.from("profiles").select("id, name").in("id", ids);
+  if (result.error) throw new Error(result.error.message ?? "加载归档人信息失败");
+  const names = new Map((result.data ?? []).map((profile) => [profile.id as string, profile.name as string | null]));
+
+  return profiles.map((profile) => ({
     ...profile,
-    role: profile.role as UserRole,
-    permissions: (profile.permissions ?? {}) as Permissions,
-    status: profile.status ?? null,
-    team_id: profile.team_id ?? null,
-    group_id: profile.group_id ?? null,
+    archived_by_name: profile.archived_by ? names.get(profile.archived_by) ?? null : null,
   }));
+}
+
+function filterVisibleArchivedProfiles(
+  profiles: AdminModuleMemberSummary[],
+  access: TeamManagementAccess,
+) {
+  if (access.level === "owner") return profiles;
+  if (!access.canView || access.teamIds === null) return [];
+
+  const visibleTeamIds = new Set(access.teamIds);
+  return profiles.filter((profile) => {
+    const archivedTeamId = profile.archive_snapshot && typeof profile.archive_snapshot.team_id === "string"
+      ? profile.archive_snapshot.team_id
+      : null;
+    return Boolean(archivedTeamId && visibleTeamIds.has(archivedTeamId));
+  });
 }
 
 async function loadAdminModuleMemberHydrationMap(
@@ -359,11 +433,14 @@ export async function loadAdminModulesTeamManagementData(): Promise<AdminModules
     leader_user_id: group.leader_user_id ?? null,
   }));
 
+  const hydratedProfiles = hydrateAdminModuleMemberEmails(buildAdminModuleMemberSummaries(profiles, teams), hydrationMap);
+  const activeProfiles = hydratedProfiles.filter(isActiveMembership);
+
   return buildAdminModulesTeamManagementPayload({
     perm,
     teams,
     groups,
-    allProfiles: hydrateAdminModuleMemberEmails(buildAdminModuleMemberSummaries(profiles, teams), hydrationMap),
+    allProfiles: activeProfiles,
   });
 }
 
@@ -392,10 +469,23 @@ export async function loadAdminModulesData({
     team_id: group.team_id ?? null,
     leader_user_id: group.leader_user_id ?? null,
   }));
-  const hydratedAllProfiles = hydrateAdminModuleMemberEmails(
+  const hydratedProfiles = hydrateAdminModuleMemberEmails(
     buildAdminModuleMemberSummaries(profiles, teams),
     hydrationMap,
   );
+  const activeProfiles = hydratedProfiles.filter(isActiveMembership);
+  const teamManagement = buildAdminModulesTeamManagementPayload({
+    perm: context.perm,
+    teams,
+    groups,
+    allProfiles: activeProfiles,
+  });
+  const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
+  const visibleActiveProfiles = activeProfiles.filter((profile) => visibleActiveProfileIds.has(profile.id));
+  const archivedProfiles = filterVisibleArchivedProfiles(await hydrateArchivedByNames(
+    context.adminSupabase,
+    hydratedProfiles.filter((profile) => profile.membership_status === "archived"),
+  ), teamManagement.access);
 
   return {
     currentUserId: context.user.id,
@@ -406,13 +496,9 @@ export async function loadAdminModulesData({
       permissions: context.perm.permissions,
     },
     permissionManagerCapabilities: context.permissionManagerCapabilities,
-    allProfiles: hydratedAllProfiles,
+    allProfiles: visibleActiveProfiles,
+    archivedProfiles,
     teams,
-    teamManagement: buildAdminModulesTeamManagementPayload({
-      perm: context.perm,
-      teams,
-      groups,
-      allProfiles: hydratedAllProfiles,
-    }),
+    teamManagement,
   };
 }
