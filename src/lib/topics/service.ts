@@ -1261,30 +1261,44 @@ export async function loadTopicPool(
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)", { count: "exact" })
     .order("created_at", { ascending: false });
 
+  // my_claims 视图：直接查 sub_topic_claims 获取用户的有效认领，不依赖 join 关联
+  let myClaimsDirectMap: Map<string, CurrentUserClaim> | null = null;
   if (options.view === "my_claims") {
-    // “我正在做的”看的是我的认领记录，不按子题创建时间过滤；
-    // 先查我的有效认领（candidate/scripting），再在数据库层过滤，保证分页总数正确
-    const { data: myClaims, error: myClaimsError } = await supabase
+    const { data: myClaimsRows, error: myClaimsError } = await supabase
       .from("sub_topic_claims")
-      .select("sub_topic_id")
+      .select("id, sub_topic_id, status, claimed_at")
       .eq("user_id", userId)
       .neq("status", "returned");
     if (myClaimsError) return { ok: false, status: 500, message: myClaimsError.message };
 
-    const claimedIds = [
-      ...new Set(
-        ((myClaims ?? []) as Array<{ sub_topic_id?: string | null }>)
-          .map((claim) => claim.sub_topic_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ];
-    if (claimedIds.length === 0) {
+    myClaimsDirectMap = new Map();
+    const claimedIds: string[] = [];
+    for (const row of (myClaimsRows ?? []) as Array<{ id?: unknown; sub_topic_id?: unknown; status?: unknown; claimed_at?: unknown }>) {
+      const subTopicId = typeof row.sub_topic_id === "string" ? row.sub_topic_id : null;
+      const claimId = typeof row.id === "string" ? row.id : null;
+      const status = row.status === "candidate" || row.status === "scripting" ? row.status : null;
+      if (!subTopicId || !claimId || !status) continue;
+      claimedIds.push(subTopicId);
+      // 同一子题保留优先级最高的（scripting > candidate，时间最新）
+      const existing = myClaimsDirectMap.get(subTopicId);
+      if (!existing || (status === "scripting" && existing.status !== "scripting")) {
+        myClaimsDirectMap.set(subTopicId, {
+          id: claimId,
+          subTopicId,
+          status,
+          claimedAt: typeof row.claimed_at === "string" ? row.claimed_at : null,
+        });
+      }
+    }
+
+    const uniqueClaimedIds = [...new Set(claimedIds)];
+    if (uniqueClaimedIds.length === 0) {
       return {
         ok: true,
         value: { items: [], pagination: { page: options.page, pageSize: options.pageSize, totalItems: 0 } },
       };
     }
-    query = query.in("id", claimedIds);
+    query = query.in("id", uniqueClaimedIds);
   } else {
     // 全部 / 我提交的：时间范围只限制子题录入时间；all 代表全部历史。
     if (since) query = query.gte("created_at", since);
@@ -1307,12 +1321,22 @@ export async function loadTopicPool(
   } catch (error) {
     return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
   }
-  const builtItems = items.map((item) => buildTopicPoolItem(
+  let builtItems = items.map((item) => buildTopicPoolItem(
     item,
     userId,
     scope,
     summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
   ));
+
+  // my_claims 视图：用直接查到的 claim 数据覆盖 join 关联的结果
+  if (myClaimsDirectMap) {
+    for (const item of builtItems) {
+      const directClaim = myClaimsDirectMap.get(String((item as Record<string, unknown>).id));
+      if (directClaim) {
+        (item as Record<string, unknown>).myClaim = directClaim;
+      }
+    }
+  }
   const sortedItems = options.sort
     ? sortTopicPoolItems(builtItems as Array<SortableTopicPoolItem & Record<string, unknown>>, options.sort)
     : builtItems;

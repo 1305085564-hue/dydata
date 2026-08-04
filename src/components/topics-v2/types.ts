@@ -1,4 +1,4 @@
-export type TopicPoolView = "all" | "my_claims" | "my_created" | "high_potential" | "never_worked";
+export type TopicPoolView = "all" | "my_claims" | "my_created";
 export type TopicTimeRange = "3d" | "1w" | "1m" | "3m" | "all";
 export type TopicComparisonDimension = "topic" | "account";
 

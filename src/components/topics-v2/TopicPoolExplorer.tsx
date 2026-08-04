@@ -138,28 +138,6 @@ export function TopicPoolExplorer({
             </button>
             <button
               type="button"
-              onClick={() => onViewChange("high_potential")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                currentView === "high_potential"
-                  ? "bg-white text-zinc-900 shadow-2xs font-semibold"
-                  : "hover:text-zinc-900"
-              }`}
-            >
-              高潜待挖
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewChange("never_worked")}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
-                currentView === "never_worked"
-                  ? "bg-white text-zinc-900 shadow-2xs font-semibold"
-                  : "hover:text-zinc-900"
-              }`}
-            >
-              从未做过
-            </button>
-            <button
-              type="button"
               onClick={() => onViewChange("my_claims")}
               className={`px-2.5 py-1 rounded-md transition-colors ${
                 currentView === "my_claims"
