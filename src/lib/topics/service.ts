@@ -353,7 +353,7 @@ export function rankSuggestedSubTopics(
 }
 
 export function calculateTopicWorkSummary(rows: TopicWorkMetricInput[]): TopicWorkSummary {
-  const qualified = rows.filter((row) => (row.playCount ?? 0) >= 1000);
+  const qualified = rows.filter((row) => (row.playCount ?? 0) >= 30_000);
   const totalPlayCount = qualified.reduce((sum, row) => sum + (row.playCount ?? 0), 0);
   const best = [...qualified].sort((a, b) => (b.playCount ?? 0) - (a.playCount ?? 0))[0] ?? null;
   const latest = [...qualified].sort((a, b) => (Date.parse(b.uploadedAt ?? "") || 0) - (Date.parse(a.uploadedAt ?? "") || 0))[0] ?? null;
@@ -409,7 +409,7 @@ export function buildTopicComparisonRows(rows: TopicComparisonInputRow[], dimens
     .map((items) => {
       const first = items[0]!;
       const workCount = items.length;
-      const qualifiedCount = items.filter((item) => item.playCount >= 1000).length;
+      const qualifiedCount = items.filter((item) => item.playCount >= 30_000).length;
       const totalPlayCount = items.reduce((total, item) => total + item.playCount, 0);
       const base = {
         topicId: first.topicId,
@@ -494,7 +494,7 @@ export function buildFocusTopics(rows: FocusTopicInput[], now = new Date(), perR
   const historicalCandidates: FocusTopicOutput[] = [];
 
   for (const row of rows) {
-    const historicalWorks = row.works.filter((work) => (work.playCount ?? 0) >= 1_000);
+    const historicalWorks = row.works.filter((work) => (work.playCount ?? 0) >= 30_000);
     const recentWorks = historicalWorks.filter((work) => {
       const snapshotTime = work.recentSnapshotAt ? Date.parse(work.recentSnapshotAt) : Number.NaN;
       return Number.isFinite(snapshotTime) && snapshotTime >= cutoff;
@@ -1056,7 +1056,7 @@ async function loadScoredTopicPool(
   for (const item of allSubTopics) {
     const aggregate = worksBySubTopic.get(String(item.id));
     if (!aggregate) continue;
-    const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= 1_000);
+    const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= 30_000);
     const avgPlayCount = qualifiedPlayCounts.length
       ? Math.round(qualifiedPlayCounts.reduce((total, playCount) => total + playCount, 0) / qualifiedPlayCounts.length)
       : null;
