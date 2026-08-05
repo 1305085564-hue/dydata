@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { inferDataScope } from "@/lib/data-access-scope";
 import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
 import type { DataScope, PermissionKey, Permissions, UserRole } from "@/types";
@@ -40,13 +41,38 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     return { error: "未登录", status: 401 as const };
   }
 
-  const { data: profile, error } = await supabase
+  const primary = await supabase
     .from("profiles")
     .select("id, name, role, permissions, data_scope, team_id")
     .eq("id", user.id)
     .single();
 
-  if (error || !profile) {
+  let profile: {
+    id: string;
+    name: string | null;
+    role: UserRole | null;
+    permissions: Permissions | null;
+    data_scope?: DataScope | null;
+    team_id: string | null;
+  } | null;
+
+  if (!primary.error) {
+    profile = primary.data as typeof profile;
+  } else if (primary.error.message.includes("data_scope") || primary.error.message.includes("Could not find")) {
+    const fallback = await supabase
+      .from("profiles")
+      .select("id, name, role, permissions, team_id")
+      .eq("id", user.id)
+      .single();
+    if (fallback.error || !fallback.data) {
+      return { error: "用户信息不存在", status: 403 as const };
+    }
+    profile = fallback.data as typeof profile;
+  } else {
+    return { error: "用户信息不存在", status: 403 as const };
+  }
+
+  if (!profile) {
     return { error: "用户信息不存在", status: 403 as const };
   }
 
@@ -67,7 +93,7 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
       role,
       permissions,
       name: profile.name ?? null,
-      dataScope: (profile.data_scope as DataScope | null | undefined) ?? "self",
+      dataScope: (profile.data_scope as DataScope | null | undefined) ?? inferDataScope(role, permissions),
       teamId: profile.team_id ?? null,
     },
   };

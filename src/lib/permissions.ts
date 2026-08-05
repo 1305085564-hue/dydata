@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserContext } from "@/lib/current-user-context";
+import { inferDataScope } from "@/lib/data-access-scope";
 import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
 import type { DataScope, Permissions, UserRole } from "@/types";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -54,8 +55,7 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
       .single();
     assertSupabaseQuerySucceeded(fallback.error, "加载用户权限失败");
     profile = fallback.data as typeof profile;
-    const role = profile?.role;
-    dataScope = role === "owner" || role === "admin" ? "all" : "self";
+    dataScope = inferDataScope(profile?.role, profile?.permissions);
   }
 
   if (!profile) return null;

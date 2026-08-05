@@ -6,6 +6,7 @@ import {
   canAccessOwner,
   filterRowsByDataScope,
   getActiveVisibleUserIds,
+  inferDataScope,
 } from "@/lib/data-access-scope";
 import type { DataAccessScope, ScopeProfileInput } from "@/lib/data-access-scope";
 
@@ -53,6 +54,13 @@ function makeFakeSupabase(rows: Array<{ id: string; team_id?: string | null; mem
 // ---------------------------------------------------------------------------
 // buildDataAccessScope — self scope
 // ---------------------------------------------------------------------------
+
+test("inferDataScope: owner/admin/member fallback mapping is stable", () => {
+  assert.equal(inferDataScope("owner", {}), "all");
+  assert.equal(inferDataScope("admin", { view_all_data: true }), "all");
+  assert.equal(inferDataScope("admin", {}), "team");
+  assert.equal(inferDataScope("member", {}), "self");
+});
 
 test("buildDataAccessScope: self scope returns only the user's own id", async () => {
   const profile = makeProfile({ id: "u1", data_scope: "self" });

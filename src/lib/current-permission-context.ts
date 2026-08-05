@@ -30,6 +30,13 @@ export async function buildPermissionContextFromPermissionInfo(
   const adminSupabase = createAdminClient();
   const scope = await buildDataAccessScope(adminSupabase, permissionInfo.userId, {
     teamId: options.teamId ?? null,
+    profile: {
+      id: permissionInfo.userId,
+      role: permissionInfo.role,
+      permissions: permissionInfo.permissions,
+      data_scope: permissionInfo.dataScope,
+      team_id: permissionInfo.teamId ?? null,
+    },
   });
   if (!scope) return null;
 

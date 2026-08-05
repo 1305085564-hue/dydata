@@ -35,15 +35,44 @@ export type ScopeProfileInput = {
   membership_status?: string | null;
 };
 
+function isMissingColumn(error: { message?: string } | null | undefined, column: string) {
+  const message = error?.message ?? "";
+  return message.includes(column) || message.includes("Could not find");
+}
+
+export function inferDataScope(role: UserRole | string | null | undefined, permissions: Permissions | null | undefined): DataScope {
+  if (role === "owner") return "all";
+  if (role === "admin" && permissions?.view_all_data === true) return "all";
+  if (role === "admin") return "team";
+  return "self";
+}
+
 async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promise<ScopeProfileInput | null> {
-  const result = await adminSupabase
+  const primary = await adminSupabase
     .from("profiles")
     .select("id, role, permissions, data_scope, membership_status, team_id")
     .eq("id", userId)
     .single();
 
-  assertSupabaseQuerySucceeded(result.error, "加载权限资料失败");
-  return (result.data as unknown as ScopeProfileInput | null) ?? null;
+  if (!isMissingColumn(primary.error, "data_scope")) {
+    assertSupabaseQuerySucceeded(primary.error, "加载权限资料失败");
+    return (primary.data as unknown as ScopeProfileInput | null) ?? null;
+  }
+
+  const fallback = await adminSupabase
+    .from("profiles")
+    .select("id, role, permissions, membership_status, team_id")
+    .eq("id", userId)
+    .single();
+
+  assertSupabaseQuerySucceeded(fallback.error, "加载权限资料失败");
+  const profile = fallback.data as unknown as Omit<ScopeProfileInput, "data_scope"> | null;
+  if (!profile) return null;
+
+  return {
+    ...profile,
+    data_scope: inferDataScope(profile.role, profile.permissions),
+  };
 }
 
 export async function buildDataAccessScope(
@@ -55,7 +84,7 @@ export async function buildDataAccessScope(
   if (!profile) return null;
 
   const role = (profile.role ?? "member") as UserRole;
-  const kind = (profile.data_scope ?? "self") as DataAccessScopeKind;
+  const kind = (profile.data_scope ?? inferDataScope(role, profile.permissions)) as DataAccessScopeKind;
   const effectiveTeamId = profile.team_id ?? options.teamId ?? null;
 
   let visibleRows: Array<{ id: string; membership_status?: string | null }> = [

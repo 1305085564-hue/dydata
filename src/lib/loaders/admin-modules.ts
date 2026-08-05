@@ -18,6 +18,7 @@ import {
   type TeamManagementAccess,
   type TeamManagementProfile,
 } from "@/lib/team-management";
+import { inferDataScope } from "@/lib/data-access-scope";
 import { getTeamOptions } from "@/lib/teams";
 import type { MembershipStatus, Permissions, UserRole } from "@/types";
 
@@ -201,13 +202,18 @@ async function loadAdminModuleProfiles(
   adminSupabase: ReturnType<typeof createAdminClient>,
 ): Promise<AdminModuleProfileRow[]> {
   const baseFields = "id, name, role, status, permissions, data_scope, team_id, created_at";
+  const legacyBaseFields = "id, name, role, status, permissions, team_id, created_at";
   const exemptionFields = "exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
   const lifecycleFields = "membership_status, archived_at, archived_by, archive_reason, archive_snapshot";
   const variants = [
     `${baseFields}, ${exemptionFields}, ${lifecycleFields}`,
+    `${legacyBaseFields}, ${exemptionFields}, ${lifecycleFields}`,
     `${baseFields}, ${lifecycleFields}`,
+    `${legacyBaseFields}, ${lifecycleFields}`,
     `${baseFields}, ${exemptionFields}`,
+    `${legacyBaseFields}, ${exemptionFields}`,
     baseFields,
+    legacyBaseFields,
   ];
 
   let lastError: { message?: string } | null = null;
@@ -222,7 +228,7 @@ async function loadAdminModuleProfiles(
         ...profile,
         role: profile.role as UserRole,
         permissions: (profile.permissions ?? {}) as Permissions,
-        data_scope: profile.data_scope ?? "self",
+        data_scope: profile.data_scope ?? inferDataScope(profile.role as UserRole, profile.permissions ?? {}),
         status: profile.status ?? null,
         membership_status: profile.membership_status ?? "active",
         archived_at: profile.archived_at ?? null,
@@ -248,6 +254,7 @@ async function loadAdminModuleProfiles(
         "exempt_reason",
         "exemption_category",
         "team_id",
+        "data_scope",
       ].some((column) => result.error?.message?.includes(column));
     if (!knownCompatibilityError) break;
   }
