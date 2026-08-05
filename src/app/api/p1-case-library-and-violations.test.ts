@@ -35,7 +35,7 @@ type PermissionMap = {
 };
 
 type Profile = {
-  businessRole: "owner" | "team_admin" | "member";
+  role: "owner" | "admin" | "member";
   permissions: PermissionMap;
 };
 
@@ -954,7 +954,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
         user: { id: "member-1" },
       }),
       getUserProfile: async () => ({
-        businessRole: "member",
+        role: "member",
         permissions: {},
       }),
     },
@@ -971,7 +971,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
         user: { id: "owner-1" },
       }),
       getUserProfile: async () => ({
-        businessRole: "owner",
+        role: "owner",
         permissions: {},
       }),
     },
@@ -988,7 +988,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
         user: { id: "owner-1" },
       }),
       getUserProfile: async (): Promise<Profile> => ({
-        businessRole: "team_admin",
+        role: "admin",
         permissions: { manage_violations: true },
       }),
     },
@@ -1069,7 +1069,7 @@ test("violations list 支持排序和多种筛选参数", async () => {
       user: { id: "owner-1" },
     }),
     getUserProfile: async (): Promise<Profile> => ({
-      businessRole: "owner",
+      role: "owner",
       permissions: {},
     }),
   };
@@ -1169,7 +1169,7 @@ test("violations list 支持话术库 pending/processed 状态分栏筛选", asy
       user: { id: "owner-1" },
     }),
     getUserProfile: async (): Promise<Profile> => ({
-      businessRole: "owner",
+      role: "owner",
       permissions: {},
     }),
   };

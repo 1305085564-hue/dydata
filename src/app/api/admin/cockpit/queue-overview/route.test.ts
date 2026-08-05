@@ -16,7 +16,6 @@ test("queue-overview 返回完整抽屉数据和底部指标", async () => {
         scope: {
           userId: "owner-1",
           role: "owner",
-          businessRole: "owner",
           permissions: {},
           accessLevel: 4,
           teamId: null,
@@ -115,7 +114,6 @@ test("queue-overview 同日期同 scope 60 秒内复用服务端缓存", async (
       scope: {
         userId: "owner-1",
         role: "owner",
-        businessRole: "owner",
         permissions: {},
         accessLevel: 4,
         teamId: null,

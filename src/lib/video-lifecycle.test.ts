@@ -9,7 +9,7 @@ import {
   performVideoLifecycleAction,
 } from "./video-lifecycle";
 
-function lifecycleDeps(input: { businessRole: "owner" | "team_admin"; lifecycleState: "active" | "trashed" | "purged"; trashedAt?: string | null; storageError?: boolean; includeScreenshot?: boolean }) {
+function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active" | "trashed" | "purged"; trashedAt?: string | null; storageError?: boolean; includeScreenshot?: boolean }) {
   const rpcCalls: Array<Record<string, unknown>> = [];
   const video = {
     id: "video-1",
@@ -37,7 +37,7 @@ function lifecycleDeps(input: { businessRole: "owner" | "team_admin"; lifecycleS
   return {
     rpcCalls,
     deps: {
-      requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", businessRole: input.businessRole } }),
+      requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", role: input.role } }),
       createAdminClient: () => supabase as never,
       buildDataAccessScope: async () => ({ visibleUserIds: ["team-user"] }),
     } as never,
@@ -45,19 +45,19 @@ function lifecycleDeps(input: { businessRole: "owner" | "team_admin"; lifecycleS
 }
 
 test("回收站只允许 owner 与 team_admin，group_leader 和 member 一律拒绝", () => {
-  assert.equal(canOperateVideoLifecycle({ businessRole: "owner" }, "trash"), true);
-  assert.equal(canOperateVideoLifecycle({ businessRole: "owner" }, "purge"), true);
-  assert.equal(canOperateVideoLifecycle({ businessRole: "team_admin" }, "restore"), true);
-  assert.equal(canOperateVideoLifecycle({ businessRole: "team_admin" }, "purge"), false);
-  assert.equal(canOperateVideoLifecycle({ businessRole: "group_leader" }, "trash"), false);
-  assert.equal(canOperateVideoLifecycle({ businessRole: "member" }, "trash"), false);
+  assert.equal(canOperateVideoLifecycle({ role: "owner" }, "trash"), true);
+  assert.equal(canOperateVideoLifecycle({ role: "owner" }, "purge"), true);
+  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "restore"), true);
+  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "purge"), false);
+  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "trash"), false);
+  assert.equal(canOperateVideoLifecycle({ role: "member" }, "trash"), false);
 });
 
 test("team_admin 只能处理可见范围内作品，owner 不受团队范围限制", () => {
   const scope = { visibleUserIds: ["team-user"] };
-  assert.equal(canOperateVideoWithinScope({ businessRole: "team_admin" }, scope, "team-user"), true);
-  assert.equal(canOperateVideoWithinScope({ businessRole: "team_admin" }, scope, "other-user"), false);
-  assert.equal(canOperateVideoWithinScope({ businessRole: "owner" }, scope, "other-user"), true);
+  assert.equal(canOperateVideoWithinScope({ role: "admin" }, scope, "team-user"), true);
+  assert.equal(canOperateVideoWithinScope({ role: "admin" }, scope, "other-user"), false);
+  assert.equal(canOperateVideoWithinScope({ role: "owner" }, scope, "other-user"), true);
 });
 
 test("永久删除必须在回收满30天后", () => {
@@ -68,19 +68,19 @@ test("永久删除必须在回收满30天后", () => {
 });
 
 test("回收与恢复经原子生命周期 RPC 执行", async () => {
-  const trash = lifecycleDeps({ businessRole: "team_admin", lifecycleState: "active" });
+  const trash = lifecycleDeps({ role: "admin", lifecycleState: "active" });
   const trashed = await performVideoLifecycleAction({ videoId: "video-1", action: "trash" }, trash.deps);
   assert.equal(trashed.ok, true);
   assert.deepEqual(trash.rpcCalls[0], { p_video_id: "video-1", p_action: "trash", p_actor_id: "admin-1" });
 
-  const restore = lifecycleDeps({ businessRole: "team_admin", lifecycleState: "trashed" });
+  const restore = lifecycleDeps({ role: "admin", lifecycleState: "trashed" });
   const restored = await performVideoLifecycleAction({ videoId: "video-1", action: "restore" }, restore.deps);
   assert.equal(restored.ok, true);
   assert.deepEqual(restore.rpcCalls[0], { p_video_id: "video-1", p_action: "restore", p_actor_id: "admin-1" });
 });
 
 test("已永久删除作品重复 purge 只重试截图清理，不重复写生命周期审计", async () => {
-  const retry = lifecycleDeps({ businessRole: "owner", lifecycleState: "purged", trashedAt: "2026-06-01T00:00:00.000Z", storageError: true, includeScreenshot: true });
+  const retry = lifecycleDeps({ role: "owner", lifecycleState: "purged", trashedAt: "2026-06-01T00:00:00.000Z", storageError: true, includeScreenshot: true });
   const result = await performVideoLifecycleAction({ videoId: "video-1", action: "purge" }, retry.deps);
   assert.equal(result.ok, true);
   if (!result.ok) return;

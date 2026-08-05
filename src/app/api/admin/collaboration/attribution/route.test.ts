@@ -30,9 +30,9 @@ function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?
         actor: {
           userId: actorId,
           role: "owner" as const,
-          businessRole: "owner" as const,
           permissions: {},
           name: "老板",
+          dataScope: "all" as const,
         },
       }),
       buildPermissionContextForActor: async () => ({

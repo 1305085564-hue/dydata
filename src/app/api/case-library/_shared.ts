@@ -9,7 +9,7 @@ type RpcResult<T> = {
 };
 
 export async function requireCaseLibraryServiceClient() {
-  const auth = await requireAdminActor({ requiredPermission: "manage_violations" });
+  const auth = await requireAdminActor({ requiredPermission: "review_violations" });
   if ("error" in auth) {
     return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
   }

@@ -12,9 +12,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { BusinessRole } from "@/lib/business-role";
-import { hasPermission } from "@/lib/permission-utils";
-import type { Permissions, UserRole } from "@/types";
+import type { Permissions } from "@/types";
 
 export type NavSubItem = {
   href: string;
@@ -39,8 +37,6 @@ export type GetNavItemsInput = {
   showAdmin: boolean;
   showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
-  userRole?: UserRole | null;
-  businessRole?: BusinessRole | null;
   permissions?: Permissions | null;
 };
 
@@ -191,4 +187,3 @@ export function getNavItems(input: GetNavItemsInput): NavItem[] {
 
   return items;
 }
-

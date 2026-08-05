@@ -1,29 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  normalizePermissionsForBusinessRole,
-  resolveBusinessRole,
-  type BusinessGroup,
-  type BusinessRole,
-} from "@/lib/business-role";
-import type { Permissions, UserRole } from "@/types";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import {
   filterActiveMemberships,
   loadWithMembershipFallback,
-  isMissingMembershipStatusError,
 } from "@/lib/member-lifecycle";
+import type { DataScope, Permissions, UserRole } from "@/types";
 
-export type AccessLevel = 1 | 2 | 3 | 4;
-export type DataAccessScopeKind = "self" | "group" | "team" | "all";
+export type DataAccessScopeKind = DataScope;
 
 export interface DataAccessScope {
   userId: string;
   role: UserRole;
-  businessRole: BusinessRole;
   permissions: Permissions;
-  accessLevel: AccessLevel;
   teamId: string | null;
-  groupId: string | null;
   kind: DataAccessScopeKind;
   visibleUserIds: string[];
   activeVisibleUserIds?: string[];
@@ -41,74 +30,20 @@ export type ScopeProfileInput = {
   id: string;
   role: UserRole | string | null;
   permissions: Permissions | null;
-  access_level?: number | string | null;
+  data_scope?: DataScope | null;
   team_id: string | null;
-  group_id: string | null;
   membership_status?: string | null;
-  led_group_ids?: string[] | null;
-  business_role?: BusinessRole | null;
 };
 
-function clampAccessLevel(value: unknown): AccessLevel | null {
-  const level = typeof value === "string" ? Number(value) : value;
-  if (level === 1 || level === 2 || level === 3 || level === 4) return level;
-  return null;
-}
-
-export function inferAccessLevel(role: UserRole, permissions: Permissions, explicitLevel?: unknown): AccessLevel {
-  const normalized = clampAccessLevel(explicitLevel);
-  if (normalized) return normalized;
-  if (role === "owner") return 4;
-  if (role === "admin" && permissions.view_all_data === true) return 4;
-  if (role === "admin") return 3;
-  return 1;
-}
-
-export function inferBusinessAccessLevel(businessRole: BusinessRole, explicitLevel?: unknown): AccessLevel {
-  if (businessRole === "owner") return 4;
-  if (businessRole === "team_admin") return 3;
-  if (businessRole === "group_leader") return 3;
-  return clampAccessLevel(explicitLevel) ?? 1;
-}
-
-export function getScopeKind(accessLevel: AccessLevel): DataAccessScopeKind {
-  if (accessLevel >= 4) return "all";
-  if (accessLevel === 3) return "team";
-  if (accessLevel === 2) return "group";
-  return "self";
-}
-
-function isMissingAccessLevelColumn(error: { message?: string } | null | undefined) {
-  const message = error?.message ?? "";
-  return (
-    message.includes("profiles.access_level") ||
-    message.includes("column access_level does not exist") ||
-    message.includes("Could not find the 'access_level' column")
-  );
-}
-
 async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promise<ScopeProfileInput | null> {
-  const selects = [
-    "id, role, permissions, access_level, membership_status, team_id, group_id",
-    "id, role, permissions, access_level, team_id, group_id",
-    "id, role, permissions, membership_status, team_id, group_id",
-    "id, role, permissions, team_id, group_id",
-  ];
+  const result = await adminSupabase
+    .from("profiles")
+    .select("id, role, permissions, data_scope, membership_status, team_id")
+    .eq("id", userId)
+    .single();
 
-  for (const select of selects) {
-    const result = await adminSupabase
-      .from("profiles")
-      .select(select)
-      .eq("id", userId)
-      .single();
-
-    if (!result.error) return (result.data as unknown as ScopeProfileInput | null) ?? null;
-    if (!isMissingAccessLevelColumn(result.error) && !isMissingMembershipStatusError(result.error)) {
-      assertSupabaseQuerySucceeded(result.error, "加载权限资料失败");
-    }
-  }
-
-  throw new Error("加载权限资料失败：缺少必要的成员状态字段");
+  assertSupabaseQuerySucceeded(result.error, "加载权限资料失败");
+  return (result.data as unknown as ScopeProfileInput | null) ?? null;
 }
 
 export async function buildDataAccessScope(
@@ -120,42 +55,8 @@ export async function buildDataAccessScope(
   if (!profile) return null;
 
   const role = (profile.role ?? "member") as UserRole;
-  let ledGroups: BusinessGroup[];
-  if (profile.led_group_ids) {
-    ledGroups = profile.led_group_ids.map((id) => ({
-        id,
-        team_id: profile.team_id,
-        leader_user_id: userId,
-      })) as BusinessGroup[];
-  } else {
-    const groupsResult = await adminSupabase
-      .from("groups")
-      .select("id, team_id, leader_user_id")
-      .eq("leader_user_id", userId);
-    assertSupabaseQuerySucceeded(groupsResult.error, "加载用户领导小组失败");
-    ledGroups = (groupsResult.data ?? []) as BusinessGroup[];
-  }
-  const businessRole = profile.business_role ?? resolveBusinessRole(
-    {
-      id: profile.id,
-      role,
-      permissions: (profile.permissions ?? {}) as Permissions,
-      team_id: profile.team_id,
-      group_id: profile.group_id,
-    },
-    ledGroups,
-  );
-  const permissions = normalizePermissionsForBusinessRole(businessRole, (profile.permissions ?? {}) as Permissions);
-  const requestedPerspective = options.perspective === "team" ? "team" : "company";
-  const effectiveTeamId =
-    businessRole === "owner" && requestedPerspective === "team"
-      ? options.teamId ?? null
-      : profile.team_id;
-  const accessLevel =
-    businessRole === "owner" && requestedPerspective === "team"
-      ? 3
-      : inferBusinessAccessLevel(businessRole, profile.access_level);
-  const kind = getScopeKind(accessLevel);
+  const kind = (profile.data_scope ?? "self") as DataAccessScopeKind;
+  const effectiveTeamId = profile.team_id ?? options.teamId ?? null;
 
   let visibleRows: Array<{ id: string; membership_status?: string | null }> = [
     { id: userId, membership_status: profile.membership_status },
@@ -175,30 +76,12 @@ export async function buildDataAccessScope(
     });
     assertSupabaseQuerySucceeded(result.error, "加载团队可见成员失败");
     visibleRows = (result.data ?? []) as typeof visibleRows;
-  } else if (kind === "group") {
-    const ledGroupIds = ledGroups.map((group) => group.id);
-    const visibleGroupIds = ledGroupIds.length > 0 ? ledGroupIds : profile.group_id ? [profile.group_id] : [];
-    const result = visibleGroupIds.length > 0
-      ? await loadWithMembershipFallback({
-          loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status").in("group_id", visibleGroupIds),
-          loadWithoutMembership: async () => adminSupabase.from("profiles").select("id").in("group_id", visibleGroupIds),
-        })
-      : { data: [], error: null };
-    assertSupabaseQuerySucceeded(result.error, "加载小组可见成员失败");
-    visibleRows = (result.data ?? []) as typeof visibleRows;
   }
 
   let visibleUserIds = visibleRows.map((item) => item.id).filter(Boolean);
-
-  const shouldForceIncludeSelf =
-    kind !== "team" || effectiveTeamId === null || profile.team_id === effectiveTeamId;
-
-  if (shouldForceIncludeSelf && !visibleUserIds.includes(userId)) {
+  if (!visibleUserIds.includes(userId)) {
     visibleUserIds = [userId, ...visibleUserIds];
-    visibleRows = [
-      { id: userId, membership_status: profile.membership_status },
-      ...visibleRows,
-    ];
+    visibleRows = [{ id: userId, membership_status: profile.membership_status }, ...visibleRows];
   }
 
   const activeVisibleUserIds = filterActiveMemberships(visibleRows)
@@ -208,11 +91,8 @@ export async function buildDataAccessScope(
   return {
     userId,
     role,
-    businessRole,
-    permissions,
-    accessLevel,
+    permissions: (profile.permissions ?? {}) as Permissions,
     teamId: effectiveTeamId,
-    groupId: profile.group_id,
     kind,
     visibleUserIds: Array.from(new Set(visibleUserIds)),
     activeVisibleUserIds: Array.from(new Set(activeVisibleUserIds)),

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { getNavGroups, getNavItems } from "./nav-bar-items";
 
 test("管理员 5 大分组结构完整解析", () => {
-  const groups = getNavGroups({ showAdmin: true, showSystemSettings: true, businessRole: "owner" });
+  const groups = getNavGroups({ showAdmin: true, showSystemSettings: true });
 
   assert.deepEqual(
     groups.map((g) => ({
@@ -69,8 +69,7 @@ test("非管理员只能看到基础分组，管理中心若全无权限则自�
 test("统一主导航按具体权限暴露管理子项", () => {
   const contentOnly = getNavItems({
     showAdmin: true,
-    businessRole: "member",
-    permissions: { view_content_review: true },
+    permissions: { review_content: true },
   });
   assert.deepEqual(
     contentOnly.map((item) => item.href),
@@ -79,8 +78,7 @@ test("统一主导航按具体权限暴露管理子项", () => {
 
   const videosOnly = getNavItems({
     showAdmin: true,
-    businessRole: "member",
-    permissions: { manage_video_assets: true },
+    permissions: { manage_videos: true },
   });
   assert.deepEqual(
     videosOnly.map((item) => item.href),
@@ -96,4 +94,3 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
     ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration"]
   );
 });
-

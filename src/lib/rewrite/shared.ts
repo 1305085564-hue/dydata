@@ -1179,7 +1179,7 @@ export async function requireRewriteActor() {
   }
 
   const permissionInfo = await getUserPermissions();
-  if (!permissionInfo || !canUseAiCopywriting(permissionInfo.businessRole, permissionInfo.permissions)) {
+  if (!permissionInfo || !canUseAiCopywriting(permissionInfo.role, permissionInfo.permissions)) {
     return { error: "无权限", status: 403 as const };
   }
 

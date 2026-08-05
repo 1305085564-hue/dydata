@@ -49,7 +49,7 @@ export function VideoPageClient({
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
-  const canAccessTrash = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+  const canAccessTrash = permissionInfo.role === "owner" || permissionInfo.role === "admin";
 
   useEffect(() => {
     if (initialView === "trash" && !canAccessTrash) {

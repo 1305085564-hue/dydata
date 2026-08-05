@@ -23,7 +23,7 @@ function normalizeTab(value: string | undefined): AIConfigTabKey {
 export default async function AIConfigPage({ searchParams }: Props) {
   const permission = await getUserPermissions();
   if (!permission) redirect("/login");
-  if (!canAccessAdminPath("/admin/ai-config", permission.businessRole, permission.permissions)) redirect("/admin");
+  if (!canAccessAdminPath("/admin/ai-config", permission.role, permission.permissions)) redirect("/admin");
 
   const params = await searchParams;
   const initialTab = normalizeTab(params.tab);

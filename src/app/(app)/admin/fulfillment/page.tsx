@@ -51,7 +51,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   if (!context) redirect("/login");
 
   const { permissionInfo, scope } = context;
-  if (!canAccessAdminPath("/admin/fulfillment", permissionInfo.businessRole, permissionInfo.permissions)) {
+  if (!canAccessAdminPath("/admin/fulfillment", permissionInfo.role, permissionInfo.permissions)) {
     redirect("/dashboard");
   }
 

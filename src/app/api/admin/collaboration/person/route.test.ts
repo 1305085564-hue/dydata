@@ -16,10 +16,9 @@ test("access_level=1 的成员不能查看他人的个人卡", async () => {
         actor: {
           userId: "123e4567-e89b-42d3-a456-426614174001",
           role: "member",
-          businessRole: "member",
           permissions: { view_analytics: true },
           name: "成员甲",
-          accessLevel: 1,
+          dataScope: "all" as const,
         },
       }),
       buildPermissionContextForActor: async () => ({

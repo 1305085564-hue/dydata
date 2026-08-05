@@ -19,7 +19,7 @@ type DashboardSummaryDeps = {
   getAuthenticatedContext: () => Promise<{ supabase?: MinimalDashboardSupabase; user: { id: string } | null }>;
   createAdminClient: () => MinimalDashboardSupabase;
   getUserProfile?: (supabase: MinimalDashboardSupabase, userId: string) => Promise<{
-    businessRole: "owner" | "team_admin" | "group_leader" | "member";
+    role: "owner" | "admin" | "admin" | "member";
     permissions: Record<string, boolean>;
   } | null>;
 };

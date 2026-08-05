@@ -7,7 +7,7 @@ function client(error: { message: string } | null = null) {
   const query = { select: () => query, eq: () => query, in: () => query, gte: () => query, lte: () => query, then: (resolve: (value: unknown) => void, reject?: (reason: unknown) => void) => Promise.resolve({ data: [], error }).then(resolve, reject) };
   return { from: () => query };
 }
-const scope = { actorUserId: "o1", businessRole: "owner", teamId: null, visibleUserIds: ["u1"] } as const;
+const scope = { actorUserId: "o1", role: "owner", teamId: null, visibleUserIds: ["u1"] } as const;
 
 test("无成员和填报数据时返回空告警", async () => {
   const now = new Date("2026-07-18T04:00:00.000Z");

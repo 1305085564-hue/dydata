@@ -20,26 +20,26 @@ const dashboardAlertsCache = new Map<string, { expiresAt: number; payload: Recor
 
 function buildDashboardAlertsCacheKey(input: {
   userId: string;
-  businessRole: "owner" | "team_admin";
+  role: "owner" | "admin";
   teamId: string | null;
   activeVisibleUserIds: string[];
 }) {
   return [
     input.userId,
-    input.businessRole,
+    input.role,
     input.teamId ?? "",
     [...input.activeVisibleUserIds].sort().join(","),
   ].join("|");
 }
 
 function toDashboardScope(scope: DataAccessScope): DashboardAlertScope | null {
-  if (scope.businessRole !== "owner" && scope.businessRole !== "team_admin") {
+  if (scope.role !== "owner" && scope.role !== "admin") {
     return null;
   }
 
   return {
     actorUserId: scope.userId,
-    businessRole: scope.businessRole,
+    role: scope.role,
     teamId: scope.teamId,
     visibleUserIds: scope.visibleUserIds,
     activeVisibleUserIds: scope.activeVisibleUserIds ?? scope.visibleUserIds,
@@ -65,7 +65,7 @@ async function resolveScope(
     return null;
   }
 
-  if (scope.businessRole === "team_admin" && !scope.teamId) {
+  if (scope.role === "admin" && !scope.teamId) {
     return null;
   }
 
@@ -92,7 +92,7 @@ export async function buildDashboardAlertsResponse(
 
   const cacheKey = buildDashboardAlertsCacheKey({
     userId: resolved.scope.actorUserId,
-    businessRole: resolved.scope.businessRole,
+    role: resolved.scope.role,
     teamId: resolved.scope.teamId,
     activeVisibleUserIds: resolved.scope.activeVisibleUserIds ?? resolved.scope.visibleUserIds,
   });
@@ -115,7 +115,7 @@ export async function buildDashboardAlertsResponse(
     ...result,
     meta: {
       generatedAt: new Date().toISOString(),
-      scope: resolved.scope.businessRole === "owner" ? "all" : "team",
+      scope: resolved.scope.role === "owner" ? "all" : "team",
       teamId: resolved.scope.teamId,
     },
   };

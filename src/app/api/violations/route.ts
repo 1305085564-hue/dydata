@@ -40,7 +40,7 @@ type MinimalVisualTagQuery = {
 };
 
 type MinimalViolationProfile = {
-  businessRole: "owner" | "team_admin" | "group_leader" | "member";
+  role: "owner" | "admin" | "admin" | "member";
   permissions: Permissions;
 };
 
@@ -126,9 +126,9 @@ export async function buildViolationsListResponse(
   }
 
   const canManageViolations = hasUnifiedPermission(
-    profile.businessRole,
+    profile.role,
     profile.permissions as Permissions,
-    "manage_violations",
+    "review_violations",
   );
   const effectiveView = (requestedView ?? (canManageViolations ? "admin" : "staff")) as ViolationsListView;
 

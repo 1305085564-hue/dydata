@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import type { Permissions, UserRole } from "@/types";
-import type { BusinessRole } from "@/lib/business-role";
 import { hasPermission } from "@/lib/permission-utils";
 import { cn } from "@/lib/utils";
 
@@ -39,20 +38,15 @@ const NAV_ITEMS: NavItem[] = [
 
 export function getVisibleNavItems(input: {
   userRole: UserRole | null | undefined;
-  businessRole: BusinessRole | null | undefined;
   permissions: Permissions;
 }): NavItem[] {
   return NAV_ITEMS.filter((item) => {
-    if (item.requiresOwner) return input.businessRole === "owner" || input.userRole === "owner";
+    if (item.requiresOwner) return input.userRole === "owner";
     if (item.requiresManageMembers) {
-      return (
-        input.businessRole === "owner" ||
-        input.businessRole === "team_admin" ||
-        hasPermission(input.businessRole ?? "member", input.permissions, "manage_members")
-      );
+      return input.userRole === "owner" || hasPermission(input.userRole ?? "member", input.permissions, "manage_members");
     }
     if (item.requiresPermission) {
-      return hasPermission(input.businessRole ?? "member", input.permissions, item.requiresPermission);
+      return hasPermission(input.userRole ?? "member", input.permissions, item.requiresPermission);
     }
     return true;
   });
@@ -87,14 +81,13 @@ function useCenterNavBadges(intervalMs = CENTER_NAV_BADGES_POLL_MS) {
 
 interface AdminCenterNavProps {
   userRole: UserRole | null | undefined;
-  businessRole?: BusinessRole | null;
   permissions?: Permissions | null;
 }
 
-export function AdminCenterNav({ userRole, businessRole, permissions }: AdminCenterNavProps) {
+export function AdminCenterNav({ userRole, permissions }: AdminCenterNavProps) {
   const pathname = usePathname();
   const badges = useCenterNavBadges();
-  const items = getVisibleNavItems({ userRole, businessRole, permissions: permissions ?? {} });
+  const items = getVisibleNavItems({ userRole, permissions: permissions ?? {} });
 
   const isActive = (href: string) => {
     if (href === "/admin/content") {

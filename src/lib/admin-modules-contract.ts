@@ -1,6 +1,5 @@
-import { normalizePermissionsForBusinessRole, type BusinessRole } from "@/lib/business-role";
 import { normalizeMembershipStatus } from "@/lib/member-lifecycle";
-import type { ExemptType, ExemptionCategory, MembershipStatus, Permissions, UserRole } from "@/types";
+import type { DataScope, ExemptType, ExemptionCategory, MembershipStatus, Permissions, UserRole } from "@/types";
 
 interface ExemptionFields {
   exempt_type?: ExemptType | null;
@@ -16,6 +15,7 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   role: UserRole;
   status: string | null;
   permissions: Permissions;
+  data_scope?: DataScope | null;
   email: string | null;
   membership_status?: MembershipStatus;
   archived_at?: string | null;
@@ -24,7 +24,6 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   archive_reason?: string | null;
   archive_snapshot?: Record<string, unknown> | null;
   team_id?: string | null;
-  group_id?: string | null;
   team_name: string | null;
 }
 
@@ -34,26 +33,19 @@ export interface AdminModuleMemberProfileLike extends ExemptionFields {
   role: UserRole;
   status?: string | null;
   permissions?: Permissions | null;
+  data_scope?: DataScope | null;
   membership_status?: string | null;
   archived_at?: string | null;
   archived_by?: string | null;
   archive_reason?: string | null;
   archive_snapshot?: Record<string, unknown> | null;
   team_id?: string | null;
-  group_id?: string | null;
 }
 
 export interface AdminModuleMemberHydration {
   email: string | null;
   team_id?: string | null;
   team_name?: string | null;
-}
-
-function resolveMemberSummaryBusinessRole(profile: Pick<AdminModuleMemberProfileLike, "role" | "permissions">): BusinessRole {
-  if (profile.role === "owner") return "owner";
-  if (profile.role === "admin" && profile.permissions?.manage_members === true) return "team_admin";
-  if (profile.role === "admin") return "group_leader";
-  return "member";
 }
 
 export function buildAdminModuleMemberSummaries(
@@ -63,14 +55,13 @@ export function buildAdminModuleMemberSummaries(
   const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
 
   return profiles.map((profile) => {
-    const businessRole = resolveMemberSummaryBusinessRole(profile);
-
     return {
       id: profile.id,
       name: profile.name,
       role: profile.role,
       status: profile.status ?? null,
-      permissions: normalizePermissionsForBusinessRole(businessRole, profile.permissions ?? {}),
+      permissions: profile.permissions ?? {},
+      data_scope: profile.data_scope ?? "self",
       email: null,
       membership_status: normalizeMembershipStatus(profile.membership_status),
       archived_at: profile.archived_at ?? null,
@@ -78,7 +69,6 @@ export function buildAdminModuleMemberSummaries(
       archive_reason: profile.archive_reason ?? null,
       archive_snapshot: profile.archive_snapshot ?? null,
       team_id: profile.team_id ?? null,
-      group_id: profile.group_id ?? null,
       team_name: profile.team_id ? (teamNameById.get(profile.team_id) ?? null) : null,
       exempt_type: profile.exempt_type ?? null,
       exempt_start_date: profile.exempt_start_date ?? null,

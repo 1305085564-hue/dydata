@@ -37,10 +37,10 @@ export default async function AdminContentPage({ searchParams }: Props) {
 
   if (!permissionContext) redirect("/login");
   const { permissionInfo: perm } = permissionContext;
-  if (!canAccessAdminPath("/admin/content", perm.businessRole, perm.permissions)) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin/content", perm.role, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
-  const canSwitchPerspective = perm.businessRole === "owner";
+  const canSwitchPerspective = perm.role === "owner";
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
 
   return (

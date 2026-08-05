@@ -8,9 +8,9 @@ function mockAdminActor(overrides: Partial<AdminActor> = {}): AdminActor {
   return {
     userId: "reviewer-1",
     role: "admin",
-    businessRole: "team_admin",
     permissions: {},
     name: "审核员",
+    dataScope: "all" as const,
     ...overrides,
   };
 }

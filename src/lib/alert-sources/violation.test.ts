@@ -12,7 +12,7 @@ function client(pendingCount: number, weeklyData: unknown[] | null, error: { mes
     return query;
   } };
 }
-const ownerScope = { actorUserId: "o1", businessRole: "owner", teamId: null, visibleUserIds: [] } as const;
+const ownerScope = { actorUserId: "o1", role: "owner", teamId: null, visibleUserIds: [] } as const;
 
 test("待复核达到 5 条生成严重告警", async () => {
   const alerts = await detectViolationAlerts({ supabase: client(5, []) as never, scope: ownerScope as never, now: new Date("2026-07-18T04:00:00.000Z") });
@@ -21,6 +21,6 @@ test("待复核达到 5 条生成严重告警", async () => {
 });
 
 test("负责人缺团队直接返回空，查询错误抛出", async () => {
-  assert.deepEqual(await detectViolationAlerts({ supabase: client(0, []) as never, scope: { ...ownerScope, businessRole: "team_admin", teamId: null } as never }), []);
+  assert.deepEqual(await detectViolationAlerts({ supabase: client(0, []) as never, scope: { ...ownerScope, role: "admin", teamId: null } as never }), []);
   await assert.rejects(() => detectViolationAlerts({ supabase: client(0, [], { message: "db down" }) as never, scope: ownerScope as never }), /db down/);
 });

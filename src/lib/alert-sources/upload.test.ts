@@ -7,7 +7,7 @@ function client(error: { message: string } | null = null) {
   const query = { select: () => query, eq: () => query, in: () => query, is: () => query, gte: () => query, lte: () => query, order: () => query, then: (resolve: (value: unknown) => void, reject?: (reason: unknown) => void) => Promise.resolve({ data: [], error }).then(resolve, reject) };
   return { from: () => query };
 }
-const scope = { actorUserId: "o1", businessRole: "owner", teamId: null, visibleUserIds: ["u1"] } as const;
+const scope = { actorUserId: "o1", role: "owner", teamId: null, visibleUserIds: ["u1"] } as const;
 
 test("无视频和质量问题时返回空告警", async () => {
   assert.deepEqual(await detectUploadAlerts({ supabase: client() as never, scope: scope as never }), []);

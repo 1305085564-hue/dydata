@@ -25,7 +25,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
   if (!permission) redirect("/login");
   
   // 沿用与 modules 相同的权限守卫，确保符合系统的角色授权规定
-  if (!canAccessAdminPath("/admin/modules", permission.businessRole, permission.permissions)) {
+  if (!canAccessAdminPath("/admin/modules", permission.role, permission.permissions)) {
     redirect("/admin");
   }
 
@@ -84,7 +84,7 @@ async function ModulesDataContainer({
     <AdminModulesContentV2
       currentUserId={data.currentUserId}
       currentUserRole={data.perm.role}
-      currentUserBusinessRole={data.perm.businessRole}
+      currentUserBusinessRole={data.perm.role}
       currentUserPermissions={data.perm.permissions}
       permissionManagerCapabilities={data.permissionManagerCapabilities}
       allProfiles={data.allProfiles}

@@ -8,7 +8,7 @@ import {
   updateUserPermissions,
 } from "./user-management";
 
-const context = { actorId: "u1", actorRole: "owner", actorBusinessRole: "owner", actorPermissions: {} } as const;
+const context = { actorId: "u1", actorRole: "owner", actorPermissions: {} } as const;
 
 test("用户管理在参数错误时不连接数据库", async () => {
   assert.deepEqual(await kickUser({}, false, context as never), { success: false, error: "缺少 userId" });

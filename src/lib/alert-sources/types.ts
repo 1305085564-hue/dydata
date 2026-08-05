@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { BusinessRole } from "@/lib/business-role";
+import type { UserRole } from "@/types";
 
 export type AlertSource = "submission" | "playback" | "violation" | "conversion" | "upload" | "task";
 export type AlertSeverity = "critical" | "warning" | "info";
@@ -34,7 +34,7 @@ export type AlertSupabase = ReturnType<typeof createAdminClient>;
 
 export interface DashboardAlertScope {
   actorUserId: string;
-  businessRole: Extract<BusinessRole, "owner" | "team_admin">;
+  role: Extract<UserRole, "owner" | "admin">;
   teamId: string | null;
   visibleUserIds: string[];
   activeVisibleUserIds?: string[];

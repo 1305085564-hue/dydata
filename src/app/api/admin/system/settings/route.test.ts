@@ -33,7 +33,7 @@ test("admin system settings GET 返回当前履约飞书开关", async () => {
             }),
           }),
         },
-        actor: { role: "owner", businessRole: "owner", userId: "owner-1" },
+        actor: { role: "owner", userId: "owner-1" },
       }) as never,
     requireOwnerOrTeamAdminRole: () => null,
   });
@@ -67,7 +67,7 @@ test("admin system settings GET 缺少系统配置表时明确失败，不读取
             };
           },
         },
-        actor: { role: "owner", businessRole: "owner", userId: "owner-1" },
+        actor: { role: "owner", userId: "owner-1" },
       }) as never,
     requireOwnerOrTeamAdminRole: () => null,
   });
@@ -97,7 +97,7 @@ test("admin system settings POST 写入开关", async () => {
               },
             }),
           },
-          actor: { role: "admin", businessRole: "team_admin", userId: "admin-1" },
+          actor: { role: "admin", userId: "admin-1" },
         }) as never,
       requireOwnerOrTeamAdminRole: () => null,
     },
@@ -140,7 +140,7 @@ test("admin system settings POST 缺少系统配置表时明确失败，不写�
               },
             }),
           },
-          actor: { role: "admin", businessRole: "team_admin", userId: "admin-1" },
+          actor: { role: "admin", userId: "admin-1" },
         }) as never,
       requireOwnerOrTeamAdminRole: () => null,
     },

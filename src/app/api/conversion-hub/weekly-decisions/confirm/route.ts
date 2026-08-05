@@ -14,7 +14,7 @@ function normalizeWeekStart(value: unknown) {
 export async function POST(request: NextRequest) {
   const permissions = await getUserPermissions();
   if (!permissions) return jsonUnauthorized();
-  if (!hasPermission(permissions.businessRole, permissions.permissions, "manage_violations")) {
+  if (!hasPermission(permissions.role, permissions.permissions, "review_violations")) {
     return jsonForbidden("缺少每周筛选确认权限");
   }
 

@@ -24,8 +24,7 @@ const baselineMembers: PermissionManagerMember[] = [
     name: "管理员甲",
     role: "admin",
     permissions: {
-      view_all_data: true,
-      edit_data: false,
+      view_analytics: true,
       export_data: true,
     },
   },
@@ -44,8 +43,7 @@ test("仅比较可编辑的权限变更并忽略 undefined 与 false 的差异",
       name: "管理员甲",
       role: "admin",
       permissions: {
-        view_all_data: true,
-        edit_data: undefined,
+        view_analytics: true,
         export_data: true,
       },
     },
@@ -68,8 +66,7 @@ test("保存时返回所有发生权限变化的成员（含 admin 与 member �
       name: "管理员甲",
       role: "admin",
       permissions: {
-        view_all_data: true,
-        edit_data: true,
+        view_analytics: true,
         export_data: true,
       },
     },
@@ -78,7 +75,7 @@ test("保存时返回所有发生权限变化的成员（含 admin 与 member �
       name: "成员乙",
       role: "member",
       permissions: {
-        use_ai_copywriting: true,
+        use_ai_copy: true,
       },
     },
   ];
@@ -86,85 +83,76 @@ test("保存时返回所有发生权限变化的成员（含 admin 与 member �
   assert.equal(hasAdminPermissionChanges(editableMembers, baselineMembers), true);
   assert.deepEqual(getChangedAdminPermissions(editableMembers, baselineMembers), [
     {
-      id: "admin-1",
-      name: "管理员甲",
-      role: "admin",
-      permissions: {
-        view_all_data: true,
-        edit_data: true,
-        export_data: true,
-      },
-    },
-    {
       id: "member-1",
       name: "成员乙",
       role: "member",
       permissions: {
-        use_ai_copywriting: true,
+        use_ai_copy: true,
       },
     },
   ]);
 });
 
-test("owner 给 admin 改权限时会完整保留所有权限 key", () => {
+test("owner 给 admin 改权限时会完整保留所有权限 key 并支持 dataScope", () => {
   const newPermissions = {
-    view_all_data: true,
+    view_analytics: true,
     manage_members: true,
-    use_ai_copywriting: false,
-    use_ai_management: true,
+    use_ai_copy: true,
+    use_ai_assist: true,
   };
 
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
-      actorBusinessRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "admin-1",
       targetRole: "admin",
+      targetPermissions: {},
       newPermissions,
+      newDataScope: "team",
     }),
-    { permissions: newPermissions },
+    { permissions: newPermissions, dataScope: "team" },
   );
 });
 
 test("owner 给 member 改权限时会完整保留所有权限 key", () => {
   const newPermissions = {
-    view_all_data: true,
     manage_members: true,
     view_analytics: true,
-    manage_violations: true,
-    use_ai_copywriting: true,
-    use_ai_management: false,
+    review_violations: true,
+    use_ai_copy: true,
+    use_ai_assist: false,
     unknown_permission: true,
   };
 
   assert.deepEqual(sanitizePermissions(newPermissions), {
-    view_all_data: true,
     view_analytics: true,
     manage_members: true,
-    manage_violations: true,
-    use_ai_copywriting: true,
-    use_ai_management: false,
+    review_violations: true,
+    use_ai_copy: true,
+    use_ai_assist: false,
   });
 
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
-      actorBusinessRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "member-1",
       targetRole: "member",
+      targetPermissions: {},
       newPermissions,
     }),
     {
       permissions: {
-        view_all_data: true,
         view_analytics: true,
         manage_members: true,
-        manage_violations: true,
-        use_ai_copywriting: true,
-        use_ai_management: false,
+        review_violations: true,
+        use_ai_copy: true,
+        use_ai_assist: false,
       },
+      dataScope: "self",
     },
   );
 });
@@ -173,27 +161,30 @@ test("负责人可以修改本团队成员权限，但不能跨团队", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "admin",
-      actorBusinessRole: "team_admin",
       actorId: "manager-1",
+      actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
       targetId: "member-1",
       targetRole: "member",
+      targetPermissions: {},
       targetTeamId: "team-1",
-      newPermissions: { use_ai_copywriting: true },
+      newPermissions: { use_ai_copy: true },
+      newDataScope: "team",
     }),
-    { permissions: { use_ai_copywriting: true } },
+    { permissions: { use_ai_copy: true }, dataScope: "team" },
   );
 
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "admin",
-      actorBusinessRole: "team_admin",
       actorId: "manager-1",
+      actorPermissions: { manage_members: true },
       actorTeamId: "team-1",
       targetId: "member-2",
       targetRole: "member",
       targetTeamId: "team-2",
-      newPermissions: { use_ai_copywriting: true },
+      targetPermissions: {},
+      newPermissions: { use_ai_copy: true },
     }),
     { error: "负责人只能修改本团队权限" },
   );
@@ -203,11 +194,12 @@ test("组长调用权限更新会被拒绝", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "admin",
-      actorBusinessRole: "group_leader",
       actorId: "leader-1",
+      actorPermissions: {},
       targetId: "member-1",
       targetRole: "member",
-      newPermissions: { use_ai_copywriting: true },
+      targetPermissions: {},
+      newPermissions: { use_ai_copy: true },
     }),
     { error: "无权限" },
   );
@@ -217,11 +209,12 @@ test("不能修改自己的权限", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
-      actorBusinessRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "owner-1",
       targetRole: "owner",
-      newPermissions: { use_ai_management: true },
+      targetPermissions: {},
+      newPermissions: { use_ai_assist: true },
     }),
     { error: "不能修改自己的权限" },
   );
@@ -231,11 +224,12 @@ test("不能修改其他 owner 的权限", () => {
   assert.deepEqual(
     resolvePermissionUpdate({
       actorRole: "owner",
-      actorBusinessRole: "owner",
       actorId: "owner-1",
+      actorPermissions: {},
       targetId: "owner-2",
       targetRole: "owner",
-      newPermissions: { use_ai_management: true },
+      targetPermissions: {},
+      newPermissions: { use_ai_assist: true },
     }),
     { error: "不能修改创始人的权限" },
   );
@@ -276,7 +270,7 @@ test("成员管理能力会按 owner 与 admin 权限返回", () => {
   );
 
   assert.deepEqual(
-    getPermissionManagerCapabilities("admin", { manage_members: true }, "team_admin"),
+    getPermissionManagerCapabilities("admin", { manage_members: true }),
     {
       canEditPermissions: true,
       canChangeRole: true,
@@ -617,11 +611,9 @@ test("调配自己的团队会被拒绝，相同团队幂等不需要写入", ()
 test("调配团队写入 profiles 时会同步清空 group_id", () => {
   assert.deepEqual(buildMemberTeamTransferPatch("team-2"), {
     team_id: "team-2",
-    group_id: null,
   });
   assert.deepEqual(buildMemberTeamTransferPatch(null), {
     team_id: null,
-    group_id: null,
   });
 });
 
@@ -630,7 +622,7 @@ test("移除成员写入 profiles 时会同步清空团队与分组归属", () =
     role: "member",
     permissions: {},
     team_id: null,
-    group_id: null,
+    data_scope: "self",
   });
 });
 

@@ -138,7 +138,7 @@ async function loadPendingAction(
     return null;
   }
 
-  if (auth.actor.businessRole !== "owner" && data.admin_id !== auth.actor.userId) {
+  if (auth.actor.role !== "owner" && data.admin_id !== auth.actor.userId) {
     return null;
   }
 
@@ -180,7 +180,6 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
-        actorBusinessRole: auth.actor.businessRole,
         actorPermissions: auth.actor.permissions,
       },
     });
@@ -232,7 +231,6 @@ export async function buildExecuteToolResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
-        actorBusinessRole: auth.actor.businessRole,
         actorPermissions: auth.actor.permissions,
       },
     });
@@ -278,12 +276,11 @@ export async function buildExecuteToolResponse(
   const runResult = await deps.executeAdminTool({
     toolName,
     params: toolArgs,
-    context: {
-      actorId: auth.actor.userId,
-      actorRole: auth.actor.role,
-      actorBusinessRole: auth.actor.businessRole,
-      actorPermissions: auth.actor.permissions,
-    },
+      context: {
+        actorId: auth.actor.userId,
+        actorRole: auth.actor.role,
+        actorPermissions: auth.actor.permissions,
+      },
   });
 
   const executedAt = new Date().toISOString();

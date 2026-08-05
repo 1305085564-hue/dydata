@@ -1,4 +1,3 @@
-import type { BusinessRole } from "@/lib/business-role";
 import type { PermissionKey, UserRole } from "@/types";
 
 export const ADMIN_AI_ALLOWED_TOOLS = [
@@ -27,19 +26,19 @@ export type RiskContext = {
 export type RiskLevel = "low" | "high";
 
 export const TOOL_PERMISSION_MAP: Record<AdminAiToolName, PermissionKey> = {
-  getUserInfo: "view_all_data",
-  getAnomalousData: "view_all_data",
-  getTaskStatus: "view_all_data",
+  getUserInfo: "view_analytics",
+  getAnomalousData: "view_analytics",
+  getTaskStatus: "view_analytics",
   kickUser: "manage_members",
   changeUserRole: "manage_members",
   updateUserPermissions: "manage_members",
-  deleteMetrics: "edit_data",
-  fillMissingData: "edit_data",
+  deleteMetrics: "manage_system",
+  fillMissingData: "manage_system",
   grantExemption: "manage_members",
-  retryContentBreakdown: "edit_data",
-  retryDailyReview: "edit_data",
-  clearCache: "edit_data",
-  diagnoseIssue: "view_all_data",
+  retryContentBreakdown: "manage_system",
+  retryDailyReview: "manage_system",
+  clearCache: "manage_system",
+  diagnoseIssue: "manage_system",
 };
 
 const STRICT_HIGH_RISK_TOOLS = new Set<AdminAiToolName>([
@@ -77,17 +76,7 @@ export function shouldRequireConfirmation(tool: AdminAiToolName, context: RiskCo
   return isHighRiskAction(tool, context);
 }
 
-export function filterActionsByBusinessRole<T extends { admin_id: string }>(
-  rows: T[],
-  actor: { businessRole: BusinessRole; userId: string },
-) {
-  if (actor.businessRole === "owner") return rows;
-  return rows.filter((row) => row.admin_id === actor.userId);
-}
-
 export function filterActionsByRole<T extends { admin_id: string }>(rows: T[], actor: { role: UserRole; userId: string }) {
-  return filterActionsByBusinessRole(rows, {
-    businessRole: actor.role === "owner" ? "owner" : "member",
-    userId: actor.userId,
-  });
+  if (actor.role === "owner") return rows;
+  return rows.filter((row) => row.admin_id === actor.userId);
 }

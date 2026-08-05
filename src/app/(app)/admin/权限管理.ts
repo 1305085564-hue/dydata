@@ -1,16 +1,9 @@
 import { PERMISSION_KEYS } from "@/types";
-import {
-  canManagePermissionsForTarget,
-  type BusinessGroup,
-  type BusinessRole,
-} from "@/lib/business-role";
-import type { ExemptType, ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
+import type { DataScope, ExemptType, ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
 
 function hasPermission(role: UserRole, permissions: Permissions, key: PermissionKey): boolean {
   if (role === "owner") return true;
-  if (role === "admin") return permissions[key] === true;
-  if (role === "member") return permissions[key] === true;
-  return false;
+  return permissions[key] === true;
 }
 
 export interface PermissionManagerMember {
@@ -21,6 +14,7 @@ export interface PermissionManagerMember {
   teamId?: string | null;
   teamName?: string | null;
   permissions: Permissions;
+  data_scope?: DataScope | null;
   status?: UserStatus | null;
   exempt_type?: ExemptType | null;
   exempt_start_date?: string | null;
@@ -80,19 +74,46 @@ export interface AdminProfileWriteResult {
 
 export interface PermissionUpdateInput {
   actorRole: UserRole;
-  actorBusinessRole: BusinessRole;
   actorId: string;
+  actorPermissions: Permissions;
+  actorTeamId?: string | null;
+  targetId: string;
+  targetRole: UserRole;
+  targetPermissions: Permissions;
+  targetTeamId?: string | null;
+  newPermissions: Permissions;
+  newDataScope?: DataScope;
+}
+
+export type PermissionUpdateDecision =
+  | { permissions: Permissions; dataScope?: DataScope; error?: never }
+  | { permissions?: never; dataScope?: never; error: string };
+
+function canManagePermissionTarget({
+  actorRole,
+  actorId,
+  actorPermissions,
+  actorTeamId,
+  targetId,
+  targetRole,
+  targetTeamId,
+}: {
+  actorRole: UserRole;
+  actorId: string;
+  actorPermissions: Permissions;
   actorTeamId?: string | null;
   targetId: string;
   targetRole: UserRole;
   targetTeamId?: string | null;
-  newPermissions: Permissions;
-  groups?: BusinessGroup[];
+}) {
+  if (actorId === targetId) return false;
+  if (targetRole === "owner") return false;
+  if (actorRole === "owner") return true;
+  if (actorRole !== "admin") return false;
+  if (actorPermissions.manage_members !== true) return false;
+  if (!actorTeamId || !targetTeamId) return false;
+  return actorTeamId === targetTeamId;
 }
-
-export type PermissionUpdateDecision =
-  | { permissions: Permissions; error?: never }
-  | { permissions?: never; error: string };
 
 export function sanitizePermissions(newPermissions: Permissions): Permissions {
   const sanitized: Permissions = {};
@@ -108,36 +129,37 @@ export function sanitizePermissions(newPermissions: Permissions): Permissions {
 
 export function resolvePermissionUpdate({
   actorRole,
-  actorBusinessRole,
   actorId,
+  actorPermissions,
   actorTeamId,
   targetId,
   targetRole,
+  targetPermissions,
   targetTeamId,
   newPermissions,
-  groups = [],
+  newDataScope,
 }: PermissionUpdateInput): PermissionUpdateDecision {
-  if (!canManagePermissionsForTarget(
-    {
-      id: actorId,
-      role: actorRole,
-      permissions: actorBusinessRole === "team_admin" ? { manage_members: true } : {},
-      team_id: actorTeamId ?? null,
-    },
-    {
-      id: targetId,
-      role: targetRole,
-      team_id: targetTeamId ?? null,
-    },
-    groups,
-  )) {
+  void targetPermissions;
+
+  if (!canManagePermissionTarget({
+    actorRole,
+    actorId,
+    actorPermissions,
+    actorTeamId: actorTeamId ?? null,
+    targetId,
+    targetRole,
+    targetTeamId: targetTeamId ?? null,
+  })) {
     if (actorId === targetId) return { error: "不能修改自己的权限" };
     if (targetRole === "owner") return { error: "不能修改创始人的权限" };
-    return { error: actorBusinessRole === "team_admin" ? "负责人只能修改本团队权限" : "无权限" };
+    return { error: actorRole === "admin" && actorPermissions.manage_members === true ? "负责人只能修改本团队权限" : "无权限" };
   }
 
   if (targetRole === "admin" || targetRole === "member") {
-    return { permissions: sanitizePermissions(newPermissions) };
+    return {
+      permissions: sanitizePermissions(newPermissions),
+      dataScope: newDataScope ?? "self",
+    };
   }
 
   return { error: "用户角色无效" };
@@ -146,17 +168,8 @@ export function resolvePermissionUpdate({
 export function getPermissionManagerCapabilities(
   role: UserRole,
   permissions: Permissions,
-  businessRole?: BusinessRole,
 ): PermissionManagerCapabilities {
-  if (businessRole === "owner" || role === "owner") {
-    return {
-      canEditPermissions: true,
-      canChangeRole: true,
-      canRemoveMember: true,
-    };
-  }
-
-  if (businessRole === "team_admin") {
+  if (role === "owner" || permissions.manage_members === true) {
     return {
       canEditPermissions: true,
       canChangeRole: true,
@@ -186,7 +199,6 @@ export function canChangeMemberRole({
 }: ChangeMemberRoleInput) {
   if (actorId === targetId) return false;
   if (targetRole === "owner") return false;
-
   if (actorRole === "owner") return true;
 
   const actorIsTeamAdmin = actorRole === "admin" && actorPermissions.manage_members === true;
@@ -248,7 +260,6 @@ export function resolveMemberTeamTransfer({
 export function buildMemberTeamTransferPatch(newTeamId: string | null) {
   return {
     team_id: newTeamId,
-    group_id: null,
   };
 }
 
@@ -257,7 +268,7 @@ export function buildRemovedMemberProfilePatch() {
     role: "member" as const,
     permissions: {},
     team_id: null,
-    group_id: null,
+    data_scope: "self" as const,
   };
 }
 
@@ -274,7 +285,7 @@ function cloneMember(member: PermissionManagerMember): PermissionManagerMember {
 
 export function resetMembersToBaseline(
   _editableMembers: PermissionManagerMember[],
-  baselineMembers: PermissionManagerMember[]
+  baselineMembers: PermissionManagerMember[],
 ): PermissionManagerMember[] {
   return baselineMembers.map(cloneMember);
 }
@@ -282,7 +293,7 @@ export function resetMembersToBaseline(
 export function applyRoleChangeToMember(
   members: PermissionManagerMember[],
   memberId: string,
-  newRole: "member" | "admin"
+  newRole: "member" | "admin",
 ): PermissionManagerMember[] {
   return members.map((member) => {
     if (member.id !== memberId) return cloneMember(member);
@@ -301,18 +312,18 @@ function isPermissionEnabled(permissions: Permissions, key: (typeof PERMISSION_K
 
 function hasSamePermissions(
   editableMember: PermissionManagerMember,
-  baselineMember?: PermissionManagerMember
+  baselineMember?: PermissionManagerMember,
 ) {
   return PERMISSION_KEYS.every(
     (key) =>
       isPermissionEnabled(editableMember.permissions, key) ===
-      isPermissionEnabled(baselineMember?.permissions ?? {}, key)
+      isPermissionEnabled(baselineMember?.permissions ?? {}, key),
   );
 }
 
 export function getChangedAdminPermissions(
   editableMembers: PermissionManagerMember[],
-  baselineMembers: PermissionManagerMember[]
+  baselineMembers: PermissionManagerMember[],
 ): PermissionManagerMember[] {
   const baselineMap = new Map(baselineMembers.map((member) => [member.id, member]));
 
@@ -324,7 +335,7 @@ export function getChangedAdminPermissions(
 
 export function hasAdminPermissionChanges(
   editableMembers: PermissionManagerMember[],
-  baselineMembers: PermissionManagerMember[]
+  baselineMembers: PermissionManagerMember[],
 ) {
   return getChangedAdminPermissions(editableMembers, baselineMembers).length > 0;
 }

@@ -25,7 +25,7 @@ test("归因舱向 owner 和 team_admin 提供移入回收站入口", () => {
   );
 
   assert.match(pageSource, /canOperateLifecycle=/);
-  assert.match(pageSource, /businessRole === "owner" \|\| permissionInfo\.businessRole === "team_admin"/);
+  assert.match(pageSource, /businessRole === "owner" \|\| permissionInfo\.role === "admin"/);
   assert.match(workbenchSource, /canOperateLifecycle: boolean/);
   assert.match(workbenchSource, /onLifecycleChanged: \(\) => void/);
   assert.match(workbenchSource, /移入回收站/);

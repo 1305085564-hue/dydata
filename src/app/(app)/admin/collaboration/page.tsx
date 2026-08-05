@@ -32,7 +32,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   if (!context) redirect("/login");
 
   const { permissionInfo } = context;
-  if (!canAccessAdminPath("/admin/collaboration", permissionInfo.businessRole, permissionInfo.permissions)) {
+  if (!canAccessAdminPath("/admin/collaboration", permissionInfo.role, permissionInfo.permissions)) {
     redirect("/dashboard");
   }
 
@@ -57,8 +57,8 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
             month={month}
             tab={tab}
             isOwnerOrTeamAdmin={
-              permissionInfo.businessRole === "owner" ||
-              permissionInfo.businessRole === "team_admin"
+              permissionInfo.role === "owner" ||
+              permissionInfo.role === "admin"
             }
           />
         </Suspense>

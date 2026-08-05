@@ -10,14 +10,12 @@ test("team-management route 仅在按需加载时返回团队分组数据", asyn
     access: {
       level: "owner" as const,
       canView: true as const,
-      canEditGroups: true as const,
+      canEditMembers: true as const,
       teamIds: null,
-      groupIds: null,
     },
     teams: [{ id: "team-1", name: "上海一部" }],
-    groups: [{ id: "group-1", name: "A组", team_id: "team-1", leader_user_id: "leader-1" }],
-    profiles: [{ id: "member-1", name: "成员乙", role: "member" as const, team_id: "team-1", group_id: null }],
-    leaderCandidates: [{ id: "admin-2", name: "管理员甲", role: "admin" as const, team_id: "team-1", group_id: null }],
+    profiles: [{ id: "member-1", name: "成员乙", role: "member" as const, team_id: "team-1" }],
+    leaderCandidates: [{ id: "admin-2", name: "管理员甲", role: "admin" as const, team_id: "team-1" }],
   };
 
   const response = await buildAdminModuleTeamManagementResponse({

@@ -10,22 +10,16 @@ function buildAuth(scopeKind: "all" | "team" = "all") {
   const permissionInfo: UserPermissionInfo = {
     userId: "owner-1",
     role: "owner",
-    businessRole: "owner",
     permissions: {},
     name: "Owner",
-    accessLevel: 4,
+    dataScope: "all" as const,
     teamId: null,
-    groupId: null,
-    ledGroupIds: [],
   };
   const scope: CurrentPermissionContext["scope"] = {
     userId: "owner-1",
     role: "owner",
-    businessRole: "owner",
     permissions: {},
-    accessLevel: scopeKind === "all" ? 4 : 3,
     teamId: scopeKind === "all" ? null : "team-1",
-    groupId: null,
     kind: scopeKind,
     visibleUserIds: ["u-1", "u-2"],
   };
@@ -50,9 +44,9 @@ function buildAuth(scopeKind: "all" | "team" = "all") {
     actor: {
       userId: "owner-1",
       role: "owner" as const,
-      businessRole: "owner" as const,
       permissions: {},
       name: "Owner",
+      dataScope: "all" as const,
     },
     permissionInfo,
     scope,
@@ -121,9 +115,9 @@ test("sidebar-badges 同一用户同一范围 60 秒内复用内存缓存", asyn
       actor: {
         userId: "owner-cache",
         role: "owner" as const,
-        businessRole: "owner" as const,
         permissions: {},
         name: "Owner",
+        dataScope: "all" as const,
       },
       scope: {
         ...buildAuth("all").scope,

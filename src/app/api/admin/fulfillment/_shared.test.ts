@@ -90,17 +90,17 @@ test("fulfillment 写接口只允许 admin 或 owner 角色", async () => {
 
 test("全局配置不把 group_leader 的原始 admin 角色当成全局管理员", () => {
   const groupLeaderResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "admin", businessRole: "group_leader" },
+    actor: { role: "admin" },
   } as never);
   assert.equal(groupLeaderResponse?.status, 403);
 
   const teamAdminResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "admin", businessRole: "team_admin" },
+    actor: { role: "admin" },
   } as never);
   assert.equal(teamAdminResponse, null);
 
   const ownerResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "owner", businessRole: "owner" },
+    actor: { role: "owner" },
   } as never);
   assert.equal(ownerResponse, null);
 });

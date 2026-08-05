@@ -38,11 +38,11 @@ export default async function AdminVideosPage({ searchParams }: Props) {
 
   if (!permissionContext) redirect("/login");
   const { permissionInfo: perm } = permissionContext;
-  if (!canAccessAdminPath("/admin/videos", perm.businessRole, perm.permissions)) redirect("/dashboard");
+  if (!canAccessAdminPath("/admin/videos", perm.role, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
-  if (view === "trash" && perm.businessRole !== "owner" && perm.businessRole !== "team_admin") redirect("/admin/videos");
-  const canSwitchPerspective = perm.businessRole === "owner";
+  if (view === "trash" && perm.role !== "owner" && perm.role !== "admin") redirect("/admin/videos");
+  const canSwitchPerspective = perm.role === "owner";
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
 
   return (

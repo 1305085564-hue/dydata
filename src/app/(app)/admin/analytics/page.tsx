@@ -35,7 +35,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
   const permissionInfo = await getUserPermissions();
   if (
     !permissionInfo ||
-    !canAccessAdminPath("/admin/analytics", permissionInfo.businessRole, permissionInfo.permissions)
+    !canAccessAdminPath("/admin/analytics", permissionInfo.role, permissionInfo.permissions)
   ) {
     redirect("/dashboard");
   }

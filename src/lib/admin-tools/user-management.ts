@@ -4,7 +4,6 @@ import {
   isProfileWriteApplied,
   sanitizePermissions,
 } from "@/app/(app)/admin/权限管理";
-import { canManagePermissionsForTarget } from "@/lib/business-role";
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
@@ -18,6 +17,17 @@ type AdminToolProfile = {
   team_id?: string | null;
   status?: string | null;
 };
+
+function canManageTarget(
+  actor: { id: string; role: UserRole; permissions: Permissions; team_id?: string | null },
+  target: { id: string; role: UserRole; team_id?: string | null },
+) {
+  if (actor.id === target.id) return false;
+  if (target.role === "owner") return false;
+  if (actor.role === "owner") return true;
+  if (actor.role !== "admin" || actor.permissions.manage_members !== true) return false;
+  return Boolean(actor.team_id && target.team_id && actor.team_id === target.team_id);
+}
 
 export const ARCHIVE_ROLLBACK_GUIDANCE =
   "归档同时涉及 Auth 封禁和 profile 多字段修改，禁止直接 SQL 回滚，请使用 restoreMember 正式恢复流程。";
@@ -176,10 +186,10 @@ export async function updateUserPermissions(
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
   const { actor, target: before } = profilesResult;
   if (!actor || !before) return { success: false, error: "用户不存在" };
-  if (!canManagePermissionsForTarget(actor, before)) {
+  if (!canManageTarget({ id: context.actorId, role: context.actorRole, permissions: context.actorPermissions, team_id: actor?.team_id ?? null }, before)) {
     return {
       success: false,
-      error: context.actorBusinessRole === "team_admin" ? "负责人只能修改本团队权限" : "无权限",
+      error: context.actorRole === "admin" ? "负责人只能修改本团队权限" : "无权限",
     };
   }
 

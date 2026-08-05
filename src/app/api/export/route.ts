@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   const permissionInfo = await getUserPermissions();
-  if (!permissionInfo || !hasPermission(permissionInfo.businessRole, permissionInfo.permissions, "export_data")) {
+  if (!permissionInfo || !hasPermission(permissionInfo.role, permissionInfo.permissions, "export_data")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 

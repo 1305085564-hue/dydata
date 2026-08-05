@@ -45,7 +45,7 @@ export async function requireScopedAdminVideo({
     return { error: auth.error, status: auth.status as 401 | 403 | 404 };
   }
 
-  if (!canAccessAdminPath(pathname, auth.actor.businessRole, auth.actor.permissions)) {
+  if (!canAccessAdminPath(pathname, auth.actor.role, auth.actor.permissions)) {
     return { error: "无权限", status: 403 as const };
   }
 

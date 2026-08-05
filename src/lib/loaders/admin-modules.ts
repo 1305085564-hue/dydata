@@ -1,7 +1,5 @@
 import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
-import { normalizePermissionsForBusinessRole, resolveBusinessRole } from "@/lib/business-role";
-import type { BusinessRole } from "@/lib/business-role";
 import { isMissingMembershipStatusError, isActiveMembership, filterArchivedMemberships } from "@/lib/member-lifecycle";
 import {
   buildAdminModuleMemberSummaries,
@@ -18,7 +16,6 @@ import {
   filterUsableLeaderCandidates,
   resolveTeamManagementAccess,
   type TeamManagementAccess,
-  type TeamManagementGroup,
   type TeamManagementProfile,
 } from "@/lib/team-management";
 import { getTeamOptions } from "@/lib/teams";
@@ -40,7 +37,7 @@ type AdminModuleProfileRow = AdminModuleMemberProfileLike & {
 export interface AdminModulesData {
   currentUserId: string;
   queryDate: string;
-  perm: { role: UserRole; businessRole: BusinessRole; permissions: Permissions };
+  perm: { role: UserRole; permissions: Permissions };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
   allProfiles: AdminModuleMemberSummary[];
   archivedProfiles?: AdminModuleMemberSummary[];
@@ -48,7 +45,6 @@ export interface AdminModulesData {
   teamManagement: {
     access: TeamManagementAccess;
     teams: Array<{ id: string; name: string }>;
-    groups: TeamManagementGroup[];
     profiles: TeamManagementProfile[];
     leaderCandidates: TeamManagementProfile[];
   };
@@ -196,7 +192,7 @@ async function loadAdminModulesBaseContext({
     perm,
     user,
     queryDate: searchDate || new Date().toISOString().split("T")[0],
-    permissionManagerCapabilities: getPermissionManagerCapabilities(perm.role, perm.permissions, perm.businessRole),
+    permissionManagerCapabilities: getPermissionManagerCapabilities(perm.role, perm.permissions),
     adminSupabase: createAdminClient(),
   };
 }
@@ -204,7 +200,7 @@ async function loadAdminModulesBaseContext({
 async function loadAdminModuleProfiles(
   adminSupabase: ReturnType<typeof createAdminClient>,
 ): Promise<AdminModuleProfileRow[]> {
-  const baseFields = "id, name, role, status, permissions, team_id, group_id, created_at";
+  const baseFields = "id, name, role, status, permissions, data_scope, team_id, created_at";
   const exemptionFields = "exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
   const lifecycleFields = "membership_status, archived_at, archived_by, archive_reason, archive_snapshot";
   const variants = [
@@ -226,6 +222,7 @@ async function loadAdminModuleProfiles(
         ...profile,
         role: profile.role as UserRole,
         permissions: (profile.permissions ?? {}) as Permissions,
+        data_scope: profile.data_scope ?? "self",
         status: profile.status ?? null,
         membership_status: profile.membership_status ?? "active",
         archived_at: profile.archived_at ?? null,
@@ -233,7 +230,6 @@ async function loadAdminModuleProfiles(
         archive_reason: profile.archive_reason ?? null,
         archive_snapshot: profile.archive_snapshot ?? null,
         team_id: profile.team_id ?? null,
-        group_id: profile.group_id ?? null,
         exempt_type: profile.exempt_type ?? null,
         exempt_start_date: profile.exempt_start_date ?? null,
         exempt_end_date: profile.exempt_end_date ?? null,
@@ -252,7 +248,6 @@ async function loadAdminModuleProfiles(
         "exempt_reason",
         "exemption_category",
         "team_id",
-        "group_id",
       ].some((column) => result.error?.message?.includes(column));
     if (!knownCompatibilityError) break;
   }
@@ -342,21 +337,16 @@ async function loadAdminModuleMemberHydrationMap(
 function buildAdminModulesTeamManagementPayload({
   perm,
   teams,
-  groups,
   allProfiles,
 }: {
   perm: { userId: string; role: UserRole; permissions: Permissions };
   teams: Array<{ id: string; name: string }>;
-  groups: TeamManagementGroup[];
   allProfiles: AdminModuleMemberSummary[];
 }): AdminModulesTeamManagementData {
-  const normalizedHydratedProfiles = allProfiles.map((profile) => {
-    const businessRole = resolveBusinessRole(profile, groups);
-    return {
-      ...profile,
-      permissions: normalizePermissionsForBusinessRole(businessRole, profile.permissions ?? {}),
-    };
-  }) as AdminModuleMemberSummary[];
+  const normalizedHydratedProfiles = allProfiles.map((profile) => ({
+    ...profile,
+    permissions: profile.permissions ?? {},
+  })) as AdminModuleMemberSummary[];
   const actorProfile =
     (normalizedHydratedProfiles.find((profile) => profile.id === perm.userId) as TeamManagementProfile | undefined) ??
     ({
@@ -365,13 +355,11 @@ function buildAdminModulesTeamManagementPayload({
       role: perm.role,
       permissions: perm.permissions,
       team_id: null,
-      group_id: null,
     } satisfies TeamManagementProfile);
-  const teamManagementAccess = resolveTeamManagementAccess(actorProfile, groups);
+  const teamManagementAccess = resolveTeamManagementAccess(actorProfile);
   const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(
     teamManagementAccess,
     normalizedHydratedProfiles as TeamManagementProfile[],
-    groups,
   );
   const visibleTeamIds =
     teamManagementAccess.teamIds === null
@@ -382,12 +370,6 @@ function buildAdminModulesTeamManagementPayload({
       visibleTeamIds.has(team.id) ||
       visibleTeamManagementProfiles.some((profile) => profile.team_id === team.id),
   );
-  const visibleGroups = groups.filter((group) => {
-    if (!teamManagementAccess.canView) return false;
-    if (teamManagementAccess.groupIds) return teamManagementAccess.groupIds.includes(group.id);
-    if (teamManagementAccess.teamIds === null) return true;
-    return Boolean(group.team_id && teamManagementAccess.teamIds.includes(group.team_id));
-  });
   const leaderCandidates = filterUsableLeaderCandidates(
     teamManagementAccess,
     normalizedHydratedProfiles as TeamManagementProfile[],
@@ -396,7 +378,6 @@ function buildAdminModulesTeamManagementPayload({
   return {
     access: teamManagementAccess,
     teams: visibleTeams,
-    groups: visibleGroups,
     profiles: visibleTeamManagementProfiles,
     leaderCandidates,
   };
@@ -418,20 +399,10 @@ export async function loadAdminModulesTeamManagementData(): Promise<AdminModules
 
   const adminSupabase = createAdminClient();
   const teams = await getTeamOptions();
-  const [profiles, groupsResult, hydrationMap] = await Promise.all([
+  const [profiles, hydrationMap] = await Promise.all([
     loadAdminModuleProfiles(adminSupabase),
-    adminSupabase
-      .from("groups")
-      .select("id, name, team_id, leader_user_id")
-      .order("name", { ascending: true }),
     loadAdminModuleMemberHydrationMap(adminSupabase, teams),
   ]);
-  const groups = ((groupsResult.data ?? []) as TeamManagementGroup[]).map((group) => ({
-    id: group.id,
-    name: group.name,
-    team_id: group.team_id ?? null,
-    leader_user_id: group.leader_user_id ?? null,
-  }));
 
   const hydratedProfiles = hydrateAdminModuleMemberEmails(buildAdminModuleMemberSummaries(profiles, teams), hydrationMap);
   const activeProfiles = hydratedProfiles.filter(isActiveMembership);
@@ -439,7 +410,6 @@ export async function loadAdminModulesTeamManagementData(): Promise<AdminModules
   return buildAdminModulesTeamManagementPayload({
     perm,
     teams,
-    groups,
     allProfiles: activeProfiles,
   });
 }
@@ -455,20 +425,10 @@ export async function loadAdminModulesData({
   if (!context) return null;
 
   const teams = await getTeamOptions();
-  const [profiles, groupsResult, hydrationMap] = await Promise.all([
+  const [profiles, hydrationMap] = await Promise.all([
     loadAdminModuleProfiles(context.adminSupabase),
-    context.adminSupabase
-      .from("groups")
-      .select("id, name, team_id, leader_user_id")
-      .order("name", { ascending: true }),
     loadAdminModuleMemberHydrationMap(context.adminSupabase, teams),
   ]);
-  const groups = ((groupsResult.data ?? []) as TeamManagementGroup[]).map((group) => ({
-    id: group.id,
-    name: group.name,
-    team_id: group.team_id ?? null,
-    leader_user_id: group.leader_user_id ?? null,
-  }));
   const hydratedProfiles = hydrateAdminModuleMemberEmails(
     buildAdminModuleMemberSummaries(profiles, teams),
     hydrationMap,
@@ -477,7 +437,6 @@ export async function loadAdminModulesData({
   const teamManagement = buildAdminModulesTeamManagementPayload({
     perm: context.perm,
     teams,
-    groups,
     allProfiles: activeProfiles,
   });
   const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
@@ -492,7 +451,6 @@ export async function loadAdminModulesData({
     queryDate: context.queryDate,
     perm: {
       role: context.perm.role,
-      businessRole: context.perm.businessRole,
       permissions: context.perm.permissions,
     },
     permissionManagerCapabilities: context.permissionManagerCapabilities,

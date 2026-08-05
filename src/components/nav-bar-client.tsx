@@ -10,7 +10,6 @@ import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
 import { WorkspacePicker } from "@/components/workspace-picker";
 import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { cn } from "@/lib/utils";
-import type { BusinessRole } from "@/lib/business-role";
 import type { Permissions } from "@/types";
 import { isLocalNotification, useNotifications } from "@/components/notifications/notification-store";
 import {
@@ -41,7 +40,6 @@ interface Account {
 interface NavBarClientProps {
   name: string;
   role: string;
-  businessRole?: BusinessRole | null;
   permissions?: Permissions | null;
   showAdmin: boolean;
   showAiCopywriting?: boolean;
@@ -52,7 +50,6 @@ interface NavBarClientProps {
 export function NavBarClient({
   name,
   role,
-  businessRole,
   permissions,
   showAdmin,
   showAiCopywriting = true,
@@ -62,8 +59,8 @@ export function NavBarClient({
   const pathname = usePathname();
   const router = useRouter();
   const navGroups = useMemo(
-    () => getNavGroups({ showAdmin, showAiCopywriting, showSystemSettings, businessRole, permissions }),
-    [businessRole, permissions, showAdmin, showAiCopywriting, showSystemSettings],
+    () => getNavGroups({ showAdmin, showAiCopywriting, showSystemSettings, permissions }),
+    [permissions, showAdmin, showAiCopywriting, showSystemSettings],
   );
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -142,7 +139,7 @@ export function NavBarClient({
     ai_channels: number;
   } | null>(null);
 
-  const isAdmin = ["owner", "team_admin", "group_leader"].includes(businessRole || "");
+  const isAdmin = showAdmin;
 
   // Poll for admin center badges (video/content anomaly review queue counts)
   useEffect(() => {

@@ -33,13 +33,13 @@ function isAuthError(result: AdminActorResult): result is Extract<AdminActorResu
 }
 
 function toDashboardScope(scope: DataAccessScope): DashboardAlertScope | null {
-  if (scope.businessRole !== "owner" && scope.businessRole !== "team_admin") {
+  if (scope.role !== "owner" && scope.role !== "admin") {
     return null;
   }
 
   return {
     actorUserId: scope.userId,
-    businessRole: scope.businessRole,
+    role: scope.role,
     teamId: scope.teamId,
     visibleUserIds: scope.visibleUserIds,
     activeVisibleUserIds: scope.activeVisibleUserIds ?? scope.visibleUserIds,
@@ -61,7 +61,7 @@ async function resolveScope(
     return null;
   }
 
-  if (scope.businessRole === "team_admin" && !scope.teamId) {
+  if (scope.role === "admin" && !scope.teamId) {
     return null;
   }
 
@@ -207,7 +207,6 @@ export async function buildExecuteDashboardAlertResponse(
       context: {
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
-        actorBusinessRole: auth.actor.businessRole,
         actorPermissions: auth.actor.permissions,
       },
     });

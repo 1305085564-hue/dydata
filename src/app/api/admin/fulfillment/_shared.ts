@@ -107,7 +107,7 @@ export function requireOwnerOrAdminRole(auth: Awaited<ReturnType<typeof requireA
 
 export function requireOwnerOrTeamAdminRole(auth: Awaited<ReturnType<typeof requireAdminServiceClient>>) {
   if ("response" in auth) return auth.response;
-  if (auth.actor.businessRole !== "owner" && auth.actor.businessRole !== "team_admin") {
+  if (auth.actor.role !== "owner" && auth.actor.role !== "admin") {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;

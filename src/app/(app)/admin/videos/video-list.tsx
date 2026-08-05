@@ -131,7 +131,7 @@ export function VideoList({
   const [showBatchRestoreConfirm, setShowBatchRestoreConfirm] = useState(false);
   const [isBatchOperating, setIsBatchOperating] = useState(false);
 
-  const canManageLifecycle = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+  const canManageLifecycle = permissionInfo.role === "owner" || permissionInfo.role === "admin";
 
   const handleRestore = async (videoId: string) => {
     setIsOperating(videoId);
@@ -442,7 +442,7 @@ export function VideoList({
         style={{ maxHeight: "calc(100vh - 280px)" }}
       >
         <Table freezeFirst>
-          <TableHeader className="sticky top-0 z-10">
+          <TableHeader className="z-10">
             <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
               {canManageLifecycle && (
                 <TableHead className="h-9 w-10 pl-4 pr-0">
@@ -533,7 +533,7 @@ export function VideoList({
                           >
                             恢复
                           </button>
-                          {permissionInfo.businessRole === "owner" && (() => {
+                          {permissionInfo.role === "owner" && (() => {
                             const eligible = isPurgeEligible(video.trashed_at ?? null);
                             const tooltip = getPurgeTooltip(video.trashed_at ?? null);
                             return (

@@ -49,12 +49,12 @@ export default async function ViolationsPage({
 
   const permInfo = await getUserPermissions();
   if (!permInfo) redirect("/login");
-  const { businessRole, permissions, role } = permInfo;
+  const { permissions, role } = permInfo;
   const isOwner = role === "owner";
   const canManageViolations =
-    isOwner || hasPermission(businessRole, permissions, "manage_violations");
+    isOwner || hasPermission(role, permissions, "review_violations");
   const canViewDashboard = canManageViolations
-    || hasPermission(businessRole, permissions, "view_conversion_hub");
+    || hasPermission(role, permissions, "view_conversion");
 
   const resolved = await searchParams;
   const query = readParam(resolved, "q");

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import type { AlertAggregationResult, DashboardAlertScope } from "./types";
 
 test("告警聚合合同允许空数组、0 统计和 null 团队", () => {
-  const scope: DashboardAlertScope = { actorUserId: "owner-1", businessRole: "owner", teamId: null, visibleUserIds: [] };
+  const scope: DashboardAlertScope = { actorUserId: "owner-1", role: "owner", teamId: null, visibleUserIds: [] };
   const result: AlertAggregationResult = {
     alerts: [],
     groupedBySeverity: { critical: [], warning: [], info: [] },

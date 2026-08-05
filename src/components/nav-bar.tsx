@@ -1,6 +1,6 @@
-import { canAccessSystemSettings, getNavigationAccess } from "@/lib/analytics-access";
+import { getNavigationAccess } from "@/lib/analytics-access";
 import { getCurrentUserContext } from "@/lib/current-user-context";
-import { canUseAiCopywriting } from "@/lib/permission-utils";
+import { hasPermission } from "@/lib/permission-utils";
 import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
 import { NavBarClient } from "./nav-bar-client";
@@ -26,11 +26,10 @@ export async function NavBar() {
   const profile = profileResult.data;
   const accounts = accountsResult.data;
   const role = permissionInfo?.role ?? profile?.role ?? "member";
-  const businessRole = permissionInfo?.businessRole ?? role;
   const permissions = permissionInfo?.permissions ?? {};
-  const navigation = getNavigationAccess(businessRole, permissions);
-  const showAiCopywriting = canUseAiCopywriting(businessRole, permissions);
-  const showSystemSettings = canAccessSystemSettings(businessRole, permissions);
+  const navigation = getNavigationAccess(role, permissions);
+  const showAiCopywriting = hasPermission(role, permissions, "use_ai_copy");
+  const showSystemSettings = hasPermission(role, permissions, "manage_system");
 
   const displayAccounts = (accounts ?? []).map((account, index, list) => ({
     id: account.id,
@@ -51,7 +50,6 @@ export async function NavBar() {
     <NavBarClient
       name={profile?.name ?? user.email ?? ""}
       role={role}
-      businessRole={businessRole}
       permissions={permissions}
       showAdmin={navigation.showAdmin}
       showAiCopywriting={showAiCopywriting}

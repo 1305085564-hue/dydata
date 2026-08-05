@@ -63,7 +63,6 @@ test("POST 高转化话术直接写入 knowledge_cases submitted", async () => {
       getUserProfile: async () => ({
         id: "user-1",
         role: "member",
-        businessRole: "member",
         permissions: {},
         team_id: "team-1",
       }),
@@ -115,7 +114,6 @@ test("POST 违规话术仍写入 violation_cases", async () => {
       getUserProfile: async () => ({
         id: "user-1",
         role: "member",
-        businessRole: "member",
         permissions: {},
         team_id: "team-1",
       }),

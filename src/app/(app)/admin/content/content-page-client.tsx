@@ -286,7 +286,7 @@ export function ContentPageClient({
         onGoToNextVideo={handleGoToNextVideo}
         anomalyVideos={anomalyVideos}
         onVideoSelect={setSelectedVideoId}
-        canOperateLifecycle={permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin"}
+        canOperateLifecycle={permissionInfo.role === "owner" || permissionInfo.role === "admin"}
         onLifecycleChanged={() => {
           setSelectedVideoId(null);
           void loadData(view, perspective, teamId);

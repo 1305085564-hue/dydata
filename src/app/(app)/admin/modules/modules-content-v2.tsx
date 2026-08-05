@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, useMemo, useRef } from "react";
+import { useState, useEffect, useTransition, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { 
   UsersRound, Plus, Trash2, ShieldAlert, Sparkles, X,
@@ -26,7 +26,7 @@ import {
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
-import { 
+import {
   createTeam, 
   deleteTeam, 
   updatePermissions, 
@@ -36,9 +36,6 @@ import {
   removeMemberFromTeam,
   archiveMember,
   restoreMember,
-  createGroup,
-  assignMembersToGroup, 
-  removeMemberFromGroup 
 } from "../actions";
 
 import { 
@@ -48,23 +45,19 @@ import {
 
 import { ExemptionDialog } from "../豁免弹窗";
 import { findFocusMember } from "@/lib/admin/find-focus-member";
+import { MemberPermissionEditor } from "../components/member-permission-editor";
+import type { PermissionManagerMember } from "../权限管理";
 
-import type { BusinessRole } from "@/lib/business-role";
-import type { ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
+import type { DataScope, ExemptionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
 import type { ExemptionType } from "@/lib/豁免";
-import { 
-  ADMIN_PERMISSION_KEYS, 
-  AI_PERMISSION_KEYS, 
-  PERMISSION_LABELS, 
-  PERMISSION_DESCRIPTIONS 
-} from "@/types";
 
 interface ProfileSummary {
   id: string;
   name: string;
   email: string | null;
-  role: string;
+  role: UserRole;
   team_id?: string | null;
+  data_scope?: DataScope | null;
   group_id?: string | null;
   team_name: string | null;
   permissions: Permissions | null;
@@ -107,7 +100,7 @@ interface PendingRequest {
 interface TeamV2ContentProps {
   currentUserId: string;
   currentUserRole: UserRole;
-  currentUserBusinessRole?: BusinessRole;
+  currentUserBusinessRole?: UserRole;
   currentUserPermissions: Permissions;
   permissionManagerCapabilities: {
     canRemoveMember: boolean;
@@ -120,12 +113,12 @@ interface TeamV2ContentProps {
   teamManagement: {
     access: {
       canView: boolean;
-      canEditGroups: boolean;
+      canEditGroups?: boolean;
       teamIds: string[] | null;
-      groupIds: string[] | null;
+      groupIds?: string[] | null;
     };
     teams: TeamOption[];
-    groups: GroupOption[];
+    groups?: GroupOption[];
     profiles: unknown[];
     leaderCandidates: unknown[];
   };
@@ -188,6 +181,7 @@ export function AdminModulesContentV2({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [removeTarget, setRemoveTarget] = useState<ProfileSummary | null>(null);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<ProfileSummary | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<ProfileSummary | null>(null);
   const [archiveReason, setArchiveReason] = useState("");
   const [restoreTarget, setRestoreTarget] = useState<ProfileSummary | null>(null);
@@ -196,6 +190,11 @@ export function AdminModulesContentV2({
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
   const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
   const [exemptionMemberId, setExemptionMemberId] = useState<string | null>(null);
+
+  const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [batchArchiveOpen, setBatchArchiveOpen] = useState(false);
+  const [batchArchiveReason, setBatchArchiveReason] = useState("");
   
   const [aiSuggestion, setAiSuggestion] = useState<{
     status: "normal" | "warning" | "critical";
@@ -288,13 +287,14 @@ export function AdminModulesContentV2({
 
   const effectiveRole = currentUserBusinessRole ?? currentUserRole;
   const isOwner = effectiveRole === "owner";
-  const canManageGroups = teamManagement.access.canEditGroups;
+  const canManageGroups = Boolean(teamManagement.access.canEditGroups);
+  const teamGroups = teamManagement.groups ?? [];
 
   const leaderCandidates = useMemo(() => {
     return localProfiles
       .filter(p => p.role === "admin" && p.team_id === selectedTeamId && p.id !== currentUserId)
-      .filter(p => !teamManagement.groups.some(g => g.leader_user_id === p.id));
-  }, [localProfiles, selectedTeamId, teamManagement.groups, currentUserId]);
+      .filter(p => !teamGroups.some(g => g.leader_user_id === p.id));
+  }, [localProfiles, selectedTeamId, teamGroups, currentUserId]);
 
   const handleCreateTeam = () => {
     const name = newTeamName.trim();
@@ -322,7 +322,7 @@ export function AdminModulesContentV2({
   const handleDeleteTeam = (team: TeamOption) => {
     setDeleteTeamTarget(null);
     const hasMembers = localProfiles.some(p => p.team_id === team.id);
-    const hasGroups = teamManagement.groups.some(g => g.team_id === team.id);
+    const hasGroups = teamGroups.some(g => g.team_id === team.id);
     
     if (hasMembers || hasGroups) {
       feedbackToast.error("该团队下还有成员或分组，无法删除");
@@ -344,47 +344,9 @@ export function AdminModulesContentV2({
     });
   };
 
-  const handleCreateGroup = () => {
-    const name = newGroupName.trim();
-    if (!name || !newGroupLeaderId || selectedTeamId === "__all__") return;
+  const handleCreateGroup = () => {};
 
-    feedbackToast.success("正在创建分组");
-    startTransition(async () => {
-      const res = await createGroup({
-        teamId: selectedTeamId,
-        name,
-        leaderUserId: newGroupLeaderId
-      });
-      if (res.error) {
-        feedbackToast.error(res.error);
-      } else {
-        feedbackToast.success(`分组「${name}」创建成功`);
-        setNewGroupName("");
-        setNewGroupLeaderId("");
-        router.refresh();
-      }
-    });
-  };
-
-  const handleAssignMemberToGroup = (memberId: string, groupId: string | null) => {
-    const prevProfiles = localProfiles;
-    setLocalProfiles(prev => prev.map(p => p.id === memberId ? { ...p, group_id: groupId } : p));
-    
-    startTransition(async () => {
-      let res;
-      if (groupId) {
-        res = await assignMembersToGroup({ groupId, memberIds: [memberId] });
-      } else {
-        res = await removeMemberFromGroup(memberId);
-      }
-      if (res.error) {
-        setLocalProfiles(prevProfiles);
-        feedbackToast.error(res.error);
-      } else {
-        feedbackToast.success("成员分组调配成功");
-      }
-    });
-  };
+  const handleAssignMemberToGroup = (_memberId: string, _groupId: string | null) => {};
 
   const handleReviewJoinRequest = (requestId: string, action: "approve" | "reject") => {
     const targetRequest = pendingRequests.find(r => r.id === requestId);
@@ -409,12 +371,15 @@ export function AdminModulesContentV2({
     });
   };
 
-  const handleToggleRole = (member: ProfileSummary) => {
+  const handleToggleRole = () => {
+    if (!roleChangeTarget) return;
+    const member = roleChangeTarget;
+    setRoleChangeTarget(null);
     const newRole = member.role === "admin" ? "member" : "admin";
     const prevProfiles = localProfiles;
     
     setLocalProfiles(prev => prev.map(p => p.id === member.id ? { ...p, role: newRole } : p));
-    feedbackToast.success(`角色更新为：${newRole === "admin" ? "管理员" : "普通成员"}`);
+    feedbackToast.success(`正在将 ${member.name} 的角色更新为：${newRole === "admin" ? "管理员" : "普通成员"}`);
 
     startTransition(async () => {
       const res = await changeRole(member.id, newRole);
@@ -422,6 +387,7 @@ export function AdminModulesContentV2({
         setLocalProfiles(prevProfiles);
         feedbackToast.error(res.error);
       } else {
+        feedbackToast.success(`已成功将 ${member.name} 更改为 ${newRole === "admin" ? "管理员" : "普通成员"}`);
         router.refresh();
       }
     });
@@ -476,11 +442,7 @@ export function AdminModulesContentV2({
   const handleArchiveMember = () => {
     if (!archiveTarget) return;
     const target = archiveTarget;
-    const reason = archiveReason.trim();
-    if (!reason) {
-      feedbackToast.error("归档必须填写原因");
-      return;
-    }
+    const reason = archiveReason.trim() || "离职/管理员归档";
 
     const previousProfiles = localProfiles;
     setArchiveTarget(null);
@@ -493,7 +455,6 @@ export function AdminModulesContentV2({
       if (res.error) {
         setLocalProfiles(previousProfiles);
         setArchiveTarget(target);
-        setArchiveReason(reason);
         feedbackToast.error(res.error);
         return;
       }
@@ -531,8 +492,73 @@ export function AdminModulesContentV2({
         feedbackToast.error(res.error);
         return;
       }
+      setMemberView("active");
+      setRestoredFocusId(target.id);
+      setTimeout(() => {
+        setRestoredFocusId(null);
+      }, 3000);
       feedbackToast.success("账号已恢复，请重新分配团队和权限");
       router.refresh();
+    });
+  };
+
+  const handleBatchTransferTeam = (teamId: string) => {
+    if (selectedMemberIds.length === 0) return;
+    const targetTeam = localTeams.find(t => t.id === teamId);
+    const targetTeamName = targetTeam?.name ?? "未分配团队";
+    const ids = [...selectedMemberIds];
+
+    const prevProfiles = localProfiles;
+    setLocalProfiles(prev => prev.map(p => ids.includes(p.id) ? {
+      ...p,
+      team_id: teamId || null,
+      team_name: targetTeam ? targetTeam.name : null,
+      group_id: null
+    } : p));
+    setSelectedMemberIds([]);
+
+    feedbackToast.success(`正在划转 ${ids.length} 名成员至 ${targetTeamName}...`);
+    startTransition(async () => {
+      let failCount = 0;
+      for (const id of ids) {
+        const res = await updateMemberTeam(id, teamId || null);
+        if (res.error) failCount++;
+      }
+      if (failCount > 0) {
+        setLocalProfiles(prevProfiles);
+        feedbackToast.error(`部分成员划转失败 (${failCount}/${ids.length})`);
+      } else {
+        feedbackToast.success(`已成功将 ${ids.length} 名成员划转至 ${targetTeamName}`);
+        router.refresh();
+      }
+    });
+  };
+
+  const handleBatchArchive = () => {
+    if (selectedMemberIds.length === 0) return;
+    const reason = batchArchiveReason.trim() || "批量归档（离职）";
+
+    const ids = [...selectedMemberIds];
+    const prevProfiles = localProfiles;
+    setBatchArchiveOpen(false);
+    setBatchArchiveReason("");
+    setLocalProfiles(prev => prev.filter(p => !ids.includes(p.id)));
+    setSelectedMemberIds([]);
+
+    feedbackToast.success(`正在归档 ${ids.length} 名账号...`);
+    startTransition(async () => {
+      let failCount = 0;
+      for (const id of ids) {
+        const res = await archiveMember(id, reason);
+        if (res.error) failCount++;
+      }
+      if (failCount > 0) {
+        setLocalProfiles(prevProfiles);
+        feedbackToast.error(`部分账号归档失败 (${failCount}/${ids.length})`);
+      } else {
+        feedbackToast.success(`已成功归档 ${ids.length} 名账号`);
+        router.refresh();
+      }
     });
   };
 
@@ -583,25 +609,46 @@ export function AdminModulesContentV2({
     }));
   };
 
-  const handleSavePermissions = () => {
-    if (!activeMemberId || !activeMember) return;
-    const prevProfiles = localProfiles;
-    const nextPerms = { ...draftPermissions };
+  const activePermissionMember = useMemo<PermissionManagerMember | null>(() => {
+    if (!activeMember) return null;
+    return {
+      id: activeMember.id,
+      name: activeMember.name,
+      email: activeMember.email,
+      role: activeMember.role,
+      teamId: activeMember.team_id,
+      teamName: activeMember.team_name,
+      permissions: activeMember.permissions || {},
+      data_scope: activeMember.data_scope || "self",
+      status: activeMember.status as any,
+    };
+  }, [activeMember]);
 
-    setLocalProfiles(prev => prev.map(p => p.id === activeMemberId ? { ...p, permissions: nextPerms } : p));
-    feedbackToast.success("正在保存权限变更...");
+  const handleSavePermissionsEditor = useCallback(
+    (newPerms: Permissions, newDataScope: DataScope) => {
+      if (!activeMemberId || !activeMember) return;
+      const prevProfiles = localProfiles;
 
-    startSavingPermissions(async () => {
-      const res = await updatePermissions(activeMemberId, nextPerms);
-      if (res.error) {
-        setLocalProfiles(prevProfiles);
-        feedbackToast.error(res.error);
-      } else {
-        feedbackToast.success("权限保存成功，下一次访问时生效");
-        router.refresh();
-      }
-    });
-  };
+      setLocalProfiles((prev) =>
+        prev.map((p) =>
+          p.id === activeMemberId ? { ...p, permissions: newPerms, data_scope: newDataScope } : p
+        )
+      );
+      feedbackToast.success("正在保存权限与数据范围变更...");
+
+      startSavingPermissions(async () => {
+        const res = await updatePermissions(activeMemberId, newPerms, newDataScope);
+        if (res.error) {
+          setLocalProfiles(prevProfiles);
+          feedbackToast.error(res.error);
+        } else {
+          feedbackToast.success("权限与数据范围保存成功");
+          router.refresh();
+        }
+      });
+    },
+    [activeMemberId, activeMember, localProfiles, router]
+  );
 
   const handleFetchAiSuggestion = async () => {
     if (!activeMemberId) return;
@@ -697,7 +744,7 @@ export function AdminModulesContentV2({
 
           {localTeams.map(team => {
             const teamMembers = localProfiles.filter(p => p.team_id === team.id);
-            const teamGroups = teamManagement.groups.filter(g => g.team_id === team.id);
+            const teamGroupsForTeam = teamGroups.filter(g => g.team_id === team.id);
             const isTeamSelected = selectedTeamId === team.id;
             
             return (
@@ -738,7 +785,7 @@ export function AdminModulesContentV2({
 
                 {isTeamSelected && (
                   <div className="ml-3 border-l border-zinc-200 pl-3 space-y-1 pt-0.5 pb-1">
-                    {teamGroups.map(group => {
+                    {teamGroupsForTeam.map(group => {
                       const groupMembers = teamMembers.filter(p => p.group_id === group.id);
                       const isGroupSelected = selectedGroupId === group.id;
                       const leaderName = localProfiles.find(p => p.id === group.leader_user_id)?.name || "无";
@@ -911,6 +958,27 @@ export function AdminModulesContentV2({
               />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
+              {memberView === "active" && isOwner && filteredProfiles.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allIds = filteredProfiles.map(p => p.id);
+                    const isAllSelected = allIds.every(id => selectedMemberIds.includes(id));
+                    if (isAllSelected) {
+                      setSelectedMemberIds(prev => prev.filter(id => !allIds.includes(id)));
+                    } else {
+                      setSelectedMemberIds(prev => Array.from(new Set([...prev, ...allIds])));
+                    }
+                  }}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 text-[12px] text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
+                >
+                  <Checkbox
+                    checked={filteredProfiles.length > 0 && filteredProfiles.every(p => selectedMemberIds.includes(p.id))}
+                    className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-[#D97757] data-[state=checked]:border-[#D97757]"
+                  />
+                  全选当前屏
+                </button>
+              )}
               <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1" role="tablist" aria-label="成员状态">
                 <button
                   type="button"
@@ -930,7 +998,7 @@ export function AdminModulesContentV2({
                   type="button"
                   role="tab"
                   aria-selected={memberView === "archived"}
-                  onClick={() => { setMemberView("archived"); setActiveMemberId(null); }}
+                  onClick={() => { setMemberView("archived"); setActiveMemberId(null); setSelectedMemberIds([]); }}
                   className={cn(
                     "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] transition-colors",
                     memberView === "archived" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-800",
@@ -968,7 +1036,9 @@ export function AdminModulesContentV2({
                 const isArchivedView = memberView === "archived";
                 const isAdmin = member.role === "admin";
                 const isCurrentMemberActive = activeMemberId === member.id;
-                const groupAsLeader = teamManagement.groups.find(g => g.leader_user_id === member.id);
+                const isRestoredFocus = restoredFocusId === member.id;
+                const isChecked = selectedMemberIds.includes(member.id);
+                const groupAsLeader = teamGroups.find(g => g.leader_user_id === member.id);
                 const archiveSnapshot = member.archive_snapshot ?? {};
                 const archivedTeamName = typeof archiveSnapshot.team_name === "string"
                   ? archiveSnapshot.team_name
@@ -981,82 +1051,143 @@ export function AdminModulesContentV2({
                   <div
                     key={member.id}
                     className={cn(
-                      "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 hover:border-zinc-300 hover:shadow-sm",
-                      isCurrentMemberActive
+                      "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-300 hover:border-zinc-300 hover:shadow-sm",
+                      isRestoredFocus
+                        ? "ring-2 ring-[#5F82A8] bg-[#5F82A8]/10 animate-pulse border-[#5F82A8]"
+                        : isChecked
+                        ? "border-[#D97757] bg-[#D97757]/5"
+                        : isCurrentMemberActive
                         ? "border-[#5F82A8] bg-[#5F82A8]/5"
                         : "border-zinc-200 bg-white"
                     )}
                   >
-                    <button
-                      type="button"
-                      disabled={isArchivedView}
-                      aria-current={isCurrentMemberActive ? "true" : undefined}
-                      className={cn(
-                        "space-y-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40",
-                        isArchivedView && "cursor-default",
-                      )}
-                      onClick={() => { if (!isArchivedView) handleSelectMember(member); }}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="text-[13px] font-medium text-zinc-900 flex items-center gap-1.5">
-                            {member.name}
-                            {member.id === currentUserId && (
-                              <span className="scale-90 text-[12px] text-zinc-500 font-normal border border-zinc-200 px-1 rounded">我</span>
+                    {(() => {
+                      const handleCardClick = (e: React.MouseEvent) => {
+                        if (isArchivedView) return;
+
+                        // 判定是否来自 Checkbox 及其外包围容器，若是则绝对不弹 Sheet 抽屉
+                        const target = e.target as HTMLElement;
+                        if (target.closest('[role="checkbox"]') || target.closest('.checkbox-wrap')) {
+                          return;
+                        }
+
+                        if (selectedMemberIds.length > 0) {
+                          if (member.id === currentUserId) return;
+                          if (isChecked) {
+                            setSelectedMemberIds(prev => prev.filter(id => id !== member.id));
+                          } else {
+                            setSelectedMemberIds(prev => [...prev, member.id]);
+                          }
+                          return;
+                        }
+                        handleSelectMember(member);
+                      };
+
+                      return (
+                        <div
+                          role="button"
+                          tabIndex={isArchivedView ? -1 : 0}
+                          aria-current={isCurrentMemberActive ? "true" : undefined}
+                          className={cn(
+                            "space-y-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40 cursor-pointer select-none",
+                            isArchivedView && "cursor-default",
+                          )}
+                          onClick={handleCardClick}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              if (!selectedMemberIds.length) handleSelectMember(member);
+                            }
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-2">
+                              {isOwner && !isArchivedView && member.id !== currentUserId && (
+                                <div
+                                  className="checkbox-wrap shrink-0 mt-0.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedMemberIds(prev => [...prev, member.id]);
+                                      } else {
+                                        setSelectedMemberIds(prev => prev.filter(id => id !== member.id));
+                                      }
+                                    }}
+                                    className="size-4 rounded border-zinc-300 data-[state=checked]:bg-[#D97757] data-[state=checked]:border-[#D97757]"
+                                  />
+                                </div>
+                              )}
+                              <div>
+                                <h4 className="text-[13px] font-medium text-zinc-900 flex items-center gap-1.5">
+                                  {member.name}
+                                  {member.id === currentUserId && (
+                                    <span className="scale-90 text-[12px] text-zinc-500 font-normal border border-zinc-200 px-1 rounded">我</span>
+                                  )}
+                                </h4>
+                                <span className="text-[12px] text-zinc-500 leading-none">
+                                  {member.email ? (
+                                    member.email
+                                  ) : (
+                                    <span className="inline-block h-3.5 w-28 bg-zinc-200/60 rounded animate-pulse align-middle my-0.5" />
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+
+                            <span className={cn(
+                              "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-[12px] font-medium tracking-tight border",
+                              isArchivedView
+                                ? "bg-zinc-100 border-zinc-200 text-zinc-600"
+                                : isAdmin
+                                ? "bg-white border-[#D97757]/30 text-zinc-900"
+                                : "bg-zinc-100 border-transparent text-zinc-700"
+                            )}>
+                              {isArchivedView ? (
+                                <>
+                                  <Archive className="size-3" />
+                                  已归档
+                                </>
+                              ) : isAdmin ? (
+                                <>
+                                  <span className="size-1.5 rounded-full bg-[#D97757]" />
+                                  管理员
+                                </>
+                              ) : "成员"}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
+                              {isArchivedView ? archivedTeamName : member.team_name || "未分配团队"}
+                            </span>
+                            {isArchivedView ? (
+                              <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
+                                归档前角色：{archivedRole}
+                              </span>
+                            ) : groupAsLeader ? (
+                              <span className="inline-flex items-center rounded-lg bg-[#5F82A8]/15 px-2 py-0.5 text-[12px] text-[#5F82A8] font-medium">
+                                组长 : {groupAsLeader.name}
+                              </span>
+                            ) : member.group_id ? (
+                              <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
+                                {teamGroups.find(g => g.id === member.group_id)?.name || "已分分组"}
+                              </span>
+                            ) : null}
+
+                            {!isArchivedView && member.exempt_type && (
+                              <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
+                                已豁免
+                              </span>
                             )}
-                          </h4>
-                          <span className="text-[12px] text-zinc-500 leading-none">
-                            {member.email ? member.email : "邮箱获取中..."}
-                          </span>
+                          </div>
                         </div>
-
-                        <span className={cn(
-                          "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-[12px] font-medium tracking-tight border",
-                          isArchivedView
-                            ? "bg-zinc-100 border-zinc-200 text-zinc-600"
-                            : isAdmin
-                            ? "bg-white border-[#D97757]/30 text-zinc-900"
-                            : "bg-zinc-100 border-transparent text-zinc-700"
-                        )}>
-                          {isArchivedView ? (
-                            <>
-                              <Archive className="size-3" />
-                              已归档
-                            </>
-                          ) : isAdmin ? (
-                            <>
-                              <span className="size-1.5 rounded-full bg-[#D97757]" />
-                              管理员
-                            </>
-                          ) : "成员"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
-                          {isArchivedView ? archivedTeamName : member.team_name || "未分配团队"}
-                        </span>
-                        {isArchivedView ? (
-                          <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
-                            归档前角色：{archivedRole}
-                          </span>
-                        ) : groupAsLeader ? (
-                          <span className="inline-flex items-center rounded-lg bg-[#5F82A8]/15 px-2 py-0.5 text-[12px] text-[#5F82A8] font-medium">
-                            组长 : {groupAsLeader.name}
-                          </span>
-                        ) : member.group_id ? (
-                          <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
-                            {teamManagement.groups.find(g => g.id === member.group_id)?.name || "已分分组"}
-                          </span>
-                        ) : null}
-                        
-                        {!isArchivedView && member.exempt_type && (
-                          <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
-                            已豁免
-                          </span>
-                        )}
-                      </div>
-                    </button>
+                      );
+                    })()}
 
                     {isArchivedView ? (
                       <div className="mt-4 space-y-2 border-t border-zinc-100 pt-3">
@@ -1101,7 +1232,7 @@ export function AdminModulesContentV2({
                             className="h-6.5 text-[12px] bg-zinc-50 border border-zinc-200 rounded px-1.5 text-zinc-700 outline-none"
                           >
                             <option value="">直管成员</option>
-                            {teamManagement.groups
+                            {teamGroups
                               .filter(g => g.team_id === member.team_id)
                               .map(g => (
                                 <option key={g.id} value={g.id}>{g.name}</option>
@@ -1110,27 +1241,6 @@ export function AdminModulesContentV2({
                           </select>
                         )}
                       </div>
-
-                      {isOwner && member.id !== currentUserId && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            title="修改角色"
-                            onClick={(e) => { e.stopPropagation(); handleToggleRole(member); }}
-                            className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
-                          >
-                            <Settings className="size-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            title="重置密码"
-                            onClick={(e) => { e.stopPropagation(); setPasswordResetTarget(member); }}
-                            className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
-                          >
-                            <KeyRound className="size-3.5" />
-                          </button>
-                        </div>
-                      )}
                     </div>
                     )}
                   </div>
@@ -1151,256 +1261,175 @@ export function AdminModulesContentV2({
           }
         }}
       >
-        <SheetContent side="right" showCloseButton={false} className="h-dvh w-full max-w-[420px] gap-0 p-0 shadow-2xl">
-          {activeMember ? (
-            <>
-            <div className="flex items-start justify-between border-b border-zinc-200 p-6">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <SheetTitle>{activeMember.name}</SheetTitle>
-                  <span className={cn(
-                    "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[12px] font-medium border",
-                    activeMember.role === "admin"
-                      ? "bg-white border-[#D97757]/30 text-zinc-900"
-                      : "bg-zinc-100 border-transparent text-zinc-700"
-                  )}>
-                    {activeMember.role === "admin" ? "管理员" : "组员"}
-                  </span>
+        <SheetContent side="right" showCloseButton={false} className="h-dvh w-full max-w-[480px] gap-0 p-0 shadow-2xl overflow-hidden flex flex-col">
+          {activeMember && activePermissionMember ? (
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* 顶栏信息 */}
+              <div className="flex items-start justify-between border-b border-zinc-200 p-5 bg-white shrink-0">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <SheetTitle className="text-base font-semibold text-zinc-900">{activeMember.name}</SheetTitle>
+                    <span className={cn(
+                      "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[11px] font-medium border",
+                      activeMember.role === "owner"
+                        ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
+                        : activeMember.role === "admin"
+                        ? "bg-white border-[#5F82A8]/30 text-zinc-900"
+                        : "bg-zinc-100 border-transparent text-zinc-700"
+                    )}>
+                      {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "管理员" : "成员"}
+                    </span>
+                  </div>
+                  <SheetDescription className="text-[12px] text-zinc-500 leading-none">
+                    {activeMember.team_name || "未分配团队"} · {activeMember.email || "邮箱同步中"}
+                  </SheetDescription>
                 </div>
-                <SheetDescription className="leading-none">
-                  {activeMember.team_name || "未分配团队"} · {activeMember.email || "邮箱同步中"}
-                </SheetDescription>
-              </div>
 
-              <div className="flex items-center gap-1">
-                {permissionManagerCapabilities.canEditPermissions && (
-                  <Button
-                    variant="outline"
-                    onClick={handleFetchAiSuggestion}
-                    disabled={aiSuggestion?.loading}
-                    className="h-8 text-[12px] rounded-lg border-zinc-200 hover:bg-zinc-50 flex items-center gap-1 px-2.5"
+                <div className="flex items-center gap-1">
+                  {permissionManagerCapabilities.canEditPermissions && (
+                    <Button
+                      variant="outline"
+                      onClick={handleFetchAiSuggestion}
+                      disabled={aiSuggestion?.loading}
+                      className="h-8 text-[12px] rounded-lg border-zinc-200 hover:bg-zinc-50 flex items-center gap-1 px-2.5"
+                    >
+                      <Sparkles className="size-3 text-[#D97757] motion-safe:animate-pulse" />
+                      AI 诊断
+                    </Button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setActiveMemberId(null); setAiSuggestion(null); }}
+                    aria-label="关闭成员权限详情"
+                    className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
                   >
-                    <Sparkles className="size-3 text-[#D97757] motion-safe:animate-pulse" />
-                    AI 诊断
-                  </Button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setActiveMemberId(null); setAiSuggestion(null); }}
-                  aria-label="关闭成员权限详情"
-                  className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
-                >
-                  <X className="size-4.5" />
-                </button>
+                    <X className="size-4.5" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {aiSuggestion && (
-                <div className={cn(
-                  "rounded-xl border-l-2 bg-zinc-50 p-4 space-y-3",
-                  aiSuggestion.status === "critical" ? "border-l-[#C9604D]" : "border-l-zinc-300"
-                )}>
-                  {aiSuggestion.loading ? (
-                    <div className="flex items-center gap-2 text-[12px] text-zinc-500 py-2">
-                      <RefreshCw className="size-3.5 animate-spin" />
-                      AI 正在深度审查其日常填报及安全审计日志...
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-between border-b border-zinc-200/50 pb-2">
-                        <span className={cn(
-                          "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
-                          aiSuggestion.status === "critical" 
-                            ? "bg-[#C9604D]/15 text-[#C9604D]" 
-                            : "bg-[#5F82A8]/15 text-[#5F82A8]"
-                        )}>
-                          {aiSuggestion.status === "critical" ? "安全警告" : "诊断建议"}
-                        </span>
-                        <span className="text-[12px] text-zinc-500">AI 推理建议</span>
-                      </div>
-                      <p className="text-[12px] text-zinc-700 leading-relaxed">{aiSuggestion.summary}</p>
-                      
-                      {aiSuggestion.suggestions.map((sug, idx) => {
-                        const key = `${sug.label}-${idx}`;
-                        const isBusy = executingAiKey === key;
-                        return (
-                          <div key={idx} className="bg-white rounded-lg border border-zinc-200 p-2.5 flex items-start justify-between gap-3">
-                            <div className="space-y-0.5">
-                              <h5 className="text-[12px] font-medium text-zinc-900">{sug.label}</h5>
-                              <p className="text-[12px] text-zinc-500 leading-relaxed">{sug.description}</p>
-                            </div>
-                            <Button
-                              onClick={() => void handleExecuteAiSuggestion(sug, key)}
-                              disabled={Boolean(executingAiKey)}
-                              className="h-7 px-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded text-[12px] shrink-0 active:scale-95"
-                            >
-                              {isBusy ? "执行中..." : "一键部署"}
-                            </Button>
+              {/* 主体滚动区 */}
+              <div className="flex-1 overflow-y-auto space-y-6">
+                {aiSuggestion && (
+                  <div className="px-6 pt-4 pb-0">
+                    <div className={cn(
+                      "rounded-xl border-l-2 bg-zinc-50 p-4 space-y-3",
+                      aiSuggestion.status === "critical" ? "border-l-[#C9604D]" : "border-l-zinc-300"
+                    )}>
+                      {aiSuggestion.loading ? (
+                        <div className="flex items-center gap-2 text-[12px] text-zinc-500 py-2">
+                          <RefreshCw className="size-3.5 animate-spin" />
+                          AI 正在深度审查其日常填报及安全审计日志...
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between border-b border-zinc-200/50 pb-2">
+                            <span className={cn(
+                              "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
+                              aiSuggestion.status === "critical" 
+                                ? "bg-[#C9604D]/15 text-[#C9604D]" 
+                                : "bg-[#5F82A8]/15 text-[#5F82A8]"
+                            )}>
+                              {aiSuggestion.status === "critical" ? "安全警告" : "诊断建议"}
+                            </span>
+                            <span className="text-[12px] text-zinc-500">AI 推理建议</span>
                           </div>
-                        );
-                      })}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {activeMember.role === "admin" ? (
-                <>
-                  <div className="space-y-2.5">
-                    <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-zinc-500">后台管理授权</h4>
-                    <div className="grid gap-2">
-                      {ADMIN_PERMISSION_KEYS.map(key => {
-                        const isChecked = draftPermissions[key] === true;
-                        return (
-                          <label
-                            key={key}
-                            htmlFor={`admin-permission-${key}`}
-                            className={cn(
-                              "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
-                              isChecked
-                                ? "border-[#5F82A8]/60 bg-[#5F82A8]/8"
-                                : "border-zinc-200 bg-white hover:bg-zinc-50"
-                            )}
-                          >
-                            <div className="space-y-0.5 pr-2">
-                              <span className="text-[13px] font-medium text-zinc-900">{PERMISSION_LABELS[key]}</span>
-                              <p className="text-[12px] text-zinc-500 leading-relaxed">
-                                {PERMISSION_DESCRIPTIONS[key] || "后台管理和维护的基本操作。"}
-                              </p>
-                            </div>
-                            <Checkbox
-                              id={`admin-permission-${key}`}
-                              checked={isChecked}
-                              aria-label={PERMISSION_LABELS[key]}
-                              disabled={!permissionManagerCapabilities.canEditPermissions || isSavingPermissions}
-                              onCheckedChange={checked => handleTogglePermission(key, checked === true)}
-                              className="mt-0.5"
-                            />
-                          </label>
-                        );
-                      })}
+                          <p className="text-[12px] text-zinc-700 leading-relaxed">{aiSuggestion.summary}</p>
+                          
+                          {aiSuggestion.suggestions.map((sug, idx) => {
+                            const key = `${sug.label}-${idx}`;
+                            const isBusy = executingAiKey === key;
+                            return (
+                              <div key={idx} className="bg-white rounded-lg border border-zinc-200 p-2.5 flex items-start justify-between gap-3">
+                                <div className="space-y-0.5">
+                                  <h5 className="text-[12px] font-medium text-zinc-900">{sug.label}</h5>
+                                  <p className="text-[12px] text-zinc-500 leading-relaxed">{sug.description}</p>
+                                </div>
+                                <Button
+                                  onClick={() => void handleExecuteAiSuggestion(sug, key)}
+                                  disabled={Boolean(executingAiKey)}
+                                  className="h-7 px-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded text-[12px] shrink-0 active:scale-95"
+                                >
+                                  {isBusy ? "执行中..." : "一键部署"}
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                   </div>
+                )}
 
-                  <div className="space-y-2.5">
-                    <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-zinc-500">AI 智能辅助授权</h4>
-                    <div className="grid gap-2">
-                      {AI_PERMISSION_KEYS.map(key => {
-                        const isChecked = draftPermissions[key] === true;
-                        return (
-                          <label
-                            key={key}
-                            htmlFor={`ai-permission-${key}`}
-                            className={cn(
-                              "flex items-start justify-between rounded-xl border p-3 cursor-pointer transition-all duration-150",
-                              isChecked
-                                ? "border-[#5F82A8]/60 bg-[#5F82A8]/8"
-                                : "border-zinc-200 bg-white hover:bg-zinc-50"
-                            )}
-                          >
-                            <div className="space-y-0.5 pr-2">
-                              <span className="text-[13px] font-medium text-zinc-900">{PERMISSION_LABELS[key]}</span>
-                              <p className="text-[12px] text-zinc-500 leading-relaxed">
-                                {PERMISSION_DESCRIPTIONS[key] || "分配和设置成员智能工作流辅助工具能力。"}
-                              </p>
-                            </div>
-                            <Checkbox
-                              id={`ai-permission-${key}`}
-                              checked={isChecked}
-                              aria-label={PERMISSION_LABELS[key]}
-                              disabled={!permissionManagerCapabilities.canEditPermissions || isSavingPermissions}
-                              onCheckedChange={checked => handleTogglePermission(key, checked === true)}
-                              className="mt-0.5"
-                            />
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-6 text-center">
-                  <ShieldAlert className="size-5.5 text-zinc-500 stroke-[1.5]" />
-                  <div>
-                    <h5 className="text-[12px] font-medium text-zinc-700">组员无需单独授权</h5>
-                    <p className="text-[12px] text-zinc-500 max-w-[200px] leading-relaxed mt-0.5">
-                      系统内普通组员不享有单独管理和AI功能配置权。提升其角色为“管理员”即可开放授权。
-                    </p>
-                  </div>
-                </div>
-              )}
+                {/* 成员权限及数据范围编辑核心组件 */}
+                <MemberPermissionEditor
+                  member={activePermissionMember}
+                  canEdit={permissionManagerCapabilities.canEditPermissions}
+                  isSaving={isSavingPermissions}
+                  onSave={handleSavePermissionsEditor}
+                  onCancel={() => { setActiveMemberId(null); setAiSuggestion(null); }}
+                />
 
-              {(isOwner || permissionManagerCapabilities.canRemoveMember) && activeMember.id !== currentUserId && activeMember.role !== "owner" && (
-                <div className="space-y-3.5 border-t border-zinc-200 pt-6">
-                  <h4 className="text-[12px] font-normal uppercase tracking-[0.2em] text-zinc-500">高级管理</h4>
-                  
-                  {isOwner && (
-                    <div className="grid gap-2 sm:grid-cols-2">
+                {/* 高级账户与安全操作 */}
+                {(isOwner || permissionManagerCapabilities.canRemoveMember) && activeMember.id !== currentUserId && activeMember.role !== "owner" && (
+                  <div className="px-6 pb-6 space-y-3.5 border-t border-zinc-200/80 pt-5">
+                    <h4 className="text-[12px] font-medium uppercase tracking-[0.15em] text-zinc-500">高级账户与团队管理</h4>
+                    
+                    {isOwner && (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setRoleChangeTarget(activeMember)}
+                          className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50 flex items-center justify-center gap-1.5"
+                        >
+                          <Settings className="size-3.5" />
+                          {activeMember.role === "admin" ? "降级为普通组员" : "提升为管理员"}
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => setPasswordResetTarget(activeMember)}
+                          className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50 flex items-center justify-center gap-1.5"
+                        >
+                          <KeyRound className="size-3.5" />
+                          重置账户密码
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => setExemptionMemberId(activeMember.id)}
+                          className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50 border-dashed col-span-2"
+                        >
+                          {activeMember.exempt_type ? "调整日报豁免" : "开启日报豁免"}
+                        </Button>
+                      </div>
+                    )}
+
+                    {permissionManagerCapabilities.canRemoveMember && (
                       <Button
                         variant="outline"
-                        onClick={() => setPasswordResetTarget(activeMember)}
-                        className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                        onClick={() => setRemoveTarget(activeMember)}
+                        className="h-9 w-full rounded-xl border-zinc-300 text-zinc-700 hover:bg-zinc-50 text-[12px]"
                       >
-                        重置账户密码
+                        <UsersRound className="size-3.5" />
+                        移出团队
                       </Button>
+                    )}
+
+                    {isOwner && (
                       <Button
                         variant="outline"
-                        onClick={() => setExemptionMemberId(activeMember.id)}
-                        className="h-9 rounded-xl border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
+                        onClick={() => { setArchiveTarget(activeMember); setArchiveReason(""); }}
+                        className="h-9 w-full rounded-xl border-[#C9604D]/35 hover:border-[#C9604D]/50 text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
                       >
-                        {activeMember.exempt_type ? "调整日报豁免" : "开启日报豁免"}
+                        <Archive className="size-3.5" />
+                        归档账号
                       </Button>
-                    </div>
-                  )}
-
-                  {permissionManagerCapabilities.canRemoveMember && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setRemoveTarget(activeMember)}
-                      className="h-9 w-full rounded-xl border-zinc-300 text-zinc-700 hover:bg-zinc-50 text-[12px]"
-                    >
-                      <UsersRound className="size-3.5" />
-                      移出团队
-                    </Button>
-                  )}
-
-                  {isOwner && (
-                    <Button
-                      variant="outline"
-                      onClick={() => { setArchiveTarget(activeMember); setArchiveReason(""); }}
-                      className="h-9 w-full rounded-xl border-[#C9604D]/35 hover:border-[#C9604D]/50 text-[#C9604D] hover:bg-[#C9604D]/5 text-[12px]"
-                    >
-                      <Archive className="size-3.5" />
-                      归档账号
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {activeMember.role === "admin" && (
-              <div className="flex flex-col gap-2 border-t border-zinc-200 bg-zinc-50 p-4">
-                <span className="text-[12px] text-zinc-500">* 权限保存更改需要刷新浏览器刷新缓存以最终生效。</span>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => { setActiveMemberId(null); setDraftPermissions({}); }}
-                    className="h-8.5 text-[12px] text-zinc-500 rounded-lg hover:bg-zinc-100"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    onClick={handleSavePermissions}
-                    disabled={isSavingPermissions || !permissionManagerCapabilities.canEditPermissions}
-                    className="h-8.5 px-4 bg-[#D97757] hover:bg-[#C96442] text-white rounded-lg active:scale-95 text-[12px]"
-                  >
-                    {isSavingPermissions ? "保存中..." : "保存变更"}
-                  </Button>
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-            </>
+            </div>
           ) : null}
         </SheetContent>
       </Sheet>
@@ -1497,52 +1526,16 @@ export function AdminModulesContentV2({
         onOpenChange={(o) => { if (!o) setRemoveTarget(null); }}
       />
 
-      <Dialog
+      <ConfirmDialog
         open={archiveTarget !== null}
-        onOpenChange={(open) => {
-          if (!open && !isPending) {
-            setArchiveTarget(null);
-            setArchiveReason("");
-          }
-        }}
-      >
-        <DialogContent className="rounded-2xl border border-zinc-200 bg-white">
-          <DialogHeader>
-            <DialogTitle>归档账号</DialogTitle>
-            <DialogDescription>
-              {archiveTarget ? `归档 ${archiveTarget.name} 后将立即禁止登录，清空团队与权限；日报、视频、账号和审计历史会保留。` : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="archive-reason">归档原因</Label>
-            <Textarea
-              id="archive-reason"
-              value={archiveReason}
-              onChange={(event) => setArchiveReason(event.target.value)}
-              placeholder="请填写归档原因"
-              maxLength={500}
-              disabled={isPending}
-            />
-            <p className="text-right text-[12px] text-zinc-500">{archiveReason.length}/500</p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setArchiveTarget(null); setArchiveReason(""); }}
-              disabled={isPending}
-            >
-              取消
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleArchiveMember}
-              disabled={isPending || !archiveReason.trim()}
-            >
-              {isPending ? "归档中..." : "确认归档"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title="确认归档账号"
+        description={archiveTarget ? `确定将 ${archiveTarget.name} 账号归档吗？归档后将立即禁止登录并清空权限，历史日报、视频和审计数据仍保留。` : ""}
+        confirmText="确认归档"
+        destructive
+        loading={isPending}
+        onConfirm={handleArchiveMember}
+        onOpenChange={(o) => { if (!o) setArchiveTarget(null); }}
+      />
 
       <ConfirmDialog
         open={restoreTarget !== null}
@@ -1576,6 +1569,82 @@ export function AdminModulesContentV2({
           }
         }}
       />
+
+      {/* 批量归档 ConfirmDialog */}
+      <ConfirmDialog
+        open={batchArchiveOpen}
+        title="确认批量归档账号"
+        description={`确定将选中的 ${selectedMemberIds.length} 个账号归档吗？归档后将立即禁止登录并清空权限，历史日报、视频和数据仍保留。`}
+        confirmText={`确认归档 (${selectedMemberIds.length} 人)`}
+        destructive
+        loading={isPending}
+        onConfirm={handleBatchArchive}
+        onOpenChange={(o) => { if (!o) setBatchArchiveOpen(false); }}
+      />
+
+      <ConfirmDialog
+        open={roleChangeTarget !== null}
+        title="确认变更成员角色"
+        description={roleChangeTarget ? `确认将 ${roleChangeTarget.name} 的角色更改为「${roleChangeTarget.role === "admin" ? "普通组员" : "系统管理员"}」吗？` : ""}
+        confirmText="确认变更"
+        loading={isPending}
+        onConfirm={handleToggleRole}
+        onOpenChange={(o) => { if (!o) setRoleChangeTarget(null); }}
+      />
+
+      {/* 纸感纯白悬浮工具条 (Batch Actions Floating Bar) */}
+      {selectedMemberIds.length > 0 && (
+        <aside
+          aria-label="批量操作浮层"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-md px-5 py-2.5 shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4"
+        >
+          <div className="flex items-center gap-2 pr-2 border-r border-zinc-200 text-[13px] font-medium text-zinc-900">
+            <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[11px] font-semibold text-white">
+              {selectedMemberIds.length}
+            </span>
+            <span>已选择 {selectedMemberIds.length} 人</span>
+          </div>
+
+          {isOwner && (
+            <select
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleBatchTransferTeam(e.target.value);
+                  e.target.value = "";
+                }
+              }}
+              className="h-8 text-[12px] bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 text-zinc-700 outline-none hover:border-zinc-300"
+            >
+              <option value="" disabled>批量调配团队...</option>
+              {localTeams.map(t => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          )}
+
+          {isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setBatchArchiveOpen(true)}
+              className="h-8 rounded-lg border-zinc-200 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30"
+            >
+              <Archive className="size-3.5 mr-1" />
+              批量归档
+            </Button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setSelectedMemberIds([])}
+            className="ml-1 rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 text-[12px]"
+            title="取消选择"
+          >
+            <X className="size-4" />
+          </button>
+        </aside>
+      )}
     </div>
   );
 }

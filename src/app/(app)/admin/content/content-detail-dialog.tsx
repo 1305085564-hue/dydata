@@ -527,7 +527,7 @@ export function ContentDetailDialog({
   const [contentExpanded, setContentExpanded] = useState(false);
   const [isOperating, setIsOperating] = useState(false);
 
-  const canOperate = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+  const canOperate = permissionInfo.role === "owner" || permissionInfo.role === "admin";
 
   const handleTrashAction = async () => {
     if (!video) return;

@@ -13,7 +13,7 @@ async function ensureAdmin(): Promise<{ ok: true } | { ok: false; error: string 
     return { ok: false, error: "请先登录" };
   }
 
-  if (!hasPermission(permission.businessRole, permission.permissions, "manage_members")) {
+  if (!hasPermission(permission.role, permission.permissions, "manage_members")) {
     return { ok: false, error: "仅管理员可执行" };
   }
 

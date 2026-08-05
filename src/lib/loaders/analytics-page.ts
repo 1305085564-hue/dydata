@@ -222,7 +222,7 @@ export async function loadAnalyticsPageData({
         .filter((value): value is string => typeof value === "string" && value.trim().length > 0),
     ),
   );
-  const isPrivilegedUser = (resolvedContext.scope.accessLevel ?? 1) > 1;
+  const isPrivilegedUser = resolvedContext.scope.kind !== "self";
 
   return {
     range,

@@ -6,68 +6,61 @@ export type ExemptionCategory = "waive" | "leave";
 export type LeaderboardRange = "today" | "week" | "month";
 export type LeaderboardType = "overall" | "tag" | "progress";
 
-export const ADMIN_PERMISSION_KEYS = [
-  "view_all_data",
-  "edit_data",
-  "export_data",
-  "view_analytics",
-  "manage_members",
-  "manage_violations",
-  "view_conversion_hub",
-  "view_content_review",
-  "manage_video_assets",
-] as const;
+export const PERMISSION_CATEGORIES = {
+  business: ["view_analytics", "export_data", "view_conversion"],
+  content: ["review_content", "manage_fulfillment", "manage_videos"],
+  admin: ["manage_members", "review_violations", "manage_system"],
+  ai: ["use_ai_copy", "use_ai_assist"],
+} as const;
 
-export const AI_PERMISSION_KEYS = [
-  "use_ai_copywriting",
-  "use_ai_management",
-] as const;
+export type PermissionCategory = keyof typeof PERMISSION_CATEGORIES;
+export type DataScope = "self" | "team" | "all";
 
-export const PERMISSION_KEYS = [
-  ...ADMIN_PERMISSION_KEYS,
-  ...AI_PERMISSION_KEYS,
-] as const;
+export type PermissionKey =
+  | (typeof PERMISSION_CATEGORIES)[PermissionCategory][number];
 
-export type PermissionKey = (typeof PERMISSION_KEYS)[number];
+export const PERMISSION_KEYS = Object.values(PERMISSION_CATEGORIES).flat() as PermissionKey[];
 
-export type Permissions = Partial<Record<PermissionKey, boolean>>;
+export type Permissions = Partial<Record<PermissionKey, boolean>> & Record<string, boolean | undefined>;
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
-  view_all_data: "查看所有数据",
-  edit_data: "编辑/删除数据",
+  view_analytics: "经营分析",
   export_data: "导出数据",
-  view_analytics: "数据分析",
-  manage_members: "管理成员状态",
-  manage_violations: "违规话术复核",
-  view_conversion_hub: "查看转化中心",
-  view_content_review: "查看视频复盘",
-  manage_video_assets: "管理素材库",
-  use_ai_copywriting: "AI 文案助手",
-  use_ai_management: "AI 管理助手",
+  view_conversion: "转化中心",
+  review_content: "视频复盘",
+  manage_fulfillment: "发布管理",
+  manage_videos: "素材库",
+  manage_members: "成员管理",
+  review_violations: "违规复核",
+  manage_system: "系统设置",
+  use_ai_copy: "AI 文案助手",
+  use_ai_assist: "AI 管理助手",
+};
+
+export const PERMISSION_CATEGORY_LABELS: Record<PermissionCategory, string> = {
+  business: "经营",
+  content: "内容",
+  admin: "管理",
+  ai: "AI",
 };
 
 export const PERMISSION_DESCRIPTIONS: Partial<Record<PermissionKey, string>> = {
-  use_ai_copywriting: "使用文案改写工具生成爆款文案",
-  use_ai_management: "使用后台 AI 助手查询与执行管理操作",
+  use_ai_copy: "使用文案改写工具生成爆款文案",
+  use_ai_assist: "使用后台 AI 助手查询与执行管理操作",
 };
 
-export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
-  view_all_data: true,
-  edit_data: false,
-  export_data: true,
-  view_analytics: true,
-  manage_members: false,
-  manage_violations: false,
-  view_conversion_hub: false,
-  view_content_review: false,
-  manage_video_assets: false,
-  use_ai_copywriting: true,
-  use_ai_management: true,
-};
-
-export const DEFAULT_MEMBER_PERMISSIONS: Permissions = {
-  use_ai_copywriting: false,
-  use_ai_management: false,
+export const DEFAULT_PERMISSIONS_BY_ROLE: Record<UserRole, PermissionKey[]> = {
+  owner: [...PERMISSION_KEYS],
+  admin: [
+    "view_analytics",
+    "export_data",
+    "review_content",
+    "manage_fulfillment",
+    "manage_videos",
+    "use_ai_copy",
+    "use_ai_assist",
+  ],
+  member: [],
 };
 
 export interface Profile {
@@ -87,8 +80,8 @@ export interface Profile {
   exempt_reason: string | null;
   exemption_category: ExemptionCategory | null;
   permissions: Permissions;
+  data_scope?: DataScope | null;
   team_id?: string | null;
-  group_id?: string | null;
   created_at: string;
 }
 

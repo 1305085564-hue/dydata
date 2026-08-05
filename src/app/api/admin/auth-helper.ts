@@ -1,22 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
-import { getUserPermissions } from "@/lib/permissions";
-import { hasPermission } from "@/lib/permission-utils";
+import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
-import type { BusinessRole } from "@/lib/business-role";
-import type { PermissionKey, Permissions, UserRole } from "@/types";
+import type { DataScope, PermissionKey, Permissions, UserRole } from "@/types";
 
 export { toBoolean, toObject, toTrimmedString };
 
 export type AdminActor = {
   userId: string;
   role: UserRole;
-  businessRole: BusinessRole;
   permissions: Permissions;
   name: string | null;
-  accessLevel?: number | null;
+  dataScope: DataScope;
   teamId?: string | null;
-  groupId?: string | null;
-  ledGroupIds?: string[];
 };
 
 type RequireAdminActorOptions = {
@@ -34,22 +29,6 @@ export type RequireAdminActorSuccess = {
 
 export type RequireAdminActorResult = RequireAdminActorError | RequireAdminActorSuccess;
 
-function hasAnyAdminPermission(businessRole: BusinessRole, permissions: Permissions) {
-  if (businessRole === "owner" || businessRole === "team_admin" || businessRole === "group_leader") return true;
-  return (
-    hasPermission(businessRole, permissions, "view_all_data") ||
-    hasPermission(businessRole, permissions, "edit_data") ||
-    hasPermission(businessRole, permissions, "export_data") ||
-    hasPermission(businessRole, permissions, "view_analytics") ||
-    hasPermission(businessRole, permissions, "manage_members") ||
-    hasPermission(businessRole, permissions, "manage_violations") ||
-    hasPermission(businessRole, permissions, "view_conversion_hub") ||
-    hasPermission(businessRole, permissions, "view_content_review") ||
-    hasPermission(businessRole, permissions, "manage_video_assets") ||
-    hasPermission(businessRole, permissions, "use_ai_management")
-  );
-}
-
 export async function requireAdminActor(options: RequireAdminActorOptions = {}): Promise<RequireAdminActorResult> {
   const supabase = await createClient();
 
@@ -63,7 +42,7 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, name, role, permissions")
+    .select("id, name, role, permissions, data_scope, team_id")
     .eq("id", user.id)
     .single();
 
@@ -71,14 +50,11 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     return { error: "用户信息不存在", status: 403 as const };
   }
 
-  const permissionInfo = await getUserPermissions();
-  if (!permissionInfo) {
-    return { error: "用户信息不存在", status: 403 as const };
-  }
-
+  const role = profile.role as UserRole;
+  const permissions = (profile.permissions ?? {}) as Permissions;
   const allowed = options.requiredPermission
-    ? hasPermission(permissionInfo.businessRole, permissionInfo.permissions, options.requiredPermission)
-    : hasAnyAdminPermission(permissionInfo.businessRole, permissionInfo.permissions);
+    ? hasPermission(role, permissions, options.requiredPermission)
+    : hasAnyPermission(role, permissions);
 
   if (!allowed) {
     return { error: "无权限", status: 403 as const };
@@ -88,18 +64,14 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     supabase,
     actor: {
       userId: profile.id,
-      role: permissionInfo.role,
-      businessRole: permissionInfo.businessRole,
-      permissions: permissionInfo.permissions,
+      role,
+      permissions,
       name: profile.name ?? null,
-      accessLevel: permissionInfo.accessLevel,
-      teamId: permissionInfo.teamId,
-      groupId: permissionInfo.groupId,
-      ledGroupIds: permissionInfo.ledGroupIds,
-    } satisfies AdminActor,
+      dataScope: (profile.data_scope as DataScope | null | undefined) ?? "self",
+      teamId: profile.team_id ?? null,
+    },
   };
 }
-
 
 export function parseDate(value: string | null) {
   if (!value) return null;

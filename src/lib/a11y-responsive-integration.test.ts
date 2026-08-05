@@ -21,12 +21,6 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
   }
 });
 
-test("权限抽屉手机全宽且桌面固定为 480px", () => {
-  const source = readSource("src/app/(app)/admin/permission-manager.tsx");
-  assert.match(source, /w-full sm:w-\[480px\] sm:max-w-\[480px\]/);
-  assert.doesNotMatch(source, /sm:max-w-none/);
-});
-
 test("语义状态色分别提供浅色与暗色对比色", () => {
   const source = readSource("src/lib/tailwind-utils.ts");
   assert.match(source, /text-\[#6FAA7D\][^\n]*dark:text-\[#6FAA7D\]/);

@@ -92,7 +92,7 @@ export async function buildRewriteSkillsPostResponse(
   }
 
   const permissionInfo = await actualDeps.getUserPermissions();
-  const isOwner = permissionInfo?.businessRole === "owner" || permissionInfo?.role === "owner";
+  const isOwner = permissionInfo?.role === "owner";
   if (scope !== "private" && !isOwner) {
     return actualDeps.errorResponse("只有 owner 可以创建平台或公开 skill", 403);
   }

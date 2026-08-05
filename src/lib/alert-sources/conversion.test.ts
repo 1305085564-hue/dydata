@@ -7,7 +7,7 @@ function client(result: { data: unknown[] | null; error: { message: string } | n
   const query = { select: () => query, in: () => query, gte: () => query, lte: () => Promise.resolve(result) };
   return { from: () => query };
 }
-const scope = { actorUserId: "o1", businessRole: "owner", teamId: null, visibleUserIds: ["u1"] } as const;
+const scope = { actorUserId: "o1", role: "owner", teamId: null, visibleUserIds: ["u1"] } as const;
 
 test("近三日有发布但导粉为 0 生成成员告警", async () => {
   const now = new Date("2026-07-18T04:00:00.000Z");

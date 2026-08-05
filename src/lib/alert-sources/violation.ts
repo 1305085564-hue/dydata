@@ -26,7 +26,7 @@ export async function detectViolationAlerts({ supabase, scope, now = new Date() 
     .eq("purpose", "violation")
     .eq("status", "submitted");
 
-  if (scope.businessRole === "team_admin") {
+  if (scope.role === "admin") {
     if (!scope.teamId) return [];
     pendingCountQuery = pendingCountQuery.eq("team_id", scope.teamId);
   }
@@ -46,7 +46,7 @@ export async function detectViolationAlerts({ supabase, scope, now = new Date() 
     .gte("created_at", previousWeekStart.toISOString())
     .lte("created_at", now.toISOString());
 
-  if (scope.businessRole === "team_admin") {
+  if (scope.role === "admin") {
     if (!scope.teamId) return [];
     weeklyQuery = weeklyQuery.eq("team_id", scope.teamId);
   }

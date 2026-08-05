@@ -1,12 +1,11 @@
-import { hasPermission } from "@/lib/permission-utils";
-import type { BusinessRole } from "@/lib/business-role";
+import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
 import type { Permissions, UserRole } from "@/types";
 
 export type AnalyticsRangePreset = "7d" | "30d" | "month" | "custom";
 
 interface BuildAnalyticsAccessContextInput {
   userId: string;
-  role: UserRole | BusinessRole;
+  role: UserRole;
   permissions?: Permissions;
   teamId: string | null;
 }
@@ -49,98 +48,54 @@ function shiftDays(date: Date, days: number) {
   return next;
 }
 
-export function canAccessTeamManagement(role: UserRole | BusinessRole, permissions: Permissions = {}) {
-  if (role === "owner" || role === "admin" || role === "team_admin" || role === "group_leader") return true;
-  return (
-    hasPermission(role, permissions, "view_all_data") ||
-    hasPermission(role, permissions, "edit_data") ||
-    hasPermission(role, permissions, "export_data") ||
-    hasPermission(role, permissions, "view_analytics") ||
-    hasPermission(role, permissions, "manage_members") ||
-    hasPermission(role, permissions, "manage_violations") ||
-    hasPermission(role, permissions, "view_conversion_hub") ||
-    hasPermission(role, permissions, "view_content_review") ||
-    hasPermission(role, permissions, "manage_video_assets") ||
-    hasPermission(role, permissions, "use_ai_management")
-  );
+export function canAccessAdmin(role: UserRole, permissions: Permissions = {}) {
+  return hasAnyPermission(role, permissions);
 }
 
-export function canAccessSystemSettings(role: UserRole | BusinessRole, permissions: Permissions = {}) {
-  return role === "owner" || role === "team_admin" || hasPermission(role, permissions, "manage_members");
-}
+export function canAccessAdminPath(pathname: string, role: UserRole, permissions: Permissions = {}) {
+  if (role === "owner") return true;
 
-function canAccessMembersSettings(role: UserRole | BusinessRole, permissions: Permissions = {}) {
-  return role === "owner" || role === "team_admin" || hasPermission(role, permissions, "manage_members");
-}
-
-function canAccessAiSettings(role: UserRole | BusinessRole) {
-  return role === "owner";
-}
-
-function canAccessDailyManagementPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
-  if (!canAccessTeamManagement(role, permissions)) return false;
+  if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) {
+    return hasPermission(role, permissions, "manage_system");
+  }
+  if (pathname === "/admin/ai-config" || pathname.startsWith("/admin/ai-config/")) {
+    return hasPermission(role, permissions, "manage_system");
+  }
+  if (pathname === "/admin/modules" || pathname.startsWith("/admin/modules/")) {
+    return hasPermission(role, permissions, "manage_members");
+  }
+  if (pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/")) {
+    return hasPermission(role, permissions, "view_analytics");
+  }
+  if (pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/")) {
+    return hasPermission(role, permissions, "view_analytics");
+  }
   if (pathname === "/admin/content" || pathname.startsWith("/admin/content/")) {
-    return role === "owner" || hasPermission(role, permissions, "view_content_review") || hasPermission(role, permissions, "view_analytics");
+    return hasPermission(role, permissions, "review_content");
   }
   if (pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/")) {
-    return role === "owner" || role === "team_admin" || role === "group_leader"
-      || hasPermission(role, permissions, "view_analytics")
-      || hasPermission(role, permissions, "view_all_data");
+    return hasPermission(role, permissions, "manage_fulfillment");
   }
   if (pathname === "/admin/videos" || pathname.startsWith("/admin/videos/")) {
-    return role === "owner" || hasPermission(role, permissions, "manage_video_assets") || hasPermission(role, permissions, "view_analytics");
+    return hasPermission(role, permissions, "manage_videos");
   }
-  if (
-    pathname === "/admin/analytics" ||
-    pathname.startsWith("/admin/analytics/")
-  ) {
-    return role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data");
-  }
-  if (
-    pathname === "/admin/collaboration" ||
-    pathname.startsWith("/admin/collaboration/")
-  ) {
-    return (
-      role === "owner" ||
-      hasPermission(role, permissions, "view_analytics") ||
-      hasPermission(role, permissions, "view_all_data")
-    );
-  }
-  return pathname === "/admin";
+
+  return pathname === "/admin" ? hasAnyPermission(role, permissions) : false;
 }
 
 export function buildAnalyticsAccessContext({ userId, role, permissions = {}, teamId }: BuildAnalyticsAccessContextInput): AnalyticsAccessContext {
-  const effectiveTeamId = teamId ?? null;
-  const canViewAllMembers = role === "admin" || role === "team_admin" || hasPermission(role, permissions, "view_all_data");
-
   return {
     userId,
-    role: role === "team_admin" || role === "group_leader" ? "admin" : role,
-    effectiveTeamId,
-    canViewAllMembers,
+    role,
+    effectiveTeamId: teamId ?? null,
+    canViewAllMembers: role === "owner" || hasPermission(role, permissions, "manage_members"),
   };
 }
 
-export function canAccessAdminPath(pathname: string, role: UserRole | BusinessRole, permissions: Permissions = {}) {
-  if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) {
-    return canAccessSystemSettings(role, permissions);
-  }
-  if (pathname === "/admin/modules" || pathname.startsWith("/admin/modules/")) {
-    return canAccessMembersSettings(role, permissions);
-  }
-  if (
-    pathname === "/admin/ai-config" ||
-    pathname.startsWith("/admin/ai-config/")
-  ) {
-    return canAccessAiSettings(role);
-  }
-  return canAccessDailyManagementPath(pathname, role, permissions);
-}
-
-export function getNavigationAccess(role: UserRole | BusinessRole, permissions: Permissions = {}): NavigationAccess {
+export function getNavigationAccess(role: UserRole, permissions: Permissions = {}): NavigationAccess {
   return {
-    showAnalytics: role === "admin" || role === "owner" || hasPermission(role, permissions, "view_analytics") || hasPermission(role, permissions, "view_all_data"),
-    showAdmin: canAccessTeamManagement(role, permissions),
+    showAnalytics: role === "owner" || hasPermission(role, permissions, "view_analytics"),
+    showAdmin: canAccessAdmin(role, permissions),
   };
 }
 

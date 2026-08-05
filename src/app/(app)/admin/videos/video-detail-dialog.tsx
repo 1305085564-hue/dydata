@@ -148,8 +148,8 @@ export function VideoDetailDialog({
   const [isOperating, setIsOperating] = useState(false);
   const [showConfirmPurge, setShowConfirmPurge] = useState(false);
 
-  const canOperate = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
-  const isOwner = permissionInfo.businessRole === "owner";
+  const canOperate = permissionInfo.role === "owner" || permissionInfo.role === "admin";
+  const isOwner = permissionInfo.role === "owner";
 
   const handleLifecycleAction = async (action: "trash" | "restore" | "purge") => {
     if (!video) return;

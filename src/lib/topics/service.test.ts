@@ -194,7 +194,6 @@ function createScope(kind: DataAccessScope["kind"] = "all", visibleUserIds = ["u
   return {
     userId: "user-1",
     role: kind === "all" ? "owner" : "member",
-    businessRole: kind === "all" ? "owner" : "member",
     permissions: {},
     accessLevel: kind === "all" ? 4 : 1,
     teamId: null,
@@ -546,7 +545,6 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
     {
       userId: "user-1",
       role: "owner",
-      businessRole: "owner",
       permissions: {},
       accessLevel: 4,
       teamId: null,

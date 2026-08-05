@@ -25,7 +25,6 @@ test("sample-quality-check 返回结构化问题并同步写入告警数据源",
       buildDataAccessScope: async () => ({
         userId: "member-1",
         role: "member",
-        businessRole: "member",
         permissions: {},
         accessLevel: 1,
         teamId: null,

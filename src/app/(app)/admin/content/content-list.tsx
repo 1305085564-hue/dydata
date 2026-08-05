@@ -345,7 +345,7 @@ export function ContentList({
       });
   }, []);
 
-  const canManageLifecycle = permissionInfo.businessRole === "owner" || permissionInfo.businessRole === "team_admin";
+  const canManageLifecycle = permissionInfo.role === "owner" || permissionInfo.role === "admin";
 
   const snapshotMap = useMemo(() => {
     const map = new Map<string, VideoMetricsSnapshot>();
@@ -820,7 +820,7 @@ export function ContentList({
             style={{ maxHeight: "calc(100vh - 280px)" }}
           >
             <Table>
-              <TableHeader className="sticky top-0 z-10">
+              <TableHeader className="z-10">
                 <TableRow className="border-b border-zinc-200 bg-zinc-100/50 hover:bg-zinc-100/50">
                   {canManageLifecycle && (
                     <TableHead className="h-9 w-10 pl-4 pr-0">
@@ -1280,7 +1280,7 @@ export function ContentList({
                                 );
                               })()}
 
-                              {(permissionInfo?.businessRole === "owner" || permissionInfo?.businessRole === "team_admin") &&
+                              {(permissionInfo?.role === "owner" || permissionInfo?.role === "admin") &&
                                 getShanghaiDateString(new Date(video.published_at ?? video.uploaded_at ?? video.created_at)) >= "2026-07-27" && (
                                   <AttributionEditDialog video={video} onSuccess={onRefresh} />
                                 )}

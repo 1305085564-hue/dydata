@@ -384,11 +384,8 @@ export async function loadAdminContentPageData({
             id: permissionInfo.userId,
             role: permissionInfo.role,
             permissions: permissionInfo.permissions,
-            access_level: permissionInfo.accessLevel,
+            data_scope: permissionInfo.dataScope,
             team_id: permissionInfo.teamId,
-            group_id: permissionInfo.groupId,
-            led_group_ids: permissionInfo.ledGroupIds,
-            business_role: permissionInfo.businessRole,
           },
         })
       : null);

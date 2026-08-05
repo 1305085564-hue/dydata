@@ -26,7 +26,7 @@ export default async function ViolationDetailPage({ params }: { params: Promise<
   const canManageViolations =
     isOwner ||
     (permInfo
-      ? hasPermission(permInfo.businessRole, permInfo.permissions, "manage_violations")
+      ? hasPermission(permInfo.role, permInfo.permissions, "review_violations")
       : false);
 
   const { id } = await params;

@@ -39,7 +39,7 @@ export async function buildAnalyticsPanelResponse(
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  if (!canAccessAdminPath("/admin/analytics", auth.actor.businessRole, auth.actor.permissions)) {
+  if (!canAccessAdminPath("/admin/analytics", auth.actor.role, auth.actor.permissions)) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 

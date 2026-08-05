@@ -13,7 +13,6 @@ test("批改台首屏取数固定走管理员客户端", async () => {
   const permissionScope = {
     userId: "user-1",
     role: "owner",
-    businessRole: "owner",
     permissions: {},
     accessLevel: 4,
     teamId: "team-1",
@@ -74,7 +73,6 @@ test("素材库首屏取数固定走管理员客户端", async () => {
   const permissionScope = {
     userId: "user-1",
     role: "owner",
-    businessRole: "owner",
     permissions: {},
     accessLevel: 4,
     teamId: null,
@@ -217,7 +215,6 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       scope: {
         userId: "owner-1",
         role: "owner",
-        businessRole: "owner",
         permissions: {},
         accessLevel: 4,
         teamId: null,

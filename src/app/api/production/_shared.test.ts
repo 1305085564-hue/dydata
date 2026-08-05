@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   UUID_PATTERN,
   escapeCsvCell,
-  isProductionManagerBusinessRole,
+  isProductionManagerRole,
   isValidDate,
   parseLimit,
   requireVisibleProductionUser,
@@ -44,23 +44,23 @@ test("parseLimit clamps list sizes", () => {
 
 test("全局产量配置只允许 owner 和 team_admin", () => {
   const groupLeaderResponse = requireGlobalProductionActor({
-    actor: { role: "admin", businessRole: "group_leader" },
+    actor: { role: "admin" },
   } as never);
   assert.equal(groupLeaderResponse?.status, 403);
 
   assert.equal(requireGlobalProductionActor({
-    actor: { role: "admin", businessRole: "team_admin" },
+    actor: { role: "admin" },
   } as never), null);
   assert.equal(requireGlobalProductionActor({
-    actor: { role: "owner", businessRole: "owner" },
+    actor: { role: "owner" },
   } as never), null);
 });
 
 test("产量管理入口按业务角色放行，不看原始 admin 字段", () => {
-  assert.equal(isProductionManagerBusinessRole("owner"), true);
-  assert.equal(isProductionManagerBusinessRole("team_admin"), true);
-  assert.equal(isProductionManagerBusinessRole("group_leader"), true);
-  assert.equal(isProductionManagerBusinessRole("member"), false);
+  assert.equal(isProductionManagerRole("owner", {}), true);
+  assert.equal(isProductionManagerRole("admin", { manage_fulfillment: true }), true);
+  assert.equal(isProductionManagerRole("admin", {}), false);
+  assert.equal(isProductionManagerRole("member", {}), false);
 });
 
 test("产量管理写操作不能跨越当前可见成员范围", () => {

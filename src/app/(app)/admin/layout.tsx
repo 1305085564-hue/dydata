@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!permissionInfo) redirect("/login");
   const headersList = await headers();
   const pathname = headersList.get("x-next-pathname") ?? headersList.get("x-invoke-path") ?? "/admin";
-  const hasAccess = canAccessAdminPath(pathname, permissionInfo.businessRole, permissionInfo.permissions);
+  const hasAccess = canAccessAdminPath(pathname, permissionInfo.role, permissionInfo.permissions);
 
   if (!hasAccess) {
     const title = MODULE_TITLES[pathname] || "管理后台";

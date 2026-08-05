@@ -6,7 +6,7 @@ export async function requireAdminModulesAccess() {
   if (!context) return { ok: false as const, status: 401, error: "未登录" };
 
   const { permissionInfo, scope } = context;
-  if (!canAccessAdminPath("/admin/modules", permissionInfo.businessRole, permissionInfo.permissions)) {
+  if (!canAccessAdminPath("/admin/modules", permissionInfo.role, permissionInfo.permissions)) {
     return { ok: false as const, status: 403, error: "无权限" };
   }
 

@@ -13,7 +13,6 @@ function buildOwnerAuth() {
     actor: {
       userId: "owner-1",
       role: "owner" as const,
-      businessRole: "owner" as const,
       permissions: {
         view_analytics: true,
         view_all_data: true,
@@ -21,6 +20,7 @@ function buildOwnerAuth() {
         manage_members: true,
       },
       name: "阿禅",
+      dataScope: "all" as const,
     },
   };
 }
@@ -63,11 +63,8 @@ function buildDeps(options?: {
   const scope: DataAccessScope = {
     userId: "owner-1",
     role: "owner",
-    businessRole: "owner",
     permissions: { view_analytics: true, view_all_data: true, edit_data: true, manage_members: true },
-    accessLevel: 4,
     teamId: null,
-    groupId: null,
     kind: "all",
     visibleUserIds: ["user-1"],
   };

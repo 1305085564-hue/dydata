@@ -112,15 +112,12 @@ export async function loadAdminVideosPageData({
             id: permissionInfo.userId,
             role: permissionInfo.role,
             permissions: permissionInfo.permissions,
-            access_level: permissionInfo.accessLevel,
+            data_scope: permissionInfo.dataScope,
             team_id: permissionInfo.teamId,
-            group_id: permissionInfo.groupId,
-            led_group_ids: permissionInfo.ledGroupIds,
-            business_role: permissionInfo.businessRole,
           },
         })
       : null);
-  if (view === "trash" && (!resolvedScope || !["owner", "team_admin"].includes(resolvedScope.businessRole))) {
+  if (view === "trash" && (!resolvedScope || (resolvedScope.role !== "owner" && resolvedScope.role !== "admin"))) {
     return emptyAdminVideosPageData(mode);
   }
 

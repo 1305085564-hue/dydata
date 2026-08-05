@@ -33,9 +33,9 @@ test("member-ai-suggestion 返回结构化建议", async () => {
         actor: {
           userId: "owner-1",
           role: "owner",
-          businessRole: "owner",
           permissions: { use_ai_management: true, view_all_data: true },
           name: "阿禅",
+          dataScope: "all" as const,
         },
       }),
       createAdminClient: () =>
@@ -48,7 +48,6 @@ test("member-ai-suggestion 返回结构化建议", async () => {
       buildDataAccessScope: async () => ({
         userId: "owner-1",
         role: "owner",
-        businessRole: "owner",
         permissions: { use_ai_management: true, view_all_data: true },
         accessLevel: 4,
         teamId: null,

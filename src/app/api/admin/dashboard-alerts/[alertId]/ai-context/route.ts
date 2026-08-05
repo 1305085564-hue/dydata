@@ -46,17 +46,17 @@ function formatEntities(alert: Alert) {
 }
 
 function toDashboardScope(rawScope: Awaited<ReturnType<typeof buildDataAccessScope>>): DashboardAlertScope | null {
-  if (!rawScope || (rawScope.businessRole !== "owner" && rawScope.businessRole !== "team_admin")) {
+  if (!rawScope || (rawScope.role !== "owner" && rawScope.role !== "admin")) {
     return null;
   }
 
-  if (rawScope.businessRole === "team_admin" && !rawScope.teamId) {
+  if (rawScope.role === "admin" && !rawScope.teamId) {
     return null;
   }
 
   return {
     actorUserId: rawScope.userId,
-    businessRole: rawScope.businessRole,
+    role: rawScope.role,
     teamId: rawScope.teamId,
     visibleUserIds: rawScope.visibleUserIds,
     activeVisibleUserIds: rawScope.activeVisibleUserIds ?? rawScope.visibleUserIds,

@@ -1,11 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import {
-  normalizePermissionsForBusinessRole,
-  resolveBusinessRole,
-  type BusinessGroup,
-  type BusinessRole,
-} from "@/lib/business-role";
 import { hasPermission } from "@/lib/permission-utils";
 import type { Permissions, UserRole } from "@/types";
 
@@ -56,10 +50,8 @@ export function pickUsageRecordFields(row: unknown) {
 type ProfileRow = {
   id: string;
   role: UserRole;
-  businessRole: BusinessRole;
   permissions: Permissions;
   team_id: string | null;
-  group_id: string | null;
 };
 
 function toServerError(message: string): ConversionHubResult<never> {
@@ -67,13 +59,13 @@ function toServerError(message: string): ConversionHubResult<never> {
 }
 
 function hasViolationPermission(profile: ProfileRow) {
-  return hasPermission(profile.businessRole, profile.permissions, "manage_violations");
+  return hasPermission(profile.role, profile.permissions, "review_violations");
 }
 
 async function getProfile(supabase: SupabaseClient, userId: string): Promise<ConversionHubResult<ProfileRow>> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, role, permissions, team_id, group_id")
+    .select("id, role, permissions, team_id")
     .eq("id", userId)
     .single();
 
@@ -82,31 +74,15 @@ async function getProfile(supabase: SupabaseClient, userId: string): Promise<Con
   }
 
   const role = data.role as UserRole;
-  const rawPermissions = (data.permissions ?? {}) as Permissions;
-  const { data: ledGroups } = await supabase
-    .from("groups")
-    .select("id, team_id, leader_user_id")
-    .eq("leader_user_id", userId);
-  const businessRole = resolveBusinessRole(
-    {
-      id: data.id as string,
-      role,
-      permissions: rawPermissions,
-      team_id: (data.team_id ?? null) as string | null,
-      group_id: (data.group_id ?? null) as string | null,
-    },
-    (ledGroups ?? []) as BusinessGroup[],
-  );
+  const permissions = (data.permissions ?? {}) as Permissions;
 
   return {
     ok: true,
     data: {
       id: data.id as string,
       role,
-      businessRole,
-      permissions: normalizePermissionsForBusinessRole(businessRole, rawPermissions),
+      permissions,
       team_id: (data.team_id ?? null) as string | null,
-      group_id: (data.group_id ?? null) as string | null,
     },
   };
 }

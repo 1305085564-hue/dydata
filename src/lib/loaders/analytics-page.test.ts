@@ -35,7 +35,6 @@ test("经营分析 RPC 与回退查询都失败时抛错，不返回零报表", 
   const scope = {
     userId: "user-1",
     role: "owner",
-    businessRole: "owner",
     permissions: {},
     accessLevel: 4,
     teamId: null,

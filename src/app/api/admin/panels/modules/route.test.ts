@@ -18,7 +18,7 @@ test("admin panels modules 只返回当前管理范围内的成员与团队", as
       loadModules: async () => ({
         currentUserId: "admin-1",
         queryDate: "2026-07-18",
-        perm: { role: "admin", businessRole: "team_admin", permissions: { manage_members: true } },
+        perm: { role: "admin", permissions: { manage_members: true } },
         permissionManagerCapabilities: {
           canEditPermissions: true,
           canChangeRole: true,
@@ -33,7 +33,7 @@ test("admin panels modules 只返回当前管理范围内的成员与团队", as
           { id: "team-2", name: "二团" },
         ],
         teamManagement: {
-          access: { level: "team_admin", canView: true, canEditGroups: true, teamIds: ["team-1"], groupIds: null },
+          access: { level: "admin", canView: true, canEditGroups: true, teamIds: ["team-1"], groupIds: null },
           teams: [
             { id: "team-1", name: "一团" },
             { id: "team-2", name: "二团" },

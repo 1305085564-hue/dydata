@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { hasPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { BusinessRole } from "@/lib/business-role";
 
 export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -50,7 +50,7 @@ export async function requireOwnerOrAdminActor() {
     return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
   }
 
-  if (!isProductionManagerBusinessRole(auth.actor.businessRole)) {
+  if (!isProductionManagerRole(auth.actor.role, auth.actor.permissions)) {
     return { response: NextResponse.json({ error: "无权限" }, { status: 403 }) };
   }
 
@@ -66,15 +66,15 @@ export async function requireOwnerOrAdminActor() {
   };
 }
 
-export function isProductionManagerBusinessRole(businessRole: BusinessRole) {
-  return businessRole === "owner" || businessRole === "team_admin" || businessRole === "group_leader";
+export function isProductionManagerRole(role: string, permissions: Record<string, boolean | undefined>) {
+  return role === "owner" || hasPermission(role as never, permissions as never, "manage_fulfillment");
 }
 
 export function requireGlobalProductionActor(
   auth: Awaited<ReturnType<typeof requireOwnerOrAdminActor>>,
 ) {
   if ("response" in auth) return auth.response;
-  if (auth.actor.businessRole !== "owner" && auth.actor.businessRole !== "team_admin") {
+  if (auth.actor.role !== "owner" && !hasPermission(auth.actor.role, auth.actor.permissions, "manage_fulfillment")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;

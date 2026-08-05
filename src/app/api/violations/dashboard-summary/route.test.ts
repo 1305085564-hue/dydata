@@ -170,7 +170,7 @@ test("dashboard summary 返回 conversionTop3", async () => {
         ],
       }),
     getUserProfile: async () => ({
-      businessRole: "owner",
+      role: "owner",
       permissions: { manage_violations: true, view_conversion_hub: true },
     }),
   });
@@ -206,7 +206,7 @@ test("dashboard summary 拒绝没有违规和转化查看权限的普通成员",
     getAuthenticatedContext: async () => ({ user: { id: "member-1" } }),
     createAdminClient: () => createDashboardSummarySupabase({}),
     getUserProfile: async () => ({
-      businessRole: "member",
+      role: "member",
       permissions: {
         manage_violations: false,
         view_conversion_hub: false,
@@ -225,7 +225,7 @@ test("dashboard summary 允许具备转化中心查看权限的用户", async ()
       violation_cases: [],
     }),
     getUserProfile: async () => ({
-      businessRole: "member",
+      role: "member",
       permissions: {
         manage_violations: false,
         view_conversion_hub: true,

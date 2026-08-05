@@ -27,17 +27,17 @@ function firstAccount(value: LifecycleVideoRow["accounts"]) {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-export function canOperateVideoLifecycle(actor: Pick<AdminActor, "businessRole">, action: VideoLifecycleAction) {
-  if (actor.businessRole === "owner") return true;
-  return action !== "purge" && actor.businessRole === "team_admin";
+export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role">, action: VideoLifecycleAction) {
+  if (actor.role === "owner") return true;
+  return action !== "purge" && actor.role === "admin";
 }
 
 export function canOperateVideoWithinScope(
-  actor: Pick<AdminActor, "businessRole">,
+  actor: Pick<AdminActor, "role">,
   scope: Pick<DataAccessScope, "visibleUserIds">,
   ownerUserId: string,
 ) {
-  return actor.businessRole === "owner" || scope.visibleUserIds.includes(ownerUserId);
+  return actor.role === "owner" || scope.visibleUserIds.includes(ownerUserId);
 }
 
 export function isPurgeEligible(trashedAt: string | null, now = new Date()) {

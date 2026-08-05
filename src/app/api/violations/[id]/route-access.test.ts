@@ -13,7 +13,7 @@ test("详情读取先判私有案例权限，不能直接把 admin client 作为
   assert.doesNotMatch(source, /fallbackDetailClient:\s*createAdminClient\(\)/);
 });
 
-function makeDeps(profile: { businessRole: "member" | "owner"; permissions: Record<string, boolean> }, status: string) {
+function makeDeps(profile: { role: "member" | "owner"; permissions: Record<string, boolean> }, status: string) {
   return {
     getAuthenticatedContext: async () => ({ supabase: {} as never, user: { id: "user-1" } }),
     getUserProfile: async () => profile,
@@ -28,14 +28,14 @@ test("普通 member 不能读取未审核详情，管理员可以读取", async 
   const memberResponse = await buildViolationDetailResponse(
     request,
     context,
-    makeDeps({ businessRole: "member", permissions: {} }, "submitted"),
+    makeDeps({ role: "member", permissions: {} }, "submitted"),
   );
   assert.equal(memberResponse.status, 404);
 
   const adminResponse = await buildViolationDetailResponse(
     request,
     context,
-    makeDeps({ businessRole: "owner", permissions: {} }, "submitted"),
+    makeDeps({ role: "owner", permissions: {} }, "submitted"),
   );
   assert.equal(adminResponse.status, 200);
 });

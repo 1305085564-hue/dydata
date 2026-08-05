@@ -35,9 +35,9 @@ type RawQuotaRule = Omit<QuotaRule, "profiles"> & {
 export default async function AdminSettingsPage() {
   const permission = await getUserPermissions();
   if (!permission) redirect("/login");
-  if (!canAccessAdminPath("/admin/settings", permission.businessRole, permission.permissions)) redirect("/admin");
-  const isOwner = permission.businessRole === "owner" || permission.role === "owner";
-  const canManageThresholds = isOwner || permission.businessRole === "team_admin";
+  if (!canAccessAdminPath("/admin/settings", permission.role, permission.permissions)) redirect("/admin");
+  const isOwner = permission.role === "owner" || permission.permissions.manage_system === true;
+  const canManageThresholds = isOwner || permission.role === "admin";
 
   const supabase = await createClient();
   const today = getShanghaiDate();

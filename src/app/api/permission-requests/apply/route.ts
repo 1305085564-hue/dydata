@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { resolveBusinessRole } from "@/lib/business-role";
 import { emit } from "@/lib/notifications/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -84,14 +83,10 @@ export async function buildPermissionRequestApplyResponse(
   const recipients = ((adminProfiles ?? []) as AdminCandidateRow[])
     .filter((profile) => {
       if (profile.id === user.id) return false;
-      const businessRole = resolveBusinessRole({
-        id: profile.id,
-        role: profile.role,
-        permissions: profile.permissions,
-        team_id: profile.team_id,
-      });
-      if (businessRole === "owner") return true;
-      return businessRole === "team_admin" && profile.team_id === requesterProfile.team_id;
+      if (profile.role === "owner") return true;
+      return profile.role === "admin"
+        && profile.team_id === requesterProfile.team_id
+        && profile.permissions?.manage_members === true;
     })
     .map((profile) => profile.id);
 

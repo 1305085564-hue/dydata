@@ -40,21 +40,15 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
     userId: "owner-1",
     name: "阿禅",
     role: "owner" as const,
-    businessRole: "owner" as const,
     permissions: { manage_video_assets: true },
-    accessLevel: 4,
+    dataScope: "all" as const,
     teamId: null,
-    groupId: null,
-    ledGroupIds: [],
   };
   const scope = {
     userId: "owner-1",
     role: "owner" as const,
-    businessRole: "owner" as const,
     permissions: { manage_video_assets: true },
-    accessLevel: 4 as const,
     teamId: null,
-    groupId: null,
     kind: "all" as const,
     visibleUserIds: ["user-1", "user-2"],
   };
@@ -68,13 +62,9 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
         actor: {
           userId: "owner-1",
           role: "owner" as const,
-          businessRole: "owner" as const,
           permissions: { manage_video_assets: true },
           name: "阿禅",
-          accessLevel: 4,
-          teamId: null,
-          groupId: null,
-          ledGroupIds: [],
+          dataScope: "all" as const,
         },
       }),
       getTeamOptions: async () => [],
@@ -117,13 +107,13 @@ test("trash 仅允许 owner/team_admin，并把 trash 传给加载器", async ()
   };
   const denied = await buildAdminVideosListResponse(buildRequest("https://dydata.cc/api/admin/videos/list?view=trash"), {
     ...base,
-    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "admin", businessRole: "group_leader", permissions: {}, name: null } }),
+    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "admin", permissions: {}, name: null } }),
   } as never);
   assert.equal(denied.status, 403);
 
   const allowed = await buildAdminVideosListResponse(buildRequest("https://dydata.cc/api/admin/videos/list?view=trash"), {
     ...base,
-    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "owner", businessRole: "owner", permissions: {}, name: null } }),
+    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "owner", permissions: {}, name: null } }),
   } as never);
   assert.equal(allowed.status, 200);
   assert.equal(receivedView, "trash");

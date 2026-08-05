@@ -41,7 +41,6 @@ function scopeAdminModulesData(data: AdminModulesData, access: Extract<ModulesAc
     teamManagement: {
       ...data.teamManagement,
       teams: data.teamManagement.teams.filter((team) => visibleTeamIds.has(team.id)),
-      groups: data.teamManagement.groups.filter((group) => Boolean(group.team_id && visibleTeamIds.has(group.team_id))),
       profiles: teamManagementProfiles,
       leaderCandidates,
     },

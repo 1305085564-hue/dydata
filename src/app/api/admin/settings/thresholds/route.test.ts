@@ -85,7 +85,7 @@ test("阈值 PATCH 写配置并记录审计", async () => {
             },
           }),
         },
-        actor: { userId: "owner-1", businessRole: "owner", role: "owner" },
+        actor: { userId: "owner-1", role: "owner" },
       }) as never,
       requireOwnerOrTeamAdminRole: (() => null) as never,
     },
@@ -110,7 +110,7 @@ test("阈值 PATCH 拒绝 group_leader 等非 owner/team_admin 角色", async ()
       createClient: (() => Promise.resolve({})) as never,
       requireAdminServiceClient: async () => ({
         supabase: {} as never,
-        actor: { userId: "leader-1", businessRole: "group_leader", role: "admin" },
+        actor: { userId: "leader-1", role: "admin" },
       }) as never,
       requireOwnerOrTeamAdminRole: () => NextResponse.json({ error: "无权限" }, { status: 403 }),
     },

@@ -60,18 +60,18 @@ export async function buildAdminVideosListResponse(
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  if (!canAccessAdminPath("/admin/videos", auth.actor.businessRole, auth.actor.permissions)) {
+  if (!canAccessAdminPath("/admin/videos", auth.actor.role, auth.actor.permissions)) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
-  if (view === "trash" && auth.actor.businessRole !== "owner" && auth.actor.businessRole !== "team_admin") {
+  if (view === "trash" && auth.actor.role !== "owner" && auth.actor.role !== "admin") {
     return NextResponse.json({ error: "无回收站查看权限" }, { status: 403 });
   }
 
-  const teams = auth.actor.businessRole === "owner" ? await deps.getTeamOptions() : [];
+  const teams = auth.actor.role === "owner" ? await deps.getTeamOptions() : [];
   const scope = resolveAdminDataPerspective({
     requestedPerspective: request.nextUrl.searchParams.get("scope"),
     requestedTeamId: request.nextUrl.searchParams.get("teamId"),
-    canUseCompanyPerspective: auth.actor.businessRole === "owner",
+    canUseCompanyPerspective: auth.actor.role === "owner",
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: auth.actor.teamId ?? null,
   });
