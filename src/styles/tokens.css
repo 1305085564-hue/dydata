@@ -33,7 +33,7 @@
   --sidebar-accent-foreground: #3F3F46;
   --sidebar-border: #E4E4E7;
   --sidebar-ring: rgba(24, 24, 27, 0.1);
-  --app-nav-height: 3.5rem;
+  --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
   --radius-card: 6px;

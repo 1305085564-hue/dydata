@@ -160,7 +160,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   // 1. 新人空数据状态（全历史也没有日报）
   if (contract.emptyState?.isEmpty) {
     return (
-      <AppShell width="wide" className="pb-12 pt-8">
+      <AppShell width="wide" className="pb-12">
         <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white p-8 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-50 border border-zinc-200 text-zinc-500 mb-5">
             <Sparkles className="h-8 w-8 text-[#D97757]" />

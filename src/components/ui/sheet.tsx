@@ -11,11 +11,11 @@ type SheetSide = "right" | "left" | "top" | "bottom"
 
 const sideClasses: Record<SheetSide, string> = {
   right:
-    "inset-y-0 right-0 h-full border-l data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right",
+    "top-[var(--app-top-offset,64px)] bottom-0 right-0 h-[calc(100dvh-var(--app-top-offset,64px))] border-l data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right",
   left:
-    "inset-y-0 left-0 h-full border-r data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left",
+    "top-[var(--app-top-offset,64px)] bottom-0 left-0 h-[calc(100dvh-var(--app-top-offset,64px))] border-r data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left",
   top:
-    "inset-x-0 top-0 w-full border-b data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
+    "top-[var(--app-top-offset,64px)] inset-x-0 w-full border-b data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
   bottom:
     "inset-x-0 bottom-0 w-full border-t data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
 }
@@ -41,7 +41,7 @@ function SheetOverlay({ className, ...props }: DialogPrimitive.Backdrop.Props) {
     <DialogPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-zinc-950/20 duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed top-[var(--app-top-offset,64px)] bottom-0 inset-x-0 isolate z-40 bg-zinc-950/20 duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className,
       )}
       {...props}

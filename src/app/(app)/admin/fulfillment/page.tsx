@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
 import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
@@ -59,7 +60,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
   return (
     <AdminWorkspaceLayout indexItems={[]} width="wide">
-      <div className="pt-3 sm:pt-5 space-y-4">
+      <div className="space-y-4">
         <div>
           <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900">发布管理</h1>
         </div>
@@ -67,7 +68,7 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
           <FulfillmentDataContainer
             year={year}
             month={month}
-            visibleUserIds={scope.visibleUserIds}
+            visibleUserIds={getActiveVisibleUserIds(scope)}
             currentUserId={permissionInfo.userId}
             range={range}
           />

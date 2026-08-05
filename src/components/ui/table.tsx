@@ -35,64 +35,74 @@ function Table({ className, freezeFirst, ...props }: TableProps) {
   )
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return (
-    <thead
-      data-slot="table-header"
-      className={cn("sticky top-0 z-10 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90", className)}
-      {...props}
-    />
-  )
-}
+const TableHeader = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref) => (
+  <thead
+    ref={ref}
+    className={cn("sticky top-[var(--app-top-offset,64px)] z-10 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90", className)}
+    {...props}
+  />
+));
+TableHeader.displayName = "TableHeader";
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
-  return (
-    <tbody
-      data-slot="table-body"
-      className={cn("[&_tr:nth-child(even)]:bg-zinc-50/50", className)}
-      {...props}
-    />
-  )
-}
+const TableBody = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref) => (
+  <tbody
+    ref={ref}
+    className={cn("[&_tr:last-child]:border-0", className)}
+    {...props}
+  />
+));
+TableBody.displayName = "TableBody";
 
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
-  return (
-    <tfoot
-      data-slot="table-footer"
-      className={cn(
-        "bg-zinc-50 font-medium text-zinc-700",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+const TableFooter = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ className, ...props }, ref) => (
+  <tfoot
+    ref={ref}
+    className={cn(
+      "border-t bg-zinc-100/50 font-medium [&>tr]:last:border-b-0 dark:bg-zinc-800/50",
+      className
+    )}
+    {...props}
+  />
+));
+TableFooter.displayName = "TableFooter";
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
-  return (
-    <tr
-      data-slot="table-row"
-      className={cn(
-        "transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 data-[state=selected]:bg-zinc-50",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+const TableRow = React.forwardRef<
+  HTMLTableRowElement,
+  React.HTMLAttributes<HTMLTableRowElement>
+>(({ className, ...props }, ref) => (
+  <tr
+    ref={ref}
+    className={cn(
+      "border-b transition-colors hover:bg-zinc-100/50 data-[state=selected]:bg-zinc-100 dark:hover:bg-zinc-800/50 dark:data-[state=selected]:bg-zinc-800",
+      className
+    )}
+    {...props}
+  />
+));
+TableRow.displayName = "TableRow";
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
-  return (
-    <th
-      data-slot="table-head"
-      className={cn(
-        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-zinc-500 [&:has([role=checkbox])]:pr-0 sticky top-0 z-10 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+const TableHead = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement>
+>(({ className, ...props }, ref) => (
+  <th
+    ref={ref}
+    className={cn(
+      "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-zinc-500 [&:has([role=checkbox])]:pr-0 sticky top-[var(--app-top-offset,64px)] z-10 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90",
+      className
+    )}
+    {...props}
+  />
+));
+TableHead.displayName = "TableHead";
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (

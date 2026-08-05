@@ -573,7 +573,7 @@ export function NavBarClient({
         <div
           id="mobile-navigation-menu"
           className={cn(
-            "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset,60px)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-xl flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset,60px))] overflow-y-auto duration-200",
+            "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset,64px)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-xl flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset,64px))] overflow-y-auto duration-200",
             "border-zinc-200 backdrop-blur-xl"
           )}
         >

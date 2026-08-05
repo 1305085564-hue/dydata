@@ -207,12 +207,12 @@ export function TopicWorkBreakdownDrawer({
         onClick={handleClose}
         aria-hidden="true"
       />
-      {/* 抽屉面板：z-[80] 并通过 top-[var(--app-top-offset,57px)] 完美避开顶栏导航遮挡 */}
+      {/* 抽屉面板：z-[80] 并通过 top-[var(--app-top-offset,64px)] 完美避开顶栏导航遮挡 */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,57px)] bottom-0 right-0 z-[80] w-full max-w-xl bg-white/95 backdrop-blur-xl border-l border-zinc-200 shadow-2xl p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] w-full max-w-xl bg-white/95 backdrop-blur-xl border-l border-zinc-200 shadow-2xl p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
       >
         <div>
           <div className="flex items-start justify-between pb-4 border-b border-zinc-100 mb-4 pt-1">

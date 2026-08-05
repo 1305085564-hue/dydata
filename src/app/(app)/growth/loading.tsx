@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function GrowthLoading() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 pb-16 pt-8">
+    <div className="mx-auto w-full max-w-7xl space-y-6 pb-16">
       {/* 顶部标题栏与阶段标识 */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 pb-5">
         <div className="space-y-2">

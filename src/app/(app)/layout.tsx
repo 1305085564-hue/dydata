@@ -45,7 +45,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <JoinBanner />
         </Suspense>
-        <main className="app-main w-full min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+0.25rem)] sm:px-6">
+        <main className="app-main w-full min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+0.75rem)] sm:px-6">
           {children}
         </main>
         <FeedbackNotificationBridge />
