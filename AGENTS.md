@@ -46,7 +46,7 @@
 - 禁止伪接和伪造：没有真实接口就提示未接入，数据加载失败就明确失败或降级为空，禁止接到不相干接口或用假数据假装成功。
 - 用户动作必须闭环：提交/审批/导出后，后续处理入口必须真实存在且可用，不能只靠提示信息就认为完成。
 - 高风险链路（权限、登录、RLS、Auth 封禁）首次改动前，先 grep 调用点列出受影响文件清单，清单列完即动手。
-- 交付报告必须分层：最终报告必须分清“完整修复”“止血未完整”“预存问题”“新增问题”，禁止把临时方案说成完整完成。
+- 交付报告必须分层：最终报告必须分清"完整修复""止血未完整""预存问题""新增问题"，禁止把临时方案说成完整完成。
 
 ### 架构与性能
 
@@ -55,10 +55,14 @@
 - 声称「已实测某步骤耗时」前，该页面加载器必须已有对应 `[perf]` 埋点；无埋点先补埋点，否则只能记「未实测」。
 - 体检 Skill 不可用时，按总纲「五、排查流程」手动排查并回填台账。
 
-### 编码规范
+### 编码与工具链
 
 - `docs/plans`、`docs/reference`、`docs/archive` 是本项目固定英文目录名；其他文件和目录仍优先中文。
+- `docs/plans` 文件命名：`M.DD-主题.md`，多文件加后缀（`-规格书`/`-Codex后端规格`/`-Antigravity前端规格`/`-提示词`）。
 - 中文组件名内部用英文 PascalCase，导出时再用中文别名。
+- 执行 SQL：`psql "$SQL_DSN" -c "..."`
+- 执行 migration 文件：`psql "$SQL_DSN" -f supabase/migrations/xxx.sql`
+- 查 migration 状态：`supabase --workdir ~/Projects/dydata migration list --linked`
 
 ### 排查顺序
 
@@ -67,16 +71,7 @@
 - RLS/权限问题先查 helper、policy、service role 调用链路。
 - 前端传给后端的字段，如果后端没有接收逻辑，直接删或补后端，不能留幽灵字段。
 - 使用项目封装 UI 组件前，先看 `components/ui/*` 的真实 Props，不能套原版 shadcn/Radix 写法。
-
-### 提交链路
-
-涉及「组员提交/替换/重试」类接口报错 → 整读 `docs/reference/纠错索引.md`
-
-### 数据库工具链
-
-- 执行 SQL：`psql "$SQL_DSN" -c "..."`
-- 执行 migration 文件：`psql "$SQL_DSN" -f supabase/migrations/xxx.sql`
-- 查 migration 状态：`supabase --workdir ~/Projects/dydata migration list --linked`
+- 涉及「组员提交/替换/重试」类接口报错 → 整读 `docs/reference/纠错索引.md`
 
 ### 部署禁令
 
