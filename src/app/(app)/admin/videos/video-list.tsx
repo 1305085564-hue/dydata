@@ -441,7 +441,7 @@ export function VideoList({
         className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white"
         style={{ maxHeight: "calc(100vh - 280px)" }}
       >
-        <Table freezeFirst>
+        <Table freezeFirst stickyHeader>
           <TableHeader className="z-10">
             <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
               {canManageLifecycle && (

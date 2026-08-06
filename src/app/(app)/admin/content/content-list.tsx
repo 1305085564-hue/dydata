@@ -819,7 +819,7 @@ export function ContentList({
             className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white"
             style={{ maxHeight: "calc(100vh - 280px)" }}
           >
-            <Table>
+            <Table stickyHeader>
               <TableHeader className="z-10">
                 <TableRow className="border-b border-zinc-200 bg-zinc-100/50 hover:bg-zinc-100/50">
                   {canManageLifecycle && (
