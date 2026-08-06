@@ -15,9 +15,9 @@ import {
 } from "./_shared";
 
 const profiles: CollaborationProfile[] = [
-  { id: "owner-1", name: "达人甲", team_id: "team-1", group_id: null },
-  { id: "operator-1", name: "王运营", team_id: "team-1", group_id: null },
-  { id: "writer-1", name: "张文案", team_id: "team-1", group_id: null },
+  { id: "owner-1", name: "达人甲", team_id: "team-1" },
+  { id: "operator-1", name: "王运营", team_id: "team-1" },
+  { id: "writer-1", name: "张文案", team_id: "team-1" },
 ];
 
 const accounts: CollaborationAccount[] = [
