@@ -173,20 +173,19 @@ export async function POST(request: NextRequest) {
 
   const profileResult = await supabase
     .from("profiles")
-    .select("name, team_id, group_id, membership_status")
+    .select("name, team_id, membership_status")
     .eq("id", user.id)
     .single();
   const fallbackProfileResult = profileResult.error && isMissingMembershipStatusError(profileResult.error)
     ? await supabase
       .from("profiles")
-      .select("name, team_id, group_id")
+      .select("name, team_id")
       .eq("id", user.id)
       .single()
     : null;
   const profile = (fallbackProfileResult?.data ?? profileResult.data) as {
     name: string | null;
     team_id: string | null;
-    group_id: string | null;
     membership_status?: string | null;
   } | null;
   const profileError = fallbackProfileResult?.error ?? profileResult.error;
@@ -206,26 +205,21 @@ export async function POST(request: NextRequest) {
     const assigneeProfilesResult = await loadWithMembershipFallback({
       loadWithMembership: async () => createAdminClient()
         .from("profiles")
-        .select("id, team_id, group_id, membership_status")
+        .select("id, team_id, membership_status")
         .in("id", externalAssigneeIds),
       loadWithoutMembership: async () => createAdminClient()
         .from("profiles")
-        .select("id, team_id, group_id")
+        .select("id, team_id")
         .in("id", externalAssigneeIds),
     });
     const assigneeProfiles = filterActiveMemberships(
-      (assigneeProfilesResult.data ?? []) as Array<{ id: string; team_id: string | null; group_id: string | null; membership_status?: string | null }>,
+      (assigneeProfilesResult.data ?? []) as Array<{ id: string; team_id: string | null; membership_status?: string | null }>,
     );
 
     const validAssigneeIds = new Set(
       assigneeProfiles
         .filter((assignee) => {
-          const isInSameOrganization = profile?.team_id
-            ? assignee.team_id === profile.team_id
-            : profile?.group_id
-              ? assignee.group_id === profile.group_id
-              : false;
-          return isInSameOrganization;
+          return profile?.team_id ? assignee.team_id === profile.team_id : false;
         })
         .map((assignee) => assignee.id),
     );

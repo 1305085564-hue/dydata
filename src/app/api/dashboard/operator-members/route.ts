@@ -18,20 +18,19 @@ export async function GET() {
   const adminSupabase = createAdminClient();
   const profileResult = await adminSupabase
     .from("profiles")
-    .select("id, team_id, group_id, membership_status")
+    .select("id, team_id, membership_status")
     .eq("id", user.id)
     .maybeSingle();
   const fallbackProfileResult = profileResult.error && isMissingMembershipStatusError(profileResult.error)
     ? await adminSupabase
       .from("profiles")
-      .select("id, team_id, group_id")
+      .select("id, team_id")
       .eq("id", user.id)
       .maybeSingle()
     : null;
   const profile = (fallbackProfileResult?.data ?? profileResult.data) as {
     id: string;
     team_id: string | null;
-    group_id: string | null;
     membership_status?: string | null;
   } | null;
   const profileError = fallbackProfileResult?.error ?? profileResult.error;
@@ -46,12 +45,10 @@ export async function GET() {
     loadWithMembership: async () => {
       let query = adminSupabase
         .from("profiles")
-        .select("id, name, team_id, group_id, membership_status")
+        .select("id, name, team_id, membership_status")
         .order("name", { ascending: true });
       if (profile.team_id) {
         query = query.eq("team_id", profile.team_id);
-      } else if (profile.group_id) {
-        query = query.eq("group_id", profile.group_id);
       } else {
         query = query.eq("id", user.id);
       }
@@ -60,12 +57,10 @@ export async function GET() {
     loadWithoutMembership: async () => {
       let query = adminSupabase
         .from("profiles")
-        .select("id, name, team_id, group_id")
+        .select("id, name, team_id")
         .order("name", { ascending: true });
       if (profile.team_id) {
         query = query.eq("team_id", profile.team_id);
-      } else if (profile.group_id) {
-        query = query.eq("group_id", profile.group_id);
       } else {
         query = query.eq("id", user.id);
       }
@@ -79,15 +74,13 @@ export async function GET() {
   }
 
   const teamIds = [...new Set((members ?? []).map((member) => member.team_id).filter((id): id is string => Boolean(id)))];
-  const groupIds = [...new Set((members ?? []).map((member) => member.group_id).filter((id): id is string => Boolean(id)))];
-  const [{ data: teams, error: teamsError }, { data: groups, error: groupsError }] = await Promise.all([
+  const [{ data: teams, error: teamsError }] = await Promise.all([
     teamIds.length ? adminSupabase.from("teams").select("id, name").in("id", teamIds) : Promise.resolve({ data: [], error: null }),
-    groupIds.length ? adminSupabase.from("groups").select("id, name, team_id").in("id", groupIds) : Promise.resolve({ data: [], error: null }),
   ]);
 
-  if (teamsError || groupsError) {
+  if (teamsError) {
     return NextResponse.json({ error: "加载责任人组织信息失败" }, { status: 500 });
   }
 
-  return NextResponse.json({ members: buildOperatorMemberOptions((members ?? []) as OperatorMemberRow[], teams ?? [], groups ?? []) });
+  return NextResponse.json({ members: buildOperatorMemberOptions((members ?? []) as OperatorMemberRow[], teams ?? [], []) });
 }
