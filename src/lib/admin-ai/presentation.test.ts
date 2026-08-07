@@ -106,7 +106,7 @@ const HIGH_RISK_CASES: HighRiskCase[] = [
   },
   {
     toolName: "updateUserPermissions",
-    params: { userId: "u1", permissions: { manage_members: true, view_all_data: true } },
+    params: { userId: "u1", permissions: { manage_members: true, review_content: true } },
     result: {
       success: true,
       beforeSnapshot: { id: "u1", permissions: {} },

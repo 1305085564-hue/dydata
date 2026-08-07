@@ -58,7 +58,6 @@ interface ProfileSummary {
   role: UserRole;
   team_id?: string | null;
   data_scope?: DataScope | null;
-  group_id?: string | null;
   team_name: string | null;
   permissions: Permissions | null;
   status?: string | null;
@@ -78,13 +77,6 @@ interface ProfileSummary {
 interface TeamOption {
   id: string;
   name: string;
-}
-
-interface GroupOption {
-  id: string;
-  name: string;
-  team_id: string | null;
-  leader_user_id: string | null;
 }
 
 interface PendingRequest {
@@ -113,14 +105,10 @@ interface TeamV2ContentProps {
   teamManagement: {
     access: {
       canView: boolean;
-      canEditGroups?: boolean;
       teamIds: string[] | null;
-      groupIds?: string[] | null;
     };
     teams: TeamOption[];
-    groups?: GroupOption[];
     profiles: unknown[];
-    leaderCandidates: unknown[];
   };
   pendingRequests: PendingRequest[];
   defaultDate: string;
@@ -170,11 +158,8 @@ export function AdminModulesContentV2({
   const [memberView, setMemberView] = useState<"active" | "archived">("active");
 
   const [selectedTeamId, setSelectedTeamId] = useState<string>("__all__");
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   
   const [newTeamName, setNewTeamName] = useState("");
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupLeaderId, setNewGroupLeaderId] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [passwordResetTarget, setPasswordResetTarget] = useState<ProfileSummary | null>(null);
@@ -246,7 +231,6 @@ export function AdminModulesContentV2({
     if (!member) return;
     appliedFocusMemberId.current = focusMemberId;
     setSelectedTeamId("__all__");
-    setSelectedGroupId(null);
     setSearchQuery("");
     setActiveMemberId(member.id);
     setDraftPermissions({ ...member.permissions });
@@ -265,11 +249,6 @@ export function AdminModulesContentV2({
       if (selectedTeamId !== "__all__") {
         if (p.team_id !== selectedTeamId) return false;
       }
-      if (selectedGroupId === "__direct__") {
-        if (p.group_id) return false;
-      } else if (selectedGroupId) {
-        if (p.group_id !== selectedGroupId) return false;
-      }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const nameMatch = (p.name || "").toLowerCase().includes(query);
@@ -279,7 +258,7 @@ export function AdminModulesContentV2({
       }
       return true;
     });
-  }, [localProfiles, localArchivedProfiles, memberView, selectedTeamId, selectedGroupId, searchQuery]);
+  }, [localProfiles, localArchivedProfiles, memberView, selectedTeamId, searchQuery]);
 
   const activeMember = useMemo(() => {
     return localProfiles.find(p => p.id === activeMemberId) ?? null;
@@ -287,14 +266,6 @@ export function AdminModulesContentV2({
 
   const effectiveRole = currentUserBusinessRole ?? currentUserRole;
   const isOwner = effectiveRole === "owner";
-  const canManageGroups = Boolean(teamManagement.access.canEditGroups);
-  const teamGroups = teamManagement.groups ?? [];
-
-  const leaderCandidates = useMemo(() => {
-    return localProfiles
-      .filter(p => p.role === "admin" && p.team_id === selectedTeamId && p.id !== currentUserId)
-      .filter(p => !teamGroups.some(g => g.leader_user_id === p.id));
-  }, [localProfiles, selectedTeamId, teamGroups, currentUserId]);
 
   const handleCreateTeam = () => {
     const name = newTeamName.trim();
@@ -322,10 +293,9 @@ export function AdminModulesContentV2({
   const handleDeleteTeam = (team: TeamOption) => {
     setDeleteTeamTarget(null);
     const hasMembers = localProfiles.some(p => p.team_id === team.id);
-    const hasGroups = teamGroups.some(g => g.team_id === team.id);
     
-    if (hasMembers || hasGroups) {
-      feedbackToast.error("该团队下还有成员或分组，无法删除");
+    if (hasMembers) {
+      feedbackToast.error("该团队下还有成员，无法删除");
       return;
     }
 
@@ -343,10 +313,6 @@ export function AdminModulesContentV2({
       }
     });
   };
-
-  const handleCreateGroup = () => {};
-
-  const handleAssignMemberToGroup = (_memberId: string, _groupId: string | null) => {};
 
   const handleReviewJoinRequest = (requestId: string, action: "approve" | "reject") => {
     const targetRequest = pendingRequests.find(r => r.id === requestId);
@@ -401,7 +367,6 @@ export function AdminModulesContentV2({
       ...p, 
       team_id: teamId, 
       team_name: targetTeam?.name ?? null,
-      group_id: null
     } : p));
 
     startTransition(async () => {
@@ -422,7 +387,7 @@ export function AdminModulesContentV2({
     setRemoveTarget(null);
     const prevProfiles = localProfiles;
     setLocalProfiles(prev => prev.map((profile) => profile.id === target.id
-      ? { ...profile, team_id: null, group_id: null, team_name: null }
+      ? { ...profile, team_id: null, team_name: null }
       : profile));
     feedbackToast.success(`正在将 ${target.name} 移出团队`);
 
@@ -477,7 +442,6 @@ export function AdminModulesContentV2({
         role: "member",
         membership_status: "active",
         team_id: null,
-        group_id: null,
         team_name: null,
         permissions: {},
       },
@@ -513,7 +477,6 @@ export function AdminModulesContentV2({
       ...p,
       team_id: teamId || null,
       team_name: targetTeam ? targetTeam.name : null,
-      group_id: null
     } : p));
     setSelectedMemberIds([]);
 
@@ -725,7 +688,7 @@ export function AdminModulesContentV2({
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
           <button
             type="button"
-            onClick={() => { setSelectedTeamId("__all__"); setSelectedGroupId(null); }}
+            onClick={() => { setSelectedTeamId("__all__"); }}
             className={cn(
               "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150 active:scale-[0.98]",
               selectedTeamId === "__all__"
@@ -744,7 +707,6 @@ export function AdminModulesContentV2({
 
           {localTeams.map(team => {
             const teamMembers = localProfiles.filter(p => p.team_id === team.id);
-            const teamGroupsForTeam = teamGroups.filter(g => g.team_id === team.id);
             const isTeamSelected = selectedTeamId === team.id;
             
             return (
@@ -752,16 +714,16 @@ export function AdminModulesContentV2({
                 <div
                   className={cn(
                     "group flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150",
-                    isTeamSelected && !selectedGroupId
+                    isTeamSelected
                       ? "bg-[#5F82A8]/10 border-zinc-300 text-zinc-900 font-medium"
                       : "border-transparent bg-transparent text-zinc-700 hover:bg-zinc-100/50 hover:text-zinc-900"
                   )}
                 >
                   <button
                     type="button"
-                    aria-current={isTeamSelected && !selectedGroupId ? "true" : undefined}
+                    aria-current={isTeamSelected ? "true" : undefined}
                     className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                    onClick={() => { setSelectedTeamId(team.id); setSelectedGroupId(null); }}
+                    onClick={() => { setSelectedTeamId(team.id); }}
                   >
                     <span className="flex min-w-0 items-center gap-2 truncate">
                       <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#5F82A8]" : "bg-zinc-300")} />
@@ -771,7 +733,7 @@ export function AdminModulesContentV2({
                       {teamMembers.length}
                     </span>
                   </button>
-                  {isOwner && teamMembers.length === 0 && teamGroups.length === 0 && (
+                  {isOwner && teamMembers.length === 0 && (
                     <button
                       type="button"
                       aria-label={`删除团队 ${team.name}`}
@@ -782,54 +744,6 @@ export function AdminModulesContentV2({
                     </button>
                   )}
                 </div>
-
-                {isTeamSelected && (
-                  <div className="ml-3 border-l border-zinc-200 pl-3 space-y-1 pt-0.5 pb-1">
-                    {teamGroupsForTeam.map(group => {
-                      const groupMembers = teamMembers.filter(p => p.group_id === group.id);
-                      const isGroupSelected = selectedGroupId === group.id;
-                      const leaderName = localProfiles.find(p => p.id === group.leader_user_id)?.name || "无";
-                      
-                      return (
-                        <button
-                          key={group.id}
-                          type="button"
-                          onClick={() => setSelectedGroupId(group.id)}
-                          className={cn(
-                            "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors",
-                            isGroupSelected
-                              ? "bg-zinc-200/80 text-zinc-900 font-medium"
-                              : "text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900"
-                          )}
-                        >
-                          <span className="truncate">
-                            <span className="block truncate">{group.name}</span>
-                            <span className="block scale-90 origin-left text-[12px] text-zinc-500 font-normal">
-                              组长: {leaderName}
-                            </span>
-                          </span>
-                          <span className="text-[12px] text-zinc-500">{groupMembers.length}人</span>
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedGroupId("__direct__")}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-[12px] transition-colors",
-                        selectedGroupId === "__direct__"
-                          ? "bg-zinc-200/80 text-zinc-900 font-medium"
-                          : "text-zinc-500 hover:bg-zinc-100/50 hover:text-zinc-900"
-                      )}
-                    >
-                      <span>未分配组员</span>
-                      <span className="text-[12px] text-zinc-500">
-                        {teamMembers.filter(p => p.role === "member" && !p.group_id).length}人
-                      </span>
-                    </button>
-                  </div>
-                )}
               </div>
             );
           })}
@@ -858,38 +772,6 @@ export function AdminModulesContentV2({
               </div>
             </div>
 
-            {selectedTeamId !== "__all__" && canManageGroups && (
-              <div className="space-y-2 border-t border-dashed border-zinc-200 pt-3">
-                <Label htmlFor="quick-group-name" className="text-[12px] font-normal text-zinc-500 uppercase tracking-wider">在当前团队建组</Label>
-                <div className="space-y-1.5">
-                  <Input
-                    id="quick-group-name"
-                    value={newGroupName}
-                    onChange={e => setNewGroupName(e.target.value)}
-                    placeholder="组名，如: 财经二组"
-                    className="h-8.5 text-[12px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-lg"
-                  />
-                  <select
-                    aria-label="组长"
-                    value={newGroupLeaderId}
-                    onChange={e => setNewGroupLeaderId(e.target.value)}
-                    className="w-full h-8.5 text-[12px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-lg px-2 text-zinc-700 outline-none border"
-                  >
-                    <option value="">选择组长</option>
-                    {leaderCandidates.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <Button
-                    onClick={handleCreateGroup}
-                    disabled={isPending || !newGroupName.trim() || !newGroupLeaderId}
-                    className="h-8.5 w-full bg-[#D97757] text-white hover:bg-[#C96442] active:scale-95 rounded-lg text-[12px]"
-                  >
-                    创建组
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </aside>
@@ -1038,7 +920,6 @@ export function AdminModulesContentV2({
                 const isCurrentMemberActive = activeMemberId === member.id;
                 const isRestoredFocus = restoredFocusId === member.id;
                 const isChecked = selectedMemberIds.includes(member.id);
-                const groupAsLeader = teamGroups.find(g => g.leader_user_id === member.id);
                 const archiveSnapshot = member.archive_snapshot ?? {};
                 const archivedTeamName = typeof archiveSnapshot.team_name === "string"
                   ? archiveSnapshot.team_name
@@ -1169,14 +1050,6 @@ export function AdminModulesContentV2({
                               <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
                                 归档前角色：{archivedRole}
                               </span>
-                            ) : groupAsLeader ? (
-                              <span className="inline-flex items-center rounded-lg bg-[#5F82A8]/15 px-2 py-0.5 text-[12px] text-[#5F82A8] font-medium">
-                                组长 : {groupAsLeader.name}
-                              </span>
-                            ) : member.group_id ? (
-                              <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
-                                {teamGroups.find(g => g.id === member.group_id)?.name || "已分分组"}
-                              </span>
                             ) : null}
 
                             {!isArchivedView && member.exempt_type && (
@@ -1224,22 +1097,6 @@ export function AdminModulesContentV2({
                           </select>
                         )}
 
-                        {canManageGroups && member.team_id && member.role === "member" && (
-                          <select
-                            value={member.group_id ?? ""}
-                            onChange={e => handleAssignMemberToGroup(member.id, e.target.value ? e.target.value : null)}
-                            onClick={e => e.stopPropagation()}
-                            className="h-6.5 text-[12px] bg-zinc-50 border border-zinc-200 rounded px-1.5 text-zinc-700 outline-none"
-                          >
-                            <option value="">直管成员</option>
-                            {teamGroups
-                              .filter(g => g.team_id === member.team_id)
-                              .map(g => (
-                                <option key={g.id} value={g.id}>{g.name}</option>
-                              ))
-                            }
-                          </select>
-                        )}
                       </div>
                     </div>
                     )}

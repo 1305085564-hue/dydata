@@ -121,6 +121,30 @@ export function buildMembershipUnavailableResponse(
   return response;
 }
 
+const INVALID_AUTH_SESSION_CODES = new Set([
+  "bad_jwt",
+  "invalid_jwt",
+  "refresh_token_already_used",
+  "refresh_token_not_found",
+  "session_not_found",
+]);
+
+export function isInvalidAuthSessionError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+
+  const candidate = error as { code?: unknown; message?: unknown; status?: unknown };
+  const code = typeof candidate.code === "string" ? candidate.code : "";
+  if (INVALID_AUTH_SESSION_CODES.has(code)) return true;
+
+  const message = typeof candidate.message === "string" ? candidate.message.toLowerCase() : "";
+  return (
+    message.includes("invalid refresh token") ||
+    message.includes("refresh token already used") ||
+    message.includes("refresh token not found") ||
+    message.includes("auth session missing")
+  );
+}
+
 
 
 export async function middleware(request: NextRequest) {
@@ -192,11 +216,14 @@ export async function middleware(request: NextRequest) {
   if (hasAuthCookie && (isProtectedAppRoute || isApiRoute)) {
     try {
       const supabase = createClientFromRequest(request, response);
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getUser();
       if (error) {
+        if (isInvalidAuthSessionError(error)) {
+          return buildAccountBlockedResponse(request, { api: isApiRoute, archived: false });
+        }
         return buildMembershipUnavailableResponse(request, { api: isApiRoute });
       }
-      if (!data.session) {
+      if (!data.user) {
         // session 无效或过期，清除 cookie 并重定向到登录页
         return buildAccountBlockedResponse(request, { api: isApiRoute, archived: false });
       }
@@ -204,7 +231,7 @@ export async function middleware(request: NextRequest) {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("membership_status")
-        .eq("id", data.session.user.id)
+        .eq("id", data.user.id)
         .maybeSingle();
       const membershipStatus = resolveMembershipStatusFromQuery({ data: profile, error: profileError });
       if (membershipStatus === "archived") {

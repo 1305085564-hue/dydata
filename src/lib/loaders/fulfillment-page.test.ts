@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
@@ -6,6 +7,8 @@ import {
   resolveFulfillmentDateRange,
   resolveFulfillmentTodayKey,
 } from "@/lib/loaders/fulfillment-page";
+
+const loaderSource = readFileSync(new URL("./fulfillment-page.ts", import.meta.url), "utf8");
 
 test("北京时间凌晨使用上海当天日期，不回退到 UTC 前一天", () => {
   assert.equal(
@@ -25,8 +28,6 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
         user_name: "成员甲",
         team_id: "team-1",
         team_name: "一组",
-        group_id: null,
-        group_name: null,
         record_date: "2026-06-01",
         status: "published",
         reason: "",
@@ -39,8 +40,6 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
         user_name: "成员甲",
         team_id: "team-1",
         team_name: "一组",
-        group_id: null,
-        group_name: null,
         record_date: "2026-06-02",
         status: "unconfirmed",
         reason: "",
@@ -53,8 +52,6 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
         user_name: "成员甲",
         team_id: "team-1",
         team_name: "一组",
-        group_id: null,
-        group_name: null,
         record_date: "2026-06-03",
         status: "unconfirmed",
         reason: "",
@@ -67,8 +64,6 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
         user_name: "成员乙",
         team_id: "team-1",
         team_name: "一组",
-        group_id: "group-1",
-        group_name: "A小组",
         record_date: "2026-06-01",
         status: "confirmed_published",
         reason: "补确认",
@@ -81,8 +76,6 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
         user_name: "成员乙",
         team_id: "team-1",
         team_name: "一组",
-        group_id: "group-1",
-        group_name: "A小组",
         record_date: "2026-06-02",
         status: "exempted",
         reason: "",
@@ -95,8 +88,6 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
         user_name: "成员乙",
         team_id: "team-1",
         team_name: "一组",
-        group_id: "group-1",
-        group_name: "A小组",
         record_date: "2026-06-03",
         status: "absent",
         reason: "未说明",
@@ -122,6 +113,10 @@ test("发布管理日历按成员聚合并计算今日异常与统计", () => {
   assert.equal(data.members[0]?.publishedDays, 1);
   assert.equal(data.members[1]?.publishedDays, 1);
   assert.equal(data.members[1]?.waivedDays, 1);
+});
+
+test("发布管理 loader 不再传递小组筛选契约", () => {
+  assert.doesNotMatch(loaderSource, /p_group_id|groupId|group_name|groupName|小组/);
 });
 
 test("发布管理日期范围支持高频预设与自定义范围", () => {

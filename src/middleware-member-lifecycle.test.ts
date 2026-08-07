@@ -3,12 +3,14 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { NextRequest } from "next/server";
 
-import { buildAccountBlockedResponse, buildMembershipUnavailableResponse } from "./middleware";
+import { buildAccountBlockedResponse, buildMembershipUnavailableResponse, isInvalidAuthSessionError } from "./middleware";
 
 const source = readFileSync(new URL("./middleware.ts", import.meta.url), "utf8");
 
 test("middleware 对已有会话的页面和 API 统一校验 membership_status", () => {
   assert.match(source, /hasAuthCookie && \(isProtectedAppRoute \|\| isApiRoute\)/);
+  assert.match(source, /supabase\.auth\.getUser\(\)/);
+  assert.doesNotMatch(source, /supabase\.auth\.getSession\(\)/);
   assert.match(source, /\.from\("profiles"\)[\s\S]*\.select\("membership_status"\)/);
   assert.match(source, /membershipStatus === "archived"[\s\S]*buildAccountBlockedResponse/);
   assert.match(source, /账号已归档，请联系 owner 恢复/);
@@ -29,6 +31,14 @@ test("生命周期核验暂时失败返回 503 并保留认证 Cookie", () => {
   assert.equal(response.status, 503);
   assert.match(response.headers.get("content-type") ?? "", /application\/json/);
   assert.equal(response.headers.get("set-cookie"), null);
+});
+
+test("已失效 Supabase 会话错误会清理 Cookie，避免账号状态 503 循环", () => {
+  assert.equal(
+    isInvalidAuthSessionError({ code: "refresh_token_already_used", message: "Invalid Refresh Token: Already Used" }),
+    true,
+  );
+  assert.equal(isInvalidAuthSessionError({ message: "fetch failed" }), false);
 });
 
 test("明确归档返回 403 并清理认证 Cookie", () => {

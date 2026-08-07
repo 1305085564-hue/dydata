@@ -13,8 +13,6 @@ type ProductionDashboardRow = {
   user_name: string | null;
   team_id: string | null;
   team_name: string | null;
-  group_id: string | null;
-  group_name: string | null;
   daily_target: number;
   submitted_count: number;
   gap: number;
@@ -42,18 +40,13 @@ export async function GET(request: NextRequest) {
   }
 
   const teamId = request.nextUrl.searchParams.get("team_id")?.trim() || null;
-  const groupId = request.nextUrl.searchParams.get("group_id")?.trim() || null;
   if (teamId && !UUID_PATTERN.test(teamId)) {
     return NextResponse.json({ error: "team_id 必须是 uuid" }, { status: 400 });
-  }
-  if (groupId && !UUID_PATTERN.test(groupId)) {
-    return NextResponse.json({ error: "group_id 必须是 uuid" }, { status: 400 });
   }
 
   const { data, error } = await auth.supabase.rpc("get_production_dashboard", {
     p_date: date,
     p_team_id: teamId,
-    p_group_id: groupId,
   });
 
   if (error) {
@@ -61,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = filterExportViolationRows(auth.scope, (data ?? []) as ProductionDashboardRow[]);
-  const header = ["日期", "成员", "团队", "小组", "目标", "已提交", "缺口", "豁免状态", "预警"];
+  const header = ["日期", "成员", "团队", "目标", "已提交", "缺口", "豁免状态", "预警"];
   const lines = [
     header.map(escapeCsvCell).join(","),
     ...rows.map((row) =>
@@ -69,7 +62,6 @@ export async function GET(request: NextRequest) {
         date,
         row.user_name ?? "",
         row.team_name ?? "",
-        row.group_name ?? "",
         row.daily_target,
         row.submitted_count,
         row.gap,

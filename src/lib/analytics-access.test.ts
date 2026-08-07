@@ -24,11 +24,12 @@ test("成员没有 team_id 时保持空团队，且不能查看全部成员", ()
   });
 });
 
-test("管理员保留真实 team_id 且可查看全部成员", () => {
+test("负责人保留真实 team_id，具备成员管理权限时可查看全部成员", () => {
   const context = buildAnalyticsAccessContext({
     userId: "admin-1",
     role: "admin",
     teamId: "team-1",
+    permissions: { manage_members: true },
   });
 
   assert.equal(context.effectiveTeamId, "team-1");
@@ -42,34 +43,34 @@ test("成员不能访问任何管理后台页面", () => {
   assert.equal(canAccessAdminPath("/admin/videos", "member"), false);
 });
 
-test("组长能访问团队日常管理，不能访问系统设置", () => {
-  assert.equal(canAccessAdminPath("/admin", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/analytics", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/content", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/fulfillment", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/settings", "admin"), false);
-  assert.equal(canAccessAdminPath("/admin/modules", "admin"), false);
+test("管理员入口按权限键放行", () => {
+  assert.equal(canAccessAdminPath("/admin", "admin", { manage_members: true }), true);
+  assert.equal(canAccessAdminPath("/admin/analytics", "admin", { view_analytics: true }), true);
+  assert.equal(canAccessAdminPath("/admin/content", "admin", { review_content: true }), true);
+  assert.equal(canAccessAdminPath("/admin/fulfillment", "admin", { manage_fulfillment: true }), true);
+  assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_system: true }), true);
+  assert.equal(canAccessAdminPath("/admin/modules", "admin", { manage_members: true }), true);
+  assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_members: true }), false);
 });
 
-test("发布管理页面允许负责人组长和有数据权限的成员访问", () => {
+test("发布管理页面允许 owner、具备发布权限的管理员和可见成员访问", () => {
   assert.equal(canAccessAdminPath("/admin/fulfillment", "owner"), true);
-  assert.equal(canAccessAdminPath("/admin/fulfillment", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/fulfillment/detail", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/fulfillment", "member", { view_analytics: true }), true);
+  assert.equal(canAccessAdminPath("/admin/fulfillment", "admin", { manage_fulfillment: true }), true);
+  assert.equal(canAccessAdminPath("/admin/fulfillment/detail", "admin", { manage_fulfillment: true }), true);
+  assert.equal(canAccessAdminPath("/admin/fulfillment", "member", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "member"), false);
 });
 
-test("协作管理允许 owner 和具备分析或全量数据权限的角色访问", () => {
+test("协作管理允许 owner 和具备分析权限的角色访问", () => {
   assert.equal(canAccessAdminPath("/admin/collaboration", "owner"), true);
-  assert.equal(canAccessAdminPath("/admin/collaboration/person", "admin"), true);
+  assert.equal(canAccessAdminPath("/admin/collaboration/person", "admin", { view_analytics: true }), true);
   assert.equal(canAccessAdminPath("/admin/collaboration", "member", { view_analytics: true }), true);
-  assert.equal(canAccessAdminPath("/admin/collaboration", "member", { view_all_data: true }), true);
   assert.equal(canAccessAdminPath("/admin/collaboration", "member"), false);
 });
 
-test("负责人可访问系统设置里的成员权限和团队分组，AI 配置仍只给 owner", () => {
-  assert.equal(canAccessAdminPath("/admin/modules", "admin"), true);
-  assert.equal(canAccessAdminPath("/admin/settings", "admin"), true);
+test("系统设置和成员管理按对应权限放行", () => {
+  assert.equal(canAccessAdminPath("/admin/modules", "admin", { manage_members: true }), true);
+  assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_system: true }), true);
   assert.equal(canAccessAdminPath("/admin/settings", "owner"), true);
 });
 
@@ -79,7 +80,7 @@ test("导航权限区分成员与管理员入口", () => {
     showAdmin: false,
   });
 
-  assert.deepEqual(getNavigationAccess("admin"), {
+  assert.deepEqual(getNavigationAccess("admin", { view_analytics: true, manage_members: true }), {
     showAnalytics: true,
     showAdmin: true,
   });

@@ -6,7 +6,7 @@ import {
   hydrateAdminModuleMemberEmails,
 } from "@/lib/admin-modules-contract";
 
-test("成员模块首屏摘要只依赖 profiles 与 teams，邮箱允许先为空", () => {
+test("成员模块首屏摘要只依赖 profiles 与 teams，邮箱允许先为空且保留原始权限", () => {
   const members = buildAdminModuleMemberSummaries(
     [
       {
@@ -45,30 +45,26 @@ test("成员模块首屏摘要只依赖 profiles 与 teams，邮箱允许先为�
       id: member.id,
       email: member.email,
       team_name: member.team_name,
-      manage_members: member.permissions.manage_members,
-      export_data: member.permissions.export_data,
+      permissions: member.permissions,
     })),
     [
       {
         id: "owner-1",
         email: null,
         team_name: null,
-        manage_members: true,
-        export_data: true,
+        permissions: {},
       },
       {
         id: "admin-1",
         email: null,
         team_name: "上海一部",
-        manage_members: true,
-        export_data: true,
+        permissions: { manage_members: true },
       },
       {
         id: "member-1",
         email: null,
         team_name: "深圳二部",
-        manage_members: false,
-        export_data: false,
+        permissions: {},
       },
     ],
   );

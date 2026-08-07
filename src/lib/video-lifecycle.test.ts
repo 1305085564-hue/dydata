@@ -44,12 +44,12 @@ function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active
   };
 }
 
-test("回收站只允许 owner 与 team_admin，group_leader 和 member 一律拒绝", () => {
+test("回收站允许 owner 和 admin 操作，永久删除只允许 owner", () => {
   assert.equal(canOperateVideoLifecycle({ role: "owner" }, "trash"), true);
   assert.equal(canOperateVideoLifecycle({ role: "owner" }, "purge"), true);
   assert.equal(canOperateVideoLifecycle({ role: "admin" }, "restore"), true);
   assert.equal(canOperateVideoLifecycle({ role: "admin" }, "purge"), false);
-  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "trash"), false);
+  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "trash"), true);
   assert.equal(canOperateVideoLifecycle({ role: "member" }, "trash"), false);
 });
 

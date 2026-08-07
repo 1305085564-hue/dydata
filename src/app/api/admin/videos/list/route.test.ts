@@ -40,14 +40,14 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
     userId: "owner-1",
     name: "阿禅",
     role: "owner" as const,
-    permissions: { manage_video_assets: true },
+    permissions: { manage_videos: true },
     dataScope: "all" as const,
     teamId: null,
   };
   const scope = {
     userId: "owner-1",
     role: "owner" as const,
-    permissions: { manage_video_assets: true },
+    permissions: { manage_videos: true },
     teamId: null,
     kind: "all" as const,
     visibleUserIds: ["user-1", "user-2"],
@@ -62,7 +62,7 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
         actor: {
           userId: "owner-1",
           role: "owner" as const,
-          permissions: { manage_video_assets: true },
+          permissions: { manage_videos: true },
           name: "阿禅",
           dataScope: "all" as const,
         },

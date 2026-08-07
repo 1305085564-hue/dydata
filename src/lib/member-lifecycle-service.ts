@@ -144,8 +144,6 @@ export async function syncAuthUserTeamMetadata(
   input: {
     teamId: string | null;
     teamName: string | null;
-    groupId?: string | null;
-    groupName?: string | null;
     metadata?: Record<string, unknown>;
   },
 ) {
@@ -161,8 +159,6 @@ export async function syncAuthUserTeamMetadata(
       ...metadata,
       team_id: input.teamId,
       team_name: input.teamName,
-      group_id: input.groupId ?? null,
-      group_name: input.groupName ?? null,
     },
   });
   return result.error;
@@ -214,7 +210,6 @@ function toProfileSnapshot(profile: MemberLifecycleProfileRow): Record<string, u
     role: profile.role,
     permissions: profile.permissions ?? {},
     team_id: profile.team_id ?? null,
-    group_id: null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,
     archived_by: profile.archived_by ?? null,
@@ -228,7 +223,6 @@ function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): Record<s
     role: profile.role,
     permissions: profile.permissions ?? {},
     team_id: profile.team_id ?? null,
-    group_id: null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,
     archived_by: profile.archived_by ?? null,
@@ -333,8 +327,6 @@ export async function transferMemberToTeamWithClient(input: {
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: input.newTeamId,
     teamName: input.newTeamName,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
@@ -380,7 +372,7 @@ export async function transferMemberToTeamWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId, group_id: null },
+    afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId },
     affectedData: { userId: target.id, teamId: input.newTeamId },
   };
 }
@@ -427,8 +419,6 @@ export async function removeMemberFromTeamWithClient(input: {
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
     teamName: null,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
@@ -474,7 +464,7 @@ export async function removeMemberFromTeamWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, team_id: null, group_id: null },
+    afterSnapshot: { ...beforeSnapshot, team_id: null },
   };
 }
 
@@ -520,9 +510,7 @@ export async function archiveMemberWithClient(input: {
     role: target.role,
     permissions: target.permissions ?? {},
     team_id: target.team_id ?? null,
-    group_id: null,
     team_name: team.name,
-    group_name: null,
   };
   const profilePatch = buildArchiveMemberProfilePatch({
     target,
@@ -546,8 +534,6 @@ export async function archiveMemberWithClient(input: {
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
     teamName: null,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
@@ -632,8 +618,6 @@ export async function restoreMemberWithClient(input: {
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
     teamName: null,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {

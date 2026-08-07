@@ -21,15 +21,8 @@ export interface FulfillmentTeamOption {
   name: string;
 }
 
-export interface FulfillmentGroupOption {
-  id: string;
-  name: string;
-  teamId: string | null;
-}
-
 export interface FulfillmentScopeFilter {
   teamId: string | null;
-  groupId: string | null;
   label: string;
 }
 
@@ -40,8 +33,6 @@ export interface FulfillmentDayRecord {
   userName: string;
   teamId: string | null;
   teamName: string | null;
-  groupId: string | null;
-  groupName: string | null;
   date: string;
   status: FulfillmentStatus;
   reason: string;
@@ -57,8 +48,6 @@ export interface FulfillmentMemberSummary {
   userName: string;
   teamId: string | null;
   teamName: string | null;
-  groupId: string | null;
-  groupName: string | null;
   totalDays: number;
   publishedDays: number;
   leaveDays: number;
@@ -77,7 +66,6 @@ export interface FulfillmentCalendarData {
   scope: FulfillmentScopeFilter;
   filterOptions: {
     teams: FulfillmentTeamOption[];
-    groups: FulfillmentGroupOption[];
   };
   members: FulfillmentMemberSummary[];
   todayExceptions: FulfillmentMemberSummary[];

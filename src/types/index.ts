@@ -21,7 +21,7 @@ export type PermissionKey =
 
 export const PERMISSION_KEYS = Object.values(PERMISSION_CATEGORIES).flat() as PermissionKey[];
 
-export type Permissions = Partial<Record<PermissionKey, boolean>> & Record<string, boolean | undefined>;
+export type Permissions = Partial<Record<PermissionKey, boolean>>;
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view_analytics: "经营分析",

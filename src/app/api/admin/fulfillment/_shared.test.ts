@@ -88,21 +88,21 @@ test("fulfillment 写接口只允许 admin 或 owner 角色", async () => {
   assert.equal(ownerResponse, null);
 });
 
-test("全局配置不把 group_leader 的原始 admin 角色当成全局管理员", () => {
-  const groupLeaderResponse = requireOwnerOrTeamAdminRole({
+test("全局配置至少要求 owner 或 admin", () => {
+  const adminResponse = requireOwnerOrTeamAdminRole({
     actor: { role: "admin" },
   } as never);
-  assert.equal(groupLeaderResponse?.status, 403);
-
-  const teamAdminResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "admin" },
-  } as never);
-  assert.equal(teamAdminResponse, null);
+  assert.equal(adminResponse, null);
 
   const ownerResponse = requireOwnerOrTeamAdminRole({
     actor: { role: "owner" },
   } as never);
   assert.equal(ownerResponse, null);
+
+  const memberResponse = requireOwnerOrTeamAdminRole({
+    actor: { role: "member" },
+  } as never);
+  assert.equal(memberResponse?.status, 403);
 });
 
 test("fulfillment 当前写操作只能操作 active 成员，owner 也不能绕过", () => {

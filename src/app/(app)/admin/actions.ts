@@ -320,7 +320,7 @@ export async function adminUpdateReport(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "edit_data")) return { error: "无权限" };
+  if (!hasPermission(perm.role, perm.permissions, "review_content")) return { error: "无权限" };
 
   const supabase = await createClient();
   const { error } = await supabase.from("daily_reports").update(data).eq("id", reportId);
@@ -336,7 +336,7 @@ export async function adminUpdateReport(
 export async function adminDeleteReport(reportId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "edit_data")) return { error: "无权限" };
+  if (!hasPermission(perm.role, perm.permissions, "review_content")) return { error: "无权限" };
 
   const supabase = await createClient();
 

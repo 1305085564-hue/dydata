@@ -31,7 +31,7 @@ type InboxPayload = {
 };
 
 type PermissionMap = {
-  manage_violations?: boolean;
+  review_violations?: boolean;
 };
 
 type Profile = {
@@ -989,7 +989,7 @@ test("violations list staff/admin/default view 分流正确", async () => {
       }),
       getUserProfile: async (): Promise<Profile> => ({
         role: "admin",
-        permissions: { manage_violations: true },
+        permissions: { review_violations: true },
       }),
     },
   );

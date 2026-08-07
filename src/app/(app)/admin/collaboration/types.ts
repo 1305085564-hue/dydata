@@ -83,7 +83,6 @@ export interface PersonDetailData {
   userId: string;
   name: string;
   teamId: string | null;
-  groupId: string | null;
   currentMonth: PersonCurrentMonth;
   operatorSummary: PersonOperatorSummary | null;
   trend: PersonTrendItem[];

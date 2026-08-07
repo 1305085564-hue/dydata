@@ -25,22 +25,18 @@ test("admin panels modules 只返回当前管理范围内的成员与团队", as
           canRemoveMember: true,
         },
         allProfiles: [
-          { id: "member-1", name: "成员甲", role: "member", team_id: "team-1", group_id: null, email: "a@dydata.cc", status: "active", permissions: {}, team_name: "一团" },
-          { id: "member-2", name: "成员乙", role: "member", team_id: "team-2", group_id: null, email: "b@dydata.cc", status: "active", permissions: {}, team_name: "二团" },
+          { id: "member-1", name: "成员甲", role: "member", team_id: "team-1", email: "a@dydata.cc", status: "active", permissions: {}, team_name: "一团" },
+          { id: "member-2", name: "成员乙", role: "member", team_id: "team-2", email: "b@dydata.cc", status: "active", permissions: {}, team_name: "二团" },
         ],
         teams: [
           { id: "team-1", name: "一团" },
           { id: "team-2", name: "二团" },
         ],
         teamManagement: {
-          access: { level: "admin", canView: true, canEditGroups: true, teamIds: ["team-1"], groupIds: null },
+          access: { level: "admin", canView: true, canEditMembers: true, teamIds: ["team-1"] },
           teams: [
             { id: "team-1", name: "一团" },
             { id: "team-2", name: "二团" },
-          ],
-          groups: [
-            { id: "group-1", name: "一组", team_id: "team-1", leader_user_id: "admin-1" },
-            { id: "group-2", name: "二组", team_id: "team-2", leader_user_id: "member-2" },
           ],
           profiles: [
             { id: "member-1", name: "成员甲", role: "member", team_id: "team-1" },
@@ -61,7 +57,9 @@ test("admin panels modules 只返回当前管理范围内的成员与团队", as
   assert.deepEqual(payload.teams.map((team: { id: string }) => team.id), ["team-1"]);
   assert.deepEqual(payload.teamManagement.profiles.map((profile: { id: string }) => profile.id), ["member-1"]);
   assert.deepEqual(payload.teamManagement.leaderCandidates.map((profile: { id: string }) => profile.id), ["admin-1"]);
-  assert.deepEqual(payload.teamManagement.groups.map((group: { id: string }) => group.id), ["group-1"]);
+  assert.equal("groups" in payload.teamManagement, false);
+  assert.equal("groupIds" in payload.teamManagement.access, false);
+  assert.equal("canEditGroups" in payload.teamManagement.access, false);
 });
 
 test("admin panels modules 无成员管理权时不启动加载器", async () => {

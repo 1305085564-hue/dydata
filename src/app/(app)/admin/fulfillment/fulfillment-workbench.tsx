@@ -71,7 +71,6 @@ function toPercent(numerator: number, denominator: number) {
 function filterMembers(
   members: FulfillmentMemberSummary[],
   teamName: string | null,
-  groupName: string | null,
   range: TimeRangePreset,
   today: string,
 ): FulfillmentMemberSummary[] {
@@ -79,9 +78,6 @@ function filterMembers(
 
   if (teamName) {
     filtered = filtered.filter((m) => m.teamName === teamName);
-  }
-  if (groupName) {
-    filtered = filtered.filter((m) => m.groupName === groupName);
   }
 
   switch (range) {
@@ -177,7 +173,6 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
 
   // 4. 选择与抽屉状态
   const [selectedTeam, setSelectedTeam] = useState<string | null>(defaultTeam);
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -313,8 +308,8 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
 
   // 9. 客户端过滤与统计
   const filteredMembers = useMemo(
-    () => filterMembers(calendarData.members, selectedTeam, selectedGroup, range, today),
-    [calendarData.members, selectedTeam, selectedGroup, range, today],
+    () => filterMembers(calendarData.members, selectedTeam, range, today),
+    [calendarData.members, selectedTeam, range, today],
   );
 
   const exceptionMembers = useMemo(() => {
@@ -334,11 +329,6 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
 
   const handleTeamChange = useCallback((team: string | null) => {
     setSelectedTeam(team);
-    setSelectedIds(new Set());
-  }, []);
-
-  const handleGroupChange = useCallback((group: string | null) => {
-    setSelectedGroup(group);
     setSelectedIds(new Set());
   }, []);
 
@@ -463,8 +453,6 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
             userName: m.userName,
             teamId: m.teamId,
             teamName: m.teamName,
-            groupId: m.groupId,
-            groupName: m.groupName,
             date: today,
             status,
             reason: "",
@@ -546,8 +534,6 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
             userName: m.userName,
             teamId: m.teamId,
             teamName: m.teamName,
-            groupId: m.groupId,
-            groupName: m.groupName,
             date: today,
             status,
             reason,
@@ -627,9 +613,7 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
         range={range}
         members={calendarData.members}
         selectedTeam={selectedTeam}
-        selectedGroup={selectedGroup}
         onTeamChange={handleTeamChange}
-        onGroupChange={handleGroupChange}
         onPresetChange={handlePresetChange}
         feishuEnabled={feishuEnabled}
         settingsLoading={settingsLoading}

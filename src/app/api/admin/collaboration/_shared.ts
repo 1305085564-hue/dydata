@@ -377,7 +377,6 @@ export function buildPersonPayload(input: {
     userId: input.targetUserId,
     name: input.profile.name?.trim() || "未命名成员",
     teamId: input.profile.team_id,
-    groupId: null,
     currentMonth: {
       writerCount: currentRows.filter((row) => row.script_author_user_id === input.targetUserId).length,
       editorCount: currentRows.filter((row) => row.video_editor_user_id === input.targetUserId).length,
