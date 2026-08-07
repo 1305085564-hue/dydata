@@ -40,9 +40,11 @@ function isMissingColumn(error: { message?: string } | null | undefined, column:
   return message.includes(column) || message.includes("Could not find");
 }
 
-export function inferDataScope(role: UserRole | string | null | undefined, permissions: Permissions | null | undefined): DataScope {
+export function inferDataScope(
+  role: UserRole | string | null | undefined,
+  _permissions: Permissions | null | undefined,
+): DataScope {
   if (role === "owner") return "all";
-  if (role === "admin" && permissions?.view_all_data === true) return "all";
   if (role === "admin") return "team";
   return "self";
 }

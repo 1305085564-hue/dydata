@@ -15,8 +15,6 @@ function buildOwnerAuth() {
       role: "owner" as const,
       permissions: {
         view_analytics: true,
-        view_all_data: true,
-        edit_data: true,
         manage_members: true,
       },
       name: "阿禅",
@@ -63,7 +61,7 @@ function buildDeps(options?: {
   const scope: DataAccessScope = {
     userId: "owner-1",
     role: "owner",
-    permissions: { view_analytics: true, view_all_data: true, edit_data: true, manage_members: true },
+    permissions: { view_analytics: true, review_content: true, manage_members: true },
     teamId: null,
     kind: "all",
     visibleUserIds: ["user-1"],

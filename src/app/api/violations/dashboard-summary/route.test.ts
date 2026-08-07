@@ -171,7 +171,7 @@ test("dashboard summary 返回 conversionTop3", async () => {
       }),
     getUserProfile: async () => ({
       role: "owner",
-      permissions: { manage_violations: true, view_conversion_hub: true },
+      permissions: { review_violations: true, view_conversion: true },
     }),
   });
 
@@ -208,8 +208,8 @@ test("dashboard summary 拒绝没有违规和转化查看权限的普通成员",
     getUserProfile: async () => ({
       role: "member",
       permissions: {
-        manage_violations: false,
-        view_conversion_hub: false,
+        review_violations: false,
+        view_conversion: false,
       },
     }),
   } as never);
@@ -227,8 +227,8 @@ test("dashboard summary 允许具备转化中心查看权限的用户", async ()
     getUserProfile: async () => ({
       role: "member",
       permissions: {
-        manage_violations: false,
-        view_conversion_hub: true,
+        review_violations: false,
+        view_conversion: true,
       },
     }),
   } as never);

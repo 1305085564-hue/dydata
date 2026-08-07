@@ -1,0 +1,843 @@
+-- 20260807: 权限 V2 契约收口
+-- 目标：统一 data_scope + team_id，收掉旧 group 依赖和旧权限键残留。
+
+create or replace function public.visible_user_ids(p_actor_id uuid default auth.uid())
+returns table(user_id uuid)
+language plpgsql
+stable
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_actor public.profiles%rowtype;
+  v_scope text;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_actor_id then
+    raise exception using errcode = '42501', message = 'permission denied';
+  end if;
+
+  if p_actor_id is null then
+    return;
+  end if;
+
+  select *
+  into v_actor
+  from public.profiles
+  where id = p_actor_id;
+
+  if not found then
+    return;
+  end if;
+
+  v_scope := coalesce(v_actor.data_scope, 'self');
+
+  if v_scope = 'all' then
+    return query
+    select p.id
+    from public.profiles p;
+    return;
+  end if;
+
+  if v_scope = 'team' and v_actor.team_id is not null then
+    return query
+    select p.id
+    from public.profiles p
+    where p.team_id = v_actor.team_id;
+    return;
+  end if;
+
+  return query
+  select v_actor.id;
+end;
+$$;
+
+grant execute on function public.visible_user_ids(uuid) to authenticated, service_role;
+
+create or replace function public.get_fulfillment_range(
+  p_start_date date,
+  p_end_date date,
+  p_visible_user_ids uuid[] default null,
+  p_team_id uuid default null,
+  p_group_id uuid default null
+)
+returns table (
+  user_id uuid,
+  user_name text,
+  team_id uuid,
+  team_name text,
+  group_id uuid,
+  group_name text,
+  record_date date,
+  status text,
+  reason text,
+  marked_at timestamptz,
+  marked_by_name text,
+  published_count int,
+  consecutive_missing int
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  range_end date;
+begin
+  if not public.is_admin_or_owner() then
+    raise exception 'permission denied';
+  end if;
+
+  if p_start_date is null or p_end_date is null then
+    raise exception 'date range is required';
+  end if;
+
+  if p_end_date < p_start_date then
+    raise exception 'invalid date range';
+  end if;
+
+  if p_end_date - p_start_date > 366 then
+    raise exception 'date range too large';
+  end if;
+
+  range_end := least(p_end_date, current_date);
+  if p_start_date > range_end then
+    return;
+  end if;
+
+  return query
+  with
+  eligible_members as (
+    select
+      p.id as uid,
+      p.name as uname,
+      p.team_id as tid,
+      t.name as tname,
+      null::uuid as gid,
+      null::text as gname,
+      p.created_at::date as joined_date,
+      p.exempt_type,
+      p.exempt_start_date,
+      p.exempt_end_date
+    from public.profiles p
+    left join public.teams t on t.id = p.team_id
+    where coalesce(p.status, 'active') = 'active'
+      and coalesce(p.exempt_type, '') <> 'permanent'
+      and p.created_at::date <= range_end
+      and (p_visible_user_ids is null or p.id = any(p_visible_user_ids))
+      and (p_team_id is null or p.team_id = p_team_id)
+      -- p_group_id retained for compatibility and intentionally ignored.
+  ),
+  dates as (
+    select d::date as dt
+    from generate_series(p_start_date, range_end, '1 day'::interval) d
+  ),
+  member_dates as (
+    select em.uid, em.uname, em.tid, em.tname, em.gid, em.gname, em.joined_date,
+           em.exempt_type, em.exempt_start_date, em.exempt_end_date,
+           d.dt
+    from eligible_members em
+    cross join dates d
+    where d.dt >= em.joined_date
+  ),
+  daily_counts as (
+    select dr.user_id as uid, dr.report_date as dt, count(*)::int as cnt
+    from public.daily_reports dr
+    join eligible_members em on em.uid = dr.user_id
+    where dr.report_date between p_start_date and range_end
+    group by dr.user_id, dr.report_date
+  ),
+  marks as (
+    select fr.user_id as uid, fr.record_date as dt,
+           fr.status as mark_status, fr.reason as mark_reason,
+           fr.marked_at as mark_time, mp.name as marker_name
+    from public.fulfillment_records fr
+    left join public.profiles mp on mp.id = fr.marked_by
+    join eligible_members em on em.uid = fr.user_id
+    where fr.record_date between p_start_date and range_end
+  ),
+  grants as (
+    select eg.user_id as uid, eg.start_date, eg.end_date
+    from public.exemption_grant eg
+    join eligible_members em on em.uid = eg.user_id
+    where eg.status = 'active'
+      and eg.start_date is not null
+      and eg.start_date <= range_end
+      and (eg.end_date is null or eg.end_date >= p_start_date)
+  ),
+  computed as (
+    select
+      md.uid,
+      md.uname,
+      md.tid,
+      md.tname,
+      md.gid,
+      md.gname,
+      md.dt,
+      case
+        when m.mark_status is not null then m.mark_status
+        when dc.cnt > 0 then 'published'
+        when (
+          md.exempt_type = 'temporary'
+          and md.exempt_start_date is not null
+          and md.exempt_end_date is not null
+          and md.dt between md.exempt_start_date and md.exempt_end_date
+        ) then 'exempted'
+        when exists (
+          select 1 from grants gr
+          where gr.uid = md.uid
+            and md.dt >= gr.start_date
+            and (gr.end_date is null or md.dt <= gr.end_date)
+        ) then 'exempted'
+        else 'unconfirmed'
+      end as computed_status,
+      coalesce(m.mark_reason, '') as computed_reason,
+      m.mark_time as computed_marked_at,
+      coalesce(m.marker_name, '') as computed_marker,
+      coalesce(dc.cnt, 0) as pub_count
+    from member_dates md
+    left join daily_counts dc on dc.uid = md.uid and dc.dt = md.dt
+    left join marks m on m.uid = md.uid and m.dt = md.dt
+  ),
+  last_published as (
+    select
+      em.uid,
+      max(src.dt) as last_published_date
+    from eligible_members em
+    cross join lateral (
+      select dr.report_date as dt
+      from public.daily_reports dr
+      left join public.fulfillment_records fr
+        on fr.user_id = dr.user_id
+       and fr.record_date = dr.report_date
+      where dr.user_id = em.uid
+        and dr.report_date between em.joined_date and current_date
+        and fr.status is null
+
+      union
+
+      select fr.record_date as dt
+      from public.fulfillment_records fr
+      where fr.user_id = em.uid
+        and fr.record_date between em.joined_date and current_date
+        and fr.status = 'confirmed_published'
+    ) src
+    group by em.uid
+  ),
+  consecutive as (
+    select
+      em.uid,
+      case
+        when em.joined_date > current_date then 0
+        when lp.last_published_date is null then current_date - em.joined_date + 1
+        else greatest(current_date - lp.last_published_date, 0)
+      end as consec
+    from eligible_members em
+    left join last_published lp on lp.uid = em.uid
+  )
+  select
+    c.uid,
+    c.uname,
+    c.tid,
+    c.tname,
+    c.gid,
+    c.gname,
+    c.dt,
+    c.computed_status,
+    c.computed_reason,
+    c.computed_marked_at,
+    c.computed_marker,
+    c.pub_count,
+    coalesce(con.consec, 0)::int
+  from computed c
+  left join consecutive con on con.uid = c.uid
+  order by c.tname nulls last, c.gname nulls last, c.uname, c.dt;
+end;
+$$;
+
+create or replace function public.get_fulfillment_calendar(
+  target_year int,
+  target_month int,
+  p_visible_user_ids uuid[] default null
+)
+returns table (
+  user_id uuid,
+  user_name text,
+  team_id uuid,
+  team_name text,
+  group_id uuid,
+  group_name text,
+  record_date date,
+  status text,
+  reason text,
+  marked_by_name text,
+  published_count int,
+  consecutive_missing int
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  month_start date;
+  month_end date;
+begin
+  if not public.is_admin_or_owner() then
+    raise exception 'permission denied';
+  end if;
+
+  month_start := make_date(target_year, target_month, 1);
+  month_end := least((month_start + interval '1 month' - interval '1 day')::date, current_date);
+
+  return query
+  select
+    r.user_id,
+    r.user_name,
+    r.team_id,
+    r.team_name,
+    r.group_id,
+    r.group_name,
+    r.record_date,
+    r.status,
+    r.reason,
+    r.marked_by_name,
+    r.published_count,
+    r.consecutive_missing
+  from public.get_fulfillment_range(month_start, month_end, p_visible_user_ids, null, null) as r;
+end;
+$$;
+
+grant execute on function public.get_fulfillment_range(date, date, uuid[], uuid, uuid) to authenticated, service_role;
+grant execute on function public.get_fulfillment_calendar(int, int, uuid[]) to authenticated, service_role;
+
+create or replace function public.case_library_actor_scope(p_user_id uuid)
+returns table (
+  can_manage boolean,
+  business_role text,
+  visible_user_ids uuid[]
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_profile public.profiles%rowtype;
+  v_visible_user_ids uuid[] := array[]::uuid[];
+  v_business_role text := 'member';
+  v_can_manage boolean := false;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'permission denied';
+  end if;
+
+  select *
+  into v_profile
+  from public.profiles
+  where id = p_user_id;
+
+  if not found then
+    return query select false, 'member'::text, array[]::uuid[];
+    return;
+  end if;
+
+  if v_profile.role = 'owner' then
+    v_business_role := 'owner';
+  elsif v_profile.role = 'admin' then
+    v_business_role := 'admin';
+  else
+    v_business_role := 'member';
+  end if;
+
+  v_can_manage := v_profile.role = 'owner'
+    or coalesce((v_profile.permissions ->> 'review_violations')::boolean, false);
+
+  if not v_can_manage then
+    return query select false, v_business_role, array[]::uuid[];
+    return;
+  end if;
+
+  select coalesce(array_agg(user_id), array[]::uuid[])
+  into v_visible_user_ids
+  from public.visible_user_ids(p_user_id);
+
+  return query select true, v_business_role, v_visible_user_ids;
+end;
+$$;
+
+grant execute on function public.case_library_actor_scope(uuid) to authenticated;
+
+create or replace function public.publish_draft_actor_scope(p_user_id uuid)
+returns table (
+  can_review boolean,
+  business_role text,
+  visible_user_ids uuid[]
+)
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_profile public.profiles%rowtype;
+  v_visible_user_ids uuid[] := array[]::uuid[];
+  v_business_role text := 'member';
+  v_can_review boolean := false;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'permission denied';
+  end if;
+
+  select *
+  into v_profile
+  from public.profiles
+  where id = p_user_id;
+
+  if not found then
+    return query select false, 'member'::text, array[]::uuid[];
+    return;
+  end if;
+
+  if v_profile.role = 'owner' then
+    v_business_role := 'owner';
+  elsif v_profile.role = 'admin' then
+    v_business_role := 'admin';
+  else
+    v_business_role := 'member';
+  end if;
+
+  v_can_review := v_profile.role = 'owner'
+    or coalesce((v_profile.permissions ->> 'review_violations')::boolean, false);
+
+  if not v_can_review then
+    return query select false, v_business_role, array[]::uuid[];
+    return;
+  end if;
+
+  select coalesce(array_agg(user_id), array[]::uuid[])
+  into v_visible_user_ids
+  from public.visible_user_ids(p_user_id);
+
+  return query select true, v_business_role, v_visible_user_ids;
+end;
+$$;
+
+grant execute on function public.publish_draft_actor_scope(uuid) to authenticated;
+
+drop policy if exists "成员读取自己的豁免申请" on public.exemption_request;
+drop policy if exists "成员提交自己的豁免申请" on public.exemption_request;
+drop policy if exists "仅管理员审核豁免申请" on public.exemption_request;
+drop policy if exists "仅管理员删除豁免申请" on public.exemption_request;
+drop policy if exists "成员或范围管理员读取豁免申请" on public.exemption_request;
+
+create policy "成员或范围管理员读取豁免申请"
+  on public.exemption_request
+  for select
+  to authenticated
+  using (
+    applicant_user_id = auth.uid()
+    or (
+      (
+        public.has_permission('manage_fulfillment')
+        or public.has_permission('review_violations')
+      )
+      and
+      exists (
+        select 1
+        from public.visible_user_ids(auth.uid()) vis
+        where vis.user_id = exemption_request.applicant_user_id
+      )
+    )
+  );
+
+drop policy if exists "成员读取自己的豁免授予" on public.exemption_grant;
+drop policy if exists "仅管理员写入豁免授予" on public.exemption_grant;
+drop policy if exists "仅管理员更新豁免授予" on public.exemption_grant;
+drop policy if exists "仅管理员删除豁免授予" on public.exemption_grant;
+drop policy if exists "成员或范围管理员读取豁免授予" on public.exemption_grant;
+
+create policy "成员或范围管理员读取豁免授予"
+  on public.exemption_grant
+  for select
+  to authenticated
+  using (
+    user_id = auth.uid()
+    or (
+      (
+        public.has_permission('manage_fulfillment')
+        or public.has_permission('review_violations')
+      )
+      and
+      exists (
+        select 1
+        from public.visible_user_ids(auth.uid()) vis
+        where vis.user_id = exemption_grant.user_id
+      )
+    )
+  );
+
+create or replace function public.apply_exemption_grant_atomically(
+  p_user_id uuid,
+  p_grant_start_date date,
+  p_grant_end_date date,
+  p_grant_type text,
+  p_exemption_category text,
+  p_reason text,
+  p_replace_existing boolean
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_actor public.profiles%rowtype;
+  v_target public.profiles%rowtype;
+  v_grant_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception using errcode = '42501', message = '无权限管理豁免';
+  end if;
+
+  perform 1
+  from public.profiles
+  where id in (auth.uid(), p_user_id)
+  order by id
+  for update;
+
+  select * into v_actor from public.profiles where id = auth.uid();
+  if not found then
+    raise exception using errcode = '42501', message = '无权限管理豁免';
+  end if;
+
+  select * into v_target from public.profiles where id = p_user_id;
+  if not found then
+    raise exception using errcode = 'P0002', message = '用户资料不存在';
+  end if;
+
+  if v_actor.role <> 'owner'
+    and not (
+      (public.has_permission('manage_fulfillment') or public.has_permission('review_violations'))
+      and exists (
+        select 1
+        from public.visible_user_ids(v_actor.id) vis
+        where vis.user_id = p_user_id
+      )
+    ) then
+    raise exception using errcode = '42501', message = '无权限管理豁免';
+  end if;
+
+  if p_grant_type is null
+    or p_grant_type not in ('single', '3days', '4days', '5days', 'yesterday', 'range', 'permanent') then
+    raise exception using errcode = '22023', message = '豁免类型不正确';
+  end if;
+
+  if p_exemption_category is null
+    or p_exemption_category not in ('waive', 'leave') then
+    raise exception using errcode = '22023', message = '豁免分类不正确';
+  end if;
+
+  if p_grant_type = 'permanent' then
+    if p_grant_start_date is null or p_grant_end_date is not null then
+      raise exception using errcode = '22023', message = '豁免日期不正确';
+    end if;
+
+    if nullif(trim(p_reason), '') is null then
+      raise exception using errcode = '22023', message = '永久豁免必须填写原因';
+    end if;
+  elsif p_grant_start_date is null
+    or p_grant_end_date is null
+    or p_grant_start_date > p_grant_end_date then
+    raise exception using errcode = '22023', message = '豁免日期不正确';
+  end if;
+
+  if p_replace_existing or p_grant_type = 'permanent' then
+    update public.exemption_grant
+    set status = 'inactive'
+    where user_id = p_user_id
+      and status = 'active';
+  end if;
+
+  insert into public.exemption_grant (
+    request_id,
+    user_id,
+    team_id,
+    start_date,
+    end_date,
+    grant_type,
+    exemption_category,
+    status
+  ) values (
+    null,
+    p_user_id,
+    v_target.team_id,
+    p_grant_start_date,
+    p_grant_end_date,
+    p_grant_type,
+    p_exemption_category,
+    'active'
+  )
+  returning id into v_grant_id;
+
+  perform set_config('dydata.exemption_write_authorized', '1', true);
+  update public.profiles
+  set
+    status = case when p_grant_type = 'permanent' then 'exempt' else 'active' end,
+    exempt_type = case when p_grant_type = 'permanent' then 'permanent' else 'temporary' end,
+    exempt_start_date = case when p_grant_type = 'permanent' then null else p_grant_start_date end,
+    exempt_end_date = case when p_grant_type = 'permanent' then null else p_grant_end_date end,
+    exempt_reason = nullif(trim(p_reason), ''),
+    exemption_category = p_exemption_category
+  where id = p_user_id;
+
+  return jsonb_build_object('grant_id', v_grant_id, 'user_id', p_user_id);
+end;
+$$;
+
+create or replace function public.clear_exemption_grant_atomically(p_user_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_actor public.profiles%rowtype;
+  v_target public.profiles%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception using errcode = '42501', message = '无权限管理豁免';
+  end if;
+
+  perform 1
+  from public.profiles
+  where id in (auth.uid(), p_user_id)
+  order by id
+  for update;
+
+  select * into v_actor from public.profiles where id = auth.uid();
+  if not found then
+    raise exception using errcode = '42501', message = '无权限管理豁免';
+  end if;
+
+  select * into v_target from public.profiles where id = p_user_id;
+  if not found then
+    raise exception using errcode = 'P0002', message = '用户资料不存在';
+  end if;
+
+  if v_actor.role <> 'owner'
+    and not (
+      (public.has_permission('manage_fulfillment') or public.has_permission('review_violations'))
+      and exists (
+        select 1
+        from public.visible_user_ids(v_actor.id) vis
+        where vis.user_id = p_user_id
+      )
+    ) then
+    raise exception using errcode = '42501', message = '无权限管理豁免';
+  end if;
+
+  update public.exemption_grant
+  set status = 'inactive'
+  where user_id = p_user_id
+    and status = 'active';
+
+  perform set_config('dydata.exemption_write_authorized', '1', true);
+  update public.profiles
+  set
+    status = 'active',
+    exempt_type = null,
+    exempt_start_date = null,
+    exempt_end_date = null,
+    exempt_reason = null,
+    exemption_category = null
+  where id = p_user_id;
+
+  return jsonb_build_object('user_id', p_user_id, 'cleared', true);
+end;
+$$;
+
+create or replace function public.review_exemption_request_atomically(
+  p_request_id uuid,
+  p_decision text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_actor public.profiles%rowtype;
+  v_target public.profiles%rowtype;
+  v_request public.exemption_request%rowtype;
+  v_grant_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception using errcode = '42501', message = '无权限审批豁免';
+  end if;
+
+  if p_decision is null or p_decision not in ('approved', 'rejected') then
+    raise exception using errcode = '22023', message = '审核决定不正确';
+  end if;
+
+  select * into v_actor
+  from public.profiles
+  where id = auth.uid();
+  if not found then
+    raise exception using errcode = '42501', message = '无权限审批豁免';
+  end if;
+
+  if v_actor.role <> 'owner'
+    and not (
+      public.has_permission('manage_fulfillment')
+      or public.has_permission('review_violations')
+    ) then
+    raise exception using errcode = '42501', message = '无权限审批豁免';
+  end if;
+
+  select request_row.*
+  into v_request
+  from public.exemption_request request_row
+  where request_row.id = p_request_id
+    and (
+      v_actor.role = 'owner'
+      or exists (
+        select 1
+        from public.visible_user_ids(v_actor.id) vis
+        where vis.user_id = request_row.applicant_user_id
+      )
+    )
+  for update of request_row;
+  if not found then
+    raise exception using errcode = 'P0002', message = '申请不存在';
+  end if;
+
+  perform 1
+  from public.profiles
+  where id in (auth.uid(), v_request.applicant_user_id)
+  order by id
+  for update;
+
+  select * into v_actor from public.profiles where id = auth.uid();
+  if not found then
+    raise exception using errcode = '42501', message = '无权限审批豁免';
+  end if;
+
+  select * into v_target
+  from public.profiles
+  where id = v_request.applicant_user_id;
+  if not found then
+    raise exception using errcode = 'P0002', message = '用户资料不存在';
+  end if;
+
+  if v_actor.role <> 'owner'
+    and not (
+      (public.has_permission('manage_fulfillment') or public.has_permission('review_violations'))
+      and exists (
+        select 1
+        from public.visible_user_ids(v_actor.id) vis
+        where vis.user_id = v_request.applicant_user_id
+      )
+    ) then
+    raise exception using errcode = 'P0002', message = '申请不存在';
+  end if;
+
+  if v_request.request_status <> 'pending' then
+    raise exception using errcode = 'P0001', message = '该申请已处理';
+  end if;
+
+  if p_decision = 'approved' then
+    if v_request.team_id is distinct from v_target.team_id then
+      raise exception using errcode = 'P0001', message = '申请人与团队不一致';
+    end if;
+
+    if v_request.exemption_type is null
+      or v_request.exemption_type not in ('single', '3days', '4days', '5days', 'yesterday', 'range', 'permanent') then
+      raise exception using errcode = '22023', message = '豁免类型不正确';
+    end if;
+
+    if v_request.exemption_category is null
+      or v_request.exemption_category not in ('waive', 'leave') then
+      raise exception using errcode = '22023', message = '豁免分类不正确';
+    end if;
+
+    if v_request.exemption_type = 'permanent' then
+      if v_request.start_date is null or v_request.end_date is not null then
+        raise exception using errcode = '22023', message = '豁免日期不正确';
+      end if;
+
+      if nullif(trim(v_request.reason), '') is null then
+        raise exception using errcode = '22023', message = '永久豁免必须填写原因';
+      end if;
+
+      update public.exemption_grant
+      set status = 'inactive'
+      where user_id = v_target.id
+        and status = 'active';
+    elsif v_request.start_date is null
+      or v_request.end_date is null
+      or v_request.start_date > v_request.end_date then
+      raise exception using errcode = '22023', message = '豁免日期不正确';
+    end if;
+
+    insert into public.exemption_grant (
+      request_id,
+      user_id,
+      team_id,
+      start_date,
+      end_date,
+      grant_type,
+      exemption_category,
+      status
+    ) values (
+      v_request.id,
+      v_target.id,
+      v_target.team_id,
+      v_request.start_date,
+      v_request.end_date,
+      v_request.exemption_type,
+      v_request.exemption_category,
+      'active'
+    )
+    returning id into v_grant_id;
+
+    perform set_config('dydata.exemption_write_authorized', '1', true);
+    update public.profiles
+    set
+      status = case when v_request.exemption_type = 'permanent' then 'exempt' else 'active' end,
+      exempt_type = case when v_request.exemption_type = 'permanent' then 'permanent' else 'temporary' end,
+      exempt_start_date = case when v_request.exemption_type = 'permanent' then null else v_request.start_date end,
+      exempt_end_date = case when v_request.exemption_type = 'permanent' then null else v_request.end_date end,
+      exempt_reason = nullif(trim(v_request.reason), ''),
+      exemption_category = v_request.exemption_category
+    where id = v_target.id;
+  end if;
+
+  update public.exemption_request
+  set
+    request_status = p_decision,
+    reviewed_by = auth.uid(),
+    reviewed_at = now()
+  where id = p_request_id;
+
+  return jsonb_build_object(
+    'request_id', p_request_id,
+    'decision', p_decision,
+    'grant_id', v_grant_id
+  );
+end;
+$$;
+
+revoke all on function public.apply_exemption_grant_atomically(uuid, date, date, text, text, text, boolean) from public;
+revoke all on function public.apply_exemption_grant_atomically(uuid, date, date, text, text, text, boolean) from anon;
+revoke all on function public.apply_exemption_grant_atomically(uuid, date, date, text, text, text, boolean) from service_role;
+grant execute on function public.apply_exemption_grant_atomically(uuid, date, date, text, text, text, boolean) to authenticated;
+
+revoke all on function public.clear_exemption_grant_atomically(uuid) from public;
+revoke all on function public.clear_exemption_grant_atomically(uuid) from anon;
+revoke all on function public.clear_exemption_grant_atomically(uuid) from service_role;
+grant execute on function public.clear_exemption_grant_atomically(uuid) to authenticated;
+
+revoke all on function public.review_exemption_request_atomically(uuid, text) from public;
+revoke all on function public.review_exemption_request_atomically(uuid, text) from anon;
+revoke all on function public.review_exemption_request_atomically(uuid, text) from service_role;
+grant execute on function public.review_exemption_request_atomically(uuid, text) to authenticated;

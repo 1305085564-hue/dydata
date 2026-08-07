@@ -6,6 +6,10 @@ const sql = readFileSync(
   new URL("../../supabase/migrations/20260718113000_atomic_exemption_approval.sql", import.meta.url),
   "utf8",
 );
+const closureSql = readFileSync(
+  new URL("../../supabase/migrations/20260807103000_permission_v2_contract_closure.sql", import.meta.url),
+  "utf8",
+);
 const dashboardActions = readFileSync(
   new URL("../app/(app)/dashboard/actions.ts", import.meta.url),
   "utf8",
@@ -106,4 +110,20 @@ test("豁免 RPC 移除旧 14 参数签名且只授权 authenticated", () => {
   assert.match(sql, /revoke all on function[\s\S]*from anon/i);
   assert.match(sql, /grant execute on function[\s\S]*to authenticated/i);
   assert.doesNotMatch(sql, /to service_role/i);
+});
+
+test("权限 V2 收口 migration 不再引用已废弃的小组和 content_items", () => {
+  assert.match(closureSql, /create or replace function public\.visible_user_ids/i);
+  assert.doesNotMatch(closureSql, /\bfrom\s+public\.groups\b/i);
+  assert.doesNotMatch(closureSql, /\bjoin\s+public\.groups\b/i);
+  assert.doesNotMatch(closureSql, /\bprofiles\.group_id\b/i);
+  assert.doesNotMatch(closureSql, /\bcontent_items\b/i);
+});
+
+test("权限 V2 收口 migration 的豁免审批改用新权限键和 visible_user_ids", () => {
+  assert.match(closureSql, /has_permission\('manage_fulfillment'\)/i);
+  assert.match(closureSql, /has_permission\('review_violations'\)/i);
+  assert.match(closureSql, /visible_user_ids\(v_actor\.id\)/i);
+  assert.doesNotMatch(closureSql, /managed_group/i);
+  assert.doesNotMatch(closureSql, /has_permission\('manage_violations'\)/i);
 });

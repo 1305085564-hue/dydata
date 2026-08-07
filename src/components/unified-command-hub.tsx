@@ -27,8 +27,6 @@ interface ExemptionRequest {
   applicant_name: string | null;
   team_id: string | null;
   team_name: string | null;
-  group_id: string | null;
-  group_name: string | null;
   exemption_type: string;
   start_date: string;
   end_date: string | null;
@@ -539,7 +537,7 @@ export function UnifiedCommandHub({
                                       </span>
                                     </div>
                                     <div className="mt-1 text-[12px] text-zinc-500">
-                                      {item.group_name || item.team_name || "未分组"} ·{" "}
+                                      {item.team_name || "未分组"} ·{" "}
                                       <span className="tabular-nums text-zinc-500">
                                         {item.start_date}
                                         {item.end_date ? ` 至 ${item.end_date}` : ""}

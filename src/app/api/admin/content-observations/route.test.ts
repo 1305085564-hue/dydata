@@ -12,14 +12,14 @@ function buildAccess(): ScopedAdminVideoAccess {
     actor: {
       userId: "server-admin-1",
       role: "admin" as const,
-      permissions: { view_content_review: true },
+      permissions: { review_content: true },
       name: "负责人",
       dataScope: "all" as const,
     },
     scope: {
       userId: "server-admin-1",
       role: "admin" as const,
-      permissions: { view_content_review: true },
+      permissions: { review_content: true },
       teamId: null,
       kind: "all" as const,
       visibleUserIds: [],

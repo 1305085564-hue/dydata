@@ -33,7 +33,7 @@ test("member-ai-suggestion 返回结构化建议", async () => {
         actor: {
           userId: "owner-1",
           role: "owner",
-          permissions: { use_ai_management: true, view_all_data: true },
+          permissions: { use_ai_assist: true },
           name: "阿禅",
           dataScope: "all" as const,
         },
@@ -48,7 +48,7 @@ test("member-ai-suggestion 返回结构化建议", async () => {
       buildDataAccessScope: async () => ({
         userId: "owner-1",
         role: "owner",
-        permissions: { use_ai_management: true, view_all_data: true },
+        permissions: { use_ai_assist: true },
         accessLevel: 4,
         teamId: null,
         groupId: null,

@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
     p_end_date: range.endDate,
     p_visible_user_ids: [userId],
     p_team_id: null,
-    p_group_id: null,
   });
   const unwrapped = unwrapRpc<FulfillmentCalendarRpcRow[]>(result, "加载成员发布管理历史失败");
   if ("response" in unwrapped) return unwrapped.response;

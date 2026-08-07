@@ -28,7 +28,6 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
       role: "admin",
       permissions: { manage_members: true, view_analytics: true },
       team_id: "team-1",
-      group_id: "group-1",
       membership_status: "active",
       archived_at: null,
       archived_by: null,
@@ -36,7 +35,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
       archive_snapshot: null,
       ...options.profile,
     },
-    metadata: { team_id: "team-1", team_name: "内容一部", group_id: "group-1" },
+    metadata: { team_id: "team-1", team_name: "内容一部" },
     banned: false,
     failures: options.fail ? { [options.fail]: 1 } : {},
     calls: [],
@@ -104,12 +103,12 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
         };
       }
 
-      if (table === "teams" || table === "groups") {
+      if (table === "teams") {
         return {
           select: () => ({
             eq: (_field: string, id: string) => ({
               maybeSingle: async () => ({
-                data: { name: table === "teams" ? (id === "team-1" ? "内容一部" : "内容二部") : "短视频组" },
+                data: { name: id === "team-1" ? "内容一部" : "内容二部" },
                 error: null,
               }),
             }),
@@ -148,16 +147,13 @@ test("归档成功后封禁 Auth、清空组织信息并保留归档快照", asy
   assert.equal(state.banned, true);
   assert.equal(state.profile.membership_status, "archived");
   assert.equal(state.profile.team_id, null);
-  assert.equal(state.profile.group_id, null);
   assert.deepEqual(state.profile.permissions, {});
   assert.equal(state.profile.archive_reason, "长期离职");
   assert.deepEqual(state.profile.archive_snapshot, {
     role: "admin",
     permissions: { manage_members: true, view_analytics: true },
     team_id: "team-1",
-    group_id: "group-1",
     team_name: "内容一部",
-    group_name: "短视频组",
   });
   assert.deepEqual(state.logRows, [{
     profile_id: "member-1",
@@ -189,7 +185,7 @@ test("归档的 Auth metadata 同步失败时补偿 profile、metadata 和封禁
   assert.equal(state.banned, false);
   assert.equal(state.profile.membership_status, "active");
   assert.equal(state.profile.team_id, "team-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部", group_id: "group-1" });
+  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
 });
 
 test("归档成员变更日志失败时不留下半归档状态", async () => {
@@ -215,7 +211,6 @@ test("恢复 profile 写入失败时恢复原封禁状态", async () => {
     profile: {
       membership_status: "archived",
       team_id: null,
-      group_id: null,
       role: "member",
       permissions: {},
       archived_at: "2026-08-03T12:00:00.000Z",
@@ -225,7 +220,6 @@ test("恢复 profile 写入失败时恢复原封禁状态", async () => {
         role: "admin",
         permissions: { manage_members: true },
         team_id: "team-1",
-        group_id: "group-1",
       },
     },
   });
@@ -256,8 +250,7 @@ test("移出团队的 Auth metadata 同步失败时恢复 profile 和 metadata",
   assert.equal(result.ok, false);
   assert.match(result.firstError, /metadata failed/);
   assert.equal(state.profile.team_id, "team-1");
-  assert.equal(state.profile.group_id, "group-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部", group_id: "group-1" });
+  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
 });
 
 test("调配团队的 Auth metadata 同步失败时恢复旧团队归属", async () => {
@@ -274,8 +267,7 @@ test("调配团队的 Auth metadata 同步失败时恢复旧团队归属", async
   assert.equal(result.ok, false);
   assert.match(result.firstError, /metadata failed/);
   assert.equal(state.profile.team_id, "team-1");
-  assert.equal(state.profile.group_id, "group-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部", group_id: "group-1" });
+  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
 });
 
 test("调配团队的成员变更日志失败时恢复 profile 和 Auth metadata", async () => {
@@ -292,6 +284,5 @@ test("调配团队的成员变更日志失败时恢复 profile 和 Auth metadata
   assert.equal(result.ok, false);
   assert.match(result.firstError, /log failed/);
   assert.equal(state.profile.team_id, "team-1");
-  assert.equal(state.profile.group_id, "group-1");
-  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部", group_id: "group-1" });
+  assert.deepEqual(state.metadata, { team_id: "team-1", team_name: "内容一部" });
 });

@@ -157,7 +157,7 @@ test("screenshot route 拒绝普通成员读取待审核案例截图", async () 
       }),
       getUserProfile: async () => ({
         role: "member",
-        permissions: { manage_violations: false },
+        permissions: { review_violations: false },
       }),
       createAdminClient: () => createSupabaseForScreenshotRoute({
         violationRows: [{
@@ -184,7 +184,7 @@ test("screenshot route 允许普通成员读取已验证案例截图", async () 
       }),
       getUserProfile: async () => ({
         role: "member",
-        permissions: { manage_violations: false },
+        permissions: { review_violations: false },
       }),
       createAdminClient: () => createSupabaseForScreenshotRoute({
         violationRows: [{
@@ -211,7 +211,7 @@ test("screenshot route 允许普通成员读取已验证 knowledge_cases 截图"
       }),
       getUserProfile: async () => ({
         role: "member",
-        permissions: { manage_violations: false },
+        permissions: { review_violations: false },
       }),
       createAdminClient: () => createSupabaseForScreenshotRoute({
         knowledgeRows: [{
@@ -238,7 +238,7 @@ test("screenshot route 允许有复核权限的管理员读取待审核截图", 
       }),
       getUserProfile: async () => ({
         role: "member",
-        permissions: { manage_violations: true },
+        permissions: { review_violations: true },
       }),
       createAdminClient: () => createSupabaseForScreenshotRoute({
         violationRows: [{

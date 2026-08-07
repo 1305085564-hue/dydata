@@ -39,7 +39,6 @@ export type CollaborationProfile = {
   id: string;
   name: string | null;
   team_id: string | null;
-  group_id: string | null;
 };
 
 export type CollaborationAccount = {
@@ -378,7 +377,6 @@ export function buildPersonPayload(input: {
     userId: input.targetUserId,
     name: input.profile.name?.trim() || "未命名成员",
     teamId: input.profile.team_id,
-    groupId: input.profile.group_id,
     currentMonth: {
       writerCount: currentRows.filter((row) => row.script_author_user_id === input.targetUserId).length,
       editorCount: currentRows.filter((row) => row.video_editor_user_id === input.targetUserId).length,
@@ -435,7 +433,7 @@ async function loadProfiles(supabase: SupabaseClient, ids: string[]) {
   if (ids.length === 0) return [];
   const result = await supabase
     .from("profiles")
-    .select("id, name, team_id, group_id")
+    .select("id, name, team_id")
     .in("id", ids);
   assertSupabaseQuerySucceeded(result.error, "加载协作成员失败");
   return (result.data ?? []) as CollaborationProfile[];
@@ -535,7 +533,7 @@ export async function loadPersonData(input: {
   const ranges = getSixMonthRanges(input.year, input.month);
   const profileResult = await input.supabase
     .from("profiles")
-    .select("id, name, team_id, group_id")
+    .select("id, name, team_id")
     .eq("id", input.targetUserId)
     .maybeSingle();
   assertSupabaseQuerySucceeded(profileResult.error, "加载个人资料失败");

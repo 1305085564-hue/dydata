@@ -11,9 +11,7 @@ export interface MemberArchiveSnapshot {
   role: UserRole;
   permissions: Permissions;
   team_id: string | null;
-  group_id: string | null;
   team_name?: string | null;
-  group_name?: string | null;
 }
 
 export interface MemberLifecycleProfile {
@@ -21,7 +19,6 @@ export interface MemberLifecycleProfile {
   role: UserRole;
   permissions: Permissions | null;
   team_id: string | null;
-  group_id: string | null;
   membership_status?: MembershipStatus | string | null;
 }
 
@@ -34,7 +31,6 @@ export interface ArchiveMemberProfilePatch {
   role: "member";
   permissions: Permissions;
   team_id: null;
-  group_id: null;
 }
 
 export interface RestoreMemberProfilePatch {
@@ -46,7 +42,6 @@ export interface RestoreMemberProfilePatch {
   role: "member";
   permissions: Permissions;
   team_id: null;
-  group_id: null;
 }
 
 export function normalizeMembershipStatus(value: unknown): MembershipStatus {
@@ -140,7 +135,6 @@ export function buildArchiveMemberProfilePatch(input: {
     role: "member",
     permissions: {},
     team_id: null,
-    group_id: null,
   };
 }
 
@@ -154,6 +148,5 @@ export function buildRestoreMemberProfilePatch(): RestoreMemberProfilePatch {
     role: "member",
     permissions: {},
     team_id: null,
-    group_id: null,
   };
 }

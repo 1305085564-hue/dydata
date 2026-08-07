@@ -42,17 +42,17 @@ test("parseLimit clamps list sizes", () => {
   assert.equal(parseLimit("abc", 20), 20);
 });
 
-test("全局产量配置只允许 owner 和 team_admin", () => {
+test("全局产量配置只允许 owner 或带 manage_fulfillment 的管理员", () => {
   const groupLeaderResponse = requireGlobalProductionActor({
-    actor: { role: "admin" },
+    actor: { role: "admin", permissions: {} },
   } as never);
   assert.equal(groupLeaderResponse?.status, 403);
 
   assert.equal(requireGlobalProductionActor({
-    actor: { role: "admin" },
+    actor: { role: "admin", permissions: { manage_fulfillment: true } },
   } as never), null);
   assert.equal(requireGlobalProductionActor({
-    actor: { role: "owner" },
+    actor: { role: "owner", permissions: {} },
   } as never), null);
 });
 

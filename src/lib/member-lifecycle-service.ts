@@ -19,7 +19,6 @@ export type MemberLifecycleProfileRow = MemberLifecycleProfile & {
   name?: string | null;
   permissions: Permissions | null;
   team_id: string | null;
-  group_id: string | null;
   membership_status: string | null;
   archived_at?: string | null;
   archived_by?: string | null;
@@ -145,8 +144,6 @@ export async function syncAuthUserTeamMetadata(
   input: {
     teamId: string | null;
     teamName: string | null;
-    groupId?: string | null;
-    groupName?: string | null;
     metadata?: Record<string, unknown>;
   },
 ) {
@@ -162,8 +159,6 @@ export async function syncAuthUserTeamMetadata(
       ...metadata,
       team_id: input.teamId,
       team_name: input.teamName,
-      group_id: input.groupId ?? null,
-      group_name: input.groupName ?? null,
     },
   });
   return result.error;
@@ -183,7 +178,7 @@ async function restoreAuthUserMetadata(
 async function loadTargetProfile(client: MemberLifecycleClient, targetId: string) {
   const result = await client
     .from("profiles")
-    .select("id, name, role, permissions, team_id, group_id, membership_status, archived_at, archived_by, archive_reason, archive_snapshot")
+    .select("id, name, role, permissions, team_id, membership_status, archived_at, archived_by, archive_reason, archive_snapshot")
     .eq("id", targetId)
     .maybeSingle<MemberLifecycleProfileRow>();
 
@@ -199,12 +194,12 @@ async function loadTargetProfile(client: MemberLifecycleClient, targetId: string
 
 async function loadName(
   client: MemberLifecycleClient,
-  table: "teams" | "groups",
+  table: "teams",
   id: string | null,
 ) {
   if (!id) return { name: null as string | null };
   const result = await client.from(table).select("name").eq("id", id).maybeSingle<{ name: string | null }>();
-  if (result.error) return { error: result.error.message ?? `加载${table === "teams" ? "团队" : "分组"}名称失败` };
+  if (result.error) return { error: result.error.message ?? "加载团队名称失败" };
   return { name: result.data?.name ?? null };
 }
 
@@ -215,7 +210,6 @@ function toProfileSnapshot(profile: MemberLifecycleProfileRow): Record<string, u
     role: profile.role,
     permissions: profile.permissions ?? {},
     team_id: profile.team_id ?? null,
-    group_id: profile.group_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,
     archived_by: profile.archived_by ?? null,
@@ -229,7 +223,6 @@ function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): Record<s
     role: profile.role,
     permissions: profile.permissions ?? {},
     team_id: profile.team_id ?? null,
-    group_id: profile.group_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
     archived_at: profile.archived_at ?? null,
     archived_by: profile.archived_by ?? null,
@@ -312,7 +305,7 @@ export async function transferMemberToTeamWithClient(input: {
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return operationFailure("transfer_team", "校验", new Error("已归档账号不能调配团队，请先恢复账号"));
   }
-  if (target.team_id === input.newTeamId && target.group_id === null) {
+  if (target.team_id === input.newTeamId) {
     return {
       ok: true,
       changed: false,
@@ -328,15 +321,12 @@ export async function transferMemberToTeamWithClient(input: {
 
   const profileWrite = await writeProfile(input.client, target.id, {
     team_id: input.newTeamId,
-    group_id: null,
   });
   if (profileWrite.error) return operationFailure("transfer_team", "成员资料写入", profileWrite.error);
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: input.newTeamId,
     teamName: input.newTeamName,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
@@ -345,7 +335,6 @@ export async function transferMemberToTeamWithClient(input: {
         label: "恢复成员团队归属",
         run: async () => (await writeProfile(input.client, target.id, {
           team_id: target.team_id ?? null,
-          group_id: target.group_id ?? null,
         })).error,
       },
       {
@@ -368,7 +357,6 @@ export async function transferMemberToTeamWithClient(input: {
         label: "恢复成员团队归属",
         run: async () => (await writeProfile(input.client, target.id, {
           team_id: target.team_id ?? null,
-          group_id: target.group_id ?? null,
         })).error,
       },
       {
@@ -384,7 +372,7 @@ export async function transferMemberToTeamWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId, group_id: null },
+    afterSnapshot: { ...beforeSnapshot, team_id: input.newTeamId },
     affectedData: { userId: target.id, teamId: input.newTeamId },
   };
 }
@@ -411,7 +399,7 @@ export async function removeMemberFromTeamWithClient(input: {
       afterSnapshot: toProfileSnapshot(target),
     };
   }
-  if (target.team_id === null && target.group_id === null) {
+  if (target.team_id === null) {
     return {
       ok: true,
       changed: false,
@@ -425,14 +413,12 @@ export async function removeMemberFromTeamWithClient(input: {
   const auth = await loadAuthUserSnapshot(input.client, target.id);
   if (!auth.ok) return operationFailure("remove_from_team", "读取 Auth 用户", auth.error);
 
-  const profileWrite = await writeProfile(input.client, target.id, { team_id: null, group_id: null });
+  const profileWrite = await writeProfile(input.client, target.id, { team_id: null });
   if (profileWrite.error) return operationFailure("remove_from_team", "成员资料写入", profileWrite.error);
 
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
     teamName: null,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
@@ -441,7 +427,6 @@ export async function removeMemberFromTeamWithClient(input: {
         label: "恢复成员团队归属",
         run: async () => (await writeProfile(input.client, target.id, {
           team_id: target.team_id ?? null,
-          group_id: target.group_id ?? null,
         })).error,
       },
       {
@@ -464,7 +449,6 @@ export async function removeMemberFromTeamWithClient(input: {
         label: "恢复成员团队归属",
         run: async () => (await writeProfile(input.client, target.id, {
           team_id: target.team_id ?? null,
-          group_id: target.group_id ?? null,
         })).error,
       },
       {
@@ -480,7 +464,7 @@ export async function removeMemberFromTeamWithClient(input: {
     changed: true,
     target,
     beforeSnapshot,
-    afterSnapshot: { ...beforeSnapshot, team_id: null, group_id: null },
+    afterSnapshot: { ...beforeSnapshot, team_id: null },
   };
 }
 
@@ -514,13 +498,11 @@ export async function archiveMemberWithClient(input: {
     };
   }
 
-  const [team, group, auth] = await Promise.all([
+  const [team, auth] = await Promise.all([
     loadName(input.client, "teams", target.team_id ?? null),
-    loadName(input.client, "groups", target.group_id ?? null),
     loadAuthUserSnapshot(input.client, target.id),
   ]);
   if (team.error) return operationFailure("archive", "加载团队快照", new Error(team.error));
-  if (group.error) return operationFailure("archive", "加载分组快照", new Error(group.error));
   if (!auth.ok) return operationFailure("archive", "读取 Auth 用户", auth.error);
 
   const beforeSnapshot = toProfileSnapshot(target);
@@ -528,9 +510,7 @@ export async function archiveMemberWithClient(input: {
     role: target.role,
     permissions: target.permissions ?? {},
     team_id: target.team_id ?? null,
-    group_id: target.group_id ?? null,
     team_name: team.name,
-    group_name: group.name,
   };
   const profilePatch = buildArchiveMemberProfilePatch({
     target,
@@ -554,8 +534,6 @@ export async function archiveMemberWithClient(input: {
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
     teamName: null,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {
@@ -640,8 +618,6 @@ export async function restoreMemberWithClient(input: {
   const metadataError = await syncAuthUserTeamMetadata(input.client, target.id, {
     teamId: null,
     teamName: null,
-    groupId: null,
-    groupName: null,
     metadata: auth.value.metadata,
   });
   if (metadataError) {

@@ -160,7 +160,6 @@ type OperatorMember = {
   display_name: string;
   department: string | null;
   team_id: string | null;
-  group_id: string | null;
 };
 
 type FormMetaState = {

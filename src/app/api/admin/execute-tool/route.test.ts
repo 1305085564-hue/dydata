@@ -10,9 +10,7 @@ function buildAuth(supabase: unknown) {
       userId: "admin-1",
       role: "admin" as const,
       permissions: {
-        edit_data: true,
         manage_members: true,
-        view_all_data: true,
       },
       name: "负责人",
       dataScope: "all" as const,

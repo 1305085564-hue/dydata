@@ -18,16 +18,10 @@ type ExemptionRequestRow = {
 type ProfileRow = {
   id: string;
   name: string | null;
-  group_id: string | null;
   team_id: string | null;
 };
 
 type TeamRow = {
-  id: string;
-  name: string | null;
-};
-
-type GroupRow = {
   id: string;
   name: string | null;
 };
@@ -65,7 +59,7 @@ export async function loadAdminExemptionList(input: {
   const allProfileIds = Array.from(new Set([...applicantIds, ...reviewerIds]));
 
   const profilesResult = allProfileIds.length > 0
-    ? await input.supabase.from("profiles").select("id, name, group_id, team_id").in("id", allProfileIds)
+    ? await input.supabase.from("profiles").select("id, name, team_id").in("id", allProfileIds)
     : { data: [] as ProfileRow[], error: null };
 
   if (profilesResult.error) {
@@ -78,38 +72,28 @@ export async function loadAdminExemptionList(input: {
     ...rows.map((row) => row.team_id).filter(Boolean),
     ...profiles.map((profile) => profile.team_id).filter(Boolean),
   ])) as string[];
-  const groupIds = Array.from(new Set(profiles.map((profile) => profile.group_id).filter(Boolean))) as string[];
-
   const teamsResult = teamIds.length > 0
     ? await input.supabase.from("teams").select("id, name").in("id", teamIds)
     : { data: [] as TeamRow[], error: null };
-  const groupsResult = groupIds.length > 0
-    ? await input.supabase.from("groups").select("id, name").in("id", groupIds)
-    : { data: [] as GroupRow[], error: null };
 
   if (teamsResult.error) {
     return databaseFailure("读取团队信息失败", teamsResult.error);
   }
-  if (groupsResult.error) {
-    return databaseFailure("读取小组信息失败", groupsResult.error);
-  }
 
   const teamById = new Map(((teamsResult.data ?? []) as TeamRow[]).map((team) => [team.id, team]));
-  const groupById = new Map(((groupsResult.data ?? []) as GroupRow[]).map((group) => [group.id, group]));
 
   return {
     data: rows.map((row) => {
       const applicant = row.applicant_user_id ? profileById.get(row.applicant_user_id) : null;
       const reviewer = row.reviewed_by ? profileById.get(row.reviewed_by) : null;
       const team = row.team_id ? teamById.get(row.team_id) : applicant?.team_id ? teamById.get(applicant.team_id) : null;
-      const group = applicant?.group_id ? groupById.get(applicant.group_id) : null;
 
       return {
         ...row,
         applicant_name: applicant?.name ?? null,
         team_name: team?.name ?? null,
-        group_id: applicant?.group_id ?? null,
-        group_name: group?.name ?? null,
+        group_id: null,
+        group_name: null,
         reviewed_by_name: reviewer?.name ?? null,
       };
     }),

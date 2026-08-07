@@ -57,7 +57,6 @@ function makeFakeSupabase(rows: Array<{ id: string; team_id?: string | null; mem
 
 test("inferDataScope: owner/admin/member fallback mapping is stable", () => {
   assert.equal(inferDataScope("owner", {}), "all");
-  assert.equal(inferDataScope("admin", { view_all_data: true }), "all");
   assert.equal(inferDataScope("admin", {}), "team");
   assert.equal(inferDataScope("member", {}), "self");
 });
@@ -128,7 +127,7 @@ test("buildDataAccessScope: activeVisibleUserIds excludes non-active members", a
   const profile = makeProfile({ id: "u1", data_scope: "all" });
   const supabase = makeFakeSupabase([
     { id: "u1", membership_status: "active" },
-    { id: "u2", membership_status: "removed" },
+    { id: "u2", membership_status: "archived" },
     { id: "u3", membership_status: "active" },
   ]);
 

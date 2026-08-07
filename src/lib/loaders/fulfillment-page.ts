@@ -4,7 +4,6 @@ import type {
   FulfillmentCalendarData,
   FulfillmentDayRecord,
   FulfillmentDateRange,
-  FulfillmentGroupOption,
   FulfillmentMemberSummary,
   FulfillmentScopeFilter,
   FulfillmentStatus,
@@ -16,8 +15,6 @@ export type FulfillmentCalendarRpcRow = {
   user_name: string;
   team_id: string | null;
   team_name: string | null;
-  group_id: string | null;
-  group_name: string | null;
   record_date: string;
   status: FulfillmentStatus;
   reason: string | null;
@@ -43,7 +40,6 @@ export type LoadFulfillmentCalendarOptions = {
   range?: Partial<FulfillmentDateRange>;
   visibleUserIds?: string[];
   teamId?: string | null;
-  groupId?: string | null;
 };
 
 const FULFILLED_STATUSES = new Set<FulfillmentStatus>(["published", "confirmed_published"]);
@@ -182,8 +178,6 @@ function createMemberSummary(row: FulfillmentCalendarRpcRow): FulfillmentMemberS
     userName: row.user_name,
     teamId: row.team_id,
     teamName: row.team_name,
-    groupId: row.group_id,
-    groupName: row.group_name,
     totalDays: 0,
     publishedDays: 0,
     leaveDays: 0,
@@ -202,8 +196,6 @@ function toDayRecord(row: FulfillmentCalendarRpcRow): FulfillmentDayRecord {
     userName: row.user_name,
     teamId: row.team_id,
     teamName: row.team_name,
-    groupId: row.group_id,
-    groupName: row.group_name,
     date: row.record_date,
     status: row.status,
     reason: row.reason ?? "",
@@ -256,8 +248,8 @@ export function buildFulfillmentCalendarData({
     year,
     month,
     range: normalizedRange,
-    scope: scope ?? { teamId: null, groupId: null, label: "全部可见范围" },
-    filterOptions: filterOptions ?? { teams: [], groups: [] },
+    scope: scope ?? { teamId: null, label: "全部可见范围" },
+    filterOptions: filterOptions ?? { teams: [] },
     members,
     todayExceptions: sortExceptionMembers(members
       .filter((member) => member.days[today]?.status === "unconfirmed")
@@ -284,11 +276,11 @@ async function loadFulfillmentFilterOptions(
   supabase: ReturnType<typeof createAdminClient>,
   visibleUserIds: string[],
 ): Promise<FulfillmentCalendarData["filterOptions"]> {
-  if (visibleUserIds.length === 0) return { teams: [], groups: [] };
+  if (visibleUserIds.length === 0) return { teams: [] };
 
   const { data: profileRows, error } = await supabase
     .from("profiles")
-    .select("team_id, group_id")
+    .select("team_id")
     .in("id", visibleUserIds);
 
   if (error) {
@@ -296,54 +288,16 @@ async function loadFulfillmentFilterOptions(
   }
 
   const teamIds = Array.from(new Set((profileRows ?? []).map((row) => row.team_id).filter(Boolean))) as string[];
-  const groupIds = Array.from(new Set((profileRows ?? []).map((row) => row.group_id).filter(Boolean))) as string[];
 
-  const [teamsResult, groupsResult] = await Promise.all([
-    teamIds.length > 0
-      ? supabase.from("teams").select("id, name").in("id", teamIds).order("name", { ascending: true })
-      : Promise.resolve({ data: [], error: null }),
-    groupIds.length > 0
-      ? supabase.from("groups").select("id, name, team_id").in("id", groupIds).order("name", { ascending: true })
-      : Promise.resolve({ data: [], error: null }),
-  ]);
+  const teamsResult = teamIds.length > 0
+    ? await supabase.from("teams").select("id, name").in("id", teamIds).order("name", { ascending: true })
+    : { data: [], error: null };
 
   if (teamsResult.error) throw new Error(teamsResult.error.message || "加载团队筛选项失败");
-  if (groupsResult.error) throw new Error(groupsResult.error.message || "加载小组筛选项失败");
 
   return {
     teams: (teamsResult.data ?? []) as FulfillmentTeamOption[],
-    groups: (groupsResult.data ?? []).map((group) => ({
-      id: group.id,
-      name: group.name,
-      teamId: group.team_id ?? null,
-    })) as FulfillmentGroupOption[],
   };
-}
-
-function resolveScopeFilter(
-  teamId: string | null,
-  groupId: string | null,
-  filterOptions: FulfillmentCalendarData["filterOptions"],
-): FulfillmentScopeFilter {
-  if (groupId) {
-    const group = filterOptions.groups.find((item) => item.id === groupId);
-    return {
-      teamId: group?.teamId ?? teamId,
-      groupId,
-      label: group ? `小组：${group.name}` : "指定小组",
-    };
-  }
-
-  if (teamId) {
-    const team = filterOptions.teams.find((item) => item.id === teamId);
-    return {
-      teamId,
-      groupId: null,
-      label: team ? `团队：${team.name}` : "指定团队",
-    };
-  }
-
-  return { teamId: null, groupId: null, label: "全部可见范围" };
 }
 
 function normalizeLoadOptions(
@@ -352,14 +306,13 @@ function normalizeLoadOptions(
   visibleUserIds: string[] = [],
 ): Required<Pick<LoadFulfillmentCalendarOptions, "visibleUserIds">> & Omit<LoadFulfillmentCalendarOptions, "visibleUserIds"> {
   if (typeof input === "number") {
-    return { year: input, month, visibleUserIds, teamId: null, groupId: null };
+    return { year: input, month, visibleUserIds, teamId: null };
   }
 
   return {
     ...input,
     visibleUserIds: input.visibleUserIds ?? [],
     teamId: input.teamId ?? null,
-    groupId: input.groupId ?? null,
   };
 }
 
@@ -385,14 +338,14 @@ export async function loadFulfillmentCalendar(
     : resolveFulfillmentDateRange({ year: options.year ?? null, month: options.month ?? null });
   const filterOptions = await loadFulfillmentFilterOptions(supabase, options.visibleUserIds);
   const teamId = normalizeUuid(options.teamId);
-  const groupId = normalizeUuid(options.groupId);
-  const scope = resolveScopeFilter(teamId, groupId, filterOptions);
+  const scope = teamId
+    ? { teamId, label: "指定团队" }
+    : { teamId: null, label: "全部可见范围" };
   const { data, error } = await supabase.rpc("get_fulfillment_range", {
     p_start_date: range.startDate,
     p_end_date: range.endDate,
     p_visible_user_ids: options.visibleUserIds.length > 0 ? options.visibleUserIds : null,
     p_team_id: teamId,
-    p_group_id: groupId,
   });
 
   if (error) {
