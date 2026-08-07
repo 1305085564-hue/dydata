@@ -11,13 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { DashboardForm, type DashboardAccountOption, type DashboardReportData } from "./dashboard-form";
 
 type HistoryReport = {
   id: string;
@@ -42,40 +35,14 @@ type HistoryReport = {
 
 interface HistoryListProps {
   history: HistoryReport[];
-  accounts: DashboardAccountOption[];
   accountDisplayNameMap: Record<string, string>;
-  today: string;
   onReportOpen?: (report: HistoryReport) => void;
-}
-
-function toExistingData(report: HistoryReport): DashboardReportData {
-  return {
-    id: report.id,
-    account_id: report.account_id,
-    title: report.title ?? "",
-    report_date: report.report_date ?? "",
-    play_count: report.play_count,
-    completion_rate: report.completion_rate,
-    avg_play_duration: report.avg_play_duration,
-    bounce_rate_2s: report.bounce_rate_2s,
-    completion_rate_5s: report.completion_rate_5s,
-    likes: report.likes ?? 0,
-    comments: report.comments ?? 0,
-    shares: report.shares ?? 0,
-    favorites: report.favorites ?? 0,
-    follower_gain: report.follower_gain ?? 0,
-    follower_convert: report.follower_convert,
-    content: report.content,
-    published_at: report.published_at,
-    uploaded_at: report.uploaded_at ?? "",
-  };
 }
 
 const DEFAULT_VISIBLE = 10;
 
-export function HistoryList({ history, accounts, accountDisplayNameMap, today, onReportOpen }: HistoryListProps) {
+export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: HistoryListProps) {
   const [expanded, setExpanded] = useState(false);
-  const [editingReport, setEditingReport] = useState<HistoryReport | null>(null);
   const visible = expanded ? history : history.slice(0, DEFAULT_VISIBLE);
   const hasMore = history.length > DEFAULT_VISIBLE;
 
@@ -105,7 +72,11 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
               <TableRow
                 key={report.id}
                 className={"group " + (onReportOpen ? "cursor-pointer" : "")}
-                onClick={onReportOpen ? () => onReportOpen(report) : undefined}
+                onClick={onReportOpen ? (event) => {
+                  // 阻止冒泡：否则同一个 click 会继续冒泡到新挂载的编辑弹窗底层，被 Base UI 判定为"点外部"瞬间关窗
+                  event.stopPropagation();
+                  onReportOpen(report);
+                } : undefined}
               >
                 <TableCell className="whitespace-nowrap text-zinc-500 tabular-nums">
                   {report.report_date?.slice(5)}
@@ -146,7 +117,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                     className="size-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
                     onClick={(event) => {
                       event.stopPropagation();
-                      setEditingReport(report);
+                      onReportOpen?.(report);
                     }}
                   >
                     <Pencil className="size-3.5 stroke-[1.5]" />
@@ -167,7 +138,11 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                 ? "cursor-pointer space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
                 : "space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
             }
-            onClick={onReportOpen ? () => onReportOpen(report) : undefined}
+            onClick={onReportOpen ? (event) => {
+              // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭
+              event.stopPropagation();
+              onReportOpen(report);
+            } : undefined}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -187,7 +162,7 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
                   className="size-7"
                   onClick={(event) => {
                     event.stopPropagation();
-                    setEditingReport(report);
+                    onReportOpen?.(report);
                   }}
                 >
                   <Pencil className="size-3.5 stroke-[1.5]" />
@@ -237,24 +212,6 @@ export function HistoryList({ history, accounts, accountDisplayNameMap, today, o
           </Button>
         </div>
       )}
-
-      <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
-          <DialogHeader>
-            <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-700">修改日报</DialogTitle>
-          </DialogHeader>
-          {editingReport && (
-            <DashboardForm
-              key={editingReport.id}
-              accounts={accounts}
-              defaultAccountId={editingReport.account_id}
-              today={today}
-              existingData={toExistingData(editingReport)}
-              actionBarMode="inline"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

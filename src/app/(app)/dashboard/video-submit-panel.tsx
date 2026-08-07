@@ -470,20 +470,26 @@ export function VideoSubmitPanel({
   }
 
   function openSubmittedDate(date: string) {
-    setActiveBizDate(date);
     setIsDataViewOpen(false);
-    setPendingFocusDate(date);
 
     if (date === today && selectedSummary) {
+      setActiveBizDate(date);
+      setPendingFocusDate(date);
       setRequestedMode("editToday");
       return;
     }
 
     const matchedReport = getReportForDate(date);
     if (matchedReport) {
+      // 开编辑弹窗时禁止 setActiveBizDate：父级用 账号-日期 作 key，
+      // 改日期会重挂整个面板、清掉 editingReport（弹窗秒关的同类根因）
       setRequestedMode(null);
       setEditingReport(matchedReport);
+      return;
     }
+
+    setActiveBizDate(date);
+    setPendingFocusDate(date);
   }
 
   function jumpFromDataView(date: string) {
@@ -536,11 +542,10 @@ export function VideoSubmitPanel({
     published_at: string | null;
     uploaded_at: string | null;
   }) {
-    setSelectedAccountId(report.account_id);
-    setActiveBizDate(report.report_date);
-    setRequestedMode(null);
+    // 只关历史弹窗、开编辑弹窗。禁止在这里 setActiveBizDate / setSelectedAccountId：
+    // 父组件 production-control-system 用 `${selectedAccountId}-${activeBizDate}` 作 key，
+    // 改日期/账号会卸载重挂整个面板，editingReport 会被清零（弹窗秒关跳回上传页的根因）。
     setIsHistoryOpen(false);
-    setPendingFocusDate(report.report_date);
     setEditingReport(report);
   }
 
@@ -879,9 +884,7 @@ export function VideoSubmitPanel({
                 content: report.content ?? null,
                 follower_convert: report.follower_convert ?? null,
               }))}
-              accounts={accounts.map((account) => ({ id: account.id, name: account.display_name }))}
               accountDisplayNameMap={accountDisplayNameMap}
-              today={today}
               onReportOpen={(report) => {
                 if (!report.report_date) return;
                 handleHistoryReportOpen({
@@ -897,9 +900,9 @@ export function VideoSubmitPanel({
       </Dialog>
 
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
+        <DialogContent className="max-h-[90vh] overflow-y-auto p-4 gap-3 sm:max-w-5xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader>
-            <DialogTitle>查看并修改当日数据</DialogTitle>
+            <DialogTitle>查看并修改日报数据</DialogTitle>
           </DialogHeader>
           {editingReport ? (
             <DashboardForm
