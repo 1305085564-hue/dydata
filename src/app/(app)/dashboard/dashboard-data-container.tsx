@@ -25,6 +25,7 @@ export async function DashboardDataContainer() {
         accounts={data.accounts}
         userId={data.userId}
         todayReports={data.todayReports}
+        monthSubmittedDates={data.monthSubmittedDates}
         monthReports={data.monthReports}
         history={data.history}
         accountIds={data.accountIds}

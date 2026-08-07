@@ -8,6 +8,8 @@ type QueryCall = {
   columns: string;
   eqFilters: Array<[string, unknown]>;
   inFilters: Array<[string, unknown[]]>;
+  gteFilters: Array<[string, unknown]>;
+  lteFilters: Array<[string, unknown]>;
   orders: Array<[string, Record<string, unknown> | undefined]>;
   limitCount: number | null;
 };
@@ -43,8 +45,44 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
       };
     }
 
+    if (call.table === "daily_reports" && call.columns === "report_date") {
+      return {
+        data: [
+          { report_date: "2026-05-01" },
+          { report_date: "2026-05-01" },
+          { report_date: "2026-05-02" },
+          { report_date: null },
+        ],
+        error: null,
+      };
+    }
+
     if (call.table === "daily_reports") {
-      return { data: [], error: null };
+      return {
+        data: [
+          {
+            id: "report-1",
+            account_id: "account-1",
+            title: "作品",
+            report_date: "2026-05-02",
+            play_count: 100,
+            completion_rate: null,
+            avg_play_duration: null,
+            bounce_rate_2s: null,
+            completion_rate_5s: null,
+            likes: 1,
+            comments: 2,
+            shares: 3,
+            favorites: 4,
+            follower_gain: 5,
+            follower_convert: null,
+            content: null,
+            published_at: null,
+            uploaded_at: "2026-05-02T01:00:00Z",
+          },
+        ],
+        error: null,
+      };
     }
 
     if (call.table === "exemption_grant") {
@@ -72,6 +110,8 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
             columns,
             eqFilters: [],
             inFilters: [],
+            gteFilters: [],
+            lteFilters: [],
             orders: [],
             limitCount: null,
           };
@@ -84,6 +124,14 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
             },
             in(column: string, values: unknown[]) {
               call.inFilters.push([column, values]);
+              return chain;
+            },
+            gte(column: string, value: unknown) {
+              call.gteFilters.push([column, value]);
+              return chain;
+            },
+            lte(column: string, value: unknown) {
+              call.lteFilters.push([column, value]);
               return chain;
             },
             order(column: string, options?: Record<string, unknown>) {
@@ -154,4 +202,15 @@ test("loadDashboardPageData 首屏只查一次 profiles 且不再拉 team review
   assert.equal(result.userRole, "admin");
   assert.equal(result.userDisplayName, "测试成员");
   assert.equal("teamReviewRequests" in result, false);
+});
+
+test("loadDashboardPageData 会返回本月已提交日期并去重", async () => {
+  const supabase = createSupabaseMock();
+
+  const result = await loadDashboardPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+  });
+
+  assert.deepEqual(result.monthSubmittedDates, ["2026-05-01", "2026-05-02"]);
 });

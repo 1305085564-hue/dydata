@@ -29,6 +29,7 @@ interface ProductionControlSystemProps {
   }[];
   userId: string;
   todayReports: TodaySubmissionReportLike[];
+  monthSubmittedDates: string[];
   monthReports: Array<
     Omit<TodaySubmissionReportLike, "account_id"> & { id: string; account_id: string }
   >;
@@ -50,6 +51,7 @@ export function ProductionControlSystem({
   accounts,
   userId,
   todayReports,
+  monthSubmittedDates,
   monthReports,
   history,
   accountIds,
@@ -65,12 +67,14 @@ export function ProductionControlSystem({
     () =>
       Array.from(
         new Set(
-          todayReports
-            .map((report) => report.report_date)
-            .filter((date): date is string => Boolean(date)),
+          [
+            ...monthSubmittedDates,
+            ...todayReports.map((report) => report.report_date),
+            ...monthReports.map((report) => report.report_date),
+          ].filter((date): date is string => Boolean(date)),
         ),
       ),
-    [todayReports],
+    [monthReports, monthSubmittedDates, todayReports],
   );
 
   useEffect(() => {

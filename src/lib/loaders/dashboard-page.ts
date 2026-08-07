@@ -327,9 +327,11 @@ export async function loadDashboardPageData({
   const accountIds = displayAccounts.map((account) => account.id);
   const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
+  const monthStartDate = `${today.slice(0, 8)}01`;
 
   const [
     todayReportsResult,
+    monthSubmittedDatesResult,
     userExemptionGrants,
     hasPendingExemption,
     userExemptionReviewNotice,
@@ -344,16 +346,32 @@ export async function loadDashboardPageData({
           .eq("report_date", today)
           .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
+    accountIds.length
+      ? supabase
+          .from("daily_reports")
+          .select("report_date")
+          .in("account_id", accountIds)
+          .gte("report_date", monthStartDate)
+          .lte("report_date", today)
+      : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadHasPendingExemptionRequest(supabase, userId),
     loadLatestExemptionReviewNotice(supabase, userId),
   ]);
 
   assertSupabaseQuerySucceeded(todayReportsResult.error, "加载今日提交记录失败");
+  assertSupabaseQuerySucceeded(monthSubmittedDatesResult.error, "加载本月提交日期失败");
   const rawTodayReports = todayReportsResult.data;
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
+  );
+  const monthSubmittedDates = Array.from(
+    new Set(
+      ((monthSubmittedDatesResult.data ?? []) as Array<{ report_date: string | null }>)
+        .map((report) => report.report_date)
+        .filter((reportDate): reportDate is string => Boolean(reportDate)),
+    ),
   );
   const submittedAccountIds = new Set(todayReports.map((report) => report.account_id).filter(Boolean));
 
@@ -373,7 +391,7 @@ export async function loadDashboardPageData({
   return {
     today,
     isExternalUser: false,
-    monthSubmittedDates: [],
+    monthSubmittedDates,
     monthReports: [],
     userId,
     userRole,
