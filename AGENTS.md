@@ -75,8 +75,8 @@
 
 ### 部署禁令
 
-- 禁沙箱/worktree；禁改 HTTPS remote；`git user.email` 必须 `1305085564@qq.com`；改动未 push 时在交付报告中提醒一次。
-- push/pull/fetch 操作流程 → `docs/reference/部署与Git规范.md`
+- 代码改完默认 commit + push main（自动合并）
+- Antigravity改动必须确认后才能 push
 
 ------
 
