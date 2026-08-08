@@ -234,7 +234,6 @@ export function MemberDrawer({
             </div>
             <SheetDescription>
               {member.teamName ?? "无团队"}
-              {member.groupName ? ` · ${member.groupName}` : ""}
             </SheetDescription>
           </SheetHeader>
 

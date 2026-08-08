@@ -22,7 +22,6 @@ export interface ProfileWithExemptionFields {
   permissions?: unknown;
   created_at?: string;
   team_id?: string | null;
-  group_id?: string | null;
   teams?: TeamRelation | TeamRelation[] | null;
 }
 
@@ -35,7 +34,6 @@ export interface ProfileWithoutExemptionFields {
   permissions?: unknown;
   created_at?: string;
   team_id?: string | null;
-  group_id?: string | null;
   teams?: TeamRelation | TeamRelation[] | null;
 }
 
@@ -65,7 +63,6 @@ function isMissingExemptionColumnError(error: QueryErrorLike | null) {
     "profiles.exempt_reason",
     "profiles.exemption_category",
     "profiles.team_id",
-    "profiles.group_id",
   ].some((column) => error.message.includes(column));
 }
 

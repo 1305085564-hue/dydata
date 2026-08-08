@@ -208,8 +208,8 @@ export function MonthlyMatrix({
                       <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-1 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <span className="text-[13px] font-medium text-zinc-900">{member.userName}</span>
-                          {(member.groupName || member.teamName) && (
-                            <span className="text-[12px] text-zinc-400">{member.groupName ?? member.teamName}</span>
+                          {member.teamName && (
+                            <span className="text-[12px] text-zinc-400">{member.teamName}</span>
                           )}
                         </div>
                       </td>

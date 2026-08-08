@@ -5,13 +5,23 @@ import test from "node:test";
 
 const source = readFileSync(resolve(process.cwd(), "src/components/nav-bar-client.tsx"), "utf8");
 
-test("系统维护弹层使用普通导航语义并由按钮控制", () => {
-  assert.match(source, /aria-controls="system-maintenance-panel"/);
-  assert.match(source, /<nav[\s\S]*id="system-maintenance-panel"[\s\S]*aria-label="系统维护"/);
-  assert.doesNotMatch(source, /aria-haspopup="menu"/);
-  assert.doesNotMatch(source, /handleWrenchMouseEnter|onMouseEnter=\{handleWrench/);
+test("主导航与顶部按钮暴露清晰的语义标签", () => {
+  assert.match(source, /aria-label="待办与通知中心"/);
+  assert.match(source, /aria-label="导航菜单"/);
+  assert.match(source, /aria-current=\{isGroupActive \? "page" : undefined\}/);
+  assert.match(source, /aria-expanded=\{isMobileMenuOpen\}/);
+  assert.match(source, /aria-controls="mobile-navigation-menu"/);
 });
 
-test("Escape 关闭系统维护弹层并把焦点还给触发按钮", () => {
-  assert.match(source, /e\.key === "Escape"[\s\S]*setWrenchOpen\(false\)[\s\S]*wrenchButtonRef\.current\?\.focus\(\)/);
+test("工作账号与通知入口保留键盘可达和动画降级", () => {
+  const workspace = readFileSync(resolve(process.cwd(), "src/components/workspace-picker.tsx"), "utf8");
+  const persona = readFileSync(resolve(process.cwd(), "src/components/user-workspace-popover.tsx"), "utf8");
+
+  assert.match(workspace, /aria-expanded=\{isOpen\}/);
+  assert.match(workspace, /aria-controls=\{menuId\}/);
+  assert.match(workspace, /role="group" aria-label="工作账号列表"/);
+  assert.match(workspace, /motion-safe:animate-ping/);
+  assert.match(persona, /aria-expanded=\{isOpen\}/);
+  assert.match(persona, /aria-controls=\{menuId\}/);
+  assert.match(persona, /motion-safe:animate-ping/);
 });

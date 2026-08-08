@@ -608,7 +608,7 @@ test("调配自己的团队会被拒绝，相同团队幂等不需要写入", ()
   );
 });
 
-test("调配团队写入 profiles 时会同步清空 group_id", () => {
+test("调配团队写入 profiles 时只同步团队归属", () => {
   assert.deepEqual(buildMemberTeamTransferPatch("team-2"), {
     team_id: "team-2",
   });
@@ -633,9 +633,8 @@ test("取消会恢复到当前基线快照", () => {
       name: "管理员甲",
       role: "admin",
       permissions: {
-        view_all_data: false,
-        edit_data: true,
         export_data: false,
+        review_content: true,
       },
     },
     {
@@ -643,7 +642,7 @@ test("取消会恢复到当前基线快照", () => {
       name: "成员乙",
       role: "member",
       permissions: {
-        edit_data: true,
+        review_content: true,
       },
     },
   ];

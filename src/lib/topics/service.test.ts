@@ -300,8 +300,8 @@ test("聚焦选题按近期成绩和历史高均播久未重做分组，并去�
       topics: { id: "topic-1", name: "母题" },
       topic_groups: null,
       works: [
-        { uploadedAt: "2026-08-01T00:00:00.000Z", recentSnapshotAt: "2026-08-01T01:00:00.000Z", playCount: 3000 },
-        { uploadedAt: "2026-07-28T00:00:00.000Z", recentSnapshotAt: "2026-07-28T01:00:00.000Z", playCount: 1000 },
+        { uploadedAt: "2026-08-01T00:00:00.000Z", recentSnapshotAt: "2026-08-01T01:00:00.000Z", playCount: 50000 },
+        { uploadedAt: "2026-07-28T00:00:00.000Z", recentSnapshotAt: "2026-07-28T01:00:00.000Z", playCount: 29999 },
       ],
     },
     {
@@ -535,7 +535,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         count: 1,
       },
     ],
-    sub_topic_claims: [{ data: [{ sub_topic_id: "sub-old" }] }],
+    sub_topic_claims: [{ data: [{ id: "claim-1", sub_topic_id: "sub-old", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }] }],
     videos: [{ data: [] }],
   });
 
@@ -570,23 +570,28 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         claimCount: 1,
         candidateCount: 1,
         scriptingCount: 0,
-        myClaim: null,
+        myClaim: {
+          id: "claim-1",
+          subTopicId: "sub-old",
+          status: "candidate",
+          claimedAt: "2026-01-01T00:00:00.000Z",
+        },
       },
     ],
     pagination: { page: 1, pageSize: 50, totalItems: 1 },
   });
 });
 
-test("子题汇总只统计播放量不低于 1000 的作品", () => {
+test("子题汇总只统计播放量不低于 3 万的作品", () => {
   const summary = calculateTopicWorkSummary([
-    { playCount: 999, content: "低流量", uploadedAt: "2026-07-01T00:00:00.000Z" },
-    { playCount: 1000, content: "达标文案", uploadedAt: "2026-07-02T00:00:00.000Z" },
-    { playCount: 3000, content: "更好文案", uploadedAt: "2026-07-03T00:00:00.000Z" },
+    { playCount: 29999, content: "低流量", uploadedAt: "2026-07-01T00:00:00.000Z" },
+    { playCount: 30000, content: "达标文案", uploadedAt: "2026-07-02T00:00:00.000Z" },
+    { playCount: 50000, content: "更好文案", uploadedAt: "2026-07-03T00:00:00.000Z" },
   ]);
 
   assert.equal(summary.qualifiedWorkCount, 2);
-  assert.equal(summary.averagePlayCount, 2000);
-  assert.equal(summary.bestPlayCount, 3000);
+  assert.equal(summary.averagePlayCount, 40000);
+  assert.equal(summary.bestPlayCount, 50000);
   assert.equal(summary.bestCopy, "更好文案");
   assert.equal(summary.latestCopy, "更好文案");
 });
@@ -612,10 +617,10 @@ test("认领动态隐藏范围外身份但保留全量撞车计数和写稿优�
 test("横向对比按账号和母题聚合，按达标率排序并标记小样本", () => {
   const rows = buildTopicComparisonRows(
     [
-      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 1000 },
-      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 3000 },
-      { topicId: "topic-1", topicName: "美妆", accountId: "account-2", accountName: "B号", playCount: 999 },
-      { topicId: "topic-2", topicName: "穿搭", accountId: "account-1", accountName: "A号", playCount: 2000 },
+      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 30000 },
+      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 50000 },
+      { topicId: "topic-1", topicName: "美妆", accountId: "account-2", accountName: "B号", playCount: 29999 },
+      { topicId: "topic-2", topicName: "穿搭", accountId: "account-1", accountName: "A号", playCount: 35000 },
     ],
     "account",
   );
@@ -629,8 +634,8 @@ test("横向对比按账号和母题聚合，按达标率排序并标记小样�
       workCount: 2,
       qualifiedCount: 2,
       qualifiedRate: 1,
-      avgPlayCount: 2000,
-      bestPlayCount: 3000,
+      avgPlayCount: 40000,
+      bestPlayCount: 50000,
       lowConfidence: true,
     },
     {
@@ -641,8 +646,8 @@ test("横向对比按账号和母题聚合，按达标率排序并标记小样�
       workCount: 1,
       qualifiedCount: 1,
       qualifiedRate: 1,
-      avgPlayCount: 2000,
-      bestPlayCount: 2000,
+      avgPlayCount: 35000,
+      bestPlayCount: 35000,
       lowConfidence: true,
     },
     {
@@ -653,8 +658,8 @@ test("横向对比按账号和母题聚合，按达标率排序并标记小样�
       workCount: 1,
       qualifiedCount: 0,
       qualifiedRate: 0,
-      avgPlayCount: 999,
-      bestPlayCount: 999,
+      avgPlayCount: 29999,
+      bestPlayCount: 29999,
       lowConfidence: true,
     },
   ]);

@@ -226,9 +226,9 @@ export function ExceptionQueue({
                         <span className="font-medium text-zinc-900 transition-colors group-hover/btn:text-[#D97757]">
                           {member.userName}
                         </span>
-                        {(member.groupName || member.teamName) && (
+                        {member.teamName && (
                           <span className="text-[12px] text-zinc-500">
-                            {member.groupName ?? member.teamName}
+                            {member.teamName}
                           </span>
                         )}
                       </button>
@@ -444,8 +444,8 @@ export function ExceptionQueue({
                     className="inline-flex items-center rounded-md border border-zinc-200/80 bg-white px-2 py-0.5 text-zinc-800 shadow-2xs"
                   >
                     <span className="font-medium">{m.userName}</span>
-                    {m.groupName || m.teamName ? (
-                      <span className="ml-1 text-[11px] text-zinc-500">({m.groupName ?? m.teamName})</span>
+                    {m.teamName ? (
+                      <span className="ml-1 text-[11px] text-zinc-500">({m.teamName})</span>
                     ) : null}
                   </span>
                 ))}

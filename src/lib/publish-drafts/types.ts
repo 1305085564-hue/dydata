@@ -1,6 +1,6 @@
 export type DraftStatus = "pending" | "approved" | "rejected";
 
-export type PublishDraftBusinessRole = "owner" | "admin" | "admin" | "member";
+export type PublishDraftBusinessRole = "owner" | "admin" | "member";
 
 export type FeedbackHistoryItem = {
   round: number;
@@ -64,7 +64,6 @@ export type PublishDraftActorScope = {
 const DRAFT_STATUS_SET = new Set<DraftStatus>(["pending", "approved", "rejected"]);
 const BUSINESS_ROLE_SET = new Set<PublishDraftBusinessRole>([
   "owner",
-  "admin",
   "admin",
   "member",
 ]);

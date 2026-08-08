@@ -24,7 +24,7 @@ test("管理员 5 大分组结构完整解析", () => {
           { href: "/content-tools/rewrite", label: "文案助手" },
           { href: "/admin/content", label: "视频复盘" },
           { href: "/admin/videos", label: "素材库" },
-          { href: "/admin/fulfillment", label: "发布管理" },
+          { href: "/violations", label: "避坑案例" },
         ],
       },
       {
@@ -45,6 +45,7 @@ test("管理员 5 大分组结构完整解析", () => {
           { href: "/admin/modules", label: "成员管理" },
           { href: "/admin/settings", label: "系统维护" },
           { href: "/admin/ai-config", label: "AI 配置" },
+          { href: "/admin/fulfillment", label: "发布管理" },
         ],
       },
     ]
@@ -62,7 +63,7 @@ test("非管理员只能看到基础分组，管理中心若全无权限则自�
   const flatItems = getNavItems({ showAdmin: false });
   assert.deepEqual(
     flatItems.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration"]
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration"]
   );
 });
 
@@ -73,7 +74,7 @@ test("统一主导航按具体权限暴露管理子项", () => {
   });
   assert.deepEqual(
     contentOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
   );
 
   const videosOnly = getNavItems({
@@ -82,7 +83,7 @@ test("统一主导航按具体权限暴露管理子项", () => {
   });
   assert.deepEqual(
     videosOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
   );
 });
 
@@ -91,6 +92,6 @@ test("未授予 AI 文案权限时隐藏文案助手入口", () => {
 
   assert.deepEqual(
     items.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/admin/fulfillment", "/growth", "/admin/analytics", "/admin/collaboration"]
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration"]
   );
 });

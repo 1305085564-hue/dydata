@@ -10,7 +10,6 @@ test("含子控件的卡片不再把外层伪装成按钮", () => {
     "src/app/(app)/admin/ai-config/components/providers-client.tsx",
     "src/app/(app)/admin/ai-config/components/rewrite-client.tsx",
     "src/app/(app)/admin/content/content-list.tsx",
-    "src/app/(app)/admin/modules/modules-content-v2.tsx",
     "src/app/(app)/dashboard/history-list.tsx",
   ];
 
@@ -33,17 +32,18 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   const rewrite = readSource("src/app/(app)/admin/ai-config/components/rewrite-client.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
 
-  for (const source of [providers, rewrite, modules]) {
-    assert.match(source, /aria-current=/);
-  }
-  assert.match(providers, /opacity-100[^\n]*sm:opacity-0[^\n]*sm:group-focus-within:opacity-100/);
-  assert.match(rewrite, /opacity-100[^\n]*sm:opacity-0[^\n]*sm:group-focus-within:opacity-100/);
-  assert.match(modules, /pointer-events-auto[^\n]*sm:pointer-events-none[^\n]*sm:group-focus-within:pointer-events-auto/);
+  assert.match(providers, /aria-label={`启用渠道 \$\{p\.name\}`}/);
+  assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
+  assert.match(rewrite, /aria-current=\{isViewActive \? "true" : undefined\}/);
+  assert.match(modules, /aria-current=\{isTeamSelected \? "true" : undefined\}/);
+  assert.match(rewrite, /opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100/);
+  assert.match(modules, /opacity-100 transition-opacity pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto/);
 });
 
-test("默认展开的渠道第一次点击即可收起", () => {
+test("服务商与 Key 开关提供可读标签", () => {
   const source = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
-  assert.match(source, /\[id\]: !\(prev\[id\] !== false\)/);
+  assert.match(source, /aria-label={`启用渠道 \$\{p\.name\}`}/);
+  assert.match(source, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
 });
 
 test("诊断脚本行使用单一原生按钮，不再嵌套互动控件", () => {
@@ -96,17 +96,22 @@ test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
 
 test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回焦点", () => {
   const nav = readSource("src/components/nav-bar-client.tsx");
+  const persona = readSource("src/components/user-workspace-popover.tsx");
   const workspace = readSource("src/components/workspace-picker.tsx");
   assert.match(nav, /aria-expanded=\{isMobileMenuOpen\}/);
   assert.match(nav, /aria-controls="mobile-navigation-menu"/);
   assert.match(nav, /event\.key !== "Escape"[\s\S]*mobileMenuButtonRef\.current\?\.focus\(\)/);
-  assert.match(nav, /aria-label=\{`打开账号与设置：\$\{name\}`\}/);
-  assert.equal((nav.match(/aria-current=\{active \? "page" : undefined\}/g) ?? []).length, 2);
-  assert.match(nav, /motion-safe:animate-pulse/);
+  assert.match(nav, /aria-label="待办与通知中心"/);
+  assert.match(nav, /aria-label="导航菜单"/);
+  assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
+  assert.match(persona, /aria-expanded=\{isOpen\}/);
+  assert.match(persona, /aria-controls=\{menuId\}/);
+  assert.match(persona, /motion-safe:animate-ping/);
   assert.match(workspace, /type="button"[\s\S]*aria-expanded=\{isOpen\}[\s\S]*aria-controls=\{menuId\}/);
   assert.match(workspace, /event\.key !== "Escape"[\s\S]*triggerRef\.current\?\.focus\(\)/);
   assert.match(workspace, /role="group" aria-label="工作账号列表"/);
   assert.match(workspace, /aria-pressed=\{isSelected\}/);
+  assert.match(workspace, /motion-safe:animate-ping/);
 });
 
 test("认证页小号状态文字使用 AA 对比色", () => {
@@ -123,7 +128,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
   assert.match(modules, /<Sheet[\s\S]*open=\{activeMember !== null\}/);
-  assert.match(modules, /<SheetContent[\s\S]*<SheetTitle>/);
+  assert.match(modules, /<SheetContent[\s\S]*<SheetTitle\b/);
   assert.match(modules, /<SheetDescription/);
 
   const motionPaths = [
