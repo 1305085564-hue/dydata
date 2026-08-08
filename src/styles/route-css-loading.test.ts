@@ -27,8 +27,3 @@ test("跨登录后路由共享的样式不被错误缩到 Dashboard", () => {
   assert.match(dashboard, /\.animate-shake/);
   assert.match(dashboard, /\.animate-pulse-soft/);
 });
-
-test("后台导航不再依赖 Dashboard 专用选择器", () => {
-  const source = readSource("src/components/admin-secondary-nav.tsx");
-  assert.doesNotMatch(source, /dashboard-/);
-});

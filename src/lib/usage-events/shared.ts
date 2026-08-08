@@ -1,9 +1,6 @@
 const USAGE_EVENT_TYPES = [
   "page_view",
   "submit_daily_report",
-  "apply_exemption",
-  "submit_work_submission",
-  "submit_review_draft",
   "submit_violation_case",
   "review_violation_case",
   "rewrite_generate",

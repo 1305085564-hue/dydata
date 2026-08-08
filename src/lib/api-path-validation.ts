@@ -9,7 +9,6 @@ const UUID_PATH_RULES = [
   /^\/api\/content-tools\/rewrite\/conversations\/([^/]+)\/messages$/,
   /^\/api\/dashboard\/content-feedback-cards\/([^/]+)$/,
   /^\/api\/notifications\/([^/]+)\/(?:done|read)$/,
-  /^\/api\/publish-drafts\/([^/]+)(?:\/(?:approve|reject))?$/,
   /^\/api\/rewrite\/conversations\/([^/]+)\/skills(?:\/([^/]+))?$/,
   /^\/api\/rewrite\/documents\/([^/]+)(?:\/(?:history|paragraphs|revisions))?$/,
   /^\/api\/rewrite\/paragraphs\/([^/]+)\/undo$/,
