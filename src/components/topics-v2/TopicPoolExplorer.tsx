@@ -421,7 +421,7 @@ export function TopicPoolExplorer({
                       type="button"
                       disabled={operatingId === sub.id}
                       onClick={(e) => handleClaim(e, sub.id)}
-                      className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-900 text-zinc-700 text-xs font-medium opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all shrink-0"
+                      className="px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-600 hover:bg-[#D97757] hover:text-white active:scale-[0.97] text-xs font-medium transition-all shrink-0 border border-zinc-200/60 hover:border-transparent"
                       aria-label="认领写此题"
                     >
                       认领

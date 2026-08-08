@@ -8,9 +8,10 @@ import type { TopicComparisonDimension, TopicComparisonItem, TopicOption } from 
 interface TopicComparisonMatrixProps {
   topics: TopicOption[];
   topicsError?: string | null;
+  onSelectTopic?: (topicId: string) => void;
 }
 
-export function TopicComparisonMatrix({ topics, topicsError = null }: TopicComparisonMatrixProps) {
+export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopic }: TopicComparisonMatrixProps) {
   const [dimension, setDimension] = useState<TopicComparisonDimension>("topic");
   const [days, setDays] = useState<number>(30);
   const [topicId, setTopicId] = useState("");
@@ -155,15 +156,22 @@ export function TopicComparisonMatrix({ topics, topicsError = null }: TopicCompa
             const labelName = dimension === "topic" ? item.topicName || "常规母题" : `${item.accountName || "未命名账号"}`;
             const qualPercent = Math.round(item.qualifiedRate * 100);
             const format = (value: number) => (value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString());
+            const canLinkTopic = Boolean(item.topicId && onSelectTopic);
 
             return (
               <div
                 key={`${item.topicId ?? "topic"}-${item.accountId ?? "account"}`}
-                className="p-3.5 bg-zinc-50/60 border border-zinc-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4"
+                onClick={canLinkTopic ? () => onSelectTopic?.(item.topicId!) : undefined}
+                className={`p-3.5 bg-zinc-50/60 border border-zinc-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
+                  canLinkTopic ? "cursor-pointer hover:border-zinc-300 hover:bg-zinc-50/90 hover:shadow-2xs group" : ""
+                }`}
+                title={canLinkTopic ? `点击联动上方选题大盘查看《${labelName}》的全部子题` : undefined}
               >
                 <div className="w-full md:w-56 shrink-0 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-normal text-zinc-600 text-xs truncate min-w-0">{labelName}</span>
+                    <span className={`font-normal text-xs truncate min-w-0 ${canLinkTopic ? "text-zinc-700 group-hover:text-[#D97757] font-medium transition-colors" : "text-zinc-600"}`}>
+                      {labelName}
+                    </span>
                     {item.lowConfidence && (
                       <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1 shrink-0">
                         <AlertTriangle className="w-3 h-3 text-amber-600" />

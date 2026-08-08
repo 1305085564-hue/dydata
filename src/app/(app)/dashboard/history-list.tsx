@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Filter, Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -42,176 +42,312 @@ interface HistoryListProps {
 const DEFAULT_VISIBLE = 10;
 
 export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: HistoryListProps) {
+  const [selectedAccountId, setSelectedAccountId] = useState<string>("all");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? history : history.slice(0, DEFAULT_VISIBLE);
-  const hasMore = history.length > DEFAULT_VISIBLE;
+
+  // 提取可用账号选项
+  const accountOptions = useMemo(() => {
+    const accIds = Array.from(new Set(history.map((h) => h.account_id).filter(Boolean)));
+    return accIds.map((id) => ({
+      id,
+      name: accountDisplayNameMap[id] || id,
+    }));
+  }, [history, accountDisplayNameMap]);
+
+  // 提取可用月份选项（降序）
+  const monthOptions = useMemo(() => {
+    const months = Array.from(
+      new Set(
+        history
+          .map((h) => (h.report_date ? h.report_date.slice(0, 7) : null))
+          .filter((m): m is string => Boolean(m)),
+      ),
+    ).sort().reverse();
+    return months;
+  }, [history]);
+
+  const handleAccountChange = (accId: string) => {
+    setSelectedAccountId(accId);
+    setExpanded(false);
+  };
+
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    setExpanded(false);
+  };
+
+  const clearFilter = () => {
+    setSelectedAccountId("all");
+    setSelectedMonth("all");
+    setExpanded(false);
+  };
+
+  const filteredHistory = useMemo(() => {
+    return history.filter((report) => {
+      if (selectedAccountId !== "all" && report.account_id !== selectedAccountId) {
+        return false;
+      }
+      if (selectedMonth !== "all" && (!report.report_date || !report.report_date.startsWith(selectedMonth))) {
+        return false;
+      }
+      return true;
+    });
+  }, [history, selectedAccountId, selectedMonth]);
+
+  const visible = expanded ? filteredHistory : filteredHistory.slice(0, DEFAULT_VISIBLE);
+  const hasMore = filteredHistory.length > DEFAULT_VISIBLE;
+  const isFiltered = selectedAccountId !== "all" || selectedMonth !== "all";
 
   return (
-    <>
-      <div className="hidden overflow-x-auto md:block">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>日期</TableHead>
-              <TableHead>账号</TableHead>
-              <TableHead>视频标题</TableHead>
-              <TableHead className="text-right">播放量</TableHead>
-              <TableHead className="text-right">完播率</TableHead>
-              <TableHead className="text-right">均播时长</TableHead>
-              <TableHead className="hidden text-right lg:table-cell">2s跳出</TableHead>
-              <TableHead className="hidden text-right lg:table-cell">5s完播</TableHead>
-              <TableHead className="text-right">点赞</TableHead>
-              <TableHead className="text-right">评论</TableHead>
-              <TableHead className="text-right">分享</TableHead>
-              <TableHead className="hidden text-right lg:table-cell">收藏</TableHead>
-              <TableHead className="w-[60px]" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+    <div className="space-y-3">
+      {/* 历史记录公共筛选头部 */}
+      {(accountOptions.length > 1 || monthOptions.length > 1) && (
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-zinc-100 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-zinc-500 font-normal">
+              <Filter className="size-3.5 text-zinc-400" />
+              <span>筛选</span>
+            </span>
+
+            {/* 账号筛选 */}
+            {accountOptions.length > 1 && (
+              <select
+                value={selectedAccountId}
+                onChange={(e) => handleAccountChange(e.target.value)}
+                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 font-normal outline-none focus:border-[#D97757] focus:bg-white"
+                aria-label="按账号过滤历史记录"
+              >
+                <option value="all">全部账号 ({history.length})</option>
+                {accountOptions.map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* 月份筛选 */}
+            {monthOptions.length > 1 && (
+              <select
+                value={selectedMonth}
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 font-normal outline-none focus:border-[#D97757] focus:bg-white"
+                aria-label="按月份过滤历史记录"
+              >
+                <option value="all">全部月份</option>
+                {monthOptions.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={clearFilter}
+                className="text-xs text-zinc-500 hover:text-zinc-900 underline underline-offset-2 font-normal"
+              >
+                清空筛选
+              </button>
+            )}
+          </div>
+
+          <span className="text-zinc-400 text-xs tabular-nums font-normal">
+            共 {filteredHistory.length} 条
+          </span>
+        </div>
+      )}
+
+      {/* 过滤后空状态 */}
+      {filteredHistory.length === 0 ? (
+        <div className="py-12 text-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6">
+          <p className="text-xs font-medium text-zinc-700">没有符合该账号/月份的日报记录</p>
+          <p className="text-xs text-zinc-400 mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
+          {isFiltered && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={clearFilter}
+              className="mt-3 text-xs"
+            >
+              清空筛选
+            </Button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* 桌面端 Table */}
+          <div className="hidden overflow-x-auto md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>日期</TableHead>
+                  <TableHead>账号</TableHead>
+                  <TableHead>视频标题</TableHead>
+                  <TableHead className="text-right">播放量</TableHead>
+                  <TableHead className="text-right">完播率</TableHead>
+                  <TableHead className="text-right">均播时长</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">2s跳出</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">5s完播</TableHead>
+                  <TableHead className="text-right">点赞</TableHead>
+                  <TableHead className="text-right">评论</TableHead>
+                  <TableHead className="text-right">分享</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">收藏</TableHead>
+                  <TableHead className="w-[60px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visible.map((report) => (
+                  <TableRow
+                    key={report.id}
+                    className={"group " + (onReportOpen ? "cursor-pointer" : "")}
+                    onClick={onReportOpen ? (event) => {
+                      // 阻止冒泡：否则同一个 click 会继续冒泡到新挂载的编辑弹窗底层，被 Base UI 判定为"点外部"瞬间关窗
+                      event.stopPropagation();
+                      onReportOpen(report);
+                    } : undefined}
+                  >
+                    <TableCell className="whitespace-nowrap text-zinc-500 tabular-nums">
+                      {report.report_date?.slice(5)}
+                    </TableCell>
+                    <TableCell className="max-w-[120px] truncate text-zinc-500">
+                      {accountDisplayNameMap[report.account_id] ?? "-"}
+                    </TableCell>
+                    <TableCell className="max-w-[160px] truncate text-zinc-700">
+                      {onReportOpen ? (
+                        <button
+                          type="button"
+                          className="max-w-full truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onReportOpen(report);
+                          }}
+                        >
+                          {report.title}
+                        </button>
+                      ) : report.title}
+                    </TableCell>
+                    <TableCell className="text-right font-medium tabular-nums text-zinc-700">
+                      {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-zinc-700">{report.completion_rate ?? "-"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-zinc-700">{report.avg_play_duration ?? "-"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-zinc-700">{report.likes}</TableCell>
+                    <TableCell className="text-right tabular-nums text-zinc-700">{report.comments}</TableCell>
+                    <TableCell className="text-right tabular-nums text-zinc-700">{report.shares}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.favorites}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="编辑该日报"
+                        className="size-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onReportOpen?.(report);
+                        }}
+                      >
+                        <Pencil className="size-3.5 stroke-[1.5]" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* 移动端 Card 列表 */}
+          <div className="space-y-3 md:hidden">
             {visible.map((report) => (
-              <TableRow
+              <div
                 key={report.id}
-                className={"group " + (onReportOpen ? "cursor-pointer" : "")}
+                className={
+                  onReportOpen
+                    ? "cursor-pointer space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
+                    : "space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
+                }
                 onClick={onReportOpen ? (event) => {
-                  // 阻止冒泡：否则同一个 click 会继续冒泡到新挂载的编辑弹窗底层，被 Base UI 判定为"点外部"瞬间关窗
+                  // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭
                   event.stopPropagation();
                   onReportOpen(report);
                 } : undefined}
               >
-                <TableCell className="whitespace-nowrap text-zinc-500 tabular-nums">
-                  {report.report_date?.slice(5)}
-                </TableCell>
-                <TableCell className="max-w-[120px] truncate text-zinc-500">
-                  {accountDisplayNameMap[report.account_id] ?? "-"}
-                </TableCell>
-                <TableCell className="max-w-[160px] truncate text-zinc-700">
-                  {onReportOpen ? (
-                    <button
-                      type="button"
-                      className="max-w-full truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[12px] text-zinc-500 tabular-nums">{report.report_date?.slice(5)}</p>
+                    <p className="mt-1 text-[12px] text-zinc-500">
+                      {accountDisplayNameMap[report.account_id] ?? "-"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[13px] font-medium tabular-nums text-zinc-700">
+                      {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="编辑该日报"
+                      className="size-7"
                       onClick={(event) => {
                         event.stopPropagation();
-                        onReportOpen(report);
+                        onReportOpen?.(report);
                       }}
                     >
-                      {report.title}
-                    </button>
-                  ) : report.title}
-                </TableCell>
-                <TableCell className="text-right font-medium tabular-nums text-zinc-700">
-                  {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-zinc-700">{report.completion_rate ?? "-"}</TableCell>
-                <TableCell className="text-right tabular-nums text-zinc-700">{report.avg_play_duration ?? "-"}</TableCell>
-                <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
-                <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
-                <TableCell className="text-right tabular-nums text-zinc-700">{report.likes}</TableCell>
-                <TableCell className="text-right tabular-nums text-zinc-700">{report.comments}</TableCell>
-                <TableCell className="text-right tabular-nums text-zinc-700">{report.shares}</TableCell>
-                <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.favorites}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="编辑该日报"
-                    className="size-7 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                      <Pencil className="size-3.5 stroke-[1.5]" />
+                    </Button>
+                  </div>
+                </div>
+                {onReportOpen ? (
+                  <button
+                    type="button"
+                    className="max-w-full truncate rounded text-left text-[13px] text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
                     onClick={(event) => {
                       event.stopPropagation();
-                      onReportOpen?.(report);
+                      onReportOpen(report);
                     }}
                   >
-                    <Pencil className="size-3.5 stroke-[1.5]" />
-                  </Button>
-                </TableCell>
-              </TableRow>
+                    {report.title}
+                  </button>
+                ) : (
+                  <p className="truncate text-[13px] text-zinc-700">{report.title}</p>
+                )}
+                <div className="grid grid-cols-4 gap-2 text-[12px]">
+                  <div>
+                    <p className="text-zinc-500">完播率</p>
+                    <p className="tabular-nums text-zinc-700">{report.completion_rate ?? "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">点赞</p>
+                    <p className="tabular-nums text-zinc-700">{report.likes}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">评论</p>
+                    <p className="tabular-nums text-zinc-700">{report.comments}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">分享</p>
+                    <p className="tabular-nums text-zinc-700">{report.shares}</p>
+                  </div>
+                </div>
+              </div>
             ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="space-y-3 md:hidden">
-        {visible.map((report) => (
-          <div
-            key={report.id}
-            className={
-              onReportOpen
-                ? "cursor-pointer space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
-                : "space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
-            }
-            onClick={onReportOpen ? (event) => {
-              // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭
-              event.stopPropagation();
-              onReportOpen(report);
-            } : undefined}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[12px] text-zinc-500 tabular-nums">{report.report_date?.slice(5)}</p>
-                <p className="mt-1 text-[12px] text-zinc-500">
-                  {accountDisplayNameMap[report.account_id] ?? "-"}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="text-[13px] font-medium tabular-nums text-zinc-700">
-                  {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="编辑该日报"
-                  className="size-7"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onReportOpen?.(report);
-                  }}
-                >
-                  <Pencil className="size-3.5 stroke-[1.5]" />
-                </Button>
-              </div>
-            </div>
-            {onReportOpen ? (
-              <button
-                type="button"
-                className="max-w-full truncate rounded text-left text-[13px] text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onReportOpen(report);
-                }}
-              >
-                {report.title}
-              </button>
-            ) : (
-              <p className="truncate text-[13px] text-zinc-700">{report.title}</p>
-            )}
-            <div className="grid grid-cols-4 gap-2 text-[12px]">
-              <div>
-                <p className="text-zinc-500">完播率</p>
-                <p className="tabular-nums text-zinc-700">{report.completion_rate ?? "-"}</p>
-              </div>
-              <div>
-                <p className="text-zinc-500">点赞</p>
-                <p className="tabular-nums text-zinc-700">{report.likes}</p>
-              </div>
-              <div>
-                <p className="text-zinc-500">评论</p>
-                <p className="tabular-nums text-zinc-700">{report.comments}</p>
-              </div>
-              <div>
-                <p className="text-zinc-500">分享</p>
-                <p className="tabular-nums text-zinc-700">{report.shares}</p>
-              </div>
-            </div>
           </div>
-        ))}
-      </div>
 
-      {hasMore && (
-        <div className="mt-3 flex justify-center">
-          <Button variant="ghost" size="sm" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? "收起" : `展开全部（${history.length} 条）`}
-          </Button>
-        </div>
+          {hasMore && (
+            <div className="mt-3 flex justify-center">
+              <Button variant="ghost" size="sm" onClick={() => setExpanded((v) => !v)}>
+                {expanded ? "收起" : `展开全部（${filteredHistory.length} 条）`}
+              </Button>
+            </div>
+          )}
+        </>
       )}
-    </>
+    </div>
   );
 }

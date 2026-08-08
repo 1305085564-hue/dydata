@@ -265,6 +265,12 @@ export function TopicHubV2() {
     }
   };
 
+  // 联动母题筛选并滚动至大盘
+  const handleFilterByTopic = (topicId: string) => {
+    setSelectedTopicIds([topicId]);
+    document.getElementById("topic-pool-explorer")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-800 p-4 sm:p-6 lg:p-8 font-sans antialiased">
       {/* Toast 轻提示 (z-[70] 层级高于所有抽屉弹窗) */}
@@ -390,7 +396,7 @@ export function TopicHubV2() {
         />
 
         {/* 3. 选题效果横向对比 */}
-        <TopicComparisonMatrix topics={topicsOptions} topicsError={topicsOptionsError} />
+        <TopicComparisonMatrix topics={topicsOptions} topicsError={topicsOptionsError} onSelectTopic={handleFilterByTopic} />
       </div>
       )}
 
