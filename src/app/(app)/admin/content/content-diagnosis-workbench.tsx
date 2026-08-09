@@ -7,9 +7,11 @@ import {
   Loader2,
   Sparkles,
   ChevronLeft,
+  ChevronDown,
   Check,
   Plus,
   History,
+  Copy,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +28,7 @@ import type {
 } from "@/types";
 import type { AttributionFinding, AttributionResult } from "@/lib/content-attribution";
 import { METRIC_MAP_INDEX, RATE_METRICS, type MetricKey } from "@/lib/content-attribution-map";
+import { buildContentFeedbackCopyText } from "@/lib/content-feedback-copy";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -82,26 +85,22 @@ type AllComparisonData = {
   error: string | null;
 };
 
-
-
-
 function formatNumber(v: number | null | undefined) {
-  if (v == null) return "-";
+  if (v == null) return "缺数据";
   return new Intl.NumberFormat("zh-CN").format(Math.round(v));
 }
 
 function formatRate(v: number | string | null | undefined) {
-  if (v == null) return "-";
+  if (v == null) return "缺数据";
   const n = typeof v === "string" ? parseFloat(v) : v;
-  if (Number.isNaN(n)) return "-";
+  if (Number.isNaN(n)) return "缺数据";
   return n.toFixed(1) + "%";
 }
 
 function formatSeconds(v: number | null | undefined) {
-  if (v == null) return "-";
+  if (v == null) return "缺数据";
   return `${v.toFixed(1)}s`;
 }
-
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
   normal: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
@@ -123,12 +122,10 @@ export function ContentDiagnosisWorkbench({
   canOperateLifecycle,
   onLifecycleChanged,
   profiles = [],
-  onGoToNextVideo,
   anomalyVideos = [],
   onVideoSelect,
 }: ContentDiagnosisWorkbenchProps & {
   profiles?: Array<{ id: string; name: string }>;
-  onGoToNextVideo?: (videoId: string) => void;
 }) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
@@ -152,7 +149,6 @@ export function ContentDiagnosisWorkbench({
     error: null,
   });
   const [cardDetail, setCardDetail] = useState<ContentFeedbackCardDetail | null>(null);
-  const [isConfirming, setIsConfirming] = useState(false);
   const [mainIssues, setMainIssues] = useState("");
   const [feedback, setFeedback] = useState("");
   const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
@@ -161,8 +157,8 @@ export function ContentDiagnosisWorkbench({
 
   const [isMarkingExperience, setIsMarkingExperience] = useState(false);
   const [highlightedSegmentIndex, setHighlightedSegmentIndex] = useState<number | null>(null);
+  const [highlightedHint, setHighlightedHint] = useState<"opening" | "middle" | "ending" | null>(null);
   const [quotedIndices, setQuotedIndices] = useState<Set<number>>(new Set());
-  const [showSendConfirm, setShowSendConfirm] = useState(false);
 
   type RefKey = "self" | "team" | "top" | "user";
   const [selectedRef, setSelectedRef] = useState<RefKey>("self");
@@ -174,8 +170,10 @@ export function ContentDiagnosisWorkbench({
     has_previous: boolean;
     previous?: {
       card_id: string;
-      one_line: string;
-      sent_at: string;
+      source: "draft" | "sent";
+      recorded_at: string | null;
+      one_line: string | null;
+      sent_at: string | null;
       message_for_member?: string;
       metrics?: Record<string, number | null>;
     };
@@ -275,7 +273,6 @@ export function ContentDiagnosisWorkbench({
     setDraftSavedAt(null);
     setHighlightedSegmentIndex(null);
     setQuotedIndices(new Set());
-    setShowSendConfirm(false);
     setShowPreviousFeedback(false);
     skipNextSaveRef.current = true;
 
@@ -388,12 +385,41 @@ export function ContentDiagnosisWorkbench({
       .filter(Boolean);
   }, [video?.content]);
 
+  const scriptSections = useMemo(() => {
+    if (scriptSegments.length === 0) return [];
+    if (scriptSegments.length === 1) {
+      return [
+        { hint: "opening" as const, title: "前 3s 钩子", items: [{ text: scriptSegments[0], idx: 0 }] },
+      ];
+    }
+    if (scriptSegments.length === 2) {
+      return [
+        { hint: "opening" as const, title: "前 3s 钩子", items: [{ text: scriptSegments[0], idx: 0 }] },
+        { hint: "ending" as const, title: "尾部号召", items: [{ text: scriptSegments[1], idx: 1 }] },
+      ];
+    }
+    const openingCount = Math.max(1, Math.floor(scriptSegments.length * 0.25));
+    const endingCount = Math.max(1, Math.floor(scriptSegments.length * 0.25));
+    const middleStart = openingCount;
+    const middleEnd = scriptSegments.length - endingCount;
+
+    const openingItems = scriptSegments.slice(0, middleStart).map((text, i) => ({ text, idx: i }));
+    const middleItems = scriptSegments.slice(middleStart, middleEnd).map((text, i) => ({ text, idx: middleStart + i }));
+    const endingItems = scriptSegments.slice(middleEnd).map((text, i) => ({ text, idx: middleEnd + i }));
+
+    return [
+      { hint: "opening" as const, title: "前 3s 钩子", items: openingItems },
+      { hint: "middle" as const, title: "中段承接", items: middleItems },
+      { hint: "ending" as const, title: "尾部号召", items: endingItems },
+    ].filter((s) => s.items.length > 0);
+  }, [scriptSegments]);
+
   const feedbackEvidence = useMemo(() => {
     const list: string[] = [];
     if (attribution?.findings) {
       for (const f of attribution.findings) {
         if (f.tone === "bad" || f.tone === "warn") {
-          list.push(`${f.metric_label} ${f.value != null ? f.value.toFixed(1) : ""}${RATE_METRICS.has(f.metric) ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`);
+          list.push(`${f.metric_label} ${f.value != null ? f.value.toFixed(1) : "缺数据"}${RATE_METRICS.has(f.metric) && f.value != null ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`);
         }
       }
     }
@@ -402,44 +428,6 @@ export function ContentDiagnosisWorkbench({
     }
     return list;
   }, [attribution, analysisResult]);
-
-  async function handleConfirmAndSend() {
-    if (!video) return;
-    setIsConfirming(true);
-    try {
-      const action =
-        !cardDetail || cardDetail.workflow_status === "not_started"
-          ? "create_confirm_send"
-          : "confirm_and_send";
-      const res = await fetch(`/api/admin/content-feedback-cards/${video.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          manager_note: feedback.trim() || null,
-          summary: {
-            one_line: mainIssues.trim() || null,
-          },
-          actions: {
-            message_for_member: feedback.trim() || null,
-          },
-        }),
-      });
-      const data = (await res.json()) as { ok?: boolean; feedback_card?: ContentFeedbackCardDetail; error?: string };
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "确认下发失败");
-      }
-      if (data.feedback_card) {
-        setCardDetail(data.feedback_card);
-        onFeedbackCardChanged(video.id, data.feedback_card);
-      }
-      feedbackToast.success("已成功确认并下发给员工");
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "确认下发失败");
-    } finally {
-      setIsConfirming(false);
-    }
-  }
 
   async function handleGenerateAnalysis() {
     if (!video) return;
@@ -453,6 +441,7 @@ export function ContentDiagnosisWorkbench({
       const data = (await res.json()) as ContentAnalysisResult & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "生成分析失败");
       setAnalysisResult(data);
+      setShowAiReference(true);
       feedbackToast.success("AI 辅助分析已就绪");
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "生成辅助分析失败");
@@ -533,26 +522,44 @@ export function ContentDiagnosisWorkbench({
   const handleLocateFinding = useCallback((finding: AttributionFinding) => {
     const locate = finding.locate;
     if (locate.kind !== "segment" || !locate.segment_hint) return;
+    const hint = locate.segment_hint;
+    setHighlightedHint(hint);
     
     let targetIdx = -1;
-    if (locate.segment_hint === "opening") {
+    if (hint === "opening") {
       targetIdx = 0;
-    } else if (locate.segment_hint === "middle") {
+    } else if (hint === "middle") {
       targetIdx = Math.floor(scriptSegments.length / 2);
-    } else if (locate.segment_hint === "ending") {
+    } else if (hint === "ending") {
       targetIdx = scriptSegments.length - 1;
     }
     
     if (targetIdx !== -1 && targetIdx < scriptSegments.length) {
       setHighlightedSegmentIndex(targetIdx);
       setTimeout(() => {
-        const el = document.getElementById(`script-segment-${targetIdx}`);
+        const el = document.getElementById(`script-section-${hint}`) || document.getElementById(`script-segment-${targetIdx}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 50);
     }
   }, [scriptSegments]);
+
+  const handleCopyFeedbackText = useCallback(async () => {
+    const text = buildContentFeedbackCopyText({
+      title: video?.video_title,
+      findings: attribution?.findings ?? [],
+      mainIssue: mainIssues,
+      suggestion: feedback,
+    });
+
+    try {
+      await navigator.clipboard.writeText(text);
+      feedbackToast.success("建议已复制，可直接粘贴到飞书");
+    } catch {
+      feedbackToast.error("复制失败，请检查浏览器剪贴板权限");
+    }
+  }, [attribution?.findings, feedback, mainIssues, video?.video_title]);
 
   const showOverlay = previewIndex !== null && screenshotItems[previewIndex];
 
@@ -612,7 +619,7 @@ export function ContentDiagnosisWorkbench({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-                <span className="size-1.5 rounded-full bg-[#D97757]" />
+                <span className="size-1.5 rounded-full bg-[#5F82A8]" />
                 一、归因结论诊断
               </h2>
               <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
@@ -664,8 +671,11 @@ export function ContentDiagnosisWorkbench({
                 {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full rounded-xl" />)}
               </div>
             ) : !attribution || !attribution.snapshot_ready ? (
-              <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6 text-center text-[12px] text-zinc-400">
-                {attribution ? "这条视频暂无 24h 快照数据，请人工核对下方曲线与素材" : "正在加载归因结论..."}
+              <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 p-6 text-center text-[12px] text-zinc-500">
+                <p className="font-medium text-zinc-800">归因待数据齐</p>
+                <p className="mt-1 text-[11px] text-zinc-400">
+                  {attribution ? "这条视频暂无 24h 快照数据，请人工核对下方曲线与素材" : "正在加载归因结论..."}
+                </p>
               </div>
             ) : (
               <div className="flex flex-col">
@@ -682,7 +692,7 @@ export function ContentDiagnosisWorkbench({
 
           <div className="space-y-3">
             <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-              <span className="size-1.5 rounded-full bg-[#D97757]" />
+              <span className="size-1.5 rounded-full bg-[#5F82A8]" />
               二、多参照系指标对比 ({comparison.ref_label || "比自己近3条"})
             </h2>
 
@@ -739,7 +749,7 @@ export function ContentDiagnosisWorkbench({
 
           <div className="space-y-3">
             <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              <span className="size-1.5 rounded-full bg-[#5F82A8]" />
               三、流量留存曲线漏斗
             </h2>
             {snapshot ? (
@@ -748,8 +758,8 @@ export function ContentDiagnosisWorkbench({
                   <AreaChart data={funnelChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#D97757" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#D97757" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#5F82A8" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#5F82A8" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E7E5E4" />
@@ -759,10 +769,10 @@ export function ContentDiagnosisWorkbench({
                       contentStyle={{ borderRadius: "12px", border: "1px solid #E7E5E4", boxShadow: "0 4px 12px rgba(28,25,23,0.08)", fontSize: "11px" }}
                       formatter={(val) => {
                         const numericVal = typeof val === "number" ? val : parseFloat(String(val));
-                        return [`${isNaN(numericVal) ? "-" : numericVal.toFixed(1)}%`, "留存率"];
+                        return [`${isNaN(numericVal) ? "缺数据" : numericVal.toFixed(1)}%`, "留存率"];
                       }}
                     />
-                    <Area type="monotone" dataKey="rate" stroke="#D97757" strokeWidth={2} fillOpacity={1} fill="url(#colorRate)" />
+                    <Area type="monotone" dataKey="rate" stroke="#5F82A8" strokeWidth={2} fillOpacity={1} fill="url(#colorRate)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -798,7 +808,7 @@ export function ContentDiagnosisWorkbench({
                     </div>
                     <div className="px-3 py-1.5 text-[11px] text-zinc-500 bg-white border-t border-zinc-100 flex items-center justify-between">
                       <span>{item.label}</span>
-                      <span className="text-[#D97757] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">放大</span>
+                      <span className="text-zinc-600 font-medium group-hover:text-zinc-950 transition-colors">放大</span>
                     </div>
                   </button>
                 ))}
@@ -814,7 +824,10 @@ export function ContentDiagnosisWorkbench({
               <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-1.5 text-[#5F82A8]">
                   <History className="size-4" />
-                  <span className="text-[11.5px] font-medium tracking-wider uppercase">上次复盘诊断对比</span>
+                  <span className="text-[11.5px] font-medium tracking-wider uppercase">
+                    上次复盘诊断对比
+                    {previousFeedback.previous.source === "draft" ? "（草稿）" : "（历史下发）"}
+                  </span>
                 </div>
                 <button
                   onClick={() => setShowPreviousFeedback(false)}
@@ -856,79 +869,127 @@ export function ContentDiagnosisWorkbench({
             </div>
           )}
 
-          {showPreviousFeedback && <div className="h-px bg-gradient-to-r from-zinc-200/50 via-zinc-200/10 to-transparent pt-0.5" />}
+          {showPreviousFeedback && <div className="h-px bg-zinc-200/60 pt-0.5" />}
 
-          {scriptSegments.length > 0 && (
+          {scriptSections.length > 0 && (
             <div className="space-y-3">
-              <h3 className="flex items-center justify-between text-[11.5px] font-medium tracking-wider text-zinc-400">
-                <span>分段台词脚本 (点击句子引用)</span>
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
+                  <span className="size-1.5 rounded-full bg-[#5F82A8]" />
+                  台词黄金三段式 (点击句子直接引用)
+                </h3>
                 {video?.video_url && (
                   <a
                     href={video.video_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[12px] text-[#D97757] font-medium hover:underline normal-case"
+                    className="text-[12px] text-[#5F82A8] font-medium hover:underline normal-case"
                   >
                     查看抖音原片
                   </a>
                 )}
-              </h3>
-              <div className="max-h-[260px] overflow-y-auto divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white">
-                {scriptSegments.map((seg, idx) => {
-                  const isHighlighted = highlightedSegmentIndex === idx;
-                  const isQuoted = quotedIndices.has(idx);
+              </div>
+
+              <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
+                {scriptSections.map((sec) => {
+                  const isSectionHighlighted = highlightedHint === sec.hint;
                   return (
-                    <button
-                      type="button"
-                      key={idx}
-                      id={`script-segment-${idx}`}
-                      onClick={() => handleQuoteSegment(seg, idx)}
-                      aria-pressed={isQuoted}
-                      className={`group/seg flex w-full items-start gap-3 px-4 py-3.5 cursor-pointer transition-all text-left border-l-2 ${
-                        isQuoted 
-                          ? "bg-gradient-to-r from-[#6FAA7D]/8 to-transparent border-[#6FAA7D]" 
-                          : isHighlighted 
-                            ? "bg-gradient-to-r from-[#D97757]/8 to-transparent border-[#D97757]" 
-                            : "hover:bg-zinc-50/70 border-transparent"
-                      }`}
+                    <div
+                      key={sec.hint}
+                      id={`script-section-${sec.hint}`}
+                      className={`rounded-xl border transition-all ${
+                        isSectionHighlighted
+                          ? "border-[#5F82A8] bg-[#5F82A8]/[0.02] ring-1 ring-[#5F82A8]/30 shadow-2xs"
+                          : "border-zinc-200 bg-white"
+                      } overflow-hidden`}
                     >
-                      <span className={`mt-0.5 w-4 shrink-0 text-[11px] tabular-nums ${isQuoted ? "text-[#6FAA7D] font-medium" : "text-zinc-400"}`}>
-                        {idx + 1}
-                      </span>
-                      <span className={`text-[12px] leading-relaxed flex-1 ${
-                        isQuoted 
-                          ? "text-zinc-400 line-through decoration-zinc-300/60" 
-                          : isHighlighted 
-                            ? "text-amber-900 font-semibold animate-pulse" 
-                            : "text-zinc-700 font-normal"
-                      }`}>
-                        {seg}
-                      </span>
-                      <span className="opacity-100 sm:opacity-0 sm:group-hover/seg:opacity-100 sm:group-focus-visible/seg:opacity-100 transition-opacity shrink-0 flex items-center gap-1.5">
-                        <span
-                          title={isQuoted ? "取消引用" : "引用此句"}
-                          className={`rounded-md p-1 ${isQuoted ? "text-[#6FAA7D]" : "text-zinc-400 hover:text-[#D97757]"}`}
-                        >
-                          {isQuoted ? <Check className="size-3.5" /> : <Plus className="size-3.5" />}
+                      <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/80 px-3.5 py-1.5 text-[11px] font-medium text-zinc-600">
+                        <span className="flex items-center gap-1.5">
+                          <span
+                            className={`size-1.5 rounded-full ${
+                              sec.hint === "opening"
+                                ? "bg-[#5F82A8]"
+                                : sec.hint === "middle"
+                                  ? "bg-zinc-400"
+                                  : "bg-[#6FAA7D]"
+                            }`}
+                          />
+                          {sec.title}
                         </span>
-                      </span>
-                    </button>
+                        <span className="text-[10px] text-zinc-400 font-normal">
+                          {sec.items.length} 句
+                        </span>
+                      </div>
+                      <div className="divide-y divide-zinc-100">
+                        {/* scriptSegments.map */ sec.items.map(({ text: seg, idx }) => {
+                          const isHighlighted = highlightedSegmentIndex === idx;
+                          const isQuoted = quotedIndices.has(idx);
+                          return (
+                            <button
+                              type="button"
+                              key={idx}
+                              id={`script-segment-${idx}`}
+                              onClick={() => handleQuoteSegment(seg, idx)}
+                              aria-pressed={isQuoted}
+                              className={`group/seg flex w-full items-start gap-3 px-3.5 py-2.5 cursor-pointer transition-all text-left border-l-2 ${
+                                isQuoted
+                                  ? "bg-[#6FAA7D]/[0.04] border-[#6FAA7D]"
+                                  : isHighlighted
+                                    ? "bg-zinc-100/90 border-[#5F82A8]"
+                                    : "hover:bg-zinc-50/70 border-transparent"
+                              }`}
+                            >
+                              <span
+                                className={`mt-0.5 w-4 shrink-0 text-[11px] tabular-nums ${
+                                  isQuoted ? "text-[#6FAA7D] font-medium" : "text-zinc-400"
+                                }`}
+                              >
+                                {idx + 1}
+                              </span>
+                              <span
+                                className={`text-[12px] leading-relaxed flex-1 ${
+                                  isQuoted
+                                    ? "text-zinc-400 line-through decoration-zinc-300/60"
+                                    : isHighlighted
+                                      ? "text-zinc-950 font-semibold"
+                                      : "text-zinc-700 font-normal"
+                                }`}
+                              >
+                                {seg}
+                              </span>
+                              <span className="opacity-100 sm:opacity-0 sm:group-hover/seg:opacity-100 sm:group-focus-visible/seg:opacity-100 transition-opacity shrink-0 flex items-center gap-1">
+                                <span
+                                  title={isQuoted ? "取消引用" : "引用此句"}
+                                  className={`rounded-md p-1 ${
+                                    isQuoted ? "text-[#6FAA7D]" : "text-zinc-400 hover:text-zinc-700"
+                                  }`}
+                                >
+                                  {isQuoted ? <Check className="size-3.5" /> : <Plus className="size-3.5" />}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        }) /* activeTab === "analysis" */}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
-            </div> /* activeTab === "analysis" */
+            </div>
           )}
 
-          {scriptSegments.length > 0 && <div className="h-px bg-gradient-to-r from-zinc-200/50 via-zinc-200/10 to-transparent pt-0.5" />}
+          {scriptSections.length > 0 && <div className="h-px bg-zinc-200/60 pt-0.5" />}
 
+          {/* AI 辅助分析（默认折叠为 AI 参考入口） */}
           {analysisResult && (
-            <div className="border-l-2 border-[#D97757]/30 pl-4 space-y-3.5 relative animate-fade-in">
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-3.5 shadow-2xs">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[#D97757]">
-                  <Sparkles className="size-4 animate-pulse" />
-                  <span className="text-[11.5px] font-medium tracking-wider">AI 辅助诊断思路</span>
+                <div className="flex items-center gap-1.5 text-zinc-700 font-medium text-[12px]">
+                  <Sparkles className="size-3.5 text-zinc-500" />
+                  <span>AI 辅助诊断思路（仅供参考）</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setAnalysisResult(null)}
                   className="text-zinc-400 hover:text-zinc-600 text-[11px] font-medium transition-colors"
                 >
@@ -951,16 +1012,16 @@ export function ContentDiagnosisWorkbench({
               >
                 <motion.div variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}>
                   <span className="font-semibold text-zinc-900 block">数据特征总结：</span>
-                  <p className="mt-0.5">{analysisResult.data_summary}</p>
+                  <p className="mt-0.5 text-zinc-600">{analysisResult.data_summary}</p>
                 </motion.div>
                 <motion.div variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}>
                   <span className="font-semibold text-zinc-900 block">改进方向与思路：</span>
-                  <p className="mt-0.5">{analysisResult.copywriting_reason}</p>
+                  <p className="mt-0.5 text-zinc-600">{analysisResult.copywriting_reason}</p>
                 </motion.div>
                 {analysisResult.abnormal_points && analysisResult.abnormal_points.length > 0 && (
                   <motion.div variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}>
                     <span className="font-semibold text-zinc-900 block">异常提示点：</span>
-                    <ul className="list-disc pl-4 mt-0.5 space-y-0.5">
+                    <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-zinc-600">
                       {analysisResult.abnormal_points.map((pt, i) => (
                         <li key={i}>{pt}</li>
                       ))}
@@ -968,7 +1029,7 @@ export function ContentDiagnosisWorkbench({
                   </motion.div>
                 )}
               </motion.div>
-              <div className="flex justify-end gap-2 pt-2.5 border-t border-zinc-200/50">
+              <div className="flex justify-end gap-2 pt-2.5 border-t border-zinc-100">
                 <Button
                   size="sm"
                   variant="outline"
@@ -982,7 +1043,7 @@ export function ContentDiagnosisWorkbench({
                 <Button
                   size="sm"
                   onClick={handleQuoteAnalysisToFeedback}
-                  className="h-7 rounded-lg bg-[#D97757] text-white text-[11px] font-medium hover:bg-[#C96442]"
+                  className="h-7 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-medium transition-colors"
                 >
                   一键引用至反馈框
                 </Button>
@@ -990,12 +1051,13 @@ export function ContentDiagnosisWorkbench({
             </div>
           )}
 
-          {analysisResult && <div className="h-px bg-gradient-to-r from-zinc-200/50 via-zinc-200/10 to-transparent pt-0.5" />}
+          {analysisResult && <div className="h-px bg-zinc-200/60 pt-0.5" />}
 
           <div className="space-y-4 pt-1">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11.5px] font-medium tracking-wider text-zinc-400">
-                四、诊断反馈下发
+              <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
+                <span className="size-1.5 rounded-full bg-[#D97757]" />
+                四、诊断建议与下发
               </h3>
               <div className="text-[11px] text-zinc-400 min-h-5 flex items-center gap-1">
                 {isSavingDraft ? (
@@ -1029,7 +1091,7 @@ export function ContentDiagnosisWorkbench({
 
             <div className="space-y-3">
               <div className="space-y-1 text-left">
-                <label className="text-[11.5px] font-medium text-zinc-700">主要问题一句话总结 (员工在消息或仪表盘中第一眼看到)：</label>
+                <label className="text-[11.5px] font-medium text-zinc-700">主要问题一句话总结：</label>
                 <input
                   type="text"
                   value={mainIssues}
@@ -1053,7 +1115,7 @@ export function ContentDiagnosisWorkbench({
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-zinc-150 pt-3.5">
+            <div className="flex items-center justify-between border-t border-zinc-200/60 pt-3.5">
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -1062,7 +1124,7 @@ export function ContentDiagnosisWorkbench({
                   disabled={isGeneratingAnalysis || !isEditable}
                   className="h-8 rounded-lg border-zinc-200 hover:bg-zinc-50 font-medium text-[12px] gap-1.5 text-zinc-600"
                 >
-                  <Sparkles className="size-3.5 text-[#D97757]" />
+                  <Sparkles className="size-3.5 text-zinc-500" />
                   {isGeneratingAnalysis ? "分析中..." : "获取 AI 诊断思路"}
                 </Button>
                 
@@ -1090,51 +1152,60 @@ export function ContentDiagnosisWorkbench({
               </div>
 
               {isEditable ? (
-                showSendConfirm ? (
-                  <div className="flex items-center gap-1.5 animate-fade-in">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setShowSendConfirm(false);
-                        handleConfirmAndSend().then(() => {
-                          if (onGoToNextVideo && video) {
-                            onGoToNextVideo(video.id);
-                          }
-                        });
-                      }}
-                      disabled={isConfirming}
-                      className="h-8 rounded-lg bg-[#C9604D] hover:bg-[#B54D3C] text-white font-medium text-[12px] px-4"
-                    >
-                      {isConfirming ? "下发中..." : "确认"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowSendConfirm(false)}
-                      className="h-8 rounded-lg border-zinc-200 text-zinc-600 font-medium text-[12px] px-2.5"
-                    >
-                      取消
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={() => setShowSendConfirm(true)}
-                    disabled={isConfirming || isSavingDraft}
-                    className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[12px] px-4"
-                  >
-                    确认并下发
-                  </Button>
-                )
+                <Button
+                  size="sm"
+                  onClick={handleCopyFeedbackText}
+                  disabled={isSavingDraft}
+                  className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-4 gap-1.5 shadow-2xs transition-all active:scale-[0.97]"
+                >
+                  <Copy className="size-3.5" />
+                  复制建议
+                </Button>
               ) : (
                 <span className="text-[12px] text-zinc-400 font-medium bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-lg">
-                  已下发锁定
+                  历史站内记录仅查看
                 </span>
               )}
             </div>
+            
             <p className="text-[11px] text-zinc-400 text-left">
               * 提示：AI 辅助诊断思路仅供思路参考，复盘的最终判断与改进意见审定权 100% 在您手中。
             </p>
+
+            {/* 如需网站内留档可展开（折叠降级） */}
+            <details className="group rounded-xl border border-zinc-200 bg-white p-3 text-[12px] transition-all">
+              <summary className="flex cursor-pointer items-center justify-between font-medium text-zinc-500 hover:text-zinc-800 select-none">
+                <span className="flex items-center gap-1.5 text-[11.5px]">
+                  <span className="size-1.5 rounded-full bg-zinc-400" />
+                  如需网站内留档可展开
+                </span>
+                <ChevronDown className="size-3.5 text-zinc-400 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="mt-3 pt-3 border-t border-zinc-100 space-y-2 text-[11px] text-zinc-500">
+                <p className="text-zinc-400">
+                  草稿已随输入自动保存。如需在后台标记工作流确认状态，历史记录将自动保留。
+                </p>
+                <div className="flex items-center justify-between pt-1">
+                  <span>
+                    当前状态：
+                    <span className="font-medium text-zinc-700">
+                      {cardDetail?.workflow_status === "confirmed"
+                        ? "已确认"
+                        : cardDetail?.workflow_status === "sent"
+                          ? "已下发"
+                          : cardDetail?.workflow_status === "draft"
+                            ? "草稿"
+                            : "未开始"}
+                    </span>
+                  </span>
+                  {draftSavedAt && (
+                    <span className="text-zinc-400">
+                      最近保存：{draftSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -1170,7 +1241,7 @@ export function ContentDiagnosisWorkbench({
                         onClick={() => onVideoSelect(item.id)}
                         className={`size-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                           isActive
-                            ? "bg-gradient-to-tr from-[#D97757] to-[#F19373] scale-110 shadow-[0_0_8px_rgba(217,119,87,0.4)] outline outline-offset-[3px] outline-1 outline-[#D97757]/45"
+                            ? "bg-[#5F82A8] scale-110 shadow-[0_0_8px_rgba(95,130,168,0.4)] outline outline-offset-[3px] outline-1 outline-[#5F82A8]/45"
                             : "bg-zinc-300 hover:bg-zinc-400 hover:scale-115"
                         }`}
                       />
@@ -1201,7 +1272,7 @@ export function ContentDiagnosisWorkbench({
               <span className="text-[11px] font-medium tracking-wider text-zinc-400">
                 诊断
               </span>
-              <span className="text-[13px] font-semibold text-[#D97757] tabular-nums">
+              <span className="text-[13px] font-semibold text-zinc-900 tabular-nums">
                 {currentIndex + 1}
               </span>
               <span className="text-[13px] text-zinc-300 font-normal">/</span>
@@ -1246,7 +1317,7 @@ function CompareMetricCard({
   }
   
   const toneColor = isGood ? "text-[#6FAA7D]" : isBad ? "text-[#C9604D]" : "text-zinc-600";
-  const barColor = isGood ? "bg-[#6FAA7D]" : isBad ? "bg-[#C9604D]" : "bg-[#D97757]";
+  const barColor = isGood ? "bg-[#6FAA7D]" : isBad ? "bg-[#C9604D]" : "bg-[#5F82A8]";
   
   const maxVal = Math.max(currentVal, refVal, 1) * 1.1;
   const currentPct = (currentVal / maxVal) * 100;
@@ -1338,12 +1409,10 @@ function AttributionFindingRow({
           <span className="text-[12.5px] font-medium text-zinc-850">{finding.metric_label}</span>
           <div className="flex items-center leading-none">
             <span className="text-[13.5px] font-semibold text-zinc-800 tabular-nums">
-              {finding.value != null ? finding.value.toFixed(1) : "-"}
-              {RATE_METRICS.has(finding.metric) && finding.value != null ? "%" : ""}
+              {finding.value != null ? `${finding.value.toFixed(1)}${RATE_METRICS.has(finding.metric) ? "%" : ""}` : "缺数据"}
             </span>
             <span className="text-[11.5px] text-zinc-400 font-normal tabular-nums">
-              {finding.ref_value != null ? ` / 参照 ${finding.ref_value.toFixed(1)}` : ""}
-              {RATE_METRICS.has(finding.metric) && finding.ref_value != null ? "%" : ""}
+              {finding.ref_value != null ? ` / 参照 ${finding.ref_value.toFixed(1)}${RATE_METRICS.has(finding.metric) ? "%" : ""}` : ""}
             </span>
             {finding.delta != null && finding.delta !== 0 && (
               <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-md ml-2 tabular-nums border ${

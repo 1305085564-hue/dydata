@@ -1,78 +1,49 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { feedbackToast } from "@/components/ui/feedback-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getShanghaiDateString } from "@/lib/remind-submission";
-import { ContentFilters, INITIAL_FILTERS, type ContentFilterValue } from "./content-filters";
-import { ContentDetailDialog } from "./content-detail-dialog";
-import { AttributionEditDialog } from "./attribution-edit-dialog";
-import type { ContentFeedbackCardDetail, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
-import { ChevronDown, MoreHorizontal, Sparkles, Trash2, ArrowDown, ArrowUp, ArrowUpDown, RotateCcw } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { ContentFeedbackCardView, ContentReviewReadiness, Video, VideoMetricsSnapshot } from "@/types";
+import { ArrowDown, CalendarClock, Check, ChevronDown, UserRound } from "lucide-react";
+import {
+  DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  type VideoReviewThresholds,
+} from "@/lib/video-review-thresholds";
 
 type VideoRow = Video & {
   accounts: { name: string };
   profiles: { name: string };
 };
 
-type FilterOption = Pick<Profile, "id" | "name">;
-type AccountOption = FilterOption;
-import {
-  DEFAULT_VIDEO_REVIEW_THRESHOLDS,
-  type VideoReviewThresholds,
-} from "@/lib/video-review-thresholds";
-
-import type { UserPermissionInfo } from "@/lib/permissions";
+type QueueSortMode = "priority" | "user" | "latest";
 
 interface ContentListProps {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
-  profiles: FilterOption[];
-  accounts: AccountOption[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
-  onFeedbackCardChanged?: (videoId: string, card: ContentFeedbackCardView) => void;
-  onFeedbackCardsChanged?: (cards: Record<string, ContentFeedbackCardView>) => void;
-  selectedVideoId: string | null;
   onSelectVideoId: (id: string | null) => void;
-  permissionInfo: UserPermissionInfo;
-  onRefresh: () => void;
 }
 
+const PAGE_SIZE = 30;
+
 const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
-  abnormal: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
-  正常: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
-  删稿: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
-  限流: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
-  投流: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
-  活动干预: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
+  normal: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
+  abnormal: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
+  正常: "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] text-[#6FAA7D]",
+  删稿: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
+  限流: "border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[#C9604D]",
+  投流: "border-[#D99E55]/20 bg-[#D99E55]/[0.04] text-[#D99E55]",
+  活动干预: "border-[#D99E55]/20 bg-[#D99E55]/[0.04] text-[#D99E55]",
   "未满24h": "border-zinc-200 bg-zinc-100/50 text-zinc-500",
 };
-
-const PAGE_SIZE = 30;
 
 function formatNumber(value: number | null | undefined) {
   if (value == null) return "-";
@@ -86,37 +57,11 @@ function formatRate(value: number | string | null | undefined) {
   return n.toFixed(1) + "%";
 }
 
-// 配色：surge 暴涨 = 琥珀棕 / halve 腰斩 = 绿色（股市惯例：红涨绿跌）
-function PlayCountWithSignal({ video, playCount }: { video: VideoRow; playCount: number | null | undefined }) {
-  const hasSignal = video.play_change_signal && video.play_count_change_pct != null;
-  if (!hasSignal) {
-    return <span>{playCount != null ? formatNumber(playCount) : "-"}</span>;
-  }
-  const isUp = video.play_change_signal === "surge";
-  const color = isUp ? "#B42318" : "#166534";
-  const pct = isUp ? video.play_count_change_pct! : Math.abs(video.play_count_change_pct!);
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger className="cursor-default">
-          <span className="font-medium" style={{ color }}>
-            {playCount != null ? formatNumber(playCount) : "-"}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent className="text-[13px] font-medium">
-          <span style={{ color }}>{isUp ? "较上条暴涨" : "较上条腰斩"} {formatRate(pct)}</span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
 function formatDateTime(value: string | null) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
@@ -132,1348 +77,281 @@ function toShanghaiDateKey(value: string | null | undefined) {
 }
 
 function getVideoUploadDateKey(video: VideoRow) {
-  return toShanghaiDateKey(video.uploaded_at ?? video.created_at);
-}
-
-function getVideoUploadMonthKey(video: VideoRow) {
-  return getVideoUploadDateKey(video).slice(0, 7);
-}
-
-function getSnapshotPlay(snapshot: VideoMetricsSnapshot | undefined) {
-  return snapshot?.play_count ?? 0;
+  return toShanghaiDateKey(video.uploaded_at ?? video.published_at ?? video.created_at);
 }
 
 function getVideoUploadTimestamp(video: VideoRow) {
-  const raw = video.uploaded_at ?? video.created_at;
+  const raw = video.uploaded_at ?? video.published_at ?? video.created_at;
   if (!raw) return 0;
   const ts = new Date(raw).getTime();
   return Number.isNaN(ts) ? 0 : ts;
 }
 
-function isVideoUploadedToday(video: VideoRow) {
-  return getVideoUploadDateKey(video) === getShanghaiDateString();
-}
-
-/* ------------------------------------------------------------------ */
-/*  Timeline helpers                                                   */
-/* ------------------------------------------------------------------ */
-
-interface MonthGroup {
-  label: string;
-  count: number;
-  firstIndex: number;
-}
-
-function buildTimeline(rows: VideoRow[]): MonthGroup[] {
-  const groups: MonthGroup[] = [];
-  let current: MonthGroup | null = null;
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const month = getVideoUploadMonthKey(row);
-    const label = month.replace("-", "年") + "月";
-
-    if (!current || current.label !== label) {
-      current = { label, count: 0, firstIndex: i };
-      groups.push(current);
-    }
-    current.count++;
+function getMetricWarningReasons(snapshot: VideoMetricsSnapshot | undefined, thresholds: VideoReviewThresholds) {
+  const reasons: string[] = [];
+  if (!snapshot) return ["缺少 24h 快照"];
+  if (snapshot.play_count != null && snapshot.play_count < thresholds.play_count) {
+    reasons.push(`播放 ${formatNumber(snapshot.play_count)}`);
   }
-
-  return groups;
+  if (snapshot.bounce_rate_2s != null && snapshot.bounce_rate_2s > thresholds.bounce_rate_2s) {
+    reasons.push(`2s跳出 ${formatRate(snapshot.bounce_rate_2s)}`);
+  }
+  if (snapshot.completion_rate_5s != null && snapshot.completion_rate_5s < thresholds.completion_rate_5s) {
+    reasons.push(`5s完播 ${formatRate(snapshot.completion_rate_5s)}`);
+  }
+  if (snapshot.avg_play_duration != null && snapshot.avg_play_duration < thresholds.avg_play_duration) {
+    reasons.push(`均播 ${snapshot.avg_play_duration.toFixed(1)}s`);
+  }
+  if (snapshot.completion_rate != null && snapshot.completion_rate < thresholds.completion_rate) {
+    reasons.push(`完播 ${formatRate(snapshot.completion_rate)}`);
+  }
+  return reasons;
 }
 
-/* ------------------------------------------------------------------ */
-/*  MiniTimeline component                                             */
-/* ------------------------------------------------------------------ */
-
-function MiniTimeline({
-  groups,
-  total,
-  currentIndex,
-  onSeek,
-}: {
-  groups: MonthGroup[];
-  total: number;
-  currentIndex: number;
-  onSeek: (index: number) => void;
-}) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [hovered, setHovered] = useState(false);
-  const [tooltip, setTooltip] = useState<{ label: string; y: number } | null>(null);
-
-  const progress = total > 0 ? (currentIndex / (total - 1)) * 100 : 0;
-
-  const handleTrackClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = trackRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const ratio = (e.clientY - rect.top) / rect.height;
-    const targetIndex = Math.min(total - 1, Math.max(0, Math.floor(ratio * total)));
-    onSeek(targetIndex);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = trackRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const ratio = (e.clientY - rect.top) / rect.height;
-    const idx = Math.min(total - 1, Math.max(0, Math.floor(ratio * total)));
-    const group = groups.find((g) => idx >= g.firstIndex && idx < g.firstIndex + g.count);
-    setTooltip({
-      label: group?.label ?? "",
-      y: e.clientY - rect.top,
-    });
-  };
-
-  return (
-    <div
-      className="relative flex flex-col items-center"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        setTooltip(null);
-      }}
-    >
-      {/* Track */}
-      <div
-        ref={trackRef}
-        className="relative w-[3px] rounded-full bg-zinc-200 cursor-pointer"
-        style={{ height: 320 }}
-        onClick={handleTrackClick}
-        onMouseMove={handleMouseMove}
-      >
-        {/* Progress fill */}
-        <div
-          className="absolute left-0 top-0 w-full rounded-full bg-[#D97757]/40"
-          style={{ height: `${Math.min(100, Math.max(0, progress))}%` }}
-        />
-
-        {/* Thumb */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 size-2.5 rounded-full bg-[#D97757] ring-2 ring-white shadow-sm transition-[top] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
-          style={{ top: `${Math.min(100, Math.max(0, progress))}%`, transform: "translate(-50%, -50%)" }}
-        />
-
-        {/* Month ticks */}
-        {groups.map((g) => {
-          const tickTop = total > 0 ? (g.firstIndex / total) * 100 : 0;
-          return (
-            <div
-              key={g.label}
-              className="absolute left-1/2 -translate-x-1/2 size-1 rounded-full bg-zinc-300"
-              style={{ top: `${tickTop}%`, transform: "translate(-50%, -50%)" }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Tooltip */}
-      {hovered && tooltip && (
-        <div
-          className="absolute right-full mr-2 whitespace-nowrap rounded-lg border border-zinc-700 bg-zinc-700 px-2.5 py-1 text-[12px] text-white shadow-md"
-          style={{ top: tooltip.y - 12 }}
-        >
-          {tooltip.label}
-        </div>
-      )}
-    </div>
-  );
+function getPriorityScore(
+  video: VideoRow,
+  snapshot: VideoMetricsSnapshot | undefined,
+  card: ContentFeedbackCardView | undefined,
+  readiness: ContentReviewReadiness | undefined,
+  thresholds: VideoReviewThresholds,
+) {
+  let score = 0;
+  if (video.anomaly_status === "删稿" || video.anomaly_status === "限流") score += 1000;
+  if (video.play_change_signal === "halve") score += 800;
+  if (video.play_change_signal === "surge") score += 400;
+  if (video.anomaly_status === "投流" || video.anomaly_status === "活动干预") score += 200;
+  if ((card?.workflow_status ?? "not_started") === "not_started") score += 120;
+  if (readiness?.status === "ready") score += 60;
+  score += getMetricWarningReasons(snapshot, thresholds).length * 80;
+  return score;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Main component                                                     */
-/* ------------------------------------------------------------------ */
-
-const workflowStatusClass: Record<string, string> = {
-  not_started: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
-  draft: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
-  confirmed: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
-  sent: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
-  viewed: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
-};
-
-const readinessClass: Record<string, string> = {
-  missing_snapshot: "border-zinc-200 bg-zinc-100/50 text-zinc-500",
-  missing_content: "border-[#C9604D]/15 bg-[#C9604D]/0.04 text-[#C9604D]",
-  missing_segments: "border-[#D99E55]/15 bg-[#D99E55]/0.04 text-[#D99E55]",
-  ready: "border-[#6FAA7D]/15 bg-[#6FAA7D]/0.04 text-[#6FAA7D]",
-};
 
 export function ContentList({
   videos,
   snapshots,
-  profiles,
-  accounts,
   feedbackCards,
   reviewReadiness,
   totalCount,
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
-  onFeedbackCardChanged,
-  onFeedbackCardsChanged,
-  selectedVideoId,
   onSelectVideoId,
-  permissionInfo,
-  onRefresh,
 }: ContentListProps) {
-  const [filters, setFilters] = useState<ContentFilterValue>(INITIAL_FILTERS);
+  const [sortMode, setSortMode] = useState<QueueSortMode>("priority");
   const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
-  const [newBatchIds, setNewBatchIds] = useState<Set<string>>(new Set());
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const [hasUserScrolledList, setHasUserScrolledList] = useState(false);
-
-  /* Batch & Quick Recycle Bin state */
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [trashSingleVideo, setTrashSingleVideo] = useState<VideoRow | null>(null);
-  const [showBatchTrashConfirm, setShowBatchTrashConfirm] = useState(false);
-  const [isBatchTrashing, setIsBatchTrashing] = useState(false);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
 
   useEffect(() => {
     fetch("/api/admin/settings/thresholds")
       .then((res) => res.json())
       .then((data) => {
-        if (data?.thresholds) {
-          setThresholds(data.thresholds);
-        }
+        if (data?.thresholds) setThresholds(data.thresholds);
       })
-      .catch(() => {
-        // 保持兜底默认阈值
-      });
+      .catch(() => {});
   }, []);
-
-  const canManageLifecycle = permissionInfo.role === "owner" || permissionInfo.role === "admin";
 
   const snapshotMap = useMemo(() => {
     const map = new Map<string, VideoMetricsSnapshot>();
-    for (const s of snapshots) {
-      if (s.snapshot_type !== "24h") continue;
-      const existing = map.get(s.video_id);
-      const nextTs = new Date(s.captured_at).getTime();
+    for (const snapshot of snapshots) {
+      if (snapshot.snapshot_type !== "24h") continue;
+      const existing = map.get(snapshot.video_id);
+      const nextTs = new Date(snapshot.captured_at).getTime();
       const currentTs = existing ? new Date(existing.captured_at).getTime() : -Infinity;
-      if (!existing || nextTs > currentTs) {
-        map.set(s.video_id, s);
-      }
+      if (!existing || nextTs > currentTs) map.set(snapshot.video_id, snapshot);
     }
     return map;
   }, [snapshots]);
 
-  const priorityScoreMap = useMemo(() => {
-    const map = new Map<string, number>();
-    const now = Date.now();
-    for (const v of videos) {
-      let score = 0;
-      if (v.anomaly_status === "删稿" || v.anomaly_status === "限流") score += 1000;
-      if (v.play_change_signal === "halve") score += 800;
-      if (v.play_change_signal === "surge") score += 400;
-      if (v.anomaly_status === "投流" || v.anomaly_status === "活动干预") score += 200;
-      const cardStatus = feedbackCards[v.id]?.workflow_status ?? "not_started";
-      if (cardStatus === "not_started") score += 100;
-      const playCount = snapshotMap.get(v.id)?.play_count ?? 0;
-      score += Math.min(playCount / 10000, 50);
-      const ts = getVideoUploadTimestamp(v);
-      if (ts > 0) {
-        const days = Math.floor((now - ts) / 86400000);
-        score += Math.min(Math.max(days, 0), 30) * 5;
-      }
-      if (cardStatus === "sent" || cardStatus === "viewed") score -= 2000;
-      map.set(v.id, score);
-    }
-    return map;
-  }, [videos, snapshotMap, feedbackCards]);
-
-  const PRIORITY_HIGHLIGHT_THRESHOLD = 200;
-
-  const handleFilter = useCallback((value: ContentFilterValue) => {
-    setFilters(value);
-    setLoadedCount(PAGE_SIZE);
-    setNewBatchIds(new Set());
-    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
-  const handleResetFilters = useCallback(() => {
-    const defaultFilters: ContentFilterValue = {
-      profileId: "all",
-      accountId: "all",
-      startDate: "",
-      endDate: "",
-      status: "all",
-      hasSnapshot: "all",
-      reviewed: "all",
-      feedbackStatus: "all",
-      rankScope: "all",
-      sortMode: "priority",
-    };
-    handleFilter(defaultFilters);
-  }, [handleFilter]);
-
-  const handleSortModeChange = useCallback((mode: ContentFilterValue["sortMode"]) => {
-    setFilters((prev) => ({ ...prev, sortMode: mode }));
-    setLoadedCount(PAGE_SIZE);
-    setNewBatchIds(new Set());
-    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
-  const handleHeaderSortClick = useCallback(
-    (target: "priority" | "user" | "latest" | "play" | "bounce_2s" | "comp_5s" | "avg_dur" | "comp_rate") => {
-      setFilters((prev) => {
-        const current = prev.sortMode;
-        let nextMode: ContentFilterValue["sortMode"] = "priority";
-        if (target === "priority") {
-          nextMode = "priority";
-        } else if (target === "user") {
-          nextMode = current === "user" ? "user_desc" : current === "user_desc" ? "priority" : "user";
-        } else if (target === "play") {
-          nextMode = current === "play" ? "play_asc" : current === "play_asc" ? "priority" : "play";
-        } else if (target === "latest") {
-          nextMode = current === "latest" ? "oldest" : current === "oldest" ? "priority" : "latest";
-        } else if (target === "bounce_2s") {
-          nextMode = current === "bounce_2s" ? "bounce_2s_asc" : current === "bounce_2s_asc" ? "priority" : "bounce_2s";
-        } else if (target === "comp_5s") {
-          nextMode = current === "comp_5s" ? "comp_5s_asc" : current === "comp_5s_asc" ? "priority" : "comp_5s";
-        } else if (target === "avg_dur") {
-          nextMode = current === "avg_dur" ? "avg_dur_asc" : current === "avg_dur_asc" ? "priority" : "avg_dur";
-        } else if (target === "comp_rate") {
-          nextMode = current === "comp_rate" ? "comp_rate_asc" : current === "comp_rate_asc" ? "priority" : "comp_rate";
-        }
-        return { ...prev, sortMode: nextMode };
-      });
-      setLoadedCount(PAGE_SIZE);
-      setNewBatchIds(new Set());
-      tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    },
-    [],
-  );
-
-  const filtered = useMemo(() => {
+  const queueRows = useMemo(() => {
+    const today = getShanghaiDateString();
     const rows = videos.filter((video) => {
-      if (filters.profileId !== "all" && video.user_id !== filters.profileId) return false;
-      if (filters.accountId !== "all" && video.account_id !== filters.accountId) return false;
-      if (filters.status !== "all" && video.anomaly_status !== filters.status) return false;
-      const uploadedDate = getVideoUploadDateKey(video);
-      if (filters.startDate && uploadedDate < filters.startDate) return false;
-      if (filters.endDate && uploadedDate > filters.endDate) return false;
-      const hasSnap = snapshotMap.has(video.id);
-      if (filters.hasSnapshot === "yes" && !hasSnap) return false;
-      if (filters.hasSnapshot === "no" && hasSnap) return false;
-      const card = feedbackCards[video.id];
-      const cardStatus = card?.workflow_status ?? "not_started";
-      const hasDraft = cardStatus !== "not_started";
-      if (filters.reviewed === "yes" && !hasDraft) return false;
-      if (filters.reviewed === "no" && hasDraft) return false;
-      if (filters.feedbackStatus !== "all") {
-        if (filters.feedbackStatus === "no_feedback" && cardStatus !== "not_started" && cardStatus !== "draft") return false;
-        if (filters.feedbackStatus === "confirmed" && cardStatus !== "confirmed") return false;
-        if (filters.feedbackStatus === "sent" && cardStatus !== "sent") return false;
-        if (filters.feedbackStatus === "viewed" && cardStatus !== "viewed") return false;
-      }
-      return true;
+      const cardStatus = feedbackCards[video.id]?.workflow_status ?? "not_started";
+      const isToday = getVideoUploadDateKey(video) === today;
+      const hasStrongSignal =
+        video.anomaly_status === "删稿" ||
+        video.anomaly_status === "限流" ||
+        video.play_change_signal === "halve";
+      return isToday || hasStrongSignal || cardStatus === "not_started";
     });
 
-    let scopedRows = rows;
-    if (filters.rankScope === "day") {
-      const targetDay =
-        filters.startDate ||
-        filters.endDate ||
-        rows.map(getVideoUploadDateKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
-        "";
-      scopedRows = targetDay ? rows.filter((video) => getVideoUploadDateKey(video) === targetDay) : rows;
-    }
-
-    if (filters.rankScope === "month") {
-      const targetMonth =
-        (filters.startDate || filters.endDate)?.slice(0, 7) ||
-        rows.map(getVideoUploadMonthKey).filter(Boolean).sort((left, right) => right.localeCompare(left))[0] ||
-        "";
-      scopedRows = targetMonth ? rows.filter((video) => getVideoUploadMonthKey(video) === targetMonth) : rows;
-    }
-
-    return [...scopedRows].sort((left, right) => {
-      if (filters.sortMode === "priority") {
-        const scoreDiff = (priorityScoreMap.get(right.id) ?? 0) - (priorityScoreMap.get(left.id) ?? 0);
-        if (scoreDiff !== 0) return scoreDiff;
-        return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
-      }
-      if (filters.sortMode === "user") {
-        const nameA = left.profiles?.name || "";
-        const nameB = right.profiles?.name || "";
-        const nameDiff = nameA.localeCompare(nameB, "zh");
+    return [...rows].sort((left, right) => {
+      if (sortMode === "user") {
+        const nameDiff = (left.profiles?.name || "").localeCompare(right.profiles?.name || "", "zh");
         if (nameDiff !== 0) return nameDiff;
         return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
       }
-      if (filters.sortMode === "user_desc") {
-        const nameA = left.profiles?.name || "";
-        const nameB = right.profiles?.name || "";
-        const nameDiff = nameB.localeCompare(nameA, "zh");
-        if (nameDiff !== 0) return nameDiff;
+      if (sortMode === "latest") {
         return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
       }
-      if (filters.sortMode === "play") {
-        const playDiff = getSnapshotPlay(snapshotMap.get(right.id)) - getSnapshotPlay(snapshotMap.get(left.id));
-        if (playDiff !== 0) return playDiff;
-      }
-      if (filters.sortMode === "play_asc") {
-        const playDiff = getSnapshotPlay(snapshotMap.get(left.id)) - getSnapshotPlay(snapshotMap.get(right.id));
-        if (playDiff !== 0) return playDiff;
-      }
-      if (filters.sortMode === "bounce_2s") {
-        const a = snapshotMap.get(right.id)?.bounce_rate_2s ?? -1;
-        const b = snapshotMap.get(left.id)?.bounce_rate_2s ?? -1;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "bounce_2s_asc") {
-        const a = snapshotMap.get(left.id)?.bounce_rate_2s ?? 999;
-        const b = snapshotMap.get(right.id)?.bounce_rate_2s ?? 999;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "comp_5s") {
-        const a = snapshotMap.get(right.id)?.completion_rate_5s ?? -1;
-        const b = snapshotMap.get(left.id)?.completion_rate_5s ?? -1;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "comp_5s_asc") {
-        const a = snapshotMap.get(left.id)?.completion_rate_5s ?? 999;
-        const b = snapshotMap.get(right.id)?.completion_rate_5s ?? 999;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "avg_dur") {
-        const a = snapshotMap.get(right.id)?.avg_play_duration ?? -1;
-        const b = snapshotMap.get(left.id)?.avg_play_duration ?? -1;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "avg_dur_asc") {
-        const a = snapshotMap.get(left.id)?.avg_play_duration ?? 999;
-        const b = snapshotMap.get(right.id)?.avg_play_duration ?? 999;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "comp_rate") {
-        const a = snapshotMap.get(right.id)?.completion_rate ?? -1;
-        const b = snapshotMap.get(left.id)?.completion_rate ?? -1;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "comp_rate_asc") {
-        const a = snapshotMap.get(left.id)?.completion_rate ?? 999;
-        const b = snapshotMap.get(right.id)?.completion_rate ?? 999;
-        if (a !== b) return a - b;
-      }
-      if (filters.sortMode === "oldest") {
-        return getVideoUploadTimestamp(left) - getVideoUploadTimestamp(right);
-      }
+      const leftScore = getPriorityScore(left, snapshotMap.get(left.id), feedbackCards[left.id], reviewReadiness[left.id], thresholds);
+      const rightScore = getPriorityScore(right, snapshotMap.get(right.id), feedbackCards[right.id], reviewReadiness[right.id], thresholds);
+      if (rightScore !== leftScore) return rightScore - leftScore;
       return getVideoUploadTimestamp(right) - getVideoUploadTimestamp(left);
     });
-  }, [videos, filters, snapshotMap, feedbackCards, priorityScoreMap]);
+  }, [feedbackCards, reviewReadiness, snapshotMap, sortMode, thresholds, videos]);
 
-  const visible = useMemo(() => filtered.slice(0, loadedCount), [filtered, loadedCount]);
-  const hasMoreLocal = loadedCount < filtered.length;
+  const visibleRows = queueRows.slice(0, loadedCount);
+  const hasMoreLocal = loadedCount < queueRows.length;
   const hasMore = hasMoreLocal || hasDeferredData;
-  const timelineGroups = useMemo(() => buildTimeline(filtered), [filtered]);
 
-  /* Intersection Observer for auto-load */
-  const currentPageStart = useCallback((visibleRows: VideoRow[]) => {
-    const firstId = visibleRows[0]?.id;
-    return filtered.findIndex((v) => v.id === firstId);
-  }, [filtered]);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && hasMore && !isLoadingMore) {
-          if (hasDeferredData) {
-            return;
-          }
-          setIsLoadingMore(true);
-          setTimeout(() => {
-            const nextIds = new Set<string>();
-            filtered.slice(loadedCount, loadedCount + PAGE_SIZE).forEach((v) => nextIds.add(v.id));
-            setNewBatchIds(nextIds);
-            setLoadedCount((c) => c + PAGE_SIZE);
-            setIsLoadingMore(false);
-            setTimeout(() => setNewBatchIds(new Set()), 600);
-          }, 300);
-        }
-      },
-      { root: tableContainerRef.current, rootMargin: "200px" }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [filtered, hasDeferredData, hasMore, hasUserScrolledList, isLoadingMore, loadedCount, onLoadDeferredData]);
-
-  /* Current scroll index for timeline */
-  const [currentIndex, setCurrentIndex] = useState(0);
-  useEffect(() => {
-    const container = tableContainerRef.current;
-    if (!container) return;
-
-    const onScroll = () => {
-      if (container.scrollTop > 24) setHasUserScrolledList(true);
-      const rows = container.querySelectorAll("tbody tr[data-video-id]");
-      if (!rows.length) return;
-      const containerRect = container.getBoundingClientRect();
-      const centerY = containerRect.top + containerRect.height / 2;
-
-      let closest = 0;
-      let minDist = Infinity;
-      rows.forEach((row, i) => {
-        const rect = row.getBoundingClientRect();
-        const dist = Math.abs(rect.top + rect.height / 2 - centerY);
-        if (dist < minDist) {
-          minDist = dist;
-          closest = i;
-        }
-      });
-      setCurrentIndex(closest + (currentPageStart(visible)));
-
-    };
-
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
-  }, [currentPageStart, visible]);
-
-  const handleTimelineSeek = useCallback(
-    (index: number) => {
-      const targetId = filtered[index]?.id;
-      if (!targetId) return;
-      const row = tableContainerRef.current?.querySelector(`tr[data-video-id="${targetId}"]`);
-      if (row) {
-        row.scrollIntoView({ behavior: "smooth", block: "center" });
-      } else {
-        // Target not in DOM yet, load up to that point
-        const needCount = Math.min(filtered.length, Math.ceil((index + 1) / PAGE_SIZE) * PAGE_SIZE);
-        setLoadedCount(needCount);
-        setTimeout(() => {
-          const r = tableContainerRef.current?.querySelector(`tr[data-video-id="${targetId}"]`);
-          r?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 100);
-      }
-    },
-    [filtered]
-  );
-
-  const handleNavigateToNext = useCallback(() => {
-    if (!selectedVideoId) return;
-    const currentIndex = filtered.findIndex((v) => v.id === selectedVideoId);
-    if (currentIndex !== -1 && currentIndex + 1 < filtered.length) {
-      const nextVideo = filtered[currentIndex + 1];
-      onSelectVideoId(nextVideo.id);
-    } else {
-      onSelectVideoId(null);
+  const loadMore = useCallback(() => {
+    if (hasDeferredData && onLoadDeferredData) {
+      void onLoadDeferredData();
+      return;
     }
-  }, [selectedVideoId, filtered, onSelectVideoId]);
-
-  const selectedVideo = selectedVideoId ? (videos.find((v) => v.id === selectedVideoId) ?? null) : null;
-  const selectedSnapshot = selectedVideoId ? (snapshotMap.get(selectedVideoId) ?? null) : null;
-  const batchCandidates = useMemo(
-    () => filtered.filter((video) => reviewReadiness[video.id]?.can_generate).slice(0, 20),
-    [filtered, reviewReadiness],
-  );
-
-  const handleBatchGenerate = useCallback(async () => {
-    if (!batchCandidates.length) return;
-    setIsBatchGenerating(true);
-    try {
-      const res = await fetch("/api/admin/next-day-review/batch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ video_ids: batchCandidates.map((video) => video.id) }),
-      });
-      const data = (await res.json()) as {
-        success_count?: number;
-        failed_count?: number;
-        results?: Array<{ ok: boolean; video_id: string; feedback_card?: ContentFeedbackCardDetail; error?: string }>;
-        error?: string;
-      };
-      if (!res.ok) throw new Error(data.error ?? "批量生成失败");
-
-      const changedCards = Object.fromEntries(
-        (data.results ?? [])
-          .filter((item): item is { ok: true; video_id: string; feedback_card: ContentFeedbackCardDetail } => item.ok && Boolean(item.feedback_card))
-          .map((item) => [item.video_id, item.feedback_card]),
-      );
-      if (Object.keys(changedCards).length) {
-        onFeedbackCardsChanged?.(changedCards);
-      }
-
-      const failedText = data.failed_count ? `，失败 ${data.failed_count} 条` : "";
-      feedbackToast.success(`已生成 ${data.success_count ?? 0} 条草稿${failedText}`);
-    } catch (error) {
-      feedbackToast.error(error instanceof Error ? error.message : "批量生成失败");
-    } finally {
-      setIsBatchGenerating(false);
-    }
-  }, [batchCandidates, onFeedbackCardsChanged]);
-
-  const isAllSelected = useMemo(
-    () => visible.length > 0 && visible.every((v) => selectedIds.has(v.id)),
-    [visible, selectedIds]
-  );
-
-  const toggleSelectAll = useCallback(() => {
-    if (isAllSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(visible.map((v) => v.id)));
-    }
-  }, [isAllSelected, visible]);
-
-  const handleTrashSingle = useCallback(async () => {
-    if (!trashSingleVideo) return;
-    try {
-      const res = await fetch(`/api/admin/videos/${trashSingleVideo.id}/lifecycle`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "trash" }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
-      feedbackToast.success(`已将作品“${trashSingleVideo.video_title?.trim() || "未命名"}”移入回收站`);
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.delete(trashSingleVideo.id);
-        return next;
-      });
-      setTrashSingleVideo(null);
-      onRefresh();
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "移入回收站失败");
-    }
-  }, [trashSingleVideo, onRefresh]);
-
-  const handleBatchTrash = useCallback(async () => {
-    if (selectedIds.size === 0) return;
-    setIsBatchTrashing(true);
-    try {
-      const ids = Array.from(selectedIds);
-      const results = await Promise.allSettled(
-        ids.map((id) =>
-          fetch(`/api/admin/videos/${id}/lifecycle`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "trash" }),
-          }).then(async (res) => {
-            const data = await res.json();
-            if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
-            return id;
-          })
-        )
-      );
-      const successCount = results.filter((r) => r.status === "fulfilled").length;
-      const failCount = results.filter((r) => r.status === "rejected").length;
-      if (successCount > 0) {
-        feedbackToast.success(`已成功将 ${successCount} 项视频移入回收站${failCount > 0 ? `（${failCount} 项处理失败）` : ""}`);
-      } else {
-        feedbackToast.error("批量移入回收站失败");
-      }
-      setSelectedIds(new Set());
-      setShowBatchTrashConfirm(false);
-      onRefresh();
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "批量移入回收站失败");
-    } finally {
-      setIsBatchTrashing(false);
-    }
-  }, [selectedIds, onRefresh]);
+    setLoadedCount((count) => count + PAGE_SIZE);
+  }, [hasDeferredData, onLoadDeferredData]);
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <ContentFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-3 shadow-2xs">
+        <div>
+          <p className="text-[13px] font-semibold text-zinc-900">今日待盘队列</p>
+          <p className="mt-0.5 text-[12px] text-zinc-500">
+            当前 <span className="tabular-nums font-medium text-zinc-700">{queueRows.length}</span> 条，素材总数 <span className="tabular-nums font-medium text-zinc-700">{totalCount ?? videos.length}</span> 条
+            <span className="mx-1.5 text-zinc-300">·</span>
+            <Link
+              href="/admin/videos"
+              className="text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300 transition-colors"
+            >
+              前往素材库（全量账本）→
+            </Link>
+          </p>
         </div>
-        {filters.sortMode !== "priority" && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 shrink-0 gap-1 rounded-xl border-zinc-200 bg-white text-[12px] text-[#D97757] hover:bg-zinc-50 transition-colors"
-            onClick={() => handleSortModeChange("priority")}
-            title="恢复默认权重优先排序"
-          >
-            <RotateCcw className="size-3" />
-            重置排序
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 shrink-0 gap-1.5 rounded-xl text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700"
-          onClick={handleBatchGenerate}
-          disabled={isBatchGenerating || batchCandidates.length === 0}
-        >
-          <Sparkles className="size-3.5" />
-          {isBatchGenerating ? "生成中..." : `批量生成反馈草稿${batchCandidates.length > 0 ? ` · ${batchCandidates.length}` : ""}`}
-        </Button>
+        <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-100/70 p-0.5">
+          {([
+            ["priority", "按最差"],
+            ["user", "按人"],
+            ["latest", "按时间"],
+          ] as const).map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => {
+                setSortMode(mode);
+                setLoadedCount(PAGE_SIZE);
+              }}
+              className={[
+                "inline-flex h-7 items-center rounded-md px-3 text-[12px] font-medium transition-colors",
+                sortMode === mode ? "bg-white text-zinc-950 shadow-2xs" : "text-zinc-500 hover:text-zinc-800",
+              ].join(" ")}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex gap-4">
-        {/* Table area */}
-        <div className="flex-1 min-w-0">
-          <div
-            ref={tableContainerRef}
-            className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white"
-            style={{ maxHeight: "calc(100vh - 280px)" }}
-          >
-            <Table stickyHeader>
-              <TableHeader className="z-10">
-                <TableRow className="border-b border-zinc-200 bg-zinc-100/50 hover:bg-zinc-100/50">
-                  {canManageLifecycle && (
-                    <TableHead className="h-9 w-10 pl-4 pr-0">
-                      <Checkbox
-                        checked={isAllSelected}
-                        onCheckedChange={toggleSelectAll}
-                        aria-label="全选"
-                      />
-                    </TableHead>
-                  )}
-                  {/* 排名（优先级权重排序） */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("priority")}
-                    className="h-9 w-12 text-center text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按权重/最差优先排序"
-                  >
-                    <div className="flex items-center justify-center gap-0.5">
-                      <span>排名</span>
-                      {filters.sortMode === "priority" && (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 视频标题（精简控制在 160px） */}
-                  <TableHead className="h-9 w-[160px] max-w-[160px] text-[12px] font-medium text-zinc-500">视频标题</TableHead>
-
-                  {/* 作者与账号排序 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("user")}
-                    className="h-9 w-[120px] text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按作者归类排序"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>作者与账号</span>
-                      {filters.sortMode === "user" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 2s跳出 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("bounce_2s")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按2s跳出率排序（降序 ➔ 升序 ➔ 恢复默认）"
-                  >
-                    <div className="flex items-center justify-end gap-0.5">
-                      <span>2s跳出</span>
-                      {filters.sortMode === "bounce_2s" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : filters.sortMode === "bounce_2s_asc" ? (
-                        <ArrowUp className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 5s完播 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("comp_5s")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按5s完播率排序（降序 ➔ 升序 ➔ 恢复默认）"
-                  >
-                    <div className="flex items-center justify-end gap-0.5">
-                      <span>5s完播</span>
-                      {filters.sortMode === "comp_5s" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : filters.sortMode === "comp_5s_asc" ? (
-                        <ArrowUp className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 均播 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("avg_dur")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按均播时长排序（降序 ➔ 升序 ➔ 恢复默认）"
-                  >
-                    <div className="flex items-center justify-end gap-0.5">
-                      <span>均播</span>
-                      {filters.sortMode === "avg_dur" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : filters.sortMode === "avg_dur_asc" ? (
-                        <ArrowUp className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 完播率 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("comp_rate")}
-                    className="h-9 w-[75px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按完播率排序（降序 ➔ 升序 ➔ 恢复默认）"
-                  >
-                    <div className="flex items-center justify-end gap-0.5">
-                      <span>完播</span>
-                      {filters.sortMode === "comp_rate" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : filters.sortMode === "comp_rate_asc" ? (
-                        <ArrowUp className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 播放量排序 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("play")}
-                    className="h-9 w-[85px] text-right text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按播放量排序（降序 ➔ 升序 ➔ 恢复默认）"
-                  >
-                    <div className="flex items-center justify-end gap-0.5">
-                      <span>播放量</span>
-                      {filters.sortMode === "play" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : filters.sortMode === "play_asc" ? (
-                        <ArrowUp className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-
-                  {/* 发布时间排序 */}
-                  <TableHead
-                    onClick={() => handleHeaderSortClick("latest")}
-                    className="h-9 w-[100px] text-[12px] font-medium text-zinc-600 cursor-pointer select-none hover:text-zinc-900 transition-colors"
-                    title="点击按发布时间排序（最新 ➔ 最早 ➔ 恢复默认）"
-                  >
-                    <div className="flex items-center gap-0.5">
-                      <span>发布时间</span>
-                      {filters.sortMode === "latest" ? (
-                        <ArrowDown className="size-3 text-[#D97757]" />
-                      ) : filters.sortMode === "oldest" ? (
-                        <ArrowUp className="size-3 text-[#D97757]" />
-                      ) : (
-                        <ArrowUpDown className="size-3 text-zinc-400 opacity-40" />
-                      )}
-                    </div>
-                  </TableHead>
-                  <TableHead className="h-9 w-[85px] text-[12px] font-medium text-zinc-500">复盘状态</TableHead>
-                  <TableHead className="h-9 w-16 text-center text-[12px] font-medium text-zinc-500">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visible.length === 0 ? (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={canManageLifecycle ? 12 : 11} className="py-16 text-center">
-                      <div className="flex flex-col items-center justify-center space-y-2.5">
-                        <span className="text-[13px] text-zinc-500">没有找到符合条件的视频</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleResetFilters}
-                          className="h-8 rounded-xl border-zinc-200 bg-white text-[12px] text-zinc-600 hover:bg-zinc-50 active:scale-[0.98] transition-all"
-                        >
-                          清除过滤条件
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  visible.map((video, index) => {
-                    const snap = snapshotMap.get(video.id);
-                    const card = feedbackCards[video.id];
-                    const cardStatus = card?.workflow_status ?? "not_started";
-                    const readiness = reviewReadiness[video.id];
-                    const isNewBatch = newBatchIds.has(video.id);
-                    const isUploadedToday = isVideoUploadedToday(video);
-                    const previousVideo = index > 0 ? visible[index - 1] : null;
-                    const showTodayDivider =
-                      previousVideo !== null &&
-                      isVideoUploadedToday(previousVideo) &&
-                      !isUploadedToday;
-                    return (
-                      <Fragment key={video.id}>
-                        {showTodayDivider ? (
-                          <TableRow className="hover:bg-transparent">
-                            <TableCell colSpan={canManageLifecycle ? 12 : 11} className="px-4 py-2">
-                              <div className="flex items-center gap-3 text-[12px] text-zinc-500">
-                                <span className="shrink-0 tracking-[0.18em]">历史</span>
-                                <span className="h-px flex-1 bg-zinc-200" />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : null}
-                        <TableRow
-                          data-video-id={video.id}
-                          onClick={(e) => {
-                            if (window.getSelection()?.toString()) return;
-                            const target = e.target as HTMLElement;
-                            if (
-                              target.closest("button") ||
-                              target.closest("a") ||
-                              target.closest("input") ||
-                              target.closest("[role='checkbox']")
-                            ) {
-                              return;
-                            }
-                            onSelectVideoId(video.id);
-                          }}
-                          className={[
-                            "group relative border-b border-zinc-100 hover:bg-white hover:shadow-[0_4px_14px_-2px_rgba(0,0,0,0.06)] hover:z-10 cursor-pointer transition-all duration-200 ease-out",
-                            isNewBatch && "animate-fade-in-up",
-                          ].filter(Boolean).join(" ")}
-                          style={
-                            isNewBatch
-                              ? {
-                                  animation: "fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) forwards",
-                                }
-                              : undefined
-                          }
-                        >
-                          {/* 选择框 */}
-                          {canManageLifecycle && (
-                            <TableCell className="py-3 pl-4 pr-0" onClick={(e) => e.stopPropagation()}>
-                              <Checkbox
-                                checked={selectedIds.has(video.id)}
-                                onCheckedChange={(checked) => {
-                                  setSelectedIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (checked) next.add(video.id);
-                                    else next.delete(video.id);
-                                    return next;
-                                  });
-                                }}
-                                aria-label={`选择 ${video.video_title || "视频"}`}
-                              />
-                            </TableCell>
-                          )}
-
-                          {/* 排名 */}
-                          <TableCell className="py-3 text-center text-[13px] tabular-nums text-zinc-500 w-12">
-                            {filters.sortMode === "priority" && index === 0 ? (
-                              <span className="font-medium text-[#D99E55] text-[13px] drop-shadow-[0_1px_1px_rgba(217,158,85,0.15)]">1</span>
-                            ) : filters.sortMode === "priority" && index === 1 ? (
-                              <span className="font-medium text-zinc-800 text-[13px]">2</span>
-                            ) : filters.sortMode === "priority" && index === 2 ? (
-                              <span className="font-medium text-[#B87333] text-[13px]">3</span>
-                            ) : (
-                              <span className="text-[12px] font-medium text-zinc-400 group-hover:text-zinc-700 transition-colors">{index + 1}</span>
-                            )}
-                          </TableCell>
-                          
-                          {/* 视频信息标题 */}
-                          <TableCell className="w-[160px] max-w-[160px] py-3">
-                            <div className="line-clamp-2 text-[13px] font-medium text-zinc-900 leading-tight group-hover:text-[#D97757] transition-colors" title={video.video_title || video.content?.slice(0, 60) || "（无标题）"}>
-                              {video.video_title || video.content?.slice(0, 30) || "（无标题）"}
-                            </div>
-                          </TableCell>
-                          
-                          {/* 作者与账号 */}
-                          <TableCell className="text-[13px] text-zinc-700 py-3">
-                            <span className="font-medium text-zinc-800">{video.profiles.name}</span>
-                            <span className="mx-1 text-zinc-300">·</span>
-                            <span className="text-zinc-500 text-[12px]">{video.accounts.name}</span>
-                          </TableCell>
-
-                          {/* 2s跳出 */}
-                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
-                            {snap?.bounce_rate_2s != null ? (
-                              snap.bounce_rate_2s > thresholds.bounce_rate_2s ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger className="cursor-default">
-                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
-                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
-                                        {formatRate(snap.bounce_rate_2s)}
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="text-[12px]">
-                                      2s跳出率高达 {formatRate(snap.bounce_rate_2s)}（高于警戒线 {thresholds.bounce_rate_2s}%）
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span className="text-zinc-700 font-medium">{formatRate(snap.bounce_rate_2s)}</span>
-                              )
-                            ) : (
-                              <span className="text-zinc-300">-</span>
-                            )}
-                          </TableCell>
-
-                          {/* 5s完播 */}
-                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
-                            {snap?.completion_rate_5s != null ? (
-                              snap.completion_rate_5s < thresholds.completion_rate_5s ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger className="cursor-default">
-                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
-                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
-                                        {formatRate(snap.completion_rate_5s)}
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="text-[12px]">
-                                      5s完播率仅 {formatRate(snap.completion_rate_5s)}（低于警戒线 {thresholds.completion_rate_5s}%）
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span className="text-zinc-700 font-medium">{formatRate(snap.completion_rate_5s)}</span>
-                              )
-                            ) : (
-                              <span className="text-zinc-300">-</span>
-                            )}
-                          </TableCell>
-
-                          {/* 均播 */}
-                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
-                            {snap?.avg_play_duration != null ? (
-                              snap.avg_play_duration < thresholds.avg_play_duration ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger className="cursor-default">
-                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
-                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
-                                        {snap.avg_play_duration.toFixed(1)}s
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="text-[12px]">
-                                      均播时长仅 {snap.avg_play_duration.toFixed(1)}s（低于警戒线 {thresholds.avg_play_duration}s）
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span className="text-zinc-700 font-medium">{snap.avg_play_duration.toFixed(1)}s</span>
-                              )
-                            ) : (
-                              <span className="text-zinc-300">-</span>
-                            )}
-                          </TableCell>
-
-                          {/* 完播 */}
-                          <TableCell className="py-3 text-right text-[13px] tabular-nums">
-                            {snap?.completion_rate != null ? (
-                              snap.completion_rate < thresholds.completion_rate ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger className="cursor-default">
-                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
-                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
-                                        {formatRate(snap.completion_rate)}
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="text-[12px]">
-                                      完播率仅 {formatRate(snap.completion_rate)}（低于警戒线 {thresholds.completion_rate}%）
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <span className="text-zinc-700 font-medium">{formatRate(snap.completion_rate)}</span>
-                              )
-                            ) : (
-                              <span className="text-zinc-300">-</span>
-                            )}
-                          </TableCell>
-                          
-                          {/* 播放量 */}
-                          <TableCell className="text-right text-[13px] tabular-nums text-zinc-700 py-3 font-medium">
-                            {snap ? (
-                              snap.play_count != null && snap.play_count < thresholds.play_count ? (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger className="cursor-default">
-                                      <span className="font-semibold text-[#C9604D] bg-[#C9604D]/[0.07] border border-[#C9604D]/15 px-1.5 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
-                                        <span className="size-1 rounded-full bg-[#C9604D] shrink-0" />
-                                        <PlayCountWithSignal video={video} playCount={snap.play_count} />
-                                      </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="text-[12px]">
-                                      播放量仅 {formatNumber(snap.play_count)}（低于警戒线 {thresholds.play_count}）
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              ) : (
-                                <PlayCountWithSignal video={video} playCount={snap.play_count} />
-                              )
-                            ) : "-"}
-                          </TableCell>
-                          
-                          {/* 发布时间 */}
-                          <TableCell className="text-[12px] text-zinc-500 py-3 font-normal">
-                            {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
-                          </TableCell>
-                          
-                          {/* 复盘状态 */}
-                          <TableCell className="py-3">
-                            {cardStatus !== "not_started" && card ? (
-                              <div className="flex flex-col gap-1 items-start">
-                                <Badge
-                                  variant="outline"
-                                  className={`text-[12px] transition-all duration-150 ${workflowStatusClass[cardStatus] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                                >
-                                  {card.workflow_label}
-                                </Badge>
-                                {card.employee_reply_status && card.employee_reply_status !== "pending" && (
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-[11px] ${
-                                      card.employee_reply_status === "acknowledged"
-                                        ? "border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.06] text-[#6FAA7D] font-medium"
-                                        : "border-[#D99E55]/20 bg-[#D99E55]/[0.06] text-[#D99E55] font-medium"
-                                    }`}
-                                  >
-                                    {card.employee_reply_status === "acknowledged" ? "已回传：采纳" : "已回传：申诉"}
-                                  </Badge>
-                                )}
-                              </div>
-                            ) : readiness ? (
-                              <Badge
-                                variant="outline"
-                                className={`text-[12px] transition-all duration-150 ${readinessClass[readiness.status] ?? "border-zinc-200 bg-zinc-50 text-zinc-500"}`}
-                              >
-                                {readiness.label}
-                              </Badge>
-                            ) : (
-                              <span className="text-[12px] text-zinc-400">未生成</span>
-                            )}
-                          </TableCell>
-
-                          {/* 操作 */}
-                          <TableCell className="text-center py-3">
-                            <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                              {(() => {
-                                const sent = cardStatus === "sent" || cardStatus === "viewed";
-                                if (sent) {
-                                  return (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-7 rounded-lg border-zinc-200 bg-white px-3 text-[12px] text-zinc-500 hover:text-zinc-700 active:scale-[0.98] transition-all duration-150"
-                                      onClick={() => onSelectVideoId(video.id)}
-                                    >
-                                      查看
-                                    </Button>
-                                  );
-                                }
-                                return (
-                                  <Button
-                                    size="sm"
-                                    className="h-7 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-all duration-150 hover:bg-[#C96442] active:scale-[0.98]"
-                                    onClick={() => onSelectVideoId(video.id)}
-                                  >
-                                    复盘
-                                  </Button>
-                                );
-                              })()}
-
-                              {(permissionInfo?.role === "owner" || permissionInfo?.role === "admin") &&
-                                getShanghaiDateString(new Date(video.published_at ?? video.uploaded_at ?? video.created_at)) >= "2026-07-27" && (
-                                  <AttributionEditDialog video={video} onSuccess={onRefresh} />
-                                )}
-
-                              {canManageLifecycle && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger
-                                    className="flex size-7 items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
-                                    title="更多操作"
-                                  >
-                                    <MoreHorizontal className="size-4" />
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-36">
-                                    <DropdownMenuItem
-                                      variant="destructive"
-                                      className="gap-2 cursor-pointer text-[12px]"
-                                      onClick={() => setTrashSingleVideo(video)}
-                                    >
-                                      <Trash2 className="size-3.5" />
-                                      移入回收站
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      </Fragment>
-                    );
-                  })
-                )}
-
-                {/* Sentinel for auto-load */}
-                {hasMore && (
-                  <TableRow>
-                    <TableCell colSpan={canManageLifecycle ? 12 : 11} className="p-0">
-                      <div ref={sentinelRef} className="h-4" />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+      <div className="grid gap-2">
+        {visibleRows.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center shadow-2xs">
+            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 mb-3">
+              <Check className="size-5 text-[#6FAA7D]" />
+            </div>
+            <p className="text-[14px] font-semibold text-zinc-900">今日待复盘已清完</p>
+            <p className="mt-1 text-[12px] text-zinc-500">当前没有需要紧急复盘的异常视频，干得漂亮！</p>
           </div>
-
-          {/* Load more button (manual fallback + visual anchor) */}
-          {hasMore && !isLoadingMore && (
-            <div className="mt-2 flex justify-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (hasDeferredData && onLoadDeferredData) {
-                    void onLoadDeferredData();
-                    return;
-                  }
-                  setIsLoadingMore(true);
-                  setTimeout(() => {
-                    const nextIds = new Set<string>();
-                    filtered.slice(loadedCount, loadedCount + PAGE_SIZE).forEach((v) => nextIds.add(v.id));
-                    setNewBatchIds(nextIds);
-                    setLoadedCount((c) => c + PAGE_SIZE);
-                    setIsLoadingMore(false);
-                    setTimeout(() => setNewBatchIds(new Set()), 600);
-                  }, 200);
-                }}
-                disabled={isLoadingMore || isDeferredDataLoading}
+        ) : (
+          visibleRows.map((video, index) => {
+            const snapshot = snapshotMap.get(video.id);
+            const card = feedbackCards[video.id];
+            const readiness = reviewReadiness[video.id];
+            const priorityReasons = getMetricWarningReasons(snapshot, thresholds).slice(0, 3);
+            const score = getPriorityScore(video, snapshot, card, readiness, thresholds);
+            return (
+              <button
+                key={video.id}
+                type="button"
+                onClick={() => onSelectVideoId(video.id)}
+                className="group grid gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition-all hover:border-zinc-300 hover:bg-zinc-50/50 hover:shadow-2xs sm:grid-cols-[44px_1fr_auto]"
               >
-                {isLoadingMore || isDeferredDataLoading ? (
-                  <>加载中…</>
-                ) : (
-                  <>
-                    <ChevronDown className="size-3.5" />
-                    加载更多
-                    <span className="ml-1 text-[12px] text-zinc-500">
-                      (已加载 {Math.min(loadedCount, filtered.length)} / 共 {hasDeferredData ? totalCount ?? filtered.length : filtered.length} 条)
-                    </span>
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-
-          {/* End state */}
-          {!hasMore && filtered.length > 0 && (
-            <div className="mt-4 text-center text-[12px] text-zinc-500">
-              已加载全部 {filtered.length} 条内容
-            </div>
-          )}
-        </div>
-
-        {/* Right sidebar: mini timeline */}
-        {filtered.length > PAGE_SIZE && (
-          <div className="hidden flex-col items-center gap-4 py-4 lg:flex">
-            <span className="text-[12px] text-zinc-500" style={{ writingMode: "vertical-rl" }}>
-              时间轴
-            </span>
-            <MiniTimeline
-              groups={timelineGroups}
-              total={filtered.length}
-              currentIndex={Math.min(currentIndex, filtered.length - 1)}
-              onSeek={handleTimelineSeek}
-            />
-            <span className="text-[12px] text-zinc-500" style={{ writingMode: "vertical-rl" }}>
-              {filtered.length} 条
-            </span>
-          </div>
+                <div className="flex size-9 items-center justify-center rounded-lg bg-zinc-100 text-[13px] font-semibold tabular-nums text-zinc-700">
+                  {index + 1}
+                </div>
+                <div className="min-w-0 space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className={`text-[12px] font-medium ${statusClassName[video.anomaly_status]}`}>
+                      {video.anomaly_status}
+                    </Badge>
+                    {video.play_change_signal === "halve" ? (
+                      <Badge variant="outline" className="border-[#C9604D]/20 bg-[#C9604D]/[0.04] text-[12px] font-medium text-[#C9604D]">
+                        播放腰斩
+                      </Badge>
+                    ) : null}
+                    {card?.workflow_status === "draft" || card?.workflow_status === "confirmed" ? (
+                      <Badge variant="outline" className="border-[#D99E55]/20 bg-[#D99E55]/[0.04] text-[12px] font-medium text-[#D99E55]">
+                        已存草稿
+                      </Badge>
+                    ) : null}
+                    {readiness ? (
+                      <span className="text-[12px] text-zinc-400 font-normal">{readiness.label}</span>
+                    ) : null}
+                  </div>
+                  <div>
+                    <p className="truncate text-[14px] font-medium text-zinc-900">
+                      {video.video_title || video.content?.slice(0, 42) || "未命名视频"}
+                    </p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500">
+                      <span className="inline-flex items-center gap-1">
+                        <UserRound className="size-3.5 text-zinc-400" />
+                        {video.profiles?.name || "未知"} · {video.accounts?.name || "未知账号"}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarClock className="size-3.5 text-zinc-400" />
+                        {formatDateTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {priorityReasons.length > 0 ? (
+                      priorityReasons.map((reason) => (
+                        <span key={reason} className="rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-2 py-0.5 text-[11px] font-medium text-[#C9604D]">
+                          {reason}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-500">
+                        暂无明显指标异常
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+                  <span className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 tabular-nums">
+                    <ArrowDown className="size-3.5 text-zinc-400" />
+                    权重 {score}
+                  </span>
+                  <span className="rounded-lg bg-zinc-900 px-3.5 py-1.5 text-[12px] font-medium text-white transition-colors group-hover:bg-[#D97757]">
+                    复盘
+                  </span>
+                </div>
+              </button>
+            );
+          })
         )}
+
+        {isDeferredDataLoading ? (
+          <div className="grid gap-2">
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </div>
+        ) : null}
       </div>
 
-      <ContentDetailDialog
-        open={selectedVideo !== null}
-        onOpenChange={(open) => {
-          if (!open) onSelectVideoId(null);
-        }}
-        video={selectedVideo}
-        snapshot={selectedSnapshot}
-        feedbackCard={selectedVideoId ? feedbackCards[selectedVideoId] ?? null : null}
-        onFeedbackCardChanged={(videoId, card) => {
-          onFeedbackCardChanged?.(videoId, card);
-        }}
-        onNavigateToNext={handleNavigateToNext}
-        permissionInfo={permissionInfo}
-        onLifecycleChanged={() => {
-          onSelectVideoId(null);
-          onRefresh();
-        }}
-      />
-
-      {/* 悬浮批量操作工具栏 */}
-      {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
-          <span className="text-[13px] font-medium text-zinc-700">
-            已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
-          </span>
-          <div className="h-4 w-px bg-zinc-200" />
+      {hasMore ? (
+        <div className="flex justify-center pt-1">
           <Button
-            size="sm"
             variant="ghost"
-            className="h-8 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 text-[12px]"
-            onClick={() => setSelectedIds(new Set())}
-          >
-            取消选择
-          </Button>
-          <Button
             size="sm"
-            variant="destructive"
-            className="h-8 rounded-xl bg-[#C9604D] hover:bg-[#B85340] text-white text-[12px] gap-1.5 px-3.5 shadow-xs"
-            onClick={() => setShowBatchTrashConfirm(true)}
+            onClick={loadMore}
+            disabled={isDeferredDataLoading}
+            className="gap-1.5 text-[12px]"
           >
-            <Trash2 className="size-3.5" />
-            批量移入回收站
+            <ChevronDown className="size-3.5" />
+            {isDeferredDataLoading ? "加载中..." : `加载更多（${Math.min(loadedCount, queueRows.length)} / ${hasDeferredData ? totalCount ?? queueRows.length : queueRows.length}）`}
           </Button>
         </div>
-      )}
-
-      {/* 单条移入回收站确认弹窗 */}
-      <ConfirmDialog
-        open={trashSingleVideo !== null}
-        onOpenChange={(open) => {
-          if (!open) setTrashSingleVideo(null);
-        }}
-        title="移入回收站确认"
-        description={`确定将作品“${trashSingleVideo?.video_title?.trim() || "未命名"}”移入回收站吗？移入后该作品将在复盘列表中隐藏，可在“素材库 - 回收站”中随时恢复。`}
-        confirmText="确认移入"
-        destructive
-        onConfirm={handleTrashSingle}
-      />
-
-      {/* 批量移入回收站确认弹窗 */}
-      <ConfirmDialog
-        open={showBatchTrashConfirm}
-        onOpenChange={setShowBatchTrashConfirm}
-        title="批量移入回收站确认"
-        description={`确定将选中的 ${selectedIds.size} 个作品移入回收站吗？移入后这些作品将在复盘列表中隐藏，可在“素材库 - 回收站”中随时恢复。`}
-        confirmText={isBatchTrashing ? "移入中..." : "确认批量移入"}
-        loading={isBatchTrashing}
-        destructive
-        onConfirm={handleBatchTrash}
-      />
-
-      {/* Keyframe animation for new batch */}
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+      ) : null}
     </div>
   );
 }

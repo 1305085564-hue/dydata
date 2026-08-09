@@ -9,10 +9,16 @@ import {
   buildFeedbackSaveDraftMutation,
   CONTENT_FEEDBACK_CARD_SELECT,
 } from "@/lib/content-feedback-cards";
+import {
+  CONTENT_FEEDBACK_DELIVERY_ENABLED,
+  buildDeliveryDisabledPayload,
+  isContentFeedbackDeliveryAction,
+  type ContentFeedbackAction,
+} from "@/lib/content-feedback-workflow";
 import type { ContentFeedbackCard } from "@/types";
 
 type ConfirmBody = {
-  action?: "confirm" | "send" | "create_and_confirm" | "confirm_and_send" | "create_confirm_send" | "save_draft";
+  action?: ContentFeedbackAction;
   manager_note?: string | null;
   summary?: {
     grade?: string;
@@ -107,6 +113,10 @@ export async function PATCH(
       { error: "action 只能是 confirm / send / create_and_confirm / confirm_and_send / create_confirm_send / save_draft" },
       { status: 400 },
     );
+  }
+
+  if (!CONTENT_FEEDBACK_DELIVERY_ENABLED && isContentFeedbackDeliveryAction(action)) {
+    return NextResponse.json(buildDeliveryDisabledPayload(), { status: 409 });
   }
 
   const currentCard = await loadFeedbackCard(access.supabase, videoId);

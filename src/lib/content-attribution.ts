@@ -130,7 +130,7 @@ function computeLocate(
 const TONE_ORDER: Record<AttributionTone, number> = { bad: 0, warn: 1, missing: 2, good: 3 };
 
 /** Step 4 排序：tone 优先，同 tone 按偏离幅度降序 */
-function sortFindings(findings: AttributionFinding[]): AttributionFinding[] {
+export function sortFindings(findings: AttributionFinding[]): AttributionFinding[] {
   return [...findings].sort((a, b) => {
     const toneDiff = TONE_ORDER[a.tone] - TONE_ORDER[b.tone];
     if (toneDiff !== 0) return toneDiff;

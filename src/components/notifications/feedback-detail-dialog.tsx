@@ -47,6 +47,10 @@ interface FeedbackDetailDialogProps {
   onConfirmed: (cardId: string) => void;
 }
 
+export function getFeedbackCardViewedErrorMessage(payload: { delivery_disabled?: boolean }) {
+  return payload.delivery_disabled ? "站内下发已暂停" : null;
+}
+
 function formatNumber(v: number | null | undefined) {
   if (v == null) return "-";
   return new Intl.NumberFormat("zh-CN").format(v);
@@ -101,8 +105,15 @@ export function FeedbackDetailDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "viewed" }),
       });
-      const data = (await res.json()) as { ok?: boolean };
-      if (!res.ok || !data.ok) throw new Error("确认失败");
+      const data = (await res.json()) as { ok?: boolean; delivery_disabled?: boolean };
+      if (!res.ok || !data.ok) {
+        const message = getFeedbackCardViewedErrorMessage(data);
+        if (message) {
+          feedbackToast.error(message);
+          return;
+        }
+        throw new Error("确认失败");
+      }
       onConfirmed(cardId);
       feedbackToast.success("已确认");
     } catch {

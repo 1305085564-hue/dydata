@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { computeAttribution } from "./content-attribution";
+import { computeAttribution, sortFindings, type AttributionFinding } from "./content-attribution";
 
 type SnapshotRow = {
   play_count: number | null;
@@ -74,6 +74,22 @@ test("warn 区间（比率类 4-8pp）", () => {
   assert.equal(finding.tone, "warn");
 });
 
+test("绝对量类恰好落在 8% 与 15% 阈值时分别为 warn 和 bad", () => {
+  const warn = computeAttribution("v1", makeSnap({ play_count: 9200 }), refSnap, "self", "");
+  const bad = computeAttribution("v1", makeSnap({ play_count: 8500 }), refSnap, "self", "");
+
+  assert.equal(warn.findings.find((finding) => finding.metric === "play_count")?.tone, "warn");
+  assert.equal(bad.findings.find((finding) => finding.metric === "play_count")?.tone, "bad");
+});
+
+test("比率类恰好落在 4pp 与 8pp 阈值时分别为 warn 和 bad", () => {
+  const warn = computeAttribution("v1", makeSnap({ completion_rate_5s: 46 }), refSnap, "self", "");
+  const bad = computeAttribution("v1", makeSnap({ completion_rate_5s: 42 }), refSnap, "self", "");
+
+  assert.equal(warn.findings.find((finding) => finding.metric === "completion_rate_5s")?.tone, "warn");
+  assert.equal(bad.findings.find((finding) => finding.metric === "completion_rate_5s")?.tone, "bad");
+});
+
 // ===== 缺数据 =====
 
 test("current 为 null → snapshot_ready:false，findings 为空", () => {
@@ -97,6 +113,26 @@ test("reference 为 null → 所有非率型指标 missing（无法算 delta）"
   assert.ok(result.findings.every((f) => f.tone === "missing"));
 });
 
+test("绝对量类参照值为 0 时标记 missing，不伪造相对百分比", () => {
+  const reference = makeSnap({ likes: 0 });
+  const result = computeAttribution("v1", makeSnap({ likes: 1 }), reference, "self", "");
+  const finding = result.findings.find((item) => item.metric === "likes")!;
+
+  assert.equal(finding.tone, "missing");
+  assert.equal(finding.delta, null);
+  assert.ok(result.missing.includes("likes"));
+});
+
+test("单项参照值为 null、当前有值时标记 missing", () => {
+  const reference = makeSnap({ likes: null });
+  const result = computeAttribution("v1", makeSnap({ likes: 500 }), reference, "self", "");
+  const finding = result.findings.find((item) => item.metric === "likes")!;
+
+  assert.equal(finding.tone, "missing");
+  assert.equal(finding.value, 500);
+  assert.equal(finding.ref_value, null);
+});
+
 test("avg_play_ratio 为空时 → segment_hint=null，seconds 保留均播展示值", () => {
   const current = makeSnap({ avg_play_duration: 12, avg_play_ratio: null });
   const result = computeAttribution("v1", current, refSnap, "self", "");
@@ -117,6 +153,26 @@ test("findings 按 tone 降序（bad > warn > good）排列", () => {
   const firstGoodIdx = tones.indexOf("good");
   if (firstBadIdx !== -1 && firstWarnIdx !== -1) assert.ok(firstBadIdx < firstWarnIdx);
   if (firstWarnIdx !== -1 && firstGoodIdx !== -1) assert.ok(firstWarnIdx < firstGoodIdx);
+});
+
+test("同为 good 的指标按 delta 绝对值降序排列", () => {
+  const current = makeSnap({ comments: 160, shares: 50, likes: 550 });
+  const result = computeAttribution("v1", current, refSnap, "self", "");
+  const goodMetrics = result.findings.filter((finding) => finding.tone === "good").map((finding) => finding.metric);
+
+  assert.ok(goodMetrics.indexOf("comments") < goodMetrics.indexOf("shares"));
+  assert.ok(goodMetrics.indexOf("shares") < goodMetrics.indexOf("likes"));
+});
+
+test("sortFindings 接受空数组", () => {
+  assert.deepEqual(sortFindings([] as AttributionFinding[]), []);
+});
+
+test("delta 保留一位小数", () => {
+  const result = computeAttribution("v1", makeSnap({ likes: 533.333 }), refSnap, "self", "");
+  const finding = result.findings.find((item) => item.metric === "likes")!;
+
+  assert.equal(finding.delta, 6.7);
 });
 
 // ===== locate =====

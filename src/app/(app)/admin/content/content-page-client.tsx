@@ -66,7 +66,6 @@ export function ContentPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const hasLoadedFullInitialData = useRef(false);
   const requestSeq = useRef(0);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
@@ -88,10 +87,13 @@ export function ContentPageClient({
         const score = calculatePriorityScore(video);
         return { video, score };
       })
-      .filter((item) => item.score >= 200 && (view === "all" || data?.feedbackCards?.[item.video.id]?.workflow_status !== "sent"))
+      .filter((item) => {
+        const status = data?.feedbackCards?.[item.video.id]?.workflow_status ?? "not_started";
+        return item.score >= 200 && status !== "sent" && status !== "viewed";
+      })
       .sort((a, b) => b.score - a.score)
       .map((item) => item.video);
-  }, [data?.videos, data?.feedbackCards, view]);
+  }, [data?.videos, data?.feedbackCards]);
 
   const loadData = useCallback(async (
     nextView: ContentView,
@@ -125,7 +127,6 @@ export function ContentPageClient({
 
   const loadDeferredData = useCallback(async () => {
     if (!data.isPartial || isLoading || isDeferredLoading) return;
-    hasLoadedFullInitialData.current = true;
     setIsDeferredLoading(true);
     try {
       await loadData(view, perspective, teamId, { background: true });
@@ -134,23 +135,15 @@ export function ContentPageClient({
     }
   }, [data.isPartial, isDeferredLoading, isLoading, loadData, perspective, teamId, view]);
 
-  const switchView = useCallback(async (nextView: ContentView) => {
-    if (nextView === view) return;
-    hasLoadedFullInitialData.current = false;
-    await loadData(nextView, perspective, teamId);
-  }, [loadData, perspective, teamId, view]);
-
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
     const nextTeamId = nextPerspective === "team" ? teamId ?? teams[0]?.id ?? null : teamId;
-    hasLoadedFullInitialData.current = false;
     await loadData(view, nextPerspective, nextTeamId);
   }, [loadData, perspective, teamId, teams, view]);
 
   const switchTeam = useCallback(async (nextTeamId: string | null) => {
     if (!nextTeamId) return;
     if (nextTeamId === teamId) return;
-    hasLoadedFullInitialData.current = false;
     await loadData(view, "team", nextTeamId);
   }, [loadData, teamId, view]);
 
@@ -161,34 +154,6 @@ export function ContentPageClient({
       const video = prev.videos.find((item) => item.id === videoId);
       const currentReadiness = prev.reviewReadiness[videoId];
       if (video && currentReadiness) {
-        nextReadiness[videoId] = buildContentReviewReadiness({
-          video,
-          feedbackCard: nextCard,
-          hasSnapshot24h: currentReadiness.has_snapshot_24h,
-          hasSegments: true,
-        });
-      }
-      const cards = Object.values(nextFeedbackCards);
-      const workflowSummary = {
-        notStarted: cards.filter((c) => c.workflow_status === "not_started").length,
-        draft: cards.filter((c) => c.workflow_status === "draft").length,
-        confirmed: cards.filter((c) => c.workflow_status === "confirmed").length,
-        sent: cards.filter((c) => c.workflow_status === "sent").length,
-        viewed: cards.filter((c) => c.workflow_status === "viewed").length,
-        pendingDelivery: cards.filter((c) => c.workflow_status === "draft" || c.workflow_status === "confirmed").length,
-      };
-      return { ...prev, feedbackCards: nextFeedbackCards, reviewReadiness: nextReadiness, workflowSummary };
-    });
-  }, []);
-
-  const handleFeedbackCardsChanged = useCallback((nextCards: Record<string, ContentFeedbackCardView>) => {
-    setData((prev) => {
-      const nextFeedbackCards = { ...prev.feedbackCards, ...nextCards };
-      const nextReadiness = { ...prev.reviewReadiness };
-      for (const [videoId, nextCard] of Object.entries(nextCards)) {
-        const video = prev.videos.find((item) => item.id === videoId);
-        const currentReadiness = prev.reviewReadiness[videoId];
-        if (!video || !currentReadiness) continue;
         nextReadiness[videoId] = buildContentReviewReadiness({
           video,
           feedbackCard: nextCard,
@@ -250,26 +215,6 @@ export function ContentPageClient({
     }
   }, [data.videos, data.feedbackCards]);
 
-  // Transition to next video handler
-  const handleGoToNextVideo = useCallback((currentVideoId: string) => {
-    const currentIndex = data.videos.findIndex((v) => v.id === currentVideoId);
-    if (currentIndex === -1) {
-      setSelectedVideoId(null);
-      return;
-    }
-    const nextVideo = data.videos.slice(currentIndex + 1).find((v) => {
-      const card = data.feedbackCards[v.id];
-      const status = card?.workflow_status ?? "not_started";
-      return status !== "sent" && status !== "viewed";
-    });
-    if (nextVideo) {
-      setSelectedVideoId(nextVideo.id);
-    } else {
-      setSelectedVideoId(null);
-      toast.success("已下发，今日待复盘已清完！");
-    }
-  }, [data.videos, data.feedbackCards]);
-
   if (selectedVideoId) {
     const selectedVideo = data?.videos?.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = data?.snapshots?.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
@@ -283,7 +228,6 @@ export function ContentPageClient({
         onFeedbackCardChanged={handleFeedbackCardChanged}
         onClose={() => setSelectedVideoId(null)}
         profiles={data.profiles}
-        onGoToNextVideo={handleGoToNextVideo}
         anomalyVideos={anomalyVideos}
         onVideoSelect={setSelectedVideoId}
         canOperateLifecycle={permissionInfo.role === "owner" || permissionInfo.role === "admin"}
@@ -298,44 +242,16 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200/80 bg-gradient-to-b from-zinc-50/80 via-white to-white p-5 shadow-xs"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs"
     >
-      {/* 顶栏控制条：Sticky 毛玻璃与环境融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/85 p-2.5 backdrop-blur-md transition-all duration-200 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.04)]">
+      {/* 顶栏控制条：Sticky 纸感与环境融合 */}
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/90 p-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100/60 p-0.5 shadow-inner">
-            <button
-              type="button"
-              onClick={() => switchView("pending")}
-              disabled={isLoading}
-              className={[
-                "rounded-md px-3 py-1.5 text-[12px] font-medium tracking-tight transition-all duration-150",
-                view === "pending"
-                  ? "bg-white text-zinc-900 shadow-xs"
-                  : "text-zinc-500 hover:text-zinc-800",
-              ].join(" ")}
-            >
-              未开始
-              <span className="ml-1.5 text-[12px] tabular-nums font-semibold text-zinc-500">
-                {data.workflowSummary.notStarted}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchView("all")}
-              disabled={isLoading}
-              className={[
-                "rounded-md px-3 py-1.5 text-[12px] font-medium tracking-tight transition-all duration-150",
-                view === "all"
-                  ? "bg-white text-zinc-900 shadow-xs"
-                  : "text-zinc-500 hover:text-zinc-800",
-              ].join(" ")}
-            >
-              全部
-              <span className="ml-1.5 text-[12px] tabular-nums font-medium text-zinc-400">
-                {data.summary.totalVideos}
-              </span>
-            </button>
+          <div className="rounded-lg border border-zinc-200 bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-700">
+            今日待盘
+            <span className="ml-1.5 tabular-nums font-semibold text-zinc-900">
+              {data.summary.pendingReviewCount}
+            </span>
           </div>
 
           {/* 团队/公司视角统一选择下拉框 */}
@@ -370,21 +286,18 @@ export function ContentPageClient({
             </Select>
           ) : null}
 
-          {/* 今日异常雷达内联胶囊（极致呼吸光晕与高雅调性） */}
+          {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-gradient-to-r from-red-50/50 via-zinc-50 to-zinc-50 text-zinc-600 border border-[#C9604D]/20 rounded-lg hover:border-[#C9604D]/40 transition-all shadow-2xs">
-              <span className="relative flex size-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9604D] opacity-75"></span>
-                <span className="relative inline-flex rounded-full size-2 bg-[#C9604D]"></span>
-              </span>
+            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-zinc-50/80 text-zinc-600 border border-zinc-200 rounded-lg shadow-2xs">
+              <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
               <span className="font-semibold text-zinc-900">
-                今日异常({anomalyVideos.length})
+                今日异常 ({anomalyVideos.length})
               </span>
               <span className="text-zinc-300">·</span>
               <span className="flex items-center gap-1.5 shrink-0">
-                {deletedCount > 0 && <span className="text-[#C9604D] font-semibold">{deletedCount}删稿</span>}
-                {limitedCount > 0 && <span className="text-[#C9604D] font-semibold">{limitedCount}限流</span>}
-                {halvedCount > 0 && <span className="text-[#D99E55] font-semibold">{halvedCount}腰斩</span>}
+                {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
+                {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
+                {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-zinc-300 hidden lg:inline">|</span>
               <span className="text-zinc-500 truncate max-w-[210px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
@@ -392,8 +305,9 @@ export function ContentPageClient({
                   <span key={v.id}>
                     {i > 0 && "、"}
                     <button
+                      type="button"
                       onClick={() => setSelectedVideoId(v.id)}
-                      className="underline decoration-[#D97757]/40 hover:text-[#D97757] font-medium transition-colors"
+                      className="underline decoration-zinc-300 hover:text-zinc-900 font-medium transition-colors"
                     >
                       {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
                     </button>
@@ -401,8 +315,9 @@ export function ContentPageClient({
                 ))}
               </span>
               <button
+                type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C96442] hover:underline shrink-0 ml-0.5 active:scale-95 transition-transform"
+                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] hover:underline shrink-0 ml-0.5 active:scale-95 transition-transform"
               >
                 直接去盘 →
               </button>
@@ -410,60 +325,21 @@ export function ContentPageClient({
           )}
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
-          {data.workflowSummary.draft > 0 && (
-            <span className="flex items-center gap-1 bg-amber-50/60 px-2 py-0.5 rounded border border-amber-200/50">
-              待确认
-              <span className="tabular-nums font-semibold text-[#D99E55]">
-                {data.workflowSummary.draft}
-              </span>
-            </span>
-          )}
-          {data.workflowSummary.confirmed > 0 && (
-            <span className="flex items-center gap-1 bg-orange-50/60 px-2 py-0.5 rounded border border-orange-200/50">
-              已确认未发
-              <span className="tabular-nums font-semibold text-[#D97757]">
-                {data.workflowSummary.confirmed}
-              </span>
-            </span>
-          )}
-          {data.workflowSummary.sent > 0 && (
-            <span className="flex items-center gap-1">
-              已下发
-              <span className="tabular-nums font-semibold text-[#D97757]">
-                {data.workflowSummary.sent}
-              </span>
-            </span>
-          )}
-          {data.workflowSummary.viewed > 0 && (
-            <span className="flex items-center gap-1">
-              员工已读
-              <span className="tabular-nums font-semibold text-[#6FAA7D]">
-                {data.workflowSummary.viewed}
-              </span>
-            </span>
-          )}
-          <span className="pl-2 text-[12px] font-medium text-zinc-400 border-l border-zinc-200">视频复盘</span>
+        <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500">
+          <span className="text-[12px] font-medium text-zinc-400">视频复盘 · 作战舱</span>
         </div>
       </div>
 
       <ContentList
         videos={data.videos}
         snapshots={data.snapshots}
-        profiles={data.profiles}
-        accounts={data.accounts}
         feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
         totalCount={data.summary.totalVideos}
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}
-        onFeedbackCardChanged={handleFeedbackCardChanged}
-        onFeedbackCardsChanged={handleFeedbackCardsChanged}
-        selectedVideoId={selectedVideoId}
         onSelectVideoId={setSelectedVideoId}
-        permissionInfo={permissionInfo}
-        onRefresh={() => loadData(view, perspective, teamId)}
       />
     </section>
   );
