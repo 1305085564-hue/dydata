@@ -1,34 +1,35 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
-import { feedbackToast } from "@/components/ui/feedback-toast";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { VideoFilters, type VideoFilterValue } from "./video-filters";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { TablePagination } from "@/components/ui/table-pagination";
 import { VideoDetailDialog } from "./video-detail-dialog";
 import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
-import type { Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
-
+import type { AnomalyStatus, Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
 import type { UserPermissionInfo } from "@/lib/permissions";
+import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
+import type { TeamOption } from "@/lib/teams";
+import type { AdminVideosPageData } from "@/lib/loaders/admin-videos-page";
 
 type VideoRow = Video & {
   accounts: { name: string };
@@ -38,6 +39,15 @@ type VideoRow = Video & {
 
 type FilterOption = Pick<Profile, "id" | "name">;
 type AccountOption = { id: string; name: string };
+type VideoView = "pending" | "all" | "trash";
+
+export interface VideoFilterValue {
+  profileId: string;
+  accountId: string;
+  startDate: string;
+  endDate: string;
+  status: AnomalyStatus | "all";
+}
 
 interface VideoListProps {
   videos: VideoRow[];
@@ -47,50 +57,147 @@ interface VideoListProps {
   videoTags: VideoTag[];
   assetLibrary: Record<string, VideoAssetLibraryRecord>;
   totalCount?: number;
+  summary: AdminVideosPageData["summary"];
+  assetSummary: AdminVideosPageData["assetSummary"];
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
   permissionInfo: UserPermissionInfo;
-  view: "pending" | "all" | "trash";
+  view: VideoView;
+  perspective: AdminDataPerspective;
+  teamId: string | null;
+  teams: TeamOption[];
+  canSwitchPerspective: boolean;
+  canAccessTrash: boolean;
+  isLoading?: boolean;
+  onSwitchView: (view: VideoView) => void;
+  onSwitchPerspective: (perspective: AdminDataPerspective) => void;
+  onSwitchTeam: (teamId: string | null) => void;
   onRefresh: () => void;
 }
 
-const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  abnormal: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
-  删稿: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  限流: "border-zinc-200 bg-zinc-50 text-[#C9604D]",
-  投流: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  活动干预: "border-zinc-200 bg-zinc-50 text-[#D99E55]",
-  "未满24h": "border-zinc-200 bg-zinc-50 text-zinc-500",
+type SortField = "published_at" | "play_count" | "interaction_rate" | "follower_gain";
+
+const DEFAULT_PAGE_SIZE = 30;
+
+const INITIAL_FILTERS: VideoFilterValue = {
+  profileId: "all",
+  accountId: "all",
+  startDate: "",
+  endDate: "",
+  status: "all",
 };
 
-const PAGE_SIZE = 30;
+const STATUS_OPTIONS: Array<AnomalyStatus | "all"> = [
+  "all",
+  "正常",
+  "删稿",
+  "限流",
+  "投流",
+  "活动干预",
+  "未满24h",
+];
 
-function formatDateTime(value: string | null) {
-  if (!value) return "-";
+function statusLabel(value: AnomalyStatus | "all") {
+  return value === "all" ? "全部状态" : value;
+}
 
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
+  return `${m}-${day} ${h}:${min}`;
 }
 
-function formatNumber(value: number | null | undefined) {
-  if (value == null) return "-";
-  return new Intl.NumberFormat("zh-CN").format(value);
+function formatCount(val: number | null | undefined): string {
+  if (val === null || val === undefined) return "—";
+  const isNegative = val < 0;
+  const absVal = Math.abs(val);
+  if (absVal >= 100000000) {
+    const num = (absVal / 100000000).toFixed(1).replace(/\.0$/, "");
+    return `${isNegative ? "-" : ""}${num}亿`;
+  }
+  if (absVal >= 10000) {
+    const num = (absVal / 10000).toFixed(1).replace(/\.0$/, "");
+    return `${isNegative ? "-" : ""}${num}万`;
+  }
+  return val.toLocaleString("zh-CN");
 }
 
-function formatPercent(value: number | null | undefined) {
-  if (value == null) return "-";
-  return `${(value * 100).toFixed(2)}%`;
+function formatPercent(val: number | null | undefined): string {
+  if (val === null || val === undefined || isNaN(val)) return "—";
+  return `${(val * 100).toFixed(1)}%`;
+}
+
+function getVideoStatusInfo(status: string | null | undefined, playChangeSignal?: string | null) {
+  const isHalve = playChangeSignal === "halve";
+  if (status === "deleted" || status === "删稿") {
+    return {
+      dotColor: "bg-[#C9604D]",
+      textColor: "text-[#C9604D]",
+      bgColor: "bg-[#C9604D]/10",
+      label: "删稿",
+    };
+  }
+  if (status === "limited" || status === "abnormal" || status === "限流" || status === "异常") {
+    return {
+      dotColor: "bg-[#C9604D]",
+      textColor: "text-[#C9604D]",
+      bgColor: "bg-[#C9604D]/10",
+      label: status === "limited" || status === "限流" ? "限流" : "异常",
+    };
+  }
+  if (isHalve || status === "halve" || status === "腰斩") {
+    return {
+      dotColor: "bg-[#D99E55]",
+      textColor: "text-[#D99E55]",
+      bgColor: "bg-[#D99E55]/10",
+      label: "腰斩",
+    };
+  }
+  if (status === "traffic_boost" || status === "投流") {
+    return {
+      dotColor: "bg-[#D99E55]",
+      textColor: "text-[#D99E55]",
+      bgColor: "bg-[#D99E55]/10",
+      label: "投流",
+    };
+  }
+  if (status === "activity_boost" || status === "活动干预") {
+    return {
+      dotColor: "bg-[#D99E55]",
+      textColor: "text-[#D99E55]",
+      bgColor: "bg-[#D99E55]/10",
+      label: "活动干预",
+    };
+  }
+  if (status === "normal" || status === "正常") {
+    return {
+      dotColor: "bg-[#6FAA7D]",
+      textColor: "text-[#6FAA7D]",
+      bgColor: "bg-[#6FAA7D]/10",
+      label: "正常",
+    };
+  }
+  if (status === "pending" || status === "未满24h") {
+    return {
+      dotColor: "bg-zinc-300",
+      textColor: "text-zinc-500",
+      bgColor: "bg-zinc-100",
+      label: "未满24h",
+    };
+  }
+  return {
+    dotColor: "bg-zinc-300",
+    textColor: "text-zinc-500",
+    bgColor: "bg-zinc-100",
+    label: status || "未满24h",
+  };
 }
 
 export function VideoList({
@@ -100,21 +207,29 @@ export function VideoList({
   accounts,
   videoTags,
   assetLibrary,
-  totalCount,
+  summary,
+  assetSummary,
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
   permissionInfo,
   view,
+  perspective,
+  teamId,
+  teams,
+  canSwitchPerspective,
+  canAccessTrash,
+  onSwitchView,
+  onSwitchPerspective,
+  onSwitchTeam,
   onRefresh,
 }: VideoListProps) {
-  const [filters, setFilters] = useState<VideoFilterValue>({
-    profileId: "all",
-    accountId: "all",
-    startDate: "",
-    endDate: "",
-    status: "all",
-  });
+  const [filters, setFilters] = useState<VideoFilterValue>(INITIAL_FILTERS);
+  const [sortField, setSortField] = useState<SortField>("published_at");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [patchingVideoId, setPatchingVideoId] = useState<string | null>(null);
   const [videoRows, setVideoRows] = useState<VideoRow[]>(videos);
@@ -131,7 +246,11 @@ export function VideoList({
   const [showBatchRestoreConfirm, setShowBatchRestoreConfirm] = useState(false);
   const [isBatchOperating, setIsBatchOperating] = useState(false);
 
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredDeferredRef = useRef(false);
   const canManageLifecycle = permissionInfo.role === "owner" || permissionInfo.role === "admin";
+  const safeTeams = teams ?? [];
+  const selectedTeamName = safeTeams.find((t) => t.id === teamId)?.name;
 
   const handleRestore = async (videoId: string) => {
     setIsOperating(videoId);
@@ -203,11 +322,13 @@ export function VideoList({
     setAssetLibraryState(assetLibrary);
   }, [assetLibrary]);
 
-  const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasUserScrolledList, setHasUserScrolledList] = useState(false);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  // 仅在首次需要时安全触发一次背景全量加载，杜绝循环重刷
+  useEffect(() => {
+    if (hasDeferredData && onLoadDeferredData && !isDeferredDataLoading && !hasTriggeredDeferredRef.current) {
+      hasTriggeredDeferredRef.current = true;
+      void onLoadDeferredData();
+    }
+  }, [hasDeferredData, onLoadDeferredData, isDeferredDataLoading]);
 
   const snapshots24h = useMemo(
     () => snapshotRows.filter((snapshot) => snapshot.snapshot_type === "24h"),
@@ -229,15 +350,6 @@ export function VideoList({
     return map;
   }, [snapshots24h]);
 
-  const sortedVideos = useMemo(
-    () => [...videoRows].sort((a, b) => {
-      const aTime = a.published_at ? new Date(a.published_at).getTime() : 0;
-      const bTime = b.published_at ? new Date(b.published_at).getTime() : 0;
-      return bTime - aTime;
-    }),
-    [videoRows]
-  );
-
   const tagMap = useMemo(() => {
     const map = new Map<string, VideoTag[]>();
     for (const tag of tagRows) {
@@ -248,8 +360,26 @@ export function VideoList({
     return map;
   }, [tagRows]);
 
-  const filteredVideos = useMemo(() => {
-    return sortedVideos.filter((video) => {
+  const handleSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
+    setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [sortField]);
+
+  const sortedAndFilteredVideos = useMemo(() => {
+    const filtered = videoRows.filter((video) => {
+      // 本地实现 pending 视图过滤（支持无感瞬切）
+      if (view === "pending") {
+        const isNormal = video.anomaly_status === "normal" || video.anomaly_status === "正常";
+        const hasTag = tagMap.has(video.id);
+        if (hasTag && isNormal) return false;
+      }
+
       if (filters.profileId !== "all" && video.user_id !== filters.profileId) {
         return false;
       }
@@ -258,8 +388,14 @@ export function VideoList({
         return false;
       }
 
-      if (filters.status !== "all" && video.anomaly_status !== filters.status) {
-        return false;
+      if (filters.status !== "all") {
+        const s = video.anomaly_status as string;
+        if (filters.status === "正常" && s !== "normal" && s !== "正常") return false;
+        if (filters.status === "删稿" && s !== "deleted" && s !== "删稿") return false;
+        if (filters.status === "限流" && s !== "limited" && s !== "abnormal" && s !== "限流" && s !== "异常") return false;
+        if (filters.status === "投流" && s !== "traffic_boost" && s !== "投流") return false;
+        if (filters.status === "活动干预" && s !== "activity_boost" && s !== "活动干预") return false;
+        if (filters.status === "未满24h" && s !== "未满24h" && s !== "pending" && s) return false;
       }
 
       const publishedDate = video.published_at ? video.published_at.slice(0, 10) : "";
@@ -274,24 +410,61 @@ export function VideoList({
 
       return true;
     });
-  }, [filters, sortedVideos]);
 
-  const visibleVideos = useMemo(() => filteredVideos.slice(0, loadedCount), [filteredVideos, loadedCount]);
-  const hasMoreLocal = loadedCount < filteredVideos.length;
-  const hasMore = hasMoreLocal || hasDeferredData;
+    return filtered.sort((a, b) => {
+      const snapA = snapshotMap.get(a.id);
+      const snapB = snapshotMap.get(b.id);
+      let valA: number | null = null;
+      let valB: number | null = null;
+
+      switch (sortField) {
+        case "published_at":
+          valA = (view === "trash" ? a.trashed_at : a.published_at)
+            ? new Date(view === "trash" ? a.trashed_at! : a.published_at!).getTime()
+            : 0;
+          valB = (view === "trash" ? b.trashed_at : b.published_at)
+            ? new Date(view === "trash" ? b.trashed_at! : b.published_at!).getTime()
+            : 0;
+          break;
+        case "play_count":
+          valA = snapA?.play_count ?? null;
+          valB = snapB?.play_count ?? null;
+          break;
+        case "interaction_rate":
+          valA = snapA ? interactionRate(snapA) : null;
+          valB = snapB ? interactionRate(snapB) : null;
+          break;
+        case "follower_gain":
+          valA = snapA?.follower_gain ?? null;
+          valB = snapB?.follower_gain ?? null;
+          break;
+      }
+
+      if (valA === null && valB === null) return 0;
+      if (valA === null) return 1;
+      if (valB === null) return -1;
+
+      return sortDir === "desc" ? valB - valA : valA - valB;
+    });
+  }, [filters, snapshotMap, sortDir, sortField, videoRows, view]);
+
+  const pagedVideos = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return sortedAndFilteredVideos.slice(start, start + pageSize);
+  }, [currentPage, pageSize, sortedAndFilteredVideos]);
 
   const isAllSelected = useMemo(
-    () => visibleVideos.length > 0 && visibleVideos.every((v) => selectedIds.has(v.id)),
-    [visibleVideos, selectedIds]
+    () => pagedVideos.length > 0 && pagedVideos.every((v) => selectedIds.has(v.id)),
+    [pagedVideos, selectedIds]
   );
 
   const toggleSelectAll = useCallback(() => {
     if (isAllSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(visibleVideos.map((v) => v.id)));
+      setSelectedIds(new Set(pagedVideos.map((v) => v.id)));
     }
-  }, [isAllSelected, visibleVideos]);
+  }, [isAllSelected, pagedVideos]);
 
   const handleTrashSingle = useCallback(async () => {
     if (!trashSingleVideo) return;
@@ -353,56 +526,52 @@ export function VideoList({
     }
   }, [selectedIds, onRefresh]);
 
-  const handleFilter = useCallback((value: VideoFilterValue) => {
-    setFilters(value);
-    setLoadedCount(PAGE_SIZE);
-    setHasUserScrolledList(false);
+  function updateFilter<Key extends keyof VideoFilterValue>(key: Key, value: VideoFilterValue[Key]) {
+    setFilters((current) => ({ ...current, [key]: value }));
+    setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleReset() {
+    setFilters(INITIAL_FILTERS);
+    setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    const container = tableContainerRef.current;
-    if (!container) return;
-
-    const onScroll = () => {
-      if (container.scrollTop > 24) setHasUserScrolledList(true);
-    };
-
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => container.removeEventListener("scroll", onScroll);
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  /* Intersection Observer for auto-load */
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && hasMore && !isLoadingMore) {
-          if (hasDeferredData && onLoadDeferredData) {
-            if (!hasUserScrolledList) return;
-            void onLoadDeferredData();
-            return;
-          }
-          setIsLoadingMore(true);
-          setTimeout(() => {
-            setLoadedCount((c) => c + PAGE_SIZE);
-            setIsLoadingMore(false);
-          }, 300);
-        }
-      },
-      { root: tableContainerRef.current, rootMargin: "200px" }
+  const renderSortIndicator = (field: SortField) => {
+    if (sortField !== field) {
+      return <span className="text-[10px] text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
+    }
+    return (
+      <span className="text-[10.5px] font-bold text-zinc-900">
+        {sortDir === "desc" ? "▼" : "▲"}
+      </span>
     );
+  };
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [filteredVideos.length, hasDeferredData, hasMore, hasUserScrolledList, isLoadingMore, onLoadDeferredData]);
+  const profileLabel =
+    filters.profileId === "all"
+      ? "全部负责人"
+      : profiles.find((item) => item.id === filters.profileId)?.name ?? "全部负责人";
+  const accountLabel =
+    filters.accountId === "all"
+      ? "全部账号"
+      : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
 
   const selectedVideo = useMemo(
-    () => filteredVideos.find((video) => video.id === selectedVideoId) ?? null,
-    [filteredVideos, selectedVideoId]
+    () => sortedAndFilteredVideos.find((video) => video.id === selectedVideoId) ?? null,
+    [sortedAndFilteredVideos, selectedVideoId]
   );
 
   const selectedSnapshot = selectedVideo ? snapshotMap.get(selectedVideo.id) ?? null : null;
@@ -433,55 +602,281 @@ export function VideoList({
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 space-y-4">
-      <VideoFilters profiles={profiles} accounts={accounts} onFilter={handleFilter} />
+    <div className="flex flex-1 flex-col min-h-0 space-y-3">
+      {/* 🚀 单行极客控制舱（视图切换 + 公司团队视角 + 多维筛选器 + 资产统计 一行搞定） */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xs">
+        {/* 左侧：视图胶囊 + 范围选择 + 筛选器 */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* 待处理 / 全部 / 回收站 视图胶囊 */}
+          <div className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-100/80 p-0.5 text-[12px]">
+            <button
+              type="button"
+              onClick={() => onSwitchView("pending")}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                view === "pending"
+                  ? "bg-white text-zinc-950 shadow-2xs"
+                  : "text-zinc-500 hover:text-zinc-800"
+              }`}
+            >
+              待处理
+              <span className="ml-1 text-[11px] tabular-nums font-semibold text-[#D97757]">
+                {summary?.pendingCount ?? 0}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onSwitchView("all")}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                view === "all"
+                  ? "bg-white text-zinc-950 shadow-2xs"
+                  : "text-zinc-500 hover:text-zinc-800"
+              }`}
+            >
+              全部
+              <span className="ml-1 text-[11px] tabular-nums font-medium text-zinc-500">
+                {summary?.totalVideos ?? videoRows.length}
+              </span>
+            </button>
+            {canAccessTrash && (
+              <button
+                type="button"
+                onClick={() => onSwitchView("trash")}
+                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                  view === "trash"
+                    ? "bg-white text-zinc-950 shadow-2xs"
+                    : "text-zinc-500 hover:text-zinc-800"
+                }`}
+              >
+                回收站
+              </button>
+            )}
+          </div>
 
+          {/* 公司 / 团队范围选择下拉框 (对齐视频复盘) */}
+          {(safeTeams.length > 0 || canSwitchPerspective) && (
+            <Select
+              value={perspective === "company" ? "all_company" : (teamId ?? safeTeams[0]?.id ?? "all_company")}
+              onValueChange={(val) => {
+                if (val === "all_company") {
+                  onSwitchPerspective("company");
+                } else {
+                  onSwitchTeam(val);
+                }
+              }}
+            >
+              <SelectTrigger className="h-8 min-w-32 rounded-lg border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs">
+                <SelectValue placeholder="选择范围">
+                  {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {canSwitchPerspective && (
+                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-900">
+                    全公司 (全部团队)
+                  </SelectItem>
+                )}
+                {safeTeams.map((team) => (
+                  <SelectItem key={team.id} value={team.id} className="text-[12px]">
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* 细分割线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden md:block" />
+
+          {/* 负责人筛选 */}
+          <Select
+            value={filters.profileId}
+            onValueChange={(value) => updateFilter("profileId", value || "all")}
+          >
+            <SelectTrigger className="h-8 w-28 rounded-lg border-zinc-200 bg-white text-[12px]">
+              <SelectValue>{profileLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部负责人</SelectItem>
+              {(profiles ?? []).map((profile) => (
+                <SelectItem key={profile.id} value={profile.id}>
+                  {profile.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* 账号筛选 */}
+          <Select
+            value={filters.accountId}
+            onValueChange={(value) => updateFilter("accountId", value || "all")}
+          >
+            <SelectTrigger className="h-8 w-28 rounded-lg border-zinc-200 bg-white text-[12px]">
+              <SelectValue>{accountLabel}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部账号</SelectItem>
+              {(accounts ?? []).map((account) => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* 日期范围 */}
+          <div className="flex items-center gap-1">
+            <Input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => updateFilter("startDate", e.target.value)}
+              className="h-8 w-28 rounded-lg border border-zinc-200 bg-white text-[11.5px] text-zinc-700 px-2"
+            />
+            <span className="text-zinc-400 text-[11px]">—</span>
+            <Input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => updateFilter("endDate", e.target.value)}
+              className="h-8 w-28 rounded-lg border border-zinc-200 bg-white text-[11.5px] text-zinc-700 px-2"
+            />
+          </div>
+
+          {/* 状态筛选 */}
+          <Select
+            value={filters.status}
+            onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}
+          >
+            <SelectTrigger className="h-8 w-24 rounded-lg border-zinc-200 bg-white text-[12px]">
+              <SelectValue>{statusLabel(filters.status)}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {statusLabel(status)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* 重置按钮 */}
+          <Button
+            variant="ghost"
+            size="xs"
+            className="h-8 rounded-lg text-[12px] text-zinc-500 hover:text-zinc-800"
+            onClick={handleReset}
+          >
+            重置
+          </Button>
+        </div>
+
+        {/* 右侧：资产统计 */}
+        <div className="ml-auto hidden xl:flex items-center gap-3 text-[11.5px] text-zinc-500 shrink-0">
+          <span>
+            已入库 <span className="tabular-nums font-semibold text-[#6FAA7D]">{assetSummary?.readyCount ?? 0}</span>
+          </span>
+          <span>·</span>
+          <span>
+            待整理 <span className="tabular-nums font-semibold text-[#D99E55]">{assetSummary?.pendingLibraryCount ?? 0}</span>
+          </span>
+          <span>·</span>
+          <span>
+            已评级 <span className="tabular-nums font-semibold text-zinc-700">{assetSummary?.gradedCount ?? 0}</span>
+          </span>
+        </div>
+      </div>
+
+      {/* 表格容器（黄金舒适行高 ~40px，py-2，吸顶毛玻璃表头，标题列宽严格对齐视频复盘） */}
       <div
         ref={tableContainerRef}
-        className="overflow-x-auto overflow-y-auto rounded-2xl border border-zinc-200 bg-white"
-        style={{ maxHeight: "calc(100vh - 280px)" }}
+        className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs"
+        style={{ maxHeight: "calc(100vh - 260px)" }}
       >
-        <Table freezeFirst stickyHeader>
-          <TableHeader className="z-10">
-            <TableRow className="border-b border-zinc-200 bg-zinc-50 hover:bg-zinc-50">
+        <table className="w-full text-left border-collapse table-auto min-w-full">
+          <thead className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur border-b border-zinc-200 text-[12px] font-medium text-zinc-500 select-none">
+            <tr>
               {canManageLifecycle && (
-                <TableHead className="h-9 w-10 pl-4 pr-0">
+                <th className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0">
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={toggleSelectAll}
                     aria-label="全选"
                   />
-                </TableHead>
+                </th>
               )}
-              <TableHead className="h-9 px-4 text-[12px] font-medium text-zinc-500">视频标题</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">账号</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">负责人</TableHead>
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">
-                {view === "trash" ? "回收时间" : "发布时间"}
-              </TableHead>
+              <th className="py-2 px-2 text-center w-20 shrink-0 whitespace-nowrap">
+                {view === "trash" ? "状态/操作者" : "状态"}
+              </th>
+              {/* 标题列宽收敛至与视频复盘完全一致的 w-[220px] 2xl:w-[280px] min-w-[180px] */}
+              <th className="py-2 px-3 text-left w-[220px] 2xl:w-[280px] min-w-[180px]">
+                视频标题 / 账号
+              </th>
+              <th className="py-2 px-2.5 text-left w-20 2xl:w-24 whitespace-nowrap">
+                负责人
+              </th>
+              <th className="py-2 px-2.5 text-left w-24 2xl:w-28 whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={() => handleSort("published_at")}
+                  className="group inline-flex items-center gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                >
+                  <span>{view === "trash" ? "回收时间" : "发布时间"}</span>
+                  {renderSortIndicator("published_at")}
+                </button>
+              </th>
               {view !== "trash" && (
                 <>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">24h播放量</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">互动率(%)</TableHead>
-                  <TableHead className="h-9 text-[12px] font-medium text-zinc-500">涨粉</TableHead>
+                  <th className="py-2 px-2.5 text-right w-20 2xl:w-26 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("play_count")}
+                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                    >
+                      <span>24h播放</span>
+                      {renderSortIndicator("play_count")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2.5 text-right w-18 2xl:w-24 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("interaction_rate")}
+                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                    >
+                      <span>互动率</span>
+                      {renderSortIndicator("interaction_rate")}
+                    </button>
+                  </th>
+                  <th className="py-2 px-2.5 text-right w-16 2xl:w-22 whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => handleSort("follower_gain")}
+                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                    >
+                      <span>涨粉</span>
+                      {renderSortIndicator("follower_gain")}
+                    </button>
+                  </th>
                 </>
               )}
-              <TableHead className="h-9 text-[12px] font-medium text-zinc-500">
-                {view === "trash" ? "操作者" : "状态"}
-              </TableHead>
-              <TableHead className="h-9 px-4 text-right text-[12px] font-medium text-zinc-500">操作</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visibleVideos.length ? (
-              visibleVideos.map((video) => {
+              <th className="py-2 pr-4 pl-2 text-right w-24 2xl:w-28 whitespace-nowrap">
+                操作
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100 text-[12px] text-zinc-700">
+            {pagedVideos.length ? (
+              pagedVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
                 const showPatchButton = shouldShowPatch24hButton(video, snapshot);
+                const statusInfo = getVideoStatusInfo(video.anomaly_status, video.play_change_signal);
 
                 return (
-                  <TableRow key={video.id} data-video-id={video.id} className="group hover:bg-zinc-50">
+                  <tr
+                    key={video.id}
+                    data-video-id={video.id}
+                    className="group hover:bg-zinc-50/80 transition-colors border-b border-zinc-100"
+                  >
+                    {/* 复选框 */}
                     {canManageLifecycle && (
-                      <TableCell className="py-3 pl-4 pr-0" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                           checked={selectedIds.has(video.id)}
                           onCheckedChange={(checked) => {
@@ -494,42 +889,78 @@ export function VideoList({
                           }}
                           aria-label={`选择 ${video.video_title || "视频"}`}
                         />
-                      </TableCell>
+                      </td>
                     )}
-                    <TableCell className="max-w-[280px] whitespace-normal px-4 align-top">
-                      <div className="line-clamp-2 text-[13px] font-medium text-zinc-900">
-                        {video.video_title?.trim() || "未命名视频"}
+
+                    {/* 状态徽章（中文语义 + 状态微圆点） */}
+                    <td className="py-2 px-2 text-center w-20 shrink-0">
+                      {view === "trash" ? (
+                        <span className="text-[11.5px] text-zinc-600 truncate block max-w-[80px]">
+                          {video.trashed_by_name || "—"}
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${statusInfo.bgColor} ${statusInfo.textColor}`}
+                        >
+                          <span className={`size-1.5 rounded-full ${statusInfo.dotColor}`} />
+                          {statusInfo.label}
+                        </span>
+                      )}
+                    </td>
+
+                    {/* 视频标题与账号（单行紧凑排版，带 Tooltip） */}
+                    <td className="py-2 px-3 w-[220px] 2xl:w-[280px] min-w-[180px]">
+                      <div
+                        className="flex items-center gap-1.5 min-w-0"
+                        title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
+                      >
+                        <span className="truncate font-medium text-zinc-900 group-hover:text-zinc-950 transition-colors">
+                          {video.video_title?.trim() || video.content?.slice(0, 50) || "未命名视频"}
+                        </span>
+                        {video.accounts?.name && (
+                          <span className="shrink-0 text-[11px] text-zinc-400 font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
+                            · {video.accounts.name}
+                          </span>
+                        )}
                       </div>
-                    </TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">{video.accounts.name}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">{video.profiles.name}</TableCell>
-                    <TableCell className="text-[12px] text-zinc-500">
-                      {view === "trash" ? formatDateTime(video.trashed_at ?? null) : formatDateTime(video.published_at ?? null)}
-                    </TableCell>
+                    </td>
+
+                    {/* 负责人 */}
+                    <td className="py-2 px-2.5 text-[12px] text-zinc-600 truncate w-20 2xl:w-24">
+                      {video.profiles?.name || "—"}
+                    </td>
+
+                    {/* 发布时间 / 回收时间 */}
+                    <td className="py-2 px-2.5 text-[11.5px] text-zinc-500 tabular-nums whitespace-nowrap w-24 2xl:w-28">
+                      {view === "trash"
+                        ? formatDateTime(video.trashed_at ?? null)
+                        : formatDateTime(video.published_at ?? null)}
+                    </td>
+
+                    {/* 24h播放量 */}
                     {view !== "trash" && (
                       <>
-                        <TableCell className="text-[12px] text-zinc-700 tabular-nums">{formatNumber(snapshot?.play_count)}</TableCell>
-                        <TableCell className="text-[12px] text-zinc-700 tabular-nums">{formatPercent(snapshot ? interactionRate(snapshot) : null)}</TableCell>
-                        <TableCell className="text-[12px] text-zinc-700 tabular-nums">{formatNumber(snapshot?.follower_gain)}</TableCell>
+                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-800 tabular-nums font-medium whitespace-nowrap w-20 2xl:w-26">
+                          {formatCount(snapshot?.play_count)}
+                        </td>
+                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums whitespace-nowrap w-18 2xl:w-24">
+                          {formatPercent(snapshot ? interactionRate(snapshot) : null)}
+                        </td>
+                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums whitespace-nowrap w-16 2xl:w-22">
+                          {formatCount(snapshot?.follower_gain)}
+                        </td>
                       </>
                     )}
-                    <TableCell>
+
+                    {/* 操作列 */}
+                    <td className="py-2 pr-4 pl-2 text-right whitespace-nowrap w-24 2xl:w-28">
                       {view === "trash" ? (
-                        <span className="text-[12px] text-zinc-700">{video.trashed_by_name || "-"}</span>
-                      ) : (
-                        <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
-                          {video.anomaly_status}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="px-4 text-right">
-                      {view === "trash" ? (
-                        <div className="flex items-center justify-end gap-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
                           <button
                             type="button"
                             onClick={() => handleRestore(video.id)}
                             disabled={isOperating !== null}
-                            className="text-[12px] text-[#6FAA7D] underline-offset-4 hover:underline disabled:opacity-50"
+                            className="text-[12px] text-[#6FAA7D] underline-offset-4 hover:underline disabled:opacity-50 cursor-pointer"
                           >
                             恢复
                           </button>
@@ -542,7 +973,7 @@ export function VideoList({
                                 onClick={() => setConfirmPurgeVideoId(video.id)}
                                 disabled={!eligible || isOperating !== null}
                                 title={tooltip || undefined}
-                                className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed"
+                                className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
                               >
                                 永久删除
                               </button>
@@ -550,12 +981,12 @@ export function VideoList({
                           })()}
                         </div>
                       ) : (
-                        <div className="flex items-center justify-end gap-2.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+                        <div className="flex items-center justify-end gap-2">
                           {showPatchButton ? (
                             <button
                               type="button"
                               onClick={() => setPatchingVideoId(video.id)}
-                              className="text-[12px] text-[#D97757] underline-offset-4 hover:underline"
+                              className="text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] underline-offset-4 hover:underline cursor-pointer"
                             >
                               补录24h
                             </button>
@@ -563,19 +994,19 @@ export function VideoList({
                           <button
                             type="button"
                             onClick={() => setSelectedVideoId(video.id)}
-                            className="text-[12px] text-zinc-700 underline-offset-4 hover:text-zinc-900 hover:underline"
+                            className="text-[11.5px] text-zinc-500 hover:text-zinc-900 underline-offset-4 hover:underline cursor-pointer"
                           >
                             查看详情
                           </button>
                           {canManageLifecycle && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                className="flex size-7 items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                                className="flex size-6 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
                                 title="更多操作"
                               >
-                                <MoreHorizontal className="size-4" />
+                                <MoreHorizontal className="size-3.5" />
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-36">
+                              <DropdownMenuContent align="end" className="w-36 text-[12px]">
                                 <DropdownMenuItem
                                   variant="destructive"
                                   className="gap-2 cursor-pointer text-[12px]"
@@ -589,72 +1020,37 @@ export function VideoList({
                           )}
                         </div>
                       )}
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 );
               })
             ) : (
-              <TableRow>
-                <TableCell colSpan={view === "trash" ? (canManageLifecycle ? 7 : 6) : (canManageLifecycle ? 10 : 9)} className="px-4 py-16 text-center text-[13px] text-zinc-500">
+              <tr>
+                <td
+                  colSpan={view === "trash" ? (canManageLifecycle ? 6 : 5) : (canManageLifecycle ? 9 : 8)}
+                  className="px-4 py-16 text-center text-[13px] text-zinc-500"
+                >
                   当前筛选条件下暂无视频数据。
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             )}
-
-            {/* Sentinel for auto-load */}
-            {hasMore && (
-              <TableRow>
-                <TableCell colSpan={view === "trash" ? (canManageLifecycle ? 7 : 6) : (canManageLifecycle ? 10 : 9)} className="p-0">
-                  <div ref={sentinelRef} className="h-4" />
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
 
-      {/* Load more button (manual fallback + visual anchor) */}
-      {hasMore && (
-        <div className="mt-4 flex justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-10 gap-1.5 rounded-xl border-zinc-200 px-6 text-[13px] text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
-            onClick={() => {
-              if (hasDeferredData && onLoadDeferredData) {
-                void onLoadDeferredData();
-                return;
-              }
-              setIsLoadingMore(true);
-              setTimeout(() => {
-                setLoadedCount((c) => c + PAGE_SIZE);
-                setIsLoadingMore(false);
-              }, 200);
-            }}
-            disabled={isLoadingMore || isDeferredDataLoading}
-          >
-            {isLoadingMore || isDeferredDataLoading ? (
-              <>加载中…</>
-            ) : (
-              <>
-                <ChevronDown className="size-3.5" />
-                加载更多
-                <span className="ml-1 text-[12px] text-zinc-500">
-                  (已加载 {Math.min(loadedCount, filteredVideos.length)} / 共 {hasDeferredData ? totalCount ?? filteredVideos.length : filteredVideos.length} 条)
-                </span>
-              </>
-            )}
-          </Button>
-        </div>
+      {/* 极客级专业分页底栏（对齐筛选后的真实总数） */}
+      {sortedAndFilteredVideos.length > 0 && (
+        <TablePagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalCount={sortedAndFilteredVideos.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          pageSizeOptions={[20, 30, 50, 100]}
+        />
       )}
 
-      {/* End state */}
-      {!hasMore && filteredVideos.length > 0 && (
-        <div className="mt-4 text-center text-[12px] text-zinc-500">
-          已加载全部 {filteredVideos.length} 条视频
-        </div>
-      )}
-
+      {/* 详情弹窗 */}
       <VideoDetailDialog
         open={selectedVideo !== null}
         onOpenChange={(open) => {
@@ -668,7 +1064,11 @@ export function VideoList({
         assetRecord={selectedVideo ? assetLibraryState[selectedVideo.id] ?? null : null}
         onTagsSaved={(tags) => {
           setTagRows((current) => {
-            const rest = current.filter((tag) => tag.video_id !== selectedVideo?.id || !tags.some((saved) => saved.tag_dimension === tag.tag_dimension));
+            const rest = current.filter(
+              (tag) =>
+                tag.video_id !== selectedVideo?.id ||
+                !tags.some((saved) => saved.tag_dimension === tag.tag_dimension)
+            );
             return [...rest, ...tags];
           });
         }}
@@ -682,6 +1082,7 @@ export function VideoList({
         }}
       />
 
+      {/* 补录24h弹窗 */}
       <Patch24hDialog
         open={patchingVideo !== null}
         onOpenChange={(open) => {
@@ -694,6 +1095,7 @@ export function VideoList({
         onSaved={handlePatchSaved}
       />
 
+      {/* 永久删除确认弹窗 */}
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
           <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
@@ -704,7 +1106,7 @@ export function VideoList({
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="active:translate-y-0 h-9 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors"
+                className="h-9 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors cursor-pointer"
                 onClick={() => setConfirmPurgeVideoId(null)}
                 disabled={isOperating !== null}
               >
@@ -712,7 +1114,7 @@ export function VideoList({
               </button>
               <button
                 type="button"
-                className="active:translate-y-0 h-9 rounded-xl bg-[#C9604D] hover:bg-[#B34F3C] text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50"
+                className="h-9 rounded-xl bg-[#C9604D] hover:bg-[#B34F3C] text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50 cursor-pointer"
                 onClick={() => handlePurge(confirmPurgeVideoId)}
                 disabled={isOperating !== null}
               >
@@ -725,23 +1127,23 @@ export function VideoList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200">
-          <span className="text-[13px] font-medium text-zinc-700">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
+          <span className="text-[12.5px] font-medium text-zinc-700">
             已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
           </span>
           <div className="h-4 w-px bg-zinc-200" />
           <Button
-            size="sm"
+            size="xs"
             variant="ghost"
-            className="h-8 rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 text-[12px]"
+            className="rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px]"
             onClick={() => setSelectedIds(new Set())}
           >
             取消选择
           </Button>
           {view === "trash" ? (
             <Button
-              size="sm"
-              className="h-8 rounded-xl bg-[#6FAA7D] hover:bg-[#5F996C] text-white text-[12px] gap-1.5 px-3.5 shadow-xs"
+              size="xs"
+              className="rounded-lg bg-[#6FAA7D] hover:bg-[#5F996C] text-white text-[12px] gap-1 px-3 shadow-2xs"
               onClick={() => setShowBatchRestoreConfirm(true)}
             >
               <RotateCcw className="size-3.5" />
@@ -749,9 +1151,9 @@ export function VideoList({
             </Button>
           ) : (
             <Button
-              size="sm"
+              size="xs"
               variant="destructive"
-              className="h-8 rounded-xl bg-[#C9604D] hover:bg-[#B85340] text-white text-[12px] gap-1.5 px-3.5 shadow-xs"
+              className="rounded-lg bg-[#C9604D] hover:bg-[#B85340] text-white text-[12px] gap-1 px-3 shadow-2xs"
               onClick={() => setShowBatchTrashConfirm(true)}
             >
               <Trash2 className="size-3.5" />

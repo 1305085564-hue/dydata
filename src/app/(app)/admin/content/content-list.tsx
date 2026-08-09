@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentFeedbackCardView, ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,
@@ -45,7 +45,7 @@ type SortField =
   | "avg_play_duration"
   | "completion_rate";
 
-const PAGE_SIZE = 30;
+const DEFAULT_PAGE_SIZE = 30;
 
 function formatCount(val: number | null | undefined): string {
   if (val === null || val === undefined) return "—";
@@ -84,7 +84,7 @@ function formatCompactTime(dateStr: string | null | undefined): string {
 }
 
 function getStatusDot(video: VideoRow) {
-  const status = video.anomaly_status;
+  const status = video.anomaly_status as string;
   const isHalve = video.play_change_signal === "halve";
   if (status === "deleted" || status === "limited" || status === "删稿" || status === "限流") {
     return {
@@ -104,6 +104,12 @@ function getStatusDot(video: VideoRow) {
       label: "正常",
     };
   }
+  if (status === "pending" || status === "未满24h") {
+    return {
+      color: "bg-zinc-300",
+      label: "未满24h",
+    };
+  }
   return {
     color: "bg-zinc-300",
     label: status || "未满24h",
@@ -115,7 +121,6 @@ export function ContentList({
   snapshots,
   feedbackCards,
   reviewReadiness,
-  totalCount,
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
@@ -124,8 +129,11 @@ export function ContentList({
   const [viewMode, setViewMode] = useState<ViewMode>("interaction");
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [loadedCount, setLoadedCount] = useState(PAGE_SIZE);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredDeferredRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/admin/settings/thresholds")
@@ -135,6 +143,14 @@ export function ContentList({
       })
       .catch(() => {});
   }, []);
+
+  // 仅在首次需要时安全触发一次背景全量加载，杜绝循环重刷
+  useEffect(() => {
+    if (hasDeferredData && onLoadDeferredData && !isDeferredDataLoading && !hasTriggeredDeferredRef.current) {
+      hasTriggeredDeferredRef.current = true;
+      void onLoadDeferredData();
+    }
+  }, [hasDeferredData, onLoadDeferredData, isDeferredDataLoading]);
 
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
 
@@ -156,6 +172,8 @@ export function ContentList({
       setSortField(field);
       setSortDir("desc");
     }
+    setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [sortField]);
 
   const processedRows = useMemo(() => {
@@ -261,17 +279,21 @@ export function ContentList({
     });
   }, [queueRows, snapshotMap, sortField, sortDir]);
 
-  const visibleRows = processedRows.slice(0, loadedCount);
-  const hasMoreLocal = loadedCount < processedRows.length;
-  const hasMore = hasMoreLocal || hasDeferredData;
+  const visibleRows = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return processedRows.slice(start, start + pageSize);
+  }, [currentPage, pageSize, processedRows]);
 
-  const loadMore = useCallback(() => {
-    if (hasDeferredData && onLoadDeferredData) {
-      void onLoadDeferredData();
-      return;
-    }
-    setLoadedCount((count) => count + PAGE_SIZE);
-  }, [hasDeferredData, onLoadDeferredData]);
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
@@ -334,7 +356,10 @@ export function ContentList({
       </div>
 
       {/* 对比表格容器（吃满宽度，标题列弹性伸缩消除右侧留白） */}
-      <div className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs">
+      <div
+        ref={tableContainerRef}
+        className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs"
+      >
         <table className="w-full text-left border-collapse table-auto min-w-full">
           {/* 吸顶表头 */}
           <thead className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur border-b border-zinc-200 text-[12px] font-medium text-zinc-500 select-none">
@@ -585,8 +610,8 @@ export function ContentList({
               })
             )}
 
-            {/* 骨架屏行 */}
-            {isDeferredDataLoading ? (
+            {/* 仅在首屏无数据且加载中时展示骨架屏 */}
+            {visibleRows.length === 0 && isDeferredDataLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <tr key={i} className="border-b border-zinc-100 animate-pulse">
                   <td className="py-2 px-2 text-center">
@@ -641,21 +666,17 @@ export function ContentList({
         </table>
       </div>
 
-      {/* 分页加载更多 */}
-      {hasMore ? (
-        <div className="flex justify-center pt-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={loadMore}
-            disabled={isDeferredDataLoading}
-            className="gap-1.5 text-[12px] text-zinc-600 hover:text-zinc-900"
-          >
-            <ChevronDown className="size-3.5" />
-            {isDeferredDataLoading ? "加载中..." : `加载更多（${Math.min(loadedCount, queueRows.length)} / ${hasDeferredData ? totalCount ?? queueRows.length : queueRows.length}）`}
-          </Button>
-        </div>
-      ) : null}
+      {/* 极客级专业分页底栏（精准绑定当前队列实际数据量） */}
+      {processedRows.length > 0 && (
+        <TablePagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalCount={processedRows.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          pageSizeOptions={[20, 30, 50, 100]}
+        />
+      )}
     </div>
   );
 }

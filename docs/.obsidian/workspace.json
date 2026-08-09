@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "849064323049393d",
+        "id": "22b973bbe65e7129",
         "type": "tabs",
         "children": [
           {
-            "id": "8915ea1c49d8634d",
+            "id": "764ef6d759c136c3",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "plans/2026-08-03-选题库V2视觉交接-Antigravity提示词.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "2026-08-03-选题库V2视觉交接-Antigravity提示词"
+              "title": "新标签页"
             }
           }
         ]
@@ -185,13 +181,22 @@
       "bases:新建数据库": false
     }
   },
-  "active": "8915ea1c49d8634d",
+  "active": "764ef6d759c136c3",
   "lastOpenFiles": [
+    "plans/2026-08-07-权限V2收口-跑SQL傻瓜教程.md",
+    "plans/2026-08-07-权限V2根治-上线与验收清单.md",
+    "plans/2026-08-07-权限V2契约断裂-根治施工任务书.md",
+    "plans/2026-08-06-基础设施认知教学-提示词.md",
+    "plans/2026-08-03-选题库V2视觉交接-Antigravity提示词.md",
+    "plans/2026-08-05-权限重构-跑migration教程.md",
+    "plans/2026-08-05-权限重构-收尾提示词.md",
+    "plans/2026-08-05-权限重构-代码清理-Codex提示词.md",
+    "plans/2026-08-05-权限机制重构-规格书.md",
+    "plans/2026-08-05-权限机制重构-Codex任务书.md",
     "plans/2026-08-04-成员生命周期管理方案.md",
     "待办清单.md",
     "supabase-password-reset-config.md",
     "代码治理手册.md",
-    "plans/2026-08-03-选题库V2视觉交接-Antigravity提示词.md",
     "plans/2026-08-03-选题库V2功能修复-Luna任务规划书.md",
     "plans/性能优化台账.md",
     "架构与性能总纲.md",
@@ -207,15 +212,6 @@
     "未命名 3.base",
     "未命名 2.base",
     "未命名 1.base",
-    "README.md",
-    "plans/2026-05-11-数据填报美学施工进度-§1.2.4.md",
-    "plans/2026-05-08-admin-ai-assistant-优化执行方案.md",
-    "美学规范~.md",
-    "plans/顶栏导航重构-交接规格.md",
-    "plans/美学规范重塑-剩余批次方案.md",
-    "plans/2026-05-08-admin-ai-清理错搬功能.md",
-    "plans/2026-05-11-数据填报美学施工进度-P1.md",
-    "美学规范补充（默认不读）.md",
-    "美学规范 备份.md"
+    "README.md"
   ]
 }

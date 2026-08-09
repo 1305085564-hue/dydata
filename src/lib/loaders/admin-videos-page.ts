@@ -163,7 +163,7 @@ export async function loadAdminVideosPageData({
     (video) => !taggedVideoIds.has(video.id) || video.anomaly_status !== "正常",
   );
   const visibleVideos =
-    view === "pending"
+    view === "pending" && mode === "initial"
       ? pendingVideos
       : normalizedVideos;
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);

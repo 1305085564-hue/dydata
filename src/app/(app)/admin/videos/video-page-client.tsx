@@ -3,7 +3,6 @@
 import { useCallback, useState, startTransition, useEffect } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoList } from "./video-list";
 import type { AdminVideosPageData } from "@/lib/loaders/admin-videos-page";
 import type { UserPermissionInfo } from "@/lib/permissions";
@@ -47,7 +46,6 @@ export function VideoPageClient({
   const [teamId, setTeamId] = useState<string | null>(initialTeamId);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
-  const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
   const canAccessTrash = permissionInfo.role === "owner" || permissionInfo.role === "admin";
 
@@ -97,8 +95,18 @@ export function VideoPageClient({
 
   const switchView = useCallback(async (nextView: VideoView) => {
     if (nextView === view) return;
+    
+    // 如果已经加载了 full data，在 pending 和 all 之间切换无需请求网络，实现无感瞬切
+    if (!data.isPartial && view !== "trash" && nextView !== "trash") {
+      startTransition(() => {
+        setView(nextView);
+      });
+      window.history.replaceState({}, "", buildVideoPageUrl(nextView, perspective, teamId));
+      return;
+    }
+
     await loadData(nextView, perspective, teamId);
-  }, [loadData, perspective, teamId, view]);
+  }, [data.isPartial, loadData, perspective, teamId, view]);
 
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
@@ -115,137 +123,8 @@ export function VideoPageClient({
   return (
     <section
       id="video-asset-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-5"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-3 rounded-2xl border border-zinc-200 bg-white p-4"
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <div
-            className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5"
-            title="待处理 = 未打标 或 状态异常"
-          >
-            <button
-              type="button"
-              onClick={() => switchView("pending")}
-              disabled={isLoading}
-              className={[
-                "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
-                view === "pending"
-                  ? "border border-zinc-200 bg-white text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700",
-              ].join(" ")}
-            >
-              待处理
-              <span className="ml-1.5 text-[12px] tabular-nums text-[#D97757]">
-                {data.summary.pendingCount}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchView("all")}
-              disabled={isLoading}
-              className={[
-                "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
-                view === "all"
-                  ? "border border-zinc-200 bg-white text-zinc-900"
-                  : "text-zinc-500 hover:text-zinc-700",
-              ].join(" ")}
-            >
-              全部
-              <span className="ml-1.5 text-[12px] tabular-nums text-zinc-500">
-                {data.summary.totalVideos}
-              </span>
-            </button>
-            {canAccessTrash && (
-              <button
-                type="button"
-                onClick={() => switchView("trash")}
-                disabled={isLoading}
-                className={[
-                  "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
-                  view === "trash"
-                    ? "border border-zinc-200 bg-white text-zinc-900"
-                    : "text-zinc-500 hover:text-zinc-700",
-                ].join(" ")}
-              >
-                回收站
-              </button>
-            )}
-          </div>
-
-          {canSwitchPerspective ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => switchPerspective("company")}
-                  disabled={isLoading}
-                  className={[
-                    "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
-                    perspective === "company"
-                      ? "border border-zinc-200 bg-white text-zinc-900"
-                      : "text-zinc-500 hover:text-zinc-700",
-                  ].join(" ")}
-                >
-                  公司视角
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchPerspective("team")}
-                  disabled={isLoading}
-                  className={[
-                    "rounded-md px-3 py-1 text-[12px] tracking-tight transition-colors",
-                    perspective === "team"
-                      ? "border border-zinc-200 bg-white text-zinc-900"
-                      : "text-zinc-500 hover:text-zinc-700",
-                  ].join(" ")}
-                >
-                  团队视角
-                </button>
-              </div>
-
-              {perspective === "team" && teams.length > 0 ? (
-                <Select value={teamId ?? teams[0]?.id} onValueChange={switchTeam}>
-                  <SelectTrigger className="h-9 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] text-zinc-700">
-                    <SelectValue placeholder="选择团队">
-                      {selectedTeamName ?? undefined}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500">
-          <span>
-            已入库
-            <span className="ml-0.5 tabular-nums text-[#6FAA7D]">
-              {data.assetSummary.readyCount}
-            </span>
-          </span>
-          <span>
-            待整理
-            <span className="ml-0.5 tabular-nums text-[#D99E55]">
-              {data.assetSummary.pendingLibraryCount}
-            </span>
-          </span>
-          <span>
-            已评级
-            <span className="ml-0.5 tabular-nums text-zinc-700">
-              {data.assetSummary.gradedCount}
-            </span>
-          </span>
-          <span className="pl-2 text-[13px] font-medium text-zinc-500">素材库</span>
-        </div>
-      </div>
-
       <VideoList
         videos={data.videos}
         snapshots={data.snapshots}
@@ -254,11 +133,22 @@ export function VideoPageClient({
         videoTags={data.videoTags}
         assetLibrary={data.assetLibrary}
         totalCount={data.summary.totalVideos}
+        summary={data.summary}
+        assetSummary={data.assetSummary}
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}
         permissionInfo={permissionInfo}
         view={view}
+        perspective={perspective}
+        teamId={teamId}
+        teams={teams}
+        canSwitchPerspective={canSwitchPerspective}
+        canAccessTrash={canAccessTrash}
+        isLoading={isLoading}
+        onSwitchView={switchView}
+        onSwitchPerspective={switchPerspective}
+        onSwitchTeam={switchTeam}
         onRefresh={() => loadData(view, perspective, teamId)}
       />
     </section>
