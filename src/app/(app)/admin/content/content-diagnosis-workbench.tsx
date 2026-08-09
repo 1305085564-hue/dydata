@@ -7,11 +7,14 @@ import {
   Loader2,
   Sparkles,
   ChevronLeft,
+  ChevronRight,
   ChevronDown,
   Check,
   Plus,
   History,
   Copy,
+  Layers,
+  X,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from "recharts";
 import { Badge } from "@/components/ui/badge";
@@ -23,17 +26,23 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import type {
   ContentFeedbackCardDetail,
   ContentFeedbackCardView,
+  ContentReviewReadiness,
   Video,
   VideoMetricsSnapshot,
 } from "@/types";
 import type { AttributionFinding, AttributionResult } from "@/lib/content-attribution";
 import { METRIC_MAP_INDEX, RATE_METRICS, type MetricKey } from "@/lib/content-attribution-map";
 import { buildContentFeedbackCopyText } from "@/lib/content-feedback-copy";
-
-type VideoRow = Video & {
-  accounts: { name: string };
-  profiles: { name: string };
-};
+import {
+  buildReviewQueue,
+  buildSnapshotMap,
+  getMetricWarningReasons,
+  type VideoRow,
+} from "@/lib/review-queue";
+import {
+  DEFAULT_VIDEO_REVIEW_THRESHOLDS,
+  type VideoReviewThresholds,
+} from "@/lib/video-review-thresholds";
 
 interface ContentDiagnosisWorkbenchProps {
   video: VideoRow | null;
@@ -43,7 +52,12 @@ interface ContentDiagnosisWorkbenchProps {
   onClose: () => void;
   canOperateLifecycle: boolean;
   onLifecycleChanged: () => void;
+  profiles?: Array<{ id: string; name: string }>;
   anomalyVideos?: VideoRow[];
+  videos?: VideoRow[];
+  snapshots?: VideoMetricsSnapshot[];
+  feedbackCards?: Record<string, ContentFeedbackCardView>;
+  reviewReadiness?: Record<string, ContentReviewReadiness>;
   onVideoSelect?: (videoId: string) => void;
 }
 
@@ -123,16 +137,108 @@ export function ContentDiagnosisWorkbench({
   onLifecycleChanged,
   profiles = [],
   anomalyVideos = [],
+  videos,
+  snapshots,
+  feedbackCards,
+  reviewReadiness,
   onVideoSelect,
-}: ContentDiagnosisWorkbenchProps & {
-  profiles?: Array<{ id: string; name: string }>;
-}) {
+}: ContentDiagnosisWorkbenchProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const activeItemRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/settings/thresholds")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.thresholds) setThresholds(data.thresholds);
+      })
+      .catch(() => {});
+  }, []);
+
+  const snapshotMap = useMemo(() => buildSnapshotMap(snapshots ?? []), [snapshots]);
+
+  const reviewQueue = useMemo(() => {
+    if (videos && videos.length > 0) {
+      return buildReviewQueue({
+        videos,
+        snapshots: snapshotMap,
+        feedbackCards: feedbackCards ?? {},
+        reviewReadiness: reviewReadiness ?? {},
+        thresholds,
+        sortMode: "priority",
+      });
+    }
+    return anomalyVideos && anomalyVideos.length > 0 ? anomalyVideos : (video ? [video] : []);
+  }, [videos, snapshotMap, feedbackCards, reviewReadiness, thresholds, anomalyVideos, video]);
 
   const currentIndex = useMemo(() => {
-    if (!anomalyVideos || !video) return -1;
-    return anomalyVideos.findIndex((v) => v.id === video.id);
-  }, [anomalyVideos, video]);
+    if (!video || reviewQueue.length === 0) return -1;
+    return reviewQueue.findIndex((v) => v.id === video.id);
+  }, [reviewQueue, video]);
+
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < reviewQueue.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev && onVideoSelect) {
+      onVideoSelect(reviewQueue[currentIndex - 1].id);
+    }
+  }, [hasPrev, onVideoSelect, reviewQueue, currentIndex]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext && onVideoSelect) {
+      onVideoSelect(reviewQueue[currentIndex + 1].id);
+    }
+  }, [hasNext, onVideoSelect, reviewQueue, currentIndex]);
+
+  useEffect(() => {
+    if (isQueueOpen && activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [isQueueOpen, video?.id]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName.toLowerCase();
+        if (
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          target.isContentEditable ||
+          target.getAttribute("contenteditable") === "true" ||
+          target.getAttribute("role") === "textbox"
+        ) {
+          return;
+        }
+      }
+
+      if (e.key === "j" || e.key === "J" || e.key === "ArrowDown") {
+        if (hasNext) {
+          e.preventDefault();
+          handleNext();
+        }
+      } else if (e.key === "k" || e.key === "K" || e.key === "ArrowUp") {
+        if (hasPrev) {
+          e.preventDefault();
+          handlePrev();
+        }
+      } else if (e.key === "Escape") {
+        if (isQueueOpen) {
+          e.preventDefault();
+          setIsQueueOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [hasNext, hasPrev, handleNext, handlePrev, isQueueOpen]);
   const [comparison, setComparison] = useState<AllComparisonData & {
     current?: ComparisonMetricRow | null;
     reference?: ComparisonMetricRow | null;
@@ -571,50 +677,278 @@ export function ContentDiagnosisWorkbench({
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="flex flex-col h-full bg-zinc-50/70 rounded-2xl border border-zinc-200 overflow-hidden"
     >
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4">
-        <div className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:px-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="group active:scale-[0.96] rounded-xl hover:bg-zinc-100 gap-1.5 transition-transform text-[12px] text-zinc-500"
+            className="group active:scale-[0.96] rounded-xl hover:bg-zinc-100 gap-1 transition-transform text-[12px] text-zinc-600 font-medium"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-            返回列表
+            <span className="hidden sm:inline">返回列表</span>
           </Button>
-          <div className="h-4 w-px bg-zinc-200" />
-          <div className="min-w-0">
-            <h1 className="max-w-md truncate text-[16px] font-semibold text-zinc-900 leading-tight">
-              {video?.video_title || "视频复盘归因舱"}
-            </h1>
-            <p className="mt-1 text-[11px] text-zinc-500 leading-normal">
-              成员：{video?.profiles?.name || "未知"} · 账号：{video?.accounts?.name || "未知"}
-            </p>
+
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
+
+          {/* 队列展开/收起开关 */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsQueueOpen((prev) => !prev)}
+            aria-pressed={isQueueOpen}
+            className={`h-8 rounded-lg border-zinc-200 text-[12px] font-medium transition-all gap-1.5 ${
+              isQueueOpen
+                ? "bg-zinc-900 text-white hover:bg-zinc-800 border-zinc-900 shadow-2xs"
+                : "bg-white text-zinc-700 hover:bg-zinc-50"
+            }`}
+          >
+            <Layers className="size-3.5" />
+            <span>{isQueueOpen ? "收起队列" : "展开队列"}</span>
+            <span className={`text-[11px] tabular-nums font-normal ${isQueueOpen ? "text-zinc-300" : "text-zinc-400"}`}>
+              ({reviewQueue.length})
+            </span>
+          </Button>
+
+          {/* 流水线前进后退器 */}
+          <div className="flex items-center rounded-lg border border-zinc-200 bg-zinc-50/80 p-0.5 shadow-2xs">
+            <button
+              type="button"
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              title="上一条 (K 或 ↑)"
+              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-white hover:text-zinc-950 hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-700 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="size-3.5 mr-0.5" />
+              <span>上一条</span>
+            </button>
+
+            <div className="flex items-center px-2 text-[11.5px] font-medium text-zinc-500 select-none">
+              <span className="tabular-nums font-semibold text-zinc-900">
+                {currentIndex >= 0 ? currentIndex + 1 : "-"}
+              </span>
+              <span className="mx-1 text-zinc-300">/</span>
+              <span className="tabular-nums font-medium text-zinc-600">
+                {reviewQueue.length}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!hasNext}
+              title={currentIndex === reviewQueue.length - 1 && reviewQueue.length > 0 ? "已到队尾" : "下一条 (J 或 ↓)"}
+              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-white hover:text-zinc-950 hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-700 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+            >
+              <span>{currentIndex === reviewQueue.length - 1 && reviewQueue.length > 0 ? "已到队尾" : "下一条"}</span>
+              <ChevronRight className="size-3.5 ml-0.5" />
+            </button>
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        {/* 视频核心信息与状态 */}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="text-right hidden md:block">
+            <p className="max-w-xs lg:max-w-md truncate text-[13px] font-semibold text-zinc-900 leading-tight" title={video?.video_title || "未命名视频"}>
+              {video?.video_title || "视频复盘归因舱"}
+            </p>
+            <p className="mt-0.5 text-[11px] text-zinc-500">
+              {video?.profiles?.name || "未知"} · {video?.accounts?.name || "未知"}
+            </p>
+          </div>
+
           {video && canOperateLifecycle && (video.lifecycle_state ?? "active") === "active" && (
             <button
               type="button"
               onClick={handleTrashAction}
               disabled={isTrashing}
-              className="inline-flex h-7 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
+              className="inline-flex h-7 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-2.5 text-[11.5px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
             >
               {isTrashing ? "正在回收..." : "移入回收站"}
             </button>
           )}
+
           {video && (
-            <Badge variant="outline" className={`h-6 text-[12px] ${statusBadgeClass[video.anomaly_status]}`}>
+            <Badge variant="outline" className={`h-6 text-[11.5px] font-medium ${statusBadgeClass[video.anomaly_status]}`}>
               {video.anomaly_status}
             </Badge>
           )}
         </div>
       </header>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden min-h-0">
-        
-        <div className="flex flex-col border-r border-zinc-200 bg-white overflow-y-auto p-6 space-y-6">
+      <div className="relative flex-1 flex overflow-hidden min-h-0">
+        {/* 视口 < 1536px: 悬浮抽屉 + 半透明遮罩 */}
+        <AnimatePresence>
+          {isQueueOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => setIsQueueOpen(false)}
+                className="fixed inset-0 z-40 bg-zinc-950/20 backdrop-blur-[1px] 2xl:hidden"
+              />
+
+              <motion.aside
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 280 }}
+                className="fixed inset-y-0 left-0 z-50 flex w-84 max-w-[85vw] flex-col border-r border-zinc-200 bg-white shadow-2xl 2xl:hidden"
+              >
+                <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 bg-zinc-50/80">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-semibold text-zinc-900">今日待盘队列</span>
+                    <span className="rounded-md bg-zinc-200/70 px-1.5 py-0.5 text-[11px] font-medium text-zinc-700 tabular-nums">
+                      {reviewQueue.length}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsQueueOpen(false)}
+                    className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 transition-colors"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 p-1.5">
+                  {reviewQueue.map((item, idx) => {
+                    const isSelected = item.id === video?.id;
+                    const snap = snapshotMap.get(item.id);
+                    const card = feedbackCards?.[item.id];
+                    const warnings = getMetricWarningReasons(snap, thresholds).slice(0, 2);
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        ref={isSelected ? activeItemRef : undefined}
+                        onClick={() => {
+                          onVideoSelect?.(item.id);
+                          setIsQueueOpen(false);
+                        }}
+                        className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
+                          isSelected
+                            ? "bg-zinc-100 text-zinc-950 font-medium border-l-2 border-zinc-900 shadow-2xs"
+                            : "hover:bg-zinc-50 text-zinc-700 border-l-2 border-transparent"
+                        }`}
+                      >
+                        <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
+                          isSelected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600"
+                        }`}>
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="truncate text-[12px] font-medium text-zinc-900">
+                              {item.profiles?.name || "未知"} · {item.accounts?.name || "未知"}
+                            </span>
+                            {card?.workflow_status === "draft" || card?.workflow_status === "confirmed" ? (
+                              <span className="shrink-0 rounded bg-[#D99E55]/10 px-1 py-0.2 text-[10px] font-medium text-[#C47A2B]">
+                                草稿
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-1">
+                            {item.anomaly_status !== "normal" && item.anomaly_status !== "正常" && (
+                              <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
+                                {item.anomaly_status}
+                              </span>
+                            )}
+                            {item.play_change_signal === "halve" && (
+                              <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
+                                腰斩
+                              </span>
+                            )}
+                            {warnings.map((w, wIdx) => (
+                              <span key={wIdx} className="rounded bg-zinc-100 px-1 py-0.2 text-[10px] text-zinc-500">
+                                {w}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* 视口 ≥ 1536px: 停靠侧边栏 (push layout) */}
+        {isQueueOpen && (
+          <aside className="hidden 2xl:flex w-80 shrink-0 flex-col border-r border-zinc-200 bg-white h-full overflow-hidden shadow-2xs">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 bg-zinc-50/80">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-semibold text-zinc-900">今日待盘队列</span>
+                <span className="rounded-md bg-zinc-200/70 px-1.5 py-0.5 text-[11px] font-medium text-zinc-700 tabular-nums">
+                  {reviewQueue.length}
+                </span>
+              </div>
+              <span className="text-[11px] text-zinc-400 font-medium">最差优先</span>
+            </div>
+            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 p-2">
+              {reviewQueue.map((item, idx) => {
+                const isSelected = item.id === video?.id;
+                const snap = snapshotMap.get(item.id);
+                const card = feedbackCards?.[item.id];
+                const warnings = getMetricWarningReasons(snap, thresholds).slice(0, 2);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    ref={isSelected ? activeItemRef : undefined}
+                    onClick={() => onVideoSelect?.(item.id)}
+                    className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
+                      isSelected
+                        ? "bg-zinc-100 text-zinc-950 font-medium border-l-2 border-zinc-900 shadow-2xs"
+                        : "hover:bg-zinc-50 text-zinc-700 border-l-2 border-transparent"
+                    }`}
+                  >
+                    <span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
+                      isSelected ? "bg-zinc-900 text-white" : "bg-zinc-100 text-zinc-600"
+                    }`}>
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="truncate text-[12px] font-medium text-zinc-900">
+                          {item.profiles?.name || "未知"} · {item.accounts?.name || "未知"}
+                        </span>
+                        {card?.workflow_status === "draft" || card?.workflow_status === "confirmed" ? (
+                          <span className="shrink-0 rounded bg-[#D99E55]/10 px-1 py-0.2 text-[10px] font-medium text-[#C47A2B]">
+                            草稿
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1">
+                        {item.anomaly_status !== "normal" && item.anomaly_status !== "正常" && (
+                          <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
+                            {item.anomaly_status}
+                          </span>
+                        )}
+                        {item.play_change_signal === "halve" && (
+                          <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
+                            腰斩
+                          </span>
+                        )}
+                        {warnings.map((w, wIdx) => (
+                          <span key={wIdx} className="rounded bg-zinc-100 px-1 py-0.2 text-[10px] text-zinc-500">
+                            {w}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+        )}
+
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden min-h-0 min-w-0">
+          <div className="flex flex-col border-r border-zinc-200 bg-white overflow-y-auto p-6 space-y-6">
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -1209,6 +1543,7 @@ export function ContentDiagnosisWorkbench({
           </div>
         </div>
       </div>
+    </div>
 
       {showOverlay && (
         <ScreenshotPreview
@@ -1218,70 +1553,6 @@ export function ContentDiagnosisWorkbench({
           onPrev={() => setPreviewIndex((i) => (i !== null && i > 0 ? i - 1 : screenshotItems.length - 1))}
           onNext={() => setPreviewIndex((i) => (i !== null && i < screenshotItems.length - 1 ? i + 1 : 0))}
         />
-      )}
-
-      {/* 悬浮胶囊诊断舱控制器 */}
-      {anomalyVideos && anomalyVideos.length > 1 && onVideoSelect && currentIndex !== -1 && (
-        <TooltipProvider delay={150}>
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.15 }}
-            className="fixed bottom-8 right-8 z-50 flex items-center bg-zinc-50/85 backdrop-blur-xl border border-white/60 ring-1 ring-zinc-250/45 px-5 py-2.5 rounded-full shadow-[0_12px_36px_rgba(28,25,23,0.06),0_2px_8px_rgba(28,25,23,0.04)] hover:shadow-[0_16px_48px_rgba(28,25,23,0.12)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 select-none gap-4"
-          >
-            {/* 唯一选择入口：状态圆点队列 */}
-            <div className="flex gap-2.5 items-center">
-              {anomalyVideos.map((item, idx) => {
-                const isActive = idx === currentIndex;
-                return (
-                  <Tooltip key={item.id}>
-                    <TooltipTrigger>
-                      <button
-                        type="button"
-                        onClick={() => onVideoSelect(item.id)}
-                        className={`size-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                          isActive
-                            ? "bg-[#5F82A8] scale-110 shadow-[0_0_8px_rgba(95,130,168,0.4)] outline outline-offset-[3px] outline-1 outline-[#5F82A8]/45"
-                            : "bg-zinc-300 hover:bg-zinc-400 hover:scale-115"
-                        }`}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      align="center"
-                      sideOffset={10}
-                      className="z-[60] bg-zinc-950/85 text-white backdrop-blur-md border border-zinc-850 px-3 py-1.5 rounded-xl shadow-lg text-[11px] max-w-[190px] leading-snug animate-fade-in"
-                    >
-                      <p className="font-semibold truncate">
-                        {(item.profiles?.name || "未知")} · {(item.accounts?.name || "未知")}
-                      </p>
-                      <p className="text-zinc-300 truncate mt-0.5">
-                        {item.video_title || item.content || "（无标题）"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-
-            {/* 渐隐渐现分隔线 */}
-            <div className="h-4.5 w-px bg-gradient-to-b from-transparent via-zinc-250 to-transparent" />
-
-            {/* 科技杂志级混排文本 - 像素级水平对齐版 */}
-            <div className="flex items-center gap-1.5 select-none leading-none">
-              <span className="text-[11px] font-medium tracking-wider text-zinc-400">
-                诊断
-              </span>
-              <span className="text-[13px] font-semibold text-zinc-900 tabular-nums">
-                {currentIndex + 1}
-              </span>
-              <span className="text-[13px] text-zinc-300 font-normal">/</span>
-              <span className="text-[13px] font-semibold text-zinc-500 tabular-nums">
-                {anomalyVideos.length}
-              </span>
-            </div>
-          </motion.div>
-        </TooltipProvider>
       )}
     </motion.div>
   );

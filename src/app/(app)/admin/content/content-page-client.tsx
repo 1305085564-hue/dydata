@@ -229,6 +229,10 @@ export function ContentPageClient({
         onClose={() => setSelectedVideoId(null)}
         profiles={data.profiles}
         anomalyVideos={anomalyVideos}
+        videos={data.videos}
+        snapshots={data.snapshots}
+        feedbackCards={data.feedbackCards}
+        reviewReadiness={data.reviewReadiness}
         onVideoSelect={setSelectedVideoId}
         canOperateLifecycle={permissionInfo.role === "owner" || permissionInfo.role === "admin"}
         onLifecycleChanged={() => {
@@ -317,7 +321,7 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] hover:underline shrink-0 ml-0.5 active:scale-95 transition-transform"
+                className="text-[11px] font-semibold text-zinc-900 hover:text-zinc-600 underline decoration-zinc-300 shrink-0 ml-0.5 active:scale-95 transition-transform"
               >
                 直接去盘 →
               </button>
