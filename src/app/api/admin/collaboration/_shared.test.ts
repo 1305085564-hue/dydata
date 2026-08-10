@@ -16,12 +16,14 @@ import {
 
 const profiles: CollaborationProfile[] = [
   { id: "owner-1", name: "达人甲", team_id: "team-1" },
+  { id: "owner-2", name: "达人乙", team_id: "team-1" },
   { id: "operator-1", name: "王运营", team_id: "team-1" },
   { id: "writer-1", name: "张文案", team_id: "team-1" },
 ];
 
 const accounts: CollaborationAccount[] = [
   { id: "account-1", name: "账号A", profile_id: "owner-1" },
+  { id: "account-2", name: "账号B", profile_id: "owner-2" },
 ];
 
 function report(overrides: Partial<CollaborationReport> = {}): CollaborationReport {
@@ -89,31 +91,35 @@ test("summary 只把本月所有记录都由本人全包的成员列为从不填
   ]);
 });
 
-test("operators 在账号样本不足 3 条时不判爆款，上月无记录时环比为 null", () => {
+test("operators 播放未达3万不判爆款，无前5条历史也不判爆款，上月无记录时环比为 null", () => {
   const current = [
     report({ id: "a", play_count: 100, operator_user_id: "operator-1" }),
     report({ id: "b", report_date: "2026-07-28", play_count: 1000, operator_user_id: "operator-1" }),
+    report({ id: "c", account_id: "account-2", report_date: "2026-07-28", play_count: 500, operator_user_id: "operator-1" }),
     report({ id: "old", report_date: "2026-07-26", play_count: 999999, operator_user_id: "operator-1" }),
   ];
 
   const result = buildOperators(current, [], profiles, accounts);
 
   assert.equal(result.length, 1);
-  assert.equal(result[0]?.reportCount, 2);
-  assert.equal(result[0]?.totalPlay, 1100);
+  assert.equal(result[0]?.reportCount, 3);
   assert.equal(result[0]?.hitCount, 0);
   assert.equal(result[0]?.momChange, null);
 });
 
-test("operators 复用账号基线计算爆款，并避免零播放上月产生 Infinity", () => {
-  const current = [100, 100, 100, 100, 250].map((playCount, index) =>
-    report({
-      id: `current-${index}`,
-      report_date: `2026-08-${String(index + 1).padStart(2, "0")}`,
-      play_count: playCount,
-      operator_user_id: "operator-1",
-    }),
-  );
+test("operators 新爆款口径：≥3万且≥前5条均值×3才命中，上月零播放不产生 Infinity", () => {
+  const current = [
+    ...[10000, 10000, 10000, 10000].map((playCount, index) =>
+      report({
+        id: `current-${index}`,
+        report_date: `2026-08-${String(index + 1).padStart(2, "0")}`,
+        play_count: playCount,
+        operator_user_id: "operator-1",
+      }),
+    ),
+    report({ id: "current-hit", report_date: "2026-08-05", play_count: 35000, operator_user_id: "operator-1" }),
+    report({ id: "account2", account_id: "account-2", report_date: "2026-08-03", play_count: 5000, operator_user_id: "operator-1" }),
+  ];
   const previous = [
     report({ id: "previous", report_date: "2026-07-28", play_count: 0, operator_user_id: "operator-1" }),
   ];
@@ -173,7 +179,7 @@ test("person 软配对失败返回 anomaly null，并保持近 6 个月完整零
   assert.equal(payload.records[0]?.anomaly, null);
   assert.equal(payload.trend.length, 6);
   assert.equal(payload.currentMonth.operatorCount, 1);
-  assert.equal(payload.operatorSummary?.momChange, null);
+  assert.equal(payload.operatorSummary, null);
 });
 
 test("日报聚合查询和补录目标查询都在数据库层强制统计起点下限", async () => {

@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { UUID_PATTERN } from "@/app/api/production/_shared";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
-import { getAccountBaseline, median } from "@/lib/video-metrics";
 
 export const STATS_START_DATE = "2026-07-27";
 
@@ -169,20 +168,25 @@ export function buildSummary(rows: CollaborationReport[], profiles: Collaboratio
   };
 }
 
-function countHits(rows: CollaborationReport[]) {
-  const teamMedian = median(rows.map((row) => asCount(row.play_count)));
-  const byAccount = new Map<string, number[]>();
+function countHits(rows: CollaborationReport[]): number {
+  const byAccount = new Map<string, CollaborationReport[]>();
   for (const row of rows) {
-    const values = byAccount.get(row.account_id) ?? [];
-    values.push(asCount(row.play_count));
-    byAccount.set(row.account_id, values);
+    const bucket = byAccount.get(row.account_id) ?? [];
+    bucket.push(row);
+    byAccount.set(row.account_id, bucket);
   }
 
   let hits = 0;
-  for (const values of byAccount.values()) {
-    const baseline = getAccountBaseline(values, teamMedian).median;
-    if (baseline === null || baseline <= 0) continue;
-    hits += values.filter((value) => value >= baseline * 2).length;
+  for (const accountRows of byAccount.values()) {
+    const sorted = [...accountRows].sort((a, b) => a.report_date.localeCompare(b.report_date));
+    for (let i = 0; i < sorted.length; i++) {
+      const play = asCount(sorted[i]!.play_count);
+      if (play < 20000) continue;
+      const prior = sorted.slice(Math.max(0, i - 5), i);
+      if (prior.length === 0) continue;
+      const priorMean = prior.reduce((sum, r) => sum + asCount(r.play_count), 0) / prior.length;
+      if (priorMean > 0 && play >= priorMean * 3) hits++;
+    }
   }
   return hits;
 }
