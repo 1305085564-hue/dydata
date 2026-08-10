@@ -88,7 +88,7 @@ export function MyClaimDrawer({
         <span className="w-2 h-2 rounded-full bg-[#D97757]" />
         <Layers className="w-3.5 h-3.5 text-zinc-500" />
         <span className="text-xs font-medium text-zinc-800">我的选题槽位</span>
-        <div className="flex items-center gap-1 text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 font-normal">
+        <div className="flex items-center gap-1 text-xs tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 font-normal">
           <span>{candidateCount}</span>
           <span className="text-zinc-400">/</span>
           <span>5</span>
@@ -138,7 +138,7 @@ export function MyClaimDrawer({
             <div className="mb-4">
               <div className="flex justify-between text-xs text-zinc-500 mb-1 font-normal">
                 <span>候选占用率</span>
-                <span className="font-mono text-zinc-700 font-semibold">{candidateCount} / 5</span>
+                <span className="tabular-nums text-zinc-700 font-semibold">{candidateCount} / 5</span>
               </div>
               <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden flex">
                 {Array.from({ length: 5 }).map((_, idx) => (

@@ -643,7 +643,7 @@ export function VideoSubmitPanel({
                     >
                       <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
                       <div className="flex flex-col leading-none space-y-1">
-                        <span className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-900 font-mono">
+                        <span className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-900 tabular-nums">
                           {activeBizDate}
                         </span>
                         <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
@@ -743,7 +743,7 @@ export function VideoSubmitPanel({
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">播放量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined 
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN") 
                             : "--"}
@@ -751,7 +751,7 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">互动总量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {((primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
                             (primarySummary.shares ?? 0) +
@@ -760,7 +760,7 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">涨粉</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined 
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN") 
                             : "--"}
@@ -768,7 +768,7 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">完播率</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 font-mono">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {primarySummary.completionRate ?? "--"}
                         </div>
                       </div>

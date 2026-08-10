@@ -72,7 +72,7 @@ export function MyClaimSlotBar({
           <div>
             <h2 className="text-sm font-semibold text-zinc-900 tracking-tight flex items-center gap-2">
               <span>我的选题槽位</span>
-              <span className="text-xs font-mono text-zinc-500 font-normal">
+              <span className="text-xs tabular-nums text-zinc-500 font-normal">
                 (<span className={occupiedCount === 5 ? "text-amber-600 font-semibold" : "text-zinc-700 font-semibold"}>{occupiedCount}</span> / 5)
               </span>
             </h2>

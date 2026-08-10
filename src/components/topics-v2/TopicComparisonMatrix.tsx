@@ -187,7 +187,7 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
                 <div className="flex-1">
                   <div className="flex justify-between text-xs text-zinc-500 mb-1 font-normal">
                     <span>作品达标率</span>
-                    <span className="font-semibold text-zinc-800 font-mono">{qualPercent}%</span>
+                    <span className="font-semibold text-zinc-800 tabular-nums">{qualPercent}%</span>
                   </div>
                   <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
                     <div

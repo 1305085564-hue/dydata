@@ -126,7 +126,7 @@ export function DashboardWorkspaceHeader({
               )}
             />
             <div className="flex flex-col leading-none space-y-0.5 min-w-0">
-              <span className="font-mono text-[14px] font-semibold tabular-nums text-zinc-900 tracking-tight">
+              <span className="tabular-nums text-[14px] font-semibold tabular-nums text-zinc-900 tracking-tight">
                 {activeBizDate}
               </span>
               <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
