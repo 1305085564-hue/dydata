@@ -30,6 +30,8 @@ export interface AttributionFinding {
   locate: AttributionLocate;
 }
 
+export type SampleStatus = "ready" | "insufficient_sample" | "missing_snapshot";
+
 export interface AttributionResult {
   video_id: string;
   ref: string;
@@ -37,6 +39,33 @@ export interface AttributionResult {
   findings: AttributionFinding[];
   missing: MetricKey[];
   snapshot_ready: boolean;
+}
+
+export interface RefAttributionBlock {
+  ref: string;
+  ref_label: string;
+  sample_status: SampleStatus;
+  sample_count: number;
+  sample_required: number;
+  time_window: string;
+  reference_row: SnapshotRow | null;
+  findings: AttributionFinding[];
+  missing: MetricKey[];
+}
+
+export interface MultiRefAttributionResult {
+  video_id: string;
+  snapshot_ready: boolean;
+  active_refs: string[];
+  current_row: SnapshotRow | null;
+  attributions: Record<string, RefAttributionBlock>;
+  /** refs 参数中排在首位的参照，用于兼容旧的单参照字段。 */
+  primary_ref: string;
+  // Backwards compatibility for existing single-reference consumers.
+  ref: string;
+  ref_label: string;
+  findings: AttributionFinding[];
+  missing: MetricKey[];
 }
 
 type SnapshotRow = {

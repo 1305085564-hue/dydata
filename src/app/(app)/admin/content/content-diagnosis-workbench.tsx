@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type {
   ContentFeedbackCardDetail,
@@ -30,8 +29,13 @@ import type {
   Video,
   VideoMetricsSnapshot,
 } from "@/types";
-import type { AttributionFinding, AttributionResult } from "@/lib/content-attribution";
+import type {
+  AttributionFinding,
+  MultiRefAttributionResult,
+} from "@/lib/content-attribution";
 import { METRIC_MAP_INDEX, RATE_METRICS, type MetricKey } from "@/lib/content-attribution-map";
+
+export type RefKey = "self" | "team" | "top" | "user";
 import { buildContentFeedbackCopyText } from "@/lib/content-feedback-copy";
 import {
   buildReviewQueue,
@@ -82,39 +86,6 @@ type ExperienceType =
   | "middle_issue"
   | "retention_issue"
   | "conversion_issue";
-
-type ComparisonMetricRow = {
-  play_count: number | null;
-  bounce_rate_2s: number | null;
-  completion_rate_5s: number | null;
-  completion_rate: number | null;
-  avg_play_duration: number | null;
-  follower_gain: number | null;
-};
-
-type AllComparisonData = {
-  loading: boolean;
-  previous: ComparisonMetricRow | null;
-  recent3: ComparisonMetricRow | null;
-  error: string | null;
-};
-
-function formatNumber(v: number | null | undefined) {
-  if (v == null) return "缺数据";
-  return new Intl.NumberFormat("zh-CN").format(Math.round(v));
-}
-
-function formatRate(v: number | string | null | undefined) {
-  if (v == null) return "缺数据";
-  const n = typeof v === "string" ? parseFloat(v) : v;
-  if (Number.isNaN(n)) return "缺数据";
-  return n.toFixed(1) + "%";
-}
-
-function formatSeconds(v: number | null | undefined) {
-  if (v == null) return "缺数据";
-  return `${v.toFixed(1)}s`;
-}
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
   normal: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
@@ -239,26 +210,10 @@ export function ContentDiagnosisWorkbench({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasNext, hasPrev, handleNext, handlePrev, isQueueOpen]);
-  const [comparison, setComparison] = useState<AllComparisonData & {
-    current?: ComparisonMetricRow | null;
-    reference?: ComparisonMetricRow | null;
-    ref_label?: string;
-    ref_count?: number;
-  }>({
-    loading: false,
-    previous: null,
-    recent3: null,
-    current: null,
-    reference: null,
-    ref_label: "对比自己近3条",
-    ref_count: 0,
-    error: null,
-  });
   const [cardDetail, setCardDetail] = useState<ContentFeedbackCardDetail | null>(null);
   const [mainIssues, setMainIssues] = useState("");
   const [feedback, setFeedback] = useState("");
   const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
-  const [showAiReference, setShowAiReference] = useState(false);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isTrashing, setIsTrashing] = useState(false);
 
@@ -268,10 +223,12 @@ export function ContentDiagnosisWorkbench({
   const [quotedIndices, setQuotedIndices] = useState<Set<number>>(new Set());
 
   type RefKey = "self" | "team" | "top" | "user";
-  const [selectedRef, setSelectedRef] = useState<RefKey>("self");
+  const [selectedRefs, setSelectedRefs] = useState<Set<RefKey>>(() => new Set(["self", "team"]));
   const [selectedRefUserId, setSelectedRefUserId] = useState<string | null>(null);
-  const [attribution, setAttribution] = useState<AttributionResult | null>(null);
+  const [multiAttribution, setMultiAttribution] = useState<MultiRefAttributionResult | null>(null);
   const [attributionLoading, setAttributionLoading] = useState(false);
+  const [attributionError, setAttributionError] = useState<string | null>(null);
+  const [showMoreMetrics, setShowMoreMetrics] = useState(false);
 
   const [previousFeedback, setPreviousFeedback] = useState<{
     has_previous: boolean;
@@ -313,48 +270,48 @@ export function ContentDiagnosisWorkbench({
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextSaveRef = useRef(true);
 
-  const fetchAttribution = useCallback((vId: string, ref: RefKey, refUserId?: string | null) => {
-    setAttributionLoading(true);
-    let url = `/api/admin/content-attribution/${vId}?ref=${ref}`;
-    if (ref === "user" && refUserId) {
-      url += `&refUserId=${refUserId}`;
-    }
-    fetch(url)
-      .then((res) => res.json())
-      .then((data: AttributionResult) => {
-        setAttribution(data);
-        setAttributionLoading(false);
-      })
-      .catch(() => setAttributionLoading(false));
-  }, []);
-
-  const fetchComparison = useCallback((vId: string, ref: RefKey, refUserId?: string | null) => {
-    setComparison((prev) => ({ ...prev, loading: true }));
-    let url = `/api/admin/content-comparison/${vId}?ref=${ref}`;
-    if (ref === "user" && refUserId) {
-      url += `&refUserId=${refUserId}`;
-    }
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          setComparison({ loading: false, previous: null, recent3: null, error: data.error, reference: null, ref_label: data.ref_label, ref_count: 0 });
-          return;
+  const toggleRef = (refKey: RefKey) => {
+    setSelectedRefs((prev) => {
+      const next = new Set(prev);
+      if (next.has(refKey)) {
+        if (next.size > 1) {
+          next.delete(refKey);
         }
-        setComparison({
-          loading: false,
-          current: data.current ?? null,
-          previous: data.previous ?? null,
-          recent3: data.recent3 ?? null,
-          reference: data.reference ?? null,
-          ref_label: data.ref_label,
-          ref_count: data.ref_count ?? 0,
-          error: null,
-        });
-      })
-      .catch(() => {
-        setComparison({ loading: false, previous: null, recent3: null, reference: null, ref_label: "", ref_count: 0, error: "对比数据加载失败" });
-      });
+      } else {
+        next.add(refKey);
+      }
+      return next;
+    });
+  };
+
+  const fetchAttribution = useCallback(async (
+    vId: string,
+    refs: RefKey[],
+    signal: AbortSignal,
+    refUserId?: string | null,
+  ) => {
+    setAttributionLoading(true);
+    setAttributionError(null);
+    const refsStr = refs.length > 0 ? refs.join(",") : "self";
+    let url = `/api/admin/content-attribution/${vId}?refs=${encodeURIComponent(refsStr)}`;
+    if (refs.includes("user") && refUserId) {
+      url += `&refUserId=${encodeURIComponent(refUserId)}`;
+    }
+    try {
+      const res = await fetch(url, { signal });
+      const data = await res.json() as MultiRefAttributionResult & { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error || "归因数据加载失败");
+      }
+      if (signal.aborted) return;
+      setMultiAttribution(data);
+    } catch (error) {
+      if (signal.aborted) return;
+      setMultiAttribution(null);
+      setAttributionError(error instanceof Error ? error.message : "归因数据加载失败");
+    } finally {
+      if (!signal.aborted) setAttributionLoading(false);
+    }
   }, []);
 
   const fetchPreviousFeedback = useCallback((vId: string) => {
@@ -372,7 +329,8 @@ export function ContentDiagnosisWorkbench({
   }, []);
 
   useEffect(() => {
-    if (!video) return;
+    const videoId = video?.id;
+    if (!videoId) return;
     setMainIssues("");
     setFeedback("");
     setAnalysisResult(null);
@@ -383,7 +341,7 @@ export function ContentDiagnosisWorkbench({
     setShowPreviousFeedback(false);
     skipNextSaveRef.current = true;
 
-    fetch(`/api/admin/content-feedback-cards/${video.id}`)
+    fetch(`/api/admin/content-feedback-cards/${videoId}`)
       .then((res) => res.json())
       .then((data: { feedback_card?: ContentFeedbackCardDetail; error?: string }) => {
         if (data.feedback_card) {
@@ -402,19 +360,52 @@ export function ContentDiagnosisWorkbench({
       })
       .catch(() => {});
 
-    fetchPreviousFeedback(video.id);
+    fetchPreviousFeedback(videoId);
   }, [video?.id, feedbackCard, fetchPreviousFeedback]);
 
   useEffect(() => {
-    if (!video) return;
-    if (selectedRef === "user" && !selectedRefUserId) return;
-    fetchAttribution(video.id, selectedRef, selectedRefUserId);
-    fetchComparison(video.id, selectedRef, selectedRefUserId);
-  }, [video?.id, selectedRef, selectedRefUserId, fetchAttribution, fetchComparison]);
+    const videoId = video?.id;
+    if (!videoId) return;
+    const controller = new AbortController();
+    const activeArr = Array.from(selectedRefs);
+    if (activeArr.includes("user") && !selectedRefUserId) {
+      setMultiAttribution(null);
+      setAttributionError(null);
+      setAttributionLoading(false);
+      return () => controller.abort();
+    }
+    void fetchAttribution(videoId, activeArr, controller.signal, selectedRefUserId);
+    return () => controller.abort();
+  }, [video?.id, selectedRefs, selectedRefUserId, fetchAttribution]);
 
   const isLocked =
     cardDetail?.workflow_status === "sent" || cardDetail?.workflow_status === "viewed";
   const isEditable = !isLocked;
+
+  const feedbackFindings = useMemo(() => {
+    const toneRank: Record<AttributionFinding["tone"], number> = {
+      bad: 0,
+      warn: 1,
+      missing: 2,
+      good: 3,
+    };
+    if (!multiAttribution) return [];
+
+    return Array.from(selectedRefs)
+      .flatMap((refKey) => {
+        const block = multiAttribution.attributions[refKey];
+        if (!block || block.sample_status !== "ready") return [];
+        return block.findings.map((finding) => ({
+          ...finding,
+          ref_label: block.ref_label,
+        }));
+      })
+      .sort((a, b) => {
+        const toneDiff = toneRank[a.tone] - toneRank[b.tone];
+        if (toneDiff !== 0) return toneDiff;
+        return Math.abs(b.delta ?? 0) - Math.abs(a.delta ?? 0);
+      });
+  }, [multiAttribution, selectedRefs]);
 
   useEffect(() => {
     if (!video) return;
@@ -523,18 +514,16 @@ export function ContentDiagnosisWorkbench({
 
   const feedbackEvidence = useMemo(() => {
     const list: string[] = [];
-    if (attribution?.findings) {
-      for (const f of attribution.findings) {
-        if (f.tone === "bad" || f.tone === "warn") {
-          list.push(`${f.metric_label} ${f.value != null ? f.value.toFixed(1) : "缺数据"}${RATE_METRICS.has(f.metric) && f.value != null ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`);
-        }
+    for (const f of feedbackFindings) {
+      if (f.tone === "bad" || f.tone === "warn") {
+        list.push(`${f.ref_label} · ${f.metric_label} ${f.value != null ? f.value.toFixed(1) : "缺数据"}${RATE_METRICS.has(f.metric) && f.value != null ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`);
       }
     }
     if (analysisResult?.data_summary) {
       list.push(`AI：${analysisResult.data_summary}`);
     }
     return list;
-  }, [attribution, analysisResult]);
+  }, [feedbackFindings, analysisResult]);
 
   async function handleGenerateAnalysis() {
     if (!video) return;
@@ -548,7 +537,6 @@ export function ContentDiagnosisWorkbench({
       const data = (await res.json()) as ContentAnalysisResult & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "生成分析失败");
       setAnalysisResult(data);
-      setShowAiReference(true);
       feedbackToast.success("AI 辅助分析已就绪");
     } catch (error) {
       feedbackToast.error(error instanceof Error ? error.message : "生成辅助分析失败");
@@ -655,7 +643,7 @@ export function ContentDiagnosisWorkbench({
   const handleCopyFeedbackText = useCallback(async () => {
     const text = buildContentFeedbackCopyText({
       title: video?.video_title,
-      findings: attribution?.findings ?? [],
+      findings: feedbackFindings,
       mainIssue: mainIssues,
       suggestion: feedback,
     });
@@ -666,7 +654,7 @@ export function ContentDiagnosisWorkbench({
     } catch {
       feedbackToast.error("复制失败，请检查浏览器剪贴板权限");
     }
-  }, [attribution?.findings, feedback, mainIssues, video?.video_title]);
+  }, [feedbackFindings, feedback, mainIssues, video?.video_title]);
 
   const showOverlay = previewIndex !== null && screenshotItems[previewIndex];
 
@@ -948,44 +936,60 @@ export function ContentDiagnosisWorkbench({
           </aside>
         )}
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden min-h-0 min-w-0">
-          <div className="flex flex-col border-r border-zinc-200 bg-white overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-10 overflow-hidden min-h-0 min-w-0">
+          <div className="lg:col-span-6 flex flex-col border-r border-zinc-200 bg-white overflow-y-auto p-6 space-y-6">
 
+          {/* 一、归因诊断与多参照系对比 */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-                <span className="size-1.5 rounded-full bg-[#5F82A8]" />
-                一、归因结论诊断
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+              <h2 className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.08em] text-zinc-900">
+                <span className="size-2 rounded-full bg-[#5F82A8]" />
+                一、归因诊断与多参照系对比
               </h2>
-              <div className="flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
-                {(["self", "team", "top", "user"] as const).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => {
-                      setSelectedRef(r);
-                      if (r !== "user") setSelectedRefUserId(null);
-                    }}
-                    className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-all ${
-                      selectedRef === r
-                        ? "border border-zinc-200 bg-white text-zinc-950 shadow-sm"
-                        : "text-zinc-500 hover:text-zinc-700"
-                    }`}
-                  >
-                    {r === "self" ? "比自己" : r === "team" ? "比团队" : r === "top" ? "比高手" : "比某人"}
-                  </button>
-                ))}
+              {/* 多选 Tag 控制栏 */}
+              <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1">
+                {(
+                  [
+                    { key: "self", label: "比自己近3条" },
+                    { key: "team", label: "比团队均值" },
+                    { key: "top", label: "比今日团队最高" },
+                    { key: "user", label: "比指定成员" },
+                  ] as const
+                ).map(({ key, label }) => {
+                  const active = selectedRefs.has(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => toggleRef(key)}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-all cursor-pointer ${
+                        active
+                          ? "border border-zinc-200 bg-white text-zinc-950 shadow-2xs"
+                          : "text-zinc-500 hover:text-zinc-800"
+                      }`}
+                    >
+                      <span
+                        className={`size-3 rounded border flex items-center justify-center transition-colors ${
+                          active ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-300 bg-white"
+                        }`}
+                      >
+                        {active && <Check className="size-2.5 stroke-[3]" />}
+                      </span>
+                      <span>{label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {selectedRef === "user" && profiles.length > 0 && (
+            {selectedRefs.has("user") && profiles.length > 0 && (
               <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-150 rounded-xl p-2.5 animate-fade-in">
                 <span className="text-[11px] text-zinc-500 font-medium">选择指定对比人:</span>
                 <Select
                   value={selectedRefUserId || undefined}
                   onValueChange={(val) => setSelectedRefUserId(val)}
                 >
-                  <SelectTrigger className="h-7 min-w-32 text-[11px] bg-white border-zinc-200 rounded-md">
+                  <SelectTrigger className="h-7 min-w-36 text-[11px] bg-white border-zinc-200 rounded-md">
                     <SelectValue placeholder="请选择成员" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1002,82 +1006,125 @@ export function ContentDiagnosisWorkbench({
             )}
 
             {attributionLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full rounded-xl" />)}
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-32 w-full rounded-xl" />
+                ))}
               </div>
-            ) : !attribution || !attribution.snapshot_ready ? (
+            ) : attributionError ? (
+              <div className="rounded-xl border border-dashed border-[#C9604D]/30 bg-[#C9604D]/5 p-6 text-center text-[12px] text-[#B84C5C]">
+                <p className="font-semibold">归因数据加载失败</p>
+                <p className="mt-1 text-[11px]">{attributionError}</p>
+              </div>
+            ) : !multiAttribution || !multiAttribution.snapshot_ready ? (
               <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 p-6 text-center text-[12px] text-zinc-500">
-                <p className="font-medium text-zinc-800">归因待数据齐</p>
+                <p className="font-semibold text-zinc-800">归因待数据齐</p>
                 <p className="mt-1 text-[11px] text-zinc-400">
-                  {attribution ? "这条视频暂无 24h 快照数据，请人工核对下方曲线与素材" : "正在加载归因结论..."}
+                  {multiAttribution ? "这条视频暂无 24h 快照数据，请人工核对下方曲线与素材" : "正在加载归因数据..."}
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col">
-                {attribution.findings.map((f: AttributionFinding) => (
-                  <AttributionFindingRow
-                    key={f.metric}
-                    finding={f}
-                    onLocate={() => handleLocateFinding(f)}
+              <div className="space-y-3.5">
+                {/* 6 大核心卡片 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                  <MultiRefMetricCard
+                    metricKey="play_count"
+                    label="播放量"
+                    unit="count"
+                    multiAttribution={multiAttribution}
+                    selectedRefs={Array.from(selectedRefs)}
+                    onLocate={handleLocateFinding}
                   />
-                ))}
-              </div>
-            )}
-          </div>
+                  <MultiRefMetricCard
+                    metricKey="completion_rate"
+                    label="完播率"
+                    unit="rate"
+                    multiAttribution={multiAttribution}
+                    selectedRefs={Array.from(selectedRefs)}
+                    onLocate={handleLocateFinding}
+                  />
+                  <MultiRefMetricCard
+                    metricKey="bounce_rate_2s"
+                    label="2s 跳出率"
+                    unit="rate"
+                    multiAttribution={multiAttribution}
+                    selectedRefs={Array.from(selectedRefs)}
+                    onLocate={handleLocateFinding}
+                  />
+                  <MultiRefMetricCard
+                    metricKey="completion_rate_5s"
+                    label="5s 完播率"
+                    unit="rate"
+                    multiAttribution={multiAttribution}
+                    selectedRefs={Array.from(selectedRefs)}
+                    onLocate={handleLocateFinding}
+                  />
+                  <MultiRefMetricCard
+                    metricKey="avg_play_duration"
+                    label="平均播放时长"
+                    unit="s"
+                    multiAttribution={multiAttribution}
+                    selectedRefs={Array.from(selectedRefs)}
+                    onLocate={handleLocateFinding}
+                  />
+                  <MultiRefMetricCard
+                    metricKey="follower_gain"
+                    label="今日净增粉"
+                    unit="count"
+                    multiAttribution={multiAttribution}
+                    selectedRefs={Array.from(selectedRefs)}
+                    onLocate={handleLocateFinding}
+                  />
+                </div>
 
-          <div className="space-y-3">
-            <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-              <span className="size-1.5 rounded-full bg-[#5F82A8]" />
-              二、多参照系指标对比 ({comparison.ref_label || "比自己近3条"})
-            </h2>
+                {/* 更多归因指标 (4项) */}
+                <div className="border-t border-zinc-100 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreMetrics(!showMoreMetrics)}
+                    className="text-[11.5px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors inline-flex items-center gap-1 cursor-pointer select-none"
+                  >
+                    <span>{showMoreMetrics ? "收起互动归因指标" : "展开更多互动归因指标 (点赞/评论/分享/收藏)"}</span>
+                    <ChevronDown className={`size-3.5 transition-transform ${showMoreMetrics ? "rotate-180" : ""}`} />
+                  </button>
 
-            {comparison.loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
-              </div>
-            ) : comparison.error ? (
-              <div className="rounded-xl border border-dashed border-red-200 bg-red-50/20 p-4 text-center text-[12px] text-red-500">
-                {comparison.error}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <CompareMetricCard
-                  label="播放量"
-                  current={comparison.current?.play_count}
-                  reference={comparison.reference?.play_count}
-                  formatter={formatNumber}
-                />
-                <CompareMetricCard
-                  label="2s跳出率"
-                  current={comparison.current?.bounce_rate_2s}
-                  reference={comparison.reference?.bounce_rate_2s}
-                  formatter={formatRate}
-                  lowerIsBetter
-                />
-                <CompareMetricCard
-                  label="5s完播率"
-                  current={comparison.current?.completion_rate_5s}
-                  reference={comparison.reference?.completion_rate_5s}
-                  formatter={formatRate}
-                />
-                <CompareMetricCard
-                  label="完播率"
-                  current={comparison.current?.completion_rate}
-                  reference={comparison.reference?.completion_rate}
-                  formatter={formatRate}
-                />
-                <CompareMetricCard
-                  label="均播时长"
-                  current={comparison.current?.avg_play_duration}
-                  reference={comparison.reference?.avg_play_duration}
-                  formatter={formatSeconds}
-                />
-                <CompareMetricCard
-                  label="今日涨粉"
-                  current={comparison.current?.follower_gain}
-                  reference={comparison.reference?.follower_gain}
-                  formatter={formatNumber}
-                />
+                  {showMoreMetrics && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 pt-3">
+                      <MultiRefMetricCard
+                        metricKey="likes"
+                        label="点赞数"
+                        unit="count"
+                        multiAttribution={multiAttribution}
+                        selectedRefs={Array.from(selectedRefs)}
+                        onLocate={handleLocateFinding}
+                      />
+                      <MultiRefMetricCard
+                        metricKey="comments"
+                        label="评论数"
+                        unit="count"
+                        multiAttribution={multiAttribution}
+                        selectedRefs={Array.from(selectedRefs)}
+                        onLocate={handleLocateFinding}
+                      />
+                      <MultiRefMetricCard
+                        metricKey="shares"
+                        label="分享数"
+                        unit="count"
+                        multiAttribution={multiAttribution}
+                        selectedRefs={Array.from(selectedRefs)}
+                        onLocate={handleLocateFinding}
+                      />
+                      <MultiRefMetricCard
+                        metricKey="favorites"
+                        label="收藏数"
+                        unit="count"
+                        multiAttribution={multiAttribution}
+                        selectedRefs={Array.from(selectedRefs)}
+                        onLocate={handleLocateFinding}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -1150,62 +1197,12 @@ export function ContentDiagnosisWorkbench({
               </div>
             </div>
           )}
+          {screenshotItems.length > 0 && <div className="h-px bg-zinc-200/60 pt-0.5" />}
+
         </div>
 
-        <div className="flex flex-col bg-zinc-50/50 overflow-y-auto p-6 space-y-8">
-          
-          {showPreviousFeedback && previousFeedback?.previous && (
-            <div className="border-l-2 border-[#5F82A8]/30 pl-4 space-y-3.5 relative animate-fade-in">
-              <div className="flex items-center justify-between pb-1">
-                <div className="flex items-center gap-1.5 text-[#5F82A8]">
-                  <History className="size-4" />
-                  <span className="text-[11.5px] font-medium tracking-wider uppercase">
-                    上次复盘诊断对比
-                    {previousFeedback.previous.source === "draft" ? "（草稿）" : "（历史下发）"}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowPreviousFeedback(false)}
-                  className="text-zinc-400 hover:text-zinc-600 text-[11px] font-medium transition-colors"
-                >
-                  收起
-                </button>
-              </div>
-              <div className="space-y-2.5 text-[12px] text-zinc-700">
-                <div>
-                  <span className="text-[11px] text-zinc-450 block">上次核心问题：</span>
-                  <p className="font-medium text-zinc-850 text-[12.5px]">{previousFeedback.previous.one_line}</p>
-                </div>
-                {previousFeedback.previous.message_for_member && (
-                  <div>
-                    <span className="text-[11px] text-zinc-450 block">上次改进建议：</span>
-                    <p className="leading-relaxed text-zinc-600 bg-white border border-zinc-150 p-2.5 rounded-xl shadow-sm">{previousFeedback.previous.message_for_member}</p>
-                  </div>
-                )}
-                {previousFeedback.previous.metrics && (
-                  <div>
-                    <span className="text-[11px] text-zinc-450 block mb-1.5">上次核心指标快照：</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {Object.entries(previousFeedback.previous.metrics).map(([key, val]) => {
-                        const entry = METRIC_MAP_INDEX.get(key as MetricKey);
-                        if (!entry) return null;
-                        const formatted = val != null ? (RATE_METRICS.has(key as MetricKey) ? `${val.toFixed(1)}%` : key === "avg_play_duration" ? `${val.toFixed(1)}s` : val.toLocaleString()) : "—";
-                        return (
-                          <div key={key} className="flex justify-between border-b border-zinc-200/50 py-1 text-[11px] leading-normal">
-                            <span className="text-zinc-400">{entry.label}</span>
-                            <span className="font-semibold text-zinc-700 tabular-nums">{formatted}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {showPreviousFeedback && <div className="h-px bg-zinc-200/60 pt-0.5" />}
-
+        {/* 右侧 40% 栏：台词引用、AI诊断思路、诊断建议与下发 */}
+        <div className="lg:col-span-4 flex flex-col bg-white overflow-y-auto p-6 space-y-6 min-w-0">
           {scriptSections.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -1266,7 +1263,7 @@ export function ContentDiagnosisWorkbench({
                               id={`script-segment-${idx}`}
                               onClick={() => handleQuoteSegment(seg, idx)}
                               aria-pressed={isQuoted}
-                              className={`group/seg flex w-full items-start gap-3 px-3.5 py-2.5 cursor-pointer transition-all text-left border-l-2 ${
+                              className={`group/seg flex w-full min-w-0 items-start gap-3 px-3.5 py-2.5 cursor-pointer transition-all text-left border-l-2 ${
                                 isQuoted
                                   ? "bg-[#6FAA7D]/[0.04] border-[#6FAA7D]"
                                   : isHighlighted
@@ -1282,7 +1279,7 @@ export function ContentDiagnosisWorkbench({
                                 {idx + 1}
                               </span>
                               <span
-                                className={`text-[12px] leading-relaxed flex-1 ${
+                                className={`text-[12px] leading-relaxed flex-1 min-w-0 break-words whitespace-pre-wrap ${
                                   isQuoted
                                     ? "text-zinc-400 line-through decoration-zinc-300/60"
                                     : isHighlighted
@@ -1385,10 +1382,7 @@ export function ContentDiagnosisWorkbench({
               </div>
             </div>
           )}
-
-          {analysisResult && <div className="h-px bg-zinc-200/60 pt-0.5" />}
-
-          <div className="space-y-4 pt-1">
+            <div className="space-y-4 pt-1">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
                 <span className="size-1.5 rounded-full bg-[#D97757]" />
@@ -1541,6 +1535,57 @@ export function ContentDiagnosisWorkbench({
                 </div>
               </div>
             </details>
+
+            {showPreviousFeedback && previousFeedback?.previous && (
+              <div className="border-l-2 border-[#5F82A8]/30 pl-4 space-y-3.5 relative animate-fade-in bg-zinc-50 border border-zinc-200 rounded-xl p-3.5">
+                <div className="flex items-center justify-between pb-1">
+                  <div className="flex items-center gap-1.5 text-[#5F82A8]">
+                    <History className="size-4" />
+                    <span className="text-[11.5px] font-medium tracking-wider uppercase">
+                      上次复盘诊断对比
+                      {previousFeedback.previous.source === "draft" ? "（草稿）" : "（历史下发）"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviousFeedback(false)}
+                    className="text-zinc-400 hover:text-zinc-600 text-[11px] font-medium transition-colors cursor-pointer"
+                  >
+                    收起
+                  </button>
+                </div>
+                <div className="space-y-2.5 text-[12px] text-zinc-700">
+                  <div>
+                    <span className="text-[11px] text-zinc-400 block">上次核心问题：</span>
+                    <p className="font-medium text-zinc-900 text-[12.5px]">{previousFeedback.previous.one_line}</p>
+                  </div>
+                  {previousFeedback.previous.message_for_member && (
+                    <div>
+                      <span className="text-[11px] text-zinc-400 block">上次改进建议：</span>
+                      <p className="leading-relaxed text-zinc-600 bg-white border border-zinc-200/80 p-2.5 rounded-xl shadow-2xs">{previousFeedback.previous.message_for_member}</p>
+                    </div>
+                  )}
+                  {previousFeedback.previous.metrics && (
+                    <div>
+                      <span className="text-[11px] text-zinc-400 block mb-1.5">上次核心指标快照：</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(previousFeedback.previous.metrics).map(([key, val]) => {
+                          const entry = METRIC_MAP_INDEX.get(key as MetricKey);
+                          if (!entry) return null;
+                          const formatted = val != null ? (RATE_METRICS.has(key as MetricKey) ? `${val.toFixed(1)}%` : key === "avg_play_duration" ? `${val.toFixed(1)}s` : val.toLocaleString()) : "—";
+                          return (
+                            <div key={key} className="flex justify-between border-b border-zinc-200/50 py-1 text-[11px] leading-normal">
+                              <span className="text-zinc-400">{entry.label}</span>
+                              <span className="font-semibold text-zinc-700 tabular-nums">{formatted}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1559,166 +1604,172 @@ export function ContentDiagnosisWorkbench({
   );
 }
 
-function CompareMetricCard({
+type MetricRow = {
+  play_count: number | null;
+  bounce_rate_2s: number | null;
+  completion_rate_5s: number | null;
+  completion_rate: number | null;
+  avg_play_duration: number | null;
+  avg_play_ratio: number | null;
+  follower_gain: number | null;
+  likes: number | null;
+  comments: number | null;
+  shares: number | null;
+  favorites: number | null;
+};
+
+function MultiRefMetricCard({
+  metricKey,
   label,
-  current,
-  reference,
-  formatter,
-  lowerIsBetter = false,
-}: {
-  label: string;
-  current: number | null | undefined;
-  reference: number | null | undefined;
-  formatter: (v: number | null | undefined) => string;
-  lowerIsBetter?: boolean;
-}) {
-  const currentVal = current ?? 0;
-  const refVal = reference ?? 0;
-  const delta = current != null && reference != null ? current - reference : null;
-  
-  let isGood = false;
-  let isBad = false;
-  if (delta != null) {
-    const isBetter = lowerIsBetter ? delta < 0 : delta > 0;
-    const absDelta = Math.abs(delta);
-    const rateThresh = label.includes("率") ? 8 : 15;
-    if (absDelta >= rateThresh) {
-      if (isBetter) isGood = true;
-      else isBad = true;
-    }
-  }
-  
-  const toneColor = isGood ? "text-[#6FAA7D]" : isBad ? "text-[#C9604D]" : "text-zinc-600";
-  const barColor = isGood ? "bg-[#6FAA7D]" : isBad ? "bg-[#C9604D]" : "bg-[#5F82A8]";
-  
-  const maxVal = Math.max(currentVal, refVal, 1) * 1.1;
-  const currentPct = (currentVal / maxVal) * 100;
-  const refPct = (refVal / maxVal) * 100;
-
-  return (
-    <div className="bg-white border border-zinc-200 rounded-xl p-3.5 shadow-sm space-y-1.5 text-left">
-      <div className="flex items-center justify-between">
-        <span className="text-[12px] font-medium text-zinc-500">{label}</span>
-        {delta != null && delta !== 0 && (
-          <span className={`text-[11px] font-semibold ${toneColor}`}>
-            {delta > 0 ? "+" : ""}{delta.toFixed(1)}
-          </span>
-        )}
-      </div>
-      <div className="flex items-baseline justify-between gap-1">
-        <span className="text-[18px] font-semibold tabular-nums text-zinc-900 leading-tight">
-          {current != null ? formatter(current) : "缺数据"}
-        </span>
-        <span className="text-[11px] text-zinc-400 tabular-nums">
-          参照 {reference != null ? formatter(reference) : "—"}
-        </span>
-      </div>
-      
-      {current != null && reference != null && (
-        <div className="space-y-1 pt-1">
-          <div className="flex items-center gap-1.5 text-[11px] leading-normal text-zinc-500">
-            <span className="w-5 shrink-0">本条</span>
-            <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden relative">
-              <div
-                className={`h-full rounded-full ${barColor} transition-[width] duration-300`}
-                style={{ width: `${currentPct}%` }}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-[11px] leading-normal text-zinc-500">
-            <span className="w-5 shrink-0 text-zinc-400">参照</span>
-            <div className="flex-1 h-1 bg-zinc-100 rounded-full overflow-hidden relative">
-              <div
-                className="h-full bg-zinc-300 rounded-full transition-[width] duration-300"
-                style={{ width: `${refPct}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const TONE_LABEL: Record<string, string> = {
-  bad: "异常",
-  warn: "偏低",
-  good: "良好",
-  missing: "缺数据",
-};
-
-const TONE_BG_COLOR: Record<string, string> = {
-  bad: "bg-[#C9604D]/6 border-[#C9604D]/20 text-[#C9604D]",
-  warn: "bg-[#D99E55]/6 border-[#D99E55]/20 text-[#D99E55]",
-  good: "bg-[#6FAA7D]/6 border-[#6FAA7D]/20 text-[#6FAA7D]",
-  missing: "bg-zinc-50 border-zinc-250 text-zinc-450",
-};
-
-function AttributionFindingRow({
-  finding,
+  unit,
+  multiAttribution,
+  selectedRefs,
   onLocate,
 }: {
-  finding: AttributionFinding;
-  onLocate: () => void;
+  metricKey: MetricKey;
+  label: string;
+  unit: "%" | "pp" | "s" | "count" | "rate";
+  multiAttribution: MultiRefAttributionResult | null;
+  selectedRefs: RefKey[];
+  onLocate?: (finding: AttributionFinding) => void;
 }) {
-  const badgeColorClass = TONE_BG_COLOR[finding.tone] ?? TONE_BG_COLOR.missing;
-  const locate = finding.locate;
-  const hintLabel =
-    locate.kind === "attribute"
-      ? "属性层"
-      : locate.segment_hint === "opening"
-        ? "开头"
-        : locate.segment_hint === "middle"
-          ? "中段"
-          : locate.segment_hint === "ending"
-            ? "结尾"
-            : null;
+  const currentRow = multiAttribution?.current_row;
+  const currentVal = currentRow ? (currentRow[metricKey as keyof MetricRow] as number | null) : null;
+
+  let activeLocateFinding: AttributionFinding | null = null;
+  if (multiAttribution?.attributions) {
+    for (const refKey of selectedRefs) {
+      const block = multiAttribution.attributions[refKey];
+      const f = block?.findings?.find((item) => item.metric === metricKey);
+      if (f && (f.tone === "bad" || f.tone === "warn") && f.locate.segment_hint) {
+        activeLocateFinding = f;
+        break;
+      }
+    }
+  }
+
+  const formattedCurrent =
+    currentVal == null
+      ? "缺数据"
+      : unit === "%" || unit === "pp"
+      ? `${currentVal.toFixed(1)}%`
+      : unit === "s"
+      ? `${currentVal.toFixed(1)}s`
+      : new Intl.NumberFormat("zh-CN").format(Math.round(currentVal));
 
   return (
-    <div className="flex items-start gap-4 border-b border-zinc-200/50 last:border-b-0 py-4 px-1 text-left bg-transparent transition-colors">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap leading-none">
-          <span className="text-[12.5px] font-medium text-zinc-850">{finding.metric_label}</span>
-          <div className="flex items-center leading-none">
-            <span className="text-[13.5px] font-semibold text-zinc-800 tabular-nums">
-              {finding.value != null ? `${finding.value.toFixed(1)}${RATE_METRICS.has(finding.metric) ? "%" : ""}` : "缺数据"}
+    <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-zinc-300 hover:shadow-xs">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-bold text-zinc-900 tracking-tight">{label}</span>
+        {activeLocateFinding && onLocate && (
+          <button
+            type="button"
+            onClick={() => onLocate(activeLocateFinding!)}
+            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+          >
+            <span>
+              {activeLocateFinding.locate.segment_hint === "opening"
+                ? "前3s钩子"
+                : activeLocateFinding.locate.segment_hint === "middle"
+                ? "中段承接"
+                : "尾部号召"}
             </span>
-            <span className="text-[11.5px] text-zinc-400 font-normal tabular-nums">
-              {finding.ref_value != null ? ` / 参照 ${finding.ref_value.toFixed(1)}${RATE_METRICS.has(finding.metric) ? "%" : ""}` : ""}
-            </span>
-            {finding.delta != null && finding.delta !== 0 && (
-              <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded-md ml-2 tabular-nums border ${
-                finding.delta > 0
-                  ? "bg-[#6FAA7D]/6 border-[#6FAA7D]/20 text-[#6FAA7D]"
-                  : "bg-[#C9604D]/6 border-[#C9604D]/20 text-[#C9604D]"
-              }`}>
-                {finding.delta > 0 ? "+" : ""}{finding.delta.toFixed(1)}
-              </span>
-            )}
-          </div>
-          {hintLabel && (
-            <span className="text-[10px] border rounded-full px-1.5 py-0.5 font-medium border-zinc-200 text-zinc-450">
-              {hintLabel}{locate.seconds != null ? ` · ${locate.seconds.toFixed(0)}s` : ""}
-            </span>
-          )}
-        </div>
-        <p className="mt-1.5 text-[11.5px] text-zinc-500 leading-relaxed">{finding.points_to}</p>
+            <ChevronRight className="size-3 text-zinc-400" />
+          </button>
+        )}
       </div>
 
-      <div className="flex items-center gap-2.5 shrink-0 pt-0.5">
-        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeColorClass}`}>
-          {TONE_LABEL[finding.tone] ?? finding.tone}
+      <div className="flex items-baseline justify-between border-b border-zinc-100 pb-2">
+        <span className="text-[11px] text-zinc-400 font-medium">当前实测</span>
+        <span className="text-[18px] font-extrabold tabular-nums tracking-tight text-zinc-900">
+          {formattedCurrent}
         </span>
-        {locate.kind === "segment" && finding.tone !== "good" && finding.tone !== "missing" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => { e.stopPropagation(); onLocate(); }}
-            className="h-6 rounded-lg border-zinc-200 bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 px-2 text-[10px] font-semibold shadow-sm transition-all"
-          >
-            看台词
-          </Button>
-        )}
+      </div>
+
+      <div className="space-y-1.5 pt-0.5">
+        {selectedRefs.map((refKey) => {
+          const block = multiAttribution?.attributions?.[refKey];
+          const refLabel =
+            block?.ref_label ??
+            (refKey === "self"
+              ? "比自己近3条"
+              : refKey === "team"
+              ? "比团队均值"
+              : refKey === "top"
+              ? "比今日团队最高"
+              : "比指定成员");
+          const sampleStatus = block?.sample_status ?? "missing_snapshot";
+          const refRow = block?.reference_row;
+          const refVal = refRow ? (refRow[metricKey as keyof MetricRow] as number | null) : null;
+          const finding = block?.findings?.find((f) => f.metric === metricKey);
+
+          if (sampleStatus === "missing_snapshot" || currentVal == null || refVal == null) {
+            return (
+              <div key={refKey} className="flex items-center justify-between text-[11px] py-0.5">
+                <span className="text-zinc-500 truncate max-w-[125px]" title={refLabel}>
+                  {refLabel}
+                </span>
+                <span className="text-zinc-400 font-normal">—</span>
+              </div>
+            );
+          }
+
+          if (sampleStatus === "insufficient_sample") {
+            return (
+              <div key={refKey} className="flex items-center justify-between text-[11px] py-0.5">
+                <span className="text-zinc-500 truncate max-w-[125px]" title={refLabel}>
+                  {refLabel}
+                </span>
+                <span className="text-zinc-400 font-medium">
+                  样本不足 ({block?.sample_count ?? 0}/{block?.sample_required ?? 3})
+                </span>
+              </div>
+            );
+          }
+
+          let deltaStr = "";
+          const tone = finding?.tone ?? "good";
+
+          if (unit === "pp" || unit === "%" || unit === "rate") {
+            const diff = currentVal - refVal;
+            deltaStr = `${diff >= 0 ? "+" : ""}${diff.toFixed(1)} pp`;
+          } else if (unit === "s") {
+            const diff = currentVal - refVal;
+            deltaStr = `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}s`;
+          } else {
+            if (refVal === 0) {
+              deltaStr = "—";
+            } else {
+              const diffPct = ((currentVal - refVal) / Math.abs(refVal)) * 100;
+              deltaStr = `${diffPct >= 0 ? "+" : ""}${diffPct.toFixed(1)}%`;
+            }
+          }
+
+          const toneClass =
+            tone === "good"
+              ? "text-[#3D8B7A] bg-[#3D8B7A]/8 border-[#3D8B7A]/20"
+              : tone === "warn"
+              ? "text-[#B07228] bg-[#B07228]/8 border-[#B07228]/20"
+              : tone === "bad"
+              ? "text-[#B84C5C] bg-[#B84C5C]/8 border-[#B84C5C]/20"
+              : "text-zinc-500 bg-zinc-50 border-zinc-200/60";
+
+          const toneSymbol = tone === "good" ? "▲ 领先" : tone === "bad" || tone === "warn" ? "▼ 落后" : "持平";
+
+          return (
+            <div key={refKey} className="flex items-center justify-between text-[11px] py-0.5">
+              <span className="text-zinc-500 truncate max-w-[125px]" title={refLabel}>
+                {refLabel}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold tabular-nums text-zinc-700">{deltaStr}</span>
+                <span className={`inline-flex items-center rounded border px-1 py-0.2 text-[10px] font-medium ${toneClass}`}>
+                  {toneSymbol}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

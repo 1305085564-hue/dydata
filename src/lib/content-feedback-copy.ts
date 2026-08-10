@@ -1,6 +1,8 @@
 import type { AttributionFinding } from "@/lib/content-attribution";
 
-type CopyFinding = Pick<AttributionFinding, "metric_label" | "tone" | "value" | "ref_value" | "delta" | "points_to">;
+type CopyFinding = Pick<AttributionFinding, "metric_label" | "tone" | "value" | "ref_value" | "delta" | "points_to"> & {
+  ref_label?: string;
+};
 
 export type ContentFeedbackCopyInput = {
   title?: string | null;
@@ -34,7 +36,10 @@ export function buildContentFeedbackCopyText(input: ContentFeedbackCopyInput) {
 
   const findingLines = findings.length > 0
     ? findings.map((finding, index) => {
-        const reference = finding.ref_value == null ? "" : `，参照 ${formatMetricValue(finding.ref_value)}`;
+        const referenceLabel = cleanText(finding.ref_label);
+        const reference = finding.ref_value == null
+          ? ""
+          : `，${referenceLabel ? `${referenceLabel} ` : "参照 "}${formatMetricValue(finding.ref_value)}`;
         return `${index + 1}. ${finding.metric_label}: 当前 ${formatMetricValue(finding.value)}${reference}${formatDelta(finding.delta)}。指向: ${finding.points_to}`;
       })
     : ["1. 暂无明显异常指标，建议保留有效做法，重点检查脚本表达是否可复用。"];

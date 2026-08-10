@@ -81,6 +81,22 @@ test("异常指标超过五项时只保留前五项", () => {
   assert.doesNotMatch(text, /指标6/);
 });
 
+test("多参照归因复制文本保留每条证据的参照来源", () => {
+  const text = buildContentFeedbackCopyText({
+    findings: [{
+      metric_label: "完播率",
+      tone: "warn",
+      value: 35,
+      ref_value: 48,
+      delta: -13,
+      ref_label: "对比团队均值",
+      points_to: "团队口径下表现偏低",
+    }],
+  });
+
+  assert.match(text, /对比团队均值 48/);
+});
+
 test("仅 good 指标时沿用无异常兜底", () => {
   const text = buildContentFeedbackCopyText({
     findings: [{

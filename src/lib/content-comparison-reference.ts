@@ -43,6 +43,8 @@ type ReferenceMetricsParams = {
   video: Pick<ScopedAdminVideoAccess["video"], "account_id" | "user_id" | "published_at">;
   ref: RefKey;
   refUserId?: string | null;
+  /** 当前操作只允许纳入仍有效且对操作者可见的成员。 */
+  activeUserIds?: string[];
 };
 
 type LegacyComparisonParams = {
@@ -149,6 +151,7 @@ export async function getReferenceMetrics({
   video,
   ref,
   refUserId,
+  activeUserIds,
 }: ReferenceMetricsParams): Promise<{
   referenceRows: MetricRow[];
   reference: MetricRow | null;
@@ -163,10 +166,10 @@ export async function getReferenceMetrics({
     referenceRows = await getSelfReferenceRows(supabase, videoId, video.account_id, video.published_at);
   } else if (ref === "team") {
     refLabel = "对比团队均值";
-    referenceRows = await getTeamReferenceRows(supabase, videoId, video.user_id);
+    referenceRows = await getTeamReferenceRows(supabase, videoId, video.user_id, activeUserIds);
   } else if (ref === "top") {
     refLabel = "对比今日团队最高播放";
-    referenceRows = await getTopReferenceRows(supabase, videoId, video.user_id);
+    referenceRows = await getTopReferenceRows(supabase, videoId, video.user_id, activeUserIds);
   } else if (ref === "user" && refUserId) {
     refLabel = "对比指定人近3条";
     referenceRows = await getUserReferenceRows(supabase, refUserId);
@@ -306,8 +309,9 @@ async function getTeamReferenceRows(
   supabase: SupabaseClient,
   videoId: string,
   userId: string | null,
+  activeUserIds?: string[],
 ): Promise<MetricRow[]> {
-  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId);
+  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, activeUserIds);
   if (teamVideoIds.length === 0) return [];
 
   const { data: snapshots } = await supabase
@@ -323,8 +327,9 @@ async function getTopReferenceRows(
   supabase: SupabaseClient,
   videoId: string,
   userId: string | null,
+  activeUserIds?: string[],
 ): Promise<MetricRow[]> {
-  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId);
+  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, activeUserIds);
   if (teamVideoIds.length === 0) return [];
 
   const { data: topSnapshot } = await supabase
@@ -343,8 +348,9 @@ async function getTodayTeamVideoIds(
   supabase: SupabaseClient,
   videoId: string,
   userId: string | null,
+  activeUserIds?: string[],
 ): Promise<string[]> {
-  const accountIds = await getTeamAccountIds(supabase, userId);
+  const accountIds = await getTeamAccountIds(supabase, userId, activeUserIds);
   if (accountIds.length === 0) return [];
 
   const { data: teamVideos } = await supabase
@@ -361,6 +367,7 @@ async function getTodayTeamVideoIds(
 async function getTeamAccountIds(
   supabase: SupabaseClient,
   userId: string | null,
+  activeUserIds?: string[],
 ): Promise<string[]> {
   if (!userId) return [];
 
@@ -376,7 +383,10 @@ async function getTeamAccountIds(
     .from("profiles")
     .select("id")
     .eq("team_id", teamId);
-  const memberIds = ((members ?? []) as Array<{ id: string }>).map((row) => row.id);
+  const activeUserIdSet = activeUserIds ? new Set(activeUserIds) : null;
+  const memberIds = ((members ?? []) as Array<{ id: string }>)
+    .map((row) => row.id)
+    .filter((memberId) => !activeUserIdSet || activeUserIdSet.has(memberId));
   if (memberIds.length === 0) return [];
 
   const { data: accounts } = await supabase
