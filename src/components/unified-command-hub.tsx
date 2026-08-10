@@ -399,7 +399,7 @@ export function UnifiedCommandHub({
                   <button
                     type="button"
                     onClick={() => void markAllRead()}
-                    className="text-[11px] font-medium text-zinc-500 hover:text-zinc-900 px-2 py-0.5 rounded-lg hover:bg-zinc-200/50 transition-colors"
+                    className="text-[11px] font-medium text-zinc-500 hover:text-zinc-950 px-2 py-0.5 rounded-lg hover:bg-zinc-100 transition-colors"
                   >
                     全部已读
                   </button>
@@ -408,7 +408,7 @@ export function UnifiedCommandHub({
                   type="button"
                   onClick={() => onOpenChange(false)}
                   aria-label="关闭"
-                  className="flex size-6.5 items-center justify-center rounded-lg hover:bg-zinc-200/60 text-zinc-400 hover:text-zinc-800 transition-all duration-150"
+                  className="flex size-6.5 items-center justify-center rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-950 transition-all duration-150"
                 >
                   <X className="size-3.5 stroke-[1.8]" />
                 </button>

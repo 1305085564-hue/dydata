@@ -810,16 +810,16 @@ export function DataManager({
                 <div className="space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="text-[18px] font-semibold text-zinc-900">{group.profileName}</h3>
-                    <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[12px] text-zinc-700">
+                    <Badge variant="secondary" className="bg-zinc-100 text-[12px] text-zinc-700">
                       {group.accountCount} 个账号
                     </Badge>
-                    <Badge variant="outline" className="border-zinc-200 bg-zinc-100 text-[12px] text-zinc-700">
+                    <Badge variant="secondary" className="bg-zinc-100 text-[12px] text-zinc-700">
                       {group.reportCount} 条提交
                     </Badge>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {group.accountNames.map((name) => (
-                      <Badge key={name} variant="outline" className="border-zinc-200 text-[12px] text-zinc-500">
+                      <Badge key={name} variant="secondary" className="text-[12px] text-zinc-500">
                         {name}
                       </Badge>
                     ))}

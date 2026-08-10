@@ -312,7 +312,7 @@ export function MonthlyMatrix({
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => void onQuickMarkCell(member.userId, dateKey, "absent")}
-                                      className="cursor-pointer hover:bg-red-50 text-red-600 flex items-center gap-1.5 py-1.5"
+                                      className="cursor-pointer hover:bg-zinc-100 text-red-600 flex items-center gap-1.5 py-1.5"
                                     >
                                       <span className="size-2 rounded-full bg-[#C9604D]" />
                                       确认缺勤

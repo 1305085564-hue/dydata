@@ -236,7 +236,7 @@ export function MyClaimDrawer({
                             type="button"
                             disabled={operatingId === claim.subTopicId}
                             onClick={(e) => handleReturn(e, claim.subTopicId)}
-                            className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 text-xs transition-colors font-normal"
+                            className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 text-xs transition-colors font-normal"
                             aria-label="放回选题"
                           >
                             放回

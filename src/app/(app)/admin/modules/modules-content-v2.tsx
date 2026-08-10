@@ -861,7 +861,7 @@ export function AdminModulesContentV2({
                   全选当前屏
                 </button>
               )}
-              <div className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1" role="tablist" aria-label="成员状态">
+              <div className="inline-flex items-center gap-1 rounded-lg bg-zinc-50 p-1" role="tablist" aria-label="成员状态">
                 <button
                   type="button"
                   role="tab"

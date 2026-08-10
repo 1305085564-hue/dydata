@@ -211,7 +211,7 @@ function ExemptionModal({
                 <button
                   type="button"
                   onClick={handleSelectAllUnsubmitted}
-                  className="group inline-flex items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50/80 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-all duration-150 hover:bg-amber-100/90 active:scale-95 cursor-pointer shrink-0"
+                  className="group inline-flex items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50/80 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 cursor-pointer shrink-0"
                 >
                   <Zap className="size-3 stroke-[2] text-[#D97757] transition-transform group-hover:scale-110" />
                   一键全选（七日）

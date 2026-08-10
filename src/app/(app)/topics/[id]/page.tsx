@@ -535,7 +535,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                         size="sm"
                         disabled={isUpdatingClaim}
                         onClick={() => void handleStartScripting()}
-                        className="h-9.5 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[12.5px] font-medium transition-colors"
+                        className="h-9.5 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-100 hover:text-zinc-950 text-zinc-800 text-[12.5px] font-medium transition-colors"
                       >
                         {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <FileText className="size-3.5 mr-1.5 text-zinc-600" />}
                         标记脚本中

@@ -248,7 +248,7 @@ export function PremiumSettingsModal({
             type="button"
             aria-label="关闭设置"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-200 dark:border-zinc-800 dark:hover:bg-zinc-800 text-zinc-500 dark:text-[#E7E5E4] hover:text-zinc-700 dark:hover:text-white transition-colors"
+            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800 text-zinc-500 dark:text-[#E7E5E4] hover:text-zinc-950 dark:hover:text-white transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -428,7 +428,7 @@ export function PremiumSettingsModal({
                   </div>
                   <button
                     onClick={() => setIsAddingAccount(!isAddingAccount)}
-                    className="inline-flex items-center gap-1 bg-zinc-200 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-900 dark:text-[#FAFAF9] px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+                    className="inline-flex items-center gap-1 bg-zinc-200 dark:bg-zinc-900 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-800 text-zinc-900 dark:text-[#FAFAF9] px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
                   >
                     <Plus className="size-3" />
                     添加新账号
@@ -499,7 +499,7 @@ export function PremiumSettingsModal({
                     return (
                       <div
                         key={acc.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 px-3.5 py-2.5 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/10"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 px-3.5 py-2.5 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900/10"
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -527,7 +527,7 @@ export function PremiumSettingsModal({
                               onClick={() => {
                                 setDashboardAccount(acc.id);
                               }}
-                              className="text-[12px] font-medium border border-zinc-300 dark:border-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-900 px-2.5 py-1 rounded-lg transition-colors"
+                              className="text-[12px] font-medium border border-zinc-300 dark:border-zinc-800 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 px-2.5 py-1 rounded-lg transition-colors"
                             >
                               切换为该账号
                             </button>

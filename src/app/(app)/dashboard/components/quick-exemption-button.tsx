@@ -29,7 +29,7 @@ export function QuickExemptionButton({
   const subtle =
     "!h-auto !min-h-0 !border-0 !bg-transparent !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-zinc-500 transition-all duration-150 ease-out hover:!bg-zinc-100 hover:!border-0 hover:text-zinc-950 focus-visible:bg-zinc-100 focus-visible:text-zinc-950 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5 [&>svg]:size-[14px] [&>svg]:text-zinc-500 [&>svg]:transition-colors hover:[&>svg]:text-zinc-700";
   const cardPending =
-    "!h-8 !min-h-0 rounded-lg border border-amber-300/80 bg-amber-50/70 px-2.5 text-[12px] font-medium text-amber-800 transition-all duration-150 ease-out hover:bg-amber-100/90 active:scale-95 [&>svg]:text-amber-600 [&>svg]:animate-pulse";
+    "!h-8 !min-h-0 rounded-lg border border-amber-300/80 bg-amber-50/70 px-2.5 text-[12px] font-medium text-amber-800 transition-all duration-150 ease-out hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 [&>svg]:text-amber-600 [&>svg]:animate-pulse";
   const card =
     "!h-8 !min-h-0 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 transition-all duration-150 ease-out hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 active:scale-95 focus-visible:ring-1 focus-visible:ring-zinc-900/5";
 

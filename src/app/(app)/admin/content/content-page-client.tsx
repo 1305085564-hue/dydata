@@ -251,7 +251,7 @@ export function ContentPageClient({
       {/* 顶栏控制条：Sticky 纸感与环境融合 */}
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/90 p-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="rounded-lg border border-zinc-200 bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-700">
+          <div className="rounded-lg bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-700">
             今日待盘
             <span className="ml-1.5 tabular-nums font-semibold text-zinc-900">
               {data.summary.pendingReviewCount}
@@ -292,7 +292,7 @@ export function ContentPageClient({
 
           {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-zinc-50/80 text-zinc-600 border border-zinc-200 rounded-lg shadow-2xs">
+            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-zinc-50/80 text-zinc-600 rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
               <span className="font-semibold text-zinc-900">
                 今日异常 ({anomalyVideos.length})

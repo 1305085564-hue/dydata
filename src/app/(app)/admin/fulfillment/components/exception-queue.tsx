@@ -306,7 +306,7 @@ export function ExceptionQueue({
                             <DropdownMenuItem
                               onClick={() => requestQuickMark(member.userId, member.userName, "absent")}
                               variant="destructive"
-                              className="cursor-pointer hover:bg-red-50"
+                              className="cursor-pointer hover:bg-zinc-100 hover:text-zinc-950"
                             >
                               确认缺勤
                             </DropdownMenuItem>
