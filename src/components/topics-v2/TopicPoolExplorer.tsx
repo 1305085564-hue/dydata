@@ -10,7 +10,7 @@ import {
   Plus,
   RefreshCw,
   AlertCircle,
-  AlertTriangle,
+  PenTool,
 } from "lucide-react";
 import type {
   TopicPoolItem,
@@ -374,8 +374,8 @@ export function TopicPoolExplorer({
                     {/* 状态标签 */}
                     <div className="flex items-center gap-1 shrink-0">
                       {(item.scriptingCount ?? 0) > 0 && (
-                        <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                        <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1">
+                          <PenTool className="w-3 h-3 text-sky-600" />
                           <span>{item.scriptingCount} 人写作中</span>
                         </span>
                       )}
@@ -477,8 +477,8 @@ export function TopicPoolExplorer({
                     </td>
                     <td className="py-3 px-3">
                       {(item.scriptingCount ?? 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded font-normal">
-                          <AlertTriangle className="w-3 h-3 text-amber-600" />
+                        <span className="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.5 rounded font-normal">
+                          <PenTool className="w-3 h-3 text-sky-600" />
                           <span>{item.scriptingCount} 人写作中</span>
                         </span>
                       ) : (item.claimCount || 0) > 0 ? (

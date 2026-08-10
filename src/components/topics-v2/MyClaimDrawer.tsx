@@ -94,7 +94,7 @@ export function MyClaimDrawer({
           <span>5</span>
         </div>
         {scriptingCount > 0 && (
-          <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.5 rounded-full font-medium">
             {scriptingCount} 脚本中
           </span>
         )}
@@ -205,7 +205,7 @@ export function MyClaimDrawer({
                         <span
                           className={`text-xs px-1.5 py-0.5 rounded font-normal shrink-0 ${
                             isScripting
-                              ? "bg-amber-100 text-amber-800"
+                              ? "bg-sky-50 text-sky-700 border border-sky-200/80"
                               : "bg-zinc-200/80 text-zinc-700"
                           }`}
                         >
@@ -226,7 +226,7 @@ export function MyClaimDrawer({
                               type="button"
                               disabled={operatingId === claim.subTopicId}
                               onClick={(e) => handleStartScripting(e, claim.subTopicId)}
-                              className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 hover:bg-amber-100 text-xs border border-amber-200 transition-colors font-medium"
+                              className="px-2 py-0.5 rounded bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs border border-sky-200/80 transition-colors font-medium"
                               aria-label="开始写脚本"
                             >
                               开始写脚本

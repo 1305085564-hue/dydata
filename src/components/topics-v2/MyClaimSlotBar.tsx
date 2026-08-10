@@ -135,8 +135,8 @@ export function MyClaimSlotBar({
                       <span>脚本写作中</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 border border-zinc-200/80">
+                      <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
                       <span>已认领候选</span>
                     </span>
                   )}
