@@ -152,7 +152,7 @@ export function TablePagination({
                   onClick={() => onPageChange(p)}
                   className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[11.5px] tabular-nums font-medium transition-all cursor-pointer ${
                     isCurrent
-                      ? "bg-zinc-900 text-white shadow-2xs pointer-events-none"
+                      ? "bg-[#D97757]/10 text-[#D97757] font-semibold pointer-events-none"
                       : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95"
                   }`}
                   aria-current={isCurrent ? "page" : undefined}

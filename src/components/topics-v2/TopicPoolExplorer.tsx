@@ -529,7 +529,7 @@ export function TopicPoolExplorer({
               type="button"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 disabled:opacity-40"
+              className="px-2.5 py-1 rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-40"
               aria-label="上一页"
             >
               上一页
@@ -539,7 +539,7 @@ export function TopicPoolExplorer({
               type="button"
               disabled={currentPage * 50 >= totalCount}
               onClick={() => onPageChange(currentPage + 1)}
-              className="px-2.5 py-1 rounded border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 disabled:opacity-40"
+              className="px-2.5 py-1 rounded text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-40"
               aria-label="下一页"
             >
               下一页

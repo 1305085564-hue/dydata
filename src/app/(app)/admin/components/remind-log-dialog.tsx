@@ -199,21 +199,21 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       disabled={page <= 1 || loading}
                       onClick={() => setPage((p) => p - 1)}
-                      className="h-8 border-zinc-200 px-3 text-[12px]"
+                      className="h-8 px-3 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
                     >
                       上一页
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       disabled={page >= totalPages || loading}
                       onClick={() => setPage((p) => p + 1)}
-                      className="h-8 border-zinc-200 px-3 text-[12px]"
+                      className="h-8 px-3 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
                     >
                       下一页
                     </Button>

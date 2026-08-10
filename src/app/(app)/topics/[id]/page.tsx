@@ -769,19 +769,19 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               <div className="flex items-center gap-1.5">
                 <Button
                   size="xs"
-                  variant="outline"
+                  variant="ghost"
                   disabled={worksPage <= 1 || loadingWorks}
                   onClick={() => handlePageChange(worksPage - 1)}
-                  className="h-7 text-[12px] border-zinc-200 bg-white"
+                  className="h-7 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
                 >
                   上一页
                 </Button>
                 <Button
                   size="xs"
-                  variant="outline"
+                  variant="ghost"
                   disabled={worksPage >= totalPages || loadingWorks}
                   onClick={() => handlePageChange(worksPage + 1)}
-                  className="h-7 text-[12px] border-zinc-200 bg-white"
+                  className="h-7 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
                 >
                   下一页
                 </Button>

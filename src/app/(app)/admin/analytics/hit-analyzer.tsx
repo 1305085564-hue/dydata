@@ -827,11 +827,11 @@ export function HitAnalyzer({
                       type="button"
                       onClick={() => setSubmitterPage((current) => Math.max(0, current - 1))}
                       disabled={safeSubmitterPage === 0}
- className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+ className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-950 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                     >
                       上一页
                     </button>
-                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-[#D97757]/40 bg-white px-2 text-[12px] font-medium tabular-nums text-[#D97757]">
+                    <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-[#D97757]/10 px-2 text-[12px] font-medium tabular-nums text-[#D97757]">
                       {safeSubmitterPage + 1}
                     </span>
                     <span className="text-[12px] tabular-nums text-zinc-500">/ {submitterPageCount}</span>
@@ -839,7 +839,7 @@ export function HitAnalyzer({
                       type="button"
                       onClick={() => setSubmitterPage((current) => Math.min(submitterPageCount - 1, current + 1))}
                       disabled={safeSubmitterPage >= submitterPageCount - 1}
- className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-[12px] font-medium text-zinc-500 transition-[background-color, color, box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+ className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-950 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
                     >
                       下一页
                     </button>
