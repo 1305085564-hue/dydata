@@ -207,7 +207,7 @@ export function PersonnelAnalysis({
               onClick={() => setSortBy(key)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-[12px] font-medium transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                sortBy === key ? "bg-white text-zinc-900" : "text-zinc-500 hover:text-zinc-700",
+                sortBy === key ? "bg-white text-zinc-900" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950",
               )}
             >
               {label}

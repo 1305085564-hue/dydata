@@ -1660,7 +1660,7 @@ function MultiRefMetricCard({
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-zinc-300 hover:shadow-xs">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-bold text-zinc-900 tracking-tight">{label}</span>
+        <span className="text-[12px] font-semibold text-zinc-900 tracking-tight">{label}</span>
         {activeLocateFinding && onLocate && (
           <button
             type="button"
@@ -1681,7 +1681,7 @@ function MultiRefMetricCard({
 
       <div className="flex items-baseline justify-between border-b border-zinc-100 pb-2">
         <span className="text-[11px] text-zinc-400 font-medium">当前实测</span>
-        <span className="text-[18px] font-extrabold tabular-nums tracking-tight text-zinc-900">
+        <span className="text-[18px] font-semibold tabular-nums tracking-tight text-zinc-900">
           {formattedCurrent}
         </span>
       </div>

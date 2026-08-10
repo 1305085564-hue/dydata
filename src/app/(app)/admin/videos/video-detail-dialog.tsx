@@ -309,7 +309,7 @@ export function VideoDetailDialog({
                       >
                         {statusBadgeConfig[video.anomaly_status]?.label ?? video.anomaly_status}
                       </Badge>
-                      <h2 className="text-[18px] font-bold text-zinc-900 tracking-tight leading-snug">
+                      <h2 className="text-[18px] font-semibold text-zinc-900 tracking-tight leading-snug">
                         {video.video_title?.trim() || "未命名视频"}
                       </h2>
                     </div>
@@ -349,7 +349,7 @@ export function VideoDetailDialog({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-[#D97757]" />
-                      <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">爆款数据核心大盘</h3>
+                      <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">爆款数据核心大盘</h3>
                     </div>
                     <span className="text-[11px] text-zinc-400 font-normal">抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}</span>
                   </div>
@@ -361,7 +361,7 @@ export function VideoDetailDialog({
                         <span>播放量</span>
                         <Play className="size-3.5 text-zinc-400" />
                       </div>
-                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-zinc-900 tracking-tight">
+                      <div className="mt-1.5 text-[22px] font-semibold tabular-nums text-zinc-900 tracking-tight">
                         {formatNumber(snapshot?.play_count)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
@@ -375,7 +375,7 @@ export function VideoDetailDialog({
                         <span>完播率</span>
                         <Activity className="size-3.5 text-emerald-500" />
                       </div>
-                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-emerald-600 tracking-tight">
+                      <div className="mt-1.5 text-[22px] font-semibold tabular-nums text-emerald-600 tracking-tight">
                         {formatPercent(snapshot?.completion_rate)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
@@ -389,7 +389,7 @@ export function VideoDetailDialog({
                         <span>综合互动率</span>
                         <TrendingUp className="size-3.5 text-[#D97757]" />
                       </div>
-                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-[#D97757] tracking-tight">
+                      <div className="mt-1.5 text-[22px] font-semibold tabular-nums text-[#D97757] tracking-tight">
                         {formatPercent(interaction)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
@@ -403,7 +403,7 @@ export function VideoDetailDialog({
                         <span>粉转率</span>
                         <Sparkles className="size-3.5 text-indigo-500" />
                       </div>
-                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-indigo-600 tracking-tight">
+                      <div className="mt-1.5 text-[22px] font-semibold tabular-nums text-indigo-600 tracking-tight">
                         {formatPercent(followerConv)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
@@ -420,7 +420,7 @@ export function VideoDetailDialog({
                   <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-zinc-500" />
-                      <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">快照全量指标明细</h3>
+                      <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">快照全量指标明细</h3>
                     </div>
                     <span className="text-[11px] text-zinc-400 font-medium">({snapshot.snapshot_type} 抓取维度)</span>
                   </div>
@@ -499,7 +499,7 @@ export function VideoDetailDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-zinc-600" />
-                    <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">视频文案内容库</h3>
+                    <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">视频文案内容库</h3>
                     <span className="text-[11px] text-zinc-400 font-normal">
                       ({video.content?.length ?? 0} 字)
                     </span>
@@ -526,7 +526,7 @@ export function VideoDetailDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Award className="size-4 text-amber-500" />
-                    <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">素材评价与评级</h3>
+                    <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">素材评价与评级</h3>
                   </div>
                   <Button
                     type="button"
@@ -547,10 +547,10 @@ export function VideoDetailDialog({
                       {(["S", "A", "B", "C"] as VideoAssetLevel[]).map((level) => {
                         const isSelected = assetLevel === level;
                         const levelStyles: Record<VideoAssetLevel, string> = {
-                          S: isSelected ? "bg-amber-500 text-white border-amber-600 font-bold shadow-xs" : "bg-amber-50 text-amber-700 border-amber-200/60 hover:bg-amber-100",
-                          A: isSelected ? "bg-zinc-900 text-white border-zinc-900 font-bold shadow-xs" : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200",
-                          B: isSelected ? "bg-zinc-700 text-white border-zinc-700 font-bold shadow-xs" : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100",
-                          C: isSelected ? "bg-zinc-500 text-white border-zinc-500 font-bold shadow-xs" : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100",
+                          S: isSelected ? "bg-amber-500 text-white border-amber-600 font-semibold shadow-xs" : "bg-amber-50 text-amber-700 border-amber-200/60 hover:bg-amber-100",
+                          A: isSelected ? "bg-zinc-900 text-white border-zinc-900 font-semibold shadow-xs" : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200",
+                          B: isSelected ? "bg-zinc-700 text-white border-zinc-700 font-semibold shadow-xs" : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100",
+                          C: isSelected ? "bg-zinc-500 text-white border-zinc-500 font-semibold shadow-xs" : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100",
                         };
                         return (
                           <button

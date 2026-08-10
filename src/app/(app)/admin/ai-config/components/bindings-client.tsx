@@ -458,7 +458,7 @@ export default function BindingsClient() {
                         "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
                         isViewActive
                           ? "bg-zinc-100/80 text-zinc-900 font-medium"
-                          : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
                       )}
                     >
                       <button

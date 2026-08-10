@@ -300,7 +300,7 @@ export function ContentList({
       return <span className="text-[10px] text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
-      <span className="text-[10.5px] font-bold text-zinc-900">
+      <span className="text-[10.5px] font-semibold text-zinc-900">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
