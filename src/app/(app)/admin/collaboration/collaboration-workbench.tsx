@@ -208,7 +208,7 @@ export function CollaborationWorkbench({
             className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
               tab === "talents"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             达人 ({talents.length})
@@ -220,7 +220,7 @@ export function CollaborationWorkbench({
             className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
               tab === "operators"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             运营团队 ({operators.length})
@@ -232,7 +232,7 @@ export function CollaborationWorkbench({
             className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
               tab === "writers"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             文案人员
@@ -244,7 +244,7 @@ export function CollaborationWorkbench({
             className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
               tab === "editors"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             剪辑人员
