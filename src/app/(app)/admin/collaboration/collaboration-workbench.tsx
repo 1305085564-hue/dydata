@@ -6,16 +6,20 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { HealthBar } from "./health-bar";
 import { OperatorTab } from "./operator-tab";
 import { StaffTab } from "./staff-tab";
+import { TalentTab } from "./talent-tab";
 import { PersonalCard, prefetchPersonData } from "./personal-card";
-import type { OperatorRow, StaffRow, SummaryData } from "./types";
+import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type TabKey = "talents" | "operators" | "writers" | "editors";
 
 interface CollaborationWorkbenchProps {
   year: number;
   month: number;
-  defaultTab: "operators" | "writers" | "editors";
+  defaultTab: TabKey;
   summary: SummaryData | null;
   operators: OperatorRow[];
+  talents: TalentRow[];
   isOwnerOrTeamAdmin: boolean;
 }
 
@@ -60,9 +64,10 @@ export function CollaborationWorkbench({
   defaultTab,
   summary,
   operators,
+  talents,
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
-  const [tab, setTab] = useState<"operators" | "writers" | "editors">(defaultTab);
+  const [tab, setTab] = useState<TabKey>(defaultTab);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
   const [staffCache, setStaffCache] = useState<Record<string, StaffRow[]>>({});
@@ -97,7 +102,7 @@ export function CollaborationWorkbench({
       });
   };
 
-  const handleTabChange = (nextTab: "operators" | "writers" | "editors") => {
+  const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
     router.push(`/admin/collaboration?year=${year}&month=${month}&tab=${nextTab}`, { scroll: false });
     if (nextTab === "writers") {
@@ -199,6 +204,18 @@ export function CollaborationWorkbench({
         <div className="flex items-center gap-1.5 pt-1">
           <button
             type="button"
+            onClick={() => handleTabChange("talents")}
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
+              tab === "talents"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70"
+            }`}
+          >
+            达人 ({talents.length})
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleTabChange("operators")}
             className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 ${
               tab === "operators"
@@ -236,7 +253,13 @@ export function CollaborationWorkbench({
       </div>
 
       {/* Tab Content 区域 */}
-      {tab === "operators" ? (
+      {tab === "talents" ? (
+        <TalentTab
+          talents={talents}
+          onSelectPerson={(id) => setSelectedPersonId(id)}
+          onPrefetchPerson={(id) => prefetchPersonData(id, year, month)}
+        />
+      ) : tab === "operators" ? (
         <OperatorTab
           operators={operators}
           onSelectPerson={(id) => setSelectedPersonId(id)}

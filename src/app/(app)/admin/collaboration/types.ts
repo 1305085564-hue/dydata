@@ -89,6 +89,26 @@ export interface PersonDetailData {
   records: PersonRecordItem[];
 }
 
+export interface TalentAccount {
+  accountId: string;
+  accountName: string;
+  reportCount: number;
+  totalPlay: number;
+  totalFollowerConvert: number;
+}
+
+export interface TalentRow {
+  userId: string;
+  name: string;
+  accountCount: number;
+  reportCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  totalFollowerConvert: number;
+  hitCount: number;
+  accounts: TalentAccount[];
+}
+
 export function formatBigNumber(val: number | null | undefined): string {
   if (val == null || !Number.isFinite(val)) return "—";
   if (val >= 1e8) return `${(val / 1e8).toFixed(1)}亿`;

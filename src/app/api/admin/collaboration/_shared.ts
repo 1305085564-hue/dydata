@@ -229,8 +229,13 @@ export function buildOperators(
         byAccount.set(row.account_id, bucket);
       }
       const totalPlay = operatorRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
+      const accountIds = Array.from(byAccount.keys());
+      const ownAccountIds = new Set(
+        accounts.filter((a) => a.profile_id === userId).map((a) => a.id),
+      );
+      const otherAccountCount = accountIds.filter((id) => !ownAccountIds.has(id)).length;
       const ownerProfileIds = unique(
-        Array.from(byAccount.keys()).map((accountId) => accountsById.get(accountId)?.profile_id),
+        accountIds.map((accountId) => accountsById.get(accountId)?.profile_id),
       );
       const accountRows = Array.from(byAccount.entries())
         .map(([accountId, rows]) => {
@@ -256,9 +261,11 @@ export function buildOperators(
         hitCount: countHits(operatorRows),
         momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
         operatedProfileCount: ownerProfileIds.length,
+        otherAccountCount,
         accounts: accountRows,
       };
     })
+    .filter((row) => row.accounts.length >= 2 && row.otherAccountCount >= 1)
     .sort((a, b) => b.totalPlay - a.totalPlay || a.name.localeCompare(b.name, "zh-CN"));
 }
 
@@ -284,6 +291,10 @@ export function buildStaff(
     .map(([userId, staffRows]) => {
       const totalPlay = staffRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
       const accountIds = unique(staffRows.map((row) => row.account_id));
+      const ownAccountIds = new Set(
+        accounts.filter((a) => a.profile_id === userId).map((a) => a.id),
+      );
+      const otherAccountCount = accountIds.filter((id) => !ownAccountIds.has(id)).length;
       const involvedAccounts = accountIds
         .map((accountId) => ({
           accountId,
@@ -299,8 +310,10 @@ export function buildStaff(
         selfHandledCount: staffRows.filter(isSelfHandled).length,
         involvedAccounts: involvedAccounts.slice(0, 3),
         involvedAccountTotal: involvedAccounts.length,
+        otherAccountCount,
       };
     })
+    .filter((row) => row.involvedAccountTotal >= 2 && row.otherAccountCount >= 1)
     .sort((a, b) => b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"));
 }
 
@@ -497,6 +510,91 @@ export async function loadStaffData(input: {
   const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
   const lookups = await loadLookups(input.supabase, rows);
   return buildStaff(rows, input.role, lookups.profiles, lookups.accounts);
+}
+
+export type TalentAccount = {
+  accountId: string;
+  accountName: string;
+  reportCount: number;
+  totalPlay: number;
+  totalFollowerConvert: number;
+};
+
+export type TalentRow = {
+  userId: string;
+  name: string;
+  accountCount: number;
+  reportCount: number;
+  totalPlay: number;
+  avgPlay: number;
+  totalFollowerConvert: number;
+  hitCount: number;
+  accounts: TalentAccount[];
+};
+
+export function buildTalents(
+  rows: CollaborationReport[],
+  profiles: CollaborationProfile[],
+  accounts: CollaborationAccount[],
+): TalentRow[] {
+  const names = profileNameMap(profiles);
+  const accountsById = accountMap(accounts);
+  const scopedRows = fromStatsStart(rows);
+
+  const talentAccountsByUser = new Map<string, Set<string>>();
+  for (const account of accounts) {
+    if (!account.profile_id) continue;
+    const set = talentAccountsByUser.get(account.profile_id) ?? new Set();
+    set.add(account.id);
+    talentAccountsByUser.set(account.profile_id, set);
+  }
+
+  if (talentAccountsByUser.size === 0) return [];
+
+  return Array.from(talentAccountsByUser.entries())
+    .map(([userId, ownAccountIds]) => {
+      const talentRows = scopedRows.filter((row) => ownAccountIds.has(row.account_id));
+      if (talentRows.length === 0) return null;
+      const totalPlay = talentRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
+      const talentAccounts: TalentAccount[] = Array.from(ownAccountIds)
+        .map((accountId) => {
+          const accountRows = talentRows.filter((row) => row.account_id === accountId);
+          if (accountRows.length === 0) return null;
+          return {
+            accountId,
+            accountName: accountsById.get(accountId)?.name?.trim() || "未命名账号",
+            reportCount: accountRows.length,
+            totalPlay: accountRows.reduce((sum, row) => sum + asCount(row.play_count), 0),
+            totalFollowerConvert: accountRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
+          };
+        })
+        .filter((a): a is TalentAccount => a !== null)
+        .sort((a, b) => b.totalPlay - a.totalPlay || a.accountName.localeCompare(b.accountName, "zh-CN"));
+
+      return {
+        userId,
+        name: names.get(userId) ?? "未命名成员",
+        accountCount: talentAccounts.length,
+        reportCount: talentRows.length,
+        totalPlay,
+        avgPlay: talentRows.length > 0 ? Math.floor(totalPlay / talentRows.length) : 0,
+        totalFollowerConvert: talentRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
+        hitCount: countHits(talentRows),
+        accounts: talentAccounts,
+      };
+    })
+    .filter((row): row is TalentRow => row !== null)
+    .sort((a, b) => b.totalPlay - a.totalPlay || a.name.localeCompare(b.name, "zh-CN"));
+}
+
+export async function loadTalentsData(input: {
+  supabase: SupabaseClient;
+  visibleUserIds: string[];
+  range: MonthRange;
+}) {
+  const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
+  const lookups = await loadLookups(input.supabase, rows);
+  return buildTalents(rows, lookups.profiles, lookups.accounts);
 }
 
 function reportRangeToUtc(start: string, end: string) {

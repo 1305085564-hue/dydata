@@ -1,14 +1,14 @@
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getMonthRange, loadOperatorsData, loadSummaryData } from "@/app/api/admin/collaboration/_shared";
+import { getMonthRange, loadOperatorsData, loadSummaryData, loadTalentsData } from "@/app/api/admin/collaboration/_shared";
 import { CollaborationWorkbench } from "./collaboration-workbench";
-import type { OperatorRow, SummaryData } from "./types";
+import type { OperatorRow, SummaryData, TalentRow } from "./types";
 
 interface CollaborationDataContainerProps {
   year: number;
   month: number;
-  tab: "operators" | "writers" | "editors";
+  tab: "talents" | "operators" | "writers" | "editors";
   isOwnerOrTeamAdmin: boolean;
 }
 
@@ -48,15 +48,18 @@ export async function CollaborationDataContainer({
   const supabase = createAdminClient();
   const visibleUserIds = context.scope.visibleUserIds;
 
-  const [summaryResult, operatorsResult] = await Promise.allSettled([
+  const [summaryResult, operatorsResult, talentsResult] = await Promise.allSettled([
     loadSummaryData({ supabase, visibleUserIds, range }),
     loadOperatorsData({ supabase, visibleUserIds, range }),
+    loadTalentsData({ supabase, visibleUserIds, range }),
   ]);
 
   const summary: SummaryData | null =
     summaryResult.status === "fulfilled" ? (summaryResult.value as SummaryData) : null;
   const operators: OperatorRow[] =
     operatorsResult.status === "fulfilled" ? (operatorsResult.value as OperatorRow[]) : [];
+  const talents: TalentRow[] =
+    talentsResult.status === "fulfilled" ? (talentsResult.value as TalentRow[]) : [];
 
   return (
     <CollaborationWorkbench
@@ -65,6 +68,7 @@ export async function CollaborationDataContainer({
       defaultTab={tab}
       summary={summary}
       operators={operators}
+      talents={talents}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
     />
   );

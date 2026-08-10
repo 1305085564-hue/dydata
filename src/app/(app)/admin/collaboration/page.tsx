@@ -37,9 +37,9 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
   }
 
   const { year, month } = resolveYearMonth(params.year, params.month);
-  const tab = ["operators", "writers", "editors"].includes(params.tab ?? "")
-    ? (params.tab as "operators" | "writers" | "editors")
-    : "operators";
+  const tab = ["talents", "operators", "writers", "editors"].includes(params.tab ?? "")
+    ? (params.tab as "talents" | "operators" | "writers" | "editors")
+    : "talents";
 
   return (
     <AdminWorkspaceLayout indexItems={[]} width="wide">
