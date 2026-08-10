@@ -56,7 +56,7 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
     <section className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs mb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-100">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5F82A8]/10 text-[#5F82A8]">
+          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D97757]/10 text-[#D97757]">
             <BarChart2 className="w-3 h-3" />
           </span>
           <h2 className="text-base font-semibold text-zinc-900">选题效果横向对比</h2>
@@ -191,7 +191,7 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
                   </div>
                   <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#5F82A8] transition-all duration-300 rounded-full"
+                      className="h-full bg-[#4A7FB5] transition-all duration-300 rounded-full"
                       style={{ width: `${Math.min(qualPercent, 100)}%` }}
                     />
                   </div>

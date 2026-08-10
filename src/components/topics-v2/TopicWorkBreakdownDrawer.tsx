@@ -421,7 +421,7 @@ export function TopicWorkBreakdownDrawer({
           </div>
           <a
             href={`/topics/${subTopicId}`}
-            className="inline-flex items-center justify-center gap-1 w-full text-center text-xs text-[#5F82A8] hover:text-[#466984] font-medium py-1 transition-colors"
+            className="inline-flex items-center justify-center gap-1 w-full text-center text-xs text-[#D97757] hover:text-[#C46A4D] font-medium py-1 transition-colors"
           >
             <span>查看完整详情页</span>
             <ExternalLink className="w-3 h-3" />

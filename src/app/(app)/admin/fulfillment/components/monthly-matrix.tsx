@@ -50,10 +50,10 @@ function getStatusColor(status: FulfillmentStatus | undefined): string {
     case "confirmed_published":
       return "bg-[#6FAA7D] border-[#5d946a]";
     case "leave":
-      return "bg-[#5F82A8] border-[#7a9ab8]";
+      return "bg-[#4A7FB5] border-[#5A8FC5]";
     case "waived":
     case "exempted":
-      return "bg-[#5F82A8]/30 border-[#5F82A8]/20";
+      return "bg-[#4A7FB5]/30 border-[#4A7FB5]/20";
     case "absent":
       return "bg-[#C9604D] border-[#b5503e]";
     case "unconfirmed":
@@ -300,14 +300,14 @@ export function MonthlyMatrix({
                                       onClick={() => void onQuickMarkCell(member.userId, dateKey, "leave")}
                                       className="cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 py-1.5"
                                     >
-                                      <span className="size-2 rounded-full bg-[#5F82A8]" />
+                                      <span className="size-2 rounded-full bg-[#4A7FB5]" />
                                       标记请假
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => void onQuickMarkCell(member.userId, dateKey, "waived")}
                                       className="cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 py-1.5"
                                     >
-                                      <span className="size-2 rounded-full bg-[#5F82A8]/50" />
+                                      <span className="size-2 rounded-full bg-[#4A7FB5]/50" />
                                       标记豁免
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
@@ -361,11 +361,11 @@ export function MonthlyMatrix({
                 已发布 / 已确认
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#5F82A8] border border-[#7a9ab8]" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#4A7FB5] border border-[#5A8FC5]" />
                 请假
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="inline-block size-[10px] rounded-sm bg-[#5F82A8]/30 border border-[#5F82A8]/20" />
+                <span className="inline-block size-[10px] rounded-sm bg-[#4A7FB5]/30 border border-[#4A7FB5]/20" />
                 豁免 / 豁免期
               </span>
               <span className="flex items-center gap-1.5">

@@ -52,9 +52,9 @@ function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; dot: string; border: string; bg: string }> = {
     published: { label: "已发布", dot: "bg-[#6FAA7D]", border: "border-[#6FAA7D]/20", bg: "bg-[#6FAA7D]/[0.04]" },
     confirmed_published: { label: "已确认", dot: "bg-[#6FAA7D]", border: "border-[#6FAA7D]/20", bg: "bg-[#6FAA7D]/[0.04]" },
-    leave: { label: "请假", dot: "bg-[#5F82A8]", border: "border-[#5F82A8]/20", bg: "bg-[#5F82A8]/[0.04]" },
-    waived: { label: "豁免", dot: "bg-[#5F82A8]", border: "border-[#5F82A8]/20", bg: "bg-[#5F82A8]/[0.04]" },
-    exempted: { label: "豁免期", dot: "bg-[#5F82A8]/50", border: "border-[#5F82A8]/15", bg: "bg-[#5F82A8]/[0.03]" },
+    leave: { label: "请假", dot: "bg-zinc-400", border: "border-zinc-200", bg: "bg-zinc-100/60" },
+    waived: { label: "豁免", dot: "bg-zinc-400", border: "border-zinc-200", bg: "bg-zinc-100/60" },
+    exempted: { label: "豁免期", dot: "bg-zinc-300", border: "border-zinc-200", bg: "bg-zinc-50" },
     absent: { label: "缺勤", dot: "bg-[#C9604D]", border: "border-[#C9604D]/20", bg: "bg-[#C9604D]/[0.04]" },
     unconfirmed: { label: "待确认", dot: "bg-zinc-300", border: "border-zinc-200", bg: "bg-zinc-100" },
   };
@@ -264,13 +264,13 @@ export function MemberDrawer({
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">请假</p>
-                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#5F82A8]">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-500">
                     {member.leaveDays}
                   </p>
                 </div>
                 <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
                   <p className="text-[12px] text-zinc-500">豁免</p>
-                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#5F82A8]">
+                  <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-500">
                     {member.waivedDays}
                   </p>
                 </div>

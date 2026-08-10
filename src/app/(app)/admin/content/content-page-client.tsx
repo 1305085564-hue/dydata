@@ -311,7 +311,7 @@ export function ContentPageClient({
                     <button
                       type="button"
                       onClick={() => setSelectedVideoId(v.id)}
-                      className="underline decoration-zinc-300 hover:text-zinc-900 font-medium transition-colors"
+                      className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 font-medium transition-colors"
                     >
                       {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
                     </button>
@@ -321,7 +321,7 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-semibold text-zinc-900 hover:text-zinc-600 underline decoration-zinc-300 shrink-0 ml-0.5 active:scale-95 transition-transform"
+                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-95 transition-all"
               >
                 直接去盘 →
               </button>

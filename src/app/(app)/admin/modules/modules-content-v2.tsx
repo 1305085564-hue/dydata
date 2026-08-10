@@ -692,7 +692,7 @@ export function AdminModulesContentV2({
             className={cn(
               "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150 active:scale-[0.98]",
               selectedTeamId === "__all__"
-                ? "bg-[#5F82A8]/10 border-zinc-300 text-zinc-900 font-medium"
+                ? "bg-[#D97757]/10 border-transparent text-[#D97757] font-semibold"
                 : "border-transparent bg-transparent text-zinc-700 hover:bg-zinc-100/50 hover:text-zinc-900"
             )}
           >
@@ -715,7 +715,7 @@ export function AdminModulesContentV2({
                   className={cn(
                     "group flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-[13px] transition-all duration-150",
                     isTeamSelected
-                      ? "bg-[#5F82A8]/10 border-zinc-300 text-zinc-900 font-medium"
+                      ? "bg-[#D97757]/10 border-transparent text-[#D97757] font-semibold"
                       : "border-transparent bg-transparent text-zinc-700 hover:bg-zinc-100/50 hover:text-zinc-900"
                   )}
                 >
@@ -726,7 +726,7 @@ export function AdminModulesContentV2({
                     onClick={() => { setSelectedTeamId(team.id); }}
                   >
                     <span className="flex min-w-0 items-center gap-2 truncate">
-                      <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#5F82A8]" : "bg-zinc-300")} />
+                      <span className={cn("size-1.5 rounded-full", isTeamSelected ? "bg-[#D97757]" : "bg-zinc-300")} />
                       <span className="truncate font-medium">{team.name}</span>
                     </span>
                     <span className="rounded-full bg-zinc-200/60 px-2 py-0.5 text-[12px] text-zinc-700">
@@ -934,11 +934,11 @@ export function AdminModulesContentV2({
                     className={cn(
                       "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-300 hover:border-zinc-300 hover:shadow-sm",
                       isRestoredFocus
-                        ? "ring-2 ring-[#5F82A8] bg-[#5F82A8]/10 animate-pulse border-[#5F82A8]"
+                        ? "ring-2 ring-[#D97757]/40 bg-[#D97757]/10 animate-pulse border-[#D97757]/30"
                         : isChecked
                         ? "border-[#D97757] bg-[#D97757]/5"
                         : isCurrentMemberActive
-                        ? "border-[#5F82A8] bg-[#5F82A8]/5"
+                        ? "border-[#D97757]/30 bg-[#D97757]/5"
                         : "border-zinc-200 bg-white"
                     )}
                   >
@@ -1131,7 +1131,7 @@ export function AdminModulesContentV2({
                       activeMember.role === "owner"
                         ? "bg-[#D97757]/10 border-[#D97757]/30 text-[#D97757]"
                         : activeMember.role === "admin"
-                        ? "bg-white border-[#5F82A8]/30 text-zinc-900"
+                        ? "bg-white border-[#D97757]/20 text-zinc-900"
                         : "bg-zinc-100 border-transparent text-zinc-700"
                     )}>
                       {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "管理员" : "成员"}
@@ -1185,7 +1185,7 @@ export function AdminModulesContentV2({
                               "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
                               aiSuggestion.status === "critical" 
                                 ? "bg-[#C9604D]/15 text-[#C9604D]" 
-                                : "bg-[#5F82A8]/15 text-[#5F82A8]"
+                                : "bg-[#D97757]/10 text-[#D97757]"
                             )}>
                               {aiSuggestion.status === "critical" ? "安全警告" : "诊断建议"}
                             </span>
