@@ -297,7 +297,7 @@ export function VideoDetailDialog({
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
                       {video.lifecycle_state === "trashed" && (
-                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-[11px] font-medium">
+                        <Badge variant="secondary" className="bg-amber-50 text-amber-700 text-[11px] font-medium">
                           回收站
                         </Badge>
                       )}

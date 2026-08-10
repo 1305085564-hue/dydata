@@ -682,14 +682,13 @@ export function ContentDiagnosisWorkbench({
 
           {/* 队列展开/收起开关 */}
           <Button
-            variant="outline"
             size="sm"
             onClick={() => setIsQueueOpen((prev) => !prev)}
             aria-pressed={isQueueOpen}
-            className={`h-8 rounded-lg border-zinc-200 text-[12px] font-medium transition-all gap-1.5 ${
+            className={`h-8 rounded-lg text-[12px] font-medium transition-all gap-1.5 ${
               isQueueOpen
-                ? "bg-zinc-900 text-white hover:bg-zinc-800 border-zinc-900 shadow-2xs"
-                : "bg-white text-zinc-700 hover:bg-zinc-50"
+                ? "bg-zinc-900 text-white hover:bg-zinc-800 shadow-2xs"
+                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
             }`}
           >
             <Layers className="size-3.5" />
@@ -1215,7 +1214,7 @@ export function ContentDiagnosisWorkbench({
                     href={video.video_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[12px] text-[#5F82A8] font-medium hover:underline normal-case"
+                    className="text-[12px] text-[#D97757] hover:text-[#C46A4D] font-medium hover:underline normal-case"
                   >
                     查看抖音原片
                   </a>
@@ -1364,10 +1363,9 @@ export function ContentDiagnosisWorkbench({
               <div className="flex justify-end gap-2 pt-2.5 border-t border-zinc-100">
                 <Button
                   size="sm"
-                  variant="outline"
                   onClick={() => handleMarkExperience("analysis", "hot_case")}
                   disabled={isMarkingExperience}
-                  className="h-7 rounded-lg border-zinc-200 bg-white text-[11px] font-medium text-zinc-600 hover:bg-zinc-50 gap-1"
+                  className="h-7 rounded-lg bg-zinc-100 text-[11px] font-medium text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950 gap-1"
                 >
                   {isMarkingExperience && <Loader2 className="size-3 animate-spin text-zinc-400" />}
                   {isMarkingExperience ? "正在保存..." : "沉淀优秀经验"}
@@ -1447,11 +1445,10 @@ export function ContentDiagnosisWorkbench({
             <div className="flex items-center justify-between border-t border-zinc-200/60 pt-3.5">
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={handleGenerateAnalysis}
                   disabled={isGeneratingAnalysis || !isEditable}
-                  className="h-8 rounded-lg border-zinc-200 hover:bg-zinc-50 font-medium text-[12px] gap-1.5 text-zinc-600"
+                  className="h-8 rounded-lg bg-zinc-100 font-medium text-[12px] gap-1.5 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
                 >
                   <Sparkles className="size-3.5 text-zinc-500" />
                   {isGeneratingAnalysis ? "分析中..." : "获取 AI 诊断思路"}
@@ -1469,10 +1466,9 @@ export function ContentDiagnosisWorkbench({
                   </Button>
                 ) : previousFeedback?.has_previous ? (
                   <Button
-                    variant="outline"
                     size="sm"
                     onClick={() => setShowPreviousFeedback((prev) => !prev)}
-                    className="h-8 rounded-lg border-zinc-200 hover:bg-zinc-50 text-[12px] font-medium text-zinc-600 gap-1.5"
+                    className="h-8 rounded-lg bg-zinc-100 text-[12px] font-medium text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950 gap-1.5"
                   >
                     <History className="size-3.5 text-[#5F82A8]" />
                     {showPreviousFeedback ? "关闭上次反馈对比" : "对比上次反馈意见"}

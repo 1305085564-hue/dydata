@@ -296,9 +296,8 @@ export function JoinRequestReviewList({ rows }: Props) {
           </span>
           <Button
             size="sm"
-            variant="outline"
             onClick={performApproveUndo}
-            className="h-7 border-[#D97757] text-[#D97757] text-[12px] hover:bg-[#D97757]/5"
+            className="h-7 bg-[#D97757] text-white hover:bg-[#C46A4D] text-[12px]"
           >
             撤销
           </Button>
@@ -316,9 +315,8 @@ export function JoinRequestReviewList({ rows }: Props) {
           </span>
           <Button
             size="sm"
-            variant="outline"
             onClick={performRejectUndo}
-            className="h-7 border-[#D97757] text-[#D97757] text-[12px] hover:bg-[#D97757]/5"
+            className="h-7 bg-[#D97757] text-white hover:bg-[#C46A4D] text-[12px]"
           >
             撤销
           </Button>

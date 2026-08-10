@@ -321,7 +321,7 @@ export function ContentList({
             <span className="mx-1.5 text-zinc-300">·</span>
             <Link
               href="/admin/videos"
-              className="text-zinc-500 hover:text-zinc-900 underline decoration-zinc-300 transition-colors"
+              className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 transition-colors"
             >
               前往素材库（全量账本）→
             </Link>

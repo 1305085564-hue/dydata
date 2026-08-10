@@ -148,7 +148,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               <button
                 type="button"
                 onClick={clearFilter}
-                className="text-xs text-zinc-500 hover:text-zinc-900 underline underline-offset-2 font-normal"
+                className="text-xs text-[#D97757] hover:text-[#C46A4D] underline underline-offset-2 font-normal"
               >
                 清空筛选
               </button>

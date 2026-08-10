@@ -442,7 +442,7 @@ export function AiAlertPanel({
                   consultAlert({ alertId: target.id, preview: target.title });
                 }
               }}
-              className="inline-flex h-6 items-center rounded-md border border-[#D97757]/40 bg-white px-2 text-[12px] text-[#D97757] transition hover:bg-[#D97757]/5"
+              className="inline-flex h-6 items-center rounded-md bg-[#D97757]/10 px-2 text-[12px] text-[#D97757] transition hover:bg-[#D97757]/20"
             >
               <Sparkles className="mr-1 size-3" strokeWidth={1.75} />
               问 AI

@@ -342,12 +342,12 @@ export function DataManager({
     return (
       <div className="flex flex-wrap gap-1">
         {report.account?.content_direction ? (
-          <Badge variant="outline" className="border-zinc-200 text-[12px] text-zinc-500">
+          <Badge variant="secondary" className="text-[12px] text-zinc-500">
             {report.account.content_direction}
           </Badge>
         ) : null}
         {report.account?.presentation_format ? (
-          <Badge variant="outline" className="border-zinc-200 text-[12px] text-zinc-500">
+          <Badge variant="secondary" className="text-[12px] text-zinc-500">
             {report.account.presentation_format}
           </Badge>
         ) : null}

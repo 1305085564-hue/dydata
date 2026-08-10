@@ -329,7 +329,7 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                               {rec.anomaly == null || rec.anomaly === "正常" ? (
                                 <span className="text-zinc-400">—</span>
                               ) : (
-                                <Badge variant="outline" className="text-[10px] border-amber-300 bg-amber-50 text-amber-800">
+                                <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-800">
                                   {rec.anomaly}
                                 </Badge>
                               )}

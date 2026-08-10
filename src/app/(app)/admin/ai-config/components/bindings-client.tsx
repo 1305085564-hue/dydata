@@ -334,7 +334,7 @@ export default function BindingsClient() {
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium text-zinc-900">{control.label}</span>
                         {control.key === "ocr_screenshot" && (
-                          <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200/80 text-[10px] h-4.5 px-1.5 font-normal">
+                          <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px] h-4.5 px-1.5 font-normal">
                             首页核心
                           </Badge>
                         )}

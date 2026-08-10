@@ -1957,7 +1957,7 @@ export function VideoSubmitForm({
                           <button
                             type="button"
                             onClick={showAllRoles}
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#5F82A8] hover:underline transition-all duration-150 cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D97757] hover:underline transition-all duration-150 cursor-pointer"
                           >
                             <Plus className="size-3 stroke-[2.5]" />
                             <span>+ 协同指派</span>

@@ -994,7 +994,7 @@ export function VideoList({
                           <button
                             type="button"
                             onClick={() => setSelectedVideoId(video.id)}
-                            className="text-[11.5px] text-zinc-500 hover:text-zinc-900 underline-offset-4 hover:underline cursor-pointer"
+                            className="text-[11.5px] text-[#D97757] hover:text-[#C46A4D] underline-offset-2 hover:underline cursor-pointer"
                           >
                             查看详情
                           </button>
