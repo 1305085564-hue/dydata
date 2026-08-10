@@ -357,8 +357,8 @@ function ReviewBatchCard({
               className={cn(
                 "group inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] transition",
                 activeTab === t.key
-                  ? "bg-zinc-100 font-medium text-zinc-900"
-                  : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700",
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950",
               )}
             >
               {t.label}
@@ -367,7 +367,7 @@ function ReviewBatchCard({
                   className={cn(
                     "inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-1 text-[12px] font-medium tabular-nums",
                     activeTab === t.key
-                      ? "bg-zinc-700 text-white"
+                      ? "bg-[#D97757]/15 text-[#D97757]"
                       : "bg-zinc-200 text-zinc-700",
                   )}
                 >
