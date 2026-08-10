@@ -72,12 +72,11 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
               <Button
                 key={option.value}
                 size="sm"
-                variant={preset === option.value ? "default" : "outline"}
                 className={cn(
                   "h-7 rounded-lg px-3 text-[12px]",
                   preset === option.value
                     ? "border-transparent bg-[#D97757] text-white hover:bg-[#C96442]"
-                    : "border-zinc-200 bg-white text-zinc-700",
+                    : "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
                 )}
                 onClick={() => onChange(option.value)}
               >

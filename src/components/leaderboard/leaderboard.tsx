@@ -197,7 +197,7 @@ export function Leaderboard({
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            variant="secondary"
             className="h-11 rounded-2xl bg-background/80 px-3 md:h-8"
             onClick={() => setCompact((prev) => !prev)}
           >
@@ -253,8 +253,8 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-50",
-                      item.isOwn && "bg-[#D97757]/5 hover:bg-zinc-50"
+                      "border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-100",
+                      item.isOwn && "bg-[#D97757]/5 hover:bg-zinc-100"
                     )}
                   >
                     <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
@@ -344,12 +344,12 @@ function TagStack({
   return (
     <div className="flex flex-wrap gap-1.5">
       {contentDirection ? (
-        <Badge variant="outline" className="rounded-lg bg-background/80">
+        <Badge variant="secondary" className="rounded-lg bg-background/80">
           {contentDirection}
         </Badge>
       ) : null}
       {presentationFormat ? (
-        <Badge variant="outline" className="rounded-lg bg-background/80 text-muted-foreground">
+        <Badge variant="secondary" className="rounded-lg bg-background/80 text-muted-foreground">
           {presentationFormat}
         </Badge>
       ) : null}

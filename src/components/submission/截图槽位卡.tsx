@@ -351,7 +351,7 @@ export function SubmissionSlotCard({
                   <button
                     type="button"
                     onClick={onManualFill}
-                    className="inline-flex h-7 items-center rounded-lg border border-zinc-300 bg-white px-2.5 text-[12px] font-medium text-zinc-700 transition-[background-color,border-color,color] duration-150 hover:bg-zinc-200 hover:text-zinc-900"
+                    className="inline-flex h-7 items-center rounded-lg border border-zinc-300 bg-white px-2.5 text-[12px] font-medium text-zinc-700 transition-[background-color,border-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-950"
                   >
                     手动填写
                   </button>
@@ -388,7 +388,7 @@ export function SubmissionSlotCard({
           type="button"
           onClick={onDelete}
           aria-label="删除截图"
-          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-zinc-500 transition-[background-color,color] duration-150 hover:bg-zinc-200 hover:text-[#C9604D]"
+          className="absolute right-0 top-0 inline-flex size-7 items-center justify-center rounded-full text-zinc-500 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-[#C9604D]"
         >
           <Trash2 className="size-3.5 stroke-[1.6]" />
         </button>

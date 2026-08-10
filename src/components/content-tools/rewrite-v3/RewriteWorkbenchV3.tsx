@@ -200,7 +200,7 @@ export function RewriteWorkbenchV3() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportMarkdown}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 transition-all relative active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg bg-zinc-100 px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 transition-all relative active:scale-[0.98]"
               title="下载 Markdown 文件 (.md)"
             >
               <Download className="h-3.5 w-3.5 mr-1 text-zinc-500" />
@@ -208,7 +208,7 @@ export function RewriteWorkbenchV3() {
             </button>
             <button
               onClick={handleExportWord}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 transition-all relative active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg bg-zinc-100 px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 transition-all relative active:scale-[0.98]"
               title="下载 Word 兼容文件 (.doc)"
             >
               <FileText className="h-3.5 w-3.5 mr-1 text-zinc-500" />
@@ -216,7 +216,7 @@ export function RewriteWorkbenchV3() {
             </button>
             <button
               onClick={handleCopyAll}
-              className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 transition-all relative active:scale-[0.98]"
+              className="inline-flex h-8 items-center justify-center rounded-lg bg-zinc-100 px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 transition-all relative active:scale-[0.98]"
             >
               <Copy className="h-3.5 w-3.5 mr-1 text-zinc-500" />
               <span>{copiedAll ? '已复制' : '复制全文'}</span>
@@ -265,10 +265,10 @@ export function RewriteWorkbenchV3() {
             <button
               onClick={() => actions.setIsHistoryOpen(!state.isHistoryOpen)}
               className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
+                "inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
                 state.isHistoryOpen
-                  ? "bg-zinc-100 border-zinc-400 text-zinc-900"
-                  : "bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                  ? "bg-zinc-100 text-zinc-950 font-semibold"
+                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
               )}
               title={state.isHistoryOpen ? '收起历史对话' : '查看历史对话'}
             >
@@ -279,7 +279,7 @@ export function RewriteWorkbenchV3() {
             {/* 新对话 (次按钮) */}
             <button
               onClick={actions.handleNewConversation}
-              className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 text-[12px] font-medium text-zinc-700 transition-all hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.98]"
+              className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-zinc-100 px-2.5 text-[12px] font-medium text-zinc-700 transition-all hover:bg-zinc-200 hover:text-zinc-950 active:scale-[0.98]"
               title="新对话改写"
             >
               <Plus className="h-3 w-3 text-zinc-500" />
@@ -297,10 +297,10 @@ export function RewriteWorkbenchV3() {
                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                 disabled={state.isSending}
                 className={cn(
-                  "inline-flex h-7 max-w-[180px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
+                  "inline-flex h-7 max-w-[180px] items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
                   modelDropdownOpen
-                    ? "bg-zinc-100 border-zinc-400 text-zinc-900"
-                    : "bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                    ? "bg-zinc-100 text-zinc-950 font-semibold"
+                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
                 )}
                 title="选择模型组合"
               >
@@ -384,10 +384,10 @@ export function RewriteWorkbenchV3() {
           <button
             onClick={() => setShowDiffInLatest(!showDiffInLatest)}
             className={cn(
-              "inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
+              "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
               showDiffInLatest
-                ? "bg-amber-500/[0.08] border-amber-500/30 text-amber-800 hover:bg-amber-500/[0.12]"
-                : "bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                ? "bg-amber-500/[0.08] text-amber-800 hover:bg-amber-500/[0.12]"
+                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
             )}
             title={showDiffInLatest ? '关闭修订模式' : '开启修订模式'}
           >
@@ -403,7 +403,7 @@ export function RewriteWorkbenchV3() {
           <button
             onClick={handleCopyAll}
             disabled={!state.polishedText}
-            className="inline-flex h-7 items-center gap-1 rounded-md border border-zinc-300 bg-white px-2.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 transition-all active:scale-[0.98] disabled:opacity-40"
+            className="inline-flex h-7 items-center gap-1 rounded-md bg-zinc-100 px-2.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 transition-all active:scale-[0.98] disabled:opacity-40"
           >
             <Copy className="h-3 w-3 text-zinc-500" />
             <span>{copiedAll ? '已复制' : '复制'}</span>

@@ -128,7 +128,7 @@ export function SettingsDrawer({
         <button
           onClick={onClose}
           aria-label="关闭设置"
-          className="p-1 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-700"
+          className="p-1 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950"
         >
           <X className="h-4 w-4" />
         </button>
@@ -142,7 +142,7 @@ export function SettingsDrawer({
             'px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all',
             activeTab === 'skills'
               ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-500 hover:text-zinc-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-950'
           )}
         >
           个人技能管理
@@ -153,7 +153,7 @@ export function SettingsDrawer({
             'px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all',
             activeTab === 'params'
               ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-500 hover:text-zinc-700'
+              : 'border-transparent text-zinc-500 hover:text-zinc-950'
           )}
         >
           参数配置
@@ -229,7 +229,7 @@ export function SettingsDrawer({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setEditingSkill(null)}
-                  className="flex-1 border border-zinc-200 hover:bg-zinc-50 font-medium py-2 rounded-lg text-[12px] transition-all active:scale-[0.98]"
+                  className="flex-1 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950 font-medium py-2 rounded-lg text-[12px] transition-all active:scale-[0.98]"
                 >
                   取消
                 </button>
@@ -249,7 +249,7 @@ export function SettingsDrawer({
                 <span className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">自建个人技能</span>
                 <button
                   onClick={startCreate}
-                  className="inline-flex items-center gap-1 bg-[#D97757]/10 hover:bg-[#D97757]/20 border border-[#D97757]/25 text-[#C96442] px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all active:scale-[0.98]"
+                  className="inline-flex items-center gap-1 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all active:scale-[0.98]"
                 >
                   <Plus className="h-3 w-3" />
                   <span>添加技能</span>
@@ -280,7 +280,7 @@ export function SettingsDrawer({
                       <div className="flex items-center gap-1.5 ml-3 shrink-0">
                         <button
                           onClick={() => startEdit(skill)}
-                          className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-zinc-700"
+                          className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-zinc-950"
                           title="编辑技能"
                         >
                           <Edit2 className="h-3.5 w-3.5" />

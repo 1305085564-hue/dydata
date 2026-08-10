@@ -69,7 +69,7 @@ export function GrowthProgressCard({ lifetimeReportCount, targetCount = 10, stal
               <span className="text-[12px] text-[#8A6A2F]">{staleText}</span>
               <Link
                 href="/dashboard"
-                className="text-[12px] font-medium text-[#8A6A2F] underline decoration-[#D99E55]/60 underline-offset-4 transition-colors hover:text-zinc-900"
+                className="text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
               >
                 去同步
               </Link>

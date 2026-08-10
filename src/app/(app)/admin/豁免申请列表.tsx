@@ -109,10 +109,9 @@ function RequestRow({
           </Button>
           <Button
             size="sm"
-            variant="outline"
             disabled={isPending}
             onClick={() => handle("rejected")}
-            className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+            className="text-zinc-700 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950"
           >
             拒绝
           </Button>

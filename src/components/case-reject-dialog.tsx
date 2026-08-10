@@ -116,7 +116,7 @@ export function CaseRejectDialog({
             type="button"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-9 rounded-lg border border-zinc-200 bg-white px-4 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60"
+            className="h-9 rounded-lg bg-zinc-100 px-4 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-zinc-200 hover:text-zinc-950 disabled:opacity-60"
           >
             取消
           </button>

@@ -297,10 +297,9 @@ export function ExemptionDialog({
           <div>
             {profile && profile.exempt_type && (
               <Button
-                variant="outline"
                 onClick={handleClearClick}
                 disabled={isPending}
-                className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                className="text-zinc-700 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950"
               >
                 清除豁免
               </Button>
@@ -308,10 +307,9 @@ export function ExemptionDialog({
           </div>
           <div className="flex justify-end gap-2">
             <Button
-              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+              className="text-zinc-700 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950"
             >
               取消
             </Button>

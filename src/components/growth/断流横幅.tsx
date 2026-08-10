@@ -20,7 +20,7 @@ export function StaleBanner({ lastReportDate, daysSince }: StaleBannerProps) {
       </p>
       <Link
         href="/dashboard"
-        className="inline-flex w-fit items-center gap-1 text-[13px] font-medium text-[#8A6A2F] underline decoration-[#D99E55]/60 underline-offset-4 transition-colors hover:text-zinc-900"
+        className="inline-flex w-fit items-center gap-1 text-[13px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
       >
         去同步今日数据
       </Link>
