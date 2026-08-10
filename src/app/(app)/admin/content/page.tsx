@@ -46,7 +46,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   return (
     <AdminWorkspaceLayout
       indexItems={[]}
-      width="full"
+      width="extra-wide"
     >
       <Suspense
         key={`${view}-${requestedPerspective}-${params.teamId ?? ""}`}

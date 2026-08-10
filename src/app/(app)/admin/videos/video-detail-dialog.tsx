@@ -1,8 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import {
+  ExternalLink,
+  Copy,
+  Check,
+  RotateCcw,
+  Trash2,
+  AlertTriangle,
+  Play,
+  Flame,
+  Award,
+  FileText,
+  Activity,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  UserCheck,
+  TrendingUp,
+  Sparkles,
+} from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,23 +28,20 @@ import {
   SheetContent,
   SheetHeader,
   SheetBody,
-  SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   fanConversionRate,
   followerConversionRate,
   homepageVisitRate,
   interactionRate,
 } from "@/lib/video-metrics";
-import { buildTagFilterState, getTagReviewStatus } from "@/lib/video-tags";
-import { TAG_ENUMS, VIDEO_TAG_REVIEW_DIMENSIONS, type Video, type VideoAssetLibraryRecord, type VideoAssetLevel, type VideoMetricsSnapshot, type VideoTag } from "@/types";
+import {
+  type Video,
+  type VideoAssetLibraryRecord,
+  type VideoAssetLevel,
+  type VideoMetricsSnapshot,
+  type VideoTag,
+} from "@/types";
 
 import type { UserPermissionInfo } from "@/lib/permissions";
 
@@ -41,28 +56,27 @@ interface VideoDetailDialogProps {
   onOpenChange: (open: boolean) => void;
   video: VideoRow | null;
   snapshot: VideoMetricsSnapshot | null;
-  tags: VideoTag[];
+  tags?: VideoTag[];
   assetRecord: VideoAssetLibraryRecord | null;
-  onTagsSaved: (tags: VideoTag[]) => void;
+  onTagsSaved?: (tags: VideoTag[]) => void;
   onAssetSaved: (videoId: string, record: VideoAssetLibraryRecord) => void;
   permissionInfo: UserPermissionInfo;
   onLifecycleChanged: () => void;
 }
 
-const statusClassName: Record<Video["anomaly_status"], string> = {
-  normal: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  abnormal: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  正常: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  删稿: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  限流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  投流: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  活动干预: "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700",
-  "未满24h": "border-zinc-200 bg-zinc-100 text-zinc-500",
+const statusBadgeConfig: Record<Video["anomaly_status"], { label: string; className: string }> = {
+  normal: { label: "正常", className: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
+  abnormal: { label: "异常", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
+  正常: { label: "正常", className: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
+  删稿: { label: "删稿", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
+  限流: { label: "限流", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
+  投流: { label: "投流", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  活动干预: { label: "活动干预", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  "未满24h": { label: "未满24h", className: "bg-zinc-100 text-zinc-500 border-zinc-200" },
 };
 
 function formatDateTime(value: string | null) {
   if (!value) return "-";
-
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
@@ -76,55 +90,18 @@ function formatDateTime(value: string | null) {
 }
 
 function formatNumber(value: number | null | undefined) {
-  if (value == null) return "-";
+  if (value == null) return "—";
   return new Intl.NumberFormat("zh-CN").format(value);
 }
 
 function formatPercent(value: number | null | undefined) {
-  if (value == null) return "-";
-  return `${(value * 100).toFixed(2)}%`;
+  if (value == null) return "—";
+  return `${(value * 100).toFixed(1)}%`;
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center border-l-2 border-[#D97757] pl-3">
-      <h3 className="text-[13px] font-medium text-zinc-700">{children}</h3>
-    </div>
-  );
-}
-
-function MetricCard({ label, value, placeholder }: { label: string; value: string; placeholder?: boolean }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4">
-      <div className="text-[12px] text-zinc-500">{label}</div>
-      <div className={`mt-1 text-[13px] ${placeholder ? "text-zinc-500" : "text-zinc-700"}`}>{value}</div>
-    </div>
-  );
-}
-
-function renderSnapshotFields(snapshot: VideoMetricsSnapshot) {
-  const fields: Array<{ label: string; value: string }> = [
-    { label: "快照类型", value: snapshot.snapshot_type },
-    { label: "播放量", value: formatNumber(snapshot.play_count) },
-    { label: "点赞", value: formatNumber(snapshot.likes) },
-    { label: "评论", value: formatNumber(snapshot.comments) },
-    { label: "分享", value: formatNumber(snapshot.shares) },
-    { label: "收藏", value: formatNumber(snapshot.favorites) },
-    { label: "涨粉", value: formatNumber(snapshot.follower_gain) },
-    { label: "掉粉", value: formatNumber(snapshot.follower_loss) },
-    { label: "导粉", value: formatNumber(snapshot.follower_convert) },
-    { label: "主页访问", value: formatNumber(snapshot.homepage_visits) },
-    { label: "粉丝播放占比", value: formatPercent(snapshot.fan_play_ratio) },
-    { label: "封面点击率", value: formatPercent(snapshot.cover_click_rate) },
-    { label: "平均播放时长", value: snapshot.avg_play_duration == null ? "-" : `${snapshot.avg_play_duration} 秒` },
-    { label: "完播率", value: formatPercent(snapshot.completion_rate) },
-    { label: "2 秒跳出率", value: formatPercent(snapshot.bounce_rate_2s) },
-    { label: "5 秒完播率", value: formatPercent(snapshot.completion_rate_5s) },
-    { label: "平均播放进度", value: formatPercent(snapshot.avg_play_ratio) },
-    { label: "抓取时间", value: formatDateTime(snapshot.captured_at) },
-  ];
-
-  return fields.map((field) => <MetricCard key={field.label} label={field.label} value={field.value} />);
+function formatDuration(seconds: number | null | undefined) {
+  if (seconds == null) return "—";
+  return `${seconds.toFixed(1)} s`;
 }
 
 export function VideoDetailDialog({
@@ -132,24 +109,38 @@ export function VideoDetailDialog({
   onOpenChange,
   video,
   snapshot,
-  tags,
   assetRecord,
-  onTagsSaved,
   onAssetSaved,
   permissionInfo,
   onLifecycleChanged,
 }: VideoDetailDialogProps) {
-  const supabase = useMemo(() => createClient(), []);
-  const [selection, setSelection] = useState(() => buildTagFilterState(tags));
-  const [isSaving, setIsSaving] = useState(false);
   const [isAssetSaving, setIsAssetSaving] = useState(false);
   const [assetLevel, setAssetLevel] = useState<VideoAssetLevel | null>(assetRecord?.asset_level ?? null);
   const [assetNote, setAssetNote] = useState(assetRecord?.asset_note ?? "");
   const [isOperating, setIsOperating] = useState(false);
   const [showConfirmPurge, setShowConfirmPurge] = useState(false);
+  const [copiedContent, setCopiedContent] = useState(false);
+  const [showFullMetrics, setShowFullMetrics] = useState(false);
 
   const canOperate = permissionInfo.role === "owner" || permissionInfo.role === "admin";
   const isOwner = permissionInfo.role === "owner";
+
+  useEffect(() => {
+    setAssetLevel(assetRecord?.asset_level ?? null);
+    setAssetNote(assetRecord?.asset_note ?? "");
+  }, [assetRecord?.asset_level, assetRecord?.asset_note]);
+
+  const handleCopyContent = useCallback(async () => {
+    if (!video?.content) return;
+    try {
+      await navigator.clipboard.writeText(video.content);
+      setCopiedContent(true);
+      feedbackToast.success("文案已复制到剪贴板");
+      setTimeout(() => setCopiedContent(false), 2000);
+    } catch {
+      feedbackToast.error("复制失败，请重试");
+    }
+  }, [video?.content]);
 
   const handleLifecycleAction = async (action: "trash" | "restore" | "purge") => {
     if (!video) return;
@@ -189,15 +180,6 @@ export function VideoDetailDialog({
     return `未满 30 天（剩余约 ${daysLeft} 天，可于 ${targetDate.toLocaleString("zh-CN")} 后删除）`;
   };
 
-  useEffect(() => {
-    setSelection(buildTagFilterState(tags));
-  }, [tags]);
-
-  useEffect(() => {
-    setAssetLevel(assetRecord?.asset_level ?? null);
-    setAssetNote(assetRecord?.asset_note ?? "");
-  }, [assetRecord?.asset_level, assetRecord?.asset_note]);
-
   async function handleSaveAsset() {
     if (!video) return;
     setIsAssetSaving(true);
@@ -216,7 +198,7 @@ export function VideoDetailDialog({
       }
       if (data.asset) {
         onAssetSaved(video.id, data.asset);
-        feedbackToast.success("素材资料已保存");
+        feedbackToast.success("素材档案已更新");
       }
     } catch (e) {
       feedbackToast.error(e instanceof Error ? e.message : "保存失败");
@@ -225,316 +207,396 @@ export function VideoDetailDialog({
     }
   }
 
-  async function handleSaveTags() {
-    if (!video) return;
-
-    setIsSaving(true);
-    try {
-      const payload = VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
-        const currentTag = tags.find((tag) => tag.tag_dimension === dimension) ?? null;
-        return {
-          video_id: video.id,
-          tag_dimension: dimension,
-          tag_value: selection[dimension] || currentTag?.tag_value || TAG_ENUMS[dimension][0],
-          source: "manual" as const,
-          confidence: currentTag?.confidence ?? null,
-          reason: currentTag?.reason ?? null,
-        };
-      });
-
-      const dimensions = payload.map((item) => item.tag_dimension);
-
-      const { error: deleteError } = await supabase
-        .from("video_tags")
-        .delete()
-        .eq("video_id", video.id)
-        .in("tag_dimension", dimensions);
-
-      if (deleteError) {
-        throw new Error(deleteError.message || "标签保存失败");
-      }
-
-      const { data, error } = await supabase
-        .from("video_tags")
-        .insert(payload)
-        .select("*");
-
-      if (error) {
-        throw new Error(error.message || "标签保存失败");
-      }
-
-      feedbackToast.success("标签已更新");
-      onTagsSaved((data ?? []) as VideoTag[]);
-    } catch (error) {
-      feedbackToast.error((error as Error).message || "标签保存失败");
-    } finally {
-      setIsSaving(false);
-    }
-  }
+  // Calculated metrics
+  const interaction = snapshot ? interactionRate(snapshot) : null;
+  const followerConv = snapshot ? followerConversionRate(snapshot) : null;
+  const fanConv = snapshot ? fanConversionRate(snapshot) : null;
+  const homepageVisit = snapshot ? homepageVisitRate(snapshot) : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full max-w-3xl">
-        <SheetHeader>
-          <SheetTitle>视频详情</SheetTitle>
-        </SheetHeader>
-        <SheetBody>
+      <SheetContent side="right" className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-zinc-200/80 bg-zinc-50/60 backdrop-blur-xl">
+        <SheetHeader className="border-b border-zinc-200/80 bg-white/90 px-6 py-4 backdrop-blur-md">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-[12px] font-medium text-zinc-500">
+              <span className="flex items-center gap-1 text-zinc-700 font-semibold">
+                <Flame className="size-3.5 text-[#D97757]" />
+                素材库 · 视频工作舱
+              </span>
+              <span>·</span>
+              <span className="tabular-nums">ID: {video?.id.slice(0, 8)}</span>
+            </div>
 
-        {video ? (
-          <div className="space-y-6">
-            {video.lifecycle_state === "trashed" && isOwner && !isPurgeEligible(video.trashed_at ?? null) && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3 text-[12px] leading-relaxed text-[#B5651D]">
-                ⚠️ 本视频移入回收站未满 30 天，出于数据安全保护已处于锁定状态。
-                您可以于 <span className="font-semibold">{new Date(new Date(video.trashed_at!).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleString("zh-CN")}</span> 之后进行永久删除操作。
-              </div>
-            )}
-
-            <section className="space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <div className="text-[18px] font-semibold text-zinc-900">
-                    {video.video_title?.trim() || "未命名视频"}
-                  </div>
-                  <div className="text-[12px] text-zinc-500">
-                    账号：{video.accounts.name} · 负责人：{video.profiles.name}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2 shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    {video.lifecycle_state === "trashed" && (
-                      <Badge variant="outline" className="border-[#D99E55]/30 bg-[#D99E55]/5 text-[#D99E55] text-[12px]">
-                        已在回收站
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className={`text-[12px] ${statusClassName[video.anomaly_status]}`}>
-                      {video.anomaly_status}
-                    </Badge>
-                  </div>
-                  {canOperate && (
-                    <div className="mt-1 flex gap-2">
-                      {video.lifecycle_state === "trashed" ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleLifecycleAction("restore")}
-                            disabled={isOperating}
-                            className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-zinc-50 disabled:opacity-50"
-                          >
-                            恢复作品
-                          </button>
-                          {isOwner && (() => {
-                            const eligible = isPurgeEligible(video.trashed_at ?? null);
-                            const tooltip = getPurgeTooltip(video.trashed_at ?? null);
-                            return (
-                              <button
-                                type="button"
-                                onClick={() => setShowConfirmPurge(true)}
-                                disabled={!eligible || isOperating}
-                                title={tooltip || undefined}
-                                className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-zinc-50 disabled:text-zinc-400 disabled:cursor-not-allowed"
-                              >
-                                永久删除
-                              </button>
-                            );
-                          })()}
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleLifecycleAction("trash")}
-                          disabled={isOperating}
-                          className="active:translate-y-0 inline-flex h-7 items-center justify-center rounded-lg border border-[#C9604D]/20 bg-[#C9604D]/5 px-3 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:opacity-50"
-                        >
-                          移入回收站
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
+            {video && canOperate && (
+              <div className="flex items-center gap-2">
                 {video.lifecycle_state === "trashed" ? (
                   <>
-                    <MetricCard label="回收时间" value={formatDateTime(video.trashed_at ?? null)} />
-                    <MetricCard label="回收操作者" value={video.trashed_by_name || "-"} />
+                    <button
+                      type="button"
+                      onClick={() => handleLifecycleAction("restore")}
+                      disabled={isOperating}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/80 px-3 text-[12px] font-medium text-emerald-700 hover:bg-emerald-100/80 transition-colors disabled:opacity-50"
+                    >
+                      <RotateCcw className="size-3.5" />
+                      恢复作品
+                    </button>
+                    {isOwner && (() => {
+                      const eligible = isPurgeEligible(video.trashed_at ?? null);
+                      const tooltip = getPurgeTooltip(video.trashed_at ?? null);
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPurge(true)}
+                          disabled={!eligible || isOperating}
+                          title={tooltip || undefined}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/80 px-3 text-[12px] font-medium text-rose-700 hover:bg-rose-100/80 transition-colors disabled:text-zinc-400 disabled:bg-zinc-100 disabled:border-zinc-200 disabled:cursor-not-allowed"
+                        >
+                          <Trash2 className="size-3.5" />
+                          永久删除
+                        </button>
+                      );
+                    })()}
                   </>
                 ) : (
-                  <MetricCard label="发布时间" value={formatDateTime(video.published_at ?? null)} />
+                  <button
+                    type="button"
+                    onClick={() => handleLifecycleAction("trash")}
+                    disabled={isOperating}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-600 hover:text-rose-600 hover:border-rose-200 transition-colors disabled:opacity-50 shadow-2xs"
+                  >
+                    <Trash2 className="size-3.5" />
+                    移入回收站
+                  </button>
                 )}
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[12px] text-zinc-500">视频链接</div>
-                  <div className="mt-1 text-[13px]">
-                    {video.video_url ? (
-                      <a
-                        href={video.video_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="break-all text-[#D97757] underline underline-offset-4"
+              </div>
+            )}
+          </div>
+        </SheetHeader>
+
+        <SheetBody className="p-6 space-y-5 overflow-y-auto max-h-[calc(100vh-65px)]">
+          {video ? (
+            <>
+              {/* 锁定提示横幅 */}
+              {video.lifecycle_state === "trashed" && isOwner && !isPurgeEligible(video.trashed_at ?? null) && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-amber-200/80 bg-amber-50/60 p-3.5 text-[12px] text-amber-800 leading-relaxed shadow-2xs">
+                  <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold">作品处于回收站保护期：</span> 移入未满 30 天，可于{" "}
+                    <span className="font-semibold tabular-nums text-amber-900">
+                      {new Date(new Date(video.trashed_at!).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleString("zh-CN")}
+                    </span>{" "}
+                    之后执行彻底物理销毁。
+                  </div>
+                </div>
+              )}
+
+              {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
+              <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs space-y-5">
+                {/* 1.1 视频元信息 header */}
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-zinc-100 pb-4">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {video.lifecycle_state === "trashed" && (
+                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-[11px] font-medium">
+                          回收站
+                        </Badge>
+                      )}
+                      <Badge
+                        variant="outline"
+                        className={`text-[11px] font-medium border px-2 py-0.5 rounded-md ${
+                          statusBadgeConfig[video.anomaly_status]?.className ?? "bg-zinc-100 text-zinc-600 border-zinc-200"
+                        }`}
                       >
-                        {video.video_url}
-                      </a>
-                    ) : (
-                      <span className="text-zinc-500">-</span>
-                    )}
+                        {statusBadgeConfig[video.anomaly_status]?.label ?? video.anomaly_status}
+                      </Badge>
+                      <h2 className="text-[18px] font-bold text-zinc-900 tracking-tight leading-snug">
+                        {video.video_title?.trim() || "未命名视频"}
+                      </h2>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-zinc-500">
+                      <span className="flex items-center gap-1 font-medium text-zinc-700">
+                        <span className="text-zinc-400">账号:</span> {video.accounts.name}
+                      </span>
+                      <span className="text-zinc-300">·</span>
+                      <span className="flex items-center gap-1 font-medium text-zinc-700">
+                        <UserCheck className="size-3.5 text-zinc-400" />
+                        <span className="text-zinc-400">责任人:</span> {video.profiles.name}
+                      </span>
+                      <span className="text-zinc-300">·</span>
+                      <span>
+                        <span className="text-zinc-400">发布时间:</span>{" "}
+                        <span className="tabular-nums">{formatDateTime(video.published_at ?? null)}</span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[12px] text-zinc-500">素材等级</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Select
-                      value={assetLevel ?? "__null__"}
-                      onValueChange={(value) => setAssetLevel(value === "__null__" ? null : (value as VideoAssetLevel))}
+
+                  {video.video_url && (
+                    <a
+                      href={video.video_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-1.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors shrink-0 shadow-2xs"
                     >
-                      <SelectTrigger className="h-8 w-24 rounded-lg text-[13px]">
-                        <SelectValue placeholder="未评级" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__null__">未评级</SelectItem>
-                        <SelectItem value="S">S</SelectItem>
-                        <SelectItem value="A">A</SelectItem>
-                        <SelectItem value="B">B</SelectItem>
-                        <SelectItem value="C">C</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <ExternalLink className="size-3.5 text-[#D97757]" />
+                      打开源视频网页
+                    </a>
+                  )}
+                </div>
+
+                {/* 1.2 爆款数据核心大盘 (融于同卡内) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="size-2 rounded-full bg-[#D97757]" />
+                      <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">爆款数据核心大盘</h3>
+                    </div>
+                    <span className="text-[11px] text-zinc-400 font-normal">抓取时间: {formatDateTime(snapshot?.captured_at ?? null)}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {/* 播放量 */}
+                    <div className="relative overflow-hidden rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-3.5 transition-all hover:bg-zinc-50/80">
+                      <div className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
+                        <span>播放量</span>
+                        <Play className="size-3.5 text-zinc-400" />
+                      </div>
+                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-zinc-900 tracking-tight">
+                        {formatNumber(snapshot?.play_count)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
+                        {snapshot?.play_count && snapshot.play_count >= 100000 ? "🔥 爆款层级" : "日常播放"}
+                      </div>
+                    </div>
+
+                    {/* 完播率 */}
+                    <div className="relative overflow-hidden rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-3.5 transition-all hover:bg-zinc-50/80">
+                      <div className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
+                        <span>完播率</span>
+                        <Activity className="size-3.5 text-emerald-500" />
+                      </div>
+                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-emerald-600 tracking-tight">
+                        {formatPercent(snapshot?.completion_rate)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
+                        5s完播: <span className="tabular-nums font-medium text-zinc-700">{formatPercent(snapshot?.completion_rate_5s)}</span>
+                      </div>
+                    </div>
+
+                    {/* 综合互动率 */}
+                    <div className="relative overflow-hidden rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-3.5 transition-all hover:bg-zinc-50/80">
+                      <div className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
+                        <span>综合互动率</span>
+                        <TrendingUp className="size-3.5 text-[#D97757]" />
+                      </div>
+                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-[#D97757] tracking-tight">
+                        {formatPercent(interaction)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
+                        赞/评/藏/转 聚合
+                      </div>
+                    </div>
+
+                    {/* 粉转率 */}
+                    <div className="relative overflow-hidden rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-3.5 transition-all hover:bg-zinc-50/80">
+                      <div className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
+                        <span>粉转率</span>
+                        <Sparkles className="size-3.5 text-indigo-500" />
+                      </div>
+                      <div className="mt-1.5 text-[22px] font-bold tabular-nums text-indigo-600 tracking-tight">
+                        {formatPercent(followerConv)}
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">
+                        净增: <span className="tabular-nums font-medium text-zinc-700">+{formatNumber(snapshot?.follower_gain)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <div className="text-[12px] text-zinc-500">人工备注</div>
-                  <textarea
-                    value={assetNote}
-                    onChange={(e) => setAssetNote(e.target.value)}
-                    className="mt-2 w-full resize-none rounded-lg border border-zinc-200 bg-zinc-50 p-2 text-[13px] leading-[1.6] text-zinc-700 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:border-zinc-500 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-900/5"
-                    rows={2}
-                    placeholder="输入备注..."
-                  />
+              </section>
+
+              {/* 2. 全量快照指标数据 (放在文案内容库上方，默认展开) */}
+              {snapshot && (
+                <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Layers className="size-4 text-zinc-500" />
+                      <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">快照全量指标明细</h3>
+                    </div>
+                    <span className="text-[11px] text-zinc-400 font-medium">({snapshot.snapshot_type} 抓取维度)</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">点赞数</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatNumber(snapshot.likes)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">评论数</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatNumber(snapshot.comments)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">分享数</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatNumber(snapshot.shares)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">收藏数</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatNumber(snapshot.favorites)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">涨粉量</span>
+                      <span className="font-semibold tabular-nums text-emerald-600">+{formatNumber(snapshot.follower_gain)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">掉粉量</span>
+                      <span className="font-semibold tabular-nums text-rose-600">-{formatNumber(snapshot.follower_loss)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">导粉量</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatNumber(snapshot.follower_convert)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">主页访问</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatNumber(snapshot.homepage_visits)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">导粉率</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatPercent(fanConv)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">主页访问率</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatPercent(homepageVisit)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">粉丝播放占比</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatPercent(snapshot.fan_play_ratio)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">封面点击率</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatPercent(snapshot.cover_click_rate)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">平均播放时长</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatDuration(snapshot.avg_play_duration)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">2s 跳出率</span>
+                      <span className="font-semibold tabular-nums text-rose-600">{formatPercent(snapshot.bounce_rate_2s)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">5s 完播率</span>
+                      <span className="font-semibold tabular-nums text-emerald-600">{formatPercent(snapshot.completion_rate_5s)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
+                      <span className="text-zinc-500">平均播放进度</span>
+                      <span className="font-semibold tabular-nums text-zinc-900">{formatPercent(snapshot.avg_play_ratio)}</span>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* 3. 脚本文案与内容库 */}
+              <section className="rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="size-4 text-zinc-600" />
+                    <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">视频文案内容库</h3>
+                    <span className="text-[11px] text-zinc-400 font-normal">
+                      ({video.content?.length ?? 0} 字)
+                    </span>
+                  </div>
+                  {video.content && (
+                    <button
+                      type="button"
+                      onClick={handleCopyContent}
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
+                    >
+                      {copiedContent ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+                      {copiedContent ? "已复制" : "复制文案"}
+                    </button>
+                  )}
                 </div>
-                <div className="flex items-end">
+
+                <div className="rounded-xl border border-zinc-200/70 bg-zinc-50/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-zinc-800 whitespace-pre-wrap break-words">
+                  {video.content?.trim() || <span className="text-zinc-400 italic">暂无文案记录。</span>}
+                </div>
+              </section>
+
+              {/* 4. 素材评价与评级 (置于最底部，精简尺寸) */}
+              <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Award className="size-4 text-amber-500" />
+                    <h3 className="text-[13px] font-bold text-zinc-900 tracking-tight">素材评价与评级</h3>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-9 rounded-xl text-[12px]"
+                    className="h-7.5 rounded-lg border-zinc-200 text-[12px] font-medium hover:bg-zinc-50 shadow-2xs"
                     onClick={handleSaveAsset}
                     disabled={isAssetSaving}
                   >
-                    {isAssetSaving ? "保存中..." : "保存素材资料"}
+                    {isAssetSaving ? "保存中..." : "保存评价"}
                   </Button>
                 </div>
-              </div>
 
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-                <div className="text-[12px] text-zinc-500">内容文案</div>
-                <div className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap break-words text-[13px] leading-[1.6] text-zinc-700">
-                  {video.content?.trim() || "-"}
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-2">
-              <SectionTitle>核心计算指标</SectionTitle>
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                <MetricCard label="互动率" value={formatPercent(snapshot ? interactionRate(snapshot) : null)} />
-                <MetricCard label="粉转率" value={formatPercent(snapshot ? followerConversionRate(snapshot) : null)} />
-                <MetricCard label="导粉率" value={formatPercent(snapshot ? fanConversionRate(snapshot) : null)} />
-                <MetricCard label="主页访问率" value={formatPercent(snapshot ? homepageVisitRate(snapshot) : null)} />
-              </div>
-            </section>
-
-            <section className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <SectionTitle>标签信息</SectionTitle>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-8 rounded-xl bg-white text-[12px]"
-                  onClick={handleSaveTags}
-                  disabled={isSaving}
-                >
-                  {isSaving ? "保存中..." : "保存标签"}
-                </Button>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {VIDEO_TAG_REVIEW_DIMENSIONS.map((dimension) => {
-                  const tag = tags.find((item) => item.tag_dimension === dimension) ?? null;
-                  const status = getTagReviewStatus(tag?.confidence ?? null);
-                  const selectedValue = selection[dimension] || tag?.tag_value || "";
-                  return (
-                    <div key={dimension} className="space-y-2 rounded-xl border border-zinc-200 bg-white p-4">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-[12px] font-medium text-zinc-700">{dimension}</div>
-                        <Badge
-                          variant="outline"
-                          className={`text-[12px] ${
-                            status === "可信"
-                              ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-                              : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-                          }`}
-                        >
-                          {status}
-                        </Badge>
-                      </div>
-
-                      <Select
-                        value={selectedValue}
-                        onValueChange={(value) =>
-                          setSelection((current) => ({
-                            ...current,
-                            [dimension]: value ?? "",
-                          }))
-                        }
-                      >
-                        <SelectTrigger className="h-9 rounded-xl bg-white text-[13px]">
-                          <SelectValue>{selectedValue || `选择${dimension}`}</SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TAG_ENUMS[dimension].map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <div className="space-y-0.5 text-[12px] text-zinc-500">
-                        <div>来源：{tag?.source === "manual" ? "手动" : "AI"}</div>
-                        <div>置信度：{tag?.confidence != null ? `${Math.round(tag.confidence * 100)}%` : "-"}</div>
-                        <div className="line-clamp-3">理由：{tag?.reason || "-"}</div>
-                      </div>
+                <div className="grid gap-3 sm:grid-cols-3 items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-medium text-zinc-500 shrink-0">素材等级:</span>
+                    <div className="flex items-center gap-1 flex-1">
+                      {(["S", "A", "B", "C"] as VideoAssetLevel[]).map((level) => {
+                        const isSelected = assetLevel === level;
+                        const levelStyles: Record<VideoAssetLevel, string> = {
+                          S: isSelected ? "bg-amber-500 text-white border-amber-600 font-bold shadow-xs" : "bg-amber-50 text-amber-700 border-amber-200/60 hover:bg-amber-100",
+                          A: isSelected ? "bg-zinc-900 text-white border-zinc-900 font-bold shadow-xs" : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200",
+                          B: isSelected ? "bg-zinc-700 text-white border-zinc-700 font-bold shadow-xs" : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100",
+                          C: isSelected ? "bg-zinc-500 text-white border-zinc-500 font-bold shadow-xs" : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100",
+                        };
+                        return (
+                          <button
+                            key={level}
+                            type="button"
+                            onClick={() => setAssetLevel(isSelected ? null : level)}
+                            className={`h-7 flex-1 rounded-lg border text-[12px] transition-all active:scale-95 ${levelStyles[level]}`}
+                          >
+                            {level}
+                          </button>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
-            </section>
+                  </div>
 
-            <section className="space-y-2">
-              <SectionTitle>快照明细</SectionTitle>
-              {snapshot ? (
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {renderSnapshotFields(snapshot)}
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      value={assetNote}
+                      onChange={(e) => setAssetNote(e.target.value)}
+                      className="w-full h-8 rounded-lg border border-zinc-200 bg-zinc-50/50 px-3 text-[12px] text-zinc-800 placeholder:text-zinc-400 focus:bg-white focus:border-zinc-400 focus:outline-none transition-all"
+                      placeholder="添加人工复盘备注 & 亮点评语..."
+                    />
+                  </div>
                 </div>
-              ) : (
-                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
-                  暂无快照数据。
-                </div>
-              )}
-            </section>
-          </div>
-        ) : null}
-      </SheetBody>
+              </section>
+            </>
+          ) : null}
+        </SheetBody>
       </SheetContent>
 
+      {/* 永久删除二次确认弹窗 */}
       {showConfirmPurge && video && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
           <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-zinc-900">永久删除确认</h3>
-            <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
-              将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
+            <h3 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
+              <AlertTriangle className="size-5 text-rose-600" />
+              永久物理删除确认
+            </h3>
+            <p className="mt-2 text-xs text-zinc-500 leading-relaxed">
+              将永久隐藏作品「{video.video_title || "未命名视频"}」，并清理系统归属截图。此操作属于不可逆底层清理，请谨慎操作。
             </p>
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex justify-end gap-2.5">
               <button
                 type="button"
-                className="active:translate-y-0 h-9 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors"
+                className="h-8.5 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors"
                 onClick={() => setShowConfirmPurge(false)}
                 disabled={isOperating}
               >
@@ -542,11 +604,11 @@ export function VideoDetailDialog({
               </button>
               <button
                 type="button"
-                className="active:translate-y-0 h-9 rounded-xl bg-[#C9604D] hover:bg-[#B34F3C] text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50"
+                className="h-8.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50"
                 onClick={() => handleLifecycleAction("purge")}
                 disabled={isOperating}
               >
-                {isOperating ? "正在删除..." : "确定永久删除"}
+                {isOperating ? "正在删除..." : "确定永久物理删除"}
               </button>
             </div>
           </div>

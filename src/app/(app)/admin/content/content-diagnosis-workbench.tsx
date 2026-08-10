@@ -258,6 +258,7 @@ export function ContentDiagnosisWorkbench({
   const [mainIssues, setMainIssues] = useState("");
   const [feedback, setFeedback] = useState("");
   const [analysisResult, setAnalysisResult] = useState<ContentAnalysisResult | null>(null);
+  const [showAiReference, setShowAiReference] = useState(false);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isTrashing, setIsTrashing] = useState(false);
 

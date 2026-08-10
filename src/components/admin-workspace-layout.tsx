@@ -13,7 +13,7 @@ interface AdminWorkspaceIndexGroup {
   items: AdminWorkspaceIndexItem[];
 }
 
-export type AdminWorkspaceLayoutWidth = "wide" | "full";
+export type AdminWorkspaceLayoutWidth = "wide" | "extra-wide" | "full";
 
 interface AdminWorkspaceLayoutProps {
   eyebrow?: string;
@@ -28,6 +28,7 @@ interface AdminWorkspaceLayoutProps {
 
 const widthMap: Record<AdminWorkspaceLayoutWidth, string> = {
   wide: "mx-auto w-full max-w-7xl",
+  "extra-wide": "mx-auto w-full max-w-screen-2xl",
   full: "mx-auto w-full max-w-none",
 };
 

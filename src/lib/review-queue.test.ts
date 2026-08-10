@@ -43,6 +43,13 @@ function makeSnapshot(partial: Partial<VideoMetricsSnapshot> & { video_id: strin
     completion_rate: partial.completion_rate ?? 5,
     avg_play_duration: partial.avg_play_duration ?? 20,
     follower_gain: partial.follower_gain ?? 10,
+    follower_loss: partial.follower_loss ?? 0,
+    fan_play_ratio: partial.fan_play_ratio ?? null,
+    homepage_visits: partial.homepage_visits ?? 0,
+    follower_convert: partial.follower_convert ?? 0,
+    cover_click_rate: partial.cover_click_rate ?? null,
+    avg_play_ratio: partial.avg_play_ratio ?? null,
+    vs_previous: partial.vs_previous ?? null,
     likes: partial.likes ?? 100,
     comments: partial.comments ?? 10,
     shares: partial.shares ?? 5,
@@ -55,11 +62,20 @@ function makeSnapshot(partial: Partial<VideoMetricsSnapshot> & { video_id: strin
 
 function makeFeedbackCard(videoId: string, status: ContentFeedbackCardView["workflow_status"] = "not_started"): ContentFeedbackCardView {
   return {
+    card_id: null,
     video_id: videoId,
     workflow_status: status,
-    summary_text: null,
-    actions_text: null,
-    has_card: status !== "not_started",
+    workflow_label: status,
+    has_ai_draft: false,
+    latest_draft_at: null,
+    confirmed_at: null,
+    sent_at: null,
+    viewed_at: null,
+    employee_reply_status: "pending",
+    employee_reply_status_label: "未回复",
+    employee_reply_text: null,
+    employee_replied_at: null,
+    manager_note: null,
   };
 }
 
@@ -68,9 +84,9 @@ function makeReadiness(videoId: string, status: ContentReviewReadiness["status"]
     video_id: videoId,
     status,
     label: status === "ready" ? "可复盘" : "待完善",
-    missing_items: [],
-    has_feedback_draft: false,
+    can_generate: true,
     has_snapshot_24h: true,
+    has_content: true,
     has_segments: true,
   };
 }
