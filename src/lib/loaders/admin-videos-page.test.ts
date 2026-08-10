@@ -20,3 +20,12 @@ test("Supabase 关联对象、数组与 null 都归一化", () => {
   assert.equal(rows[1]?.accounts.name, "未命名账号");
   assert.equal(rows[1]?.profiles.name, "未命名成员");
 });
+
+test("素材库按视频 ID 分批查询，避免超长 IN 请求", () => {
+  const ids = Array.from({ length: 251 }, (_, index) => `video-${index}`);
+  assert.deepEqual(__internal.chunkVideoIds(ids, 100), [
+    ids.slice(0, 100),
+    ids.slice(100, 200),
+    ids.slice(200),
+  ]);
+});

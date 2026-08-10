@@ -30,6 +30,7 @@ export type AdminVideosView = "pending" | "all" | "trash";
 export const ADMIN_VIDEOS_INITIAL_LIMIT = 30;
 const ADMIN_VIDEOS_INITIAL_CANDIDATE_LIMIT = 60;
 const ADMIN_VIDEOS_FIRST_SCREEN_RPC = "admin_videos_first_screen";
+const VIDEO_ID_QUERY_CHUNK_SIZE = 100;
 const VIDEO_ASSET_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, lifecycle_state, trashed_at, trashed_by, purged_at, purged_by, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name), trashed_by_profile:profiles!videos_trashed_by_fkey(name)";
 const VIDEO_SNAPSHOT_SELECT =
@@ -62,6 +63,27 @@ export interface AdminVideosPageData {
 
 function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_VIDEOS_INITIAL_LIMIT) : rows;
+}
+
+function chunkVideoIds(ids: string[], chunkSize = VIDEO_ID_QUERY_CHUNK_SIZE) {
+  const normalizedSize = Math.max(1, Math.floor(chunkSize));
+  const chunks: string[][] = [];
+  for (let index = 0; index < ids.length; index += normalizedSize) {
+    chunks.push(ids.slice(index, index + normalizedSize));
+  }
+  return chunks;
+}
+
+async function loadRowsByVideoIds<T>(
+  videoIds: string[],
+  query: (ids: string[]) => PromiseLike<{ data: T[] | null; error: { message?: string } | null }>,
+  context: string,
+) {
+  const results = await Promise.all(chunkVideoIds(videoIds).map((ids) => query(ids)));
+  return results.flatMap((result) => {
+    assertSupabaseQuerySucceeded(result.error, context);
+    return result.data ?? [];
+  });
 }
 
 function readJoinedName(value: RawVideoRow["accounts"] | RawVideoRow["profiles"] | RawVideoRow["trashed_by_profile"], fallback: string) {
@@ -148,11 +170,11 @@ export async function loadAdminVideosPageData({
     : normalizedRows;
   const scopedVideoIdSet = new Set(normalizedVideos.map((video) => video.id));
   const scopedVideoIds = Array.from(scopedVideoIdSet);
-  const tagIdsResult = scopedVideoIds.length > 0
-    ? await supabase.from("video_tags").select("video_id").in("video_id", scopedVideoIds)
-    : { data: [], error: null };
-  assertSupabaseQuerySucceeded(tagIdsResult.error, "加载视频标签失败");
-  const tagIds = tagIdsResult.data;
+  const tagIds = await loadRowsByVideoIds(
+    scopedVideoIds,
+    (videoIds) => supabase.from("video_tags").select("video_id").in("video_id", videoIds),
+    "加载视频标签失败",
+  );
   const visibleProfileIds = new Set(resolvedScope?.visibleUserIds ?? normalizedVideos.map((video) => video.accounts?.profile_id ?? video.user_id));
   const taggedVideoIds = new Set(
     (tagIds ?? [])
@@ -168,28 +190,30 @@ export async function loadAdminVideosPageData({
       : normalizedVideos;
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
-  const [snapshotFlagsResult, segmentRowsResult] =
-    scopedVideoIds.length > 0
-      ? await Promise.all([
-          supabase.from("video_metrics_snapshots").select("video_id").eq("snapshot_type", "24h").in("video_id", scopedVideoIds),
-          supabase.from("video_content_segments").select("video_id").in("video_id", scopedVideoIds),
-        ])
-      : [{ data: [], error: null }, { data: [], error: null }];
-  assertSupabaseQuerySucceeded(snapshotFlagsResult.error, "加载视频快照状态失败");
-  assertSupabaseQuerySucceeded(segmentRowsResult.error, "加载视频分段失败");
-  const snapshotFlags = snapshotFlagsResult.data;
-  const segmentRows = segmentRowsResult.data;
-  const [snapshotsResult, videoTagsResult] =
-    visibleVideoIds.length > 0
-      ? await Promise.all([
-          supabase.from("video_metrics_snapshots").select(VIDEO_SNAPSHOT_SELECT).in("video_id", visibleVideoIds),
-          supabase.from("video_tags").select("*").in("video_id", visibleVideoIds),
-        ])
-      : [{ data: [], error: null }, { data: [], error: null }];
-  assertSupabaseQuerySucceeded(snapshotsResult.error, "加载视频快照失败");
-  assertSupabaseQuerySucceeded(videoTagsResult.error, "加载视频标签明细失败");
-  const snapshots = snapshotsResult.data;
-  const videoTags = videoTagsResult.data;
+  const [snapshotFlags, segmentRows] = await Promise.all([
+    loadRowsByVideoIds(
+      scopedVideoIds,
+      (videoIds) => supabase.from("video_metrics_snapshots").select("video_id").eq("snapshot_type", "24h").in("video_id", videoIds),
+      "加载视频快照状态失败",
+    ),
+    loadRowsByVideoIds(
+      scopedVideoIds,
+      (videoIds) => supabase.from("video_content_segments").select("video_id").in("video_id", videoIds),
+      "加载视频分段失败",
+    ),
+  ]);
+  const [snapshots, videoTags] = await Promise.all([
+    loadRowsByVideoIds(
+      visibleVideoIds,
+      (videoIds) => supabase.from("video_metrics_snapshots").select(VIDEO_SNAPSHOT_SELECT).in("video_id", videoIds),
+      "加载视频快照失败",
+    ),
+    loadRowsByVideoIds(
+      visibleVideoIds,
+      (videoIds) => supabase.from("video_tags").select("*").in("video_id", videoIds),
+      "加载视频标签明细失败",
+    ),
+  ]);
   const normalizedTags = (videoTags ?? []) as VideoTag[];
   const snapshot24hVideoIds = new Set((snapshotFlags ?? []).map((row) => row.video_id as string));
   const segmentCountMap = new Map<string, number>();
@@ -322,6 +346,7 @@ export const __internal = {
   ADMIN_VIDEOS_FIRST_SCREEN_RPC,
   VIDEO_ASSET_SELECT,
   VIDEO_SNAPSHOT_SELECT,
+  chunkVideoIds,
   limitInitialVideos,
   normalizeVideoRows,
 };
