@@ -185,7 +185,7 @@ export function SubmissionCalendar({
       {/* 头部 Month 动态切换选择器 */}
       <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#5F82A8]" />
+          <span className="h-2 w-2 rounded-full bg-zinc-400" />
           <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">选择日期</h3>
         </div>
         

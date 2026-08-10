@@ -79,7 +79,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#5F82A8]/30 outline-none",
+          "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#D97757]/20 outline-none",
           "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70 active:scale-[0.98]",
           isOpen && "text-zinc-900 bg-zinc-100/80"
         )}
@@ -142,12 +142,12 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     className={cn(
                       "flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all duration-150 group/item",
                       isSelected
-                        ? "bg-[#5F82A8]/10 text-[#5F82A8]"
+                        ? "bg-[#D97757]/10 text-[#D97757]"
                         : "hover:bg-zinc-100/80 text-zinc-700 hover:text-zinc-900"
                     )}
                   >
                     <div className="flex flex-col min-w-0">
-                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#5F82A8] font-semibold" : "text-zinc-800")}>
+                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#D97757] font-semibold" : "text-zinc-800")}>
                         {account.display_name}
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-500 font-normal min-w-0">
@@ -175,7 +175,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     </div>
                     
                     {isSelected && (
-                      <Check className="size-4 shrink-0 text-[#5F82A8]" />
+                      <Check className="size-4 shrink-0 text-[#D97757]" />
                     )}
                   </button>
                 );

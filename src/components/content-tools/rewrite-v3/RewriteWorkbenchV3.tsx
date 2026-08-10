@@ -316,12 +316,12 @@ export function RewriteWorkbenchV3() {
                     className={cn(
                       "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
                       !state.selectedModelViewId
-                        ? "bg-[#5F82A8]/10 text-[#4c6785]"
+                        ? "bg-[#D97757]/10 text-[#D97757]"
                         : "text-zinc-700 hover:bg-zinc-50"
                     )}
                   >
                     <span>自动推荐模型</span>
-                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#5F82A8]" />}
+                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#D97757]" />}
                   </button>
                   {state.bootstrap.modelViews.map((item) => {
                     const disabled = (item as { is_enabled?: boolean; isEnabled?: boolean }).is_enabled === false || (item as { is_enabled?: boolean; isEnabled?: boolean }).isEnabled === false;
@@ -340,13 +340,13 @@ export function RewriteWorkbenchV3() {
                           disabled
                             ? "opacity-50 cursor-not-allowed text-zinc-400"
                             : state.selectedModelViewId === item.id
-                            ? "bg-[#5F82A8]/10 text-[#4c6785]"
+                            ? "bg-[#D97757]/10 text-[#D97757]"
                             : "text-zinc-700 hover:bg-zinc-50"
                         )}
                         title={disabled ? "已停用" : (item.description || item.label)}
                       >
                         <span className="truncate pr-2">{item.label}{disabled ? " (已停用)" : ""}</span>
-                        {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#5F82A8] shrink-0" />}
+                        {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#D97757] shrink-0" />}
                       </button>
                     );
                   })}
@@ -480,10 +480,10 @@ export function RewriteWorkbenchV3() {
           onDoubleClick={handleDoubleClick}
           className={cn(
             "w-[6px] cursor-col-resize shrink-0 transition-colors z-35 relative ml-[-3px] mr-[-3px] flex items-center justify-center group/splitter",
-            isResizing ? "bg-[#5F82A8]/20" : "bg-transparent hover:bg-[#5F82A8]/10"
+            isResizing ? "bg-zinc-200" : "bg-transparent hover:bg-zinc-100"
           )}
         >
-          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-[#5F82A8]" : "bg-zinc-200/80")} />
+          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-zinc-400" : "bg-zinc-200/80")} />
             <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[12px] px-2 py-1 rounded-lg shadow-lg whitespace-nowrap font-sans font-medium">
             双击重置为 35%
           </div>
