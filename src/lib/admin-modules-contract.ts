@@ -118,7 +118,10 @@ export function hydrateAdminModuleMemberEmails(
 
 export interface AdminModuleMonthlyPublishRow {
   user_id: string | null;
-  report_date: string | null;
+  /** daily_reports 直查字段 */
+  report_date?: string | null;
+  /** get_fulfillment_range RPC 返回字段 */
+  record_date?: string | null;
   status?: string | null;
   published_count?: number | null;
 }
@@ -141,7 +144,8 @@ export function calculateAdminModuleMonthlyPublishStats(
   const stats = new Map<string, { publishedCount: number; requiredCount: number }>();
 
   for (const row of rows ?? []) {
-    if (!row.user_id || !row.report_date) continue;
+    const date = row.report_date ?? row.record_date;
+    if (!row.user_id || !date) continue;
 
     const current = stats.get(row.user_id) ?? { publishedCount: 0, requiredCount: 0 };
     const publishedCount = Math.max(0, Number(row.published_count ?? 0));
@@ -156,7 +160,7 @@ export function calculateAdminModuleMonthlyPublishStats(
       if (!daySets.has(row.user_id)) {
         daySets.set(row.user_id, new Set());
       }
-      daySets.get(row.user_id)?.add(row.report_date);
+      daySets.get(row.user_id)?.add(date);
     }
   }
 
