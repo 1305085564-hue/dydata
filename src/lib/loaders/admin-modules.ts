@@ -291,21 +291,22 @@ function getMonthBoundsForDate(date: string) {
 }
 
 async function loadAdminModuleMonthlyPublishStats(
-  adminSupabase: ReturnType<typeof createAdminClient>,
+  supabase: AdminSupabase,
   userIds: string[],
   queryDate: string,
 ) {
   if (userIds.length === 0) return {};
 
   const { startDate, endDate } = getMonthBoundsForDate(queryDate);
-  const { data, error } = await adminSupabase
-    .from("daily_reports")
-    .select("user_id, report_date")
-    .in("user_id", userIds)
-    .gte("report_date", startDate)
-    .lte("report_date", endDate);
+  const { data, error } = await supabase.rpc("get_fulfillment_range", {
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_visible_user_ids: userIds,
+    p_team_id: null,
+    p_group_id: null,
+  });
 
-  if (error) throw new Error(error.message ?? "加载成员本月发布统计失败");
+  if (error) throw new Error(error.message ?? "加载成员本月应发实发统计失败");
   return calculateAdminModuleMonthlyPublishStats((data ?? []) as AdminModuleMonthlyPublishRow[]);
 }
 
@@ -497,7 +498,7 @@ export async function loadAdminModulesData({
   const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
   const visibleActiveProfiles = activeProfiles.filter((profile) => visibleActiveProfileIds.has(profile.id));
   const monthlyPublishStats = await loadAdminModuleMonthlyPublishStats(
-    context.adminSupabase,
+    supabase,
     visibleActiveProfiles.map((profile) => profile.id),
     context.queryDate,
   );

@@ -20,6 +20,7 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   last_sign_in_at?: string | null;
   monthly_published_days?: number;
   monthly_published_count?: number;
+  monthly_required_count?: number;
   membership_status?: MembershipStatus;
   archived_at?: string | null;
   archived_by?: string | null;
@@ -70,6 +71,7 @@ export function buildAdminModuleMemberSummaries(
       last_sign_in_at: null,
       monthly_published_days: 0,
       monthly_published_count: 0,
+      monthly_required_count: 0,
       membership_status: normalizeMembershipStatus(profile.membership_status),
       archived_at: profile.archived_at ?? null,
       archived_by: profile.archived_by ?? null,
@@ -117,34 +119,53 @@ export function hydrateAdminModuleMemberEmails(
 export interface AdminModuleMonthlyPublishRow {
   user_id: string | null;
   report_date: string | null;
+  status?: string | null;
+  published_count?: number | null;
 }
 
 export interface AdminModuleMonthlyPublishStats {
-  publishedDays: number;
+  /** 实发作品条数 */
   publishedCount: number;
+  /** 有实际发布记录的自然日数，仅辅助调试/后续扩展 */
+  publishedDays: number;
+  /** 应发条数 = 统计窗口内自然日 - 豁免日 */
+  requiredCount: number;
 }
+
+const EXEMPT_MONTHLY_STATUSES = new Set(["leave", "waived", "exempted"]);
 
 export function calculateAdminModuleMonthlyPublishStats(
   rows: AdminModuleMonthlyPublishRow[] | null | undefined,
 ): Record<string, AdminModuleMonthlyPublishStats> {
   const daySets = new Map<string, Set<string>>();
-  const counts = new Map<string, number>();
+  const stats = new Map<string, { publishedCount: number; requiredCount: number }>();
 
   for (const row of rows ?? []) {
     if (!row.user_id || !row.report_date) continue;
 
-    if (!daySets.has(row.user_id)) {
-      daySets.set(row.user_id, new Set());
+    const current = stats.get(row.user_id) ?? { publishedCount: 0, requiredCount: 0 };
+    const publishedCount = Math.max(0, Number(row.published_count ?? 0));
+    current.publishedCount += Number.isFinite(publishedCount) ? publishedCount : 0;
+
+    if (!EXEMPT_MONTHLY_STATUSES.has(row.status ?? "")) {
+      current.requiredCount += 1;
     }
-    daySets.get(row.user_id)?.add(row.report_date);
-    counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+    stats.set(row.user_id, current);
+
+    if (publishedCount > 0) {
+      if (!daySets.has(row.user_id)) {
+        daySets.set(row.user_id, new Set());
+      }
+      daySets.get(row.user_id)?.add(row.report_date);
+    }
   }
 
   const result: Record<string, AdminModuleMonthlyPublishStats> = {};
-  for (const [userId, dates] of daySets) {
+  for (const [userId, stat] of stats) {
     result[userId] = {
-      publishedDays: dates.size,
-      publishedCount: counts.get(userId) ?? 0,
+      publishedCount: stat.publishedCount,
+      publishedDays: daySets.get(userId)?.size ?? 0,
+      requiredCount: stat.requiredCount,
     };
   }
 
@@ -161,6 +182,7 @@ export function applyAdminModuleMonthlyPublishStats(
       ...member,
       monthly_published_days: stats?.publishedDays ?? 0,
       monthly_published_count: stats?.publishedCount ?? 0,
+      monthly_required_count: stats?.requiredCount ?? 0,
     };
   });
 }

@@ -23,18 +23,19 @@ test("空数组返回空，邮箱补全只覆盖命中成员", () => {
 });
 
 
-test("本月发布统计按用户聚合发布天数和作品条数", () => {
+test("本月发布统计按实发条数和应发条数聚合，豁免日不计入应发", () => {
   const stats = calculateAdminModuleMonthlyPublishStats([
-    { user_id: "u1", report_date: "2026-08-01" },
-    { user_id: "u1", report_date: "2026-08-01" },
-    { user_id: "u1", report_date: "2026-08-02" },
-    { user_id: "u2", report_date: "2026-08-03" },
-    { user_id: null, report_date: "2026-08-03" },
+    { user_id: "u1", report_date: "2026-08-01", status: "published", published_count: 2 },
+    { user_id: "u1", report_date: "2026-08-02", status: "unconfirmed", published_count: 0 },
+    { user_id: "u1", report_date: "2026-08-03", status: "exempted", published_count: 0 },
+    { user_id: "u1", report_date: "2026-08-04", status: "leave", published_count: 0 },
+    { user_id: "u2", report_date: "2026-08-03", status: "published", published_count: 1 },
+    { user_id: null, report_date: "2026-08-03", status: "published", published_count: 1 },
   ]);
 
   assert.deepEqual(stats, {
-    u1: { publishedDays: 2, publishedCount: 3 },
-    u2: { publishedDays: 1, publishedCount: 1 },
+    u1: { publishedCount: 2, publishedDays: 1, requiredCount: 2 },
+    u2: { publishedCount: 1, publishedDays: 1, requiredCount: 1 },
   });
 });
 
@@ -45,11 +46,12 @@ test("本月发布统计回填到成员摘要，未发布成员默认为 0", () 
   ], []);
 
   const hydrated = applyAdminModuleMonthlyPublishStats(members, {
-    u1: { publishedDays: 12, publishedCount: 18 },
+    u1: { publishedCount: 12, publishedDays: 8, requiredCount: 18 },
   });
 
-  assert.equal(hydrated[0]?.monthly_published_days, 12);
-  assert.equal(hydrated[0]?.monthly_published_count, 18);
-  assert.equal(hydrated[1]?.monthly_published_days, 0);
+  assert.equal(hydrated[0]?.monthly_published_count, 12);
+  assert.equal(hydrated[0]?.monthly_required_count, 18);
+  assert.equal(hydrated[0]?.monthly_published_days, 8);
   assert.equal(hydrated[1]?.monthly_published_count, 0);
+  assert.equal(hydrated[1]?.monthly_required_count, 0);
 });
