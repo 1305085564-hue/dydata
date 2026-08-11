@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition, useMemo, useRef, useCallback } from
 import { useRouter } from "next/navigation";
 import {
   UsersRound, Plus, Trash2, ShieldAlert, Sparkles, X,
-  Search, KeyRound, Settings, RefreshCw, Archive, RotateCcw, ChevronDown
+  Search, KeyRound, Settings, RefreshCw, Archive, RotateCcw, ChevronDown, Clock
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,6 +45,21 @@ import {
 import { ExemptionDialog } from "../豁免弹窗";
 import { findFocusMember } from "@/lib/admin/find-focus-member";
 import { MemberPermissionEditor } from "../components/member-permission-editor";
+function formatLastLoginDisplay(dateStr?: string | null): { text: string; isInactive: boolean } {
+  if (!dateStr) return { text: "从未登录 (疑似未激活)", isInactive: true };
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return { text: "未知登录时间", isInactive: false };
+
+  const now = new Date();
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+  const formatted = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+
+  if (diffDays > 30) {
+    return { text: `${formatted} (${diffDays}天未活跃)`, isInactive: true };
+  }
+  return { text: formatted, isInactive: false };
+}
+
 import type { PermissionManagerMember } from "../权限管理";
 
 import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
@@ -66,6 +81,7 @@ interface ProfileSummary {
   id: string;
   name: string;
   email: string | null;
+  last_sign_in_at?: string | null;
   role: UserRole;
   team_id?: string | null;
   data_scope?: DataScope | null;
@@ -1081,7 +1097,7 @@ export function AdminModulesContentV2({
                             </div>
 
                             <span className={cn(
-                              "inline-flex h-5.5 items-center gap-1 rounded-full px-2 text-[12px] font-medium tracking-tight border",
+                              "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium leading-none border shrink-0",
                               isArchivedView
                                 ? "bg-zinc-100 border-zinc-200 text-zinc-600"
                                 : isAdmin
@@ -1102,10 +1118,34 @@ export function AdminModulesContentV2({
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
-                              {isArchivedView ? archivedTeamName : member.team_name || "未分配团队"}
-                            </span>
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            {isArchivedView || !isOwner || member.id === currentUserId ? (
+                              <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
+                                {isArchivedView ? archivedTeamName : member.team_name || "未分配团队"}
+                              </span>
+                            ) : (
+                              <div
+                                className="relative inline-flex items-center"
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onPointerDown={(e) => e.stopPropagation()}
+                              >
+                                <select
+                                  value={member.team_id ?? ""}
+                                  onChange={(e) => handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)}
+                                  className="h-6 pl-2 pr-5 text-[12px] font-medium bg-zinc-100 hover:bg-zinc-200/80 text-zinc-800 border border-zinc-200/60 rounded-lg outline-none cursor-pointer appearance-none transition-all"
+                                >
+                                  <option value="">未分配团队</option>
+                                  {localTeams.map((t) => (
+                                    <option key={t.id} value={t.id}>
+                                      {t.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 size-3 text-zinc-500" />
+                              </div>
+                            )}
+
                             {isArchivedView ? (
                               <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
                                 归档前角色：{archivedRole}
@@ -1122,7 +1162,7 @@ export function AdminModulesContentV2({
                       );
                     })()}
 
-                    {isArchivedView ? (
+                    {isArchivedView && (
                       <div className="mt-4 space-y-2 border-t border-zinc-100 pt-3">
                         <div className="space-y-1 text-[12px] text-zinc-500">
                           <p>归档时间：{member.archived_at ? new Date(member.archived_at).toLocaleString("zh-CN") : "未知"}</p>
@@ -1140,25 +1180,6 @@ export function AdminModulesContentV2({
                           恢复账号
                         </Button>
                       </div>
-                    ) : (
-                    <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3 opacity-100 transition-opacity pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto">
-                      <div className="flex items-center gap-1.5">
-                        {isOwner && member.id !== currentUserId && (
-                          <select
-                            value={member.team_id ?? ""}
-                            onChange={e => handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)}
-                            onClick={e => e.stopPropagation()}
-                            className="h-6.5 text-[12px] bg-zinc-50 border border-zinc-200 rounded px-1.5 text-zinc-700 outline-none"
-                          >
-                            <option value="">未分配团队</option>
-                            {localTeams.map(t => (
-                              <option key={t.id} value={t.id}>{t.name}</option>
-                            ))}
-                          </select>
-                        )}
-
-                      </div>
-                    </div>
                     )}
                   </div>
                 );
@@ -1197,8 +1218,23 @@ export function AdminModulesContentV2({
                       {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "管理员" : "成员"}
                     </span>
                   </div>
-                  <SheetDescription className="text-[12px] text-zinc-500 leading-none">
-                    {activeMember.team_name || "未分配团队"} · {activeMember.email || "邮箱同步中"}
+                  <SheetDescription className="text-[12px] text-zinc-500 leading-normal mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span>{activeMember.team_name || "未分配团队"} · {activeMember.email || "邮箱同步中"}</span>
+                    <span className="text-zinc-300">|</span>
+                    {(() => {
+                      const loginInfo = formatLastLoginDisplay(activeMember.last_sign_in_at);
+                      return (
+                        <span className={cn(
+                          "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors",
+                          loginInfo.isInactive
+                            ? "bg-amber-500/10 text-amber-700 border border-amber-500/20"
+                            : "bg-zinc-100 text-zinc-600"
+                        )}>
+                          <Clock className="size-3 shrink-0 text-zinc-400" />
+                          最后登录：{loginInfo.text}
+                        </span>
+                      );
+                    })()}
                   </SheetDescription>
                 </div>
 

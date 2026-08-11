@@ -17,6 +17,7 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   permissions: Permissions;
   data_scope?: DataScope | null;
   email: string | null;
+  last_sign_in_at?: string | null;
   membership_status?: MembershipStatus;
   archived_at?: string | null;
   archived_by?: string | null;
@@ -44,6 +45,7 @@ export interface AdminModuleMemberProfileLike extends ExemptionFields {
 
 export interface AdminModuleMemberHydration {
   email: string | null;
+  last_sign_in_at?: string | null;
   team_id?: string | null;
   team_name?: string | null;
 }
@@ -63,6 +65,7 @@ export function buildAdminModuleMemberSummaries(
       permissions: profile.permissions ?? {},
       data_scope: profile.data_scope ?? "self",
       email: null,
+      last_sign_in_at: null,
       membership_status: normalizeMembershipStatus(profile.membership_status),
       archived_at: profile.archived_at ?? null,
       archived_by: profile.archived_by ?? null,
@@ -97,6 +100,7 @@ export function hydrateAdminModuleMemberEmails(
     return {
       ...member,
       email: hydration.email,
+      last_sign_in_at: hydration.last_sign_in_at ?? null,
       team_id: member.team_id ?? null,
       team_name: member.team_name,
     };

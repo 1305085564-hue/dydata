@@ -10,6 +10,7 @@ export interface PermissionManagerMember {
   id: string;
   name: string;
   email?: string | null;
+  last_sign_in_at?: string | null;
   role: UserRole;
   teamId?: string | null;
   teamName?: string | null;

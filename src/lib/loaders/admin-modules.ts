@@ -1,6 +1,6 @@
 import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
-import { isMissingMembershipStatusError, isActiveMembership, filterArchivedMemberships } from "@/lib/member-lifecycle";
+import { isMissingMembershipStatusError, isActiveMembership } from "@/lib/member-lifecycle";
 import {
   buildAdminModuleMemberSummaries,
   hydrateAdminModuleMemberEmails,
@@ -20,7 +20,7 @@ import {
 } from "@/lib/team-management";
 import { inferDataScope } from "@/lib/data-access-scope";
 import { getTeamOptions } from "@/lib/teams";
-import type { MembershipStatus, Permissions, UserRole } from "@/types";
+import type { Permissions, UserRole } from "@/types";
 
 import { shiftDateOnly } from "./shared";
 
@@ -333,6 +333,7 @@ async function loadAdminModuleMemberHydrationMap(
         authUser.id,
         {
           email: authUser.email ?? null,
+          last_sign_in_at: authUser.last_sign_in_at ?? null,
           team_id: resolvedTeamId,
           team_name: resolvedTeamId ? (teamNameById.get(resolvedTeamId) ?? metadataTeamName ?? null) : (metadataTeamName ?? null),
         },
