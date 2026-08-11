@@ -56,6 +56,8 @@ import {
   filterProfilesForMemberView,
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
+  isProfileExemptOnDate,
+  resolveDefaultSelectedTeamId,
   retainSelectableMemberIds,
   resolveSelectedTeamAfterTeamDelete,
 } from "./team-view-logic";
@@ -157,6 +159,7 @@ export function AdminModulesContentV2({
   teams: initialTeams,
   teamManagement,
   pendingRequests: initialPendingRequests,
+  defaultDate,
   focusMemberId,
 }: TeamV2ContentProps) {
   const router = useRouter();
@@ -168,13 +171,20 @@ export function AdminModulesContentV2({
     manageableTeams: teamManagement.teams,
   });
 
+  const initialSelectedTeamId = resolveDefaultSelectedTeamId({
+    currentUserId,
+    profiles: allProfiles,
+    visibleTeams: initialVisibleTeams,
+    isOwner,
+  });
+
   const [localTeams, setLocalTeams] = useState<TeamOption[]>(initialVisibleTeams);
   const [localProfiles, setLocalProfiles] = useState<ProfileSummary[]>(allProfiles);
   const [localArchivedProfiles, setLocalArchivedProfiles] = useState<ProfileSummary[]>(initialArchivedProfiles);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
   const [memberView, setMemberView] = useState<"active" | "archived">("active");
 
-  const [selectedTeamId, setSelectedTeamId] = useState<string>(ALL_TEAMS_ID);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>(initialSelectedTeamId);
 
   const [newTeamName, setNewTeamName] = useState("");
 
@@ -219,6 +229,12 @@ export function AdminModulesContentV2({
   useEffect(() => {
     setLocalTeams(initialVisibleTeams);
   }, [initialVisibleTeams]);
+
+  useEffect(() => {
+    if (selectedTeamId === ALL_TEAMS_ID && initialSelectedTeamId !== ALL_TEAMS_ID) {
+      setSelectedTeamId(initialSelectedTeamId);
+    }
+  }, [initialSelectedTeamId, selectedTeamId]);
 
   useEffect(() => {
     if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((team) => team.id === selectedTeamId)) {
@@ -291,6 +307,7 @@ export function AdminModulesContentV2({
   }, [localProfiles, activeMemberId]);
 
   const activeMemberIsOwner = activeMember?.role === "owner";
+  const activeMemberIsCurrentlyExempt = activeMember ? isProfileExemptOnDate(activeMember, defaultDate) : false;
 
   const initialPermissions = useMemo<Permissions>(() => {
     if (!activeMember) return {};
@@ -969,6 +986,7 @@ export function AdminModulesContentV2({
                 const archivedRole = typeof archiveSnapshot.role === "string"
                   ? archiveSnapshot.role === "admin" ? "管理员" : "成员"
                   : "成员";
+                const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
 
                 return (
                   <div
@@ -1094,7 +1112,7 @@ export function AdminModulesContentV2({
                               </span>
                             ) : null}
 
-                            {!isArchivedView && member.exempt_type && (
+                            {isCurrentlyExempt && (
                               <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
                                 已豁免
                               </span>
@@ -1310,9 +1328,9 @@ export function AdminModulesContentV2({
                           >
                             <span className="flex items-center gap-2">
                               <ShieldAlert className="size-3.5 text-zinc-400" />
-                              {activeMember.exempt_type ? "调整日报豁免" : "开启日报豁免"}
+                              {activeMemberIsCurrentlyExempt ? "调整日报豁免" : "开启日报豁免"}
                             </span>
-                            <span className="text-[11px] text-zinc-400">{activeMember.exempt_type ? "已开启" : "未开启"}</span>
+                            <span className="text-[11px] text-zinc-400">{activeMemberIsCurrentlyExempt ? "已生效" : "未生效"}</span>
                           </button>
                         </>
                       )}

@@ -16,6 +16,10 @@ export interface TeamViewProfile {
   team_name?: string | null;
   archive_reason?: string | null;
   archive_snapshot?: Record<string, unknown> | null;
+  status?: string | null;
+  exempt_type?: string | null;
+  exempt_start_date?: string | null;
+  exempt_end_date?: string | null;
 }
 
 function normalizeQuery(value: string) {
@@ -32,6 +36,45 @@ export function getVisibleTeamOptions({
   manageableTeams: TeamViewTeamOption[];
 }) {
   return isOwner ? allTeams : manageableTeams;
+}
+
+export function resolveDefaultSelectedTeamId({
+  currentUserId,
+  profiles,
+  visibleTeams,
+  isOwner,
+}: {
+  currentUserId: string;
+  profiles: TeamViewProfile[];
+  visibleTeams: TeamViewTeamOption[];
+  isOwner: boolean;
+}): TeamFilterId {
+  const visibleTeamIds = new Set(visibleTeams.map((team) => team.id));
+  const currentUserTeamId = profiles.find((profile) => profile.id === currentUserId)?.team_id ?? null;
+
+  if (currentUserTeamId && visibleTeamIds.has(currentUserTeamId)) {
+    return currentUserTeamId;
+  }
+
+  if (!isOwner && visibleTeams.length === 1) {
+    return visibleTeams[0]?.id ?? ALL_TEAMS_ID;
+  }
+
+  return ALL_TEAMS_ID;
+}
+
+export function isProfileExemptOnDate(profile: TeamViewProfile, date: string) {
+  if (profile.exempt_type === "permanent" || profile.status === "exempt") {
+    return true;
+  }
+
+  return Boolean(
+    profile.exempt_type === "temporary" &&
+      profile.exempt_start_date &&
+      profile.exempt_end_date &&
+      profile.exempt_start_date <= date &&
+      date <= profile.exempt_end_date,
+  );
 }
 
 export function getArchivedTeamId(profile: TeamViewProfile) {

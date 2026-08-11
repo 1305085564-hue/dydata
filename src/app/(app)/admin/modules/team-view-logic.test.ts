@@ -6,6 +6,8 @@ import {
   filterProfilesForMemberView,
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
+  resolveDefaultSelectedTeamId,
+  isProfileExemptOnDate,
   retainSelectableMemberIds,
   resolveSelectedTeamAfterTeamDelete,
   type TeamViewProfile,
@@ -94,5 +96,53 @@ test("切换团队或搜索后清掉不可见的批量选择，避免批量操�
   assert.deepEqual(
     retainSelectableMemberIds(["member-1", "member-2"], ["member-2", "member-3"]),
     ["member-2"],
+  );
+});
+
+
+test("默认优先进入自己团队视角，而不是公司全员视角", () => {
+  assert.equal(
+    resolveDefaultSelectedTeamId({
+      currentUserId: "owner-1",
+      profiles: activeProfiles,
+      visibleTeams: teams,
+      isOwner: true,
+    }),
+    "team-1",
+  );
+});
+
+test("成员卡片只在当天仍生效时展示已豁免，过期临时豁免不再大面积误标", () => {
+  assert.equal(
+    isProfileExemptOnDate(
+      {
+        id: "member-expired",
+        status: "active",
+        exempt_type: "temporary",
+        exempt_start_date: "2026-08-01",
+        exempt_end_date: "2026-08-03",
+      },
+      "2026-08-11",
+    ),
+    false,
+  );
+
+  assert.equal(
+    isProfileExemptOnDate(
+      {
+        id: "member-active",
+        status: "active",
+        exempt_type: "temporary",
+        exempt_start_date: "2026-08-10",
+        exempt_end_date: "2026-08-12",
+      },
+      "2026-08-11",
+    ),
+    true,
+  );
+
+  assert.equal(
+    isProfileExemptOnDate({ id: "member-permanent", status: "exempt", exempt_type: "permanent" }, "2026-08-11"),
+    true,
   );
 });
