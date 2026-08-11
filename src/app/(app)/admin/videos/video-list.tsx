@@ -138,56 +138,56 @@ function getVideoStatusInfo(status: string | null | undefined, playChangeSignal?
   const isHalve = playChangeSignal === "halve";
   if (status === "deleted" || status === "删稿") {
     return {
-      dotColor: "bg-[#C9604D]",
-      textColor: "text-[#C9604D]",
-      bgColor: "bg-[#C9604D]/10",
+      dotColor: "bg-red-500",
+      textColor: "text-red-600",
+      bgColor: "bg-red-50",
       label: "删稿",
     };
   }
   if (status === "limited" || status === "abnormal" || status === "限流" || status === "异常") {
     return {
-      dotColor: "bg-[#C9604D]",
-      textColor: "text-[#C9604D]",
-      bgColor: "bg-[#C9604D]/10",
+      dotColor: "bg-red-500",
+      textColor: "text-red-600",
+      bgColor: "bg-red-50",
       label: status === "limited" || status === "限流" ? "限流" : "异常",
     };
   }
   if (isHalve || status === "halve" || status === "腰斩") {
     return {
-      dotColor: "bg-[#D99E55]",
-      textColor: "text-[#D99E55]",
-      bgColor: "bg-[#D99E55]/10",
+      dotColor: "bg-amber-500",
+      textColor: "text-amber-600",
+      bgColor: "bg-amber-50",
       label: "腰斩",
     };
   }
   if (status === "traffic_boost" || status === "投流") {
     return {
-      dotColor: "bg-[#D99E55]",
-      textColor: "text-[#D99E55]",
-      bgColor: "bg-[#D99E55]/10",
+      dotColor: "bg-amber-500",
+      textColor: "text-amber-600",
+      bgColor: "bg-amber-50",
       label: "投流",
     };
   }
   if (status === "activity_boost" || status === "活动干预") {
     return {
-      dotColor: "bg-[#D99E55]",
-      textColor: "text-[#D99E55]",
-      bgColor: "bg-[#D99E55]/10",
+      dotColor: "bg-amber-500",
+      textColor: "text-amber-600",
+      bgColor: "bg-amber-50",
       label: "活动干预",
     };
   }
   if (status === "normal" || status === "正常") {
     return {
-      dotColor: "bg-[#6FAA7D]",
-      textColor: "text-[#6FAA7D]",
-      bgColor: "bg-[#6FAA7D]/10",
+      dotColor: "bg-emerald-500",
+      textColor: "text-emerald-700",
+      bgColor: "bg-emerald-50",
       label: "正常",
     };
   }
   if (status === "pending" || status === "未满24h") {
     return {
-      dotColor: "bg-zinc-300",
-      textColor: "text-zinc-500",
+      dotColor: "bg-zinc-400",
+      textColor: "text-zinc-600",
       bgColor: "bg-zinc-100",
       label: "未满24h",
     };
