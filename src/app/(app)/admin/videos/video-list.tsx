@@ -603,10 +603,10 @@ export function VideoList({
 
   return (
     <div className="flex flex-1 flex-col min-h-0 space-y-3">
-      {/* 🚀 单行极客控制舱（视图切换 + 公司团队视角 + 多维筛选器 + 资产统计 一行搞定） */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xs">
-        {/* 左侧：视图胶囊 + 范围选择 + 筛选器 */}
-        <div className="flex flex-wrap items-center gap-2">
+      {/* 🚀 控制舱（视图切换 + 公司团队视角 + 多维筛选器 + 资产统计） */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xs">
+        {/* 左侧：视图胶囊 + 范围选择 + 响应式筛选器 */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-center gap-2">
           {/* 待处理 / 全部 / 回收站 视图胶囊 */}
           <div className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-100/80 p-0.5 text-[12px]">
             <button
@@ -724,7 +724,7 @@ export function VideoList({
           </Select>
 
           {/* 日期范围 */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 col-span-2 sm:col-span-1 lg:col-span-auto">
             <Input
               type="date"
               value={filters.startDate}
@@ -1030,7 +1030,17 @@ export function VideoList({
                   colSpan={view === "trash" ? (canManageLifecycle ? 6 : 5) : (canManageLifecycle ? 9 : 8)}
                   className="px-4 py-16 text-center text-[13px] text-zinc-500"
                 >
-                  当前筛选条件下暂无视频数据。
+                  <div className="flex flex-col items-center justify-center gap-2.5">
+                    <span>当前筛选条件下暂无视频数据。</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleReset}
+                      className="h-7 text-[12px] text-zinc-700 hover:text-zinc-900 border-zinc-200"
+                    >
+                      重置所有筛选
+                    </Button>
+                  </div>
                 </td>
               </tr>
             )}
