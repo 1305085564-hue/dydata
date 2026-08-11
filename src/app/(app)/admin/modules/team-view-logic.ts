@@ -147,3 +147,23 @@ export function retainSelectableMemberIds(selectedMemberIds: string[], selectabl
 export function resolveSelectedTeamAfterTeamDelete(selectedTeamId: TeamFilterId, deletedTeamId: string): TeamFilterId {
   return selectedTeamId === deletedTeamId ? ALL_TEAMS_ID : selectedTeamId;
 }
+
+
+export function formatLastLoginDisplay(
+  dateStr?: string | null,
+  now: Date = new Date(),
+): { text: string; isLoginStale: boolean } {
+  if (!dateStr) return { text: "从未登录（疑似未激活）", isLoginStale: true };
+
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return { text: "未知登录时间", isLoginStale: false };
+
+  const diffDays = Math.max(0, Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)));
+  const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+
+  if (diffDays > 30) {
+    return { text: `${formatted}（距上次登录 ${diffDays} 天）`, isLoginStale: true };
+  }
+
+  return { text: formatted, isLoginStale: false };
+}

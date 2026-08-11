@@ -45,20 +45,6 @@ import {
 import { ExemptionDialog } from "../豁免弹窗";
 import { findFocusMember } from "@/lib/admin/find-focus-member";
 import { MemberPermissionEditor } from "../components/member-permission-editor";
-function formatLastLoginDisplay(dateStr?: string | null): { text: string; isInactive: boolean } {
-  if (!dateStr) return { text: "从未登录 (疑似未激活)", isInactive: true };
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return { text: "未知登录时间", isInactive: false };
-
-  const now = new Date();
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-  const formatted = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-
-  if (diffDays > 30) {
-    return { text: `${formatted} (${diffDays}天未活跃)`, isInactive: true };
-  }
-  return { text: formatted, isInactive: false };
-}
 
 import type { PermissionManagerMember } from "../权限管理";
 
@@ -69,6 +55,7 @@ import {
   ALL_TEAMS_ID,
   countProfilesInTeamForView,
   filterProfilesForMemberView,
+  formatLastLoginDisplay,
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
   isProfileExemptOnDate,
@@ -1224,14 +1211,17 @@ export function AdminModulesContentV2({
                     {(() => {
                       const loginInfo = formatLastLoginDisplay(activeMember.last_sign_in_at);
                       return (
-                        <span className={cn(
-                          "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors",
-                          loginInfo.isInactive
-                            ? "bg-amber-500/10 text-amber-700 border border-amber-500/20"
-                            : "bg-zinc-100 text-zinc-600"
-                        )}>
+                        <span
+                          title="这是 Supabase Auth 记录的上次登录时间，不等于当前在线时间或最后访问时间"
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors",
+                            loginInfo.isLoginStale
+                              ? "bg-amber-500/10 text-amber-700 border border-amber-500/20"
+                              : "bg-zinc-100 text-zinc-600"
+                          )}
+                        >
                           <Clock className="size-3 shrink-0 text-zinc-400" />
-                          最后登录：{loginInfo.text}
+                          上次登录：{loginInfo.text}
                         </span>
                       );
                     })()}

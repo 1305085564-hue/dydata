@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   countProfilesInTeamForView,
   filterProfilesForMemberView,
+  formatLastLoginDisplay,
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
   resolveDefaultSelectedTeamId,
@@ -145,4 +146,17 @@ test("成员卡片只在当天仍生效时展示已豁免，过期临时豁免�
     isProfileExemptOnDate({ id: "member-permanent", status: "exempt", exempt_type: "permanent" }, "2026-08-11"),
     true,
   );
+});
+
+
+test("最后登录时间只表达上次登录，不误写成在线或活跃时间", () => {
+  assert.deepEqual(
+    formatLastLoginDisplay("2026-07-01T10:30:00", new Date("2026-08-11T10:30:00")),
+    { text: "2026-07-01 10:30（距上次登录 41 天）", isLoginStale: true },
+  );
+
+  assert.deepEqual(formatLastLoginDisplay(null, new Date("2026-08-11T10:30:00")), {
+    text: "从未登录（疑似未激活）",
+    isLoginStale: true,
+  });
 });
