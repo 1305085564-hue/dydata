@@ -75,7 +75,7 @@ test("视频软配对失败时事务仍成功并明确返回 videoUpdated false"
   assert.deepEqual(await response.json(), {
     ok: true,
     videoUpdated: false,
-    message: "视频侧未找到对应记录，仅更新了日报",
+    message: "暂未匹配到视频，日报已保存，后续可手动关联",
   });
   assert.equal(injected.wasUpdateCalled(), true);
 });

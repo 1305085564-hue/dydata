@@ -1201,7 +1201,7 @@ export function ContentDiagnosisWorkbench({
         </div>
 
         {/* 右侧 40% 栏：台词引用、AI诊断思路、诊断建议与下发 */}
-        <div className="lg:col-span-4 flex flex-col bg-white overflow-y-auto p-6 space-y-6 min-w-0">
+        <div className="lg:col-span-4 flex flex-col bg-white overflow-y-auto p-6 pb-24 space-y-6 min-w-0">
           {scriptSections.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">

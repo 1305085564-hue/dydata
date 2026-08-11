@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Search, Check, X, FileText, Scissors, Rocket } from "lucide-react";
+import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Search, Check, X, FileText, Scissors, Rocket, Loader2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
@@ -2235,9 +2235,10 @@ export function VideoSubmitForm({
                     type="button"
                     onClick={triggerSubmit}
                     disabled={isSubmitting || !canActuallySubmit}
-                    className="h-10 rounded-xl px-6 text-[13px] font-medium bg-[#D97757] hover:bg-[#C96442] text-white disabled:bg-[#D97757]/40 disabled:text-white/70 disabled:cursor-not-allowed transition-all duration-150"
+                    className="h-10 rounded-xl px-6 text-[13px] font-medium bg-[#D97757] hover:bg-[#C96442] text-white disabled:opacity-50 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed transition-all duration-150 flex items-center gap-2"
                   >
-                    {submitButtonLabel}
+                    {isSubmitting && <Loader2 className="size-4 animate-spin shrink-0 text-white" />}
+                    <span>{submitButtonLabel}</span>
                   </Button>
                 </div>
               </div>

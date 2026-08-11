@@ -519,13 +519,13 @@ export function VideoSubmitFormV2({
             disabled={isSubmitting || isSuccess}
             className={cn(
               "bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.97] transition-all px-6 py-2 rounded-md font-medium text-[14px] shadow-sm flex items-center gap-2",
-              (isSubmitting || isSuccess) && "opacity-80 cursor-not-allowed"
+              (isSubmitting || isSuccess) && "opacity-50 cursor-not-allowed"
             )}
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                正在提交中...
+                提交中...
               </>
             ) : isSuccess ? (
               <>

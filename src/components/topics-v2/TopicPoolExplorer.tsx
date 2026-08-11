@@ -11,7 +11,9 @@ import {
   RefreshCw,
   AlertCircle,
   PenTool,
+  Sparkles,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type {
   TopicPoolItem,
   TopicOption,
@@ -19,7 +21,7 @@ import type {
   TopicTimeRange,
 } from "./types";
 
-export type SortByOption = "avg_play" | "claim_count" | "latest";
+export type SortByOption = "ai_recommended" | "avg_play" | "claim_count" | "latest";
 
 interface TopicPoolExplorerProps {
   items: TopicPoolItem[];
@@ -225,16 +227,25 @@ export function TopicPoolExplorer({
           </div>
 
           {/* 排序下拉 */}
-          <select
-            value={sortBy}
-            onChange={(e) => onSortByChange(e.target.value as SortByOption)}
-            className="text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#5F82A8]"
-            aria-label="排序依据"
-          >
-            <option value="avg_play">均播最高排序</option>
-            <option value="claim_count">认领热度排序</option>
-            <option value="latest">最新录入排序</option>
-          </select>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={sortBy}
+              onChange={(e) => onSortByChange(e.target.value as SortByOption)}
+              className="text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#5F82A8]"
+              aria-label="排序依据"
+            >
+              <option value="ai_recommended">✨ AI 智能推荐排序</option>
+              <option value="avg_play">均播最高排序</option>
+              <option value="claim_count">认领热度排序</option>
+              <option value="latest">最新录入排序</option>
+            </select>
+            {sortBy === "ai_recommended" && (
+              <Badge variant="outline" className="text-[11px] border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] flex items-center gap-1 font-medium px-2 py-0.5 shrink-0">
+                <Sparkles className="size-3 text-[#D97757]" />
+                AI
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* 搜题、时间窗、视图与新建 */}

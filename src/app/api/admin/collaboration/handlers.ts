@@ -205,7 +205,7 @@ export async function buildAttributionResponse(
     return NextResponse.json({
       ok: true,
       videoUpdated: result.videoUpdated,
-      message: result.videoUpdated ? null : "视频侧未找到对应记录，仅更新了日报",
+      message: result.videoUpdated ? null : "暂未匹配到视频，日报已保存，后续可手动关联",
     });
   } catch (error) {
     const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "更新协作归属失败";
