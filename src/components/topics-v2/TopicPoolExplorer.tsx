@@ -187,7 +187,7 @@ export function TopicPoolExplorer({
                   onClick={() => setIsTopicFilterOpen(false)}
                   aria-hidden="true"
                 />
-                <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg z-[62] p-3 animate-in fade-in duration-150">
+                <div className="absolute left-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white border border-zinc-200 rounded-xl shadow-lg z-[62] p-3 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100 text-xs">
                     <span className="font-semibold text-zinc-800">多选母题</span>
                     {selectedTopicIds.length > 0 && (
@@ -240,7 +240,11 @@ export function TopicPoolExplorer({
               <option value="latest">最新录入排序</option>
             </select>
             {sortBy === "ai_recommended" && (
-              <Badge variant="outline" className="text-[11px] border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] flex items-center gap-1 font-medium px-2 py-0.5 shrink-0">
+              <Badge
+                variant="outline"
+                title="综合近 30 天合格均播与团队防撞车权重推荐"
+                className="text-[11px] border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] flex items-center gap-1 font-medium px-2 py-0.5 shrink-0 cursor-help"
+              >
                 <Sparkles className="size-3 text-[#D97757]" />
                 AI
               </Badge>
@@ -516,7 +520,7 @@ export function TopicPoolExplorer({
                           type="button"
                           disabled={operatingId === sub.id}
                           onClick={(e) => handleClaim(e, sub.id)}
-                          className="px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all"
+                          className="px-2 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 text-xs font-medium opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all"
                           aria-label="认领"
                         >
                           认领

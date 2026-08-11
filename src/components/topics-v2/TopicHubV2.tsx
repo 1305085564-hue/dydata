@@ -28,11 +28,13 @@ import { SmartReplaceModal } from "./SmartReplaceModal";
 export function TopicHubV2() {
   // Toast 反馈
   const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToastMsg({ text, type });
-    setTimeout(() => {
-      setToastMsg((prev) => (prev?.text === text ? null : prev));
+    toastTimerRef.current = setTimeout(() => {
+      setToastMsg(null);
     }, 3000);
   };
 

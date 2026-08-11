@@ -91,7 +91,9 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
             <select
               value={topicId}
               onChange={(event) => setTopicId(event.target.value)}
-              className="max-w-44 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-normal"
+              className={`max-w-44 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-normal transition-all ${
+                !topicId ? "ring-2 ring-[#D97757]/50 animate-pulse border-[#D97757]" : ""
+              }`}
               aria-label="选择对比母题"
             >
               <option value="">选择母题...</option>

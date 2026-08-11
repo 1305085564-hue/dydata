@@ -187,65 +187,113 @@ export function MyClaimDrawer({
                 暂未认领任何选题，浏览大盘点击“认领”
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                {activeClaims.map((claim) => {
-                  const sub = claim.subTopic;
-                  const isScripting = claim.status === "scripting";
-
-                  return (
-                    <div
-                      key={claim.id}
-                      onClick={() => sub?.id && onSelectTopic(sub.id)}
-                      className="group p-3 rounded-lg border border-zinc-200 bg-zinc-50/50 hover:bg-white hover:border-zinc-300 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <span className="text-xs font-normal text-zinc-600 group-hover:text-[#D97757] line-clamp-1">
-                          {sub?.title || "选题名"}
-                        </span>
-                        <span
-                          className={`text-xs px-1.5 py-0.5 rounded font-normal shrink-0 ${
-                            isScripting
-                              ? "bg-sky-50 text-sky-700 border border-sky-200/80"
-                              : "bg-zinc-200/80 text-zinc-700"
-                          }`}
-                        >
-                          {isScripting ? "脚本撰写中" : "候选准备"}
-                        </span>
-                      </div>
-                      <p className="text-xs text-zinc-500 line-clamp-1 mb-2 font-normal">
-                        “{sub?.hook || "暂无 Hook"}”
-                      </p>
-
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
-                        <span className="text-zinc-500 font-normal tabular-nums">
-                          {claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString() : "时间未知"}
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          {!isScripting && (
-                            <button
-                              type="button"
-                              disabled={operatingId === claim.subTopicId}
-                              onClick={(e) => handleStartScripting(e, claim.subTopicId)}
-                              className="px-2 py-0.5 rounded bg-sky-50 text-sky-700 hover:bg-sky-100 text-xs border border-sky-200/80 transition-colors font-medium"
-                              aria-label="开始写脚本"
-                            >
-                              开始写脚本
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            disabled={operatingId === claim.subTopicId}
-                            onClick={(e) => handleReturn(e, claim.subTopicId)}
-                            className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 text-xs transition-colors font-normal"
-                            aria-label="放回选题"
-                          >
-                            放回
-                          </button>
-                        </div>
-                      </div>
+              <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
+                {/* 1. 候选池区块 */}
+                {activeClaims.filter((c) => c.status === "candidate").length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
+                      <span>候选池 (占用 {candidateCount}/5 配额)</span>
                     </div>
-                  );
-                })}
+                    {activeClaims
+                      .filter((c) => c.status === "candidate")
+                      .map((claim) => {
+                        const sub = claim.subTopic;
+                        return (
+                          <div
+                            key={claim.id}
+                            onClick={() => sub?.id && onSelectTopic(sub.id)}
+                            className="group p-3 rounded-lg border border-zinc-200 bg-zinc-50/50 hover:bg-white hover:border-zinc-300 transition-all cursor-pointer"
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
+                                {sub?.title || "选题名"}
+                              </span>
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-amber-50 text-amber-700 border border-amber-200/80">
+                                候选准备
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-500 line-clamp-1 mb-2 font-normal">
+                              “{sub?.hook || "暂无 Hook"}”
+                            </p>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
+                              <span className="text-zinc-500 font-normal tabular-nums">
+                                {claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString() : "时间未知"}
+                              </span>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={operatingId === claim.subTopicId}
+                                  onClick={(e) => handleStartScripting(e, claim.subTopicId)}
+                                  className="px-2 py-0.5 rounded bg-[#D97757] text-white hover:bg-[#C46A4D] text-xs transition-colors font-medium shadow-2xs"
+                                  aria-label="开始写脚本"
+                                >
+                                  开始写脚本
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={operatingId === claim.subTopicId}
+                                  onClick={(e) => handleReturn(e, claim.subTopicId)}
+                                  className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs transition-colors font-normal"
+                                  aria-label="放回选题"
+                                >
+                                  放回
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+
+                {/* 2. 脚本撰写中区块 */}
+                {activeClaims.filter((c) => c.status === "scripting").length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-semibold text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
+                      <span>撰写中 (已锁定不占候选配额)</span>
+                    </div>
+                    {activeClaims
+                      .filter((c) => c.status === "scripting")
+                      .map((claim) => {
+                        const sub = claim.subTopic;
+                        return (
+                          <div
+                            key={claim.id}
+                            onClick={() => sub?.id && onSelectTopic(sub.id)}
+                            className="group p-3 rounded-lg border border-sky-100 bg-sky-50/30 hover:bg-white hover:border-sky-200 transition-all cursor-pointer"
+                          >
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
+                                {sub?.title || "选题名"}
+                              </span>
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-sky-50 text-sky-700 border border-sky-200/80">
+                                脚本中
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-500 line-clamp-1 mb-2 font-normal">
+                              “{sub?.hook || "暂无 Hook"}”
+                            </p>
+
+                            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
+                              <span className="text-zinc-500 font-normal tabular-nums">
+                                {claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString() : "时间未知"}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={operatingId === claim.subTopicId}
+                                onClick={(e) => handleReturn(e, claim.subTopicId)}
+                                className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs transition-colors font-normal"
+                                aria-label="放回选题"
+                              >
+                                放回
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             )}
           </div>

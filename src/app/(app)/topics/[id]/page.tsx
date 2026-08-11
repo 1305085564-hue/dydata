@@ -462,13 +462,14 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6 space-y-6">
       {/* 顶部面包屑与管理按钮 (L0 空间) */}
       <div className="flex items-center justify-between pb-1">
-        <Link
-          href="/topics"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="inline-flex items-center gap-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
         >
           <ChevronLeft className="size-4 text-zinc-400" />
           <span>返回选题池</span>
-        </Link>
+        </button>
 
         {isOwner && (
           <div className="flex items-center gap-2">
@@ -893,17 +894,12 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-zinc-200">
                   取消
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    setDeleteDialogOpen(false);
-                    document.getElementById("associated-works-section")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="rounded-xl bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90"
+                <a
+                  href={`/admin/content?topicId=${subTopicId}`}
+                  className="inline-flex items-center justify-center h-8 px-3 rounded-xl bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90 text-[12px] font-medium transition-all"
                 >
-                  去看关联作品
-                </Button>
+                  前往视频管理解绑
+                </a>
               </div>
             </div>
           ) : (

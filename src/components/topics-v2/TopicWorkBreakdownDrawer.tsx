@@ -394,7 +394,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 active:scale-[0.97] text-zinc-700 font-medium text-xs transition-all disabled:opacity-50"
+                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
               >
                 开始写脚本
               </button>

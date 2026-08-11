@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Sparkles, UserCheck, Video, RefreshCw, AlertCircle } from "lucide-react";
+import { Sparkles, UserCheck, Video, RefreshCw, AlertCircle, ExternalLink } from "lucide-react";
 import type { ActiveTopicsResponse, TopicClaimItem, TopicFocusItem } from "./types";
 
 interface TodayFocusSectionProps {
@@ -14,7 +14,7 @@ interface TodayFocusSectionProps {
 }
 
 function formatPlayCount(value: number | null) {
-  if (value === null) return "暂无";
+  if (value === null) return "无合格成片";
   return value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString();
 }
 
@@ -60,13 +60,17 @@ function FocusCard({
 
         {/* 仅保留唯一的【数据指标网格】，彻底剔除重复的推荐信号框与额外新标签 */}
         <div className="grid grid-cols-2 gap-2 bg-zinc-50 rounded-lg p-2.5 mb-4 border border-zinc-100 text-xs">
-          <div>
+          <div title={item.summary.averagePlayCount === null ? "暂无播放量≥10,000 的合格成片数据" : undefined}>
             <div className="text-zinc-500 text-xs font-normal">合格作品均播</div>
-            <div className="font-semibold tabular-nums text-zinc-800 text-sm mt-0.5">{formatPlayCount(item.summary.averagePlayCount)}</div>
+            <div className={`font-semibold tabular-nums text-sm mt-0.5 ${item.summary.averagePlayCount === null ? "text-zinc-400 text-xs font-normal" : "text-zinc-800"}`}>
+              {formatPlayCount(item.summary.averagePlayCount)}
+            </div>
           </div>
-          <div>
+          <div title={item.summary.bestPlayCount === null ? "暂无播放量≥10,000 的合格成片数据" : undefined}>
             <div className="text-zinc-500 text-xs font-normal">最高播放</div>
-            <div className="font-semibold tabular-nums text-zinc-900 text-sm mt-0.5">{formatPlayCount(item.summary.bestPlayCount)}</div>
+            <div className={`font-semibold tabular-nums text-sm mt-0.5 ${item.summary.bestPlayCount === null ? "text-zinc-400 text-xs font-normal" : "text-zinc-900"}`}>
+              {formatPlayCount(item.summary.bestPlayCount)}
+            </div>
           </div>
         </div>
       </div>
@@ -179,7 +183,7 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
             >
               <div className="min-w-0 flex-1 truncate font-normal">
                 <span className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">{claim.displayName || "团队成员"}</span>
-                <span className="text-zinc-500 ml-1.5">认领了《{claim.subTopic?.title || "子题"}》</span>
+                <span className="text-zinc-500 ml-1.5">认领选题《{claim.subTopic?.title || "子题"}》</span>
               </div>
               <span className="text-xs text-zinc-500 shrink-0 font-normal tabular-nums">{formatDate(claim.claimedAt)}</span>
             </button>
@@ -193,18 +197,32 @@ export function TodayFocusSection({ data, loading, error, onClaim, onRetry, onSe
           empty="暂无最新作品产出"
         >
           {(data?.recentlyWorked ?? []).slice(0, 4).map((work) => (
-            <button
+            <div
               key={work.id}
-              type="button"
-              onClick={() => work.subTopic?.id && onSelectTopic(work.subTopic.id)}
-              className="w-full flex items-center justify-between gap-3 text-xs py-2 px-2.5 hover:bg-zinc-50 rounded-lg transition-colors text-left min-w-0 group"
+              className="w-full flex items-center justify-between gap-2 text-xs py-2 px-2.5 hover:bg-zinc-50 rounded-lg transition-colors text-left min-w-0 group"
             >
-              <div className="min-w-0 flex-1 truncate font-normal">
-                <span className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">《{work.videoTitle}》</span>
-                {work.subTopic?.title && <span className="text-zinc-500 ml-1 truncate">(对应: {work.subTopic.title})</span>}
+              <button
+                type="button"
+                onClick={() => work.subTopic?.id && onSelectTopic(work.subTopic.id)}
+                className="min-w-0 flex-1 truncate font-normal text-left"
+                title={`查看选题《${work.subTopic?.title || "未命名选题"}》的剖析剖位`}
+              >
+                <span className="font-medium text-zinc-800 group-hover:text-[#D97757] transition-colors">成片《{work.videoTitle}》</span>
+                {work.subTopic?.title && <span className="text-zinc-500 ml-1 truncate">(对应选题: {work.subTopic.title})</span>}
+              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href="/admin/content"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1 text-zinc-400 hover:text-[#D97757] transition-colors rounded hover:bg-zinc-100"
+                  title="前往视频复盘查看成片"
+                  aria-label="前往视频复盘查看成片"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <span className="text-xs text-zinc-500 font-normal tabular-nums">{formatDate(work.uploadedAt)}</span>
               </div>
-              <span className="text-xs text-zinc-500 shrink-0 font-normal tabular-nums">{formatDate(work.uploadedAt)}</span>
-            </button>
+            </div>
           ))}
         </ActivityPanel>
       </div>
