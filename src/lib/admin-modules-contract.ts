@@ -18,6 +18,8 @@ export interface AdminModuleMemberSummary extends ExemptionFields {
   data_scope?: DataScope | null;
   email: string | null;
   last_sign_in_at?: string | null;
+  monthly_published_days?: number;
+  monthly_published_count?: number;
   membership_status?: MembershipStatus;
   archived_at?: string | null;
   archived_by?: string | null;
@@ -66,6 +68,8 @@ export function buildAdminModuleMemberSummaries(
       data_scope: profile.data_scope ?? "self",
       email: null,
       last_sign_in_at: null,
+      monthly_published_days: 0,
+      monthly_published_count: 0,
       membership_status: normalizeMembershipStatus(profile.membership_status),
       archived_at: profile.archived_at ?? null,
       archived_by: profile.archived_by ?? null,
@@ -100,9 +104,63 @@ export function hydrateAdminModuleMemberEmails(
     return {
       ...member,
       email: hydration.email,
-      last_sign_in_at: hydration.last_sign_in_at ?? null,
+      ...(hydration.last_sign_in_at !== undefined || "last_sign_in_at" in member
+        ? { last_sign_in_at: hydration.last_sign_in_at ?? member.last_sign_in_at ?? null }
+        : {}),
       team_id: member.team_id ?? null,
       team_name: member.team_name,
+    };
+  });
+}
+
+
+export interface AdminModuleMonthlyPublishRow {
+  user_id: string | null;
+  report_date: string | null;
+}
+
+export interface AdminModuleMonthlyPublishStats {
+  publishedDays: number;
+  publishedCount: number;
+}
+
+export function calculateAdminModuleMonthlyPublishStats(
+  rows: AdminModuleMonthlyPublishRow[] | null | undefined,
+): Record<string, AdminModuleMonthlyPublishStats> {
+  const daySets = new Map<string, Set<string>>();
+  const counts = new Map<string, number>();
+
+  for (const row of rows ?? []) {
+    if (!row.user_id || !row.report_date) continue;
+
+    if (!daySets.has(row.user_id)) {
+      daySets.set(row.user_id, new Set());
+    }
+    daySets.get(row.user_id)?.add(row.report_date);
+    counts.set(row.user_id, (counts.get(row.user_id) ?? 0) + 1);
+  }
+
+  const result: Record<string, AdminModuleMonthlyPublishStats> = {};
+  for (const [userId, dates] of daySets) {
+    result[userId] = {
+      publishedDays: dates.size,
+      publishedCount: counts.get(userId) ?? 0,
+    };
+  }
+
+  return result;
+}
+
+export function applyAdminModuleMonthlyPublishStats(
+  members: AdminModuleMemberSummary[],
+  statsByUserId: Record<string, AdminModuleMonthlyPublishStats>,
+): AdminModuleMemberSummary[] {
+  return members.map((member) => {
+    const stats = statsByUserId[member.id];
+    return {
+      ...member,
+      monthly_published_days: stats?.publishedDays ?? 0,
+      monthly_published_count: stats?.publishedCount ?? 0,
     };
   });
 }

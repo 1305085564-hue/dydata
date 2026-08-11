@@ -2,10 +2,13 @@ import type { DataManager } from "@/app/(app)/admin/data-manager";
 import { getPermissionManagerCapabilities } from "@/app/(app)/admin/权限管理";
 import { isMissingMembershipStatusError, isActiveMembership } from "@/lib/member-lifecycle";
 import {
+  applyAdminModuleMonthlyPublishStats,
   buildAdminModuleMemberSummaries,
+  calculateAdminModuleMonthlyPublishStats,
   hydrateAdminModuleMemberEmails,
   type AdminModuleMemberHydration,
   type AdminModuleMemberProfileLike,
+  type AdminModuleMonthlyPublishRow,
   type AdminModuleMemberSummary,
 } from "@/lib/admin-modules-contract";
 import { getUserPermissions } from "@/lib/permissions";
@@ -54,7 +57,9 @@ export interface AdminModulesData {
 export type AdminModulesTeamManagementData = AdminModulesData["teamManagement"];
 
 export {
+  applyAdminModuleMonthlyPublishStats,
   buildAdminModuleMemberSummaries,
+  calculateAdminModuleMonthlyPublishStats,
   hydrateAdminModuleMemberEmails,
 };
 
@@ -262,6 +267,48 @@ async function loadAdminModuleProfiles(
   throw new Error(lastError?.message ?? "加载成员资料失败");
 }
 
+function getMonthBoundsForDate(date: string) {
+  const [yearPart, monthPart] = date.split("-");
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    const now = new Date();
+    const fallbackYear = now.getUTCFullYear();
+    const fallbackMonth = now.getUTCMonth() + 1;
+    const fallbackEndDay = new Date(Date.UTC(fallbackYear, fallbackMonth, 0)).getUTCDate();
+    return {
+      startDate: `${fallbackYear}-${String(fallbackMonth).padStart(2, "0")}-01`,
+      endDate: `${fallbackYear}-${String(fallbackMonth).padStart(2, "0")}-${String(fallbackEndDay).padStart(2, "0")}`,
+    };
+  }
+
+  const endDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return {
+    startDate: `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-01`,
+    endDate: `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`,
+  };
+}
+
+async function loadAdminModuleMonthlyPublishStats(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  userIds: string[],
+  queryDate: string,
+) {
+  if (userIds.length === 0) return {};
+
+  const { startDate, endDate } = getMonthBoundsForDate(queryDate);
+  const { data, error } = await adminSupabase
+    .from("daily_reports")
+    .select("user_id, report_date")
+    .in("user_id", userIds)
+    .gte("report_date", startDate)
+    .lte("report_date", endDate);
+
+  if (error) throw new Error(error.message ?? "加载成员本月发布统计失败");
+  return calculateAdminModuleMonthlyPublishStats((data ?? []) as AdminModuleMonthlyPublishRow[]);
+}
+
 async function hydrateArchivedByNames(
   adminSupabase: ReturnType<typeof createAdminClient>,
   profiles: AdminModuleMemberSummary[],
@@ -449,6 +496,15 @@ export async function loadAdminModulesData({
   });
   const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
   const visibleActiveProfiles = activeProfiles.filter((profile) => visibleActiveProfileIds.has(profile.id));
+  const monthlyPublishStats = await loadAdminModuleMonthlyPublishStats(
+    context.adminSupabase,
+    visibleActiveProfiles.map((profile) => profile.id),
+    context.queryDate,
+  );
+  const visibleActiveProfilesWithMonthlyStats = applyAdminModuleMonthlyPublishStats(
+    visibleActiveProfiles,
+    monthlyPublishStats,
+  );
   const archivedProfiles = filterVisibleArchivedProfiles(await hydrateArchivedByNames(
     context.adminSupabase,
     hydratedProfiles.filter((profile) => profile.membership_status === "archived"),
@@ -462,7 +518,7 @@ export async function loadAdminModulesData({
       permissions: context.perm.permissions,
     },
     permissionManagerCapabilities: context.permissionManagerCapabilities,
-    allProfiles: visibleActiveProfiles,
+    allProfiles: visibleActiveProfilesWithMonthlyStats,
     archivedProfiles,
     teams,
     teamManagement,
