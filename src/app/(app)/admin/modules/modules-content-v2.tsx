@@ -48,6 +48,12 @@ import { MemberPermissionEditor } from "../components/member-permission-editor";
 
 import type { PermissionManagerMember } from "../权限管理";
 
+function truncateTeamName6(name?: string | null): string {
+  if (!name) return "未分配团队";
+  if (name.length <= 6) return name;
+  return name.slice(0, 6) + "…";
+}
+
 import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
 import type { DataScope, ExemptionCategory, PermissionCategory, PermissionKey, Permissions, UserRole, UserStatus } from "@/types";
 import type { ExemptionType } from "@/lib/豁免";
@@ -86,6 +92,9 @@ interface ProfileSummary {
   exempt_end_date?: string | null;
   exempt_reason?: string | null;
   exemption_category?: string | null;
+  monthly_published_count?: number;
+  monthly_required_count?: number;
+  monthly_published_days?: number;
 }
 
 interface TeamOption {
@@ -208,6 +217,7 @@ export function AdminModulesContentV2({
   const [exemptionMemberId, setExemptionMemberId] = useState<string | null>(null);
 
   const [teamManagementDialogOpen, setTeamManagementDialogOpen] = useState(false);
+  const [sortOption, setSortOption] = useState<"role" | "published">("role");
   const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [batchArchiveOpen, setBatchArchiveOpen] = useState(false);
@@ -293,6 +303,17 @@ export function AdminModulesContentV2({
       searchQuery,
     }) as ProfileSummary[];
   }, [profilesForCurrentView, memberView, selectedTeamId, searchQuery]);
+
+  const sortedProfiles = useMemo(() => {
+    const list = [...filteredProfiles];
+    if (sortOption === "published") {
+      list.sort((a, b) => (b.monthly_published_count ?? 0) - (a.monthly_published_count ?? 0));
+    } else {
+      const roleRank: Record<string, number> = { owner: 1, admin: 2, member: 3 };
+      list.sort((a, b) => (roleRank[a.role] ?? 9) - (roleRank[b.role] ?? 9));
+    }
+    return list;
+  }, [filteredProfiles, sortOption]);
 
   const selectableFilteredMemberIds = useMemo(() => {
     return getSelectableCurrentScreenMemberIds(filteredProfiles, currentUserId);
@@ -869,7 +890,7 @@ export function AdminModulesContentV2({
                   <option value={ALL_TEAMS_ID}>{memberView === "archived" ? "归档大盘" : "全员大盘"} ({profilesForCurrentView.length}人)</option>
                   {localTeams.map(t => {
                     const count = countProfilesInTeamForView(profilesForCurrentView, memberView, t.id);
-                    return <option key={t.id} value={t.id}>{t.name} ({count}人)</option>;
+                    return <option key={t.id} value={t.id}>{truncateTeamName6(t.name)} ({count}人)</option>;
                   })}
                   {isOwner && <option value="__manage__">⚙️ 管理团队架构...</option>}
                 </select>
@@ -878,14 +899,29 @@ export function AdminModulesContentV2({
                 </div>
               </div>
 
-              {/* 搜索框 */}
-              <div className="relative flex-1 min-w-[200px] max-w-sm">
+              {/* 排序方式选择器 */}
+              <div className="relative shrink-0">
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as "role" | "published")}
+                  className="h-9.5 pl-3.5 pr-8 text-[13px] font-medium bg-zinc-100/80 hover:bg-zinc-100 text-zinc-800 border border-zinc-200/60 focus:bg-white focus:border-zinc-500 focus:shadow-sm rounded-xl outline-none transition-all cursor-pointer appearance-none"
+                >
+                  <option value="role">职位排名</option>
+                  <option value="published">发布排名</option>
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-3 text-zinc-500">
+                  <ChevronDown className="size-3.5" />
+                </div>
+              </div>
+
+              {/* 搜索框 (收紧为约 2/3 宽度) */}
+              <div className="relative flex-1 min-w-[160px] max-w-[220px]">
                 <Search className="absolute left-3 top-2.5 size-4 text-zinc-500 stroke-[1.5]" />
                 <Input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="搜索姓名、邮箱或所属团队..."
-                  className="h-9.5 pl-9 pr-4 text-[13px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-xl"
+                  placeholder="搜索姓名、邮箱..."
+                  className="h-9.5 pl-9 pr-3 text-[13px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-xl"
                 />
               </div>
 
@@ -920,7 +956,7 @@ export function AdminModulesContentV2({
                     checked={selectableFilteredMemberIds.length > 0 && selectableFilteredMemberIds.every(id => selectedMemberIds.includes(id))}
                     className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-[#D97757] data-[state=checked]:border-[#D97757]"
                   />
-                  全选当前屏
+                  全选
                 </button>
               )}
               <div className="inline-flex items-center gap-1 rounded-lg bg-zinc-50 p-1" role="tablist" aria-label="成员状态">
@@ -935,7 +971,7 @@ export function AdminModulesContentV2({
                   )}
                 >
                   <UsersRound className="size-3.5" />
-                  正常成员
+                  正常
                   <span className="tabular-nums">{localProfiles.length}</span>
                 </button>
                 <button
@@ -949,7 +985,7 @@ export function AdminModulesContentV2({
                   )}
                 >
                   <Archive className="size-3.5" />
-                  已归档账号
+                  归档
                   <span className="tabular-nums">{localArchivedProfiles.length}</span>
                 </button>
               </div>
@@ -959,7 +995,7 @@ export function AdminModulesContentV2({
             </div>
           </div>
 
-          {filteredProfiles.length === 0 ? (
+          {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
               <div className="relative size-16 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full border border-dashed border-zinc-300 animate-[spin_40s_linear_infinite]" />
@@ -976,7 +1012,7 @@ export function AdminModulesContentV2({
             </div>
           ) : (
             <div className="mt-5 grid gap-3.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {filteredProfiles.map(member => {
+              {sortedProfiles.map(member => {
                 const isArchivedView = memberView === "archived";
                 const isAdmin = member.role === "admin";
                 const isCurrentMemberActive = activeMemberId === member.id;
@@ -1105,43 +1141,51 @@ export function AdminModulesContentV2({
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                            {isArchivedView || !isOwner || member.id === currentUserId ? (
-                              <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
-                                {isArchivedView ? archivedTeamName : member.team_name || "未分配团队"}
-                              </span>
-                            ) : (
-                              <div
-                                className="relative inline-flex items-center"
-                                onClick={(e) => e.stopPropagation()}
-                                onMouseDown={(e) => e.stopPropagation()}
-                                onPointerDown={(e) => e.stopPropagation()}
-                              >
-                                <select
-                                  value={member.team_id ?? ""}
-                                  onChange={(e) => handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)}
-                                  className="h-6 pl-2 pr-5 text-[12px] font-medium bg-zinc-100 hover:bg-zinc-200/80 text-zinc-800 border border-zinc-200/60 rounded-lg outline-none cursor-pointer appearance-none transition-all"
+                          <div className="flex items-end justify-between gap-2 pt-2">
+                            <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                              {isArchivedView || !isOwner || member.id === currentUserId ? (
+                                <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
+                                  {isArchivedView ? truncateTeamName6(archivedTeamName) : truncateTeamName6(member.team_name)}
+                                </span>
+                              ) : (
+                                <div
+                                  className="relative inline-flex items-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                  onPointerDown={(e) => e.stopPropagation()}
                                 >
-                                  <option value="">未分配团队</option>
-                                  {localTeams.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {t.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 size-3 text-zinc-500" />
-                              </div>
-                            )}
+                                  <select
+                                    value={member.team_id ?? ""}
+                                    onChange={(e) => handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)}
+                                    className="h-6 pl-2 pr-5 text-[12px] font-medium bg-zinc-100 hover:bg-zinc-200/80 text-zinc-800 border border-zinc-200/60 rounded-lg outline-none cursor-pointer appearance-none transition-all max-w-[120px] truncate"
+                                  >
+                                    <option value="">未分配团队</option>
+                                    {localTeams.map((t) => (
+                                      <option key={t.id} value={t.id}>
+                                        {truncateTeamName6(t.name)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 size-3 text-zinc-500" />
+                                </div>
+                              )}
 
-                            {isArchivedView ? (
-                              <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
-                                归档前角色：{archivedRole}
-                              </span>
-                            ) : null}
+                              {isArchivedView && (
+                                <span className="inline-flex items-center rounded-lg bg-zinc-100/80 px-2 py-0.5 text-[12px] text-zinc-500">
+                                  归档前角色：{archivedRole}
+                                </span>
+                              )}
 
-                            {isCurrentlyExempt && (
-                              <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
-                                已豁免
+                              {isCurrentlyExempt && (
+                                <span className="inline-flex items-center rounded-lg bg-[#C9604D]/10 px-2 py-0.5 text-[12px] text-[#C9604D] font-medium">
+                                  已豁免
+                                </span>
+                              )}
+                            </div>
+
+                            {!isArchivedView && (
+                              <span className="text-[12px] font-medium text-zinc-500 tabular-nums shrink-0 pb-0.5">
+                                {member.monthly_published_count ?? 0} / {member.monthly_required_count ?? 0}
                               </span>
                             )}
                           </div>
