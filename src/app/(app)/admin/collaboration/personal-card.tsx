@@ -255,8 +255,8 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                           itemStyle={{ color: "#F4F4F5" }}
                         />
                         <Legend wrapperStyle={{ fontSize: 10, paddingTop: 2 }} />
-                        <Bar dataKey="writer" name="文案" stackId="a" fill="#3B82F6" barSize={14} />
-                        <Bar dataKey="editor" name="剪辑" stackId="a" fill="#8B5CF6" barSize={14} />
+                        <Bar dataKey="writer" name="文案" stackId="a" fill="#4A7FB5" barSize={14} />
+                        <Bar dataKey="editor" name="剪辑" stackId="a" fill="#7B6BA5" barSize={14} />
                         <Bar dataKey="operator" name="运营" stackId="a" fill="#D97757" radius={[3, 3, 0, 0]} barSize={14} />
                       </BarChart>
                     </ResponsiveContainer>
