@@ -114,7 +114,7 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[94vw] h-[640px] aspect-[5/4] p-0 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[94vw] max-h-[85vh] h-auto p-0 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
         <DialogHeader className="p-5 pb-3.5 border-b border-zinc-100 flex flex-row items-center justify-between shrink-0 bg-zinc-50/40">
