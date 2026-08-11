@@ -1771,6 +1771,8 @@ export function AdminModulesContentV2({
                         <Button
                           variant="ghost"
                           size="sm"
+                          aria-label={`删除团队 ${team.name}`}
+                          title={`删除团队 ${team.name}`}
                           onClick={() => setDeleteTeamTarget(team)}
                           className="h-7 px-2.5 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/10 rounded-lg"
                         >

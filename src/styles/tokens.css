@@ -35,7 +35,8 @@
   --sidebar-ring: rgba(24, 24, 27, 0.1);
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
-  --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top));
+  --network-bar-offset: 0px;
+  --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top) + var(--network-bar-offset, 0px));
   --radius-card: 6px;
   --radius-dialog: 8px;
 }

@@ -173,6 +173,11 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
               {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
             </button>
           </div>
+          {state.error ? (
+            <p className="text-[12px] font-medium text-[#DC2626] animate-in fade-in duration-200" role="alert">
+              {getLoginErrorMessage(state.error)}
+            </p>
+          ) : null}
         </div>
 
         <label

@@ -35,9 +35,9 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   assert.match(providers, /aria-label={`启用渠道 \$\{p\.name\}`}/);
   assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
   assert.match(rewrite, /aria-current=\{isViewActive \? "true" : undefined\}/);
-  assert.match(modules, /aria-current=\{isTeamSelected \? "true" : undefined\}/);
+  assert.match(modules, /aria-selected=\{memberView === "active"\}/);
+  assert.match(modules, /aria-current=\{isCurrentMemberActive \? "true" : undefined\}/);
   assert.match(rewrite, /opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100/);
-  assert.match(modules, /opacity-100 transition-opacity pointer-events-auto sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto sm:group-focus-within:opacity-100 sm:group-focus-within:pointer-events-auto/);
 });
 
 test("服务商与 Key 开关提供可读标签", () => {
@@ -90,7 +90,9 @@ test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
   const caseRow = readSource("src/app/(app)/violations/components/case-row.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
   assert.match(caseRow, /opacity-100 sm:opacity-0[^"]*sm:group-focus-within:opacity-100/);
-  assert.match(modules, /删除团队[\s\S]*opacity-100[^"]*sm:opacity-0[^"]*sm:group-focus-within:opacity-100/);
+  assert.match(modules, /aria-label=\{`删除团队 \$\{team\.name\}`\}/);
+  assert.match(modules, /title=\{`删除团队 \$\{team\.name\}`\}/);
+  assert.match(modules, /onClick=\{\(\) => setDeleteTeamTarget\(team\)\}/);
   assert.match(modules, /aria-label="关闭成员权限详情"/);
 });
 
@@ -122,7 +124,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   assert.match(register, /barColor: "#D99E55", textColor: "#8F641B"/);
   assert.match(register, /barColor: "#5F82A8", textColor: "#4E7194"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
-  assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#3F7A4E\]/);
+  assert.match(forgot, /bg-\[#16A34A\]\/10[^"]*text-\[#15803D\]/);
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {

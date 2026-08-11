@@ -10,6 +10,7 @@ import { buildLoginPath, sanitizeNextPath } from "@/lib/auth-password";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 import type { TeamOption } from "@/lib/teams";
 
 import { AuthShell } from "../_components/auth-shell";
@@ -78,6 +79,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
   const [isLoadingTeams, setIsLoadingTeams] = useState(initialTeams.length === 0);
   const [teamLoadError, setTeamLoadError] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const passwordStrengthLevel = useMemo(() => getPasswordStrengthLevel(password), [password]);
   const passwordStrengthIndex = getPasswordStrengthIndex(passwordStrengthLevel);
   const activeConfig = passwordStrengthLevel
@@ -156,16 +158,28 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="password">密码</Label>
-            <Input
-              autoComplete="new-password"
-              id="password"
-              name="password"
-              placeholder="至少 6 位密码"
-              required
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <div className="relative">
+              <Input
+                autoComplete="new-password"
+                id="password"
+                name="password"
+                placeholder="至少 6 位密码"
+                required
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 focus:outline-none transition-colors p-0.5 rounded"
+                aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+              </button>
+            </div>
             {password ? (
               <div className="flex items-center justify-between gap-3">
                 <div className="flex flex-1 gap-1">

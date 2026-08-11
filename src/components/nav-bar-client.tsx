@@ -120,6 +120,17 @@ export function NavBarClient({
   }, []);
 
   useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
     if (!isMobileMenuOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -229,6 +240,10 @@ export function NavBarClient({
   );
 
   const handleCommandHubOpen = useCallback(async () => {
+    if (commandHubOpen) {
+      setCommandHubOpen(false);
+      return;
+    }
     setCommandHubLoaded(true);
     let nextApprovalCount = approvalBadgeCount;
     const localTodoCount = allNotifications.filter(
@@ -260,7 +275,7 @@ export function NavBarClient({
       }),
     );
     setCommandHubOpen(true);
-  }, [activate, activeTodos.length, allNotifications, approvalBadgeCount, isAdmin, loadPendingApprovalsCount]);
+  }, [activate, activeTodos.length, allNotifications, approvalBadgeCount, commandHubOpen, isAdmin, loadPendingApprovalsCount]);
 
   const handleSettingsOpen = useCallback(() => {
     setSettingsLoaded(true);
@@ -282,7 +297,7 @@ export function NavBarClient({
     <>
       <nav
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
+          "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
             ? "border-zinc-200 bg-white/95 py-2.5 backdrop-blur-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)]"
             : "border-zinc-200/50 bg-zinc-50/80 py-3.5 backdrop-blur-md"
@@ -339,7 +354,7 @@ export function NavBarClient({
                           "relative inline-flex h-9 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-all duration-200 ease-out group origin-center",
                           isGroupActive
                             ? "text-zinc-950 font-semibold scale-[1.03]"
-                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-200/80 hover:scale-[1.03] active:scale-95"
+                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100 hover:scale-[1.03] active:scale-95"
                         )}
                       >
                         {isGroupActive && (
@@ -369,11 +384,12 @@ export function NavBarClient({
                           setActiveDropdownGroup((curr) => (curr === group.key ? null : group.key))
                         }
                         aria-expanded={isDropdownOpen}
+                        aria-haspopup="true"
                         className={cn(
                           "relative inline-flex h-9 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-all duration-200 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
                             ? "text-zinc-950 font-semibold scale-[1.03]"
-                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-200/80 hover:scale-[1.03] active:scale-95"
+                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100 hover:scale-[1.03] active:scale-95"
                         )}
                       >
                         {isGroupActive && (
@@ -431,7 +447,7 @@ export function NavBarClient({
                                       "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[13px] transition-all duration-150 origin-left group/item",
                                       active
                                         ? "bg-[#5F82A8]/12 text-zinc-950 font-semibold scale-[1.02]"
-                                        : "text-zinc-700 font-medium hover:bg-zinc-200/70 hover:text-zinc-950 hover:scale-[1.02]"
+                                        : "text-zinc-700 font-medium hover:bg-zinc-100 hover:text-zinc-950 hover:scale-[1.02]"
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">
@@ -483,15 +499,8 @@ export function NavBarClient({
                 onOpenSettings={handleSettingsOpen}
               />
 
-              {/* Bell alert Popover button container (FAR RIGHT - Seamless Hover Expansion) */}
-              <div
-                className="relative group py-1 -my-1"
-                onMouseEnter={() => {
-                  if (!commandHubLoaded) setCommandHubLoaded(true);
-                  setCommandHubOpen(true);
-                }}
-                onMouseLeave={() => setCommandHubOpen(false)}
-              >
+              {/* Bell alert Popover button container (Click to Open) */}
+              <div className="relative group py-1 -my-1">
                 <button
                   type="button"
                   onClick={() => void handleCommandHubOpen()}

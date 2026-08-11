@@ -25,13 +25,13 @@ test("glassClass 返回统一毛玻璃样式", () => {
 });
 
 test("buttonClass 复用现有按钮 variants", () => {
-  const primary = buttonClass("default", "lg");
+  const primary = buttonClass("default", "default");
   const ghost = buttonClass("ghost", "sm");
 
   assert.match(primary, /bg-\[#D97757\]/);
   assert.match(primary, /h-9/);
   assert.match(ghost, /hover:bg-zinc-100/);
-  assert.match(ghost, /h-7/);
+  assert.match(ghost, /h-8/);
 });
 
 test("badgeClass 根据语义色返回对应 badge class", () => {

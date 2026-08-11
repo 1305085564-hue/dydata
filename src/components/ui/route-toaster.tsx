@@ -12,5 +12,5 @@ export function RouteToaster() {
   const pathname = usePathname();
 
   if (pathname === "/") return null;
-  return <Toaster richColors position="top-right" />;
+  return <Toaster richColors position="bottom-right" />;
 }

@@ -49,10 +49,21 @@ export function NetworkStatusBar() {
     };
   }, []);
 
+  useEffect(() => {
+    if (visible) {
+      document.documentElement.style.setProperty("--network-bar-offset", "2rem");
+    } else {
+      document.documentElement.style.setProperty("--network-bar-offset", "0px");
+    }
+    return () => {
+      document.documentElement.style.setProperty("--network-bar-offset", "0px");
+    };
+  }, [visible]);
+
   if (!visible) return null;
 
   const isOffline = state === "offline";
-  const bgColor = isOffline ? "bg-[#C9604D]" : "bg-[#6FAA7D]";
+  const bgColor = isOffline ? "bg-[#C9604D]" : "bg-[#16A34A]";
   const text = isOffline ? "网络已断开，部分功能可能不可用" : "网络已恢复";
 
   return (
