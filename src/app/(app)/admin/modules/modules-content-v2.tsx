@@ -765,7 +765,7 @@ export function AdminModulesContentV2({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: activeMemberId })
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error("API request failed");
       const payload = await res.json();
       setAiSuggestion({
         status: payload.status || "normal",
@@ -774,8 +774,13 @@ export function AdminModulesContentV2({
         loading: false
       });
     } catch {
-      feedbackToast.error("获取 AI 建议失败");
-      setAiSuggestion(null);
+      feedbackToast.error("网络异常，请检查连接后重试");
+      setAiSuggestion({
+        status: "critical",
+        summary: "网络异常，请检查网络连接后重试。",
+        suggestions: [],
+        loading: false
+      });
     }
   };
 
@@ -873,9 +878,9 @@ export function AdminModulesContentV2({
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-zinc-100 pb-5">
-            <div className="flex flex-wrap items-center gap-2.5 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 w-full sm:w-auto">
               {/* 团队架构选择器 */}
-              <div className="relative shrink-0">
+              <div className="relative shrink-0 w-full sm:w-auto">
                 <select
                   value={selectedTeamId}
                   onChange={(e) => {
@@ -885,7 +890,7 @@ export function AdminModulesContentV2({
                       setSelectedTeamId(e.target.value);
                     }
                   }}
-                  className="h-9.5 pl-3.5 pr-8 text-[13px] font-medium bg-zinc-100/80 hover:bg-zinc-100 text-zinc-800 border border-zinc-200/60 focus:bg-white focus:border-zinc-500 focus:shadow-sm rounded-xl outline-none transition-all cursor-pointer appearance-none"
+                  className="h-9.5 w-full sm:w-auto pl-3.5 pr-8 text-[13px] font-medium bg-zinc-100/80 hover:bg-zinc-100 text-zinc-800 border border-zinc-200/60 focus:bg-white focus:border-zinc-500 focus:shadow-sm rounded-xl outline-none transition-all cursor-pointer appearance-none"
                 >
                   <option value={ALL_TEAMS_ID}>{memberView === "archived" ? "归档大盘" : "全员大盘"} ({profilesForCurrentView.length}人)</option>
                   {localTeams.map(t => {
@@ -900,11 +905,11 @@ export function AdminModulesContentV2({
               </div>
 
               {/* 排序方式选择器 */}
-              <div className="relative shrink-0">
+              <div className="relative shrink-0 w-full sm:w-auto">
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as "role" | "published")}
-                  className="h-9.5 pl-3.5 pr-8 text-[13px] font-medium bg-zinc-100/80 hover:bg-zinc-100 text-zinc-800 border border-zinc-200/60 focus:bg-white focus:border-zinc-500 focus:shadow-sm rounded-xl outline-none transition-all cursor-pointer appearance-none"
+                  className="h-9.5 w-full sm:w-auto pl-3.5 pr-8 text-[13px] font-medium bg-zinc-100/80 hover:bg-zinc-100 text-zinc-800 border border-zinc-200/60 focus:bg-white focus:border-zinc-500 focus:shadow-sm rounded-xl outline-none transition-all cursor-pointer appearance-none"
                 >
                   <option value="role">职位排名</option>
                   <option value="published">发布排名</option>
@@ -915,13 +920,13 @@ export function AdminModulesContentV2({
               </div>
 
               {/* 搜索框 (收紧为约 2/3 宽度) */}
-              <div className="relative flex-1 min-w-[160px] max-w-[220px]">
+              <div className="relative flex-1 w-full sm:w-auto sm:min-w-[160px] sm:max-w-[220px]">
                 <Search className="absolute left-3 top-2.5 size-4 text-zinc-500 stroke-[1.5]" />
                 <Input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="搜索姓名、邮箱..."
-                  className="h-9.5 pl-9 pr-3 text-[13px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-xl"
+                  className="h-9.5 pl-9 pr-3 text-[13px] bg-zinc-100/60 border-transparent focus:bg-white focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 rounded-xl w-full"
                 />
               </div>
 
@@ -1322,25 +1327,39 @@ export function AdminModulesContentV2({
                         </div>
                         <p className="text-[12px] text-zinc-700 leading-relaxed">{aiSuggestion.summary}</p>
 
-                        {aiSuggestion.suggestions.map((sug, idx) => {
-                          const key = `${sug.label}-${idx}`;
-                          const isBusy = executingAiKey === key;
-                          return (
-                            <div key={idx} className="bg-white rounded-lg border border-zinc-200 p-2.5 flex items-start justify-between gap-3">
-                              <div className="space-y-0.5">
-                                <h5 className="text-[12px] font-medium text-zinc-900">{sug.label}</h5>
-                                <p className="text-[12px] text-zinc-500 leading-relaxed">{sug.description}</p>
+                        {aiSuggestion.suggestions.length > 0 ? (
+                          aiSuggestion.suggestions.map((sug, idx) => {
+                            const key = `${sug.label}-${idx}`;
+                            const isBusy = executingAiKey === key;
+                            return (
+                              <div key={idx} className="bg-white rounded-lg border border-zinc-200 p-2.5 flex items-start justify-between gap-3">
+                                <div className="space-y-0.5">
+                                  <h5 className="text-[12px] font-medium text-zinc-900">{sug.label}</h5>
+                                  <p className="text-[12px] text-zinc-500 leading-relaxed">{sug.description}</p>
+                                </div>
+                                <Button
+                                  onClick={() => void handleExecuteAiSuggestion(sug, key)}
+                                  disabled={Boolean(executingAiKey)}
+                                  className="h-7 px-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded text-[12px] shrink-0 active:scale-95"
+                                >
+                                  {isBusy ? "执行中..." : "一键部署"}
+                                </Button>
                               </div>
-                              <Button
-                                onClick={() => void handleExecuteAiSuggestion(sug, key)}
-                                disabled={Boolean(executingAiKey)}
-                                className="h-7 px-2.5 bg-zinc-950 text-white hover:bg-zinc-800 rounded text-[12px] shrink-0 active:scale-95"
-                              >
-                                {isBusy ? "执行中..." : "一键部署"}
-                              </Button>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                        ) : (
+                          <div className="flex justify-end pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleFetchAiSuggestion}
+                              className="h-7 px-2.5 text-[12px] border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-100"
+                            >
+                              <RefreshCw className="size-3 mr-1 text-zinc-500" />
+                              重试
+                            </Button>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -1649,7 +1668,7 @@ export function AdminModulesContentV2({
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作浮层"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-md px-5 py-2.5 shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-md px-5 py-2.5 shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out"
         >
           <div className="flex items-center gap-2 pr-2 border-r border-zinc-200 text-[13px] font-medium text-zinc-900">
             <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[11px] font-semibold text-white">

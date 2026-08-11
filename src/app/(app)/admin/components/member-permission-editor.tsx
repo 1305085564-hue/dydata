@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Users, User } from "lucide-react";
+import { Building2, Users, User, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import {
@@ -71,6 +71,13 @@ export function MemberPermissionEditor({
 
   return (
     <div className="space-y-6">
+      {isOwner && (
+        <div className="flex items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50 px-3.5 py-2.5 text-[12px] text-zinc-500">
+          <Info className="size-4 shrink-0 text-zinc-400" />
+          <span>超管拥有全站最高权限，无需单独配置</span>
+        </div>
+      )}
+
       {/* 板块一：数据范围 (Data Scope) */}
       <section className="space-y-3">
         <div>
