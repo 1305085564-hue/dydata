@@ -29,7 +29,7 @@ interface ExceptionQueueProps {
   today: string;
   selectedIds: Set<string>;
   onSelectToggle: (userId: string) => void;
-  onSelectAll: (selected: boolean) => void;
+  onSelectAll: (selected: boolean, visibleIds?: string[]) => void;
   onQuickMark: (userId: string, status: MarkAction) => Promise<void>;
   onBatchMark: (userIds: string[], status: MarkAction, reason: string) => Promise<void>;
   onMemberClick: (member: FulfillmentMemberSummary) => void;
@@ -89,9 +89,15 @@ export function ExceptionQueue({
 
   const visibleMembers = isExpanded ? members : members.slice(0, 10);
   const hasMore = members.length > 10;
+  const visibleUserIds = visibleMembers.map((m) => m.userId);
 
-  const allSelected = members.length > 0 && members.every((m) => selectedIds.has(m.userId));
-  const someSelected = selectedIds.size > 0;
+  const allSelected = visibleMembers.length > 0 && visibleMembers.every((m) => selectedIds.has(m.userId));
+  const someSelected = visibleMembers.some((m) => selectedIds.has(m.userId)) && !allSelected;
+  const hasSelected = selectedIds.size > 0;
+
+  const toggleSelectVisible = useCallback(() => {
+    onSelectAll(!allSelected, visibleUserIds);
+  }, [allSelected, onSelectAll, visibleUserIds]);
 
   const handleQuickMark = useCallback(
     async (userId: string, action: MarkAction) => {
@@ -173,9 +179,10 @@ export function ExceptionQueue({
               <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
                 <th className="w-10 px-3 py-1.5 text-left">
                   <Checkbox
-                    aria-label="全选"
+                    aria-label="全选当前可见成员"
                     checked={allSelected}
-                    onCheckedChange={() => onSelectAll(!allSelected)}
+                    indeterminate={someSelected}
+                    onCheckedChange={toggleSelectVisible}
                   />
                 </th>
                 <th className="px-3 py-1.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
@@ -346,7 +353,7 @@ export function ExceptionQueue({
       </div>
 
       {/* 批量操作浮条 */}
-      {someSelected && (
+      {hasSelected && (
         <div className="sticky bottom-4 z-30 flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-3 shadow-md">
           <div className="flex items-center gap-3">
             <span className="text-[13px] font-medium text-zinc-700">

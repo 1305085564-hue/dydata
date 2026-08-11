@@ -345,11 +345,23 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
   }, []);
 
   const handleSelectAll = useCallback(
-    (selected: boolean) => {
+    (selected: boolean, targetUserIds?: string[]) => {
       if (selected) {
-        setSelectedIds(new Set(exceptionMembers.map((m) => m.userId)));
+        if (targetUserIds && targetUserIds.length > 0) {
+          setSelectedIds((prev) => new Set([...prev, ...targetUserIds]));
+        } else {
+          setSelectedIds(new Set(exceptionMembers.map((m) => m.userId)));
+        }
       } else {
-        setSelectedIds(new Set());
+        if (targetUserIds && targetUserIds.length > 0) {
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            targetUserIds.forEach((id) => next.delete(id));
+            return next;
+          });
+        } else {
+          setSelectedIds(new Set());
+        }
       }
     },
     [exceptionMembers],
