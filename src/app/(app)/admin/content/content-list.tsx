@@ -306,9 +306,9 @@ export function ContentList({
     );
   };
 
-  // 宽屏 (≥1536px) 全展开；窄屏 (<1536px) 按 viewMode 切换
-  const interactiveColClass = viewMode === "interaction" ? "" : "hidden 2xl:table-cell";
-  const completionColClass = viewMode === "completion" ? "" : "hidden 2xl:table-cell";
+  // 宽屏 (≥1280px) 全展开；窄屏 (<1280px) 按 viewMode 切换
+  const interactiveColClass = viewMode === "interaction" ? "" : "hidden xl:table-cell";
+  const completionColClass = viewMode === "completion" ? "" : "hidden xl:table-cell";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -328,8 +328,8 @@ export function ContentList({
           </p>
         </div>
 
-        {/* 窄屏 (<1536px) 视图分段切换器；宽屏 (≥1536px) 自动隐藏并全展开 */}
-        <div className="inline-flex 2xl:hidden items-center rounded-lg border border-zinc-200 bg-zinc-100/80 p-0.5 text-[12px]">
+        {/* 窄屏 (<1280px) 视图分段切换器；宽屏 (≥1280px) 自动隐藏并全展开 */}
+        <div className="inline-flex xl:hidden items-center rounded-lg border border-zinc-200 bg-zinc-100/80 p-0.5 text-[12px]">
           <button
             type="button"
             onClick={() => setViewMode("interaction")}
