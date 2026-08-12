@@ -21,7 +21,8 @@ import type {
   TopicTimeRange,
 } from "./types";
 
-export type SortByOption = "ai_recommended" | "avg_play" | "claim_count" | "latest";
+export type SortByOption =
+  "ai_recommended" | "avg_play" | "claim_count" | "latest";
 
 interface TopicPoolExplorerProps {
   items: TopicPoolItem[];
@@ -119,12 +120,17 @@ export function TopicPoolExplorer({
   };
 
   return (
-    <section id="topic-pool-explorer" className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs">
+    <section
+      id="topic-pool-explorer"
+      className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs"
+    >
       {/* 极简控制栏 */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6 pb-4 border-b border-zinc-100">
         <div className="flex flex-wrap items-center gap-2.5">
-          <h2 className="text-base font-semibold text-zinc-900 mr-1">选题大盘</h2>
-          
+          <h2 className="text-base font-semibold text-zinc-900 mr-1">
+            选题大盘
+          </h2>
+
           {/* 视图 Tab 分段控制器 */}
           <div className="flex items-center p-1 bg-zinc-100/80 rounded-lg text-xs font-medium text-zinc-600">
             <button
@@ -176,7 +182,12 @@ export function TopicPoolExplorer({
               aria-label="母题筛选"
             >
               <Filter className="w-3.5 h-3.5" />
-              <span>母题 {selectedTopicIds.length > 0 ? `(${selectedTopicIds.length})` : "筛选"}</span>
+              <span>
+                母题{" "}
+                {selectedTopicIds.length > 0
+                  ? `(${selectedTopicIds.length})`
+                  : "筛选"}
+              </span>
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
@@ -189,7 +200,9 @@ export function TopicPoolExplorer({
                 />
                 <div className="absolute left-0 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] bg-white border border-zinc-200 rounded-xl shadow-lg z-[62] p-3 animate-in fade-in duration-150">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100 text-xs">
-                    <span className="font-semibold text-zinc-800">多选母题</span>
+                    <span className="font-semibold text-zinc-800">
+                      多选母题
+                    </span>
                     {selectedTopicIds.length > 0 && (
                       <button
                         type="button"
@@ -214,7 +227,13 @@ export function TopicPoolExplorer({
                             onChange={() => toggleTopicId(t.id)}
                             className="rounded text-[#D97757] focus:ring-[#D97757]"
                           />
-                          <span className={isChecked ? "font-semibold text-zinc-900" : "text-zinc-700"}>
+                          <span
+                            className={
+                              isChecked
+                                ? "font-semibold text-zinc-900"
+                                : "text-zinc-700"
+                            }
+                          >
                             {t.name}
                           </span>
                         </label>
@@ -257,7 +276,9 @@ export function TopicPoolExplorer({
           {/* 时间范围 */}
           <select
             value={currentTimeRange}
-            onChange={(e) => onTimeRangeChange(e.target.value as TopicTimeRange)}
+            onChange={(e) =>
+              onTimeRangeChange(e.target.value as TopicTimeRange)
+            }
             className="text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-medium focus:outline-none focus:ring-1 focus:ring-[#5F82A8]"
             aria-label="时间范围"
           >
@@ -323,14 +344,14 @@ export function TopicPoolExplorer({
           <p className="text-xs text-zinc-500 font-normal">数据加载中...</p>
         </div>
       ) : error ? (
-        <div className="py-12 text-center border border-rose-200 rounded-xl bg-rose-50/60 p-6">
-          <AlertCircle className="w-6 h-6 text-rose-600 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-rose-900">选题池加载失败</p>
-          <p className="text-xs text-rose-600 mt-1 font-normal">{error}</p>
+        <div className="py-12 text-center border border-zinc-200 rounded-xl bg-zinc-100/60 p-6">
+          <AlertCircle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
+          <p className="text-sm font-semibold text-zinc-600">选题池加载失败</p>
+          <p className="text-xs text-[#DC2626] mt-1 font-normal">{error}</p>
           <button
             type="button"
             onClick={onRetry}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-xs font-medium text-rose-700 hover:bg-rose-100 active:scale-[0.97] transition-all"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-100 active:scale-[0.97] transition-all"
             aria-label="重试加载选题池"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -344,7 +365,9 @@ export function TopicPoolExplorer({
           </div>
           {totalCount === 0 && !searchQuery && selectedTopicIds.length === 0 ? (
             <>
-              <h3 className="text-sm font-semibold text-zinc-800 mb-1">还没有选题</h3>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-1">
+                还没有选题
+              </h3>
               <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-4 font-normal leading-relaxed">
                 还没有选题，点右上角录入第一个
               </p>
@@ -359,7 +382,9 @@ export function TopicPoolExplorer({
             </>
           ) : (
             <>
-              <h3 className="text-sm font-semibold text-zinc-800 mb-1">未找到符合条件的选题</h3>
+              <h3 className="text-sm font-semibold text-zinc-800 mb-1">
+                未找到符合条件的选题
+              </h3>
               <p className="text-xs text-zinc-500 max-w-sm mx-auto font-normal leading-relaxed">
                 尝试调整搜索词、母题多选或时间范围筛选条件
               </p>
@@ -372,7 +397,8 @@ export function TopicPoolExplorer({
           {visibleItems.map((item) => {
             const sub = item;
             const summary = item.summary;
-            const isMyClaimed = !!item.myClaim && item.myClaim.status !== "returned";
+            const isMyClaimed =
+              !!item.myClaim && item.myClaim.status !== "returned";
 
             return (
               <div
@@ -383,19 +409,22 @@ export function TopicPoolExplorer({
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2 min-w-0">
                     <span className="text-xs font-normal px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 truncate min-w-0">
-                      {sub.topics?.name || "常规"} {sub.topic_groups?.name ? `· ${sub.topic_groups.name}` : ""}
+                      {sub.topics?.name || "常规"}{" "}
+                      {sub.topic_groups?.name
+                        ? `· ${sub.topic_groups.name}`
+                        : ""}
                     </span>
 
                     {/* 状态标签 */}
                     <div className="flex items-center gap-1 shrink-0">
                       {(item.scriptingCount ?? 0) > 0 && (
-                        <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1">
-                          <PenTool className="w-3 h-3 text-sky-600" />
+                        <span className="text-xs bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1">
+                          <PenTool className="w-3 h-3 text-[#5F82A8]" />
                           <span>{item.scriptingCount} 人写作中</span>
                         </span>
                       )}
                       {isMyClaimed && (
-                        <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-normal">
+                        <span className="text-xs bg-[#16A34A]/10 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded font-normal">
                           已在候选
                         </span>
                       )}
@@ -412,10 +441,16 @@ export function TopicPoolExplorer({
 
                 <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs min-w-0">
                   <div className="text-zinc-500 text-xs tabular-nums truncate min-w-0 pr-2">
-                    热度: <span className="font-semibold text-zinc-700">{item.claimCount || 0}</span>
+                    热度:{" "}
+                    <span className="font-semibold text-zinc-700">
+                      {item.claimCount || 0}
+                    </span>
                     {summary?.averagePlayCount ? (
                       <span className="ml-2">
-                        均播: <span className="font-semibold text-[#D97757]">{(summary.averagePlayCount / 10000).toFixed(1)}万</span>
+                        均播:{" "}
+                        <span className="font-semibold text-[#D97757]">
+                          {(summary.averagePlayCount / 10000).toFixed(1)}万
+                        </span>
                       </span>
                     ) : null}
                   </div>
@@ -464,7 +499,8 @@ export function TopicPoolExplorer({
               {visibleItems.map((item) => {
                 const sub = item;
                 const summary = item.summary;
-                const isMyClaimed = !!item.myClaim && item.myClaim.status !== "returned";
+                const isMyClaimed =
+                  !!item.myClaim && item.myClaim.status !== "returned";
 
                 return (
                   <tr
@@ -482,18 +518,27 @@ export function TopicPoolExplorer({
                     </td>
                     <td className="py-3 px-3 text-zinc-600 font-normal">
                       {sub.topics?.name || "常规"}
-                      {sub.topic_groups?.name ? ` / ${sub.topic_groups.name}` : ""}
+                      {sub.topic_groups?.name
+                        ? ` / ${sub.topic_groups.name}`
+                        : ""}
                     </td>
                     <td className="py-3 px-3 text-zinc-600 tabular-nums">
-                      <div>均播: <span className="font-semibold text-[#D97757]">{summary?.averagePlayCount ? `${(summary.averagePlayCount / 10000).toFixed(1)}万` : "无"}</span></div>
+                      <div>
+                        均播:{" "}
+                        <span className="font-semibold text-[#D97757]">
+                          {summary?.averagePlayCount
+                            ? `${(summary.averagePlayCount / 10000).toFixed(1)}万`
+                            : "无"}
+                        </span>
+                      </div>
                       <div className="text-xs text-zinc-500 font-normal">
                         热度: {item.claimCount || 0} 人认领
                       </div>
                     </td>
                     <td className="py-3 px-3">
                       {(item.scriptingCount ?? 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.5 rounded font-normal">
-                          <PenTool className="w-3 h-3 text-sky-600" />
+                        <span className="inline-flex items-center gap-1 text-xs bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded font-normal">
+                          <PenTool className="w-3 h-3 text-[#5F82A8]" />
                           <span>{item.scriptingCount} 人写作中</span>
                         </span>
                       ) : (item.claimCount || 0) > 0 ? (
@@ -501,7 +546,9 @@ export function TopicPoolExplorer({
                           {item.claimCount} 人已认领
                         </span>
                       ) : (
-                        <span className="text-xs text-zinc-500 font-normal">0 人竞争</span>
+                        <span className="text-xs text-zinc-500 font-normal">
+                          0 人竞争
+                        </span>
                       )}
                     </td>
                     <td className="py-3 px-3 text-right">
@@ -538,7 +585,9 @@ export function TopicPoolExplorer({
       {/* 分页条（有数据时才显示） */}
       {totalCount > 0 && (
         <div className="flex items-center justify-between pt-4 mt-4 border-t border-zinc-100 text-xs text-zinc-500 font-normal">
-          <span>共 {totalCount} 条记录，本页 {visibleItems.length} 条</span>
+          <span>
+            共 {totalCount} 条记录，本页 {visibleItems.length} 条
+          </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -549,7 +598,9 @@ export function TopicPoolExplorer({
             >
               上一页
             </button>
-            <span className="text-zinc-700 font-medium tabular-nums">第 {currentPage} 页</span>
+            <span className="text-zinc-700 font-medium tabular-nums">
+              第 {currentPage} 页
+            </span>
             <button
               type="button"
               disabled={currentPage * 50 >= totalCount}

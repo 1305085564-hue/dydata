@@ -1,10 +1,18 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { X, Sparkles, Plus, Trash2, Edit2, SlidersHorizontal, BookOpen } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { BootstrapPayload } from '../types';
-import type { Skill } from './SkillCabin';
+import React, { useState } from "react";
+import {
+  X,
+  Sparkles,
+  Plus,
+  Trash2,
+  Edit2,
+  SlidersHorizontal,
+  BookOpen,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { BootstrapPayload } from "../types";
+import type { Skill } from "./SkillCabin";
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -25,34 +33,34 @@ export function SettingsDrawer({
   onUpdateContextLimit,
   onRefreshSkills,
 }: SettingsDrawerProps) {
-  const [activeTab, setActiveTab] = useState<'skills' | 'params'>('skills');
+  const [activeTab, setActiveTab] = useState<"skills" | "params">("skills");
 
   // 技能创建/编辑临时状态
   const [editingSkill, setEditingSkill] = useState<Partial<Skill> | null>(null);
-  const [skillName, setSkillName] = useState('');
-  const [skillPrompt, setSkillPrompt] = useState('');
-  const [skillDesc, setSkillDesc] = useState('');
-  const [skillModel, setSkillModel] = useState('');
+  const [skillName, setSkillName] = useState("");
+  const [skillPrompt, setSkillPrompt] = useState("");
+  const [skillDesc, setSkillDesc] = useState("");
+  const [skillModel, setSkillModel] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 过滤出个人可以修改的技能（scope === 'private' 或公开但是属于当前用户的）
   // 简便起见，只展示和编辑 scope === 'private' 的个人专属技能
-  const privateSkills = availableSkills.filter((s) => s.scope === 'private');
+  const privateSkills = availableSkills.filter((s) => s.scope === "private");
 
   const startCreate = () => {
     setEditingSkill({});
-    setSkillName('');
-    setSkillPrompt('');
-    setSkillDesc('');
-    setSkillModel('');
+    setSkillName("");
+    setSkillPrompt("");
+    setSkillDesc("");
+    setSkillModel("");
   };
 
   const startEdit = (skill: Skill) => {
     setEditingSkill(skill);
     setSkillName(skill.name);
     setSkillPrompt(skill.systemPrompt);
-    setSkillDesc(skill.description || '');
-    setSkillModel(skill.defaultModelViewId || '');
+    setSkillDesc(skill.description || "");
+    setSkillModel(skill.defaultModelViewId || "");
   };
 
   const handleSaveSkill = async () => {
@@ -61,8 +69,10 @@ export function SettingsDrawer({
 
     try {
       const isEdit = Boolean(editingSkill?.id);
-      const url = isEdit ? `/api/rewrite/skills/${editingSkill!.id}` : '/api/rewrite/skills';
-      const method = isEdit ? 'PATCH' : 'POST';
+      const url = isEdit
+        ? `/api/rewrite/skills/${editingSkill!.id}`
+        : "/api/rewrite/skills";
+      const method = isEdit ? "PATCH" : "POST";
 
       // 技能 key 需要是唯一的英文字符。如果是创建，自动生成一个随机 key
       const key = isEdit ? undefined : `skill_${Date.now()}`;
@@ -72,13 +82,13 @@ export function SettingsDrawer({
         systemPrompt: skillPrompt.trim(),
         description: skillDesc.trim() || null,
         defaultModelViewId: skillModel || null,
-        scope: 'private',
+        scope: "private",
         key,
       };
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
@@ -87,36 +97,36 @@ export function SettingsDrawer({
         onRefreshSkills();
       } else {
         const errorData = await res.json();
-        alert(errorData.error || '保存技能失败');
+        alert(errorData.error || "保存技能失败");
       }
     } catch (e) {
-      console.warn('保存技能异常', e);
+      console.warn("保存技能异常", e);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteSkill = async (id: string) => {
-    if (!confirm('确定要删除这个个人技能吗？')) return;
+    if (!confirm("确定要删除这个个人技能吗？")) return;
     try {
       const res = await fetch(`/api/rewrite/skills/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       if (res.ok) {
         onRefreshSkills();
       } else {
-        alert('删除失败');
+        alert("删除失败");
       }
     } catch (e) {
-      console.warn('删除技能异常', e);
+      console.warn("删除技能异常", e);
     }
   };
 
   return (
     <div
       className={cn(
-        'absolute inset-0 bg-white z-40 transition-all duration-300 flex flex-col',
-        isOpen ? 'translate-x-0' : '-translate-x-full'
+        "absolute inset-0 bg-white z-40 transition-all duration-300 flex flex-col",
+        isOpen ? "translate-x-0" : "-translate-x-full",
       )}
     >
       {/* 头部控制 */}
@@ -137,23 +147,29 @@ export function SettingsDrawer({
       {/* Tabs 切换 */}
       <div className="shrink-0 flex border-b border-zinc-200/40 px-2 pt-1.5 bg-zinc-50/20">
         <button
-          onClick={() => { setActiveTab('skills'); setEditingSkill(null); }}
+          onClick={() => {
+            setActiveTab("skills");
+            setEditingSkill(null);
+          }}
           className={cn(
-            'px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all',
-            activeTab === 'skills'
-              ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-500 hover:text-zinc-950'
+            "px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all",
+            activeTab === "skills"
+              ? "border-zinc-900 text-zinc-900"
+              : "border-transparent text-zinc-500 hover:text-zinc-950",
           )}
         >
           个人技能管理
         </button>
         <button
-          onClick={() => { setActiveTab('params'); setEditingSkill(null); }}
+          onClick={() => {
+            setActiveTab("params");
+            setEditingSkill(null);
+          }}
           className={cn(
-            'px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all',
-            activeTab === 'params'
-              ? 'border-zinc-900 text-zinc-900'
-              : 'border-transparent text-zinc-500 hover:text-zinc-950'
+            "px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all",
+            activeTab === "params"
+              ? "border-zinc-900 text-zinc-900"
+              : "border-transparent text-zinc-500 hover:text-zinc-950",
           )}
         >
           参数配置
@@ -162,16 +178,18 @@ export function SettingsDrawer({
 
       {/* 内容流式渲染区 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {activeTab === 'skills' ? (
+        {activeTab === "skills" ? (
           editingSkill ? (
             /* 1. 创建/编辑技能表单 */
             <div className="space-y-3 animate-in fade-in duration-200">
               <div className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">
-                {editingSkill.id ? '编辑个人技能' : '新建个人技能'}
+                {editingSkill.id ? "编辑个人技能" : "新建个人技能"}
               </div>
 
               <label className="block space-y-1">
-                <span className="text-[12px] font-medium text-zinc-700 pl-0.5">技能名称 (必填)</span>
+                <span className="text-[12px] font-medium text-zinc-700 pl-0.5">
+                  技能名称 (必填)
+                </span>
                 <input
                   type="text"
                   value={skillName}
@@ -182,7 +200,9 @@ export function SettingsDrawer({
               </label>
 
               <label className="block space-y-1">
-                <span className="text-[12px] font-medium text-zinc-700 pl-0.5">提示词指令 System Prompt (必填)</span>
+                <span className="text-[12px] font-medium text-zinc-700 pl-0.5">
+                  提示词指令 System Prompt (必填)
+                </span>
                 <textarea
                   value={skillPrompt}
                   onChange={(e) => setSkillPrompt(e.target.value)}
@@ -193,7 +213,9 @@ export function SettingsDrawer({
               </label>
 
               <label className="block space-y-1">
-                <span className="text-[12px] font-medium text-zinc-700 pl-0.5">技能简短说明</span>
+                <span className="text-[12px] font-medium text-zinc-700 pl-0.5">
+                  技能简短说明
+                </span>
                 <input
                   type="text"
                   value={skillDesc}
@@ -206,7 +228,9 @@ export function SettingsDrawer({
               {/* 绑定默认模型 */}
               {bootstrap && (
                 <label className="block space-y-1">
-                  <span className="text-[12px] font-medium text-zinc-700 pl-0.5">绑定默认模型 (可选)</span>
+                  <span className="text-[12px] font-medium text-zinc-700 pl-0.5">
+                    绑定默认模型 (可选)
+                  </span>
                   <select
                     value={skillModel}
                     onChange={(e) => setSkillModel(e.target.value)}
@@ -214,10 +238,20 @@ export function SettingsDrawer({
                   >
                     <option value="">跟随全局配置</option>
                     {bootstrap.modelViews.map((item) => {
-                      const disabled = (item as { is_enabled?: boolean; isEnabled?: boolean }).is_enabled === false || (item as { is_enabled?: boolean; isEnabled?: boolean }).isEnabled === false;
+                      const disabled =
+                        (item as { is_enabled?: boolean; isEnabled?: boolean })
+                          .is_enabled === false ||
+                        (item as { is_enabled?: boolean; isEnabled?: boolean })
+                          .isEnabled === false;
                       return (
-                        <option key={item.id} value={item.id} disabled={disabled} className={disabled ? "text-zinc-400" : ""}>
-                          {item.label}{disabled ? " (已停用)" : ""}
+                        <option
+                          key={item.id}
+                          value={item.id}
+                          disabled={disabled}
+                          className={disabled ? "text-zinc-400" : ""}
+                        >
+                          {item.label}
+                          {disabled ? " (已停用)" : ""}
                         </option>
                       );
                     })}
@@ -235,10 +269,12 @@ export function SettingsDrawer({
                 </button>
                 <button
                   onClick={handleSaveSkill}
-                  disabled={isSubmitting || !skillName.trim() || !skillPrompt.trim()}
+                  disabled={
+                    isSubmitting || !skillName.trim() || !skillPrompt.trim()
+                  }
                   className="flex-1 bg-[#D97757] text-white hover:bg-[#C96442] disabled:opacity-50 font-medium py-2 rounded-lg text-[12px] shadow-sm shadow-[#D97757]/20 transition-all active:scale-[0.98]"
                 >
-                  {isSubmitting ? '保存中...' : '确认保存'}
+                  {isSubmitting ? "保存中..." : "确认保存"}
                 </button>
               </div>
             </div>
@@ -246,7 +282,9 @@ export function SettingsDrawer({
             /* 2. 个人技能管理列表 */
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">自建个人技能</span>
+                <span className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">
+                  自建个人技能
+                </span>
                 <button
                   onClick={startCreate}
                   className="inline-flex items-center gap-1 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all active:scale-[0.98]"
@@ -259,7 +297,9 @@ export function SettingsDrawer({
               {privateSkills.length === 0 ? (
                 <div className="text-center py-10 border border-dashed border-zinc-200 rounded-lg space-y-2">
                   <BookOpen className="h-6 w-6 text-zinc-500 mx-auto" />
-                  <p className="text-[12px] text-zinc-500 font-medium">暂无个人技能，点击上方按钮创建</p>
+                  <p className="text-[12px] text-zinc-500 font-medium">
+                    暂无个人技能，点击上方按钮创建
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -270,11 +310,15 @@ export function SettingsDrawer({
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1">
-                          <Sparkles className="h-3 w-3 text-amber-500 shrink-0" />
-                          <span className="text-[12px] font-medium text-zinc-900 truncate">{skill.name}</span>
+                          <Sparkles className="h-3 w-3 text-[#F59E0B] shrink-0" />
+                          <span className="text-[12px] font-medium text-zinc-900 truncate">
+                            {skill.name}
+                          </span>
                         </div>
                         {skill.description && (
-                          <p className="text-[12px] text-zinc-500 line-clamp-1 mt-0.5 leading-relaxed">{skill.description}</p>
+                          <p className="text-[12px] text-zinc-500 line-clamp-1 mt-0.5 leading-relaxed">
+                            {skill.description}
+                          </p>
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 ml-3 shrink-0">
@@ -287,7 +331,7 @@ export function SettingsDrawer({
                         </button>
                         <button
                           onClick={() => handleDeleteSkill(skill.id)}
-                          className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-rose-600"
+                          className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-500 hover:text-[#DC2626]"
                           title="删除技能"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -302,13 +346,19 @@ export function SettingsDrawer({
         ) : (
           /* 3. 参数配置（上下文剪枝限制） */
           <div className="space-y-4 animate-in fade-in duration-200">
-            <div className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">上下文管理</div>
+            <div className="text-[12px] font-medium uppercase tracking-wider text-zinc-500">
+              上下文管理
+            </div>
 
             <div className="border border-zinc-200 bg-white p-4 rounded-lg space-y-3 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-medium text-zinc-900">携带历史对话轮数</span>
+                <span className="text-[12px] font-medium text-zinc-900">
+                  携带历史对话轮数
+                </span>
                 <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
-                  {contextLimit === 99 ? '携带全量' : `携带最近 ${contextLimit} 轮`}
+                  {contextLimit === 99
+                    ? "携带全量"
+                    : `携带最近 ${contextLimit} 轮`}
                 </span>
               </div>
 
@@ -336,7 +386,8 @@ export function SettingsDrawer({
                 </div>
               </div>
               <p className="text-[12px] text-zinc-500 leading-relaxed leading-normal mt-1">
-                限制携带轮数能极大降低长对话的 token 消耗成本，并能有效减少 AI 受到远期老指令的幻觉干扰。
+                限制携带轮数能极大降低长对话的 token 消耗成本，并能有效减少 AI
+                受到远期老指令的幻觉干扰。
               </p>
             </div>
           </div>

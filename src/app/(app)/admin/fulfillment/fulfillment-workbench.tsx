@@ -21,8 +21,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 
 type Source = "queue" | "matrix";
-type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
-type FulfillmentRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+type MarkAction = Extract<
+  FulfillmentStatus,
+  "leave" | "waived" | "absent" | "confirmed_published"
+>;
+type FulfillmentRequest = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
 
 export async function fetchFulfillmentAppeals(
   request: FulfillmentRequest = fetch,
@@ -38,7 +44,9 @@ export async function fetchFulfillmentAppeals(
   return Array.isArray(payload.appeals) ? payload.appeals : [];
 }
 
-export async function fetchFulfillmentSettings(request: FulfillmentRequest = fetch): Promise<boolean> {
+export async function fetchFulfillmentSettings(
+  request: FulfillmentRequest = fetch,
+): Promise<boolean> {
   const response = await request("/api/admin/system/settings");
   const payload = (await response.json()) as {
     feishuFulfillmentReminderEnabled?: boolean;
@@ -88,14 +96,19 @@ function filterMembers(
       const cutoff = new Date(today);
       cutoff.setDate(cutoff.getDate() - 6);
       const cutoffStr = cutoff.toISOString().slice(0, 10);
-      return filtered.filter((m) => Object.keys(m.days).some((d) => d >= cutoffStr && d <= today));
+      return filtered.filter((m) =>
+        Object.keys(m.days).some((d) => d >= cutoffStr && d <= today),
+      );
     }
     default:
       return filtered;
   }
 }
 
-function sortExceptions(members: FulfillmentMemberSummary[], today: string): FulfillmentMemberSummary[] {
+function sortExceptions(
+  members: FulfillmentMemberSummary[],
+  today: string,
+): FulfillmentMemberSummary[] {
   return [...members].sort((a, b) => {
     // 1. 连续未发天数 desc
     if (b.consecutiveMissing !== a.consecutiveMissing) {
@@ -118,17 +131,25 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
     const s = m.days[today]?.status;
     return s === "published" || s === "confirmed_published";
   }).length;
-  const pendingToday = members.filter((m) => m.days[today]?.status === "unconfirmed").length;
-  const leaveToday = members.filter((m) => m.days[today]?.status === "leave").length;
+  const pendingToday = members.filter(
+    (m) => m.days[today]?.status === "unconfirmed",
+  ).length;
+  const leaveToday = members.filter(
+    (m) => m.days[today]?.status === "leave",
+  ).length;
   const waivedToday = members.filter((m) => {
     const s = m.days[today]?.status;
     return s === "waived" || s === "exempted";
   }).length;
-  const absentToday = members.filter((m) => m.days[today]?.status === "absent").length;
+  const absentToday = members.filter(
+    (m) => m.days[today]?.status === "absent",
+  ).length;
   const totalDays = members.reduce((sum, m) => sum + m.totalDays, 0);
   const publishedDays = members.reduce((sum, m) => sum + m.publishedDays, 0);
   const periodFulfillmentRate = toPercent(publishedDays, totalDays);
-  const consecutiveMissingMembers = members.filter((m) => m.consecutiveMissing > 0).length;
+  const consecutiveMissingMembers = members.filter(
+    (m) => m.consecutiveMissing > 0,
+  ).length;
 
   return {
     totalMembers,
@@ -142,20 +163,27 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
   };
 }
 
-export function FulfillmentWorkbench({ initialData, initialRange, currentUserId }: FulfillmentWorkbenchProps) {
+export function FulfillmentWorkbench({
+  initialData,
+  initialRange,
+  currentUserId,
+}: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
 
   // 默认定位到当前登录用户所属的团队，若无则定位到首个有团队名的团队
   const defaultTeam = useMemo(() => {
     if (currentUserId) {
-      const userMember = initialData.members.find((m) => m.userId === currentUserId);
+      const userMember = initialData.members.find(
+        (m) => m.userId === currentUserId,
+      );
       if (userMember?.teamName) return userMember.teamName;
     }
     return initialData.members.find((m) => m.teamName)?.teamName ?? null;
   }, [currentUserId, initialData.members]);
 
   // 1. 核心状态：日历数据与范围
-  const [calendarData, setCalendarData] = useState<FulfillmentCalendarData>(initialData);
+  const [calendarData, setCalendarData] =
+    useState<FulfillmentCalendarData>(initialData);
   const [range, setRange] = useState<TimeRangePreset>(initialRange);
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
@@ -176,7 +204,8 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<FulfillmentMemberSummary | null>(null);
+  const [selectedMember, setSelectedMember] =
+    useState<FulfillmentMemberSummary | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [source, setSource] = useState<Source>("queue");
 
@@ -240,7 +269,10 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
   };
 
   // 7. 处理申诉审批动作
-  const handleHandleAppeal = async (appealId: string, decision: "approve" | "reject") => {
+  const handleHandleAppeal = async (
+    appealId: string,
+    decision: "approve" | "reject",
+  ) => {
     setIsSubmittingAppeal(true);
     try {
       const res = await fetch("/api/admin/fulfillment/appeal/handle", {
@@ -254,10 +286,12 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
         return;
       }
       toast.success(decision === "approve" ? "已同意申诉并改判" : "已驳回申诉");
-      
+
       // 静默重新加载日历和申诉
       await fetchAppeals();
-      const calendarRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+      const calendarRes = await fetch(
+        `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
+      );
       if (calendarRes.ok) {
         const refreshResult = await calendarRes.json();
         setCalendarData(refreshResult.data);
@@ -270,40 +304,53 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
   };
 
   // 8. 客户端无感日历加载器
-  const loadCalendar = useCallback(async (targetYear: number, targetMonth: number, targetRange: TimeRangePreset) => {
-    setIsLoadingCalendar(true);
-    try {
-      const res = await fetch(`/api/admin/fulfillment/calendar?year=${targetYear}&month=${targetMonth}`);
-      if (!res.ok) throw new Error("加载数据失败");
-      const result = await res.json();
-      setCalendarData(result.data);
+  const loadCalendar = useCallback(
+    async (
+      targetYear: number,
+      targetMonth: number,
+      targetRange: TimeRangePreset,
+    ) => {
+      setIsLoadingCalendar(true);
+      try {
+        const res = await fetch(
+          `/api/admin/fulfillment/calendar?year=${targetYear}&month=${targetMonth}`,
+        );
+        if (!res.ok) throw new Error("加载数据失败");
+        const result = await res.json();
+        setCalendarData(result.data);
 
-      // 同步 URL 参数
-      const url = new URL(window.location.href);
-      url.searchParams.set("year", String(targetYear));
-      url.searchParams.set("month", String(targetMonth));
-      url.searchParams.set("range", targetRange);
-      window.history.pushState(null, "", url.pathname + url.search);
-    } catch {
-      toast.error("加载履约日历失败，请重试");
-    } finally {
-      setIsLoadingCalendar(false);
-    }
-  }, []);
+        // 同步 URL 参数
+        const url = new URL(window.location.href);
+        url.searchParams.set("year", String(targetYear));
+        url.searchParams.set("month", String(targetMonth));
+        url.searchParams.set("range", targetRange);
+        window.history.pushState(null, "", url.pathname + url.search);
+      } catch {
+        toast.error("加载履约日历失败，请重试");
+      } finally {
+        setIsLoadingCalendar(false);
+      }
+    },
+    [],
+  );
 
   const handlePresetChange = useCallback(
-    (targetPreset: TimeRangePreset, targetYear: number, targetMonth: number) => {
+    (
+      targetPreset: TimeRangePreset,
+      targetYear: number,
+      targetMonth: number,
+    ) => {
       setRange(targetPreset);
       loadCalendar(targetYear, targetMonth, targetPreset);
     },
-    [loadCalendar]
+    [loadCalendar],
   );
 
   const handleMonthChange = useCallback(
     (targetYear: number, targetMonth: number) => {
       loadCalendar(targetYear, targetMonth, range);
     },
-    [loadCalendar, range]
+    [loadCalendar, range],
   );
 
   // 9. 客户端过滤与统计
@@ -314,7 +361,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
 
   const exceptionMembers = useMemo(() => {
     // 异常队列：待处理 unconfirmed 成员
-    const exceptions = filteredMembers.filter((m) => m.days[today]?.status === "unconfirmed");
+    const exceptions = filteredMembers.filter(
+      (m) => m.days[today]?.status === "unconfirmed",
+    );
     return sortExceptions(exceptions, today);
   }, [filteredMembers, today]);
 
@@ -322,10 +371,15 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
     if (!Array.isArray(appeals)) return [];
     // 过滤出当前管理范围内的 pending 申诉
     const visibleUserSet = new Set(calendarData.members.map((m) => m.userId));
-    return appeals.filter((a) => a.status === "pending" && visibleUserSet.has(a.user_id));
+    return appeals.filter(
+      (a) => a.status === "pending" && visibleUserSet.has(a.user_id),
+    );
   }, [appeals, calendarData.members]);
 
-  const stats = useMemo(() => calcStats(filteredMembers, today), [filteredMembers, today]);
+  const stats = useMemo(
+    () => calcStats(filteredMembers, today),
+    [filteredMembers, today],
+  );
 
   const handleTeamChange = useCallback((team: string | null) => {
     setSelectedTeam(team);
@@ -370,7 +424,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
   const handleQueueMemberClick = useCallback(
     (member: FulfillmentMemberSummary) => {
       queueRef.current = exceptionMembers;
-      queueIndexRef.current = exceptionMembers.findIndex((m) => m.userId === member.userId);
+      queueIndexRef.current = exceptionMembers.findIndex(
+        (m) => m.userId === member.userId,
+      );
       setSelectedMember(member);
       setSelectedDate(today);
       setSource("queue");
@@ -379,12 +435,15 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
     [exceptionMembers, today],
   );
 
-  const handleMatrixCellClick = useCallback((member: FulfillmentMemberSummary, date: string) => {
-    setSelectedMember(member);
-    setSelectedDate(date);
-    setSource("matrix");
-    setSheetOpen(true);
-  }, []);
+  const handleMatrixCellClick = useCallback(
+    (member: FulfillmentMemberSummary, date: string) => {
+      setSelectedMember(member);
+      setSelectedDate(date);
+      setSource("matrix");
+      setSheetOpen(true);
+    },
+    [],
+  );
 
   // 10. 操作回调
   const handleActionComplete = useCallback(() => {
@@ -392,13 +451,14 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
 
     // 重新拉取最新的日历和申诉
     fetchAppeals();
-    fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`)
-      .then(async (res) => {
-        if (res.ok) {
-          const r = await res.json();
-          setCalendarData(r.data);
-        }
-      });
+    fetch(
+      `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
+    ).then(async (res) => {
+      if (res.ok) {
+        const r = await res.json();
+        setCalendarData(r.data);
+      }
+    });
 
     if (source === "queue") {
       const queue = queueRef.current;
@@ -437,7 +497,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
         }
         toast.success("改判成功");
         fetchAppeals();
-        const calendarRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+        const calendarRes = await fetch(
+          `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
+        );
         if (calendarRes.ok) {
           const refreshResult = await calendarRes.json();
           setCalendarData(refreshResult.data);
@@ -446,7 +508,7 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
         toast.error("网络错误，改判失败");
       }
     },
-    [calendarData.year, calendarData.month, fetchAppeals]
+    [calendarData.year, calendarData.month, fetchAppeals],
   );
 
   // 11. 快速与批量打标的乐观更新机制
@@ -473,18 +535,20 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
             consecutiveMissing: 0,
           };
           const nextDays = { ...m.days, [today]: newRecord };
-          
+
           let publishedDays = 0;
           let leaveDays = 0;
           let waivedDays = 0;
           let absentDays = 0;
           Object.values(nextDays).forEach((d) => {
-            if (d.status === "published" || d.status === "confirmed_published") publishedDays++;
+            if (d.status === "published" || d.status === "confirmed_published")
+              publishedDays++;
             else if (d.status === "leave") leaveDays++;
-            else if (d.status === "waived" || d.status === "exempted") waivedDays++;
+            else if (d.status === "waived" || d.status === "exempted")
+              waivedDays++;
             else if (d.status === "absent") absentDays++;
           });
-          
+
           return {
             ...m,
             consecutiveMissing: 0,
@@ -492,7 +556,10 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
             leaveDays,
             waivedDays,
             absentDays,
-            fulfillmentRate: m.totalDays > 0 ? Math.round((publishedDays / m.totalDays) * 100) : 0,
+            fulfillmentRate:
+              m.totalDays > 0
+                ? Math.round((publishedDays / m.totalDays) * 100)
+                : 0,
             days: nextDays,
           };
         });
@@ -514,11 +581,16 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
           const err = await res.json().catch(() => ({ error: "标记失败" }));
           throw new Error(err.error || "标记失败");
         }
-        trackUsageEvent({ path: "/admin/fulfillment", eventType: "mark_fulfillment_status" });
+        trackUsageEvent({
+          path: "/admin/fulfillment",
+          eventType: "mark_fulfillment_status",
+        });
         toast.success("标记成功");
-        
+
         // 后台静默刷新以同步统计大盘
-        const refreshRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+        const refreshRes = await fetch(
+          `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
+        );
         if (refreshRes.ok) {
           const refreshResult = await refreshRes.json();
           setCalendarData(refreshResult.data);
@@ -528,7 +600,7 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
         setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
     },
-    [calendarData.members, calendarData.year, calendarData.month, today]
+    [calendarData.members, calendarData.year, calendarData.month, today],
   );
 
   const handleBatchMark = useCallback(
@@ -560,9 +632,11 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
           let waivedDays = 0;
           let absentDays = 0;
           Object.values(nextDays).forEach((d) => {
-            if (d.status === "published" || d.status === "confirmed_published") publishedDays++;
+            if (d.status === "published" || d.status === "confirmed_published")
+              publishedDays++;
             else if (d.status === "leave") leaveDays++;
-            else if (d.status === "waived" || d.status === "exempted") waivedDays++;
+            else if (d.status === "waived" || d.status === "exempted")
+              waivedDays++;
             else if (d.status === "absent") absentDays++;
           });
 
@@ -573,7 +647,10 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
             leaveDays,
             waivedDays,
             absentDays,
-            fulfillmentRate: m.totalDays > 0 ? Math.round((publishedDays / m.totalDays) * 100) : 0,
+            fulfillmentRate:
+              m.totalDays > 0
+                ? Math.round((publishedDays / m.totalDays) * 100)
+                : 0,
             days: nextDays,
           };
         });
@@ -599,21 +676,28 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
           const err = await res.json().catch(() => ({ error: "批量标记失败" }));
           throw new Error(err.error || "批量标记失败");
         }
-        trackUsageEvent({ path: "/admin/fulfillment", eventType: "mark_fulfillment_status" });
+        trackUsageEvent({
+          path: "/admin/fulfillment",
+          eventType: "mark_fulfillment_status",
+        });
         toast.success("批量标记成功");
 
         // 后台静默刷新以同步统计大盘
-        const refreshRes = await fetch(`/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`);
+        const refreshRes = await fetch(
+          `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
+        );
         if (refreshRes.ok) {
           const refreshResult = await refreshRes.json();
           setCalendarData(refreshResult.data);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "批量标记失败，已回滚");
+        toast.error(
+          err instanceof Error ? err.message : "批量标记失败，已回滚",
+        );
         setCalendarData((prev) => ({ ...prev, members: originalMembers }));
       }
     },
-    [calendarData.members, calendarData.year, calendarData.month, today]
+    [calendarData.members, calendarData.year, calendarData.month, today],
   );
 
   return (
@@ -652,7 +736,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
               <TabsTrigger value="appeals" className="text-[12px]">
                 待审核申诉
                 {appealsError ? (
-                  <span className="ml-1.5 rounded border border-[#C9604D]/20 bg-[#C9604D]/5 px-1.5 py-0.5 text-[#C9604D]">!</span>
+                  <span className="ml-1.5 rounded border border-[#C9604D]/20 bg-[#C9604D]/5 px-1.5 py-0.5 text-[#C9604D]">
+                    !
+                  </span>
                 ) : pendingAppeals.length > 0 ? (
                   <span className="ml-1.5 inline-flex items-center gap-1 text-[12px] px-1.5 py-0.5 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] text-[#D99E55] font-medium">
                     <span className="size-1 rounded-full bg-[#D99E55]" />
@@ -671,7 +757,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
             {isLoadingCalendar ? (
               <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-zinc-500">正在刷新数据...</span>
+                <span className="text-[13px] text-zinc-500">
+                  正在刷新数据...
+                </span>
               </div>
             ) : (
               <ExceptionQueue
@@ -689,21 +777,34 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
 
           <TabsContent value="appeals" className="mt-3">
             {appealsError ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center">
-                <p className="text-[13px] font-medium text-zinc-800">申诉数据加载失败</p>
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 px-6 py-10 text-center">
+                <p className="text-[13px] font-medium text-zinc-800">
+                  申诉数据加载失败
+                </p>
                 <p className="mt-1 text-[12px] text-zinc-500">{appealsError}</p>
-                <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => void fetchAppeals()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => void fetchAppeals()}
+                >
                   重新加载
                 </Button>
               </div>
             ) : appealsLoading || isSubmittingAppeal ? (
               <div className="flex items-center justify-center py-12 rounded-2xl border border-zinc-200 bg-white">
                 <span className="size-6 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-zinc-500">{isSubmittingAppeal ? "正在处理申诉..." : "正在加载申诉..."}</span>
+                <span className="text-[13px] text-zinc-500">
+                  {isSubmittingAppeal ? "正在处理申诉..." : "正在加载申诉..."}
+                </span>
               </div>
             ) : pendingAppeals.length === 0 ? (
               <div className="rounded-2xl border border-zinc-200 bg-white py-12">
-                <EmptyState title="当前无待处理申诉" description="所有成员的申诉请求已处理完毕" />
+                <EmptyState
+                  title="当前无待处理申诉"
+                  description="所有成员的申诉请求已处理完毕"
+                />
               </div>
             ) : (
               <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
@@ -711,23 +812,45 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
                   <table className="w-full text-[13px]">
                     <thead>
                       <tr className="border-b border-zinc-200/50 bg-zinc-50/50">
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">成员</th>
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">申诉日期</th>
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">申诉原因</th>
-                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">提交时间</th>
-                        <th className="px-3 py-2.5 text-right text-[12px] font-normal tracking-[0.12em] text-zinc-500">操作</th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                          成员
+                        </th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                          申诉日期
+                        </th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                          申诉原因
+                        </th>
+                        <th className="px-3 py-2.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                          提交时间
+                        </th>
+                        <th className="px-3 py-2.5 text-right text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                          操作
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {pendingAppeals.map((appeal) => (
-                        <tr key={appeal.id} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/30 transition-colors">
-                          <td className="px-3 py-2.5 font-medium text-zinc-900">{appeal.user_name || "未知成员"}</td>
-                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-zinc-700">{appeal.record_date}</td>
-                          <td className="max-w-[240px] truncate px-3 py-2.5 text-zinc-700" title={appeal.reason}>
+                        <tr
+                          key={appeal.id}
+                          className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/30 transition-colors"
+                        >
+                          <td className="px-3 py-2.5 font-medium text-zinc-900">
+                            {appeal.user_name || "未知成员"}
+                          </td>
+                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-zinc-700">
+                            {appeal.record_date}
+                          </td>
+                          <td
+                            className="max-w-[240px] truncate px-3 py-2.5 text-zinc-700"
+                            title={appeal.reason}
+                          >
                             {appeal.reason}
                           </td>
                           <td className="px-3 py-2.5 text-[12px] tabular-nums text-zinc-500">
-                            {new Date(appeal.created_at).toLocaleString("zh-CN")}
+                            {new Date(appeal.created_at).toLocaleString(
+                              "zh-CN",
+                            )}
                           </td>
                           <td className="px-3 py-2.5 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -735,7 +858,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
                                 variant="outline"
                                 size="sm"
                                 className="h-8 text-[#6FAA7D] border-[#6FAA7D]/30 hover:bg-[#6FAA7D]/5 hover:text-[#6FAA7D] font-medium"
-                                onClick={() => handleHandleAppeal(appeal.id, "approve")}
+                                onClick={() =>
+                                  handleHandleAppeal(appeal.id, "approve")
+                                }
                               >
                                 同意并改判
                               </Button>
@@ -743,7 +868,9 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
                                 variant="outline"
                                 size="sm"
                                 className="h-8 text-[#C9604D] border-[#C9604D]/30 hover:bg-[#C9604D]/5 hover:text-[#C9604D] font-medium"
-                                onClick={() => handleHandleAppeal(appeal.id, "reject")}
+                                onClick={() =>
+                                  handleHandleAppeal(appeal.id, "reject")
+                                }
                               >
                                 驳回
                               </Button>
@@ -764,8 +891,13 @@ export function FulfillmentWorkbench({ initialData, initialRange, currentUserId 
       <section>
         {isLoadingCalendar ? (
           <div className="flex flex-col gap-3">
-            <button disabled className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left">
-              <span className="text-[13px] font-normal text-zinc-500">正在刷新日历数据...</span>
+            <button
+              disabled
+              className="flex w-full items-center justify-between rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left"
+            >
+              <span className="text-[13px] font-normal text-zinc-500">
+                正在刷新日历数据...
+              </span>
               <span className="size-4 animate-spin rounded-full border-2 border-zinc-400 border-t-transparent" />
             </button>
           </div>

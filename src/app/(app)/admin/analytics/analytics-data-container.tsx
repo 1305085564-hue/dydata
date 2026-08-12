@@ -17,19 +17,23 @@ export async function AnalyticsDataContainer({
   from,
   to,
 }: AnalyticsDataContainerProps) {
-  const actorResult = await requireAdminActor({ requiredPermission: "view_analytics" });
+  const actorResult = await requireAdminActor({
+    requiredPermission: "view_analytics",
+  });
   if ("error" in actorResult) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">
+      <div className="rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-[13px] text-[#DC2626]">
         加载失败：无权查看该分析数据 ({actorResult.error})
       </div>
     );
   }
 
-  const permissionContext = await buildPermissionContextForActor(actorResult.actor);
+  const permissionContext = await buildPermissionContextForActor(
+    actorResult.actor,
+  );
   if (!permissionContext) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">
+      <div className="rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-[13px] text-[#DC2626]">
         加载失败：用户权限上下文加载失败
       </div>
     );
@@ -44,10 +48,5 @@ export async function AnalyticsDataContainer({
     scope: permissionContext.scope,
   });
 
-  return (
-    <AnalyticsContent
-      userId={userId}
-      initialData={pageData}
-    />
-  );
+  return <AnalyticsContent userId={userId} initialData={pageData} />;
 }

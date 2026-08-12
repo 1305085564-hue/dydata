@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GROWTH_DIMENSION_RULES, type GrowthRadarItem } from "@/lib/growth-page";
+import {
+  GROWTH_DIMENSION_RULES,
+  type GrowthRadarItem,
+} from "@/lib/growth-page";
 
 // ─── 雷达图大小常量 ───────────────────────────────────────────
 const RADAR_SIZE = 300;
@@ -53,7 +56,14 @@ function getScores(item: GrowthRadarItem) {
 
 interface 六维雷达面板Props {
   radar: GrowthRadarItem[];
-  weakestDimension?: "开头留人" | "中段跳出" | "整体完播" | "增长转化" | "互动吸引" | "话题爆点" | null;
+  weakestDimension?:
+    | "开头留人"
+    | "中段跳出"
+    | "整体完播"
+    | "增长转化"
+    | "互动吸引"
+    | "话题爆点"
+    | null;
   /** 累积期锁定态：只画虚线空六边形骨架，不画任何数据形状 */
   locked?: boolean;
   lockedText?: string;
@@ -64,7 +74,11 @@ function 锁定雷达({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative flex w-full max-w-[320px] items-center justify-center">
-        <svg viewBox="-20 -20 340 340" className="w-full" aria-label="能力画像未解锁">
+        <svg
+          viewBox="-20 -20 340 340"
+          className="w-full"
+          aria-label="能力画像未解锁"
+        >
           {Array.from({ length: LEVELS }, (_, level) => {
             const radius = ((level + 1) / LEVELS) * MAX_RADIUS;
             const points = Array.from({ length: DIMS }, (_, i) => {
@@ -88,7 +102,15 @@ function 锁定雷达({ text }: { text: string }) {
             if (i === 1 || i === 2) textAnchor = "start";
             if (i === 4 || i === 5) textAnchor = "end";
             return (
-              <text key={dimension} x={x} y={y + 4} textAnchor={textAnchor} fontSize="11" fill="#A8A29E" className="select-none">
+              <text
+                key={dimension}
+                x={x}
+                y={y + 4}
+                textAnchor={textAnchor}
+                fontSize="11"
+                fill="#A8A29E"
+                className="select-none"
+              >
                 {dimension}
               </text>
             );
@@ -100,16 +122,25 @@ function 锁定雷达({ text }: { text: string }) {
           </span>
         </div>
       </div>
-      <p className="max-w-[260px] text-center text-[12px] leading-[1.6] text-zinc-500">{text}</p>
+      <p className="max-w-[260px] text-center text-[12px] leading-[1.6] text-zinc-500">
+        {text}
+      </p>
     </div>
   );
 }
 
-export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedText }: 六维雷达面板Props) {
+export function SixRadarPanel({
+  radar,
+  weakestDimension,
+  locked = false,
+  lockedText,
+}: 六维雷达面板Props) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (locked) {
-    return <锁定雷达 text={lockedText ?? "随日报积累自动解锁。解锁前不画假形状。"} />;
+    return (
+      <锁定雷达 text={lockedText ?? "随日报积累自动解锁。解锁前不画假形状。"} />
+    );
   }
 
   if (!radar || radar.length === 0) {
@@ -125,7 +156,9 @@ export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedT
   if (!hasTeamBaseline) {
     return (
       <div className="space-y-4">
-        <p className="text-[13px] leading-[1.7] text-zinc-500">团队暂无可比样本，以下只列你的真实指标，不生成虚拟基准。</p>
+        <p className="text-[13px] leading-[1.7] text-zinc-500">
+          团队暂无可比样本，以下只列你的真实指标，不生成虚拟基准。
+        </p>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           {radar.map((item) => (
             <div key={item.dimension} className="border-t border-zinc-200 pt-3">
@@ -170,7 +203,8 @@ export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedT
           </span>
         </div>
         <span className="text-[12px] text-zinc-500">
-          最弱项：<span className="font-medium text-rose-600">{weakestDimension}</span>
+          最弱项：
+          <span className="font-medium text-[#DC2626]">{weakestDimension}</span>
         </span>
       </div>
 
@@ -316,22 +350,32 @@ export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedT
             <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-zinc-500">
               <span>我：</span>
               <span className="font-medium text-[#D97757] text-right">
-                {formatMetricValue(radar[hoveredIndex].dimension, radar[hoveredIndex].self)}
+                {formatMetricValue(
+                  radar[hoveredIndex].dimension,
+                  radar[hoveredIndex].self,
+                )}
               </span>
               <span>团队均值：</span>
               <span className="font-medium text-zinc-900 text-right">
-                {formatMetricValue(radar[hoveredIndex].dimension, radar[hoveredIndex].teamAvg)}
+                {formatMetricValue(
+                  radar[hoveredIndex].dimension,
+                  radar[hoveredIndex].teamAvg,
+                )}
               </span>
               <span>评级：</span>
               <span
                 className={cn(
                   "font-medium text-right",
-                  radar[hoveredIndex].rating === "strong" && "text-emerald-600",
-                  radar[hoveredIndex].rating === "weak" && "text-rose-600",
-                  radar[hoveredIndex].rating === "mid" && "text-amber-600"
+                  radar[hoveredIndex].rating === "strong" && "text-[#16A34A]",
+                  radar[hoveredIndex].rating === "weak" && "text-[#DC2626]",
+                  radar[hoveredIndex].rating === "mid" && "text-[#D97706]",
                 )}
               >
-                {radar[hoveredIndex].rating === "strong" ? "强" : radar[hoveredIndex].rating === "weak" ? "弱" : "中"}
+                {radar[hoveredIndex].rating === "strong"
+                  ? "强"
+                  : radar[hoveredIndex].rating === "weak"
+                    ? "弱"
+                    : "中"}
               </span>
             </div>
           </div>
@@ -348,18 +392,20 @@ export function SixRadarPanel({ radar, weakestDimension, locked = false, lockedT
               key={item.dimension}
               className={cn(
                 "flex flex-col items-center justify-center rounded-lg py-1.5 text-center transition-all",
-                isWeak && "bg-rose-50/50 border border-rose-100",
-                isStrong && "bg-emerald-50/50 border border-emerald-100",
-                !isWeak && !isStrong && "bg-zinc-50 border border-zinc-200"
+                isWeak && "bg-[#DC2626]/10 border border-transparent",
+                isStrong && "bg-[#16A34A]/10 border border-transparent",
+                !isWeak && !isStrong && "bg-zinc-50 border border-zinc-200",
               )}
             >
-              <span className="text-[11px] font-medium text-zinc-500">{item.dimension}</span>
+              <span className="text-[11px] font-medium text-zinc-500">
+                {item.dimension}
+              </span>
               <span
                 className={cn(
                   "text-[12px] font-medium mt-0.5",
-                  isWeak && "text-rose-700",
-                  isStrong && "text-emerald-700",
-                  !isWeak && !isStrong && "text-zinc-900"
+                  isWeak && "text-[#DC2626]",
+                  isStrong && "text-[#16A34A]",
+                  !isWeak && !isStrong && "text-zinc-900",
                 )}
               >
                 {formatMetricValue(item.dimension, item.self)}

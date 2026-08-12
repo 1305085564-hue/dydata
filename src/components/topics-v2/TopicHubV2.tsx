@@ -16,7 +16,13 @@ import {
   parseTopicPoolResponse,
   TopicRequestError,
 } from "@/lib/topics/v2-client-contract";
-import { RefreshCw, Lock, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
+import {
+  RefreshCw,
+  Lock,
+  CheckCircle2,
+  AlertTriangle,
+  Lightbulb,
+} from "lucide-react";
 import { TodayFocusSection } from "./TodayFocusSection";
 import { MyClaimDrawer } from "./MyClaimDrawer";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
@@ -27,7 +33,10 @@ import { SmartReplaceModal } from "./SmartReplaceModal";
 
 export function TopicHubV2() {
   // Toast 反馈
-  const [toastMsg, setToastMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [toastMsg, setToastMsg] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
@@ -39,7 +48,9 @@ export function TopicHubV2() {
   };
 
   // 全局数据状态
-  const [activeTopics, setActiveTopics] = useState<ActiveTopicsResponse | null>(null);
+  const [activeTopics, setActiveTopics] = useState<ActiveTopicsResponse | null>(
+    null,
+  );
   const [activeLoading, setActiveLoading] = useState(true);
   const [activeError, setActiveError] = useState<string | null>(null);
 
@@ -53,7 +64,9 @@ export function TopicHubV2() {
   const [poolTotalCount, setPoolTotalCount] = useState(0);
 
   const [topicsOptions, setTopicsOptions] = useState<TopicOption[]>([]);
-  const [topicsOptionsError, setTopicsOptionsError] = useState<string | null>(null);
+  const [topicsOptionsError, setTopicsOptionsError] = useState<string | null>(
+    null,
+  );
 
   // 选题池 Query & 排序筛选选项
   const [poolView, setPoolView] = useState<TopicPoolView>("all");
@@ -79,13 +92,22 @@ export function TopicHubV2() {
   const poolRequestId = useRef(0);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setDebouncedPoolSearchQuery(poolSearchQuery.trim()), 300);
+    const timer = window.setTimeout(
+      () => setDebouncedPoolSearchQuery(poolSearchQuery.trim()),
+      300,
+    );
     return () => window.clearTimeout(timer);
   }, [poolSearchQuery]);
 
   useEffect(() => {
     setPoolPage(1);
-  }, [debouncedPoolSearchQuery, selectedTopicIds, sortBy, poolView, poolTimeRange]);
+  }, [
+    debouncedPoolSearchQuery,
+    selectedTopicIds,
+    sortBy,
+    poolView,
+    poolTimeRange,
+  ]);
 
   const getErrorMessage = (error: unknown, fallback: string) =>
     error instanceof Error && error.message ? error.message : fallback;
@@ -98,9 +120,11 @@ export function TopicHubV2() {
       const data = await fetchTopicJson("/api/topics/active?limit=6");
       setActiveTopics(parseActiveTopicsResponse(data) as ActiveTopicsResponse);
     } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401) setAuthError(true);
+      if (err instanceof TopicRequestError && err.status === 401)
+        setAuthError(true);
       setActiveError(getErrorMessage(err, "今日聚焦加载失败"));
-      if (!(err instanceof TopicRequestError && err.status === 401)) console.error("加载今日精选失败:", err);
+      if (!(err instanceof TopicRequestError && err.status === 401))
+        console.error("加载今日精选失败:", err);
     } finally {
       setActiveLoading(false);
     }
@@ -112,7 +136,8 @@ export function TopicHubV2() {
       const data = await fetchTopicJson("/api/topics/options");
       setTopicsOptions(parseTopicOptionsResponse(data));
     } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401) setAuthError(true);
+      if (err instanceof TopicRequestError && err.status === 401)
+        setAuthError(true);
       setTopicsOptionsError(getErrorMessage(err, "母题列表加载失败"));
     }
   }, []);
@@ -133,33 +158,58 @@ export function TopicHubV2() {
       if (debouncedPoolSearchQuery) params.set("q", debouncedPoolSearchQuery);
       selectedTopicIds.forEach((topicId) => params.append("topic_id", topicId));
 
-      const data = parseTopicPoolResponse(await fetchTopicJson(`/api/topics/pool?${params.toString()}`));
+      const data = parseTopicPoolResponse(
+        await fetchTopicJson(`/api/topics/pool?${params.toString()}`),
+      );
       if (requestId !== poolRequestId.current) return;
       setPoolItems(data.items as TopicPoolItem[]);
       setPoolTotalCount(data.pagination.totalItems);
     } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401) setAuthError(true);
+      if (err instanceof TopicRequestError && err.status === 401)
+        setAuthError(true);
       setPoolError(getErrorMessage(err, "选题池加载失败"));
-      if (!(err instanceof TopicRequestError && err.status === 401)) console.error("加载选题池列表失败:", err);
+      if (!(err instanceof TopicRequestError && err.status === 401))
+        console.error("加载选题池列表失败:", err);
     } finally {
       if (requestId === poolRequestId.current) setPoolLoading(false);
     }
-  }, [debouncedPoolSearchQuery, poolPage, poolTimeRange, poolView, selectedTopicIds, sortBy]);
+  }, [
+    debouncedPoolSearchQuery,
+    poolPage,
+    poolTimeRange,
+    poolView,
+    selectedTopicIds,
+    sortBy,
+  ]);
 
   // 3. 我的认领也只从后端明确返回的 myClaim 构造
   const fetchMyClaims = useCallback(async () => {
     try {
       setClaimsLoading(true);
       setClaimsError(null);
-      const data = parseTopicPoolResponse(await fetchTopicJson("/api/topics/pool?view=my_claims&time_range=all&sort=latest&page_size=100"));
-      setMyClaims(data.items.flatMap((item) => item.myClaim ? [{
-        ...item.myClaim,
-        subTopic: item,
-      }] : []) as TopicClaimItem[]);
+      const data = parseTopicPoolResponse(
+        await fetchTopicJson(
+          "/api/topics/pool?view=my_claims&time_range=all&sort=latest&page_size=100",
+        ),
+      );
+      setMyClaims(
+        data.items.flatMap((item) =>
+          item.myClaim
+            ? [
+                {
+                  ...item.myClaim,
+                  subTopic: item,
+                },
+              ]
+            : [],
+        ) as TopicClaimItem[],
+      );
     } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401) setAuthError(true);
+      if (err instanceof TopicRequestError && err.status === 401)
+        setAuthError(true);
       setClaimsError(getErrorMessage(err, "我的认领加载失败"));
-      if (!(err instanceof TopicRequestError && err.status === 401)) console.error("加载我的认领失败:", err);
+      if (!(err instanceof TopicRequestError && err.status === 401))
+        console.error("加载我的认领失败:", err);
     } finally {
       setClaimsLoading(false);
     }
@@ -204,7 +254,9 @@ export function TopicHubV2() {
 
     try {
       try {
-        await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/claim`, { method: "POST" });
+        await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/claim`, {
+          method: "POST",
+        });
       } catch (error) {
         if (error instanceof TopicRequestError && error.status === 409) {
           setReplaceTargetTopic({
@@ -225,7 +277,10 @@ export function TopicHubV2() {
   };
 
   // 确认智能替换认领
-  const handleConfirmReplace = async (returnedSubTopicId: string, targetSubTopicId: string) => {
+  const handleConfirmReplace = async (
+    returnedSubTopicId: string,
+    targetSubTopicId: string,
+  ) => {
     try {
       await fetchTopicJson("/api/topics/sub-topics/replace-claim", {
         method: "POST",
@@ -248,7 +303,10 @@ export function TopicHubV2() {
   // 开始写脚本
   const handleStartScripting = async (subTopicId: string) => {
     try {
-      await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/start-scripting`, { method: "POST" });
+      await fetchTopicJson(
+        `/api/topics/sub-topics/${subTopicId}/start-scripting`,
+        { method: "POST" },
+      );
       showToast("选题状态已更新为: 脚本撰写中", "success");
       refreshAll();
     } catch (err) {
@@ -259,7 +317,9 @@ export function TopicHubV2() {
   // 归还认领
   const handleReturnClaim = async (subTopicId: string) => {
     try {
-      await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/return`, { method: "POST" });
+      await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/return`, {
+        method: "POST",
+      });
       showToast("已释放该选题，槽位已空出", "success");
       refreshAll();
     } catch (err) {
@@ -270,7 +330,9 @@ export function TopicHubV2() {
   // 联动母题筛选并滚动至大盘
   const handleFilterByTopic = (topicId: string) => {
     setSelectedTopicIds([topicId]);
-    document.getElementById("topic-pool-explorer")?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById("topic-pool-explorer")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -281,14 +343,14 @@ export function TopicHubV2() {
           <div
             className={`px-4 py-2.5 rounded-xl shadow-xl backdrop-blur-xl text-xs font-medium flex items-center gap-2 ${
               toastMsg.type === "error"
-                ? "bg-rose-900/90 text-rose-100 border border-rose-700/50"
+                ? "bg-[#DC2626]/10 text-[#DC2626] border border-zinc-200"
                 : "bg-zinc-900/90 text-white border border-zinc-700/50"
             }`}
           >
             {toastMsg.type === "error" ? (
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-zinc-600 shrink-0" />
             )}
             <span>{toastMsg.text}</span>
           </div>
@@ -299,7 +361,7 @@ export function TopicHubV2() {
       {authError ? (
         <div className="min-h-[60vh] flex items-center justify-center p-4">
           <div className="bg-white border border-zinc-200 rounded-2xl p-8 max-w-md w-full text-center shadow-lg animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50/80 border border-amber-200/60 text-[#D97757] flex items-center justify-center mx-auto mb-4 shadow-2xs">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-100/80 border border-zinc-200/60 text-[#D97757] flex items-center justify-center mx-auto mb-4 shadow-2xs">
               <Lock className="w-6 h-6" />
             </div>
             <h3 className="text-lg font-semibold text-zinc-900 mb-1.5 tracking-tight">
@@ -350,56 +412,62 @@ export function TopicHubV2() {
                 title="刷新最新数据"
                 aria-label="刷新最新数据"
               >
-                <RefreshCw className={`w-4 h-4 ${(activeLoading || poolLoading || claimsLoading) ? "animate-spin text-[#D97757]" : ""}`} />
+                <RefreshCw
+                  className={`w-4 h-4 ${activeLoading || poolLoading || claimsLoading ? "animate-spin text-[#D97757]" : ""}`}
+                />
               </button>
             </div>
           </header>
 
-        {/* 1. 第一优先级：今日最值得写的选题 */}
-        <TodayFocusSection
-          data={activeTopics}
-          loading={activeLoading}
-          error={activeError}
-          onClaim={handleClaim}
-          onRetry={fetchActiveData}
-          onSelectTopic={(id) => setInspectTopicId(id)}
-        />
+          {/* 1. 第一优先级：今日最值得写的选题 */}
+          <TodayFocusSection
+            data={activeTopics}
+            loading={activeLoading}
+            error={activeError}
+            onClaim={handleClaim}
+            onRetry={fetchActiveData}
+            onSelectTopic={(id) => setInspectTopicId(id)}
+          />
 
-        {/* 2. 主主体：选题大盘多维排序与母题多选筛选 */}
-        <TopicPoolExplorer
-          items={poolItems}
-          topics={topicsOptions}
-          loading={poolLoading}
-          error={poolError}
-          totalCount={poolTotalCount}
-          searchQuery={poolSearchQuery}
-          onRetry={fetchPoolData}
-          currentPage={poolPage}
-          currentView={poolView}
-          currentTimeRange={poolTimeRange}
-          selectedTopicIds={selectedTopicIds}
-          sortBy={sortBy}
-          onPageChange={(p) => setPoolPage(p)}
-          onViewChange={(v) => {
-            setPoolView(v);
-            setPoolPage(1);
-          }}
-          onTimeRangeChange={(t) => {
-            setPoolTimeRange(t);
-            setPoolPage(1);
-          }}
-          onTopicIdsChange={(ids) => setSelectedTopicIds(ids)}
-          onSortByChange={(s) => setSortBy(s)}
-          onSearchQueryChange={(query) => setPoolSearchQuery(query)}
-          onClaim={handleClaim}
-          onReturnClaim={handleReturnClaim}
-          onSelectTopic={(id) => setInspectTopicId(id)}
-          onCreateClick={() => setIsCreateModalOpen(true)}
-        />
+          {/* 2. 主主体：选题大盘多维排序与母题多选筛选 */}
+          <TopicPoolExplorer
+            items={poolItems}
+            topics={topicsOptions}
+            loading={poolLoading}
+            error={poolError}
+            totalCount={poolTotalCount}
+            searchQuery={poolSearchQuery}
+            onRetry={fetchPoolData}
+            currentPage={poolPage}
+            currentView={poolView}
+            currentTimeRange={poolTimeRange}
+            selectedTopicIds={selectedTopicIds}
+            sortBy={sortBy}
+            onPageChange={(p) => setPoolPage(p)}
+            onViewChange={(v) => {
+              setPoolView(v);
+              setPoolPage(1);
+            }}
+            onTimeRangeChange={(t) => {
+              setPoolTimeRange(t);
+              setPoolPage(1);
+            }}
+            onTopicIdsChange={(ids) => setSelectedTopicIds(ids)}
+            onSortByChange={(s) => setSortBy(s)}
+            onSearchQueryChange={(query) => setPoolSearchQuery(query)}
+            onClaim={handleClaim}
+            onReturnClaim={handleReturnClaim}
+            onSelectTopic={(id) => setInspectTopicId(id)}
+            onCreateClick={() => setIsCreateModalOpen(true)}
+          />
 
-        {/* 3. 选题效果横向对比 */}
-        <TopicComparisonMatrix topics={topicsOptions} topicsError={topicsOptionsError} onSelectTopic={handleFilterByTopic} />
-      </div>
+          {/* 3. 选题效果横向对比 */}
+          <TopicComparisonMatrix
+            topics={topicsOptions}
+            topicsError={topicsOptionsError}
+            onSelectTopic={handleFilterByTopic}
+          />
+        </div>
       )}
 
       {/* 4. 爆款剖析侧滑抽屉 */}

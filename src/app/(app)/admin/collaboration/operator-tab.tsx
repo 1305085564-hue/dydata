@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, HelpCircle, ArrowUpDown, ArrowDown, ArrowUp, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  HelpCircle,
+  ArrowUpDown,
+  ArrowDown,
+  ArrowUp,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,7 +19,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatBigNumber, type OperatorRow } from "./types";
 
@@ -20,10 +34,17 @@ interface OperatorTabProps {
   onPrefetchPerson?: (userId: string) => void;
 }
 
-type SortField = "reportCount" | "totalPlay" | "avgPlay" | "totalFollowerConvert";
+type SortField =
+  "reportCount" | "totalPlay" | "avgPlay" | "totalFollowerConvert";
 
-export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: OperatorTabProps) {
-  const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set());
+export function OperatorTab({
+  operators,
+  onSelectPerson,
+  onPrefetchPerson,
+}: OperatorTabProps) {
+  const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [sortField, setSortField] = useState<SortField>("reportCount");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
@@ -87,7 +108,9 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
         <TableHeader>
           <TableRow className="bg-zinc-50/70 hover:bg-zinc-50/70 text-[12px]">
             <TableHead className="w-10" />
-            <TableHead className="text-left font-medium text-zinc-600">运营姓名</TableHead>
+            <TableHead className="text-left font-medium text-zinc-600">
+              运营姓名
+            </TableHead>
             <TableHead className="text-right font-medium text-zinc-600">
               <TooltipProvider>
                 <Tooltip>
@@ -106,7 +129,9 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                 type="button"
                 onClick={() => handleSort("reportCount")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
-                  sortField === "reportCount" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                  sortField === "reportCount"
+                    ? "text-zinc-950 font-semibold"
+                    : "hover:text-zinc-900"
                 }`}
               >
                 本月条数
@@ -118,7 +143,9 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                 type="button"
                 onClick={() => handleSort("totalPlay")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
-                  sortField === "totalPlay" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                  sortField === "totalPlay"
+                    ? "text-zinc-950 font-semibold"
+                    : "hover:text-zinc-900"
                 }`}
               >
                 总播放
@@ -130,7 +157,9 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                 type="button"
                 onClick={() => handleSort("avgPlay")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
-                  sortField === "avgPlay" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                  sortField === "avgPlay"
+                    ? "text-zinc-950 font-semibold"
+                    : "hover:text-zinc-900"
                 }`}
               >
                 人均播放
@@ -142,22 +171,29 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                 type="button"
                 onClick={() => handleSort("totalFollowerConvert")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
-                  sortField === "totalFollowerConvert" ? "text-zinc-950 font-semibold" : "hover:text-zinc-900"
+                  sortField === "totalFollowerConvert"
+                    ? "text-zinc-950 font-semibold"
+                    : "hover:text-zinc-900"
                 }`}
               >
                 导粉
                 {renderSortIcon("totalFollowerConvert")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">爆款数</TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">环比</TableHead>
+            <TableHead className="text-right font-medium text-zinc-600">
+              爆款数
+            </TableHead>
+            <TableHead className="text-right font-medium text-zinc-600">
+              环比
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="text-[13px]">
           {sortedOperators.map((op) => {
             const isSelfAccountOnly =
               op.accounts.length === 1 &&
-              (op.accounts[0].ownerName === op.name || op.accounts[0].accountId === op.userId);
+              (op.accounts[0].ownerName === op.name ||
+                op.accounts[0].accountId === op.userId);
             const canExpand = !isSelfAccountOnly && op.accounts.length > 0;
             const isExpanded = canExpand && expandedUserIds.has(op.userId);
             const mom = op.momChange;
@@ -178,10 +214,16 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                         type="button"
                         onClick={() => toggleExpand(op.userId)}
                         className={`w-8 flex items-center justify-center transition-colors ${
-                          isExpanded ? "text-[#D97757]" : "text-zinc-400 hover:text-zinc-700"
+                          isExpanded
+                            ? "text-[#D97757]"
+                            : "text-zinc-400 hover:text-zinc-700"
                         }`}
                       >
-                        {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                        {isExpanded ? (
+                          <ChevronDown className="size-4" />
+                        ) : (
+                          <ChevronRight className="size-4" />
+                        )}
                       </button>
                     ) : (
                       <div className="w-8 shrink-0" />
@@ -220,7 +262,7 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                       </div>
                       <div className="text-right tabular-nums text-zinc-700">
                         {op.hitCount > 0 ? (
-                          <span className="font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[12px] border border-amber-200/60">
+                          <span className="font-semibold text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded text-[12px] border border-zinc-200/60">
                             {op.hitCount}
                           </span>
                         ) : (
@@ -232,8 +274,8 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                           <span className="text-zinc-400">—</span>
                         ) : mom > 0 ? (
                           <span className="inline-flex items-center justify-end gap-0.5 text-[#DC2626]">
-                            <TrendingUp className="size-3" />
-                            +{(mom * 100).toFixed(1)}%
+                            <TrendingUp className="size-3" />+
+                            {(mom * 100).toFixed(1)}%
                           </span>
                         ) : mom < 0 ? (
                           <span className="inline-flex items-center justify-end gap-0.5 text-[#16A34A]">
@@ -254,21 +296,46 @@ export function OperatorTab({ operators, onSelectPerson, onPrefetchPerson }: Ope
                         <table className="w-full text-[12px]">
                           <thead>
                             <tr className="border-b border-zinc-100 bg-zinc-50/80 text-zinc-500 text-left">
-                              <th className="py-2.5 px-3.5 font-medium">达人姓名</th>
-                              <th className="py-2.5 px-3.5 font-medium">账号名</th>
-                              <th className="py-2.5 px-3.5 font-medium text-right">条数</th>
-                              <th className="py-2.5 px-3.5 font-medium text-right">总播放</th>
-                              <th className="py-2.5 px-3.5 font-medium text-right pr-4">导粉</th>
+                              <th className="py-2.5 px-3.5 font-medium">
+                                达人姓名
+                              </th>
+                              <th className="py-2.5 px-3.5 font-medium">
+                                账号名
+                              </th>
+                              <th className="py-2.5 px-3.5 font-medium text-right">
+                                条数
+                              </th>
+                              <th className="py-2.5 px-3.5 font-medium text-right">
+                                总播放
+                              </th>
+                              <th className="py-2.5 px-3.5 font-medium text-right pr-4">
+                                导粉
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-100">
                             {op.accounts.map((acc) => (
-                              <tr key={acc.accountId} className="hover:bg-zinc-50/50 transition-colors">
-                                <td className="py-2.5 px-3.5 font-medium text-zinc-800">{acc.ownerName}</td>
-                                <td className="py-2.5 px-3.5 text-zinc-600">{acc.accountName}</td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-900 font-semibold">{acc.reportCount}</td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700">{formatBigNumber(acc.totalPlay)}</td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700 pr-4">{acc.totalFollowerConvert.toLocaleString("zh-CN")}</td>
+                              <tr
+                                key={acc.accountId}
+                                className="hover:bg-zinc-50/50 transition-colors"
+                              >
+                                <td className="py-2.5 px-3.5 font-medium text-zinc-800">
+                                  {acc.ownerName}
+                                </td>
+                                <td className="py-2.5 px-3.5 text-zinc-600">
+                                  {acc.accountName}
+                                </td>
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-900 font-semibold">
+                                  {acc.reportCount}
+                                </td>
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700">
+                                  {formatBigNumber(acc.totalPlay)}
+                                </td>
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700 pr-4">
+                                  {acc.totalFollowerConvert.toLocaleString(
+                                    "zh-CN",
+                                  )}
+                                </td>
                               </tr>
                             ))}
                           </tbody>

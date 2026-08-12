@@ -33,18 +33,29 @@ export function TopicCreateModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // 查重建议候选
-  const [suggestions, setSuggestions] = useState<Array<{ id: string; title: string; hook: string | null; topics?: TopicOption | null }>>([]);
+  const [suggestions, setSuggestions] = useState<
+    Array<{
+      id: string;
+      title: string;
+      hook: string | null;
+      topics?: TopicOption | null;
+    }>
+  >([]);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // 焦点记录与还原，支持 Esc 按键关闭
   useEffect(() => {
     if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement | null;
+      previousActiveElement.current =
+        document.activeElement as HTMLElement | null;
       closeBtnRef.current?.focus();
     }
     return () => {
-      if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
+      if (
+        previousActiveElement.current &&
+        typeof previousActiveElement.current.focus === "function"
+      ) {
         previousActiveElement.current.focus();
       }
     };
@@ -74,10 +85,15 @@ export function TopicCreateModal({
         if (title.trim()) query.set("title", title.trim());
         if (hook.trim()) query.set("content", hook.trim());
 
-        const suggestions = parseSuggestedSubTopicsResponse(await fetchTopicJson(`/api/topics/sub-topics/suggest?${query.toString()}`));
+        const suggestions = parseSuggestedSubTopicsResponse(
+          await fetchTopicJson(
+            `/api/topics/sub-topics/suggest?${query.toString()}`,
+          ),
+        );
         if (isMounted) setSuggestions(suggestions);
       } catch (err) {
-        if (isMounted) setErrorMsg(err instanceof Error ? err.message : "查重校验失败");
+        if (isMounted)
+          setErrorMsg(err instanceof Error ? err.message : "查重校验失败");
       }
     }, 400);
 
@@ -100,17 +116,19 @@ export function TopicCreateModal({
       setLoading(true);
       setErrorMsg(null);
 
-      const created = parseCreatedSubTopicResponse(await fetchTopicJson("/api/topics/sub-topics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          hook: hook.trim(),
-          topic_id: topicId,
-          emotion_tag: emotionTag.trim() || null,
-          audience: audience.trim() || null,
+      const created = parseCreatedSubTopicResponse(
+        await fetchTopicJson("/api/topics/sub-topics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim(),
+            hook: hook.trim(),
+            topic_id: topicId,
+            emotion_tag: emotionTag.trim() || null,
+            audience: audience.trim() || null,
+          }),
         }),
-      }));
+      );
 
       if (!created.id) throw new Error("创建接口未返回新选题");
       onSuccess();
@@ -144,7 +162,10 @@ export function TopicCreateModal({
           className="w-full max-w-lg bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-150"
         >
           <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-100">
-            <h3 id="create-modal-title" className="text-base font-semibold text-zinc-900">
+            <h3
+              id="create-modal-title"
+              className="text-base font-semibold text-zinc-900"
+            >
               新增子题
             </h3>
             <button
@@ -161,13 +182,13 @@ export function TopicCreateModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs flex items-center gap-2 font-normal">
-                <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+              <div className="p-3 bg-zinc-100 border border-zinc-200 text-zinc-600 rounded-lg text-xs flex items-center gap-2 font-normal">
+                <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
             {topicsError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-normal">
+              <div className="p-3 bg-zinc-100 border border-zinc-200 text-zinc-600 rounded-lg text-xs font-normal">
                 母题列表加载失败：{topicsError}
               </div>
             )}
@@ -175,7 +196,7 @@ export function TopicCreateModal({
             {/* 母题选择 */}
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">
-                选择所属母题 <span className="text-rose-500">*</span>
+                选择所属母题 <span className="text-[#DC2626]">*</span>
               </label>
               <select
                 value={topicId}
@@ -196,7 +217,7 @@ export function TopicCreateModal({
             {/* 子题标题 */}
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">
-                子题标题 <span className="text-rose-500">*</span>
+                子题标题 <span className="text-[#DC2626]">*</span>
               </label>
               <input
                 type="text"
@@ -212,7 +233,8 @@ export function TopicCreateModal({
             {/* Hook */}
             <div>
               <label className="block text-xs font-medium text-zinc-700 mb-1">
-                一句话选题 Hook / 痛点口号 <span className="text-rose-500">*</span>
+                一句话选题 Hook / 痛点口号{" "}
+                <span className="text-[#DC2626]">*</span>
               </label>
               <textarea
                 rows={2}
@@ -257,16 +279,16 @@ export function TopicCreateModal({
 
             {/* 智能查重建议列表 */}
             {suggestions.length > 0 && (
-              <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-3 text-xs">
-                <div className="font-semibold text-amber-900 mb-1.5 flex items-center gap-1.5">
-                  <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
+              <div className="bg-zinc-100/70 border border-zinc-200/80 rounded-xl p-3 text-xs">
+                <div className="font-semibold text-zinc-600 mb-1.5 flex items-center gap-1.5">
+                  <Lightbulb className="w-4 h-4 text-[#F59E0B] shrink-0" />
                   <span>检出相似度较高的已有子题 (请注意避免重复录入)</span>
                 </div>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                   {suggestions.map((s) => (
                     <div
                       key={s.id}
-                      className="bg-white/90 p-2 rounded-lg border border-amber-100 text-xs font-normal"
+                      className="bg-white/90 p-2 rounded-lg border border-zinc-200 text-xs font-normal"
                     >
                       <div className="font-medium text-zinc-800">{s.title}</div>
                       <div className="text-zinc-500 truncate">“{s.hook}”</div>
@@ -292,7 +314,9 @@ export function TopicCreateModal({
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs disabled:opacity-50"
                 aria-label="保存子题"
               >
-                {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
+                {loading ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : null}
                 <span>{loading ? "录入中..." : "保存子题"}</span>
               </button>
             </div>

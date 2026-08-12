@@ -1,8 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, XCircle, AlertTriangle, CheckCircle, ClipboardPaste, ChevronDown, Zap, Plus, Search, Check, X, FileText, Scissors, Rocket, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  XCircle,
+  AlertTriangle,
+  CheckCircle,
+  ClipboardPaste,
+  ChevronDown,
+  Zap,
+  Plus,
+  Search,
+  Check,
+  X,
+  FileText,
+  Scissors,
+  Rocket,
+  Loader2,
+} from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
@@ -22,11 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { getDefaultPublishedAtValue } from "@/lib/日报";
-import type {
-  AnomalyStatus,
-  Video,
-  VideoTagReviewDimension,
-} from "@/types";
+import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
@@ -88,7 +108,12 @@ interface SampleQualityResponse {
 }
 
 interface VideoSubmitFormProps {
-  account: { id: string; name: string; display_name: string; content_direction: string | null } | null;
+  account: {
+    id: string;
+    name: string;
+    display_name: string;
+    content_direction: string | null;
+  } | null;
   userId: string;
   today: string;
   mode: SubmitPanelMode;
@@ -109,7 +134,6 @@ interface VideoSubmitFormProps {
   onRequestEdit?: () => void;
 }
 
-
 type SubmitResponse = {
   data?: Video;
   video?: Video;
@@ -129,7 +153,18 @@ type OcrApiPayload = {
     confidence_score: number;
     requires_manual_confirmation: boolean;
     recognized_fields: Record<string, string | number | boolean | null> | null;
-    confidence?: Partial<Record<"play_count" | "likes" | "comments" | "shares" | "favorites" | "follower_gain" | "follower_convert", "high" | "medium" | "low">>;
+    confidence?: Partial<
+      Record<
+        | "play_count"
+        | "likes"
+        | "comments"
+        | "shares"
+        | "favorites"
+        | "follower_gain"
+        | "follower_convert",
+        "high" | "medium" | "low"
+      >
+    >;
     error?: string;
     error_code?: string;
   };
@@ -242,7 +277,12 @@ function parseMetric(value: string, fallback = 0) {
 }
 
 function isVideo(value: unknown): value is Video {
-  return !!value && typeof value === "object" && "id" in value && "account_id" in value;
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "id" in value &&
+    "account_id" in value
+  );
 }
 
 function createFieldState(value = ""): SubmissionFieldState {
@@ -258,7 +298,7 @@ function createFieldState(value = ""): SubmissionFieldState {
 
 function buildOcrSummary(
   screenshotType: "data" | "curve" | "retention" | null | undefined,
-  recognizedFields: Record<string, unknown> | null | undefined
+  recognizedFields: Record<string, unknown> | null | undefined,
 ): string[] {
   if (!recognizedFields) {
     return [];
@@ -266,15 +306,24 @@ function buildOcrSummary(
 
   if (screenshotType === "curve") {
     return [
-      recognizedFields.curve_pattern ? `曲线类型：${recognizedFields.curve_pattern}` : null,
-      recognizedFields.first_peak_position ? `首峰位置：${recognizedFields.first_peak_position}` : null,
-      recognizedFields.drop_severity ? `掉速程度：${recognizedFields.drop_severity}` : null,
-      recognizedFields.tail_strength ? `长尾强弱：${recognizedFields.tail_strength}` : null,
+      recognizedFields.curve_pattern
+        ? `曲线类型：${recognizedFields.curve_pattern}`
+        : null,
+      recognizedFields.first_peak_position
+        ? `首峰位置：${recognizedFields.first_peak_position}`
+        : null,
+      recognizedFields.drop_severity
+        ? `掉速程度：${recognizedFields.drop_severity}`
+        : null,
+      recognizedFields.tail_strength
+        ? `长尾强弱：${recognizedFields.tail_strength}`
+        : null,
     ].filter((item): item is string => Boolean(item));
   }
 
   if (screenshotType === "retention") {
-    const retentionMetrics = recognizedFields.retention_metrics as Record<string, number | null> | undefined;
+    const retentionMetrics = recognizedFields.retention_metrics as
+      Record<string, number | null> | undefined;
     const retentionAnalysis = recognizedFields.retention_analysis as
       | {
           bounce_peak_time?: string | null;
@@ -286,12 +335,24 @@ function buildOcrSummary(
     const firstSegment = retentionAnalysis?.segment_summary?.[0];
 
     return [
-      retentionMetrics?.avg_play_duration != null ? `均播时长：${retentionMetrics.avg_play_duration}秒` : null,
-      retentionMetrics?.bounce_rate_2s != null ? `2秒跳出率：${retentionMetrics.bounce_rate_2s}%` : null,
-      retentionMetrics?.completion_rate_5s != null ? `5秒完播率：${retentionMetrics.completion_rate_5s}%` : null,
-      retentionMetrics?.completion_rate != null ? `整体完播率：${retentionMetrics.completion_rate}%` : null,
-      retentionAnalysis?.bounce_peak_time ? `跳出峰值：${retentionAnalysis.bounce_peak_time}` : null,
-      retentionAnalysis?.replay_peak_time ? `回放峰值：${retentionAnalysis.replay_peak_time}` : null,
+      retentionMetrics?.avg_play_duration != null
+        ? `均播时长：${retentionMetrics.avg_play_duration}秒`
+        : null,
+      retentionMetrics?.bounce_rate_2s != null
+        ? `2秒跳出率：${retentionMetrics.bounce_rate_2s}%`
+        : null,
+      retentionMetrics?.completion_rate_5s != null
+        ? `5秒完播率：${retentionMetrics.completion_rate_5s}%`
+        : null,
+      retentionMetrics?.completion_rate != null
+        ? `整体完播率：${retentionMetrics.completion_rate}%`
+        : null,
+      retentionAnalysis?.bounce_peak_time
+        ? `跳出峰值：${retentionAnalysis.bounce_peak_time}`
+        : null,
+      retentionAnalysis?.replay_peak_time
+        ? `回放峰值：${retentionAnalysis.replay_peak_time}`
+        : null,
       firstSegment?.segment && firstSegment?.performance
         ? `分段摘要：${firstSegment.segment}${firstSegment.performance}`
         : null,
@@ -299,12 +360,21 @@ function buildOcrSummary(
   }
 
   const baseSummary = Object.entries(recognizedFields)
-    .filter(([key, value]) => value !== null && value !== undefined && value !== "" && key !== "curve_info" && key !== "retention_info")
+    .filter(
+      ([key, value]) =>
+        value !== null &&
+        value !== undefined &&
+        value !== "" &&
+        key !== "curve_info" &&
+        key !== "retention_info",
+    )
     .slice(0, 4)
     .map(([key, value]) => `${key}：${String(value)}`);
 
-  const curveInfo = recognizedFields.curve_info as unknown as Record<string, string | null> | undefined;
-  const retentionInfo = recognizedFields.retention_info as unknown as Record<string, string | null> | undefined;
+  const curveInfo = recognizedFields.curve_info as unknown as
+    Record<string, string | null> | undefined;
+  const retentionInfo = recognizedFields.retention_info as unknown as
+    Record<string, string | null> | undefined;
 
   if (curveInfo?.curve_pattern) {
     baseSummary.push(`推流曲线：${curveInfo.curve_pattern}`);
@@ -350,7 +420,7 @@ function mapConfidenceToScore(value?: "high" | "medium" | "low") {
 function buildSubmissionState(
   slots: Record<SubmissionSlotRole, SlotViewState>,
   fields: SubmissionState["fields"],
-  submitted: boolean
+  submitted: boolean,
 ): SubmissionState {
   return { slots, fields, submitted };
 }
@@ -423,19 +493,27 @@ function createSummaryOverride(
   };
 }
 
-function buildIssueMessages(summary: ReturnType<typeof summarizeSubmissionIssues>) {
+function buildIssueMessages(
+  summary: ReturnType<typeof summarizeSubmissionIssues>,
+) {
   const messages: string[] = [];
 
   if (summary.missingRequiredSlots.length > 0) {
-    messages.push(`必传截图缺失：${summary.missingRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`);
+    messages.push(
+      `必传截图缺失：${summary.missingRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`,
+    );
   }
 
   if (summary.failedRequiredSlots.length > 0) {
-    messages.push(`识别失败：${summary.failedRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`);
+    messages.push(
+      `识别失败：${summary.failedRequiredSlots.map((role) => SLOT_LABELS[role]).join("、")}`,
+    );
   }
 
   if (summary.pendingSlotConfirmations.length > 0) {
-    messages.push(`待确认截图：${summary.pendingSlotConfirmations.map((role) => SLOT_LABELS[role]).join("、")}`);
+    messages.push(
+      `待确认截图：${summary.pendingSlotConfirmations.map((role) => SLOT_LABELS[role]).join("、")}`,
+    );
   }
 
   if (summary.topicTagMissing) {
@@ -477,9 +555,15 @@ export function VideoSubmitForm({
 }: VideoSubmitFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const [meta, setMeta] = useState<FormMetaState>(() => createInitialMeta(today, userId));
-  const [fields, setFields] = useState<SubmissionState["fields"]>(() => createEditableFields());
-  const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(() => createEditableSlots());
+  const [meta, setMeta] = useState<FormMetaState>(() =>
+    createInitialMeta(today, userId),
+  );
+  const [fields, setFields] = useState<SubmissionState["fields"]>(() =>
+    createEditableFields(),
+  );
+  const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(
+    () => createEditableSlots(),
+  );
   const slotsRef = useRef(slots);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -494,31 +578,51 @@ export function VideoSubmitForm({
     data: SampleQualityResponse | null;
     loading: boolean;
   }>({ data: null, loading: false });
-  const [deleteTargetRole, setDeleteTargetRole] = useState<SubmissionSlotRole | null>(null);
+  const [deleteTargetRole, setDeleteTargetRole] =
+    useState<SubmissionSlotRole | null>(null);
   const [keywordInput, setKeywordInput] = useState("");
-  const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(null);
-  const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(null);
+  const [focusedRole, setFocusedRole] = useState<SubmissionSlotRole | null>(
+    null,
+  );
+  const [highlightedOcrIndex, setHighlightedOcrIndex] = useState<number | null>(
+    null,
+  );
   const [scriptText, setScriptText] = useState("");
   const slotsSectionRef = useRef<HTMLDivElement | null>(null);
   const metricsSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const [hasManualScriptAuthorSelection, setHasManualScriptAuthorSelection] = useState(false);
-  const [hasManualOperatorSelection, setHasManualOperatorSelection] = useState(false);
+  const [hasManualScriptAuthorSelection, setHasManualScriptAuthorSelection] =
+    useState(false);
+  const [hasManualOperatorSelection, setHasManualOperatorSelection] =
+    useState(false);
   const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
 
   // 岗位外协与下拉相关状态
-  const [activeRoleDropdown, setActiveRoleDropdown] = useState<"script_author" | "video_editor" | "operator" | null>(null);
+  const [activeRoleDropdown, setActiveRoleDropdown] = useState<
+    "script_author" | "video_editor" | "operator" | null
+  >(null);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
-  const [hiddenRoles, setHiddenRoles] = useState<Set<SubmissionAssigneeRole>>(new Set());
+  const [hiddenRoles, setHiddenRoles] = useState<Set<SubmissionAssigneeRole>>(
+    new Set(),
+  );
 
-  const isScriptAuthorExternal = Boolean(meta.scriptAuthorUserId && meta.scriptAuthorUserId !== userId);
-  const isVideoEditorExternal = Boolean(meta.videoEditorUserId && meta.videoEditorUserId !== userId);
-  const isOperatorExternal = Boolean(meta.operatorUserId && meta.operatorUserId !== userId);
+  const isScriptAuthorExternal = Boolean(
+    meta.scriptAuthorUserId && meta.scriptAuthorUserId !== userId,
+  );
+  const isVideoEditorExternal = Boolean(
+    meta.videoEditorUserId && meta.videoEditorUserId !== userId,
+  );
+  const isOperatorExternal = Boolean(
+    meta.operatorUserId && meta.operatorUserId !== userId,
+  );
 
-  const isScriptAuthorVisible = isScriptAuthorExternal || !hiddenRoles.has("script_author");
-  const isVideoEditorVisible = isVideoEditorExternal || !hiddenRoles.has("video_editor");
+  const isScriptAuthorVisible =
+    isScriptAuthorExternal || !hiddenRoles.has("script_author");
+  const isVideoEditorVisible =
+    isVideoEditorExternal || !hiddenRoles.has("video_editor");
   const isOperatorVisible = isOperatorExternal || !hiddenRoles.has("operator");
-  const hasAnyVisibleRole = isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
+  const hasAnyVisibleRole =
+    isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
 
   const filteredMembersForRole = useMemo(() => {
     if (!roleSearchQuery.trim()) return operatorMembers;
@@ -527,7 +631,7 @@ export function VideoSubmitForm({
       (m) =>
         m.name?.toLowerCase().includes(q) ||
         m.display_name?.toLowerCase().includes(q) ||
-        (m.department && m.department.toLowerCase().includes(q))
+        (m.department && m.department.toLowerCase().includes(q)),
     );
   }, [operatorMembers, roleSearchQuery]);
 
@@ -535,45 +639,88 @@ export function VideoSubmitForm({
     slotsRef.current = slots;
   }, [slots]);
 
-  const setRoleUser = useCallback((role: SubmissionAssigneeRole, id: string, options: { isManual?: boolean } = {}) => {
-    const operatorUserId = resolveSelectedOperatorUserId(id);
-    if (operatorMembers.length > 0 && !operatorMembers.some((member) => member.id === operatorUserId)) {
-      feedbackToast.error("责任人必须是当前团队或小组中的成员");
-      return;
-    }
-    setMeta((current) => {
-      const next = operatorUserId === userId
-        ? removeSubmissionRoleOverride({ userId, role, assignments: current, overrides: current.roleOverrides })
-        : addSubmissionRoleOverride({ userId, role, assignments: current, overrides: current.roleOverrides });
-      const assignmentKey = role === "script_author" ? "scriptAuthorUserId" : role === "video_editor" ? "videoEditorUserId" : "operatorUserId";
-      return { ...current, ...next.assignments, [assignmentKey]: operatorUserId, roleOverrides: next.overrides };
-    });
-    if (role === "script_author") setHasManualScriptAuthorSelection(options.isManual ?? true);
-    if (role === "operator") setHasManualOperatorSelection(options.isManual ?? true);
-  }, [operatorMembers, userId]);
-
-  const removeRoleOverride = useCallback((role: SubmissionAssigneeRole) => {
-    setMeta((current) => {
-      const next = removeSubmissionRoleOverride({
-        userId,
-        role,
-        assignments: current,
-        overrides: current.roleOverrides,
+  const setRoleUser = useCallback(
+    (
+      role: SubmissionAssigneeRole,
+      id: string,
+      options: { isManual?: boolean } = {},
+    ) => {
+      const operatorUserId = resolveSelectedOperatorUserId(id);
+      if (
+        operatorMembers.length > 0 &&
+        !operatorMembers.some((member) => member.id === operatorUserId)
+      ) {
+        feedbackToast.error("责任人必须是当前团队或小组中的成员");
+        return;
+      }
+      setMeta((current) => {
+        const next =
+          operatorUserId === userId
+            ? removeSubmissionRoleOverride({
+                userId,
+                role,
+                assignments: current,
+                overrides: current.roleOverrides,
+              })
+            : addSubmissionRoleOverride({
+                userId,
+                role,
+                assignments: current,
+                overrides: current.roleOverrides,
+              });
+        const assignmentKey =
+          role === "script_author"
+            ? "scriptAuthorUserId"
+            : role === "video_editor"
+              ? "videoEditorUserId"
+              : "operatorUserId";
+        return {
+          ...current,
+          ...next.assignments,
+          [assignmentKey]: operatorUserId,
+          roleOverrides: next.overrides,
+        };
       });
-      return { ...current, ...next.assignments, roleOverrides: next.overrides };
-    });
-    if (role === "script_author") setHasManualScriptAuthorSelection(false);
-    if (role === "operator") setHasManualOperatorSelection(false);
-  }, [userId]);
+      if (role === "script_author")
+        setHasManualScriptAuthorSelection(options.isManual ?? true);
+      if (role === "operator")
+        setHasManualOperatorSelection(options.isManual ?? true);
+    },
+    [operatorMembers, userId],
+  );
 
-  const hideRole = useCallback((role: SubmissionAssigneeRole) => {
-    removeRoleOverride(role);
-    setHiddenRoles((prev) => {
-      const next = new Set(prev);
-      next.add(role);
-      return next;
-    });
-  }, [removeRoleOverride]);
+  const removeRoleOverride = useCallback(
+    (role: SubmissionAssigneeRole) => {
+      setMeta((current) => {
+        const next = removeSubmissionRoleOverride({
+          userId,
+          role,
+          assignments: current,
+          overrides: current.roleOverrides,
+        });
+        return {
+          ...current,
+          ...next.assignments,
+          roleOverrides: next.overrides,
+        };
+      });
+      if (role === "script_author") setHasManualScriptAuthorSelection(false);
+      if (role === "operator") setHasManualOperatorSelection(false);
+    },
+    [userId],
+  );
+
+  const hideRole = useCallback(
+    (role: SubmissionAssigneeRole) => {
+      removeRoleOverride(role);
+      setHiddenRoles((prev) => {
+        const next = new Set(prev);
+        next.add(role);
+        return next;
+      });
+    },
+    [removeRoleOverride],
+  );
 
   const showAllRoles = useCallback(() => {
     setHiddenRoles(new Set());
@@ -583,13 +730,19 @@ export function VideoSubmitForm({
     removeRoleOverride("operator");
   }, [removeRoleOverride]);
 
-  const setOperatorUser = useCallback((id: string, options: { isManual?: boolean } = {}) => {
-    setRoleUser("operator", id, options);
-  }, [setRoleUser]);
+  const setOperatorUser = useCallback(
+    (id: string, options: { isManual?: boolean } = {}) => {
+      setRoleUser("operator", id, options);
+    },
+    [setRoleUser],
+  );
 
-  const setScriptAuthorUser = useCallback((id: string, options: { isManual?: boolean } = {}) => {
-    setRoleUser("script_author", id, options);
-  }, [setRoleUser]);
+  const setScriptAuthorUser = useCallback(
+    (id: string, options: { isManual?: boolean } = {}) => {
+      setRoleUser("script_author", id, options);
+    },
+    [setRoleUser],
+  );
 
   useEffect(() => {
     setOperatorToSelf();
@@ -604,7 +757,10 @@ export function VideoSubmitForm({
         return response.json() as Promise<{ members?: OperatorMember[] }>;
       })
       .then((payload) => {
-        if (!cancelled) setOperatorMembers(Array.isArray(payload.members) ? payload.members : []);
+        if (!cancelled)
+          setOperatorMembers(
+            Array.isArray(payload.members) ? payload.members : [],
+          );
       })
       .catch(() => {
         if (!cancelled) setOperatorMembers([]);
@@ -679,10 +835,17 @@ export function VideoSubmitForm({
 
   // Set uploadedAt on client only to avoid hydration mismatch
   useEffect(() => {
-    setMeta((prev) => prev.uploadedAt ? prev : { ...prev, uploadedAt: new Date().toLocaleString("zh-CN") });
+    setMeta((prev) =>
+      prev.uploadedAt
+        ? prev
+        : { ...prev, uploadedAt: new Date().toLocaleString("zh-CN") },
+    );
   }, []);
 
-  const draftKey = useMemo(() => `dydata.draft.videoSubmit.${userId}`, [userId]);
+  const draftKey = useMemo(
+    () => `dydata.draft.videoSubmit.${userId}`,
+    [userId],
+  );
 
   type DraftData = {
     meta: FormMetaState;
@@ -708,17 +871,36 @@ export function VideoSubmitForm({
       hasManualScriptAuthorSelection,
       hasManualOperatorSelection,
     }),
-    [meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection]
+    [
+      meta,
+      fields,
+      slots,
+      scriptText,
+      keywordInput,
+      hasManualScriptAuthorSelection,
+      hasManualOperatorSelection,
+    ],
   );
 
-  const { hasDraft, restoreDraft, clearDraft, lastSavedAt } = useFormDraft<DraftData>(
-    draftKey,
-    draftData,
-    [meta, fields, slots, scriptText, keywordInput, hasManualScriptAuthorSelection, hasManualOperatorSelection],
-    { isEmpty: isVideoSubmitDraftEmpty }
-  );
+  const { hasDraft, restoreDraft, clearDraft, lastSavedAt } =
+    useFormDraft<DraftData>(
+      draftKey,
+      draftData,
+      [
+        meta,
+        fields,
+        slots,
+        scriptText,
+        keywordInput,
+        hasManualScriptAuthorSelection,
+        hasManualOperatorSelection,
+      ],
+      { isEmpty: isVideoSubmitDraftEmpty },
+    );
 
-  const { setLocalNotification } = useNotifications();
+  // 草稿状态 → 表单顶部内联 banner
+  const showDraftBanner =
+    hasDraft && !isSubmitted && !submittedViewActive && !initialSummary;
 
   const handleRestoreDraft = useCallback(() => {
     const draft = restoreDraft();
@@ -726,18 +908,38 @@ export function VideoSubmitForm({
 
     setMeta({
       ...draft.meta,
-      scriptAuthorUserId: draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
-      videoEditorUserId: draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
-      operatorUserId: draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
+      scriptAuthorUserId:
+        draft.meta.scriptAuthorUserId ?? resolveSelfOperatorUserId(userId),
+      videoEditorUserId:
+        draft.meta.videoEditorUserId ?? resolveSelfOperatorUserId(userId),
+      operatorUserId:
+        draft.meta.operatorUserId ?? resolveSelfOperatorUserId(userId),
       roleOverrides: draft.meta.roleOverrides ?? [],
     });
-    setHasManualScriptAuthorSelection(draft.hasManualScriptAuthorSelection ?? false);
+    setHasManualScriptAuthorSelection(
+      draft.hasManualScriptAuthorSelection ?? false,
+    );
     setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
     setFields(draft.fields);
     setSlots((current) => ({
-      screenshot_1: { ...current.screenshot_1, ...draft.slots.screenshot_1, file: null, previewUrl: null },
-      screenshot_2: { ...current.screenshot_2, ...draft.slots.screenshot_2, file: null, previewUrl: null },
-      screenshot_3: { ...current.screenshot_3, ...draft.slots.screenshot_3, file: null, previewUrl: null },
+      screenshot_1: {
+        ...current.screenshot_1,
+        ...draft.slots.screenshot_1,
+        file: null,
+        previewUrl: null,
+      },
+      screenshot_2: {
+        ...current.screenshot_2,
+        ...draft.slots.screenshot_2,
+        file: null,
+        previewUrl: null,
+      },
+      screenshot_3: {
+        ...current.screenshot_3,
+        ...draft.slots.screenshot_3,
+        file: null,
+        previewUrl: null,
+      },
     }));
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
@@ -747,40 +949,6 @@ export function VideoSubmitForm({
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
   }, [clearDraft]);
-
-  // 草稿状态 → 通知中心本地条目（不再占用主页空间）
-  useEffect(() => {
-    const shouldShow = hasDraft && !isSubmitted && !submittedViewActive && !initialSummary;
-    if (shouldShow) {
-      const time = lastSavedAt
-        ? lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
-        : "";
-      setLocalNotification(`draft.video_submit.${userId}`, {
-        key: `draft.video_submit.${userId}`,
-        type: "draft.video_submit",
-        category: "todo",
-        severity: "warning",
-        title: "未提交的填报草稿",
-        body: time ? `最后保存于 ${time}，是否恢复继续填写？` : "是否恢复继续填写？",
-        primaryActionLabel: "恢复草稿",
-        primaryAction: handleRestoreDraft,
-        secondaryActionLabel: "丢弃",
-        secondaryAction: handleDiscardDraft,
-      });
-    } else {
-      setLocalNotification(`draft.video_submit.${userId}`, null);
-    }
-  }, [
-    hasDraft,
-    isSubmitted,
-    submittedViewActive,
-    initialSummary,
-    lastSavedAt,
-    userId,
-    handleRestoreDraft,
-    handleDiscardDraft,
-    setLocalNotification,
-  ]);
 
   // Track all created blob URLs to clean them up on unmount
   useEffect(() => {
@@ -834,10 +1002,20 @@ export function VideoSubmitForm({
     setFocusedRole(null);
     setHasManualScriptAuthorSelection(false);
     setHasManualOperatorSelection(false);
-  }, [account?.id, initialBizDate, initialSummary, isBackfillMode, today, userId, submittedViewActive]);
+  }, [
+    account?.id,
+    initialBizDate,
+    initialSummary,
+    isBackfillMode,
+    today,
+    userId,
+    submittedViewActive,
+  ]);
 
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
-  const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
+  const screenshotsRequired = areSubmissionScreenshotsRequired(
+    meta.anomalyStatus,
+  );
   const issueSummary = useMemo(
     () =>
       summarizeSubmissionIssues(submissionState, {
@@ -847,14 +1025,26 @@ export function VideoSubmitForm({
         content: meta.content,
         // contentKeywords：前端暂隐藏不必填（保留后端字段，重做后再上线）
       }),
-    [submissionState, meta.topicTag, meta.anomalyStatus, meta.videoTitle, meta.content]
+    [
+      submissionState,
+      meta.topicTag,
+      meta.anomalyStatus,
+      meta.videoTitle,
+      meta.content,
+    ],
   );
   const submitCheck = canSubmit(submissionState, {
     anomalyStatus: meta.anomalyStatus,
   });
   const canActuallySubmit = issueSummary.canSubmit;
-  const issueMessages = useMemo(() => buildIssueMessages(issueSummary), [issueSummary]);
-  const issueHintText = useMemo(() => buildIssueHintText(issueMessages), [issueMessages]);
+  const issueMessages = useMemo(
+    () => buildIssueMessages(issueSummary),
+    [issueSummary],
+  );
+  const issueHintText = useMemo(
+    () => buildIssueHintText(issueMessages),
+    [issueMessages],
+  );
   const submitButtonLabel = isSubmitting
     ? "提交中..."
     : isBackfillMode
@@ -863,7 +1053,10 @@ export function VideoSubmitForm({
         ? "保存修改"
         : "提交今日数据";
 
-  function updateMeta<Key extends keyof FormMetaState>(key: Key, value: FormMetaState[Key]) {
+  function updateMeta<Key extends keyof FormMetaState>(
+    key: Key,
+    value: FormMetaState[Key],
+  ) {
     setMeta((current) => ({ ...current, [key]: value }));
   }
 
@@ -877,7 +1070,9 @@ export function VideoSubmitForm({
     }));
   }
 
-  function scrollToIssueAnchor(anchor: "slots" | "metrics" | "topicTag" | "meta" | null) {
+  function scrollToIssueAnchor(
+    anchor: "slots" | "metrics" | "topicTag" | "meta" | null,
+  ) {
     const target =
       anchor === "slots"
         ? slotsSectionRef.current
@@ -893,9 +1088,25 @@ export function VideoSubmitForm({
   }
 
   function handleFieldFocus(key: EditableMetricKey) {
-    if (["play_count", "follower_gain", "likes", "comments", "shares", "favorites"].includes(key)) {
+    if (
+      [
+        "play_count",
+        "follower_gain",
+        "likes",
+        "comments",
+        "shares",
+        "favorites",
+      ].includes(key)
+    ) {
       setFocusedRole("screenshot_1");
-    } else if (["avg_play_duration", "bounce_rate_2s", "completion_rate_5s", "completion_rate"].includes(key)) {
+    } else if (
+      [
+        "avg_play_duration",
+        "bounce_rate_2s",
+        "completion_rate_5s",
+        "completion_rate",
+      ].includes(key)
+    ) {
       setFocusedRole("screenshot_2");
     } else if (key === "follower_convert") {
       setFocusedRole("screenshot_3");
@@ -967,7 +1178,7 @@ export function VideoSubmitForm({
 
   function applyOverviewFields(
     recognizedFields: Record<string, string | number | boolean | null>,
-    confidence?: OcrData["confidence"]
+    confidence?: OcrData["confidence"],
   ) {
     setFields((current) => {
       const next = { ...current };
@@ -981,7 +1192,9 @@ export function VideoSubmitForm({
             source: "ocr",
             requiresManualConfirmation: false,
             confirmed: true,
-            confidenceScore: mapConfidenceToScore(confidence?.[key as keyof typeof confidence]),
+            confidenceScore: mapConfidenceToScore(
+              confidence?.[key as keyof typeof confidence],
+            ),
           };
         }
       }
@@ -990,248 +1203,277 @@ export function VideoSubmitForm({
     });
   }
 
-  const handleSlotUpload = useCallback(async (role: SubmissionSlotRole, file: File) => {
-    if (!account) {
-      feedbackToast.error("请先选择提交账号");
-      return;
-    }
-
-    // Revoke old blob URL for this slot to avoid leak when uploading a new file over an existing one
-    const oldUrl = slots[role]?.previewUrl ?? slots[role]?.assetUrl;
-    if (oldUrl && oldUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(oldUrl);
-      blobUrlsRef.current.delete(oldUrl);
-    }
-
-    setSlots((current) => ({
-      ...current,
-      [role]: {
-        ...current[role],
-        status: "uploading",
-        fileName: file.name,
-        file,
-        error: null,
-      },
-    }));
-
-    let phase: "upload" | "ocr" = "upload";
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user && !userId) {
-        throw new Error("登录状态已失效，请刷新页面后重试");
-      }
-
-      const uploadStart = performance.now();
-      const { url: assetUrl, bucket, path } = await uploadSubmissionScreenshot({
-        accountId: account.id,
-        role,
-        file,
-      });
-      const uploadMs = Math.round(performance.now() - uploadStart);
-      const previewUrl = URL.createObjectURL(file);
-      blobUrlsRef.current.add(previewUrl);
-
-      phase = "ocr";
-      setSlots((current) => ({
-        ...current,
-        [role]: {
-          ...current[role],
-          status: "recognizing",
-        },
-      }));
-
-      feedbackToast.success("截图已保存，正在识别", {
-        duration: 2000,
-        className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
-      });
-
-      const ocrRequestStart = performance.now();
-      const response = await fetch("/api/ocr-screenshot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bucket,
-          path,
-          asset_role: role,
-        }),
-      });
-      const ocrRequestMs = Math.round(performance.now() - ocrRequestStart);
-
-      const payload = (await response.json()) as OcrApiPayload;
-      const totalMs = Math.round(performance.now() - uploadStart);
-      const serverTimings = payload.timings;
-      console.log("[OCR 耗时]", {
-        role,
-        upload_ms: uploadMs,
-        ocr_request_ms: ocrRequestMs,
-        server_download_ms: serverTimings?.download_ms,
-        server_classify_ms: serverTimings?.classify_ms,
-        server_ocr_ms: serverTimings?.ocr_ms,
-        server_parse_ms: serverTimings?.parse_ms,
-        server_total_ms: serverTimings?.total_ms,
-        total_ms: totalMs,
-      });
-
-      if (!response.ok || !payload.data) {
-        throw new Error(toOcrErrorMessage(payload.error));
-      }
-
-      const { data } = payload;
-      const detectedType = data.screenshot_type;
-      const ocrSummary = buildOcrSummary(detectedType, data.recognized_fields);
-
-      const resolvedError = data.error_code
-        ? resolveOcrErrorMessage(data.error_code)
-        : data.error
-          ? toOcrErrorMessage(data.error)
-          : null;
-
-      // 智能对调逻辑：如果识别出的是流量数据，分流到 screenshot_1；若是留存完播数据，分流到 screenshot_2
-      let targetRole: SubmissionSlotRole = role;
-      if (detectedType === "data") {
-        targetRole = "screenshot_1";
-      } else if (detectedType === "retention") {
-        targetRole = "screenshot_2";
-      }
-
-      const shouldAutoMoveSlot =
-        role !== targetRole &&
-        (slotsRef.current[targetRole].status === "empty" || slotsRef.current[targetRole].status === "failed");
-      setSlots((current) => {
-        const newSlotData = {
-          ...current[role],
-          status: data.slot_status,
-          confirmed: data.slot_status === "confirmed",
-          requiresManualConfirmation: data.requires_manual_confirmation,
-          confidenceScore: data.confidence_score,
-          error: data.slot_status === "failed" ? resolvedError ?? OCR_FAIL_MESSAGE : resolvedError,
-          assetUrl,
-          previewUrl,
-          screenshotType: detectedType,
-          recognizedFields: data.recognized_fields,
-          ocrSummary,
-        };
-
-        if (role !== targetRole && (current[targetRole].status === "empty" || current[targetRole].status === "failed")) {
-          return {
-            ...current,
-            [targetRole]: {
-              ...newSlotData,
-              role: targetRole,
-            },
-            [role]: {
-              role: role,
-              required: current[role].required,
-              status: "empty",
-              confidenceScore: null,
-              requiresManualConfirmation: false,
-              confirmed: false,
-              fileName: undefined,
-              error: null,
-              assetUrl: null,
-              previewUrl: null,
-              file: null,
-              recognizedFields: null,
-              ocrSummary: undefined,
-            },
-          };
-        }
-
-        return {
-          ...current,
-          [role]: newSlotData,
-        };
-      });
-
-      if (shouldAutoMoveSlot) {
-        const detectedLabel = detectedType === "data" ? "流量数据图" : detectedType === "retention" ? "留存完播图" : "截图";
-        feedbackToast.success(`已识别为${detectedLabel}，自动归入${SLOT_LABELS[targetRole]}`, {
-          duration: 2000,
-        });
-      }
-
-      if (data.slot_status === "failed") {
-        feedbackToast.error(resolvedError || OCR_FAIL_MESSAGE);
+  const handleSlotUpload = useCallback(
+    async (role: SubmissionSlotRole, file: File) => {
+      if (!account) {
+        feedbackToast.error("请先选择提交账号");
         return;
       }
 
-      if (detectedType === "data" && data.recognized_fields) {
-        applyOverviewFields(data.recognized_fields, data.confidence);
+      // Revoke old blob URL for this slot to avoid leak when uploading a new file over an existing one
+      const oldUrl = slots[role]?.previewUrl ?? slots[role]?.assetUrl;
+      if (oldUrl && oldUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(oldUrl);
+        blobUrlsRef.current.delete(oldUrl);
       }
 
-      if (detectedType === "retention" && data.recognized_fields) {
-        const retentionMetrics = data.recognized_fields.retention_metrics as unknown as Record<string, number | null> | undefined;
-        setFields((current) => ({
-          ...current,
-          avg_play_duration: {
-            ...current.avg_play_duration,
-            value:
-              typeof retentionMetrics?.avg_play_duration === "number"
-                ? String(retentionMetrics.avg_play_duration)
-                : current.avg_play_duration.value,
-            source: "ocr",
-            requiresManualConfirmation: false,
-            confirmed: true,
-          },
-          bounce_rate_2s: {
-            ...current.bounce_rate_2s,
-            value:
-              typeof retentionMetrics?.bounce_rate_2s === "number"
-                ? String(retentionMetrics.bounce_rate_2s)
-                : current.bounce_rate_2s.value,
-            source: "ocr",
-            requiresManualConfirmation: false,
-            confirmed: true,
-          },
-          completion_rate_5s: {
-            ...current.completion_rate_5s,
-            value:
-              typeof retentionMetrics?.completion_rate_5s === "number"
-                ? String(retentionMetrics.completion_rate_5s)
-                : current.completion_rate_5s.value,
-            source: "ocr",
-            requiresManualConfirmation: false,
-            confirmed: true,
-          },
-          completion_rate: {
-            ...current.completion_rate,
-            value:
-              typeof retentionMetrics?.completion_rate === "number"
-                ? String(retentionMetrics.completion_rate)
-                : current.completion_rate.value,
-            source: "ocr",
-            requiresManualConfirmation: false,
-            confirmed: true,
-          },
-        }));
-      }
-
-      feedbackToast.success("识别完成", {
-        duration: 2200,
-        className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
-      });
-    } catch (error) {
-      const message = phase === "upload"
-        ? toScreenshotUploadErrorMessage(error)
-        : toOcrErrorMessage(error);
       setSlots((current) => ({
         ...current,
         [role]: {
           ...current[role],
-          status: "failed",
-          confirmed: false,
-          requiresManualConfirmation: true,
-          error: message,
+          status: "uploading",
+          fileName: file.name,
+          file,
+          error: null,
         },
       }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, slots]);
+
+      let phase: "upload" | "ocr" = "upload";
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user && !userId) {
+          throw new Error("登录状态已失效，请刷新页面后重试");
+        }
+
+        const uploadStart = performance.now();
+        const {
+          url: assetUrl,
+          bucket,
+          path,
+        } = await uploadSubmissionScreenshot({
+          accountId: account.id,
+          role,
+          file,
+        });
+        const uploadMs = Math.round(performance.now() - uploadStart);
+        const previewUrl = URL.createObjectURL(file);
+        blobUrlsRef.current.add(previewUrl);
+
+        phase = "ocr";
+        setSlots((current) => ({
+          ...current,
+          [role]: {
+            ...current[role],
+            status: "recognizing",
+          },
+        }));
+
+        feedbackToast.success("截图已保存，正在识别", {
+          duration: 2000,
+          className:
+            "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
+        });
+
+        const ocrRequestStart = performance.now();
+        const response = await fetch("/api/ocr-screenshot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bucket,
+            path,
+            asset_role: role,
+          }),
+        });
+        const ocrRequestMs = Math.round(performance.now() - ocrRequestStart);
+
+        const payload = (await response.json()) as OcrApiPayload;
+        const totalMs = Math.round(performance.now() - uploadStart);
+        const serverTimings = payload.timings;
+        console.log("[OCR 耗时]", {
+          role,
+          upload_ms: uploadMs,
+          ocr_request_ms: ocrRequestMs,
+          server_download_ms: serverTimings?.download_ms,
+          server_classify_ms: serverTimings?.classify_ms,
+          server_ocr_ms: serverTimings?.ocr_ms,
+          server_parse_ms: serverTimings?.parse_ms,
+          server_total_ms: serverTimings?.total_ms,
+          total_ms: totalMs,
+        });
+
+        if (!response.ok || !payload.data) {
+          throw new Error(toOcrErrorMessage(payload.error));
+        }
+
+        const { data } = payload;
+        const detectedType = data.screenshot_type;
+        const ocrSummary = buildOcrSummary(
+          detectedType,
+          data.recognized_fields,
+        );
+
+        const resolvedError = data.error_code
+          ? resolveOcrErrorMessage(data.error_code)
+          : data.error
+            ? toOcrErrorMessage(data.error)
+            : null;
+
+        // 智能对调逻辑：如果识别出的是流量数据，分流到 screenshot_1；若是留存完播数据，分流到 screenshot_2
+        let targetRole: SubmissionSlotRole = role;
+        if (detectedType === "data") {
+          targetRole = "screenshot_1";
+        } else if (detectedType === "retention") {
+          targetRole = "screenshot_2";
+        }
+
+        const shouldAutoMoveSlot =
+          role !== targetRole &&
+          (slotsRef.current[targetRole].status === "empty" ||
+            slotsRef.current[targetRole].status === "failed");
+        setSlots((current) => {
+          const newSlotData = {
+            ...current[role],
+            status: data.slot_status,
+            confirmed: data.slot_status === "confirmed",
+            requiresManualConfirmation: data.requires_manual_confirmation,
+            confidenceScore: data.confidence_score,
+            error:
+              data.slot_status === "failed"
+                ? (resolvedError ?? OCR_FAIL_MESSAGE)
+                : resolvedError,
+            assetUrl,
+            previewUrl,
+            screenshotType: detectedType,
+            recognizedFields: data.recognized_fields,
+            ocrSummary,
+          };
+
+          if (
+            role !== targetRole &&
+            (current[targetRole].status === "empty" ||
+              current[targetRole].status === "failed")
+          ) {
+            return {
+              ...current,
+              [targetRole]: {
+                ...newSlotData,
+                role: targetRole,
+              },
+              [role]: {
+                role: role,
+                required: current[role].required,
+                status: "empty",
+                confidenceScore: null,
+                requiresManualConfirmation: false,
+                confirmed: false,
+                fileName: undefined,
+                error: null,
+                assetUrl: null,
+                previewUrl: null,
+                file: null,
+                recognizedFields: null,
+                ocrSummary: undefined,
+              },
+            };
+          }
+
+          return {
+            ...current,
+            [role]: newSlotData,
+          };
+        });
+
+        if (shouldAutoMoveSlot) {
+          const detectedLabel =
+            detectedType === "data"
+              ? "流量数据图"
+              : detectedType === "retention"
+                ? "留存完播图"
+                : "截图";
+          feedbackToast.success(
+            `已识别为${detectedLabel}，自动归入${SLOT_LABELS[targetRole]}`,
+            {
+              duration: 2000,
+            },
+          );
+        }
+
+        if (data.slot_status === "failed") {
+          feedbackToast.error(resolvedError || OCR_FAIL_MESSAGE);
+          return;
+        }
+
+        if (detectedType === "data" && data.recognized_fields) {
+          applyOverviewFields(data.recognized_fields, data.confidence);
+        }
+
+        if (detectedType === "retention" && data.recognized_fields) {
+          const retentionMetrics = data.recognized_fields
+            .retention_metrics as unknown as
+            Record<string, number | null> | undefined;
+          setFields((current) => ({
+            ...current,
+            avg_play_duration: {
+              ...current.avg_play_duration,
+              value:
+                typeof retentionMetrics?.avg_play_duration === "number"
+                  ? String(retentionMetrics.avg_play_duration)
+                  : current.avg_play_duration.value,
+              source: "ocr",
+              requiresManualConfirmation: false,
+              confirmed: true,
+            },
+            bounce_rate_2s: {
+              ...current.bounce_rate_2s,
+              value:
+                typeof retentionMetrics?.bounce_rate_2s === "number"
+                  ? String(retentionMetrics.bounce_rate_2s)
+                  : current.bounce_rate_2s.value,
+              source: "ocr",
+              requiresManualConfirmation: false,
+              confirmed: true,
+            },
+            completion_rate_5s: {
+              ...current.completion_rate_5s,
+              value:
+                typeof retentionMetrics?.completion_rate_5s === "number"
+                  ? String(retentionMetrics.completion_rate_5s)
+                  : current.completion_rate_5s.value,
+              source: "ocr",
+              requiresManualConfirmation: false,
+              confirmed: true,
+            },
+            completion_rate: {
+              ...current.completion_rate,
+              value:
+                typeof retentionMetrics?.completion_rate === "number"
+                  ? String(retentionMetrics.completion_rate)
+                  : current.completion_rate.value,
+              source: "ocr",
+              requiresManualConfirmation: false,
+              confirmed: true,
+            },
+          }));
+        }
+
+        feedbackToast.success("识别完成", {
+          duration: 2200,
+          className:
+            "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
+        });
+      } catch (error) {
+        const message =
+          phase === "upload"
+            ? toScreenshotUploadErrorMessage(error)
+            : toOcrErrorMessage(error);
+        setSlots((current) => ({
+          ...current,
+          [role]: {
+            ...current[role],
+            status: "failed",
+            confirmed: false,
+            requiresManualConfirmation: true,
+            error: message,
+          },
+        }));
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [account, slots],
+  );
 
   function handleSlotRetry(role: SubmissionSlotRole) {
     const slot = slots[role];
@@ -1278,7 +1520,12 @@ export function VideoSubmitForm({
 
     if (!submitCheck.ok || !issueSummary.canSubmit) {
       triggerFormShake();
-      feedbackToast.error(issueHintText || issueSummary.reason || submitCheck.reason || "当前还不能提交");
+      feedbackToast.error(
+        issueHintText ||
+          issueSummary.reason ||
+          submitCheck.reason ||
+          "当前还不能提交",
+      );
       scrollToIssueAnchor(issueSummary.firstIssueAnchor);
       return;
     }
@@ -1296,13 +1543,15 @@ export function VideoSubmitForm({
       return;
     }
 
-    const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit({
-      mode,
-      bizDate: meta.bizDate,
-      today,
-      submittedViewActive,
-      hasInitialSummary: Boolean(initialSummary),
-    });
+    const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit(
+      {
+        mode,
+        bizDate: meta.bizDate,
+        today,
+        submittedViewActive,
+        hasInitialSummary: Boolean(initialSummary),
+      },
+    );
 
     setIsSubmitting(true);
 
@@ -1327,9 +1576,18 @@ export function VideoSubmitForm({
           published_at: meta.publishedAt || getDefaultPublishedAtValue(),
           published_at_text: normalizeOptionalText(meta.publishedAtText),
           anomaly_status: meta.anomalyStatus,
-          punish_type: meta.anomalyStatus === "abnormal" ? (meta.punishType || "限流") : undefined,
-          platform_notice: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.platformNotice ?? "") : undefined,
-          appeal: meta.anomalyStatus === "abnormal" ? normalizeOptionalText(meta.appeal ?? "") : undefined,
+          punish_type:
+            meta.anomalyStatus === "abnormal"
+              ? meta.punishType || "限流"
+              : undefined,
+          platform_notice:
+            meta.anomalyStatus === "abnormal"
+              ? normalizeOptionalText(meta.platformNotice ?? "")
+              : undefined,
+          appeal:
+            meta.anomalyStatus === "abnormal"
+              ? normalizeOptionalText(meta.appeal ?? "")
+              : undefined,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
           topic_id: null,
@@ -1338,7 +1596,10 @@ export function VideoSubmitForm({
           operator_user_id: meta.operatorUserId,
           content_keywords: meta.contentKeywords,
           assets: buildAssets(slots),
-          script_text: parseMetric(fields.follower_convert.value) > 0 ? scriptText.trim() || null : null,
+          script_text:
+            parseMetric(fields.follower_convert.value) > 0
+              ? scriptText.trim() || null
+              : null,
           metrics: {
             play_count: parseMetric(fields.play_count.value),
             likes: parseMetric(fields.likes.value),
@@ -1374,7 +1635,10 @@ export function VideoSubmitForm({
         throw new Error("提交成功，但返回数据格式不正确");
       }
 
-      const aiTags = !isVideo(payload) && Array.isArray(payload.ai_tags) ? payload.ai_tags : [];
+      const aiTags =
+        !isVideo(payload) && Array.isArray(payload.ai_tags)
+          ? payload.ai_tags
+          : [];
       const summaryOverride = createSummaryOverride(account.id, meta, fields);
       shouldAutoRedirectAfterSubmitRef.current = shouldAutoRedirectAfterSubmit;
       setSubmittedVideo(submittedVideo);
@@ -1398,37 +1662,45 @@ export function VideoSubmitForm({
     }
   }
 
-
   /* ---------------------------------------------------------------- */
-  /*  双态面板状态及队列上传                                            */
+  /* 双态面板状态及队列上传 */
   /* ---------------------------------------------------------------- */
-  const [activePanelTab, setActivePanelTab] = useState<"upload" | "confirm">("upload");
+  const [activePanelTab, setActivePanelTab] = useState<"upload" | "confirm">(
+    "upload",
+  );
   const isAbnormalStatus = meta.anomalyStatus === "abnormal";
 
   // 统一的多图指派与上传
-  const handleUnifiedUpload = useCallback(async (files: File[]) => {
-    if (files.length === 0) return;
-    const roles: SubmissionSlotRole[] = ["screenshot_1", "screenshot_2", "screenshot_3"];
-    const uploadsToStart: { role: SubmissionSlotRole; file: File }[] = [];
+  const handleUnifiedUpload = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) return;
+      const roles: SubmissionSlotRole[] = [
+        "screenshot_1",
+        "screenshot_2",
+        "screenshot_3",
+      ];
+      const uploadsToStart: { role: SubmissionSlotRole; file: File }[] = [];
 
-    let fileIndex = 0;
-    for (const role of roles) {
-      if (fileIndex >= files.length) break;
-      const slot = slots[role];
-      if (slot.status === "empty" || slot.status === "failed") {
-        uploadsToStart.push({ role, file: files[fileIndex] });
-        fileIndex++;
+      let fileIndex = 0;
+      for (const role of roles) {
+        if (fileIndex >= files.length) break;
+        const slot = slots[role];
+        if (slot.status === "empty" || slot.status === "failed") {
+          uploadsToStart.push({ role, file: files[fileIndex] });
+          fileIndex++;
+        }
       }
-    }
 
-    await Promise.all(
-      uploadsToStart.map(({ role, file }) => handleSlotUpload(role, file))
-    );
+      await Promise.all(
+        uploadsToStart.map(({ role, file }) => handleSlotUpload(role, file)),
+      );
 
-    if (fileIndex < files.length) {
-      toast.warning(`槽位已满，仅上传了前 ${uploadsToStart.length} 张图片`);
-    }
-  }, [slots, handleSlotUpload]);
+      if (fileIndex < files.length) {
+        toast.warning(`槽位已满，仅上传了前 ${uploadsToStart.length} 张图片`);
+      }
+    },
+    [slots, handleSlotUpload],
+  );
 
   // 1. OCR 识别完成自动切 Tab 逻辑
   const autoAdvancedRef = useRef(false);
@@ -1438,8 +1710,9 @@ export function VideoSubmitForm({
     const slot1 = slots.screenshot_1;
     const slot2 = slots.screenshot_2;
     if (!slot1 || !slot2) return;
-    
-    const bothConfirmed = slot1.status === "confirmed" && slot2.status === "confirmed";
+
+    const bothConfirmed =
+      slot1.status === "confirmed" && slot2.status === "confirmed";
     const anyPending =
       slot1.status === "pending_confirm" ||
       slot2.status === "pending_confirm" ||
@@ -1467,7 +1740,9 @@ export function VideoSubmitForm({
       autoAdvancedRef.current = false;
     }
 
-    const hasAnyUpload = Object.values(slots).some((slot) => slot.status !== "empty");
+    const hasAnyUpload = Object.values(slots).some(
+      (slot) => slot.status !== "empty",
+    );
     if (!hasAnyUpload && !isAbnormalStatus) {
       setActivePanelTab("upload");
     }
@@ -1483,18 +1758,26 @@ export function VideoSubmitForm({
   // 2. 快捷键：Ctrl+Enter 快捷提交，Esc 切换 Tab 面板
   const isSubmittingRef = useRef(isSubmitting);
   const canSubmitRef = useRef(canActuallySubmit);
-  useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
-  useEffect(() => { canSubmitRef.current = canActuallySubmit; }, [canActuallySubmit]);
+  useEffect(() => {
+    isSubmittingRef.current = isSubmitting;
+  }, [isSubmitting]);
+  useEffect(() => {
+    canSubmitRef.current = canActuallySubmit;
+  }, [canActuallySubmit]);
 
   // 提交：触发 form 的提交事件，复用现有 handleSubmit
   const triggerSubmit = useCallback(() => {
     setHasAttemptedSubmit(true);
-    const formEl = document.getElementById("video-submit-form") as HTMLFormElement | null;
+    const formEl = document.getElementById(
+      "video-submit-form",
+    ) as HTMLFormElement | null;
     if (formEl) {
       if (formEl.requestSubmit) {
         formEl.requestSubmit();
       } else {
-        formEl.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        formEl.dispatchEvent(
+          new Event("submit", { cancelable: true, bubbles: true }),
+        );
       }
     }
   }, []);
@@ -1505,9 +1788,15 @@ export function VideoSubmitForm({
       const target = event.target as HTMLElement | null;
 
       const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
-      const cmdEnter = event.key === "Enter" && (isMac ? event.metaKey : event.ctrlKey);
+      const cmdEnter =
+        event.key === "Enter" && (isMac ? event.metaKey : event.ctrlKey);
 
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
         if (cmdEnter) {
           event.preventDefault();
           if (canSubmitRef.current) triggerSubmit();
@@ -1533,9 +1822,6 @@ export function VideoSubmitForm({
     return () => window.removeEventListener("keydown", onKey);
   }, [triggerSubmit]);
 
-
-
-
   if (!account) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-white p-6">
@@ -1555,9 +1841,7 @@ export function VideoSubmitForm({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-4 pb-2"
         >
-          <div 
-            className="rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] select-none"
-          >
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] select-none">
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/5 border border-[#6FAA7D]/10">
               <svg
                 className="size-8 text-[#6FAA7D]"
@@ -1640,7 +1924,8 @@ export function VideoSubmitForm({
                 }}
                 className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
               >
-                去查看我的成长与大盘数据 🚀 {countdown !== null ? `(${countdown}s)` : ""}
+                去查看我的成长与大盘数据 🚀{" "}
+                {countdown !== null ? `(${countdown}s)` : ""}
               </Button>
             </div>
           </div>
@@ -1718,14 +2003,23 @@ export function VideoSubmitForm({
         </motion.div>
       ) : (
         <>
-          <Dialog open={deleteTargetRole !== null} onOpenChange={(open) => !open && setDeleteTargetRole(null)}>
+          <Dialog
+            open={deleteTargetRole !== null}
+            onOpenChange={(open) => !open && setDeleteTargetRole(null)}
+          >
             <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl">
               <DialogHeader className="px-6 pt-6">
                 <DialogTitle>确认删除截图？</DialogTitle>
-                <DialogDescription>删除后需要重新上传并识别该槽位截图。</DialogDescription>
+                <DialogDescription>
+                  删除后需要重新上传并识别该槽位截图。
+                </DialogDescription>
               </DialogHeader>
               <DialogFooter className="px-6 pb-6">
-                <Button type="button" variant="outline" onClick={() => setDeleteTargetRole(null)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDeleteTargetRole(null)}
+                >
                   取消
                 </Button>
                 <Button
@@ -1734,13 +2028,18 @@ export function VideoSubmitForm({
                   onClick={() => {
                     if (!deleteTargetRole) return;
                     const targetSlot = slots[deleteTargetRole];
-                    if (targetSlot.previewUrl && targetSlot.previewUrl.startsWith("blob:")) {
+                    if (
+                      targetSlot.previewUrl &&
+                      targetSlot.previewUrl.startsWith("blob:")
+                    ) {
                       URL.revokeObjectURL(targetSlot.previewUrl);
                       blobUrlsRef.current.delete(targetSlot.previewUrl);
                     }
                     setSlots((current) => ({
                       ...current,
-                      [deleteTargetRole]: { ...createEditableSlots()[deleteTargetRole] },
+                      [deleteTargetRole]: {
+                        ...createEditableSlots()[deleteTargetRole],
+                      },
                     }));
                     setDeleteTargetRole(null);
                     feedbackToast.success("删除成功", {
@@ -1765,11 +2064,39 @@ export function VideoSubmitForm({
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="mx-auto max-w-4xl space-y-3.5 py-0">
+              {/* 草稿恢复 banner */}
+              {showDraftBanner && (
+                <div className="flex items-center justify-between rounded-xl border border-transparent bg-[#F59E0B]/10 px-4 py-2.5 text-[12px]">
+                  <span className="text-[#B45309]">
+                    {lastSavedAt
+                      ? `有未提交的草稿，最后保存于 ${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
+                      : "有未提交的草稿"}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleRestoreDraft}
+                      className="font-medium text-[#B45309] hover:text-[#B45309]"
+                    >
+                      恢复草稿
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardDraft}
+                      className="text-[#F59E0B] hover:text-[#B45309]"
+                    >
+                      丢弃
+                    </button>
+                  </div>
+                </div>
+              )}
               {/* 1. 局部双态自管理容器 */}
               <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-7 shadow-xs">
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
-                    <span className="text-[13px] font-medium text-zinc-700">核心指标与截图</span>
+                    <span className="text-[13px] font-medium text-zinc-700">
+                      核心指标与截图
+                    </span>
                     <div className="flex items-center gap-2">
                       <VideoStatusSegmented
                         value={meta.anomalyStatus}
@@ -1778,7 +2105,9 @@ export function VideoSubmitForm({
                       {meta.anomalyStatus === "abnormal" && (
                         <select
                           value={meta.punishType || "限流"}
-                          onChange={(e) => updateMeta("punishType", e.target.value)}
+                          onChange={(e) =>
+                            updateMeta("punishType", e.target.value)
+                          }
                           className="h-9 rounded-full border border-zinc-200 bg-white px-3 text-[12px] font-medium text-zinc-700 shadow-sm outline-none focus:border-zinc-300 focus:ring-1 focus:ring-zinc-200"
                         >
                           <option value="限流">限流</option>
@@ -1791,36 +2120,39 @@ export function VideoSubmitForm({
                   </div>
 
                   {/* 仅当有已上传图片时且处于正常状态下显示 Tab 切换 */}
-                  {!isAbnormalStatus && Object.values(slots).some((slot) => slot.status !== "empty") && (
-                    <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setActivePanelTab("upload")}
-                        title="Esc 快速切换"
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
-                          activePanelTab === "upload"
-                            ? "bg-white text-zinc-700 shadow-sm"
-                            : "text-zinc-500 hover:text-zinc-700"
-                        )}
-                      >
-                        截图列表
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActivePanelTab("confirm")}
-                        title="Esc 快速切换"
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
-                          activePanelTab === "confirm"
-                            ? "bg-white text-zinc-700 shadow-sm"
-                            : "text-zinc-500 hover:text-zinc-700"
-                        )}
-                      >
-                        指标核对
-                      </button>
-                    </div>
-                  )}
+                  {!isAbnormalStatus &&
+                    Object.values(slots).some(
+                      (slot) => slot.status !== "empty",
+                    ) && (
+                      <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setActivePanelTab("upload")}
+                          title="Esc 快速切换"
+                          className={cn(
+                            "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
+                            activePanelTab === "upload"
+                              ? "bg-white text-zinc-700 shadow-sm"
+                              : "text-zinc-500 hover:text-zinc-700",
+                          )}
+                        >
+                          截图列表
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActivePanelTab("confirm")}
+                          title="Esc 快速切换"
+                          className={cn(
+                            "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
+                            activePanelTab === "confirm"
+                              ? "bg-white text-zinc-700 shadow-sm"
+                              : "text-zinc-500 hover:text-zinc-700",
+                          )}
+                        >
+                          指标核对
+                        </button>
+                      </div>
+                    )}
                 </div>
 
                 {/* 局部面板过渡内容：锁定高度，防抖，支持 smooth scroll/overflow */}
@@ -1892,32 +2224,76 @@ export function VideoSubmitForm({
                     {/* 视频标题 */}
                     <div
                       className="space-y-1 shrink-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
-                      data-missing={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle")}
+                      data-missing={
+                        hasAttemptedSubmit &&
+                        meta.anomalyStatus !== "abnormal" &&
+                        issueSummary.missingRequiredMeta.includes("videoTitle")
+                      }
                     >
-                      <Label htmlFor="video_title" className="text-[13px] font-medium text-zinc-600">
-                        视频标题 {meta.anomalyStatus !== "abnormal" && <span className="text-[#C9604D]">*</span>}
+                      <Label
+                        htmlFor="video_title"
+                        className="text-[13px] font-medium text-zinc-600"
+                      >
+                        视频标题{" "}
+                        {meta.anomalyStatus !== "abnormal" && (
+                          <span className="text-[#C9604D]">*</span>
+                        )}
                       </Label>
                       <Input
                         id="video_title"
                         value={meta.videoTitle}
-                        onChange={(event) => updateMeta("videoTitle", event.target.value)}
+                        onChange={(event) =>
+                          updateMeta("videoTitle", event.target.value)
+                        }
                         placeholder="输入视频标题"
                         className="h-10.5 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-150"
-                        aria-invalid={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "true" : "false"}
-                        aria-describedby={hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? "video_title_error" : undefined}
+                        aria-invalid={
+                          hasAttemptedSubmit &&
+                          meta.anomalyStatus !== "abnormal" &&
+                          issueSummary.missingRequiredMeta.includes(
+                            "videoTitle",
+                          )
+                            ? "true"
+                            : "false"
+                        }
+                        aria-describedby={
+                          hasAttemptedSubmit &&
+                          meta.anomalyStatus !== "abnormal" &&
+                          issueSummary.missingRequiredMeta.includes(
+                            "videoTitle",
+                          )
+                            ? "video_title_error"
+                            : undefined
+                        }
                       />
-                      {hasAttemptedSubmit && meta.anomalyStatus !== "abnormal" && issueSummary.missingRequiredMeta.includes("videoTitle") ? (
-                        <p id="video_title_error" role="alert" className="text-[12px] font-medium text-[#C9604D]">必填，仍未填写视频标题</p>
+                      {hasAttemptedSubmit &&
+                      meta.anomalyStatus !== "abnormal" &&
+                      issueSummary.missingRequiredMeta.includes(
+                        "videoTitle",
+                      ) ? (
+                        <p
+                          id="video_title_error"
+                          role="alert"
+                          className="text-[12px] font-medium text-[#C9604D]"
+                        >
+                          必填，仍未填写视频标题
+                        </p>
                       ) : null}
                     </div>
 
                     {/* 视频文案 (flex-1 自动调高填满全高，与右侧虚线框完美动态平齐) */}
                     <div
                       className="flex-1 flex flex-col min-h-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
-                      data-missing={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content")}
+                      data-missing={
+                        hasAttemptedSubmit &&
+                        issueSummary.missingRequiredMeta.includes("content")
+                      }
                     >
                       <div className="flex items-center justify-between shrink-0">
-                        <Label htmlFor="content" className="text-[13px] font-medium text-zinc-600">
+                        <Label
+                          htmlFor="content"
+                          className="text-[13px] font-medium text-zinc-600"
+                        >
                           文案 <span className="text-[#C9604D]">*</span>
                         </Label>
                         <button
@@ -1932,14 +2308,33 @@ export function VideoSubmitForm({
                       <textarea
                         id="content"
                         value={meta.content}
-                        onChange={(event) => updateMeta("content", event.target.value)}
+                        onChange={(event) =>
+                          updateMeta("content", event.target.value)
+                        }
                         placeholder="粘贴视频文案..."
                         className="mt-1.5 flex-1 min-h-[160px] w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3.5 text-[13px] leading-[1.75] tracking-[0.005em] text-zinc-700 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-200 overflow-y-auto custom-scrollbar"
-                        aria-invalid={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "true" : "false"}
-                        aria-describedby={hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? "content_error" : undefined}
+                        aria-invalid={
+                          hasAttemptedSubmit &&
+                          issueSummary.missingRequiredMeta.includes("content")
+                            ? "true"
+                            : "false"
+                        }
+                        aria-describedby={
+                          hasAttemptedSubmit &&
+                          issueSummary.missingRequiredMeta.includes("content")
+                            ? "content_error"
+                            : undefined
+                        }
                       />
-                      {hasAttemptedSubmit && issueSummary.missingRequiredMeta.includes("content") ? (
-                        <p id="content_error" role="alert" className="mt-1 text-[12px] font-medium text-[#C9604D] shrink-0">必填，仍未填写文案</p>
+                      {hasAttemptedSubmit &&
+                      issueSummary.missingRequiredMeta.includes("content") ? (
+                        <p
+                          id="content_error"
+                          role="alert"
+                          className="mt-1 text-[12px] font-medium text-[#C9604D] shrink-0"
+                        >
+                          必填，仍未填写文案
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -1974,7 +2369,9 @@ export function VideoSubmitForm({
                           {isScriptAuthorVisible && (
                             <RoleItemSelectorRow
                               label="文案"
-                              icon={<FileText className="size-3.5 text-zinc-500 stroke-[1.75]" />}
+                              icon={
+                                <FileText className="size-3.5 text-zinc-500 stroke-[1.75]" />
+                              }
                               roleKey="script_author"
                               selectedUserId={meta.scriptAuthorUserId}
                               operatorMembers={operatorMembers}
@@ -1996,7 +2393,9 @@ export function VideoSubmitForm({
                           {isVideoEditorVisible && (
                             <RoleItemSelectorRow
                               label="剪辑"
-                              icon={<Scissors className="size-3.5 text-zinc-500 stroke-[1.75]" />}
+                              icon={
+                                <Scissors className="size-3.5 text-zinc-500 stroke-[1.75]" />
+                              }
                               roleKey="video_editor"
                               selectedUserId={meta.videoEditorUserId}
                               operatorMembers={operatorMembers}
@@ -2007,7 +2406,9 @@ export function VideoSubmitForm({
                               setRoleSearchQuery={setRoleSearchQuery}
                               filteredMembersForRole={filteredMembersForRole}
                               onSelectUser={(id) => {
-                                setRoleUser("video_editor", id, { isManual: true });
+                                setRoleUser("video_editor", id, {
+                                  isManual: true,
+                                });
                                 if (id === userId) hideRole("video_editor");
                               }}
                               onResetSelf={() => hideRole("video_editor")}
@@ -2018,7 +2419,9 @@ export function VideoSubmitForm({
                           {isOperatorVisible && (
                             <RoleItemSelectorRow
                               label="运营"
-                              icon={<Rocket className="size-3.5 text-zinc-500 stroke-[1.75]" />}
+                              icon={
+                                <Rocket className="size-3.5 text-zinc-500 stroke-[1.75]" />
+                              }
                               roleKey="operator"
                               selectedUserId={meta.operatorUserId}
                               operatorMembers={operatorMembers}
@@ -2044,7 +2447,9 @@ export function VideoSubmitForm({
                       {!isMemoryExpanded ? (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[12.5px] text-zinc-700 font-semibold">已记配置：</span>
+                            <span className="text-[12.5px] text-zinc-700 font-semibold">
+                              已记配置：
+                            </span>
                             <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-2 py-0.5 text-[11.5px] font-medium">
                               {meta.topicTag}
                             </span>
@@ -2063,18 +2468,25 @@ export function VideoSubmitForm({
                       ) : (
                         <div className="space-y-3 rounded-xl bg-zinc-100/50 p-3 border border-zinc-200/50">
                           <div className="space-y-2">
-                            <Label className="text-[12px] font-medium text-zinc-600">话题标签 *</Label>
+                            <Label className="text-[12px] font-medium text-zinc-600">
+                              话题标签 *
+                            </Label>
                             <div className="grid grid-cols-2 gap-2">
                               {(["干货", "复盘"] as const).map((tag) => (
                                 <button
                                   key={tag}
                                   type="button"
-                                  onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
+                                  onClick={() =>
+                                    updateMeta(
+                                      "topicTag",
+                                      meta.topicTag === tag ? "" : tag,
+                                    )
+                                  }
                                   className={cn(
                                     "h-8 rounded-lg border transition-all duration-150 text-[12px] font-medium cursor-pointer",
                                     meta.topicTag === tag
                                       ? "border-[#D97757] bg-[#D97757] text-white"
-                                      : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60"
+                                      : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60",
                                   )}
                                 >
                                   {tag}
@@ -2084,7 +2496,9 @@ export function VideoSubmitForm({
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-[12px] font-medium text-zinc-600">视频形式 *</Label>
+                            <Label className="text-[12px] font-medium text-zinc-600">
+                              视频形式 *
+                            </Label>
                             <div className="grid grid-cols-2 gap-2">
                               {(["出镜", "图文"] as const).map((form) => (
                                 <button
@@ -2095,7 +2509,7 @@ export function VideoSubmitForm({
                                     "h-8 rounded-lg border transition-all duration-150 text-[12px] font-medium cursor-pointer",
                                     meta.videoForm === form
                                       ? "border-[#D97757] bg-[#D97757] text-white"
-                                      : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60"
+                                      : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60",
                                   )}
                                 >
                                   {form}
@@ -2119,23 +2533,37 @@ export function VideoSubmitForm({
 
                     {/* 模块四：异常状态补充输入 */}
                     {meta.anomalyStatus === "abnormal" && (
-                      <div className="flex flex-col gap-3 rounded-xl border border-amber-200/80 bg-amber-50/40 p-3.5">
+                      <div className="flex flex-col gap-3 rounded-xl border border-transparent bg-[#F59E0B]/[0.08] p-3.5">
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor="platform_notice" className="text-[12px] font-medium text-zinc-600">平台通知 (选填)</Label>
+                          <Label
+                            htmlFor="platform_notice"
+                            className="text-[12px] font-medium text-zinc-600"
+                          >
+                            平台通知 (选填)
+                          </Label>
                           <Input
                             id="platform_notice"
                             value={meta.platformNotice || ""}
-                            onChange={(e) => updateMeta("platformNotice", e.target.value)}
+                            onChange={(e) =>
+                              updateMeta("platformNotice", e.target.value)
+                            }
                             placeholder="如处罚通知文案"
                             className="h-8.5 rounded-lg bg-white border-zinc-200 text-[12px] text-zinc-700 focus:bg-white"
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor="appeal" className="text-[12px] font-medium text-zinc-600">申诉进展 (选填)</Label>
+                          <Label
+                            htmlFor="appeal"
+                            className="text-[12px] font-medium text-zinc-600"
+                          >
+                            申诉进展 (选填)
+                          </Label>
                           <Input
                             id="appeal"
                             value={meta.appeal || ""}
-                            onChange={(e) => updateMeta("appeal", e.target.value)}
+                            onChange={(e) =>
+                              updateMeta("appeal", e.target.value)
+                            }
                             placeholder="如申诉处理中"
                             className="h-8.5 rounded-lg bg-white border-zinc-200 text-[12px] text-zinc-700 focus:bg-white"
                           />
@@ -2147,13 +2575,22 @@ export function VideoSubmitForm({
                     <div className="pt-1">
                       <button
                         type="button"
-                        onClick={() => setIsMoreSettingsExpanded(!isMoreSettingsExpanded)}
+                        onClick={() =>
+                          setIsMoreSettingsExpanded(!isMoreSettingsExpanded)
+                        }
                         className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus-visible:outline-none cursor-pointer"
                       >
-                        <ChevronDown className={cn("size-3.5 stroke-[1.5] transition-transform duration-150", isMoreSettingsExpanded && "rotate-180")} />
-                        {isMoreSettingsExpanded ? "收起更多设置" : "展开更多设置"}
+                        <ChevronDown
+                          className={cn(
+                            "size-3.5 stroke-[1.5] transition-transform duration-150",
+                            isMoreSettingsExpanded && "rotate-180",
+                          )}
+                        />
+                        {isMoreSettingsExpanded
+                          ? "收起更多设置"
+                          : "展开更多设置"}
                       </button>
-                      
+
                       <AnimatePresence initial={false}>
                         {isMoreSettingsExpanded && (
                           <motion.div
@@ -2164,7 +2601,12 @@ export function VideoSubmitForm({
                             className="space-y-3 pt-2"
                           >
                             <div className="space-y-1">
-                              <Label htmlFor="published_at" className="text-[12px] font-medium text-zinc-500">发布时间</Label>
+                              <Label
+                                htmlFor="published_at"
+                                className="text-[12px] font-medium text-zinc-500"
+                              >
+                                发布时间
+                              </Label>
                               <Input
                                 id="published_at"
                                 type="datetime-local"
@@ -2179,7 +2621,10 @@ export function VideoSubmitForm({
                                   });
                                   setMeta((current) => ({
                                     ...current,
-                                    bizDate: preserveBizDateWhenPublishedAtChanges(current.bizDate),
+                                    bizDate:
+                                      preserveBizDateWhenPublishedAtChanges(
+                                        current.bizDate,
+                                      ),
                                     publishedAt: synced.publishedAt,
                                     publishedAtText: synced.publishedAtText,
                                   }));
@@ -2188,7 +2633,9 @@ export function VideoSubmitForm({
                               />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-[12px] font-medium text-zinc-500">上传时间</Label>
+                              <Label className="text-[12px] font-medium text-zinc-500">
+                                上传时间
+                              </Label>
                               <div className="flex h-9 items-center rounded-lg border border-zinc-200/80 bg-zinc-100/60 px-3 text-[12px] text-zinc-500">
                                 {meta.uploadedAt || "--"}
                               </div>
@@ -2215,7 +2662,9 @@ export function VideoSubmitForm({
                         <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
                         <span>已就绪,可提交</span>
                       </span>
-                      <span className="text-[12px] text-zinc-400">⌘/Ctrl + Enter 快捷提交</span>
+                      <span className="text-[12px] text-zinc-400">
+                        ⌘/Ctrl + Enter 快捷提交
+                      </span>
                     </div>
                   )}
                 </div>
@@ -2237,7 +2686,9 @@ export function VideoSubmitForm({
                     disabled={isSubmitting || !canActuallySubmit}
                     className="h-10 rounded-xl px-6 text-[13px] font-medium bg-[#D97757] hover:bg-[#C96442] text-white disabled:opacity-50 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed transition-all duration-150 flex items-center gap-2"
                   >
-                    {isSubmitting && <Loader2 className="size-4 animate-spin shrink-0 text-white" />}
+                    {isSubmitting && (
+                      <Loader2 className="size-4 animate-spin shrink-0 text-white" />
+                    )}
                     <span>{submitButtonLabel}</span>
                   </Button>
                 </div>
@@ -2265,7 +2716,9 @@ export function VideoSubmitForm({
                 <Zap className="size-6 stroke-[2] fill-current" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-[14px] font-semibold text-zinc-900">数据同步中</h4>
+                <h4 className="text-[14px] font-semibold text-zinc-900">
+                  数据同步中
+                </h4>
                 <p className="text-[12px] text-zinc-500">正在前往数据分析...</p>
               </div>
             </motion.div>
@@ -2282,8 +2735,18 @@ const VIDEO_STATUS_OPTIONS: Array<{
   dotClass: string;
   activeTextClass: string;
 }> = [
-  { value: "normal", label: "正常", dotClass: "bg-[#6FAA7D]", activeTextClass: "text-zinc-700" },
-  { value: "abnormal", label: "异常", dotClass: "bg-[#D99E55]", activeTextClass: "text-[#D99E55]" },
+  {
+    value: "normal",
+    label: "正常",
+    dotClass: "bg-[#6FAA7D]",
+    activeTextClass: "text-zinc-700",
+  },
+  {
+    value: "abnormal",
+    label: "异常",
+    dotClass: "bg-[#D99E55]",
+    activeTextClass: "text-[#D99E55]",
+  },
 ];
 
 function VideoStatusSegmented({
@@ -2296,11 +2759,14 @@ function VideoStatusSegmented({
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
-    const currentIndex = VIDEO_STATUS_OPTIONS.findIndex((option) => option.value === value);
+    const currentIndex = VIDEO_STATUS_OPTIONS.findIndex(
+      (option) => option.value === value,
+    );
     const nextIndex =
       event.key === "ArrowRight"
         ? (currentIndex + 1) % VIDEO_STATUS_OPTIONS.length
-        : (currentIndex - 1 + VIDEO_STATUS_OPTIONS.length) % VIDEO_STATUS_OPTIONS.length;
+        : (currentIndex - 1 + VIDEO_STATUS_OPTIONS.length) %
+          VIDEO_STATUS_OPTIONS.length;
     onChange(VIDEO_STATUS_OPTIONS[nextIndex].value);
   };
 
@@ -2323,11 +2789,20 @@ function VideoStatusSegmented({
             className={cn(
               "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[12px] font-medium tracking-tight transition-all duration-150 ease-out",
               isActive
-                ? cn("bg-white text-zinc-950 shadow-sm font-semibold", option.activeTextClass)
+                ? cn(
+                    "bg-white text-zinc-950 shadow-sm font-semibold",
+                    option.activeTextClass,
+                  )
                 : "text-zinc-500 hover:text-zinc-900",
             )}
           >
-            <span className={cn("size-1.5 rounded-full", option.dotClass, !isActive && "opacity-60")} />
+            <span
+              className={cn(
+                "size-1.5 rounded-full",
+                option.dotClass,
+                !isActive && "opacity-60",
+              )}
+            />
             {option.label}
           </button>
         );
@@ -2345,7 +2820,9 @@ interface RoleItemSelectorRowProps {
   operatorMembers: OperatorMember[];
   userId: string;
   activeRoleDropdown: "script_author" | "video_editor" | "operator" | null;
-  setActiveRoleDropdown: (role: "script_author" | "video_editor" | "operator" | null) => void;
+  setActiveRoleDropdown: (
+    role: "script_author" | "video_editor" | "operator" | null,
+  ) => void;
   roleSearchQuery: string;
   setRoleSearchQuery: (query: string) => void;
   filteredMembersForRole: OperatorMember[];
@@ -2370,7 +2847,8 @@ function RoleItemSelectorRow({
   onResetSelf,
 }: RoleItemSelectorRowProps) {
   const isOpen = activeRoleDropdown === roleKey;
-  const currentMember = operatorMembers.find((m) => m.id === selectedUserId) || null;
+  const currentMember =
+    operatorMembers.find((m) => m.id === selectedUserId) || null;
   const isUpward = placement === "top";
 
   return (
@@ -2397,7 +2875,12 @@ function RoleItemSelectorRow({
                 ? `${currentMember.display_name || currentMember.name}${currentMember.id === userId ? " (我)" : ""}`
                 : "选择成员..."}
             </span>
-            <ChevronDown className={cn("size-3 text-zinc-400 shrink-0 ml-1 transition-transform duration-150", isOpen && "rotate-180")} />
+            <ChevronDown
+              className={cn(
+                "size-3 text-zinc-400 shrink-0 ml-1 transition-transform duration-150",
+                isOpen && "rotate-180",
+              )}
+            />
           </button>
 
           <AnimatePresence>
@@ -2414,7 +2897,7 @@ function RoleItemSelectorRow({
                   transition={{ duration: 0.12 }}
                   className={cn(
                     "absolute right-0 z-30 w-48 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg space-y-1",
-                    isUpward ? "bottom-8.5 mb-0.5" : "top-8.5"
+                    isUpward ? "bottom-8.5 mb-0.5" : "top-8.5",
                   )}
                 >
                   <div className="relative">
@@ -2430,7 +2913,9 @@ function RoleItemSelectorRow({
 
                   <div className="max-h-52 overflow-y-auto space-y-0.5 pt-0.5 custom-scrollbar">
                     {filteredMembersForRole.length === 0 ? (
-                      <div className="py-2 text-center text-[11px] text-zinc-400">未找到匹配成员</div>
+                      <div className="py-2 text-center text-[11px] text-zinc-400">
+                        未找到匹配成员
+                      </div>
                     ) : (
                       filteredMembersForRole.map((member) => {
                         const isSelected = selectedUserId === member.id;
@@ -2447,17 +2932,27 @@ function RoleItemSelectorRow({
                               "flex h-7 w-full items-center justify-between rounded-md px-2 text-left text-[11px] transition-colors cursor-pointer",
                               isSelected
                                 ? "bg-[#5F82A8]/10 text-[#5F82A8] font-medium"
-                                : "text-zinc-700 hover:bg-zinc-100"
+                                : "text-zinc-700 hover:bg-zinc-100",
                             )}
                           >
                             <div className="flex items-center gap-1 truncate">
-                              <span className="truncate">{member.display_name || member.name}</span>
-                              {isSelf && <span className="text-[9px] text-[#5F82A8] font-semibold">(我)</span>}
+                              <span className="truncate">
+                                {member.display_name || member.name}
+                              </span>
+                              {isSelf && (
+                                <span className="text-[9px] text-[#5F82A8] font-semibold">
+                                  (我)
+                                </span>
+                              )}
                               {member.department && (
-                                <span className="text-[9px] text-zinc-400 truncate">· {member.department}</span>
+                                <span className="text-[9px] text-zinc-400 truncate">
+                                  · {member.department}
+                                </span>
                               )}
                             </div>
-                            {isSelected && <Check className="size-3 text-[#5F82A8] shrink-0" />}
+                            {isSelected && (
+                              <Check className="size-3 text-[#5F82A8] shrink-0" />
+                            )}
                           </button>
                         );
                       })

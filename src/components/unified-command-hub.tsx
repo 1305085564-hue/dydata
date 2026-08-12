@@ -9,16 +9,21 @@ import {
   ArrowRight,
   Trash2,
   CalendarDays,
-  Inbox,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useNotifications, isLocalNotification, AnyNotificationRow } from "./notifications/notification-store";
+import {
+  useNotifications,
+  AnyNotificationRow,
+} from "./notifications/notification-store";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { collectApprovalRequestIds, resolveApprovalRequestId } from "@/lib/exemption-approvals";
+import {
+  collectApprovalRequestIds,
+  resolveApprovalRequestId,
+} from "@/lib/exemption-approvals";
 
 interface ExemptionRequest {
   id: string;
@@ -50,8 +55,8 @@ const EXEMPTION_LABELS: Record<string, string> = {
 interface UnifiedCommandHubProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  activeTab: "todos" | "approvals" | "notifications";
-  onTabChange: (tab: "todos" | "approvals" | "notifications") => void;
+  activeTab: "todos" | "approvals";
+  onTabChange: (tab: "todos" | "approvals") => void;
   isAdmin: boolean;
   pendingApprovalsCount?: number;
   onPendingCountChange?: (count: number) => void;
@@ -66,13 +71,18 @@ export function UnifiedCommandHub({
   pendingApprovalsCount = 0,
   onPendingCountChange,
 }: UnifiedCommandHubProps) {
-  const { notifications, loading, markRead, markAllRead, markDone } = useNotifications();
+  const { notifications, loading, markRead, markAllRead, markDone } =
+    useNotifications();
   const drawerRef = useRef<HTMLDivElement>(null);
 
   // Approvals State
   const [approvalsLoading, setApprovalsLoading] = useState(false);
-  const [pendingApprovals, setPendingApprovals] = useState<ExemptionRequest[]>([]);
-  const [selectedApprovalIds, setSelectedApprovalIds] = useState<Set<string>>(new Set());
+  const [pendingApprovals, setPendingApprovals] = useState<ExemptionRequest[]>(
+    [],
+  );
+  const [selectedApprovalIds, setSelectedApprovalIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [actionProcessing, setActionProcessing] = useState<{
     id: string;
     action: "approved" | "rejected";
@@ -92,7 +102,9 @@ export function UnifiedCommandHub({
       setPendingApprovals(data);
       setSelectedApprovalIds((prev) => {
         if (prev.size === 0) return prev;
-        const next = new Set(Array.from(prev).filter((id) => validRequestIds.has(id)));
+        const next = new Set(
+          Array.from(prev).filter((id) => validRequestIds.has(id)),
+        );
         return next;
       });
       onPendingCountChange?.(count);
@@ -115,7 +127,10 @@ export function UnifiedCommandHub({
     }
   }, [activeTab, fetchApprovals, isAdmin, onPendingCountChange, open]);
 
-  const handleReviewApproval = async (item: ExemptionRequest, action: "approved" | "rejected") => {
+  const handleReviewApproval = async (
+    item: ExemptionRequest,
+    action: "approved" | "rejected",
+  ) => {
     const requestId = resolveApprovalRequestId(item);
     if (!requestId) {
       toast.error("操作失败", { description: "申请编号异常，请刷新后重试" });
@@ -167,7 +182,7 @@ export function UnifiedCommandHub({
             console.error(e);
             failCount++;
           }
-        })
+        }),
       );
       toast.success("批量通过完成", {
         description:
@@ -196,11 +211,15 @@ export function UnifiedCommandHub({
   };
 
   const allApprovalIds = collectApprovalRequestIds(pendingApprovals);
-  const allSelected = allApprovalIds.length > 0 && allApprovalIds.every((id) => selectedApprovalIds.has(id));
-  
+  const allSelected =
+    allApprovalIds.length > 0 &&
+    allApprovalIds.every((id) => selectedApprovalIds.has(id));
+
   // Track recently completed todo IDs in the current session for smooth animations
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
-  const [completedSessionTitles, setCompletedSessionTitles] = useState<Record<string, string>>({});
+  const [completedSessionTitles, setCompletedSessionTitles] = useState<
+    Record<string, string>
+  >({});
 
   // Close drawer on ESC
   useEffect(() => {
@@ -227,17 +246,18 @@ export function UnifiedCommandHub({
   };
 
   // Filter dynamic lists
-  const activeTodos = notifications.filter((n) => n.category === "todo" && n.status === "unread");
-  const alerts = notifications.filter((n) => n.category !== "todo");
+  const activeTodos = notifications.filter(
+    (n) => n.category === "todo" && n.status === "unread",
+  );
 
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case "critical":
-        return "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border-rose-200/50 dark:border-rose-900/30";
+        return "bg-[#DC2626]/10 text-[#DC2626] border-transparent ";
       case "warning":
-        return "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30";
+        return "bg-[#F59E0B]/10 text-[#B45309] border-transparent/50 ";
       case "success":
-        return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-250 dark:border-emerald-900/30";
+        return "bg-[#16A34A]/10 text-[#16A34A] border-transparent ";
       default:
         return "bg-zinc-50 text-zinc-700 dark:bg-zinc-900 dark:text-zinc-500 border-zinc-200 dark:border-zinc-800";
     }
@@ -250,7 +270,7 @@ export function UnifiedCommandHub({
       [todo.id]: todo.title,
     }));
     setCompletedSessionIds((prev) => [...prev, todo.id]);
-    
+
     // Call real DB API to mark as completed
     void markDone(todo.id, "done");
   };
@@ -263,7 +283,10 @@ export function UnifiedCommandHub({
     if (hr < 24) return `${hr} 小时前`;
     const day = Math.floor(hr / 24);
     if (day < 7) return `${day} 天前`;
-    return new Date(iso).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
+    return new Date(iso).toLocaleDateString("zh-CN", {
+      month: "numeric",
+      day: "numeric",
+    });
   };
 
   // Keyboard shortcut for tab switching (1, 2, 3)
@@ -281,8 +304,6 @@ export function UnifiedCommandHub({
         onTabChange("todos");
       } else if (e.key === "2" && isAdmin) {
         onTabChange("approvals");
-      } else if (e.key === "3") {
-        onTabChange("notifications");
       }
     };
     window.addEventListener("keydown", handleShortcut);
@@ -308,7 +329,7 @@ export function UnifiedCommandHub({
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
               "absolute right-0 top-full mt-2 z-50 flex w-[420px] max-h-[580px] flex-col overflow-hidden rounded-2xl border bg-white/95 shadow-2xl shadow-zinc-900/12 backdrop-blur-2xl ring-1 ring-black/5",
-              "border-zinc-200"
+              "border-zinc-200",
             )}
           >
             {/* Header & Spring Segmented Controller */}
@@ -322,14 +343,18 @@ export function UnifiedCommandHub({
                     "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                     activeTab === "todos"
                       ? "text-zinc-950 font-semibold"
-                      : "text-zinc-500 hover:text-zinc-800 font-medium"
+                      : "text-zinc-500 hover:text-zinc-800 font-medium",
                   )}
                 >
                   {activeTab === "todos" && (
                     <motion.div
                       layoutId="popoverSegmentedTab"
                       className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 35,
+                      }}
                     />
                   )}
                   <span>待办</span>
@@ -348,14 +373,18 @@ export function UnifiedCommandHub({
                       "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                       activeTab === "approvals"
                         ? "text-zinc-950 font-semibold"
-                        : "text-zinc-500 hover:text-zinc-800 font-medium"
+                        : "text-zinc-500 hover:text-zinc-800 font-medium",
                     )}
                   >
                     {activeTab === "approvals" && (
                       <motion.div
                         layoutId="popoverSegmentedTab"
                         className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 35,
+                        }}
                       />
                     )}
                     <span>审批</span>
@@ -366,44 +395,10 @@ export function UnifiedCommandHub({
                     )}
                   </button>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => onTabChange("notifications")}
-                  className={cn(
-                    "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
-                    activeTab === "notifications"
-                      ? "text-zinc-950 font-semibold"
-                      : "text-zinc-500 hover:text-zinc-800 font-medium"
-                  )}
-                >
-                  {activeTab === "notifications" && (
-                    <motion.div
-                      layoutId="popoverSegmentedTab"
-                      className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                  <span>动态</span>
-                  {alerts.filter((n) => n.status === "unread").length > 0 && (
-                    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-medium text-white tabular-nums">
-                      {alerts.filter((n) => n.status === "unread").length}
-                    </span>
-                  )}
-                </button>
               </div>
 
               {/* Action buttons */}
               <div className="flex items-center gap-1.5">
-                {activeTab === "notifications" && alerts.some((n) => n.status === "unread") && (
-                  <button
-                    type="button"
-                    onClick={() => void markAllRead()}
-                    className="text-[11px] font-medium text-zinc-500 hover:text-zinc-950 px-2 py-0.5 rounded-lg hover:bg-zinc-100 transition-colors"
-                  >
-                    全部已读
-                  </button>
-                )}
                 <button
                   type="button"
                   onClick={() => onOpenChange(false)}
@@ -417,7 +412,6 @@ export function UnifiedCommandHub({
 
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-
               {/* APPROVALS TAB */}
               {activeTab === "approvals" && isAdmin && (
                 <div className="space-y-4">
@@ -445,7 +439,11 @@ export function UnifiedCommandHub({
                               aria-label="全选"
                               onCheckedChange={(checked) => {
                                 const nextChecked = Boolean(checked);
-                                setSelectedApprovalIds(nextChecked ? new Set(allApprovalIds) : new Set());
+                                setSelectedApprovalIds(
+                                  nextChecked
+                                    ? new Set(allApprovalIds)
+                                    : new Set(),
+                                );
                               }}
                               className="border-zinc-300"
                             />
@@ -459,13 +457,15 @@ export function UnifiedCommandHub({
 
                           <button
                             type="button"
-                            disabled={selectedApprovalIds.size === 0 || batchProcessing}
+                            disabled={
+                              selectedApprovalIds.size === 0 || batchProcessing
+                            }
                             onClick={() => void handleBatchApproveApprovals()}
                             className={cn(
                               "inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-[12px] font-medium transition-colors",
                               selectedApprovalIds.size === 0 || batchProcessing
                                 ? "cursor-not-allowed bg-zinc-100 text-zinc-500"
-                                : "bg-[#D97757] text-white hover:bg-[#C96442]"
+                                : "bg-[#D97757] text-white hover:bg-[#C96442]",
                             )}
                           >
                             {batchProcessing ? (
@@ -499,18 +499,29 @@ export function UnifiedCommandHub({
                     <div className="space-y-2">
                       {pendingApprovals.map((item) => {
                         const requestId = resolveApprovalRequestId(item);
-                        const rowKey = requestId ?? item.request_id ?? item.id ?? `${item.applicant_user_id}-${item.created_at}`;
-                        const isSelected = requestId ? selectedApprovalIds.has(requestId) : false;
+                        const rowKey =
+                          requestId ??
+                          item.request_id ??
+                          item.id ??
+                          `${item.applicant_user_id}-${item.created_at}`;
+                        const isSelected = requestId
+                          ? selectedApprovalIds.has(requestId)
+                          : false;
                         const isApproving =
-                          requestId != null && actionProcessing?.id === requestId && actionProcessing.action === "approved";
+                          requestId != null &&
+                          actionProcessing?.id === requestId &&
+                          actionProcessing.action === "approved";
                         const isRejecting =
-                          requestId != null && actionProcessing?.id === requestId && actionProcessing.action === "rejected";
+                          requestId != null &&
+                          actionProcessing?.id === requestId &&
+                          actionProcessing.action === "rejected";
                         return (
                           <div
                             key={rowKey}
                             className={cn(
                               "group rounded-2xl border border-zinc-200 bg-white p-4 transition-colors",
-                              isSelected && "border-[#D97757]/50 bg-[#D97757]/[0.03]"
+                              isSelected &&
+                                "border-[#D97757]/50 bg-[#D97757]/[0.03]",
                             )}
                           >
                             <div className="flex items-start gap-3">
@@ -520,7 +531,10 @@ export function UnifiedCommandHub({
                                 disabled={!requestId}
                                 onCheckedChange={(checked) => {
                                   if (!requestId) return;
-                                  toggleApprovalSelection(requestId, Boolean(checked));
+                                  toggleApprovalSelection(
+                                    requestId,
+                                    Boolean(checked),
+                                  );
                                 }}
                                 className="mt-0.5 border-zinc-300"
                               />
@@ -533,14 +547,18 @@ export function UnifiedCommandHub({
                                         {item.applicant_name || "未命名成员"}
                                       </span>
                                       <span className="inline-flex shrink-0 rounded-full bg-[#D99E55]/10 px-2 py-0.5 text-[12px] font-medium text-[#D99E55]">
-                                        {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
+                                        {EXEMPTION_LABELS[
+                                          item.exemption_type
+                                        ] || item.exemption_type}
                                       </span>
                                     </div>
                                     <div className="mt-1 text-[12px] text-zinc-500">
                                       {item.team_name || "未分组"} ·{" "}
                                       <span className="tabular-nums text-zinc-500">
                                         {item.start_date}
-                                        {item.end_date ? ` 至 ${item.end_date}` : ""}
+                                        {item.end_date
+                                          ? ` 至 ${item.end_date}`
+                                          : ""}
                                       </span>
                                     </div>
                                   </div>
@@ -563,8 +581,14 @@ export function UnifiedCommandHub({
                               <div className="ml-3 flex shrink-0 flex-col items-end justify-center gap-1">
                                 <button
                                   type="button"
-                                  disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
-                                  onClick={() => void handleReviewApproval(item, "approved")}
+                                  disabled={
+                                    !requestId ||
+                                    batchProcessing ||
+                                    actionProcessing?.id === requestId
+                                  }
+                                  onClick={() =>
+                                    void handleReviewApproval(item, "approved")
+                                  }
                                   className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#6FAA7D] transition-colors hover:bg-[#6FAA7D]/10 disabled:cursor-not-allowed disabled:text-zinc-500"
                                 >
                                   {isApproving ? (
@@ -576,8 +600,14 @@ export function UnifiedCommandHub({
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={!requestId || batchProcessing || actionProcessing?.id === requestId}
-                                  onClick={() => void handleReviewApproval(item, "rejected")}
+                                  disabled={
+                                    !requestId ||
+                                    batchProcessing ||
+                                    actionProcessing?.id === requestId
+                                  }
+                                  onClick={() =>
+                                    void handleReviewApproval(item, "rejected")
+                                  }
                                   className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-[#C9604D] transition-colors hover:bg-[#C9604D]/10 disabled:cursor-not-allowed disabled:text-zinc-500"
                                 >
                                   {isRejecting ? (
@@ -603,12 +633,16 @@ export function UnifiedCommandHub({
                     <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-sm transition-all hover:shadow-md hover:border-zinc-300">
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-50 text-[#D97757] dark:bg-amber-950/20">
+                          <div className="flex size-8 items-center justify-center rounded-lg bg-[#F59E0B]/10 text-[#D97757] ">
                             <CalendarDays className="size-4 text-[#D97757]" />
                           </div>
                           <div>
-                            <h4 className="text-[12px] font-medium text-zinc-900 dark:text-zinc-100 leading-tight">日常发布管理</h4>
-                            <p className="text-[11px] text-zinc-500 mt-0.5">查看团队成员作品交档与申诉处理</p>
+                            <h4 className="text-[12px] font-medium text-zinc-900 dark:text-zinc-100 leading-tight">
+                              日常发布管理
+                            </h4>
+                            <p className="text-[11px] text-zinc-500 mt-0.5">
+                              查看团队成员作品交档与申诉处理
+                            </p>
                           </div>
                         </div>
                         <Link
@@ -633,7 +667,7 @@ export function UnifiedCommandHub({
                   {!loading && activeTodos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <div className="flex size-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
-                        <CheckCircle2 className="size-6 text-emerald-500" />
+                        <CheckCircle2 className="size-6 text-[#16A34A]" />
                       </div>
                       <h3 className="text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
                         今日待办已全部完成
@@ -653,11 +687,20 @@ export function UnifiedCommandHub({
                             key={todo.id}
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, x: -50, height: 0, marginBottom: 0 }}
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            exit={{
+                              opacity: 0,
+                              x: -50,
+                              height: 0,
+                              marginBottom: 0,
+                            }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 30,
+                            }}
                             className={cn(
                               "group flex items-start gap-3 rounded-xl border p-3.5 bg-white dark:bg-zinc-900 transition-colors",
-                              "border-zinc-200 dark:border-zinc-800"
+                              "border-zinc-200 dark:border-zinc-800",
                             )}
                           >
                             <button
@@ -669,11 +712,17 @@ export function UnifiedCommandHub({
                             </button>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-1.5">
-                                <span className={cn(
-                                  "inline-flex border px-1.5 py-0.5 rounded text-[12px] font-medium uppercase tracking-wider",
-                                  getSeverityBadge(todo.severity)
-                                )}>
-                                  {todo.severity === "critical" ? "P0 急需" : todo.severity === "warning" ? "P1 高优" : "P2 常规"}
+                                <span
+                                  className={cn(
+                                    "inline-flex border px-1.5 py-0.5 rounded text-[12px] font-medium uppercase tracking-wider",
+                                    getSeverityBadge(todo.severity),
+                                  )}
+                                >
+                                  {todo.severity === "critical"
+                                    ? "P0 急需"
+                                    : todo.severity === "warning"
+                                      ? "P1 高优"
+                                      : "P2 常规"}
                                 </span>
                                 <span className="text-[12px] text-zinc-500 dark:text-zinc-500 flex items-center gap-1">
                                   <CalendarDays className="size-2.5" />
@@ -688,13 +737,14 @@ export function UnifiedCommandHub({
                                   {todo.body}
                                 </p>
                               )}
-                              
+
                               {todo.action_url && (
                                 <div className="mt-2.5 flex items-center justify-end">
                                   <Link
                                     href={todo.action_url}
                                     onClick={() => {
-                                      if (todo.status === "unread") void markRead(todo.id);
+                                      if (todo.status === "unread")
+                                        void markRead(todo.id);
                                       onOpenChange(false);
                                     }}
                                     className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:opacity-85 transition-opacity"
@@ -723,8 +773,8 @@ export function UnifiedCommandHub({
                             key={id}
                             className="flex items-center gap-3 rounded-lg border border-dashed border-zinc-200 dark:border-zinc-800 p-2.5 bg-zinc-100/50 dark:bg-zinc-900/30"
                           >
-                            <span className="text-emerald-500 shrink-0">
-                              <CheckCircle2 className="size-4 fill-emerald-500 text-white" />
+                            <span className="text-[#16A34A] shrink-0">
+                              <CheckCircle2 className="size-4 fill-[#16A34A] text-white" />
                             </span>
                             <span className="text-[12px] font-medium text-zinc-500 dark:text-zinc-500 line-through truncate flex-1">
                               {completedSessionTitles[id] || "完成的待办事项"}
@@ -736,134 +786,6 @@ export function UnifiedCommandHub({
                   )}
                 </div>
               )}
-
-              {/* NOTIFICATIONS TAB */}
-              {activeTab === "notifications" && (
-                <div className="space-y-4">
-                  {loading && alerts.length === 0 && (
-                    <div className="py-12 text-center text-[12px] text-zinc-500 animate-pulse">
-                      正在读取系统动态...
-                    </div>
-                  )}
-
-                  {!loading && alerts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <div className="flex size-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-[#E7E5E4] mb-3 shadow-inner">
-                        <Inbox className="size-6 text-zinc-500" />
-                      </div>
-                      <h3 className="text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
-                        目前没有任何动态
-                      </h3>
-                      <p className="text-[12px] text-zinc-500 dark:text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
-                        当系统有新的合规提示、账号限流预警或发布情况时，将在此汇总。
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <AnimatePresence initial={false}>
-                        {alerts.map((notif) => {
-                          const isLocal = isLocalNotification(notif);
-                          const isUnread = notif.status === "unread";
-                          return (
-                            <motion.div
-                              key={notif.id}
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, x: 50, height: 0, marginBottom: 0 }}
-                              transition={{ type: "spring", stiffness: 450, damping: 28 }}
-                              className={cn(
-                                "relative rounded-xl border p-3.5 bg-white dark:bg-zinc-900 transition-colors",
-                                !isUnread ? "border-zinc-200 dark:border-zinc-800/50 opacity-70" : "border-zinc-200 dark:border-zinc-700/80"
-                              )}
-                            >
-                              <div className="flex items-start gap-2.5">
-                                {/* Read Status Dot */}
-                                {isUnread && (
-                                  <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#D97757]" />
-                                )}
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <span className={cn(
-                                      "text-[12px] font-medium uppercase px-1 rounded-sm",
-                                      notif.severity === "critical" ? "text-rose-600 bg-rose-50 dark:bg-rose-950/20" :
-                                      notif.severity === "warning" ? "text-amber-600 bg-amber-50 dark:bg-amber-950/20" :
-                                      notif.severity === "success" ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20" :
-                                      "text-zinc-500 bg-zinc-100"
-                                    )}>
-                                      {notif.severity === "critical" ? "重大预警" : notif.severity === "warning" ? "建议反馈" : "动态通知"}
-                                    </span>
-                                    <span className="text-[12px] text-zinc-500 dark:text-zinc-500">{relativeTime(notif.created_at)}</span>
-                                  </div>
-                                  <h4 className={cn(
-                                    "text-[12px] leading-snug mt-1.5",
-                                    !isUnread ? "font-medium text-zinc-700 dark:text-zinc-500" : "font-medium text-zinc-900 dark:text-zinc-50"
-                                  )}>
-                                    {notif.title}
-                                  </h4>
-                                  {notif.body && (
-                                    <p className="text-[12px] text-zinc-500 dark:text-zinc-500 leading-normal mt-1">
-                                      {notif.body}
-                                    </p>
-                                  )}
-
-                                  {/* Interactive Actions */}
-                                  <div className="mt-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 pt-2">
-                                    <div className="flex gap-2">
-                                      {isUnread && (
-                                        <button
-                                          type="button"
-                                          onClick={() => void markRead(notif.id)}
-                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
-                                        >
-                                          标为已读
-                                        </button>
-                                      )}
-                                      {!isLocal && notif.action_url && (
-                                        <Link
-                                          href={notif.action_url}
-                                          onClick={() => {
-                                            if (isUnread) void markRead(notif.id);
-                                            onOpenChange(false);
-                                          }}
-                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85 inline-flex items-center gap-0.5"
-                                        >
-                                          {notif.action_label || "查看"}
-                                          <ArrowRight className="size-2.5" />
-                                        </Link>
-                                      )}
-                                      {isLocal && notif.primaryActionLabel && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            notif.primaryAction?.();
-                                            onOpenChange(false);
-                                          }}
-                                          className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
-                                        >
-                                          {notif.primaryActionLabel}
-                                        </button>
-                                      )}
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => void markDone(notif.id, "ignored")}
-                                      className="text-zinc-500 hover:text-rose-500 transition-colors"
-                                      title="忽略此条"
-                                      aria-label="忽略此条"
-                                    >
-                                      <Trash2 className="size-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Footer summary & shortcut bar */}
@@ -871,7 +793,7 @@ export function UnifiedCommandHub({
               <span className="font-normal">待处理提醒已同步至团队控制台</span>
               <div className="hidden sm:flex items-center gap-2 tabular-nums text-[10px] text-zinc-400">
                 <span className="inline-flex items-center gap-1 bg-zinc-200/60 px-1.5 py-0.5 rounded-md">
-                  <kbd className="font-sans">1-3</kbd> 切换页签
+                  <kbd className="font-sans">1-2</kbd> 切换页签
                 </span>
                 <span className="inline-flex items-center gap-1 bg-zinc-200/60 px-1.5 py-0.5 rounded-md">
                   <kbd className="font-sans">Esc</kbd> 收起

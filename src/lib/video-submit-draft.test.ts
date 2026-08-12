@@ -12,14 +12,24 @@ function createDefaultDraft() {
       bizDate: "2026-05-19",
       publishedAt: "2026-05-18T10:30",
       publishedAtText: "",
-      anomalyStatus: "正常",
+      anomalyStatus: "normal",
       uploadedAt: "2026/5/19 10:30:00",
       topicTag: "复盘",
       contentKeywords: [],
     },
     fields: {
-      play_count: { value: "", source: "manual", requiresManualConfirmation: false, confirmed: true },
-      follower_convert: { value: "0", source: "manual", requiresManualConfirmation: false, confirmed: true },
+      play_count: {
+        value: "",
+        source: "manual",
+        requiresManualConfirmation: false,
+        confirmed: true,
+      },
+      follower_convert: {
+        value: "0",
+        source: "manual",
+        requiresManualConfirmation: false,
+        confirmed: true,
+      },
     },
     slots: {
       screenshot_1: { status: "empty", required: true, confirmed: false },

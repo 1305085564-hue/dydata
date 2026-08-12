@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { 
-  CalendarDays, 
-  CheckCircle2, 
-  Clock, 
-  Edit3, 
-  FilePlus, 
-  History, 
-  ShieldAlert, 
-  Sparkles, 
-  TrendingUp, 
+import {
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Edit3,
+  FilePlus,
+  History,
+  ShieldAlert,
+  Sparkles,
+  TrendingUp,
   Zap,
-  X
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -36,7 +36,12 @@ import {
 import { cn } from "@/lib/utils";
 
 export interface VideoSubmitPanelV2Props {
-  accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
+  accounts: {
+    id: string;
+    name: string;
+    display_name: string;
+    content_direction: string | null;
+  }[];
   selectedAccountId?: string;
   onSelectedAccountChange?: (accountId: string) => void;
   activeBizDate?: string;
@@ -72,7 +77,9 @@ export function VideoSubmitPanelV2({
   userExemptionGrants,
 }: VideoSubmitPanelV2Props) {
   // 当前选中的账号 ID
-  const [internalAccountId, setInternalAccountId] = useState<string>(accounts[0]?.id || "");
+  const [internalAccountId, setInternalAccountId] = useState<string>(
+    accounts[0]?.id || "",
+  );
   const selectedAccountId = propsSelectedAccountId || internalAccountId;
 
   const setSelectedAccountId = (id: string) => {
@@ -90,7 +97,8 @@ export function VideoSubmitPanelV2({
   };
 
   // 模态或展开请求模式
-  const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
+  const [requestedMode, setRequestedMode] =
+    useState<SubmitPanelRequestedMode>(null);
 
   // 快捷刷新回调
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -116,23 +124,26 @@ export function VideoSubmitPanelV2({
     return getExemptionDatesForMonth(
       userExemptionProfile,
       today,
-      userExemptionGrants
+      userExemptionGrants,
     );
   }, [userExemptionProfile, today, userExemptionGrants]);
 
   // 快捷选择日期打卡
-  const handleSelectCalendarDate = useCallback((date: string) => {
-    setActiveBizDate(date);
-    if (date === today) {
-      if (summary) {
-        setRequestedMode("editToday");
+  const handleSelectCalendarDate = useCallback(
+    (date: string) => {
+      setActiveBizDate(date);
+      if (date === today) {
+        if (summary) {
+          setRequestedMode("editToday");
+        } else {
+          setRequestedMode(null);
+        }
       } else {
-        setRequestedMode(null);
+        setRequestedMode("backfill");
       }
-    } else {
-      setRequestedMode("backfill");
-    }
-  }, [today, summary, setActiveBizDate]);
+    },
+    [today, summary, setActiveBizDate],
+  );
 
   // 全局 Esc 阻泥退出
   useEffect(() => {
@@ -200,21 +211,25 @@ export function VideoSubmitPanelV2({
                 <span className="text-[12px] font-medium text-zinc-400 uppercase tracking-wider">
                   TODAY STATUS
                 </span>
-                <span className={cn(
-                  "rounded-full px-2.5 py-0.5 text-[12px] font-medium",
-                  summary 
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-amber-50 text-amber-700 border border-amber-200"
-                )}>
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-[12px] font-medium",
+                    summary
+                      ? "bg-[#16A34A]/10 text-[#16A34A]50 text-green-700 border border-green-200"
+                      : "bg-zinc-100 text-zinc-600 border border-zinc-200",
+                  )}
+                >
                   {summary ? "今日已打卡" : "今日待填报"}
                 </span>
               </div>
 
               <h4 className="mt-3 text-[20px] font-semibold text-zinc-900">
-                {summary ? (summary.title || "已提交短视频作品") : "尚未录入今日数据"}
+                {summary
+                  ? summary.title || "已提交短视频作品"
+                  : "尚未录入今日数据"}
               </h4>
               <p className="mt-1 text-[13px] text-zinc-500">
-                {summary 
+                {summary
                   ? `发布时间: ${summary.publishedAt ? summary.publishedAt.slice(0, 16) : "暂未标注"}`
                   : "完成每日数据填报，驱动智能爆款分析与复盘"}
               </p>
@@ -223,9 +238,13 @@ export function VideoSubmitPanelV2({
               {summary && (
                 <div className="mt-5 grid grid-cols-2 gap-3 rounded-xl bg-zinc-50 p-3 border border-zinc-100">
                   <div>
-                    <span className="text-[12px] text-zinc-400">24h 播放量</span>
+                    <span className="text-[12px] text-zinc-400">
+                      24h 播放量
+                    </span>
                     <p className="text-[18px] font-semibold text-zinc-900">
-                      {summary.playCount !== null ? summary.playCount.toLocaleString() : "0"}
+                      {summary.playCount !== null
+                        ? summary.playCount.toLocaleString()
+                        : "0"}
                     </p>
                   </div>
                   <div>
@@ -279,7 +298,9 @@ export function VideoSubmitPanelV2({
               setRequestedMode(null);
               toast.success("工作台记录已更新");
             }}
-            onCancel={requestedMode !== null ? () => setRequestedMode(null) : undefined}
+            onCancel={
+              requestedMode !== null ? () => setRequestedMode(null) : undefined
+            }
           />
         )}
 
@@ -291,12 +312,15 @@ export function VideoSubmitPanelV2({
             transition={{ duration: 0.2 }}
             className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center min-h-[220px]"
           >
-            <div className="size-12 rounded-full bg-green-50 flex items-center justify-center text-green-600 mb-3 border border-green-100">
+            <div className="size-12 rounded-full bg-[#16A34A]/10 text-[#16A34A]50 flex items-center justify-center text-green-600 mb-3 border border-green-100">
               <CheckCircle2 className="size-6" />
             </div>
-            <h3 className="text-[17px] font-semibold text-zinc-900">今日数据打卡成功</h3>
+            <h3 className="text-[17px] font-semibold text-zinc-900">
+              今日数据打卡成功
+            </h3>
             <p className="text-[13px] text-zinc-500 max-w-md mt-1">
-              您已成功完成《{summary?.title || "抖音作品"}》的播放数据及协作归属填报。数据将实时同步至数据大盘与复盘中心。
+              您已成功完成《{summary?.title || "抖音作品"}
+              》的播放数据及协作归属填报。数据将实时同步至数据大盘与复盘中心。
             </p>
             <div className="mt-4 flex items-center gap-3">
               <Button

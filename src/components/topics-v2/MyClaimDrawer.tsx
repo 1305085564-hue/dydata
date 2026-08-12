@@ -28,17 +28,27 @@ export function MyClaimDrawer({
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const triggerBtnRef = useRef<HTMLButtonElement | null>(null);
 
-  const activeClaims = claims.filter((c) => c.status === "candidate" || c.status === "scripting");
-  const candidateCount = activeClaims.filter((c) => c.status === "candidate").length;
-  const scriptingCount = activeClaims.filter((c) => c.status === "scripting").length;
+  const activeClaims = claims.filter(
+    (c) => c.status === "candidate" || c.status === "scripting",
+  );
+  const candidateCount = activeClaims.filter(
+    (c) => c.status === "candidate",
+  ).length;
+  const scriptingCount = activeClaims.filter(
+    (c) => c.status === "scripting",
+  ).length;
 
   // Esc key & Focus management
   useEffect(() => {
     if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement | null;
+      previousActiveElement.current =
+        document.activeElement as HTMLElement | null;
     }
     return () => {
-      if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
+      if (
+        previousActiveElement.current &&
+        typeof previousActiveElement.current.focus === "function"
+      ) {
         previousActiveElement.current.focus();
       }
     };
@@ -54,7 +64,10 @@ export function MyClaimDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
 
-  const handleStartScripting = async (e: React.MouseEvent, subTopicId: string) => {
+  const handleStartScripting = async (
+    e: React.MouseEvent,
+    subTopicId: string,
+  ) => {
     e.stopPropagation();
     try {
       setOperatingId(subTopicId);
@@ -94,7 +107,7 @@ export function MyClaimDrawer({
           <span>5</span>
         </div>
         {scriptingCount > 0 && (
-          <span className="text-xs bg-sky-50 text-sky-700 border border-sky-200/80 px-1.5 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded-full font-medium">
             {scriptingCount} 脚本中
           </span>
         )}
@@ -116,7 +129,10 @@ export function MyClaimDrawer({
           >
             <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100">
               <div>
-                <h4 id="claim-drawer-title" className="text-sm font-semibold text-zinc-900">
+                <h4
+                  id="claim-drawer-title"
+                  className="text-sm font-semibold text-zinc-900"
+                >
                   我的选题认领
                 </h4>
                 <p className="text-xs text-zinc-500 mt-0.5 font-normal">
@@ -138,7 +154,9 @@ export function MyClaimDrawer({
             <div className="mb-4">
               <div className="flex justify-between text-xs text-zinc-500 mb-1 font-normal">
                 <span>候选占用率</span>
-                <span className="tabular-nums text-zinc-700 font-semibold">{candidateCount} / 5</span>
+                <span className="tabular-nums text-zinc-700 font-semibold">
+                  {candidateCount} / 5
+                </span>
               </div>
               <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden flex">
                 {Array.from({ length: 5 }).map((_, idx) => (
@@ -147,7 +165,7 @@ export function MyClaimDrawer({
                     className={`flex-1 border-r border-white transition-colors duration-200 ${
                       idx < candidateCount
                         ? candidateCount === 5
-                          ? "bg-rose-500"
+                          ? "bg-zinc-1000"
                           : "bg-[#D97757]"
                         : "bg-zinc-200"
                     }`}
@@ -155,8 +173,8 @@ export function MyClaimDrawer({
                 ))}
               </div>
               {candidateCount === 5 && (
-                <div className="flex items-center gap-1.5 text-xs text-rose-600 mt-1.5 font-normal">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-500" />
+                <div className="flex items-center gap-1.5 text-xs text-[#DC2626] mt-1.5 font-normal">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-[#DC2626]" />
                   <span>候选槽位已满（5/5），请先放回不写的选题。</span>
                 </div>
               )}
@@ -164,13 +182,13 @@ export function MyClaimDrawer({
 
             {/* 认领列表 */}
             {error ? (
-              <div className="py-6 text-center text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg">
+              <div className="py-6 text-center text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg">
                 <p className="font-medium">我的认领加载失败</p>
-                <p className="mt-1 text-rose-600 font-normal">{error}</p>
+                <p className="mt-1 text-[#DC2626] font-normal">{error}</p>
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-xs font-medium text-rose-700 hover:bg-rose-100"
+                  className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
                   aria-label="重试加载"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -189,7 +207,8 @@ export function MyClaimDrawer({
             ) : (
               <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
                 {/* 1. 候选池区块 */}
-                {activeClaims.filter((c) => c.status === "candidate").length > 0 && (
+                {activeClaims.filter((c) => c.status === "candidate").length >
+                  0 && (
                   <div className="space-y-2">
                     <div className="text-xs font-semibold text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
                       <span>候选池 (占用 {candidateCount}/5 配额)</span>
@@ -208,7 +227,7 @@ export function MyClaimDrawer({
                               <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
                                 {sub?.title || "选题名"}
                               </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-amber-50 text-amber-700 border border-amber-200/80">
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600 border border-zinc-200/80">
                                 候选准备
                               </span>
                             </div>
@@ -218,13 +237,19 @@ export function MyClaimDrawer({
 
                             <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
                               <span className="text-zinc-500 font-normal tabular-nums">
-                                {claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString() : "时间未知"}
+                                {claim.claimedAt
+                                  ? new Date(
+                                      claim.claimedAt,
+                                    ).toLocaleDateString()
+                                  : "时间未知"}
                               </span>
                               <div className="flex items-center gap-1.5">
                                 <button
                                   type="button"
                                   disabled={operatingId === claim.subTopicId}
-                                  onClick={(e) => handleStartScripting(e, claim.subTopicId)}
+                                  onClick={(e) =>
+                                    handleStartScripting(e, claim.subTopicId)
+                                  }
                                   className="px-2 py-0.5 rounded bg-[#D97757] text-white hover:bg-[#C46A4D] text-xs transition-colors font-medium shadow-2xs"
                                   aria-label="开始写脚本"
                                 >
@@ -233,7 +258,9 @@ export function MyClaimDrawer({
                                 <button
                                   type="button"
                                   disabled={operatingId === claim.subTopicId}
-                                  onClick={(e) => handleReturn(e, claim.subTopicId)}
+                                  onClick={(e) =>
+                                    handleReturn(e, claim.subTopicId)
+                                  }
                                   className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs transition-colors font-normal"
                                   aria-label="放回选题"
                                 >
@@ -248,7 +275,8 @@ export function MyClaimDrawer({
                 )}
 
                 {/* 2. 脚本撰写中区块 */}
-                {activeClaims.filter((c) => c.status === "scripting").length > 0 && (
+                {activeClaims.filter((c) => c.status === "scripting").length >
+                  0 && (
                   <div className="space-y-2">
                     <div className="text-xs font-semibold text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
                       <span>撰写中 (已锁定不占候选配额)</span>
@@ -261,13 +289,13 @@ export function MyClaimDrawer({
                           <div
                             key={claim.id}
                             onClick={() => sub?.id && onSelectTopic(sub.id)}
-                            className="group p-3 rounded-lg border border-sky-100 bg-sky-50/30 hover:bg-white hover:border-sky-200 transition-all cursor-pointer"
+                            className="group p-3 rounded-lg border border-zinc-200 bg-zinc-100/30 hover:bg-white hover:border-zinc-200 transition-all cursor-pointer"
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
                                 {sub?.title || "选题名"}
                               </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-sky-50 text-sky-700 border border-sky-200/80">
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600 border border-zinc-200">
                                 脚本中
                               </span>
                             </div>
@@ -277,12 +305,18 @@ export function MyClaimDrawer({
 
                             <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
                               <span className="text-zinc-500 font-normal tabular-nums">
-                                {claim.claimedAt ? new Date(claim.claimedAt).toLocaleDateString() : "时间未知"}
+                                {claim.claimedAt
+                                  ? new Date(
+                                      claim.claimedAt,
+                                    ).toLocaleDateString()
+                                  : "时间未知"}
                               </span>
                               <button
                                 type="button"
                                 disabled={operatingId === claim.subTopicId}
-                                onClick={(e) => handleReturn(e, claim.subTopicId)}
+                                onClick={(e) =>
+                                  handleReturn(e, claim.subTopicId)
+                                }
                                 className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs transition-colors font-normal"
                                 aria-label="放回选题"
                               >

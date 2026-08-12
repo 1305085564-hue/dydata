@@ -52,7 +52,9 @@ function ExemptionModal({
 
   function handleOpen() {
     if (localHasPending) return;
-    setSelectedDates(Array.from(new Set(initialSelectedDates.filter(Boolean))).sort());
+    setSelectedDates(
+      Array.from(new Set(initialSelectedDates.filter(Boolean))).sort(),
+    );
     setCategory("leave");
     setReason("");
     setOpen(true);
@@ -79,7 +81,9 @@ function ExemptionModal({
         dates.push(dateStr);
       }
     }
-    const newSelected = Array.from(new Set([...selectedDates, ...dates])).sort();
+    const newSelected = Array.from(
+      new Set([...selectedDates, ...dates]),
+    ).sort();
     setSelectedDates(newSelected);
     feedbackToast.success(`已一键选中近 7 天未交的 ${dates.length} 个日期`);
   }
@@ -154,9 +158,11 @@ function ExemptionModal({
     });
   }
 
-  const resolvedTitle = triggerTitle ?? (localHasPending ? "申请审批中" : "申请豁免/请假");
+  const resolvedTitle =
+    triggerTitle ?? (localHasPending ? "申请审批中" : "申请豁免/请假");
   const resolvedDescription =
-    triggerDescription ?? (localHasPending ? "当前有申请正在等待审批" : "发起免交或请假申请");
+    triggerDescription ??
+    (localHasPending ? "当前有申请正在等待审批" : "发起免交或请假申请");
 
   return (
     <>
@@ -211,7 +217,7 @@ function ExemptionModal({
                 <button
                   type="button"
                   onClick={handleSelectAllUnsubmitted}
-                  className="group inline-flex items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50/80 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 cursor-pointer shrink-0"
+                  className="group inline-flex items-center gap-1 rounded-md border border-transparent bg-[#F59E0B]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 cursor-pointer shrink-0"
                 >
                   <Zap className="size-3 stroke-[2] text-[#D97757] transition-transform group-hover:scale-110" />
                   一键全选（七日）
@@ -250,7 +256,7 @@ function ExemptionModal({
                         "flex h-7 items-center justify-center rounded-md text-[12.5px] transition-all duration-150 ease-out cursor-pointer",
                         category === "leave"
                           ? "bg-white text-zinc-950 font-semibold shadow-2xs"
-                          : "text-zinc-500 hover:text-zinc-800"
+                          : "text-zinc-500 hover:text-zinc-800",
                       )}
                     >
                       请假（该交不交）
@@ -263,7 +269,7 @@ function ExemptionModal({
                         "flex h-7 items-center justify-center rounded-md text-[12.5px] transition-all duration-150 ease-out cursor-pointer",
                         category === "waive"
                           ? "bg-white text-zinc-950 font-semibold shadow-2xs"
-                          : "text-zinc-500 hover:text-zinc-800"
+                          : "text-zinc-500 hover:text-zinc-800",
                       )}
                     >
                       豁免（不该交不交）
@@ -272,7 +278,9 @@ function ExemptionModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <p className="text-[13px] font-medium text-zinc-700">已选日期</p>
+                  <p className="text-[13px] font-medium text-zinc-700">
+                    已选日期
+                  </p>
                   {selectedDates.length > 0 ? (
                     <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
                       <div className="flex flex-wrap gap-1.5">
@@ -306,7 +314,9 @@ function ExemptionModal({
                     <Bell className="size-4 shrink-0 stroke-[1.5]" />
                     <span>
                       该日期前后您已被催交{" "}
-                      <span className="font-medium tabular-nums">{remindCount}</span>{" "}
+                      <span className="font-medium tabular-nums">
+                        {remindCount}
+                      </span>{" "}
                       次
                     </span>
                   </div>
@@ -334,12 +344,20 @@ function ExemptionModal({
                     value={reason}
                     onChange={(event) => setReason(event.target.value)}
                   />
-                  <p className="text-right text-[12px] tabular-nums text-zinc-400">{reason.length}/100</p>
+                  <p className="text-right text-[12px] tabular-nums text-zinc-400">
+                    {reason.length}/100
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending} className="h-11 px-6 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setOpen(false)}
+                  disabled={isPending}
+                  className="h-11 px-6 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
+                >
                   取消
                 </Button>
                 <Button

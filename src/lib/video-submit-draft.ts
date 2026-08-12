@@ -49,8 +49,14 @@ const EDITED_SLOT_STATUSES = new Set([
 function hasEditedSlot(slot: DraftSlot | undefined) {
   if (!slot) return false;
   if (slot.status && EDITED_SLOT_STATUSES.has(slot.status)) return true;
-  if (hasText(slot.fileName) || hasText(slot.assetUrl) || hasText(slot.previewUrl)) return true;
-  if (slot.recognizedFields && Object.keys(slot.recognizedFields).length > 0) return true;
+  if (
+    hasText(slot.fileName) ||
+    hasText(slot.assetUrl) ||
+    hasText(slot.previewUrl)
+  )
+    return true;
+  if (slot.recognizedFields && Object.keys(slot.recognizedFields).length > 0)
+    return true;
   if (slot.ocrSummary?.some(hasText)) return true;
   return false;
 }
@@ -70,7 +76,7 @@ export function isVideoSubmitDraftEmpty(draft: VideoSubmitDraft) {
     return false;
   }
 
-  if (anomalyStatus && anomalyStatus !== "正常") {
+  if (anomalyStatus && anomalyStatus !== "normal") {
     return false;
   }
 
@@ -78,7 +84,11 @@ export function isVideoSubmitDraftEmpty(draft: VideoSubmitDraft) {
     return false;
   }
 
-  if (Object.values(draft.fields ?? {}).some((field) => hasNonZeroMetric(field?.value))) {
+  if (
+    Object.values(draft.fields ?? {}).some((field) =>
+      hasNonZeroMetric(field?.value),
+    )
+  ) {
     return false;
   }
 

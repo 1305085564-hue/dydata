@@ -25,7 +25,14 @@ import { VideoDetailDialog } from "./video-detail-dialog";
 import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
 import { shouldShowPatch24hButton } from "@/lib/video-admin";
-import type { AnomalyStatus, Profile, Video, VideoAssetLibraryRecord, VideoMetricsSnapshot, VideoTag } from "@/types";
+import type {
+  AnomalyStatus,
+  Profile,
+  Video,
+  VideoAssetLibraryRecord,
+  VideoMetricsSnapshot,
+  VideoTag,
+} from "@/types";
 import type { UserPermissionInfo } from "@/lib/permissions";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
@@ -76,7 +83,8 @@ interface VideoListProps {
   onRefresh: () => void;
 }
 
-type SortField = "published_at" | "play_count" | "interaction_rate" | "follower_gain";
+type SortField =
+  "published_at" | "play_count" | "interaction_rate" | "follower_gain";
 
 const DEFAULT_PAGE_SIZE = 30;
 
@@ -134,53 +142,61 @@ function formatPercent(val: number | null | undefined): string {
   return `${(val * 100).toFixed(1)}%`;
 }
 
-function getVideoStatusInfo(status: string | null | undefined, playChangeSignal?: string | null) {
+function getVideoStatusInfo(
+  status: string | null | undefined,
+  playChangeSignal?: string | null,
+) {
   const isHalve = playChangeSignal === "halve";
   if (status === "deleted" || status === "删稿") {
     return {
-      dotColor: "bg-red-500",
-      textColor: "text-red-600",
-      bgColor: "bg-red-50",
+      dotColor: "bg-zinc-1000",
+      textColor: "text-[#DC2626]",
+      bgColor: "bg-zinc-100",
       label: "删稿",
     };
   }
-  if (status === "limited" || status === "abnormal" || status === "限流" || status === "异常") {
+  if (
+    status === "limited" ||
+    status === "abnormal" ||
+    status === "限流" ||
+    status === "异常"
+  ) {
     return {
-      dotColor: "bg-red-500",
-      textColor: "text-red-600",
-      bgColor: "bg-red-50",
+      dotColor: "bg-zinc-1000",
+      textColor: "text-[#DC2626]",
+      bgColor: "bg-zinc-100",
       label: status === "limited" || status === "限流" ? "限流" : "异常",
     };
   }
   if (isHalve || status === "halve" || status === "腰斩") {
     return {
-      dotColor: "bg-amber-500",
-      textColor: "text-amber-600",
-      bgColor: "bg-amber-50",
+      dotColor: "bg-zinc-1000",
+      textColor: "text-[#F59E0B]",
+      bgColor: "bg-zinc-100",
       label: "腰斩",
     };
   }
   if (status === "traffic_boost" || status === "投流") {
     return {
-      dotColor: "bg-amber-500",
-      textColor: "text-amber-600",
-      bgColor: "bg-amber-50",
+      dotColor: "bg-zinc-1000",
+      textColor: "text-[#F59E0B]",
+      bgColor: "bg-zinc-100",
       label: "投流",
     };
   }
   if (status === "activity_boost" || status === "活动干预") {
     return {
-      dotColor: "bg-amber-500",
-      textColor: "text-amber-600",
-      bgColor: "bg-amber-50",
+      dotColor: "bg-zinc-1000",
+      textColor: "text-[#F59E0B]",
+      bgColor: "bg-zinc-100",
       label: "活动干预",
     };
   }
   if (status === "normal" || status === "正常") {
     return {
-      dotColor: "bg-emerald-500",
-      textColor: "text-emerald-700",
-      bgColor: "bg-emerald-50",
+      dotColor: "bg-[#16A34A]/100",
+      textColor: "text-zinc-600",
+      bgColor: "bg-[#16A34A]/10",
       label: "正常",
     };
   }
@@ -237,18 +253,23 @@ export function VideoList({
   const [tagRows, setTagRows] = useState(videoTags);
   const [assetLibraryState, setAssetLibraryState] = useState(assetLibrary);
   const [isOperating, setIsOperating] = useState<string | null>(null);
-  const [confirmPurgeVideoId, setConfirmPurgeVideoId] = useState<string | null>(null);
+  const [confirmPurgeVideoId, setConfirmPurgeVideoId] = useState<string | null>(
+    null,
+  );
 
   /* Batch & Quick Recycle Bin state */
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [trashSingleVideo, setTrashSingleVideo] = useState<VideoRow | null>(null);
+  const [trashSingleVideo, setTrashSingleVideo] = useState<VideoRow | null>(
+    null,
+  );
   const [showBatchTrashConfirm, setShowBatchTrashConfirm] = useState(false);
   const [showBatchRestoreConfirm, setShowBatchRestoreConfirm] = useState(false);
   const [isBatchOperating, setIsBatchOperating] = useState(false);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const hasTriggeredDeferredRef = useRef(false);
-  const canManageLifecycle = permissionInfo.role === "owner" || permissionInfo.role === "admin";
+  const canManageLifecycle =
+    permissionInfo.role === "owner" || permissionInfo.role === "admin";
   const safeTeams = teams ?? [];
   const selectedTeamName = safeTeams.find((t) => t.id === teamId)?.name;
 
@@ -299,7 +320,9 @@ export function VideoList({
 
   const getPurgeTooltip = (trashedAt: string | null | undefined) => {
     if (!trashedAt) return "";
-    const targetDate = new Date(new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000);
+    const targetDate = new Date(
+      new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000,
+    );
     const diff = targetDate.getTime() - Date.now();
     if (diff <= 0) return "";
     const daysLeft = Math.ceil(diff / (24 * 60 * 60 * 1000));
@@ -324,7 +347,12 @@ export function VideoList({
 
   // 仅在首次需要时安全触发一次背景全量加载，杜绝循环重刷
   useEffect(() => {
-    if (hasDeferredData && onLoadDeferredData && !isDeferredDataLoading && !hasTriggeredDeferredRef.current) {
+    if (
+      hasDeferredData &&
+      onLoadDeferredData &&
+      !isDeferredDataLoading &&
+      !hasTriggeredDeferredRef.current
+    ) {
       hasTriggeredDeferredRef.current = true;
       void onLoadDeferredData();
     }
@@ -332,7 +360,7 @@ export function VideoList({
 
   const snapshots24h = useMemo(
     () => snapshotRows.filter((snapshot) => snapshot.snapshot_type === "24h"),
-    [snapshotRows]
+    [snapshotRows],
   );
 
   const snapshotMap = useMemo(() => {
@@ -360,22 +388,26 @@ export function VideoList({
     return map;
   }, [tagRows]);
 
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
-    } else {
-      setSortField(field);
-      setSortDir("desc");
-    }
-    setCurrentPage(1);
-    tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, [sortField]);
+  const handleSort = useCallback(
+    (field: SortField) => {
+      if (sortField === field) {
+        setSortDir((prev) => (prev === "desc" ? "asc" : "desc"));
+      } else {
+        setSortField(field);
+        setSortDir("desc");
+      }
+      setCurrentPage(1);
+      tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [sortField],
+  );
 
   const sortedAndFilteredVideos = useMemo(() => {
     const filtered = videoRows.filter((video) => {
       // 本地实现 pending 视图过滤（支持无感瞬切）
       if (view === "pending") {
-        const isNormal = video.anomaly_status === "normal" || video.anomaly_status === "正常";
+        const isNormal =
+          video.anomaly_status === "normal" || video.anomaly_status === "正常";
         const hasTag = tagMap.has(video.id);
         if (hasTag && isNormal) return false;
       }
@@ -384,27 +416,59 @@ export function VideoList({
         return false;
       }
 
-      if (filters.accountId !== "all" && video.account_id !== filters.accountId) {
+      if (
+        filters.accountId !== "all" &&
+        video.account_id !== filters.accountId
+      ) {
         return false;
       }
 
       if (filters.status !== "all") {
         const s = video.anomaly_status as string;
-        if (filters.status === "正常" && s !== "normal" && s !== "正常") return false;
-        if (filters.status === "删稿" && s !== "deleted" && s !== "删稿") return false;
-        if (filters.status === "限流" && s !== "limited" && s !== "abnormal" && s !== "限流" && s !== "异常") return false;
-        if (filters.status === "投流" && s !== "traffic_boost" && s !== "投流") return false;
-        if (filters.status === "活动干预" && s !== "activity_boost" && s !== "活动干预") return false;
-        if (filters.status === "未满24h" && s !== "未满24h" && s !== "pending" && s) return false;
+        if (filters.status === "正常" && s !== "normal" && s !== "正常")
+          return false;
+        if (filters.status === "删稿" && s !== "deleted" && s !== "删稿")
+          return false;
+        if (
+          filters.status === "限流" &&
+          s !== "limited" &&
+          s !== "abnormal" &&
+          s !== "限流" &&
+          s !== "异常"
+        )
+          return false;
+        if (filters.status === "投流" && s !== "traffic_boost" && s !== "投流")
+          return false;
+        if (
+          filters.status === "活动干预" &&
+          s !== "activity_boost" &&
+          s !== "活动干预"
+        )
+          return false;
+        if (
+          filters.status === "未满24h" &&
+          s !== "未满24h" &&
+          s !== "pending" &&
+          s
+        )
+          return false;
       }
 
-      const publishedDate = video.published_at ? video.published_at.slice(0, 10) : "";
+      const publishedDate = video.published_at
+        ? video.published_at.slice(0, 10)
+        : "";
 
-      if (filters.startDate && (!publishedDate || publishedDate < filters.startDate)) {
+      if (
+        filters.startDate &&
+        (!publishedDate || publishedDate < filters.startDate)
+      ) {
         return false;
       }
 
-      if (filters.endDate && (!publishedDate || publishedDate > filters.endDate)) {
+      if (
+        filters.endDate &&
+        (!publishedDate || publishedDate > filters.endDate)
+      ) {
         return false;
       }
 
@@ -420,10 +484,14 @@ export function VideoList({
       switch (sortField) {
         case "published_at":
           valA = (view === "trash" ? a.trashed_at : a.published_at)
-            ? new Date(view === "trash" ? a.trashed_at! : a.published_at!).getTime()
+            ? new Date(
+                view === "trash" ? a.trashed_at! : a.published_at!,
+              ).getTime()
             : 0;
           valB = (view === "trash" ? b.trashed_at : b.published_at)
-            ? new Date(view === "trash" ? b.trashed_at! : b.published_at!).getTime()
+            ? new Date(
+                view === "trash" ? b.trashed_at! : b.published_at!,
+              ).getTime()
             : 0;
           break;
         case "play_count":
@@ -454,8 +522,9 @@ export function VideoList({
   }, [currentPage, pageSize, sortedAndFilteredVideos]);
 
   const isAllSelected = useMemo(
-    () => pagedVideos.length > 0 && pagedVideos.every((v) => selectedIds.has(v.id)),
-    [pagedVideos, selectedIds]
+    () =>
+      pagedVideos.length > 0 && pagedVideos.every((v) => selectedIds.has(v.id)),
+    [pagedVideos, selectedIds],
   );
 
   const toggleSelectAll = useCallback(() => {
@@ -469,14 +538,19 @@ export function VideoList({
   const handleTrashSingle = useCallback(async () => {
     if (!trashSingleVideo) return;
     try {
-      const res = await fetch(`/api/admin/videos/${trashSingleVideo.id}/lifecycle`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "trash" }),
-      });
+      const res = await fetch(
+        `/api/admin/videos/${trashSingleVideo.id}/lifecycle`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "trash" }),
+        },
+      );
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
-      feedbackToast.success(`已将作品“${trashSingleVideo.video_title?.trim() || "未命名"}”移入回收站`);
+      feedbackToast.success(
+        `已将作品“${trashSingleVideo.video_title?.trim() || "未命名"}”移入回收站`,
+      );
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(trashSingleVideo.id);
@@ -489,44 +563,55 @@ export function VideoList({
     }
   }, [trashSingleVideo, onRefresh]);
 
-  const handleBatchLifecycle = useCallback(async (action: "trash" | "restore") => {
-    if (selectedIds.size === 0) return;
-    setIsBatchOperating(true);
-    try {
-      const ids = Array.from(selectedIds);
-      const results = await Promise.allSettled(
-        ids.map((id) =>
-          fetch(`/api/admin/videos/${id}/lifecycle`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action }),
-          }).then(async (res) => {
-            const data = await res.json();
-            if (!res.ok || !data.ok) throw new Error(data.error ?? "操作失败");
-            return id;
-          })
-        )
-      );
-      const successCount = results.filter((r) => r.status === "fulfilled").length;
-      const failCount = results.filter((r) => r.status === "rejected").length;
-      const actionName = action === "trash" ? "移入回收站" : "恢复";
-      if (successCount > 0) {
-        feedbackToast.success(`已成功${actionName} ${successCount} 项视频${failCount > 0 ? `（${failCount} 项处理失败）` : ""}`);
-      } else {
-        feedbackToast.error(`批量${actionName}失败`);
+  const handleBatchLifecycle = useCallback(
+    async (action: "trash" | "restore") => {
+      if (selectedIds.size === 0) return;
+      setIsBatchOperating(true);
+      try {
+        const ids = Array.from(selectedIds);
+        const results = await Promise.allSettled(
+          ids.map((id) =>
+            fetch(`/api/admin/videos/${id}/lifecycle`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action }),
+            }).then(async (res) => {
+              const data = await res.json();
+              if (!res.ok || !data.ok)
+                throw new Error(data.error ?? "操作失败");
+              return id;
+            }),
+          ),
+        );
+        const successCount = results.filter(
+          (r) => r.status === "fulfilled",
+        ).length;
+        const failCount = results.filter((r) => r.status === "rejected").length;
+        const actionName = action === "trash" ? "移入回收站" : "恢复";
+        if (successCount > 0) {
+          feedbackToast.success(
+            `已成功${actionName} ${successCount} 项视频${failCount > 0 ? `（${failCount} 项处理失败）` : ""}`,
+          );
+        } else {
+          feedbackToast.error(`批量${actionName}失败`);
+        }
+        setSelectedIds(new Set());
+        setShowBatchTrashConfirm(false);
+        setShowBatchRestoreConfirm(false);
+        onRefresh();
+      } catch (e) {
+        feedbackToast.error(e instanceof Error ? e.message : "批量操作失败");
+      } finally {
+        setIsBatchOperating(false);
       }
-      setSelectedIds(new Set());
-      setShowBatchTrashConfirm(false);
-      setShowBatchRestoreConfirm(false);
-      onRefresh();
-    } catch (e) {
-      feedbackToast.error(e instanceof Error ? e.message : "批量操作失败");
-    } finally {
-      setIsBatchOperating(false);
-    }
-  }, [selectedIds, onRefresh]);
+    },
+    [selectedIds, onRefresh],
+  );
 
-  function updateFilter<Key extends keyof VideoFilterValue>(key: Key, value: VideoFilterValue[Key]) {
+  function updateFilter<Key extends keyof VideoFilterValue>(
+    key: Key,
+    value: VideoFilterValue[Key],
+  ) {
     setFilters((current) => ({ ...current, [key]: value }));
     setCurrentPage(1);
     tableContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
@@ -551,7 +636,11 @@ export function VideoList({
 
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
-      return <span className="text-[10px] text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
+      return (
+        <span className="text-[10px] text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">
+          ↕
+        </span>
+      );
     }
     return (
       <span className="text-[10.5px] font-semibold text-zinc-900">
@@ -563,41 +652,57 @@ export function VideoList({
   const profileLabel =
     filters.profileId === "all"
       ? "全部负责人"
-      : profiles.find((item) => item.id === filters.profileId)?.name ?? "全部负责人";
+      : (profiles.find((item) => item.id === filters.profileId)?.name ??
+        "全部负责人");
   const accountLabel =
     filters.accountId === "all"
       ? "全部账号"
-      : accounts.find((item) => item.id === filters.accountId)?.name ?? "全部账号";
+      : (accounts.find((item) => item.id === filters.accountId)?.name ??
+        "全部账号");
 
   const selectedVideo = useMemo(
-    () => sortedAndFilteredVideos.find((video) => video.id === selectedVideoId) ?? null,
-    [sortedAndFilteredVideos, selectedVideoId]
+    () =>
+      sortedAndFilteredVideos.find((video) => video.id === selectedVideoId) ??
+      null,
+    [sortedAndFilteredVideos, selectedVideoId],
   );
 
-  const selectedSnapshot = selectedVideo ? snapshotMap.get(selectedVideo.id) ?? null : null;
+  const selectedSnapshot = selectedVideo
+    ? (snapshotMap.get(selectedVideo.id) ?? null)
+    : null;
   const patchingVideo = useMemo(
     () => videoRows.find((video) => video.id === patchingVideoId) ?? null,
-    [patchingVideoId, videoRows]
+    [patchingVideoId, videoRows],
   );
-  const patchingSnapshot = patchingVideo ? snapshotMap.get(patchingVideo.id) ?? null : null;
+  const patchingSnapshot = patchingVideo
+    ? (snapshotMap.get(patchingVideo.id) ?? null)
+    : null;
 
-  function handlePatchSaved(result: { video: VideoRow; snapshot: VideoMetricsSnapshot }) {
+  function handlePatchSaved(result: {
+    video: VideoRow;
+    snapshot: VideoMetricsSnapshot;
+  }) {
     setVideoRows((current) =>
-      current.map((video) => (video.id === result.video.id ? result.video : video))
+      current.map((video) =>
+        video.id === result.video.id ? result.video : video,
+      ),
     );
 
     setSnapshotRows((current) => {
       const matchIndex = current.findIndex(
         (snapshot) =>
           snapshot.id === result.snapshot.id ||
-          (snapshot.video_id === result.snapshot.video_id && snapshot.snapshot_type === "24h")
+          (snapshot.video_id === result.snapshot.video_id &&
+            snapshot.snapshot_type === "24h"),
       );
 
       if (matchIndex === -1) {
         return [result.snapshot, ...current];
       }
 
-      return current.map((snapshot, index) => (index === matchIndex ? result.snapshot : snapshot));
+      return current.map((snapshot, index) =>
+        index === matchIndex ? result.snapshot : snapshot,
+      );
     });
   }
 
@@ -655,7 +760,11 @@ export function VideoList({
           {/* 公司 / 团队范围选择下拉框 (对齐视频复盘) */}
           {(safeTeams.length > 0 || canSwitchPerspective) && (
             <Select
-              value={perspective === "company" ? "all_company" : (teamId ?? safeTeams[0]?.id ?? "all_company")}
+              value={
+                perspective === "company"
+                  ? "all_company"
+                  : (teamId ?? safeTeams[0]?.id ?? "all_company")
+              }
               onValueChange={(val) => {
                 if (val === "all_company") {
                   onSwitchPerspective("company");
@@ -666,17 +775,26 @@ export function VideoList({
             >
               <SelectTrigger className="h-8 min-w-32 rounded-lg border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs">
                 <SelectValue placeholder="选择范围">
-                  {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
+                  {perspective === "company"
+                    ? "全公司 (全部团队)"
+                    : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-900">
+                  <SelectItem
+                    value="all_company"
+                    className="text-[12px] font-medium text-zinc-900"
+                  >
                     全公司 (全部团队)
                   </SelectItem>
                 )}
                 {safeTeams.map((team) => (
-                  <SelectItem key={team.id} value={team.id} className="text-[12px]">
+                  <SelectItem
+                    key={team.id}
+                    value={team.id}
+                    className="text-[12px]"
+                  >
                     {team.name}
                   </SelectItem>
                 ))}
@@ -743,7 +861,12 @@ export function VideoList({
           {/* 状态筛选 */}
           <Select
             value={filters.status}
-            onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}
+            onValueChange={(value) =>
+              updateFilter(
+                "status",
+                (value || "all") as VideoFilterValue["status"],
+              )
+            }
           >
             <SelectTrigger className="h-8 w-24 rounded-lg border-zinc-200 bg-white text-[12px]">
               <SelectValue>{statusLabel(filters.status)}</SelectValue>
@@ -771,15 +894,24 @@ export function VideoList({
         {/* 右侧：资产统计 */}
         <div className="ml-auto hidden xl:flex items-center gap-3 text-[11.5px] text-zinc-500 shrink-0">
           <span>
-            已入库 <span className="tabular-nums font-semibold text-[#6FAA7D]">{assetSummary?.readyCount ?? 0}</span>
+            已入库{" "}
+            <span className="tabular-nums font-semibold text-[#6FAA7D]">
+              {assetSummary?.readyCount ?? 0}
+            </span>
           </span>
           <span>·</span>
           <span>
-            待整理 <span className="tabular-nums font-semibold text-[#D99E55]">{assetSummary?.pendingLibraryCount ?? 0}</span>
+            待整理{" "}
+            <span className="tabular-nums font-semibold text-[#D99E55]">
+              {assetSummary?.pendingLibraryCount ?? 0}
+            </span>
           </span>
           <span>·</span>
           <span>
-            已评级 <span className="tabular-nums font-semibold text-zinc-700">{assetSummary?.gradedCount ?? 0}</span>
+            已评级{" "}
+            <span className="tabular-nums font-semibold text-zinc-700">
+              {assetSummary?.gradedCount ?? 0}
+            </span>
           </span>
         </div>
       </div>
@@ -865,8 +997,14 @@ export function VideoList({
             {pagedVideos.length ? (
               pagedVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
-                const showPatchButton = shouldShowPatch24hButton(video, snapshot);
-                const statusInfo = getVideoStatusInfo(video.anomaly_status, video.play_change_signal);
+                const showPatchButton = shouldShowPatch24hButton(
+                  video,
+                  snapshot,
+                );
+                const statusInfo = getVideoStatusInfo(
+                  video.anomaly_status,
+                  video.play_change_signal,
+                );
 
                 return (
                   <tr
@@ -876,7 +1014,10 @@ export function VideoList({
                   >
                     {/* 复选框 */}
                     {canManageLifecycle && (
-                      <td className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <td
+                        className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Checkbox
                           checked={selectedIds.has(video.id)}
                           onCheckedChange={(checked) => {
@@ -902,7 +1043,9 @@ export function VideoList({
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${statusInfo.bgColor} ${statusInfo.textColor}`}
                         >
-                          <span className={`size-1.5 rounded-full ${statusInfo.dotColor}`} />
+                          <span
+                            className={`size-1.5 rounded-full ${statusInfo.dotColor}`}
+                          />
                           {statusInfo.label}
                         </span>
                       )}
@@ -915,7 +1058,9 @@ export function VideoList({
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
                         <span className="truncate font-medium text-zinc-900 group-hover:text-zinc-950 transition-colors">
-                          {video.video_title?.trim() || video.content?.slice(0, 50) || "未命名视频"}
+                          {video.video_title?.trim() ||
+                            video.content?.slice(0, 50) ||
+                            "未命名视频"}
                         </span>
                         {video.accounts?.name && (
                           <span className="shrink-0 text-[11px] text-zinc-400 font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
@@ -944,7 +1089,9 @@ export function VideoList({
                           {formatCount(snapshot?.play_count)}
                         </td>
                         <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums whitespace-nowrap w-18 2xl:w-24">
-                          {formatPercent(snapshot ? interactionRate(snapshot) : null)}
+                          {formatPercent(
+                            snapshot ? interactionRate(snapshot) : null,
+                          )}
                         </td>
                         <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums whitespace-nowrap w-16 2xl:w-22">
                           {formatCount(snapshot?.follower_gain)}
@@ -964,21 +1111,28 @@ export function VideoList({
                           >
                             恢复
                           </button>
-                          {permissionInfo.role === "owner" && (() => {
-                            const eligible = isPurgeEligible(video.trashed_at ?? null);
-                            const tooltip = getPurgeTooltip(video.trashed_at ?? null);
-                            return (
-                              <button
-                                type="button"
-                                onClick={() => setConfirmPurgeVideoId(video.id)}
-                                disabled={!eligible || isOperating !== null}
-                                title={tooltip || undefined}
-                                className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
-                              >
-                                永久删除
-                              </button>
-                            );
-                          })()}
+                          {permissionInfo.role === "owner" &&
+                            (() => {
+                              const eligible = isPurgeEligible(
+                                video.trashed_at ?? null,
+                              );
+                              const tooltip = getPurgeTooltip(
+                                video.trashed_at ?? null,
+                              );
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setConfirmPurgeVideoId(video.id)
+                                  }
+                                  disabled={!eligible || isOperating !== null}
+                                  title={tooltip || undefined}
+                                  className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
+                                >
+                                  永久删除
+                                </button>
+                              );
+                            })()}
                         </div>
                       ) : (
                         <div className="flex items-center justify-end gap-2">
@@ -1006,7 +1160,10 @@ export function VideoList({
                               >
                                 <MoreHorizontal className="size-3.5" />
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-36 text-[12px]">
+                              <DropdownMenuContent
+                                align="end"
+                                className="w-36 text-[12px]"
+                              >
                                 <DropdownMenuItem
                                   variant="destructive"
                                   className="gap-2 cursor-pointer text-[12px]"
@@ -1027,7 +1184,15 @@ export function VideoList({
             ) : (
               <tr>
                 <td
-                  colSpan={view === "trash" ? (canManageLifecycle ? 6 : 5) : (canManageLifecycle ? 9 : 8)}
+                  colSpan={
+                    view === "trash"
+                      ? canManageLifecycle
+                        ? 6
+                        : 5
+                      : canManageLifecycle
+                        ? 9
+                        : 8
+                  }
                   className="px-4 py-16 text-center text-[13px] text-zinc-500"
                 >
                   <div className="flex flex-col items-center justify-center gap-2.5">
@@ -1070,20 +1235,27 @@ export function VideoList({
         }}
         video={selectedVideo}
         snapshot={selectedSnapshot}
-        tags={selectedVideo ? tagMap.get(selectedVideo.id) ?? [] : []}
-        assetRecord={selectedVideo ? assetLibraryState[selectedVideo.id] ?? null : null}
+        tags={selectedVideo ? (tagMap.get(selectedVideo.id) ?? []) : []}
+        assetRecord={
+          selectedVideo ? (assetLibraryState[selectedVideo.id] ?? null) : null
+        }
         onTagsSaved={(tags) => {
           setTagRows((current) => {
             const rest = current.filter(
               (tag) =>
                 tag.video_id !== selectedVideo?.id ||
-                !tags.some((saved) => saved.tag_dimension === tag.tag_dimension)
+                !tags.some(
+                  (saved) => saved.tag_dimension === tag.tag_dimension,
+                ),
             );
             return [...rest, ...tags];
           });
         }}
         onAssetSaved={(videoId, record) => {
-          setAssetLibraryState((current) => ({ ...current, [videoId]: record }));
+          setAssetLibraryState((current) => ({
+            ...current,
+            [videoId]: record,
+          }));
         }}
         permissionInfo={permissionInfo}
         onLifecycleChanged={() => {
@@ -1109,7 +1281,9 @@ export function VideoList({
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
           <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-zinc-900">永久删除确认</h3>
+            <h3 className="text-base font-semibold text-zinc-900">
+              永久删除确认
+            </h3>
             <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
               将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
             </p>
@@ -1139,7 +1313,11 @@ export function VideoList({
       {canManageLifecycle && selectedIds.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
           <span className="text-[12.5px] font-medium text-zinc-700">
-            已选择 <span className="font-semibold text-[#D97757]">{selectedIds.size}</span> 项视频
+            已选择{" "}
+            <span className="font-semibold text-[#D97757]">
+              {selectedIds.size}
+            </span>{" "}
+            项视频
           </span>
           <div className="h-4 w-px bg-zinc-200" />
           <Button

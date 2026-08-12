@@ -2,8 +2,15 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BarChart2, AlertTriangle, RefreshCw } from "lucide-react";
-import { fetchTopicJson, parseComparisonResponse } from "@/lib/topics/v2-client-contract";
-import type { TopicComparisonDimension, TopicComparisonItem, TopicOption } from "./types";
+import {
+  fetchTopicJson,
+  parseComparisonResponse,
+} from "@/lib/topics/v2-client-contract";
+import type {
+  TopicComparisonDimension,
+  TopicComparisonItem,
+  TopicOption,
+} from "./types";
 
 interface TopicComparisonMatrixProps {
   topics: TopicOption[];
@@ -11,7 +18,11 @@ interface TopicComparisonMatrixProps {
   onSelectTopic?: (topicId: string) => void;
 }
 
-export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopic }: TopicComparisonMatrixProps) {
+export function TopicComparisonMatrix({
+  topics,
+  topicsError = null,
+  onSelectTopic,
+}: TopicComparisonMatrixProps) {
   const [dimension, setDimension] = useState<TopicComparisonDimension>("topic");
   const [days, setDays] = useState<number>(30);
   const [topicId, setTopicId] = useState("");
@@ -33,7 +44,9 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
     if (dimension === "account") params.set("topicId", topicId);
 
     try {
-      const parsed = parseComparisonResponse(await fetchTopicJson(`/api/topics/comparison?${params.toString()}`));
+      const parsed = parseComparisonResponse(
+        await fetchTopicJson(`/api/topics/comparison?${params.toString()}`),
+      );
       if (requestId !== requestIdRef.current) return;
       setData(parsed.rows as TopicComparisonItem[]);
       setSampleTotal(parsed.sampleTotal);
@@ -59,7 +72,9 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D97757]/10 text-[#D97757]">
             <BarChart2 className="w-3 h-3" />
           </span>
-          <h2 className="text-base font-semibold text-zinc-900">选题效果横向对比</h2>
+          <h2 className="text-base font-semibold text-zinc-900">
+            选题效果横向对比
+          </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center p-1 bg-zinc-100/80 rounded-lg text-xs font-medium text-zinc-600">
@@ -67,7 +82,9 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
               type="button"
               onClick={() => setDimension("topic")}
               className={`px-3 py-1 rounded-md transition-colors ${
-                dimension === "topic" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "hover:text-zinc-900 font-normal"
+                dimension === "topic"
+                  ? "bg-white text-zinc-900 shadow-2xs font-semibold"
+                  : "hover:text-zinc-900 font-normal"
               }`}
               aria-label="按母题对比"
             >
@@ -77,7 +94,9 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
               type="button"
               onClick={() => setDimension("account")}
               className={`px-3 py-1 rounded-md transition-colors ${
-                dimension === "account" ? "bg-white text-zinc-900 shadow-2xs font-semibold" : "hover:text-zinc-900 font-normal"
+                dimension === "account"
+                  ? "bg-white text-zinc-900 shadow-2xs font-semibold"
+                  : "hover:text-zinc-900 font-normal"
               }`}
               aria-label="按账号对比"
             >
@@ -86,23 +105,27 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
           </div>
 
           {dimension === "account" && topicsError ? (
-            <span className="text-xs text-rose-700">母题列表加载失败</span>
-          ) : dimension === "account" && (
-            <select
-              value={topicId}
-              onChange={(event) => setTopicId(event.target.value)}
-              className={`max-w-44 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-normal transition-all ${
-                !topicId ? "ring-2 ring-[#D97757]/50 animate-pulse border-[#D97757]" : ""
-              }`}
-              aria-label="选择对比母题"
-            >
-              <option value="">选择母题...</option>
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.name}
-                </option>
-              ))}
-            </select>
+            <span className="text-xs text-zinc-600">母题列表加载失败</span>
+          ) : (
+            dimension === "account" && (
+              <select
+                value={topicId}
+                onChange={(event) => setTopicId(event.target.value)}
+                className={`max-w-44 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2.5 py-1.5 text-zinc-700 font-normal transition-all ${
+                  !topicId
+                    ? "ring-2 ring-[#D97757]/50 animate-pulse border-[#D97757]"
+                    : ""
+                }`}
+                aria-label="选择对比母题"
+              >
+                <option value="">选择母题...</option>
+                {topics.map((topic) => (
+                  <option key={topic.id} value={topic.id}>
+                    {topic.name}
+                  </option>
+                ))}
+              </select>
+            )
           )}
 
           <select
@@ -128,13 +151,13 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
           <span>对比矩阵加载中...</span>
         </div>
       ) : error ? (
-        <div className="py-10 text-center text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
+        <div className="py-10 text-center text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-xl">
           <p className="text-sm font-medium">横向对比加载失败</p>
-          <p className="text-xs mt-1 text-rose-600 font-normal">{error}</p>
+          <p className="text-xs mt-1 text-[#DC2626] font-normal">{error}</p>
           <button
             type="button"
             onClick={() => setRetryToken((value) => value + 1)}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-rose-200 text-xs font-medium text-rose-700 hover:bg-rose-100 active:scale-[0.97] transition-all"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-100 active:scale-[0.97] transition-all"
             aria-label="重试加载对比矩阵"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -146,37 +169,61 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
           <div className="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
             <BarChart2 className="w-5 h-5" />
           </div>
-          <h3 className="text-sm font-semibold text-zinc-800 mb-1">暂无对比数据</h3>
+          <h3 className="text-sm font-semibold text-zinc-800 mb-1">
+            暂无对比数据
+          </h3>
           <p className="text-xs text-zinc-500 max-w-sm mx-auto font-normal leading-relaxed">
-            {dimension === "account" ? "需要至少 2 个账号有作品后才能对比" : "需要至少 2 个账号有作品后才能对比"}
+            {dimension === "account"
+              ? "需要至少 2 个账号有作品后才能对比"
+              : "需要至少 2 个账号有作品后才能对比"}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="text-xs text-zinc-500 font-normal tabular-nums">样本作品 {sampleTotal} 条</div>
+          <div className="text-xs text-zinc-500 font-normal tabular-nums">
+            样本作品 {sampleTotal} 条
+          </div>
           {data.map((item) => {
-            const labelName = dimension === "topic" ? item.topicName || "常规母题" : `${item.accountName || "未命名账号"}`;
+            const labelName =
+              dimension === "topic"
+                ? item.topicName || "常规母题"
+                : `${item.accountName || "未命名账号"}`;
             const qualPercent = Math.round(item.qualifiedRate * 100);
-            const format = (value: number) => (value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString());
+            const format = (value: number) =>
+              value >= 10000
+                ? `${(value / 10000).toFixed(1)}万`
+                : value.toLocaleString();
             const canLinkTopic = Boolean(item.topicId && onSelectTopic);
 
             return (
               <div
                 key={`${item.topicId ?? "topic"}-${item.accountId ?? "account"}`}
-                onClick={canLinkTopic ? () => onSelectTopic?.(item.topicId!) : undefined}
+                onClick={
+                  canLinkTopic
+                    ? () => onSelectTopic?.(item.topicId!)
+                    : undefined
+                }
                 className={`p-3.5 bg-zinc-50/60 border border-zinc-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
-                  canLinkTopic ? "cursor-pointer hover:border-zinc-300 hover:bg-zinc-50/90 hover:shadow-2xs group" : ""
+                  canLinkTopic
+                    ? "cursor-pointer hover:border-zinc-300 hover:bg-zinc-50/90 hover:shadow-2xs group"
+                    : ""
                 }`}
-                title={canLinkTopic ? `点击联动上方选题大盘查看《${labelName}》的全部子题` : undefined}
+                title={
+                  canLinkTopic
+                    ? `点击联动上方选题大盘查看《${labelName}》的全部子题`
+                    : undefined
+                }
               >
                 <div className="w-full md:w-56 shrink-0 min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className={`font-normal text-xs truncate min-w-0 ${canLinkTopic ? "text-zinc-700 group-hover:text-[#D97757] font-medium transition-colors" : "text-zinc-600"}`}>
+                    <span
+                      className={`font-normal text-xs truncate min-w-0 ${canLinkTopic ? "text-zinc-700 group-hover:text-[#D97757] font-medium transition-colors" : "text-zinc-600"}`}
+                    >
                       {labelName}
                     </span>
                     {item.lowConfidence && (
-                      <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1 shrink-0">
-                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                      <span className="text-xs bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded font-normal inline-flex items-center gap-1 shrink-0">
+                        <AlertTriangle className="w-3 h-3 text-[#F59E0B]" />
                         <span>样本较少</span>
                       </span>
                     )}
@@ -189,7 +236,9 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
                 <div className="flex-1">
                   <div className="flex justify-between text-xs text-zinc-500 mb-1 font-normal">
                     <span>作品达标率</span>
-                    <span className="font-semibold text-zinc-800 tabular-nums">{qualPercent}%</span>
+                    <span className="font-semibold text-zinc-800 tabular-nums">
+                      {qualPercent}%
+                    </span>
                   </div>
                   <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
                     <div
@@ -201,12 +250,20 @@ export function TopicComparisonMatrix({ topics, topicsError = null, onSelectTopi
 
                 <div className="flex items-center gap-6 text-xs text-right shrink-0 tabular-nums">
                   <div>
-                    <div className="text-xs text-zinc-500 font-normal">平均播放</div>
-                    <div className="font-normal text-zinc-600 text-xs mt-0.5">{format(item.avgPlayCount)}</div>
+                    <div className="text-xs text-zinc-500 font-normal">
+                      平均播放
+                    </div>
+                    <div className="font-normal text-zinc-600 text-xs mt-0.5">
+                      {format(item.avgPlayCount)}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-xs text-zinc-500 font-normal">最高播放</div>
-                    <div className="font-semibold text-emerald-600 text-xs mt-0.5">{format(item.bestPlayCount)}</div>
+                    <div className="text-xs text-zinc-500 font-normal">
+                      最高播放
+                    </div>
+                    <div className="font-semibold text-[#16A34A] text-xs mt-0.5">
+                      {format(item.bestPlayCount)}
+                    </div>
                   </div>
                 </div>
               </div>

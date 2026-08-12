@@ -21,8 +21,9 @@ import type { InboxBucketEntry, InboxCounts } from "../data";
 import dynamic from "next/dynamic";
 
 const CaseRejectDialog = dynamic(
-  () => import("@/components/case-reject-dialog").then((m) => m.CaseRejectDialog),
-  { ssr: false }
+  () =>
+    import("@/components/case-reject-dialog").then((m) => m.CaseRejectDialog),
+  { ssr: false },
 );
 
 /** 后端 batch-review / [id]/review response 里的旧状态快照 */
@@ -88,7 +89,11 @@ const TONE: Record<
   },
 };
 
-const RISK_LABEL: Record<string, string> = { high: "高", medium: "中", low: "低" };
+const RISK_LABEL: Record<string, string> = {
+  high: "高",
+  medium: "中",
+  low: "低",
+};
 const MISSING_LABEL: Record<string, string> = {
   screenshot: "截图",
   scene_description: "场景描述",
@@ -115,8 +120,7 @@ function MissingBadge({ field }: { field: string }) {
   const label = MISSING_LABEL[field] ?? field;
   return (
     <span className="inline-flex items-center gap-1 rounded-md border border-[#D99E55]/20 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] text-[#D99E55]">
-      <span className="size-1 rounded-full bg-[#D99E55]" />
-      缺{label}
+      <span className="size-1 rounded-full bg-[#D99E55]" />缺{label}
     </span>
   );
 }
@@ -152,7 +156,7 @@ function TaskRow({
         "group relative flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200",
         selected
           ? "border-zinc-300 bg-zinc-50"
-          : "border-transparent hover:border-zinc-200 hover:bg-zinc-50/80 hover:shadow-[0_4px_12px_-4px_rgba(28,25,23,0.06)]"
+          : "border-transparent hover:border-zinc-200 hover:bg-zinc-50/80 hover:shadow-[0_4px_12px_-4px_rgba(28,25,23,0.06)]",
       )}
     >
       {/* Checkbox */}
@@ -166,7 +170,7 @@ function TaskRow({
           "flex size-4 shrink-0 items-center justify-center rounded border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300",
           selected
             ? "border-[#D97757] bg-[#D97757] text-white"
-            : "border-zinc-300 bg-white hover:border-zinc-400"
+            : "border-zinc-300 bg-white hover:border-zinc-400",
         )}
       >
         {selected && <Check className="size-3 stroke-[2.5]" />}
@@ -177,7 +181,7 @@ function TaskRow({
         className={cn(
           "absolute left-0 top-2.5 bottom-2.5 w-[2px] rounded-full transition-all duration-200",
           style.bar,
-          selected ? "opacity-100" : "opacity-40 group-hover:opacity-100"
+          selected ? "opacity-100" : "opacity-40 group-hover:opacity-100",
         )}
       />
 
@@ -203,7 +207,7 @@ function TaskRow({
               <span
                 className={cn(
                   "rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-normal",
-                  TONE.danger.badge
+                  TONE.danger.badge,
                 )}
               >
                 {RISK_LABEL[entry.risk_level] ?? entry.risk_level}风险
@@ -215,10 +219,12 @@ function TaskRow({
       </button>
 
       {/* Quick actions — hover 时流畅淡入滑入 */}
-      <div className={cn(
-        "hidden shrink-0 items-center gap-1 sm:flex",
-        "opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-200"
-      )}>
+      <div
+        className={cn(
+          "hidden shrink-0 items-center gap-1 sm:flex",
+          "opacity-0 translate-x-2 pointer-events-none group-hover:opacity-100 group-hover:translate-x-0 group-hover:pointer-events-auto transition-all duration-200",
+        )}
+      >
         <button
           type="button"
           disabled={busyAction !== null}
@@ -324,7 +330,7 @@ function CollapsibleSection({
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-lg border bg-white",
           style.iconText,
-          style.badge
+          style.badge,
         )}
       >
         <Icon className="size-3.5 stroke-[1.5]" />
@@ -336,7 +342,7 @@ function CollapsibleSection({
             <span
               className={cn(
                 "inline-flex h-5 items-center rounded-md border px-1.5 text-[11px] tabular-nums font-medium",
-                style.badge
+                style.badge,
               )}
             >
               {visualCount}
@@ -357,9 +363,9 @@ function CollapsibleSection({
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const }}
       className={cn(
         "overflow-hidden rounded-2xl border bg-white transition-colors duration-300 shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]",
-        (section.tone === "danger" && visualCount > 0)
-          ? "border-red-200/60 bg-gradient-to-b from-red-50/[0.03] to-white"
-          : "border-zinc-200"
+        section.tone === "danger" && visualCount > 0
+          ? "border-zinc-200/60 bg-gradient-to-b from-red-50/[0.03] to-white"
+          : "border-zinc-200",
       )}
     >
       {/* Header */}
@@ -373,7 +379,7 @@ function CollapsibleSection({
           <ChevronDown
             className={cn(
               "size-4 shrink-0 stroke-[1.5] text-zinc-500 transition-transform duration-300",
-              open ? "" : "-rotate-90"
+              open ? "" : "-rotate-90",
             )}
           />
         </button>
@@ -390,7 +396,10 @@ function CollapsibleSection({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+            transition={{
+              duration: 0.3,
+              ease: [0.25, 0.46, 0.45, 0.94] as const,
+            }}
             className="overflow-hidden"
           >
             <div className="px-3 py-3 bg-white">
@@ -448,7 +457,7 @@ function CollapsibleSection({
                         <ChevronDown
                           className={cn(
                             "size-3.5 stroke-[1.5] transition-transform duration-200",
-                            expanded ? "rotate-180" : ""
+                            expanded ? "rotate-180" : "",
                           )}
                         />
                       </button>
@@ -505,7 +514,9 @@ function BulkActionBar({
           onClick={onApprove}
           className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-[#6FAA7D]/10 hover:text-[#6FAA7D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
-          {busy === "approve" ? <Loader2 className="size-3 animate-spin" /> : null}
+          {busy === "approve" ? (
+            <Loader2 className="size-3 animate-spin" />
+          ) : null}
           批量通过
         </button>
         <button
@@ -514,7 +525,9 @@ function BulkActionBar({
           onClick={onReject}
           className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-[#C9604D]/10 hover:text-[#C9604D] disabled:cursor-wait disabled:opacity-60 sm:px-3"
         >
-          {busy === "reject" ? <Loader2 className="size-3 animate-spin" /> : null}
+          {busy === "reject" ? (
+            <Loader2 className="size-3 animate-spin" />
+          ) : null}
           批量驳回
         </button>
         <button
@@ -563,7 +576,9 @@ export function TaskInbox({
   const [bulkBusy, setBulkBusy] = useState<RowAction | null>(null);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   /** 中心 Dialog 的当前案例 id — 行点击触发 */
-  const [internalDetailCaseId, setInternalDetailCaseId] = useState<string | null>(null);
+  const [internalDetailCaseId, setInternalDetailCaseId] = useState<
+    string | null
+  >(null);
   const activeDetailCaseId = detailCaseId ?? internalDetailCaseId;
   const setActiveDetailCaseId = onOpenDetail ?? setInternalDetailCaseId;
   const [rejectState, setRejectState] = useState<
@@ -574,7 +589,9 @@ export function TaskInbox({
   const [rejectBusy, setRejectBusy] = useState(false);
   const lastRefreshRef = useRef(0);
   /** 撤销窗口期内挂起的 refresh 定时器，撤销时取消，提交时立即触发 */
-  const pendingRefreshTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const pendingRefreshTimers = useRef<Set<ReturnType<typeof setTimeout>>>(
+    new Set(),
+  );
 
   // 卸载时清掉所有挂起的 refresh
   useEffect(() => {
@@ -645,34 +662,37 @@ export function TaskInbox({
 
       const id = feedbackToast.success(label, {
         duration: UNDO_WINDOW_MS,
-        action: snapshots.length > 0
-          ? {
-              label: "撤销",
-              onClick: async () => {
-                undone = true;
-                clearTimeout(commitTimer);
-                pendingRefreshTimers.current.delete(commitTimer);
-                // 视觉立刻把行恢复回来
-                restoreHidden(affectedIds);
-                try {
-                  const res = await fetch("/api/violations/review/restore", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ snapshots }),
-                  });
-                  if (!res.ok) throw new Error("撤销失败");
-                  feedbackToast.success("已撤销");
-                  // 撤销后也刷一次，让 reviewed_at 之类的辅助字段同步
-                  debouncedRefresh();
-                } catch (e) {
-                  feedbackToast.error(e instanceof Error ? e.message : "撤销失败");
-                  // 撤销失败 → 行还是隐藏的（数据库实际审批已写入），后端是源头
-                  optimisticHide(affectedIds);
-                  debouncedRefresh();
-                }
-              },
-            }
-          : undefined,
+        action:
+          snapshots.length > 0
+            ? {
+                label: "撤销",
+                onClick: async () => {
+                  undone = true;
+                  clearTimeout(commitTimer);
+                  pendingRefreshTimers.current.delete(commitTimer);
+                  // 视觉立刻把行恢复回来
+                  restoreHidden(affectedIds);
+                  try {
+                    const res = await fetch("/api/violations/review/restore", {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({ snapshots }),
+                    });
+                    if (!res.ok) throw new Error("撤销失败");
+                    feedbackToast.success("已撤销");
+                    // 撤销后也刷一次，让 reviewed_at 之类的辅助字段同步
+                    debouncedRefresh();
+                  } catch (e) {
+                    feedbackToast.error(
+                      e instanceof Error ? e.message : "撤销失败",
+                    );
+                    // 撤销失败 → 行还是隐藏的（数据库实际审批已写入），后端是源头
+                    optimisticHide(affectedIds);
+                    debouncedRefresh();
+                  }
+                },
+              }
+            : undefined,
       });
       // 返回 id 便于将来需要 dismiss
       return id;
@@ -710,7 +730,9 @@ export function TaskInbox({
           }),
         });
         if (!res.ok) throw new Error("通过失败");
-        const payload: { snapshot?: ReviewSnapshot } = await res.json().catch(() => ({}));
+        const payload: { snapshot?: ReviewSnapshot } = await res
+          .json()
+          .catch(() => ({}));
         const snapshot = payload?.snapshot;
         showUndoableToast({
           label: "已通过",
@@ -861,7 +883,9 @@ export function TaskInbox({
             const failedCount = data?.failed ?? 0;
             const snapshots = data?.snapshots ?? [];
             if (failedCount > 0) {
-              feedbackToast.warning(`成功 ${successCount} · 失败 ${failedCount}`);
+              feedbackToast.warning(
+                `成功 ${successCount} · 失败 ${failedCount}`,
+              );
               debouncedRefresh();
             } else if (successCount > 0) {
               showUndoableToast({
@@ -875,7 +899,9 @@ export function TaskInbox({
             clearSelection();
           } catch (e) {
             restoreHidden(ids);
-            feedbackToast.error(e instanceof Error ? e.message : "批量操作失败");
+            feedbackToast.error(
+              e instanceof Error ? e.message : "批量操作失败",
+            );
             throw e;
           } finally {
             setBulkBusy(null);
@@ -909,17 +935,18 @@ export function TaskInbox({
         icon: AlertTriangle,
         entries: inbox.high_risk_pending,
         emptyHint: "✓ 目前安全 · 无高风险踩雷话术待确认",
-        headerTag: counts.high_risk_pending > 0 ? (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D] leading-normal">
-            <span className="size-1 rounded-full bg-[#C9604D]" />
-            优先处理
-          </span>
-        ) : (
-          <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#6FAA7D] leading-normal">
-            <span className="size-1 rounded-full bg-[#6FAA7D]" />
-            目前安全
-          </span>
-        ),
+        headerTag:
+          counts.high_risk_pending > 0 ? (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#C9604D]/20 bg-[#C9604D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#C9604D] leading-normal">
+              <span className="size-1 rounded-full bg-[#C9604D]" />
+              优先处理
+            </span>
+          ) : (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-[#6FAA7D]/20 bg-[#6FAA7D]/[0.04] px-1.5 py-0.5 text-[11px] text-[#6FAA7D] leading-normal">
+              <span className="size-1 rounded-full bg-[#6FAA7D]" />
+              目前安全
+            </span>
+          ),
       },
       {
         key: "pending",
@@ -951,12 +978,14 @@ export function TaskInbox({
           ) : null,
       },
     ],
-    [inbox, counts]
+    [inbox, counts],
   );
 
   const sections = useMemo(() => {
     if (viewType === "main") {
-      return allSections.filter((s) => s.key === "pending" || s.key === "high_risk");
+      return allSections.filter(
+        (s) => s.key === "pending" || s.key === "high_risk",
+      );
     }
     return allSections.filter((s) => s.key === "missing");
   }, [allSections, viewType]);
@@ -1002,7 +1031,7 @@ export function TaskInbox({
                 "rounded-2xl border text-center",
                 viewType === "main"
                   ? "border-[#6FAA7D]/25 bg-[#6FAA7D]/[0.04] px-6 py-8"
-                  : "border-zinc-200 bg-zinc-50 px-4 py-6"
+                  : "border-zinc-200 bg-zinc-50 px-4 py-6",
               )}
             >
               <div className="mx-auto flex size-8 items-center justify-center rounded-full bg-white shadow-sm">
@@ -1012,7 +1041,9 @@ export function TaskInbox({
                 {viewType === "main" ? "今天的审批已清空" : "无待补材料"}
               </p>
               <p className="mt-1 text-[12px] text-zinc-500 font-normal">
-                {viewType === "main" ? "辛苦了 · 5 秒内仍可在 toast 撤销" : "材料全部齐全"}
+                {viewType === "main"
+                  ? "辛苦了 · 5 秒内仍可在 toast 撤销"
+                  : "材料全部齐全"}
               </p>
             </motion.div>
           ) : null}

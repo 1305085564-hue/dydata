@@ -18,7 +18,12 @@ import {
   parseSubTopicDetailResponse,
   parseTopicWorksResponse,
 } from "@/lib/topics/v2-client-contract";
-import type { TopicClaimsDetailResponse, TopicWorkItem, TopicWorksResponse, SubTopicItem } from "./types";
+import type {
+  TopicClaimsDetailResponse,
+  TopicWorkItem,
+  TopicWorksResponse,
+  SubTopicItem,
+} from "./types";
 
 interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
@@ -39,7 +44,8 @@ export function TopicWorkBreakdownDrawer({
   const [mounted, setMounted] = useState(false);
   const [subTopicInfo, setSubTopicInfo] = useState<SubTopicItem | null>(null);
   const [worksData, setWorksData] = useState<TopicWorksResponse | null>(null);
-  const [claimsData, setClaimsData] = useState<TopicClaimsDetailResponse | null>(null);
+  const [claimsData, setClaimsData] =
+    useState<TopicClaimsDetailResponse | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [worksError, setWorksError] = useState<string | null>(null);
   const [claimsError, setClaimsError] = useState<string | null>(null);
@@ -69,7 +75,8 @@ export function TopicWorkBreakdownDrawer({
   // Focus Management & Esc Key Support
   useEffect(() => {
     if (subTopicId) {
-      previousActiveElement.current = document.activeElement as HTMLElement | null;
+      previousActiveElement.current =
+        document.activeElement as HTMLElement | null;
       try {
         closeBtnRef.current?.focus();
       } catch {
@@ -77,7 +84,10 @@ export function TopicWorkBreakdownDrawer({
       }
     }
     return () => {
-      if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
+      if (
+        previousActiveElement.current &&
+        typeof previousActiveElement.current.focus === "function"
+      ) {
         try {
           previousActiveElement.current.focus();
         } catch {
@@ -110,7 +120,9 @@ export function TopicWorkBreakdownDrawer({
 
     const [detailResult, worksResult, claimsResult] = await Promise.allSettled([
       fetchTopicJson(`/api/topics/sub-topics/${subTopicId}`),
-      fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/works?sort=best&page=1&page_size=20`),
+      fetchTopicJson(
+        `/api/topics/sub-topics/${subTopicId}/works?sort=best&page=1&page_size=20`,
+      ),
       fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/claims`),
     ]);
 
@@ -118,22 +130,35 @@ export function TopicWorkBreakdownDrawer({
 
     if (detailResult.status === "fulfilled") {
       try {
-        setSubTopicInfo(parseSubTopicDetailResponse(detailResult.value).subTopic as SubTopicItem);
+        setSubTopicInfo(
+          parseSubTopicDetailResponse(detailResult.value)
+            .subTopic as SubTopicItem,
+        );
       } catch (error) {
         setDetailError(error instanceof Error ? error.message : "详情结构无效");
       }
     } else {
-      setDetailError(detailResult.reason instanceof Error ? detailResult.reason.message : "详情加载失败");
+      setDetailError(
+        detailResult.reason instanceof Error
+          ? detailResult.reason.message
+          : "详情加载失败",
+      );
     }
 
     if (worksResult.status === "fulfilled") {
       try {
-        setWorksData(parseTopicWorksResponse(worksResult.value) as TopicWorksResponse);
+        setWorksData(
+          parseTopicWorksResponse(worksResult.value) as TopicWorksResponse,
+        );
       } catch (error) {
         setWorksError(error instanceof Error ? error.message : "作品结构无效");
       }
     } else {
-      setWorksError(worksResult.reason instanceof Error ? worksResult.reason.message : "作品加载失败");
+      setWorksError(
+        worksResult.reason instanceof Error
+          ? worksResult.reason.message
+          : "作品加载失败",
+      );
     }
 
     if (claimsResult.status === "fulfilled") {
@@ -151,10 +176,16 @@ export function TopicWorkBreakdownDrawer({
           })),
         });
       } catch (error) {
-        setClaimsError(error instanceof Error ? error.message : "撞车动态结构无效");
+        setClaimsError(
+          error instanceof Error ? error.message : "撞车动态结构无效",
+        );
       }
     } else {
-      setClaimsError(claimsResult.reason instanceof Error ? claimsResult.reason.message : "撞车动态加载失败");
+      setClaimsError(
+        claimsResult.reason instanceof Error
+          ? claimsResult.reason.message
+          : "撞车动态加载失败",
+      );
     }
     setLoading(false);
   }, [subTopicId]);
@@ -163,27 +194,39 @@ export function TopicWorkBreakdownDrawer({
     if (subTopicId) void loadData();
   }, [loadData, subTopicId]);
 
-  if (!subTopicId || !mounted || typeof window === "undefined" || !document?.body) return null;
+  if (
+    !subTopicId ||
+    !mounted ||
+    typeof window === "undefined" ||
+    !document?.body
+  )
+    return null;
 
   const claim =
-    subTopicInfo?.myClaim && (subTopicInfo.myClaim.status === "candidate" || subTopicInfo.myClaim.status === "scripting")
+    subTopicInfo?.myClaim &&
+    (subTopicInfo.myClaim.status === "candidate" ||
+      subTopicInfo.myClaim.status === "scripting")
       ? subTopicInfo.myClaim
       : null;
   const action = getTopicActionState(
     detailError
       ? null
       : claim
-      ? {
-          id: claim.id,
-          subTopicId: claim.subTopicId,
-          status: claim.status === "candidate" ? "candidate" : "scripting",
-          claimedAt: claim.claimedAt,
-        }
-      : null
+        ? {
+            id: claim.id,
+            subTopicId: claim.subTopicId,
+            status: claim.status === "candidate" ? "candidate" : "scripting",
+            claimedAt: claim.claimedAt,
+          }
+        : null,
   );
 
   const handleAction = async () => {
-    if (!(action.canClaim || action.canStartScripting || action.canReturn) || submitting) return;
+    if (
+      !(action.canClaim || action.canStartScripting || action.canReturn) ||
+      submitting
+    )
+      return;
     try {
       setSubmitting(true);
       if (action.canClaim) {
@@ -219,14 +262,19 @@ export function TopicWorkBreakdownDrawer({
             <div className="min-w-0 pr-3">
               <div className="flex items-center gap-2 text-xs font-normal text-zinc-500 mb-1 truncate">
                 <span>{subTopicInfo?.topics?.name || "常规母题"}</span>
-                {subTopicInfo?.topic_groups?.name && <span>· {subTopicInfo.topic_groups.name}</span>}
+                {subTopicInfo?.topic_groups?.name && (
+                  <span>· {subTopicInfo.topic_groups.name}</span>
+                )}
                 {subTopicInfo?.emotion_tag && (
                   <span className="bg-zinc-100 px-1.5 py-0.5 rounded text-xs text-zinc-600 font-normal">
                     #{subTopicInfo.emotion_tag}
                   </span>
                 )}
               </div>
-              <h3 id="drawer-title" className="text-lg font-semibold text-zinc-900 leading-snug">
+              <h3
+                id="drawer-title"
+                className="text-lg font-semibold text-zinc-900 leading-snug"
+              >
                 {subTopicInfo?.title || "子题详情"}
               </h3>
             </div>
@@ -243,10 +291,12 @@ export function TopicWorkBreakdownDrawer({
           </div>
 
           {detailError ? (
-            <div className="py-8 text-center text-rose-700 bg-rose-50 border border-rose-200 rounded-xl">
-              <AlertTriangle className="w-6 h-6 text-rose-600 mx-auto mb-2" />
+            <div className="py-8 text-center text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-xl">
+              <AlertTriangle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
               <p className="text-sm font-medium">详情加载失败</p>
-              <p className="text-xs text-rose-600 mt-1 font-normal">{detailError}</p>
+              <p className="text-xs text-[#DC2626] mt-1 font-normal">
+                {detailError}
+              </p>
             </div>
           ) : (
             <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 mb-6">
@@ -276,12 +326,13 @@ export function TopicWorkBreakdownDrawer({
                   </h4>
                   {claimsData && (
                     <span className="text-xs text-zinc-500 font-normal tabular-nums">
-                      候选 {claimsData.candidateCount} · 脚本中 {claimsData.scriptingCount}
+                      候选 {claimsData.candidateCount} · 脚本中{" "}
+                      {claimsData.scriptingCount}
                     </span>
                   )}
                 </div>
                 {claimsError ? (
-                  <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-normal">
+                  <div className="text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg p-3 font-normal">
                     {claimsError}
                   </div>
                 ) : claimsData?.claims.length === 0 ? (
@@ -296,7 +347,9 @@ export function TopicWorkBreakdownDrawer({
                           key={item.id}
                           className="flex items-center justify-between bg-zinc-50 px-3 py-2 rounded-lg border border-zinc-200 text-xs"
                         >
-                          <span className="font-medium text-zinc-800">{item.displayName}</span>
+                          <span className="font-medium text-zinc-800">
+                            {item.displayName}
+                          </span>
                           <span
                             className={
                               item.status === "scripting"
@@ -304,7 +357,9 @@ export function TopicWorkBreakdownDrawer({
                                 : "bg-zinc-200/70 text-zinc-700 font-normal px-2 py-0.5 rounded text-xs"
                             }
                           >
-                            {item.status === "scripting" ? "脚本撰写中" : "候选准备"}
+                            {item.status === "scripting"
+                              ? "脚本撰写中"
+                              : "候选准备"}
                           </span>
                         </div>
                       ))}
@@ -315,7 +370,7 @@ export function TopicWorkBreakdownDrawer({
 
               {/* 作品数据汇总 */}
               {worksError ? (
-                <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3 font-normal">
+                <div className="text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg p-3 font-normal">
                   作品加载失败：{worksError}
                 </div>
               ) : (
@@ -326,9 +381,21 @@ export function TopicWorkBreakdownDrawer({
                       <span>合格作品数据汇总</span>
                     </h4>
                     <div className="grid grid-cols-3 gap-3 bg-zinc-50 rounded-xl p-3 border border-zinc-200 text-center text-xs">
-                      <Metric label="合格作品数" value={String(worksData.summary.qualifiedWorkCount)} />
-                      <Metric label="平均播放量" value={formatPlayCount(worksData.summary.averagePlayCount)} />
-                      <Metric label="最高播放" value={formatPlayCount(worksData.summary.bestPlayCount)} accent />
+                      <Metric
+                        label="合格作品数"
+                        value={String(worksData.summary.qualifiedWorkCount)}
+                      />
+                      <Metric
+                        label="平均播放量"
+                        value={formatPlayCount(
+                          worksData.summary.averagePlayCount,
+                        )}
+                      />
+                      <Metric
+                        label="最高播放"
+                        value={formatPlayCount(worksData.summary.bestPlayCount)}
+                        accent
+                      />
                     </div>
                   </section>
                 )
@@ -337,7 +404,9 @@ export function TopicWorkBreakdownDrawer({
               {/* 最高播放文案摘录 */}
               {worksData?.summary?.bestCopy && (
                 <section className="bg-zinc-50 border border-zinc-200 rounded-xl p-3.5 text-xs">
-                  <div className="text-xs font-medium text-zinc-500 mb-1.5">最高播放作品文案摘录</div>
+                  <div className="text-xs font-medium text-zinc-500 mb-1.5">
+                    最高播放作品文案摘录
+                  </div>
                   <p className="text-zinc-700 line-clamp-4 leading-relaxed bg-white p-2.5 rounded-lg border border-zinc-200 font-normal">
                     {worksData.summary.bestCopy}
                   </p>
@@ -347,8 +416,12 @@ export function TopicWorkBreakdownDrawer({
               {/* 历史关联作品 */}
               <section>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-normal text-zinc-600 uppercase tracking-wider">历史关联作品</h4>
-                  <span className="text-xs text-zinc-500 font-normal tabular-nums">{worksData?.pagination.totalItems ?? 0} 条</span>
+                  <h4 className="text-xs font-normal text-zinc-600 uppercase tracking-wider">
+                    历史关联作品
+                  </h4>
+                  <span className="text-xs text-zinc-500 font-normal tabular-nums">
+                    {worksData?.pagination.totalItems ?? 0} 条
+                  </span>
                 </div>
                 {worksData?.items.length === 0 ? (
                   <div className="text-xs text-zinc-500 py-4 text-center border border-dashed border-zinc-200 rounded-lg bg-zinc-50/50 font-normal">
@@ -362,16 +435,23 @@ export function TopicWorkBreakdownDrawer({
                         className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs flex justify-between items-start gap-2"
                       >
                         <div>
-                          <div className="font-semibold text-zinc-900 line-clamp-1">《{item.videoTitle}》</div>
+                          <div className="font-semibold text-zinc-900 line-clamp-1">
+                            《{item.videoTitle}》
+                          </div>
                           {item.uploadedAt && (
                             <div className="text-xs text-zinc-500 mt-0.5 font-normal tabular-nums">
-                              发布时间: {new Date(item.uploadedAt).toLocaleDateString()}
+                              发布时间:{" "}
+                              {new Date(item.uploadedAt).toLocaleDateString()}
                             </div>
                           )}
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="font-semibold text-zinc-800 tabular-nums">{formatPlayCount(item.playCount)}</div>
-                          <div className="text-xs text-zinc-500 font-normal">播放量</div>
+                          <div className="font-semibold text-zinc-800 tabular-nums">
+                            {formatPlayCount(item.playCount)}
+                          </div>
+                          <div className="text-xs text-zinc-500 font-normal">
+                            播放量
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -429,15 +509,25 @@ export function TopicWorkBreakdownDrawer({
         </div>
       </div>
     </>,
-    document.body
+    document.body,
   );
 }
 
-function Metric({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
+function Metric({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
   return (
     <div>
       <div className="text-xs text-zinc-500 font-normal">{label}</div>
-      <div className={`font-semibold text-sm mt-0.5 tabular-nums ${accent ? "text-[#D97757]" : "text-zinc-800"}`}>
+      <div
+        className={`font-semibold text-sm mt-0.5 tabular-nums ${accent ? "text-[#D97757]" : "text-zinc-800"}`}
+      >
         {value}
       </div>
     </div>
@@ -446,5 +536,7 @@ function Metric({ label, value, accent = false }: { label: string; value: string
 
 function formatPlayCount(value: number | null) {
   if (value === null) return "未拉取";
-  return value >= 10000 ? `${(value / 10000).toFixed(1)}万` : value.toLocaleString();
+  return value >= 10000
+    ? `${(value / 10000).toFixed(1)}万`
+    : value.toLocaleString();
 }

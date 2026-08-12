@@ -1,15 +1,43 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { type AiFeatureControl, useAiConfig, type RewriteModelRoute, type RewriteModelView } from "../hooks/use-ai-config";
+import {
+  type AiFeatureControl,
+  useAiConfig,
+  type RewriteModelRoute,
+  type RewriteModelView,
+} from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil, Trash2, Plus, Info, Sparkles, GitFork, Star, Archive, ArchiveRestore } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Info,
+  Sparkles,
+  GitFork,
+  Star,
+  Archive,
+  ArchiveRestore,
+} from "lucide-react";
 import { BindingDialog } from "./bindings-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -17,8 +45,16 @@ import { cn } from "@/lib/utils";
 type ViewDraft = Partial<RewriteModelView>;
 type RouteDraft = Partial<RewriteModelRoute>;
 
-const defaultViewDraft = { is_enabled: true, is_default: false, sort_order: 100 } satisfies ViewDraft;
-const defaultRouteDraft = { is_enabled: true, priority: 100, weight: 100 } satisfies RouteDraft;
+const defaultViewDraft = {
+  is_enabled: true,
+  is_default: false,
+  sort_order: 100,
+} satisfies ViewDraft;
+const defaultRouteDraft = {
+  is_enabled: true,
+  priority: 100,
+  weight: 100,
+} satisfies RouteDraft;
 
 function RewriteViewDialog({
   open,
@@ -35,7 +71,13 @@ function RewriteViewDialog({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setFormData(open ? (view ? { ...defaultViewDraft, ...view } : defaultViewDraft) : defaultViewDraft);
+    setFormData(
+      open
+        ? view
+          ? { ...defaultViewDraft, ...view }
+          : defaultViewDraft
+        : defaultViewDraft,
+    );
   }, [open, view]);
 
   const handleSubmit = async () => {
@@ -51,37 +93,82 @@ function RewriteViewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{view?.id ? "编辑改写视图" : "添加改写视图"}</DialogTitle>
+          <DialogTitle>
+            {view?.id ? "编辑改写视图" : "添加改写视图"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="view-key">Key</Label>
-            <Input id="view-key" value={formData.key || ""} onChange={(e) => setFormData({ ...formData, key: e.target.value })} disabled={!!view?.id} />
+            <Input
+              id="view-key"
+              value={formData.key || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, key: e.target.value })
+              }
+              disabled={!!view?.id}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="view-label">名称</Label>
-            <Input id="view-label" value={formData.label || ""} onChange={(e) => setFormData({ ...formData, label: e.target.value })} />
+            <Input
+              id="view-label"
+              value={formData.label || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, label: e.target.value })
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="view-description">描述</Label>
-            <Input id="view-description" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+            <Input
+              id="view-description"
+              value={formData.description || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="view-sort-order">排序</Label>
-              <Input id="view-sort-order" type="number" value={formData.sort_order ?? 100} onChange={(e) => setFormData({ ...formData, sort_order: Number.parseInt(e.target.value, 10) || 100 })} />
+              <Input
+                id="view-sort-order"
+                type="number"
+                value={formData.sort_order ?? 100}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    sort_order: Number.parseInt(e.target.value, 10) || 100,
+                  })
+                }
+              />
             </div>
             <div className="flex items-end">
               <div className="flex w-full items-center justify-between rounded-md border border-zinc-200 px-3 py-2">
                 <Label>启用</Label>
-                <Switch aria-label="启用模型视图" checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
+                <Switch
+                  aria-label="启用模型视图"
+                  checked={formData.is_enabled ?? true}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, is_enabled: checked })
+                  }
+                />
               </div>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
-          <Button onClick={handleSubmit} disabled={loading}>保存</Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            取消
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            保存
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -131,7 +218,9 @@ function RewriteRouteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{route?.id ? "编辑路由规则" : "添加路由规则"}</DialogTitle>
+          <DialogTitle>
+            {route?.id ? "编辑路由规则" : "添加路由规则"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -140,27 +229,46 @@ function RewriteRouteDialog({
               id="route-model-view"
               className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
               value={formData.model_view_id || ""}
-              onChange={(e) => setFormData({ ...formData, model_view_id: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, model_view_id: e.target.value })
+              }
             >
               <option value="">请选择</option>
               {viewOptions.map((option) => (
-                <option key={option.id} value={option.id} disabled={!option.isEnabled} className={!option.isEnabled ? "text-zinc-400" : ""}>
+                <option
+                  key={option.id}
+                  value={option.id}
+                  disabled={!option.isEnabled}
+                  className={!option.isEnabled ? "text-zinc-400" : ""}
+                >
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="route-provider-key-model">物理映射 (渠道 / Key / 模型)</Label>
+            <Label htmlFor="route-provider-key-model">
+              物理映射 (渠道 / Key / 模型)
+            </Label>
             <select
               id="route-provider-key-model"
               className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
               value={formData.provider_key_model_id || ""}
-              onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  provider_key_model_id: e.target.value || null,
+                })
+              }
             >
               <option value="">自动分配</option>
               {modelOptions.map((option) => (
-                <option key={option.id} value={option.id} disabled={!option.isEnabled} className={!option.isEnabled ? "text-zinc-400" : ""}>
+                <option
+                  key={option.id}
+                  value={option.id}
+                  disabled={!option.isEnabled}
+                  className={!option.isEnabled ? "text-zinc-400" : ""}
+                >
                   {option.label}
                 </option>
               ))}
@@ -169,25 +277,65 @@ function RewriteRouteDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="route-priority">Priority (优先级)</Label>
-              <Input id="route-priority" type="number" value={formData.priority ?? 100} onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 100 })} />
+              <Input
+                id="route-priority"
+                type="number"
+                value={formData.priority ?? 100}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    priority: Number.parseInt(e.target.value, 10) || 100,
+                  })
+                }
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="route-weight">Weight (权重)</Label>
-              <Input id="route-weight" type="number" value={formData.weight ?? 100} onChange={(e) => setFormData({ ...formData, weight: Number.parseInt(e.target.value, 10) || 100 })} />
+              <Input
+                id="route-weight"
+                type="number"
+                value={formData.weight ?? 100}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    weight: Number.parseInt(e.target.value, 10) || 100,
+                  })
+                }
+              />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="route-actual-model">实际调用 Model ID</Label>
-            <Input id="route-actual-model" value={formData.actual_model || ""} onChange={(e) => setFormData({ ...formData, actual_model: e.target.value })} />
+            <Input
+              id="route-actual-model"
+              value={formData.actual_model || ""}
+              onChange={(e) =>
+                setFormData({ ...formData, actual_model: e.target.value })
+              }
+            />
           </div>
           <div className="flex items-center justify-between">
             <Label>启用</Label>
-            <Switch aria-label="启用路由" checked={formData.is_enabled ?? true} onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })} />
+            <Switch
+              aria-label="启用路由"
+              checked={formData.is_enabled ?? true}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, is_enabled: checked })
+              }
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>取消</Button>
-          <Button onClick={handleSubmit} disabled={loading}>保存</Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            取消
+          </Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            保存
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -195,20 +343,40 @@ function RewriteRouteDialog({
 }
 
 export default function BindingsClient() {
-  const { bundle, isLoading, mutateEntity, saveFeatureControl, archiveFeature, restoreFeature } = useAiConfig();
-  const [bindingModal, setBindingModal] = useState<{ open: boolean; data: AiFeatureControl | null }>({
+  const {
+    bundle,
+    isLoading,
+    mutateEntity,
+    saveFeatureControl,
+    archiveFeature,
+    restoreFeature,
+  } = useAiConfig();
+  const [bindingModal, setBindingModal] = useState<{
+    open: boolean;
+    data: AiFeatureControl | null;
+  }>({
     open: false,
     data: null,
   });
-  const [archiveControl, setArchiveControl] = useState<AiFeatureControl | null>(null);
+  const [archiveControl, setArchiveControl] = useState<AiFeatureControl | null>(
+    null,
+  );
 
-  const [viewModal, setViewModal] = useState<{ open: boolean; data: ViewDraft | null }>({ open: false, data: null });
-  const [routeModal, setRouteModal] = useState<{ open: boolean; modelViewId: string | null; data: RouteDraft | null }>({ open: false, modelViewId: null, data: null });
+  const [viewModal, setViewModal] = useState<{
+    open: boolean;
+    data: ViewDraft | null;
+  }>({ open: false, data: null });
+  const [routeModal, setRouteModal] = useState<{
+    open: boolean;
+    modelViewId: string | null;
+    data: RouteDraft | null;
+  }>({ open: false, modelViewId: null, data: null });
 
   const [deleteConfirm, setDeleteConfirm] = useState<{
     open: boolean;
     id: string | null;
-    entity: "feature_binding" | "rewrite_model_view" | "rewrite_model_route" | null;
+    entity:
+      "feature_binding" | "rewrite_model_view" | "rewrite_model_route" | null;
     title: string;
   }>({
     open: false,
@@ -220,18 +388,30 @@ export default function BindingsClient() {
   const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
   const activeViewId = useMemo(() => {
     if (!bundle) return selectedViewId;
-    if (selectedViewId && bundle.rewriteModelViews.some((view) => view.id === selectedViewId)) {
+    if (
+      selectedViewId &&
+      bundle.rewriteModelViews.some((view) => view.id === selectedViewId)
+    ) {
       return selectedViewId;
     }
-    return [...bundle.rewriteModelViews].sort((left, right) => left.sort_order - right.sort_order)[0]?.id ?? null;
+    return (
+      [...bundle.rewriteModelViews].sort(
+        (left, right) => left.sort_order - right.sort_order,
+      )[0]?.id ?? null
+    );
   }, [bundle, selectedViewId]);
 
   const modelOptions = useMemo(() => {
     if (!bundle) return [];
     return bundle.models.map((model) => {
       const key = bundle.keys.find((item) => item.id === model.key_id);
-      const provider = bundle.providers.find((item) => item.id === key?.provider_id);
-      const isEnabled = model.is_enabled && (key ? key.is_enabled : true) && (provider ? provider.is_enabled : true);
+      const provider = bundle.providers.find(
+        (item) => item.id === key?.provider_id,
+      );
+      const isEnabled =
+        model.is_enabled &&
+        (key ? key.is_enabled : true) &&
+        (provider ? provider.is_enabled : true);
       return {
         id: model.id,
         label: `${provider?.name || "未知"} / ${key?.label || "未知"} / ${model.display_name || model.model_id}${!isEnabled ? " (已停用)" : ""}`,
@@ -288,18 +468,26 @@ export default function BindingsClient() {
 
   const handleDelete = async () => {
     if (!deleteConfirm.id || !deleteConfirm.entity) return;
-    await mutateEntity("delete", deleteConfirm.entity, { id: deleteConfirm.id });
+    await mutateEntity("delete", deleteConfirm.entity, {
+      id: deleteConfirm.id,
+    });
     setDeleteConfirm({ open: false, id: null, entity: null, title: "" });
   };
 
-  const views = [...bundle.rewriteModelViews].sort((a, b) => a.sort_order - b.sort_order);
-  const businessControls = bundle.featureControls.filter((control) => control.group === "business");
+  const views = [...bundle.rewriteModelViews].sort(
+    (a, b) => a.sort_order - b.sort_order,
+  );
+  const businessControls = bundle.featureControls.filter(
+    (control) => control.group === "business",
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-[12px] text-zinc-600 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl">
         <Info className="size-4 text-[#5F82A8] shrink-0" />
-        <span>只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。</span>
+        <span>
+          只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
+        </span>
       </div>
 
       <div className="space-y-3">
@@ -317,29 +505,44 @@ export default function BindingsClient() {
                 <TableHead className="text-[12px] pl-5">功能</TableHead>
                 <TableHead className="text-[12px]">模型策略</TableHead>
                 <TableHead className="w-[96px] text-[12px]">状态</TableHead>
-                <TableHead className="w-[140px] text-right text-[12px] pr-5">操作</TableHead>
+                <TableHead className="w-[140px] text-right text-[12px] pr-5">
+                  操作
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {businessControls.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-zinc-400 text-[13px]">
+                  <TableCell
+                    colSpan={4}
+                    className="h-24 text-center text-zinc-400 text-[13px]"
+                  >
                     暂无可管理的业务功能。
                   </TableCell>
                 </TableRow>
               ) : (
                 businessControls.map((control) => (
-                  <TableRow key={control.key} className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0">
+                  <TableRow
+                    key={control.key}
+                    className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0"
+                  >
                     <TableCell className="pl-5">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-zinc-900">{control.label}</span>
+                        <span className="font-medium text-zinc-900">
+                          {control.label}
+                        </span>
                         {control.key === "ocr_screenshot" && (
-                          <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px] h-4.5 px-1.5 font-normal">
+                          <Badge
+                            variant="secondary"
+                            className="bg-zinc-100 text-zinc-600 text-[10px] h-4.5 px-1.5 font-normal"
+                          >
                             首页核心
                           </Badge>
                         )}
                       </div>
-                      <div className="mt-0.5 text-[12px] text-zinc-500">{control.description}</div>
+                      <div className="mt-0.5 text-[12px] text-zinc-500">
+                        {control.description}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-1 text-[12px] text-zinc-700 bg-zinc-100/80 px-2 py-0.5 rounded-md">
@@ -349,16 +552,22 @@ export default function BindingsClient() {
                     </TableCell>
                     <TableCell>
                       {control.lifecycleState === "archived" ? (
-                        <Badge variant="outline" className="bg-zinc-100 text-zinc-600 border-zinc-200 text-[11px] font-normal">
+                        <Badge
+                          variant="outline"
+                          className="bg-zinc-100 text-zinc-600 border-zinc-200 text-[11px] font-normal"
+                        >
                           已停止
                         </Badge>
                       ) : control.isEnabled ? (
-                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
-                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600">
+                          <span className="size-1.5 rounded-full bg-[#16A34A]/100" />
                           使用中
                         </span>
                       ) : (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200/80 text-[11px] font-normal">
+                        <Badge
+                          variant="outline"
+                          className="bg-zinc-100 text-zinc-600 border-zinc-200/80 text-[11px] font-normal"
+                        >
                           已关闭
                         </Badge>
                       )}
@@ -385,7 +594,9 @@ export default function BindingsClient() {
                               title={`设置${control.label}`}
                               aria-label={`设置${control.label}`}
                               className="h-7 px-2 text-[12px] text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
-                              onClick={() => setBindingModal({ open: true, data: control })}
+                              onClick={() =>
+                                setBindingModal({ open: true, data: control })
+                              }
                             >
                               <Pencil className="size-3.5 mr-1 text-zinc-400" />
                               设置
@@ -395,7 +606,7 @@ export default function BindingsClient() {
                               size="sm"
                               title={`停止使用${control.label}`}
                               aria-label={`停止使用${control.label}`}
-                              className="h-7 px-2 text-[12px] text-zinc-500 hover:text-[#C9604D] hover:bg-red-50/50"
+                              className="h-7 px-2 text-[12px] text-zinc-500 hover:text-[#C9604D] hover:bg-zinc-100/50"
                               onClick={() => setArchiveControl(control)}
                             >
                               <Archive className="size-3.5 mr-1 opacity-70" />
@@ -416,7 +627,8 @@ export default function BindingsClient() {
           <Info className="size-4 text-zinc-400 shrink-0 mt-0.5" />
           <div>
             <span className="font-medium text-zinc-700">历史配置说明：</span>
-            旧版智能预警、成长建议旧配置、视频诊断旧配置等 5 项历史废弃配置已于系统重构升级中安全下线清理。当前展示的功能均为活跃或主线业务功能。
+            旧版智能预警、成长建议旧配置、视频诊断旧配置等 5
+            项历史废弃配置已于系统重构升级中安全下线清理。当前展示的功能均为活跃或主线业务功能。
           </div>
         </div>
       </div>
@@ -433,7 +645,9 @@ export default function BindingsClient() {
         <div className="flex flex-col md:flex-row gap-3 items-start min-h-[460px]">
           <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-zinc-200 rounded-2xl">
             <div className="flex justify-between items-center px-2 py-1">
-              <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">改写视图</h2>
+              <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">
+                改写视图
+              </h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -447,7 +661,9 @@ export default function BindingsClient() {
 
             <div className="space-y-0.5 max-h-[500px] overflow-y-auto">
               {views.length === 0 ? (
-                <div className="text-[12px] text-zinc-500 py-6 text-center">暂无视图</div>
+                <div className="text-[12px] text-zinc-500 py-6 text-center">
+                  暂无视图
+                </div>
               ) : (
                 views.map((v) => {
                   const isViewActive = activeViewId === v.id;
@@ -458,7 +674,7 @@ export default function BindingsClient() {
                         "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
                         isViewActive
                           ? "bg-zinc-100/80 text-zinc-900 font-medium"
-                          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
+                          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
                       )}
                     >
                       <button
@@ -468,9 +684,20 @@ export default function BindingsClient() {
                         onClick={() => setSelectedViewId(v.id)}
                       >
                         <span className="truncate">{v.label}</span>
-                        <Badge variant="outline" className={cn("font-mono text-[10px] h-4 px-1 py-0 bg-white shrink-0 border-zinc-200", isViewActive && "text-zinc-900")}>{v.key}</Badge>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "font-mono text-[10px] h-4 px-1 py-0 bg-white shrink-0 border-zinc-200",
+                            isViewActive && "text-zinc-900",
+                          )}
+                        >
+                          {v.key}
+                        </Badge>
                         {v.is_default && (
-                          <Star strokeWidth={1.5} className="size-3 text-[#D97757] fill-[#D97757] shrink-0" />
+                          <Star
+                            strokeWidth={1.5}
+                            className="size-3 text-[#D97757] fill-[#D97757] shrink-0"
+                          />
                         )}
                       </button>
                       <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
@@ -495,115 +722,204 @@ export default function BindingsClient() {
           </div>
 
           <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 border border-zinc-200 rounded-2xl">
-            {activeViewId && (() => {
-              const view = bundle.rewriteModelViews.find((v) => v.id === activeViewId);
-              if (!view) return <div className="text-zinc-500 text-[12px] py-10 text-center">模型视图已不存在</div>;
-              const routes = bundle.rewriteModelRoutes.filter((route) => route.model_view_id === view.id);
-
-              return (
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center px-1 pb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-[14px] text-zinc-900">{view.label}</h3>
-                        <Badge variant="outline" className="font-mono text-[11px] bg-zinc-50 border-zinc-200">{view.key}</Badge>
-                        {view.is_default && <Badge className="h-4.5 text-[10px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-medium">默认规则</Badge>}
-                      </div>
-                      {view.description && (
-                        <div className="text-[12px] text-zinc-500 mt-0.5">{view.description}</div>
-                      )}
+            {activeViewId &&
+              (() => {
+                const view = bundle.rewriteModelViews.find(
+                  (v) => v.id === activeViewId,
+                );
+                if (!view)
+                  return (
+                    <div className="text-zinc-500 text-[12px] py-10 text-center">
+                      模型视图已不存在
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="h-7 text-[12px]" onClick={() => setViewModal({ open: true, data: view })}>
-                        <Pencil strokeWidth={1.5} className="size-3 mr-1" /> 编辑视图
-                      </Button>
-                      <Button size="sm" className="h-7 text-[12px]" onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: { model_view_id: view.id } })}>
-                        <Plus strokeWidth={1.5} className="size-3 mr-1" /> 添加路由
-                      </Button>
-                    </div>
-                  </div>
+                  );
+                const routes = bundle.rewriteModelRoutes.filter(
+                  (route) => route.model_view_id === view.id,
+                );
 
-                  <div className="rounded-xl overflow-hidden bg-white border border-zinc-200 w-full overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-zinc-50/80">
-                        <TableRow className="hover:bg-transparent border-0">
-                          <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-zinc-500">优先级</TableHead>
-                          <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">实际 Model ID</TableHead>
-                          <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">映射物理渠道</TableHead>
-                          <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">启用</TableHead>
-                          <TableHead className="h-8 w-[100px] py-1.5 pr-4 text-right text-[12px] font-normal text-zinc-500">操作</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {routes.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="py-8 text-center text-[13px] text-zinc-400">
-                              暂无路由规则，请点击右上角添加
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          routes.map((route) => {
-                            const model = bundle.models.find((item) => item.id === route.provider_key_model_id);
-                            const key = bundle.keys.find((item) => item.id === model?.key_id);
-                            const provider = bundle.providers.find((item) => item.id === key?.provider_id);
-
-                            return (
-                              <TableRow
-                                key={route.id}
-                                className={cn(
-                                  "group hover:bg-zinc-50/50 h-9 transition-colors text-[13px] border-b border-zinc-200/60 last:border-b-0",
-                                  !route.is_enabled && "opacity-60"
-                                )}
-                              >
-                                <TableCell className="py-1 text-[12px] font-mono text-zinc-500 font-normal pl-4 text-left">
-                                  P{route.priority}
-                                </TableCell>
-                                <TableCell className="py-1 font-mono text-[12px] font-medium text-zinc-900 text-left">
-                                  {route.actual_model}
-                                </TableCell>
-                                <TableCell className="py-1 text-[12px] text-zinc-500 text-left truncate max-w-[200px]">
-                                  {provider ? `${provider.name} / ${key?.label}` : "自动分配"}
-                                </TableCell>
-                                <TableCell className="py-1 text-left">
-                                  <Switch
-                                    aria-label={`启用路由 ${route.actual_model}`}
-                                    className="scale-75 origin-left"
-                                    checked={route.is_enabled}
-                                    onCheckedChange={(checked) => mutateEntity("update", "rewrite_model_route", { id: route.id, is_enabled: checked })}
-                                  />
-                                </TableCell>
-                                <TableCell className="py-1 text-right pr-4">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      aria-label={`编辑路由 ${route.actual_model}`}
-                                      className="size-7 text-zinc-500 hover:text-zinc-700"
-                                      onClick={() => setRouteModal({ open: true, modelViewId: view.id, data: route })}
-                                    >
-                                      <Pencil strokeWidth={1.5} className="size-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      aria-label={`删除路由 ${route.actual_model}`}
-                                      className="size-7 text-zinc-500 hover:text-[#C9604D]"
-                                      onClick={() => setDeleteConfirm({ open: true, id: route.id, entity: "rewrite_model_route", title: `删除路由 ${route.actual_model}` })}
-                                    >
-                                      <Trash2 strokeWidth={1.5} className="size-3.5" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
+                return (
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center px-1 pb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-[14px] text-zinc-900">
+                            {view.label}
+                          </h3>
+                          <Badge
+                            variant="outline"
+                            className="font-mono text-[11px] bg-zinc-50 border-zinc-200"
+                          >
+                            {view.key}
+                          </Badge>
+                          {view.is_default && (
+                            <Badge className="h-4.5 text-[10px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-medium">
+                              默认规则
+                            </Badge>
+                          )}
+                        </div>
+                        {view.description && (
+                          <div className="text-[12px] text-zinc-500 mt-0.5">
+                            {view.description}
+                          </div>
                         )}
-                      </TableBody>
-                    </Table>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[12px]"
+                          onClick={() =>
+                            setViewModal({ open: true, data: view })
+                          }
+                        >
+                          <Pencil strokeWidth={1.5} className="size-3 mr-1" />{" "}
+                          编辑视图
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 text-[12px]"
+                          onClick={() =>
+                            setRouteModal({
+                              open: true,
+                              modelViewId: view.id,
+                              data: { model_view_id: view.id },
+                            })
+                          }
+                        >
+                          <Plus strokeWidth={1.5} className="size-3 mr-1" />{" "}
+                          添加路由
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl overflow-hidden bg-white border border-zinc-200 w-full overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-zinc-50/80">
+                          <TableRow className="hover:bg-transparent border-0">
+                            <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-zinc-500">
+                              优先级
+                            </TableHead>
+                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">
+                              实际 Model ID
+                            </TableHead>
+                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">
+                              映射物理渠道
+                            </TableHead>
+                            <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">
+                              启用
+                            </TableHead>
+                            <TableHead className="h-8 w-[100px] py-1.5 pr-4 text-right text-[12px] font-normal text-zinc-500">
+                              操作
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {routes.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={5}
+                                className="py-8 text-center text-[13px] text-zinc-400"
+                              >
+                                暂无路由规则，请点击右上角添加
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            routes.map((route) => {
+                              const model = bundle.models.find(
+                                (item) =>
+                                  item.id === route.provider_key_model_id,
+                              );
+                              const key = bundle.keys.find(
+                                (item) => item.id === model?.key_id,
+                              );
+                              const provider = bundle.providers.find(
+                                (item) => item.id === key?.provider_id,
+                              );
+
+                              return (
+                                <TableRow
+                                  key={route.id}
+                                  className={cn(
+                                    "group hover:bg-zinc-50/50 h-9 transition-colors text-[13px] border-b border-zinc-200/60 last:border-b-0",
+                                    !route.is_enabled && "opacity-60",
+                                  )}
+                                >
+                                  <TableCell className="py-1 text-[12px] font-mono text-zinc-500 font-normal pl-4 text-left">
+                                    P{route.priority}
+                                  </TableCell>
+                                  <TableCell className="py-1 font-mono text-[12px] font-medium text-zinc-900 text-left">
+                                    {route.actual_model}
+                                  </TableCell>
+                                  <TableCell className="py-1 text-[12px] text-zinc-500 text-left truncate max-w-[200px]">
+                                    {provider
+                                      ? `${provider.name} / ${key?.label}`
+                                      : "自动分配"}
+                                  </TableCell>
+                                  <TableCell className="py-1 text-left">
+                                    <Switch
+                                      aria-label={`启用路由 ${route.actual_model}`}
+                                      className="scale-75 origin-left"
+                                      checked={route.is_enabled}
+                                      onCheckedChange={(checked) =>
+                                        mutateEntity(
+                                          "update",
+                                          "rewrite_model_route",
+                                          { id: route.id, is_enabled: checked },
+                                        )
+                                      }
+                                    />
+                                  </TableCell>
+                                  <TableCell className="py-1 text-right pr-4">
+                                    <div className="flex items-center justify-end gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={`编辑路由 ${route.actual_model}`}
+                                        className="size-7 text-zinc-500 hover:text-zinc-700"
+                                        onClick={() =>
+                                          setRouteModal({
+                                            open: true,
+                                            modelViewId: view.id,
+                                            data: route,
+                                          })
+                                        }
+                                      >
+                                        <Pencil
+                                          strokeWidth={1.5}
+                                          className="size-3.5"
+                                        />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={`删除路由 ${route.actual_model}`}
+                                        className="size-7 text-zinc-500 hover:text-[#C9604D]"
+                                        onClick={() =>
+                                          setDeleteConfirm({
+                                            open: true,
+                                            id: route.id,
+                                            entity: "rewrite_model_route",
+                                            title: `删除路由 ${route.actual_model}`,
+                                          })
+                                        }
+                                      >
+                                        <Trash2
+                                          strokeWidth={1.5}
+                                          className="size-3.5"
+                                        />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                );
+              })()}
 
             {!activeViewId && (
               <div className="text-center py-20 text-[12px] text-zinc-500">
@@ -620,7 +936,12 @@ export default function BindingsClient() {
         onOpenChange={(c) => setBindingModal({ ...bindingModal, open: c })}
         onSave={handleSaveBinding}
       />
-      <RewriteViewDialog open={viewModal.open} view={viewModal.data} onOpenChange={(open) => setViewModal({ ...viewModal, open })} onSave={handleSaveView} />
+      <RewriteViewDialog
+        open={viewModal.open}
+        view={viewModal.data}
+        onOpenChange={(open) => setViewModal({ ...viewModal, open })}
+        onSave={handleSaveView}
+      />
       <RewriteRouteDialog
         open={routeModal.open}
         route={routeModal.data}

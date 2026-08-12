@@ -20,10 +20,17 @@ import { AuthShell } from "../_components/auth-shell";
 
 function isRecoverySession(accessToken: string): boolean {
   try {
-    const part = accessToken.split('.')[1];
-    const padded = part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=');
-    const payload = JSON.parse(atob(padded)) as { amr?: Array<{ method: string }> };
-    return Array.isArray(payload.amr) && payload.amr.some(a => a.method === 'otp');
+    const part = accessToken.split(".")[1];
+    const padded = part
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(part.length / 4) * 4, "=");
+    const payload = JSON.parse(atob(padded)) as {
+      amr?: Array<{ method: string }>;
+    };
+    return (
+      Array.isArray(payload.amr) && payload.amr.some((a) => a.method === "otp")
+    );
   } catch {
     return false;
   }
@@ -39,7 +46,7 @@ export function ResetPasswordErrorNotice({
   return (
     <div
       aria-live="polite"
-      className="space-y-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[13px] text-red-700"
+      className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-100 px-3 py-2.5 text-[13px] text-red-700"
       role="alert"
     >
       <p>{message}</p>
@@ -58,16 +65,22 @@ export function ResetPasswordForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [recoveryState, setRecoveryState] = useState<"checking" | "ready" | "invalid">("checking");
+  const [recoveryState, setRecoveryState] = useState<
+    "checking" | "ready" | "invalid"
+  >("checking");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    void createClient().auth.getSession()
+    void createClient()
+      .auth.getSession()
       .then(({ data, error }) => {
         if (!active) return;
-        const valid = !error && data.session != null && isRecoverySession(data.session.access_token);
+        const valid =
+          !error &&
+          data.session != null &&
+          isRecoverySession(data.session.access_token);
         setRecoveryState(valid ? "ready" : "invalid");
       })
       .catch(() => {
@@ -107,7 +120,9 @@ export function ResetPasswordForm() {
       await supabase.auth.signOut();
       window.location.assign(buildLoginPath(next, { reset: "success" }));
     } catch (error) {
-      const message = getResetPasswordErrorMessage(error instanceof Error ? error.message : null);
+      const message = getResetPasswordErrorMessage(
+        error instanceof Error ? error.message : null,
+      );
       setSubmitError(message);
       feedbackToast.error(message);
     } finally {
@@ -118,7 +133,11 @@ export function ResetPasswordForm() {
   if (recoveryState === "checking") {
     return (
       <AuthShell title="设置新密码" subtitle="正在确认重置链接是否有效">
-        <p aria-live="polite" className="text-center text-[13px] text-zinc-500" role="status">
+        <p
+          aria-live="polite"
+          className="text-center text-[13px] text-zinc-500"
+          role="status"
+        >
           正在验证重置链接...
         </p>
       </AuthShell>
@@ -127,14 +146,20 @@ export function ResetPasswordForm() {
 
   if (recoveryState === "invalid") {
     return (
-      <AuthShell title="重置链接已失效" subtitle="请重新发送重置邮件后再设置新密码">
+      <AuthShell
+        title="重置链接已失效"
+        subtitle="请重新发送重置邮件后再设置新密码"
+      >
         <div className="space-y-5 text-center">
           <ResetPasswordErrorNotice
             href={forgotPasswordHref}
             message="重置链接无效或已过期，请重新发送重置邮件"
           />
           <p className="text-[13px] text-zinc-500">
-            <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
+            <Link
+              className="text-zinc-700 underline underline-offset-4"
+              href={loginHref}
+            >
               返回登录
             </Link>
           </p>
@@ -147,7 +172,10 @@ export function ResetPasswordForm() {
     <AuthShell title="设置新密码" subtitle="输入并确认你的新密码">
       <form className="space-y-5" onSubmit={handleSubmit}>
         {submitError ? (
-          <ResetPasswordErrorNotice href={forgotPasswordHref} message={submitError} />
+          <ResetPasswordErrorNotice
+            href={forgotPasswordHref}
+            message={submitError}
+          />
         ) : null}
         <div className="space-y-2">
           <Label htmlFor="password">新密码</Label>
@@ -185,7 +213,10 @@ export function ResetPasswordForm() {
           {submitting ? "提交中" : "确认重置密码"}
         </Button>
         <p className="text-center text-[13px] text-zinc-500">
-          <Link className="text-zinc-700 underline underline-offset-4" href={loginHref}>
+          <Link
+            className="text-zinc-700 underline underline-offset-4"
+            href={loginHref}
+          >
             返回登录
           </Link>
         </p>

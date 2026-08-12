@@ -5,7 +5,12 @@ import { X, User, Shield, Check, Plus, Settings2, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { updateProfile, updateAccountName, createAccount, updateAccountRemark } from "@/app/(app)/dashboard/actions";
+import {
+  updateProfile,
+  updateAccountName,
+  createAccount,
+  updateAccountRemark,
+} from "@/app/(app)/dashboard/actions";
 import { signOut } from "@/app/actions/auth";
 import { setDashboardAccount } from "@/lib/dashboard-store";
 
@@ -42,7 +47,9 @@ export function PremiumSettingsModal({
 }: PremiumSettingsModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const [activeTab, setActiveTab] = useState<"profile" | "accounts" | "system">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "accounts" | "system">(
+    "profile",
+  );
   const [editingName, setEditingName] = useState(profileName);
   const [isPending, startTransition] = useTransition();
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -52,7 +59,9 @@ export function PremiumSettingsModal({
   const [newAccRemark, setNewAccRemark] = useState("");
   const [newAccDir, setNewAccDir] = useState("");
   const [isAddingAccount, setIsAddingAccount] = useState(false);
-  const [accountActionPending, setAccountActionPending] = useState<string | null>(null);
+  const [accountActionPending, setAccountActionPending] = useState<
+    string | null
+  >(null);
 
   // Theme or toggle state
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -61,10 +70,13 @@ export function PremiumSettingsModal({
   useEffect(() => {
     if (!open) return;
 
-    const previouslyFocused = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    const focusFrame = requestAnimationFrame(() => closeButtonRef.current?.focus());
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const focusFrame = requestAnimationFrame(() =>
+      closeButtonRef.current?.focus(),
+    );
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -155,7 +167,11 @@ export function PremiumSettingsModal({
 
     setAccountActionPending("add");
     startTransition(async () => {
-      const result = await createAccount(trimmedName, trimmedDir || undefined, trimmedRemark || undefined);
+      const result = await createAccount(
+        trimmedName,
+        trimmedDir || undefined,
+        trimmedRemark || undefined,
+      );
       setAccountActionPending(null);
       if (result?.error) {
         feedbackToast.error(result.error);
@@ -169,8 +185,14 @@ export function PremiumSettingsModal({
     });
   };
 
-  const handleRenameAccount = (accountId: string, currentAccountName: string) => {
-    const newName = prompt("请输入新的抖音账号名称(英文/数字/中文，建议与抖音一致):", currentAccountName);
+  const handleRenameAccount = (
+    accountId: string,
+    currentAccountName: string,
+  ) => {
+    const newName = prompt(
+      "请输入新的抖音账号名称(英文/数字/中文，建议与抖音一致):",
+      currentAccountName,
+    );
     if (newName === null) return;
     const trimmed = newName.trim();
     if (!trimmed) {
@@ -195,8 +217,14 @@ export function PremiumSettingsModal({
     });
   };
 
-  const handleEditAccountRemark = (accountId: string, currentRemark: string) => {
-    const newRemark = prompt("请输入新的账号备注名 (如: 探店主理人):", currentRemark);
+  const handleEditAccountRemark = (
+    accountId: string,
+    currentRemark: string,
+  ) => {
+    const newRemark = prompt(
+      "请输入新的账号备注名 (如: 探店主理人):",
+      currentRemark,
+    );
     if (newRemark === null) return;
     const trimmed = newRemark.trim();
     if (trimmed === currentRemark) return;
@@ -239,7 +267,7 @@ export function PremiumSettingsModal({
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className={cn(
             "relative flex h-[min(620px,calc(100dvh-2rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl sm:h-[520px] sm:flex-row",
-            "border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950"
+            "border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950",
           )}
         >
           {/* Close button */}
@@ -256,10 +284,13 @@ export function PremiumSettingsModal({
           {/* Left Sidebar Tab Navigation */}
           <div className="w-full shrink-0 border-b border-zinc-300/60 bg-zinc-100/50 p-3 pt-11 dark:border-zinc-800/80 dark:bg-zinc-900/20 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
             <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
-              <h2 id="premium-settings-title" className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-zinc-500 sm:dark:text-[#E7E5E4]">
+              <h2
+                id="premium-settings-title"
+                className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-zinc-500 sm:dark:text-[#E7E5E4]"
+              >
                 账号与设置
               </h2>
-              
+
               <button
                 type="button"
                 onClick={() => setActiveTab("profile")}
@@ -267,7 +298,7 @@ export function PremiumSettingsModal({
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "profile"
                     ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]"
+                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]",
                 )}
               >
                 <User className="size-4 text-[#D97757]" />
@@ -281,10 +312,10 @@ export function PremiumSettingsModal({
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "accounts"
                     ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]"
+                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]",
                 )}
               >
-                <Shield className="size-4 text-sky-500" />
+                <Shield className="size-4 text-[#5F82A8]" />
                 矩阵账号管理
               </button>
 
@@ -295,21 +326,21 @@ export function PremiumSettingsModal({
                   "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
                   activeTab === "system"
                     ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]"
+                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]",
                 )}
               >
-                <Settings2 className="size-4 text-emerald-500" />
+                <Settings2 className="size-4 text-[#16A34A]" />
                 系统参数配置
               </button>
             </div>
-            
+
             <div className="mt-2 space-y-3 sm:mt-0">
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all duration-200"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#DC2626] hover:bg-zinc-100 transition-all duration-200"
                 >
-                  <LogOut className="size-4 text-rose-500" />
+                  <LogOut className="size-4 text-[#DC2626]" />
                   退出当前系统
                 </button>
               </form>
@@ -321,7 +352,6 @@ export function PremiumSettingsModal({
 
           {/* Right Main Details Content */}
           <div className="min-w-0 flex-1 overflow-y-auto p-4 pt-5 sm:p-6 sm:pt-12">
-            
             {/* TAB 1: PROFILE */}
             {activeTab === "profile" && (
               <motion.div
@@ -354,7 +384,7 @@ export function PremiumSettingsModal({
                         className={cn(
                           "flex-1 rounded-lg border py-1.5 px-3 text-[12px] tracking-tight outline-none transition-all duration-200",
                           "border-zinc-300 bg-white focus:border-zinc-400 focus:ring-0",
-                          "dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-zinc-600"
+                          "dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-zinc-600",
                         )}
                         required
                         disabled={isPending}
@@ -365,8 +395,8 @@ export function PremiumSettingsModal({
                         className={cn(
                           "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-all duration-200 min-w-[80px]",
                           saveSuccess
-                            ? "bg-emerald-500"
-                            : "bg-[#D97757] hover:bg-[#C96442]"
+                            ? "bg-[#16A34A]/100"
+                            : "bg-[#D97757] hover:bg-[#C96442]",
                         )}
                       >
                         {isPending ? (
@@ -493,8 +523,10 @@ export function PremiumSettingsModal({
                 {/* Accounts list */}
                 <div className="space-y-1.5">
                   {accounts.map((acc) => {
-                    const isRenamePending = accountActionPending === acc.id + "-name";
-                    const isRemarkPending = accountActionPending === acc.id + "-remark";
+                    const isRenamePending =
+                      accountActionPending === acc.id + "-name";
+                    const isRemarkPending =
+                      accountActionPending === acc.id + "-remark";
                     const isActive = acc.id === selectedAccountId;
                     return (
                       <div
@@ -532,10 +564,12 @@ export function PremiumSettingsModal({
                               切换为该账号
                             </button>
                           )}
-                          
+
                           <button
                             type="button"
-                            onClick={() => handleRenameAccount(acc.id, acc.name)}
+                            onClick={() =>
+                              handleRenameAccount(acc.id, acc.name)
+                            }
                             disabled={isRenamePending}
                             className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
                           >
@@ -544,7 +578,9 @@ export function PremiumSettingsModal({
 
                           <button
                             type="button"
-                            onClick={() => handleEditAccountRemark(acc.id, acc.remark || "")}
+                            onClick={() =>
+                              handleEditAccountRemark(acc.id, acc.remark || "")
+                            }
                             disabled={isRemarkPending}
                             className="text-[12px] font-medium text-zinc-700 hover:text-zinc-900"
                           >
@@ -608,11 +644,12 @@ export function PremiumSettingsModal({
                           value={remindHour}
                           onChange={(e) => setRemindHour(e.target.value)}
                           className={cn(
-                            "rounded-lg border py-1 px-2.5 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                            "rounded-lg border py-1 px-2.5 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white",
                           )}
                         />
                         <span className="text-[12px] text-zinc-500 flex items-center">
-                          配置与系统 Cron 进程对齐，将在每日 {remindHour} 准时执行。
+                          配置与系统 Cron 进程对齐，将在每日 {remindHour}{" "}
+                          准时执行。
                         </span>
                       </div>
                     </div>
@@ -620,13 +657,17 @@ export function PremiumSettingsModal({
 
                   {/* Global configuration status */}
                   <div className="p-3.5 rounded-xl bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-900 dark:to-zinc-900/60 border border-zinc-300/50 dark:border-zinc-800 text-[12px] text-zinc-700 dark:text-zinc-500 leading-relaxed">
-                    ⚙️ <span className="font-medium text-zinc-700 dark:text-zinc-500">主库参数：</span>
-                    当前连接 Supabase Singapore 实例，服务状态正常。所有 API 接口已自动检测环境变量 `SUPABASE_SERVICE_ROLE_KEY` 并适配权限。
+                    ⚙️{" "}
+                    <span className="font-medium text-zinc-700 dark:text-zinc-500">
+                      主库参数：
+                    </span>
+                    当前连接 Supabase Singapore 实例，服务状态正常。所有 API
+                    接口已自动检测环境变量 `SUPABASE_SERVICE_ROLE_KEY`
+                    并适配权限。
                   </div>
                 </div>
               </motion.div>
             )}
-
           </div>
         </motion.div>
       </div>

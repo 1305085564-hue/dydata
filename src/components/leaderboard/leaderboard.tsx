@@ -360,7 +360,7 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-zinc-100 text-[#D99E55] ring-amber-200"
+      ? "bg-zinc-100 text-[#D99E55] ring-[#F59E0B]/30"
       : rank === 2
         ? "bg-slate-100 text-slate-700 ring-slate-200"
         : rank === 3

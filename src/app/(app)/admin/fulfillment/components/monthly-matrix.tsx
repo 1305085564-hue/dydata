@@ -1,9 +1,17 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
-import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
+import type {
+  FulfillmentMemberSummary,
+  FulfillmentStatus,
+} from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
 
 interface FulfillmentAppeal {
@@ -23,7 +31,11 @@ interface MonthlyMatrixProps {
   onCellClick: (member: FulfillmentMemberSummary, date: string) => void;
   onMonthChange: (year: number, month: number) => void;
   appeals?: FulfillmentAppeal[];
-  onQuickMarkCell?: (userId: string, date: string, action: "confirmed_published" | "leave" | "waived" | "absent") => Promise<void>;
+  onQuickMarkCell?: (
+    userId: string,
+    date: string,
+    action: "confirmed_published" | "leave" | "waived" | "absent",
+  ) => Promise<void>;
 }
 
 interface ActiveCellData {
@@ -95,7 +107,10 @@ export function MonthlyMatrix({
   const [openMenuCell, setOpenMenuCell] = useState<ActiveCellData | null>(null);
 
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
-  const dayNumbers = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
+  const dayNumbers = useMemo(
+    () => Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    [daysInMonth],
+  );
 
   // 构建申诉缓存映射
   const appealMap = useMemo(() => {
@@ -170,7 +185,9 @@ export function MonthlyMatrix({
           className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
         >
           <span className="flex min-w-0 items-center gap-3">
-            <span className="text-[18px] font-semibold text-zinc-900">月度矩阵</span>
+            <span className="text-[18px] font-semibold text-zinc-900">
+              月度矩阵
+            </span>
             <span className="truncate text-[12px] text-zinc-500">
               {year}年{month}月 · {members.length} 人
             </span>
@@ -183,17 +200,32 @@ export function MonthlyMatrix({
         </button>
         {expanded && (
           <div className="flex shrink-0 items-center gap-1">
-            <Button variant="ghost" size="icon-xs" aria-label="上一月" onClick={handlePrevMonth}>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label="上一月"
+              onClick={handlePrevMonth}
+            >
               <ChevronLeft className="size-3.5" />
             </Button>
             <span className="min-w-[72px] text-center text-[12px] font-medium text-zinc-700">
               {year}年{month}月
             </span>
-            <Button variant="ghost" size="icon-xs" aria-label="下一月" onClick={handleNextMonth}>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label="下一月"
+              onClick={handleNextMonth}
+            >
               <ChevronRight className="size-3.5" />
             </Button>
             {!isCurrentMonth() && (
-              <Button variant="ghost" size="xs" onClick={handleCurrentMonth} className="ml-1 text-[12px]">
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={handleCurrentMonth}
+                className="ml-1 text-[12px]"
+              >
                 当月
               </Button>
             )}
@@ -218,7 +250,9 @@ export function MonthlyMatrix({
                       <th
                         key={day}
                         className={`min-w-[28px] px-0.5 py-1.5 text-center text-[12px] font-normal tabular-nums ${
-                          isToday ? "text-[#D97757] font-medium" : "text-zinc-500"
+                          isToday
+                            ? "text-[#D97757] font-medium"
+                            : "text-zinc-500"
                         }`}
                       >
                         {day}
@@ -233,12 +267,19 @@ export function MonthlyMatrix({
 
               <tbody>
                 {members.map((member) => (
-                  <tr key={member.userId} className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
+                  <tr
+                    key={member.userId}
+                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors"
+                  >
                     <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-1 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
                       <div className="flex items-center gap-1.5 whitespace-nowrap">
-                        <span className="text-[13px] font-medium text-zinc-900">{member.userName}</span>
+                        <span className="text-[13px] font-medium text-zinc-900">
+                          {member.userName}
+                        </span>
                         {member.teamName && (
-                          <span className="text-[12px] text-zinc-400">{member.teamName}</span>
+                          <span className="text-[12px] text-zinc-400">
+                            {member.teamName}
+                          </span>
                         )}
                       </div>
                     </td>
@@ -247,7 +288,9 @@ export function MonthlyMatrix({
                       const record = member.days[dateKey];
                       const status = record?.status;
                       const isToday = dateKey === today;
-                      const appeal = appealMap.get(`${member.userId}_${dateKey}`);
+                      const appeal = appealMap.get(
+                        `${member.userId}_${dateKey}`,
+                      );
 
                       return (
                         <td key={day} className="px-0.5 py-1">
@@ -255,7 +298,8 @@ export function MonthlyMatrix({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              const rect = e.currentTarget.getBoundingClientRect();
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
                               setOpenMenuCell({
                                 member,
                                 dateKey,
@@ -269,7 +313,8 @@ export function MonthlyMatrix({
                             }}
                             onMouseEnter={(e) => {
                               if (openMenuCell) return;
-                              const rect = e.currentTarget.getBoundingClientRect();
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
                               setHoveredCell({
                                 member,
                                 dateKey,
@@ -284,8 +329,10 @@ export function MonthlyMatrix({
                               setHoveredCell(null);
                             }}
                             className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-110 hover:z-10 cursor-pointer ${getStatusColor(status)} ${
-                              isToday ? "ring-1 ring-[#D97757] ring-offset-1 z-10" : ""
-                            } ${appeal ? "ring-1.5 ring-amber-500 ring-offset-0.5" : ""}`}
+                              isToday
+                                ? "ring-1 ring-[#D97757] ring-offset-1 z-10"
+                                : ""
+                            } ${appeal ? "ring-1.5 ring-[#F59E0B] ring-offset-0.5" : ""}`}
                           />
                         </td>
                       );
@@ -302,7 +349,9 @@ export function MonthlyMatrix({
                       >
                         {member.publishedDays}
                       </span>
-                      <span className="mx-0.5 text-[12px] text-zinc-500">/</span>
+                      <span className="mx-0.5 text-[12px] text-zinc-500">
+                        /
+                      </span>
                       <span className="text-[12px] tabular-nums text-zinc-500">
                         {member.totalDays}
                       </span>
@@ -336,7 +385,7 @@ export function MonthlyMatrix({
               待确认
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm border border-amber-500 bg-white" />
+              <span className="inline-block size-[10px] rounded-sm border border-[#F59E0B] bg-white" />
               有待处理申诉
             </span>
           </div>
@@ -351,45 +400,71 @@ export function MonthlyMatrix({
             top: Math.max(10, hoveredCell.rect.top - 8),
             left: Math.min(
               typeof window !== "undefined" ? window.innerWidth - 130 : 500,
-              Math.max(130, hoveredCell.rect.left + hoveredCell.rect.width / 2)
+              Math.max(130, hoveredCell.rect.left + hoveredCell.rect.width / 2),
             ),
             transform: "translate(-50%, -100%)",
           }}
         >
           <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
-            <span className="font-medium text-zinc-50">{hoveredCell.dateKey}</span>
-            <span className="font-medium text-zinc-400">{hoveredCell.member.userName}</span>
+            <span className="font-medium text-zinc-50">
+              {hoveredCell.dateKey}
+            </span>
+            <span className="font-medium text-zinc-400">
+              {hoveredCell.member.userName}
+            </span>
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className={`size-2 rounded-full ${getStatusColor(hoveredCell.status)}`} />
-            <span className="font-normal">{getStatusLabel(hoveredCell.status)}</span>
+            <span
+              className={`size-2 rounded-full ${getStatusColor(hoveredCell.status)}`}
+            />
+            <span className="font-normal">
+              {getStatusLabel(hoveredCell.status)}
+            </span>
             {hoveredCell.record && hoveredCell.record.publishedCount > 0 && (
-              <span className="text-zinc-400 tabular-nums">({hoveredCell.record.publishedCount} 条视频)</span>
+              <span className="text-zinc-400 tabular-nums">
+                ({hoveredCell.record.publishedCount} 条视频)
+              </span>
             )}
           </div>
-          <span className="mt-1 text-[11px] text-zinc-400">点击弹出快捷改判菜单 ➔</span>
-          
+          <span className="mt-1 text-[11px] text-zinc-400">
+            点击弹出快捷改判菜单 ➔
+          </span>
+
           {hoveredCell.record?.reason && (
             <div className="w-full rounded border border-zinc-700 bg-zinc-800 p-1.5 text-zinc-300">
-              <span className="block text-[11px] font-normal text-zinc-400">打标原因：</span>
-              <p className="mt-0.5 leading-[1.6] text-zinc-100">{hoveredCell.record.reason}</p>
+              <span className="block text-[11px] font-normal text-zinc-400">
+                打标原因：
+              </span>
+              <p className="mt-0.5 leading-[1.6] text-zinc-100">
+                {hoveredCell.record.reason}
+              </p>
               {hoveredCell.record.markedByName && (
-                <span className="mt-1 block text-right text-[11px] text-zinc-400">— 标记人: {hoveredCell.record.markedByName}</span>
+                <span className="mt-1 block text-right text-[11px] text-zinc-400">
+                  — 标记人: {hoveredCell.record.markedByName}
+                </span>
               )}
             </div>
           )}
 
           {hoveredCell.appeal && (
-            <div className="w-full border border-amber-500/20 bg-amber-500/10 p-1.5 rounded text-amber-200 mt-1">
+            <div className="w-full border border-[#F59E0B]/20 bg-zinc-1000/10 p-1.5 rounded text-[#B45309] mt-1">
               <div className="flex items-center gap-1 font-normal text-[11px]">
-                <span className="size-1 bg-amber-400 rounded-full" />
-                员工申诉 ({hoveredCell.appeal.status === "pending" ? "待处理" : hoveredCell.appeal.status === "approved" ? "申诉通过" : "被驳回"})
+                <span className="size-1 bg-[#F59E0B] rounded-full" />
+                员工申诉 (
+                {hoveredCell.appeal.status === "pending"
+                  ? "待处理"
+                  : hoveredCell.appeal.status === "approved"
+                    ? "申诉通过"
+                    : "被驳回"}
+                )
               </div>
               <p className="mt-1 text-[12px] italic leading-[1.7] text-zinc-100">
                 &ldquo;{hoveredCell.appeal.reason}&rdquo;
               </p>
               {hoveredCell.appeal.handler_name && (
-                <span className="mt-1 block text-right text-[11px] text-zinc-400">处理人: {hoveredCell.appeal.handler_name}</span>
+                <span className="mt-1 block text-right text-[11px] text-zinc-400">
+                  处理人: {hoveredCell.appeal.handler_name}
+                </span>
               )}
             </div>
           )}
@@ -408,11 +483,14 @@ export function MonthlyMatrix({
             style={{
               top: Math.min(
                 typeof window !== "undefined" ? window.innerHeight - 200 : 600,
-                openMenuCell.rect.bottom + 6
+                openMenuCell.rect.bottom + 6,
               ),
               left: Math.min(
                 typeof window !== "undefined" ? window.innerWidth - 80 : 500,
-                Math.max(80, openMenuCell.rect.left + openMenuCell.rect.width / 2)
+                Math.max(
+                  80,
+                  openMenuCell.rect.left + openMenuCell.rect.width / 2,
+                ),
               ),
               transform: "translateX(-50%)",
             }}
@@ -427,7 +505,11 @@ export function MonthlyMatrix({
                   onClick={() => {
                     const { member, dateKey } = openMenuCell;
                     setOpenMenuCell(null);
-                    void onQuickMarkCell(member.userId, dateKey, "confirmed_published");
+                    void onQuickMarkCell(
+                      member.userId,
+                      dateKey,
+                      "confirmed_published",
+                    );
                   }}
                   className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 text-[12px] transition-colors"
                 >
@@ -465,7 +547,7 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "absent");
                   }}
-                  className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-100 text-red-600 flex items-center gap-1.5 text-[12px] transition-colors"
+                  className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-100 text-[#DC2626] flex items-center gap-1.5 text-[12px] transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#C9604D]" />
                   确认缺勤

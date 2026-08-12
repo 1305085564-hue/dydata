@@ -23,7 +23,10 @@ import { trackUsageEvent } from "@/lib/usage-events/client";
 
 type Source = "queue" | "matrix";
 
-type MarkAction = Extract<FulfillmentStatus, "leave" | "waived" | "absent" | "confirmed_published">;
+type MarkAction = Extract<
+  FulfillmentStatus,
+  "leave" | "waived" | "absent" | "confirmed_published"
+>;
 
 interface MemberDrawerProps {
   open: boolean;
@@ -42,25 +45,75 @@ interface ActionConfig {
 }
 
 const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
-  leave: { label: "标记请假", variant: "outline", colorClass: "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900" },
-  waived: { label: "标记豁免", variant: "outline", colorClass: "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900" },
+  leave: {
+    label: "标记请假",
+    variant: "outline",
+    colorClass:
+      "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
+  },
+  waived: {
+    label: "标记豁免",
+    variant: "outline",
+    colorClass:
+      "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
+  },
   absent: { label: "确认缺勤", variant: "destructive" },
   confirmed_published: { label: "确认已发", variant: "default" },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; dot: string; border: string; bg: string }> = {
-    published: { label: "已发布", dot: "bg-[#6FAA7D]", border: "border-[#6FAA7D]/20", bg: "bg-[#6FAA7D]/[0.04]" },
-    confirmed_published: { label: "已确认", dot: "bg-[#6FAA7D]", border: "border-[#6FAA7D]/20", bg: "bg-[#6FAA7D]/[0.04]" },
-    leave: { label: "请假", dot: "bg-zinc-400", border: "border-zinc-200", bg: "bg-zinc-100/60" },
-    waived: { label: "豁免", dot: "bg-zinc-400", border: "border-zinc-200", bg: "bg-zinc-100/60" },
-    exempted: { label: "豁免期", dot: "bg-zinc-300", border: "border-zinc-200", bg: "bg-zinc-50" },
-    absent: { label: "缺勤", dot: "bg-[#C9604D]", border: "border-[#C9604D]/20", bg: "bg-[#C9604D]/[0.04]" },
-    unconfirmed: { label: "待确认", dot: "bg-zinc-300", border: "border-zinc-200", bg: "bg-zinc-100" },
+  const config: Record<
+    string,
+    { label: string; dot: string; border: string; bg: string }
+  > = {
+    published: {
+      label: "已发布",
+      dot: "bg-[#6FAA7D]",
+      border: "border-[#6FAA7D]/20",
+      bg: "bg-[#6FAA7D]/[0.04]",
+    },
+    confirmed_published: {
+      label: "已确认",
+      dot: "bg-[#6FAA7D]",
+      border: "border-[#6FAA7D]/20",
+      bg: "bg-[#6FAA7D]/[0.04]",
+    },
+    leave: {
+      label: "请假",
+      dot: "bg-zinc-400",
+      border: "border-zinc-200",
+      bg: "bg-zinc-100/60",
+    },
+    waived: {
+      label: "豁免",
+      dot: "bg-zinc-400",
+      border: "border-zinc-200",
+      bg: "bg-zinc-100/60",
+    },
+    exempted: {
+      label: "豁免期",
+      dot: "bg-zinc-300",
+      border: "border-zinc-200",
+      bg: "bg-zinc-50",
+    },
+    absent: {
+      label: "缺勤",
+      dot: "bg-[#C9604D]",
+      border: "border-[#C9604D]/20",
+      bg: "bg-[#C9604D]/[0.04]",
+    },
+    unconfirmed: {
+      label: "待确认",
+      dot: "bg-zinc-300",
+      border: "border-zinc-200",
+      bg: "bg-zinc-100",
+    },
   };
   const c = config[status] ?? config.unconfirmed;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[12px] font-medium ${c.border} ${c.bg} text-zinc-700`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[12px] font-medium ${c.border} ${c.bg} text-zinc-700`}
+    >
       <span className={`size-1.5 rounded-full ${c.dot}`} />
       {c.label}
     </span>
@@ -97,7 +150,9 @@ export function MemberDrawer({
   // 查找选中日期对应的申诉记录
   const dateAppeal = useMemo(() => {
     if (!member || !effectiveDate || !Array.isArray(appeals)) return null;
-    return appeals.find((a) => a.user_id === member.userId && a.record_date === effectiveDate);
+    return appeals.find(
+      (a) => a.user_id === member.userId && a.record_date === effectiveDate,
+    );
   }, [member, effectiveDate, appeals]);
 
   const handleActionClick = useCallback((action: MarkAction) => {
@@ -129,7 +184,10 @@ export function MemberDrawer({
         toast.error(err.error || "标记失败");
         return;
       }
-      trackUsageEvent({ path: "/admin/fulfillment", eventType: "mark_fulfillment_status" });
+      trackUsageEvent({
+        path: "/admin/fulfillment",
+        eventType: "mark_fulfillment_status",
+      });
       toast.success("标记成功");
       setActiveAction(null);
       setReason("");
@@ -168,27 +226,32 @@ export function MemberDrawer({
     }
   }, [member, effectiveDate, onOpenChange, onActionComplete]);
 
-  const handleHandleAppeal = useCallback(async (appealId: string, decision: "approve" | "reject") => {
-    setIsSubmittingAppeal(true);
-    try {
-      const res = await fetch("/api/admin/fulfillment/appeal/handle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appealId, decision }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "处理申诉失败" }));
-        toast.error(err.error || "处理申诉失败");
-        return;
+  const handleHandleAppeal = useCallback(
+    async (appealId: string, decision: "approve" | "reject") => {
+      setIsSubmittingAppeal(true);
+      try {
+        const res = await fetch("/api/admin/fulfillment/appeal/handle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ appealId, decision }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "处理申诉失败" }));
+          toast.error(err.error || "处理申诉失败");
+          return;
+        }
+        toast.success(
+          decision === "approve" ? "已同意申诉并改判" : "已驳回申诉",
+        );
+        onActionComplete();
+      } catch {
+        toast.error("网络错误，处理申诉失败");
+      } finally {
+        setIsSubmittingAppeal(false);
       }
-      toast.success(decision === "approve" ? "已同意申诉并改判" : "已驳回申诉");
-      onActionComplete();
-    } catch {
-      toast.error("网络错误，处理申诉失败");
-    } finally {
-      setIsSubmittingAppeal(false);
-    }
-  }, [onActionComplete]);
+    },
+    [onActionComplete],
+  );
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -199,7 +262,7 @@ export function MemberDrawer({
       }
       onOpenChange(nextOpen);
     },
-    [onOpenChange]
+    [onOpenChange],
   );
 
   const handleDateSelect = useCallback((d: string) => {
@@ -232,9 +295,7 @@ export function MemberDrawer({
               <SheetTitle>{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
-            <SheetDescription>
-              {member.teamName ?? "无团队"}
-            </SheetDescription>
+            <SheetDescription>{member.teamName ?? "无团队"}</SheetDescription>
           </SheetHeader>
 
           <SheetBody className="space-y-6">
@@ -318,14 +379,19 @@ export function MemberDrawer({
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className={`text-[12px] tabular-nums ${isSelected ? "font-medium text-zinc-900" : "text-zinc-500"}`}>
+                            <span
+                              className={`text-[12px] tabular-nums ${isSelected ? "font-medium text-zinc-900" : "text-zinc-500"}`}
+                            >
                               {d.slice(5)}
                             </span>
                             <StatusBadge status={record.status} />
                           </div>
                           <div className="flex items-center gap-2">
                             {record.reason ? (
-                              <span className="max-w-[120px] truncate text-[12px] text-zinc-500" title={record.reason}>
+                              <span
+                                className="max-w-[120px] truncate text-[12px] text-zinc-500"
+                                title={record.reason}
+                              >
                                 {record.reason}
                               </span>
                             ) : null}
@@ -345,25 +411,28 @@ export function MemberDrawer({
 
             {/* 员工申诉状态 (新集成) */}
             {dateAppeal && (
-              <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 space-y-3">
+              <section className="rounded-xl border border-zinc-200 bg-zinc-1000/[0.03] p-4 space-y-3">
                 <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#D99E55]">
-                  <span className="size-2 rounded-full bg-amber-400" />
+                  <span className="size-2 rounded-full bg-[#F59E0B]" />
                   员工发起申诉
                 </h4>
                 <div className="text-[13px] text-zinc-700 bg-white border border-zinc-200 p-2.5 rounded-lg italic">
                   “{dateAppeal.reason}”
                 </div>
                 <p className="text-[12px] text-zinc-500">
-                  提交时间: {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}
+                  提交时间:{" "}
+                  {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}
                 </p>
-                
+
                 {dateAppeal.status === "pending" && (
                   <div className="flex gap-2 pt-1">
                     <Button
                       variant="outline"
                       size="sm"
                       className="flex-1 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
-                      onClick={() => handleHandleAppeal(dateAppeal.id, "approve")}
+                      onClick={() =>
+                        handleHandleAppeal(dateAppeal.id, "approve")
+                      }
                       disabled={isSubmittingAppeal}
                     >
                       同意并改判
@@ -372,7 +441,9 @@ export function MemberDrawer({
                       variant="outline"
                       size="sm"
                       className="flex-1 border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
-                      onClick={() => handleHandleAppeal(dateAppeal.id, "reject")}
+                      onClick={() =>
+                        handleHandleAppeal(dateAppeal.id, "reject")
+                      }
                       disabled={isSubmittingAppeal}
                     >
                       驳回申诉
@@ -383,11 +454,21 @@ export function MemberDrawer({
                 {dateAppeal.status !== "pending" && (
                   <div className="text-[12px] font-medium pt-1 text-zinc-700">
                     审批状态：
-                    <span className={dateAppeal.status === "approved" ? "text-[#6FAA7D]" : "text-[#C9604D]"}>
-                      {dateAppeal.status === "approved" ? "已同意改判" : "已驳回"}
+                    <span
+                      className={
+                        dateAppeal.status === "approved"
+                          ? "text-[#6FAA7D]"
+                          : "text-[#C9604D]"
+                      }
+                    >
+                      {dateAppeal.status === "approved"
+                        ? "已同意改判"
+                        : "已驳回"}
                     </span>
                     {dateAppeal.handler_name && (
-                      <span className="ml-1.5 text-[12px] text-zinc-500">({dateAppeal.handler_name})</span>
+                      <span className="ml-1.5 text-[12px] text-zinc-500">
+                        ({dateAppeal.handler_name})
+                      </span>
                     )}
                   </div>
                 )}
@@ -397,7 +478,9 @@ export function MemberDrawer({
             {/* 当日/选中日状态 */}
             <section>
               <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-zinc-500">
-                {effectiveDate === date ? "当日状态" : `${effectiveDate?.slice(5)} 状态`}
+                {effectiveDate === date
+                  ? "当日状态"
+                  : `${effectiveDate?.slice(5)} 状态`}
               </h3>
               <div className="space-y-2 bg-zinc-50/50 border border-zinc-200/50 rounded-xl p-3.5">
                 {dayRecord ? (
@@ -410,20 +493,28 @@ export function MemberDrawer({
                     </div>
                     {dayRecord.reason ? (
                       <div className="rounded-lg border border-zinc-200 bg-white p-2.5">
-                        <p className="text-[12px] text-zinc-500">打标备注原因</p>
-                        <p className="mt-1 text-[13px] text-zinc-700 leading-normal">{dayRecord.reason}</p>
+                        <p className="text-[12px] text-zinc-500">
+                          打标备注原因
+                        </p>
+                        <p className="mt-1 text-[13px] text-zinc-700 leading-normal">
+                          {dayRecord.reason}
+                        </p>
                       </div>
                     ) : null}
                     {dayRecord.markedByName ? (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-zinc-500">标记人</span>
-                        <span className="text-zinc-700 font-medium">{dayRecord.markedByName}</span>
+                        <span className="text-zinc-700 font-medium">
+                          {dayRecord.markedByName}
+                        </span>
                       </div>
                     ) : null}
                     {dayRecord.markedAt ? (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-zinc-500">标记时间</span>
-                        <span className="text-[12px] text-zinc-700">{new Date(dayRecord.markedAt).toLocaleString("zh-CN")}</span>
+                        <span className="text-[12px] text-zinc-700">
+                          {new Date(dayRecord.markedAt).toLocaleString("zh-CN")}
+                        </span>
                       </div>
                     ) : null}
                   </div>
@@ -441,7 +532,10 @@ export function MemberDrawer({
               {activeAction ? (
                 <div className="space-y-3">
                   <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
-                    <label htmlFor="action-reason" className="mb-1.5 block text-[12px] font-normal text-zinc-500">
+                    <label
+                      htmlFor="action-reason"
+                      className="mb-1.5 block text-[12px] font-normal text-zinc-500"
+                    >
                       {ACTION_CONFIG[activeAction].label}原因（可选）
                     </label>
                     <input
@@ -475,30 +569,36 @@ export function MemberDrawer({
               ) : (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    {(Object.entries(ACTION_CONFIG) as [MarkAction, (typeof ACTION_CONFIG)[MarkAction]][]).map(
-                      ([action, config]) => (
-                        <Button
-                          key={action}
-                          variant={config.variant}
-                          className={config.colorClass}
-                          onClick={() => handleActionClick(action)}
-                          disabled={dayRecord?.status === action}
-                        >
-                          {config.label}
-                        </Button>
-                      ),
-                    )}
+                    {(
+                      Object.entries(ACTION_CONFIG) as [
+                        MarkAction,
+                        (typeof ACTION_CONFIG)[MarkAction],
+                      ][]
+                    ).map(([action, config]) => (
+                      <Button
+                        key={action}
+                        variant={config.variant}
+                        className={config.colorClass}
+                        onClick={() => handleActionClick(action)}
+                        disabled={dayRecord?.status === action}
+                      >
+                        {config.label}
+                      </Button>
+                    ))}
                   </div>
-                  {dayRecord && dayRecord.status !== "published" && dayRecord.status !== "exempted" && dayRecord.status !== "unconfirmed" && (
-                    <Button
-                      variant="outline"
-                      className="w-full border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
-                      onClick={() => setRemoveConfirmOpen(true)}
-                    >
-                      <Trash2 className="size-3.5 mr-1" />
-                      删除标记
-                    </Button>
-                  )}
+                  {dayRecord &&
+                    dayRecord.status !== "published" &&
+                    dayRecord.status !== "exempted" &&
+                    dayRecord.status !== "unconfirmed" && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                        onClick={() => setRemoveConfirmOpen(true)}
+                      >
+                        <Trash2 className="size-3.5 mr-1" />
+                        删除标记
+                      </Button>
+                    )}
                 </div>
               )}
             </section>

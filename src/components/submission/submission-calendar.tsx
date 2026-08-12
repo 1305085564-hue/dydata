@@ -82,7 +82,12 @@ function getCalendarCells({
   const monthEnd = new Date(year, month + 1, 0);
   const firstWeekday = (monthStart.getDay() + 6) % 7;
   const totalDays = monthEnd.getDate();
-  const cells: Array<{ key: string; day?: number; state?: SubmissionCalendarDateState; isToday?: boolean }> = [];
+  const cells: Array<{
+    key: string;
+    day?: number;
+    state?: SubmissionCalendarDateState;
+    isToday?: boolean;
+  }> = [];
 
   for (let index = 0; index < firstWeekday; index += 1) {
     cells.push({ key: `empty-${index}` });
@@ -132,7 +137,10 @@ export function SubmissionCalendar({
   compact = false,
 }: SubmissionCalendarProps) {
   const [displayDate, setDisplayDate] = useState(() => {
-    if (selectedDate && !isNaN(new Date(`${selectedDate}T00:00:00`).getTime())) {
+    if (
+      selectedDate &&
+      !isNaN(new Date(`${selectedDate}T00:00:00`).getTime())
+    ) {
       return new Date(`${selectedDate}T00:00:00`);
     }
     return new Date(`${today}T00:00:00`);
@@ -149,15 +157,22 @@ export function SubmissionCalendar({
   }, [displayDate, todayDate]);
 
   const handlePrevMonth = () => {
-    setDisplayDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    setDisplayDate(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
+    );
   };
 
   const handleNextMonth = () => {
     if (!canGoNext) return;
-    setDisplayDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    setDisplayDate(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
+    );
   };
 
-  const submittedDateSet = useMemo(() => new Set(submittedDates), [submittedDates]);
+  const submittedDateSet = useMemo(
+    () => new Set(submittedDates),
+    [submittedDates],
+  );
   const waiveDateSet = useMemo(() => new Set(waiveDates), [waiveDates]);
   const leaveDateSet = useMemo(() => new Set(leaveDates), [leaveDates]);
   const pendingDateSet = useMemo(() => new Set(pendingDates), [pendingDates]);
@@ -172,7 +187,14 @@ export function SubmissionCalendar({
         leaveDates: leaveDateSet,
         pendingDates: pendingDateSet,
       }),
-    [displayDate, today, submittedDateSet, waiveDateSet, leaveDateSet, pendingDateSet],
+    [
+      displayDate,
+      today,
+      submittedDateSet,
+      waiveDateSet,
+      leaveDateSet,
+      pendingDateSet,
+    ],
   );
 
   return (
@@ -186,9 +208,11 @@ export function SubmissionCalendar({
       <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-zinc-400" />
-          <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">选择日期</h3>
+          <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">
+            选择日期
+          </h3>
         </div>
-        
+
         <div className="flex items-center gap-0.5 rounded-full bg-zinc-100 p-0.5 border border-zinc-200">
           <button
             type="button"
@@ -209,7 +233,7 @@ export function SubmissionCalendar({
               "flex size-6 items-center justify-center rounded-full transition-all",
               canGoNext
                 ? "text-zinc-600 hover:bg-white hover:text-zinc-950 active:scale-95 cursor-pointer"
-                : "text-zinc-300 opacity-40 cursor-not-allowed"
+                : "text-zinc-300 opacity-40 cursor-not-allowed",
             )}
             title="下一个月"
           >
@@ -243,11 +267,14 @@ export function SubmissionCalendar({
             );
           }
 
-          const isSelected = selectedDate === cell.key || selectedDates.includes(cell.key);
-          const isSubmitted = cell.state === "submitted" || cell.state === "waive";
+          const isSelected =
+            selectedDate === cell.key || selectedDates.includes(cell.key);
+          const isSubmitted =
+            cell.state === "submitted" || cell.state === "waive";
           const isLeave = cell.state === "leave";
           const isPendingState = cell.state === "pending";
-          const isMissing = cell.state === "missing" || cell.state === "unsubmitted";
+          const isMissing =
+            cell.state === "missing" || cell.state === "unsubmitted";
           const isFuture = cell.state === "future";
 
           return (
@@ -258,19 +285,32 @@ export function SubmissionCalendar({
               onClick={() => onDateSelect?.(cell.key, isSubmitted)}
               className={cn(
                 "relative flex h-10 w-full flex-col items-center justify-center rounded-lg text-[13px] transition-all duration-150 ease-out outline-none",
-                !isFuture && "cursor-pointer hover:scale-[1.05] active:scale-95",
-                
+                !isFuture &&
+                  "cursor-pointer hover:scale-[1.05] active:scale-95",
+
                 // 默认/未选中态
-                !isSelected && !isFuture && "hover:bg-zinc-100 hover:text-zinc-950",
-                !isSelected && isSubmitted && "bg-emerald-50/40 text-emerald-900 font-medium",
-                !isSelected && isLeave && "bg-amber-50/40 text-amber-900 font-medium",
-                !isSelected && isPendingState && "bg-amber-50/60 text-amber-900 font-medium border border-amber-300/60",
-                !isSelected && isMissing && "bg-rose-50/30 text-rose-900 font-medium",
-                !isSelected && isFuture && "text-zinc-300 opacity-60 cursor-not-allowed",
+                !isSelected &&
+                  !isFuture &&
+                  "hover:bg-zinc-100 hover:text-zinc-950",
+                !isSelected &&
+                  isSubmitted &&
+                  "bg-[#16A34A]/10/40 text-zinc-600 font-medium",
+                !isSelected &&
+                  isLeave &&
+                  "bg-zinc-100/40 text-zinc-600 font-medium",
+                !isSelected &&
+                  isPendingState &&
+                  "bg-zinc-100/60 text-zinc-600 font-medium border border-zinc-200/60",
+                !isSelected &&
+                  isMissing &&
+                  "bg-zinc-100/30 text-zinc-600 font-medium",
+                !isSelected &&
+                  isFuture &&
+                  "text-zinc-300 opacity-60 cursor-not-allowed",
 
                 // 选中态：黑胶囊高亮浮起
                 isSelected &&
-                  "bg-zinc-900 text-white font-semibold shadow-md scale-[1.05] z-10"
+                  "bg-zinc-900 text-white font-semibold shadow-md scale-[1.05] z-10",
               )}
             >
               <span className="tabular-nums leading-none">{cell.day}</span>
@@ -283,12 +323,12 @@ export function SubmissionCalendar({
                     isSelected
                       ? "bg-white"
                       : isSubmitted
-                        ? "bg-emerald-500"
+                        ? "bg-[#16A34A]/100"
                         : isLeave
-                          ? "bg-amber-500"
+                          ? "bg-zinc-1000"
                           : isPendingState
-                            ? "bg-amber-500 animate-pulse ring-2 ring-amber-400/40"
-                            : "bg-rose-500"
+                            ? "bg-zinc-1000 animate-pulse ring-2 ring-[#F59E0B]/40"
+                            : "bg-zinc-1000",
                   )}
                 />
               )}
@@ -300,16 +340,17 @@ export function SubmissionCalendar({
       {/* 底部微型极简图例说明 (Minimal Footer Legend) */}
       <div className="pt-2 border-t border-zinc-100 flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-zinc-400">
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-emerald-500" /> 已交/免交
+          <span className="size-1.5 rounded-full bg-[#16A34A]/100" /> 已交/免交
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-amber-500 animate-pulse ring-1 ring-amber-400/50" /> 审批中
+          <span className="size-1.5 rounded-full bg-zinc-1000 animate-pulse ring-1 ring-[#F59E0B]/50" />{" "}
+          审批中
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-amber-500" /> 请假
+          <span className="size-1.5 rounded-full bg-zinc-1000" /> 请假
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-rose-500" /> 未交/漏交
+          <span className="size-1.5 rounded-full bg-zinc-1000" /> 未交/漏交
         </span>
       </div>
     </section>

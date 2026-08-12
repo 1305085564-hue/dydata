@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback, useState, useRef, useEffect } from "react";
-import { 
-  AlertCircle, 
-  CheckCircle2, 
-  FileText, 
-  Image as ImageIcon, 
-  Sparkles, 
-  Upload, 
-  UserCheck, 
-  Zap, 
-  Loader2, 
+import {
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  Image as ImageIcon,
+  Sparkles,
+  Upload,
+  UserCheck,
+  Zap,
+  Loader2,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -56,7 +56,7 @@ export function VideoSubmitFormV2({
 }: VideoSubmitFormV2Props) {
   // 1. 账号与基础字段
   const [selectedAccountId, setSelectedAccountId] = useState<string>(
-    initialSummary?.accountId || accounts[0]?.id || ""
+    initialSummary?.accountId || accounts[0]?.id || "",
   );
   const [anomalyStatus, setAnomalyStatus] = useState<AnomalyStatus>("normal");
   const [videoTitle, setVideoTitle] = useState(initialSummary?.title || "");
@@ -76,21 +76,41 @@ export function VideoSubmitFormV2({
   const [appeal, setAppeal] = useState<string>("");
 
   // 4. 数据指标
-  const [playCount, setPlayCount] = useState<string>(initialSummary?.playCount?.toString() || "");
-  const [completionRate, setCompletionRate] = useState<string>(initialSummary?.completionRate || "");
-  const [bounceRate2s, setBounceRate2s] = useState<string>(initialSummary?.bounceRate2s || "");
-  const [completionRate5s, setCompletionRate5s] = useState<string>(initialSummary?.completionRate5s || "");
-  const [avgPlayDuration, setAvgPlayDuration] = useState<string>(initialSummary?.avgPlayDuration || "");
-  const [likes, setLikes] = useState<string>(initialSummary?.likes?.toString() || "");
-  const [comments, setComments] = useState<string>(initialSummary?.comments?.toString() || "");
-  const [shares, setShares] = useState<string>(initialSummary?.shares?.toString() || "");
-  const [favorites, setFavorites] = useState<string>(initialSummary?.favorites?.toString() || "");
-  const [followerGain, setFollowerGain] = useState<string>(initialSummary?.followerGain?.toString() || "");
+  const [playCount, setPlayCount] = useState<string>(
+    initialSummary?.playCount?.toString() || "",
+  );
+  const [completionRate, setCompletionRate] = useState<string>(
+    initialSummary?.completionRate || "",
+  );
+  const [bounceRate2s, setBounceRate2s] = useState<string>(
+    initialSummary?.bounceRate2s || "",
+  );
+  const [completionRate5s, setCompletionRate5s] = useState<string>(
+    initialSummary?.completionRate5s || "",
+  );
+  const [avgPlayDuration, setAvgPlayDuration] = useState<string>(
+    initialSummary?.avgPlayDuration || "",
+  );
+  const [likes, setLikes] = useState<string>(
+    initialSummary?.likes?.toString() || "",
+  );
+  const [comments, setComments] = useState<string>(
+    initialSummary?.comments?.toString() || "",
+  );
+  const [shares, setShares] = useState<string>(
+    initialSummary?.shares?.toString() || "",
+  );
+  const [favorites, setFavorites] = useState<string>(
+    initialSummary?.favorites?.toString() || "",
+  );
+  const [followerGain, setFollowerGain] = useState<string>(
+    initialSummary?.followerGain?.toString() || "",
+  );
 
   // 5. 截图素材与状态机
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
-  
+
   // 6. UI 交互状态 (6 大标准状态机制)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -128,8 +148,10 @@ export function VideoSubmitFormV2({
 
       // 如果后端自带 OCR 提取数据则自动帮填充
       if (json.ocrData) {
-        if (json.ocrData.play_count) setPlayCount(String(json.ocrData.play_count));
-        if (json.ocrData.completion_rate) setCompletionRate(String(json.ocrData.completion_rate));
+        if (json.ocrData.play_count)
+          setPlayCount(String(json.ocrData.play_count));
+        if (json.ocrData.completion_rate)
+          setCompletionRate(String(json.ocrData.completion_rate));
         if (json.ocrData.likes) setLikes(String(json.ocrData.likes));
       }
     } catch (err: any) {
@@ -181,7 +203,8 @@ export function VideoSubmitFormV2({
         topic_id: topicId,
         anomaly_status: anomalyStatus,
         punish_type: anomalyStatus === "abnormal" ? punishType : null,
-        platform_notice: anomalyStatus === "abnormal" ? platformNotice.trim() || null : null,
+        platform_notice:
+          anomalyStatus === "abnormal" ? platformNotice.trim() || null : null,
         appeal: anomalyStatus === "abnormal" ? appeal.trim() || null : null,
         script_author_user_id: assignments.scriptAuthorUserId,
         video_editor_user_id: assignments.videoEditorUserId,
@@ -213,7 +236,11 @@ export function VideoSubmitFormV2({
       }
 
       setIsSuccess(true);
-      toast.success(activeBizDate === today ? "今日数据提交成功！" : `日期 ${activeBizDate} 数据补交成功！`);
+      toast.success(
+        activeBizDate === today
+          ? "今日数据提交成功！"
+          : `日期 ${activeBizDate} 数据补交成功！`,
+      );
 
       setTimeout(() => {
         onSubmitSuccess?.();
@@ -233,7 +260,7 @@ export function VideoSubmitFormV2({
       transition={{ duration: 0.2 }}
       className={cn(
         "rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm",
-        shakeError && "animate-shake"
+        shakeError && "animate-shake",
       )}
     >
       {/* 头部：标题与发布类型切换 */}
@@ -241,7 +268,9 @@ export function VideoSubmitFormV2({
         <div>
           <h2 className="text-[18px] font-semibold text-zinc-900 flex items-center gap-2">
             <Zap className="size-5 text-[#D97757]" />
-            {activeBizDate === today ? "数据填报 (今日)" : `补交日报 (${activeBizDate})`}
+            {activeBizDate === today
+              ? "数据填报 (今日)"
+              : `补交日报 (${activeBizDate})`}
           </h2>
           <p className="mt-1 text-[13px] text-zinc-500">
             录入核心播放指标与分工责任，助推数据复盘与增长分析
@@ -257,7 +286,7 @@ export function VideoSubmitFormV2({
               "rounded-md px-3 py-1.5 text-[13px] font-medium transition-all duration-150",
               anomalyStatus === "normal"
                 ? "bg-white text-zinc-950 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-900"
+                : "text-zinc-500 hover:text-zinc-900",
             )}
           >
             正常发布
@@ -268,8 +297,8 @@ export function VideoSubmitFormV2({
             className={cn(
               "rounded-md px-3 py-1.5 text-[13px] font-medium transition-all duration-150 flex items-center gap-1.5",
               anomalyStatus === "abnormal"
-                ? "bg-red-50 text-red-700 shadow-sm border border-red-200"
-                : "text-zinc-500 hover:text-red-600"
+                ? "bg-zinc-100 text-red-700 shadow-sm border border-zinc-200"
+                : "text-zinc-500 hover:text-[#DC2626]",
             )}
           >
             <AlertTriangle className="size-3.5" />
@@ -280,7 +309,7 @@ export function VideoSubmitFormV2({
 
       {/* 错误白话提示 */}
       {formError && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 p-3 text-[13px] text-red-600 border border-red-100">
+        <div className="mt-4 flex items-center gap-2 rounded-lg bg-zinc-100 p-3 text-[13px] text-[#DC2626] border border-zinc-200">
           <AlertCircle className="size-4 shrink-0" />
           <span>{formError}</span>
         </div>
@@ -288,11 +317,12 @@ export function VideoSubmitFormV2({
 
       {/* 表单内容区域 */}
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-        
         {/* 1. 账号与基础基本信息 */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label className="text-[13px] font-medium text-zinc-700">发布账号 <span className="text-[#D97757]">*</span></Label>
+            <Label className="text-[13px] font-medium text-zinc-700">
+              发布账号 <span className="text-[#D97757]">*</span>
+            </Label>
             <select
               value={selectedAccountId}
               onChange={(e) => setSelectedAccountId(e.target.value)}
@@ -308,7 +338,10 @@ export function VideoSubmitFormV2({
 
           <div>
             <Label className="text-[13px] font-medium text-zinc-700">
-              视频作品标题 {anomalyStatus === "normal" && <span className="text-[#D97757]">*</span>}
+              视频作品标题{" "}
+              {anomalyStatus === "normal" && (
+                <span className="text-[#D97757]">*</span>
+              )}
             </Label>
             <Input
               type="text"
@@ -336,14 +369,16 @@ export function VideoSubmitFormV2({
 
         {/* 流量处罚拓展项 */}
         {anomalyStatus === "abnormal" && (
-          <div className="rounded-xl border border-red-100 bg-red-50/40 p-4 space-y-3">
+          <div className="rounded-xl border border-zinc-200 bg-zinc-100/40 p-4 space-y-3">
             <h4 className="text-[13px] font-semibold text-red-800 flex items-center gap-1.5">
               <AlertTriangle className="size-4" />
               异常处罚信息报备
             </h4>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <Label className="text-[12px] font-medium text-zinc-600">处罚类型</Label>
+                <Label className="text-[12px] font-medium text-zinc-600">
+                  处罚类型
+                </Label>
                 <select
                   value={punishType}
                   onChange={(e) => setPunishType(e.target.value)}
@@ -356,7 +391,9 @@ export function VideoSubmitFormV2({
                 </select>
               </div>
               <div>
-                <Label className="text-[12px] font-medium text-zinc-600">申诉进展</Label>
+                <Label className="text-[12px] font-medium text-zinc-600">
+                  申诉进展
+                </Label>
                 <Input
                   placeholder="如：申诉中、申诉通过、放弃申诉..."
                   value={appeal}
@@ -375,7 +412,9 @@ export function VideoSubmitFormV2({
               <FileText className="size-4 text-zinc-500" />
               核心播放指标录入
             </h3>
-            <span className="text-[12px] text-zinc-400">支持截图自动识别或手动录入</span>
+            <span className="text-[12px] text-zinc-400">
+              支持截图自动识别或手动录入
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -465,12 +504,16 @@ export function VideoSubmitFormV2({
 
         {/* 3. 截图上传与识别区 */}
         <div>
-          <Label className="text-[13px] font-medium text-zinc-700">数据截图凭证</Label>
+          <Label className="text-[13px] font-medium text-zinc-700">
+            数据截图凭证
+          </Label>
           <div className="mt-1.5 flex items-center gap-4">
             <label className="flex flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white p-4 hover:border-zinc-400 hover:bg-zinc-50/50 transition-all">
               <Upload className="size-5 text-zinc-400" />
               <span className="mt-1 text-[12px] text-zinc-600">
-                {uploadingScreenshot ? "正在上传解析..." : "点击或拖拽上传创作者后台截图"}
+                {uploadingScreenshot
+                  ? "正在上传解析..."
+                  : "点击或拖拽上传创作者后台截图"}
               </span>
               <input
                 type="file"
@@ -487,7 +530,11 @@ export function VideoSubmitFormV2({
             {screenshotUrl && (
               <div className="relative size-20 rounded-lg border border-zinc-200 overflow-hidden shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={screenshotUrl} alt="截图凭证" className="size-full object-cover" />
+                <img
+                  src={screenshotUrl}
+                  alt="截图凭证"
+                  className="size-full object-cover"
+                />
                 <button
                   type="button"
                   onClick={() => setScreenshotUrl(null)}
@@ -519,7 +566,7 @@ export function VideoSubmitFormV2({
             disabled={isSubmitting || isSuccess}
             className={cn(
               "bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.97] transition-all px-6 py-2 rounded-md font-medium text-[14px] shadow-sm flex items-center gap-2",
-              (isSubmitting || isSuccess) && "opacity-50 cursor-not-allowed"
+              (isSubmitting || isSuccess) && "opacity-50 cursor-not-allowed",
             )}
           >
             {isSubmitting ? (
@@ -540,7 +587,6 @@ export function VideoSubmitFormV2({
             )}
           </Button>
         </div>
-
       </form>
     </motion.div>
   );

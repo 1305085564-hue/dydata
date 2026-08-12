@@ -9,7 +9,10 @@ interface SmartReplaceModalProps {
   targetTopic: { id: string; title: string; hook: string } | null;
   myClaims: TopicClaimItem[];
   onClose: () => void;
-  onConfirmReplace: (returnedSubTopicId: string, targetSubTopicId: string) => Promise<boolean>;
+  onConfirmReplace: (
+    returnedSubTopicId: string,
+    targetSubTopicId: string,
+  ) => Promise<boolean>;
 }
 
 export function SmartReplaceModal({
@@ -26,13 +29,18 @@ export function SmartReplaceModal({
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // 只有候选状态占用可替换槽位，脚本中记录不能被替换。
-  const candidateClaims = useMemo(() => myClaims.filter((claim) => claim.status === "candidate"), [myClaims]);
+  const candidateClaims = useMemo(
+    () => myClaims.filter((claim) => claim.status === "candidate"),
+    [myClaims],
+  );
 
   // 自动计算挂机最久的那个选题 (claimed_at 最早)
   useEffect(() => {
     if (isOpen && candidateClaims.length > 0) {
       const sorted = [...candidateClaims].sort(
-        (a, b) => (Date.parse(a.claimedAt ?? "") || 0) - (Date.parse(b.claimedAt ?? "") || 0)
+        (a, b) =>
+          (Date.parse(a.claimedAt ?? "") || 0) -
+          (Date.parse(b.claimedAt ?? "") || 0),
       );
       setSelectedReturnId(sorted[0].subTopicId);
       setError(null);
@@ -42,11 +50,15 @@ export function SmartReplaceModal({
   // Focus Management & Esc Key Support
   useEffect(() => {
     if (isOpen) {
-      previousActiveElement.current = document.activeElement as HTMLElement | null;
+      previousActiveElement.current =
+        document.activeElement as HTMLElement | null;
       closeBtnRef.current?.focus();
     }
     return () => {
-      if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
+      if (
+        previousActiveElement.current &&
+        typeof previousActiveElement.current.focus === "function"
+      ) {
         previousActiveElement.current.focus();
       }
     };
@@ -70,7 +82,10 @@ export function SmartReplaceModal({
 
     try {
       setLoading(true);
-      const succeeded = await onConfirmReplace(selectedReturnId, targetTopic.id);
+      const succeeded = await onConfirmReplace(
+        selectedReturnId,
+        targetTopic.id,
+      );
       if (succeeded) onClose();
       else setError("替换失败，原认领保持不变，请检查提示后重试。");
     } catch (err) {
@@ -98,10 +113,13 @@ export function SmartReplaceModal({
         >
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-semibold text-xs">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-100 text-zinc-600 font-semibold text-xs">
                 <AlertTriangle className="w-3.5 h-3.5" />
               </span>
-              <h3 id="replace-modal-title" className="text-base font-semibold text-zinc-900">
+              <h3
+                id="replace-modal-title"
+                className="text-base font-semibold text-zinc-900"
+              >
                 候选槽位已满 (5/5)，请选择替换
               </h3>
             </div>
@@ -119,16 +137,28 @@ export function SmartReplaceModal({
 
           <div className="mb-4 shrink-0">
             <p className="text-xs text-zinc-500 mb-2 font-normal">
-              即将认领新选题：<span className="font-semibold text-zinc-900">《{targetTopic.title}》</span>
+              即将认领新选题：
+              <span className="font-semibold text-zinc-900">
+                《{targetTopic.title}》
+              </span>
             </p>
-            <div className="bg-amber-50/80 border border-amber-200/80 rounded-xl p-3 text-xs text-amber-900 font-normal">
-              系统已为您自动推荐放回<span className="font-medium">挂机时间最长</span>的候选选题。脚本中的选题不会出现在替换列表。
+            <div className="bg-zinc-100/80 border border-zinc-200/80 rounded-xl p-3 text-xs text-zinc-600 font-normal">
+              系统已为您自动推荐放回
+              <span className="font-medium">挂机时间最长</span>
+              的候选选题。脚本中的选题不会出现在替换列表。
             </div>
           </div>
 
-          {error && <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 font-normal shrink-0">{error}</div>}
+          {error && (
+            <div className="mb-3 p-3 bg-zinc-100 border border-zinc-200 rounded-lg text-xs text-zinc-600 font-normal shrink-0">
+              {error}
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden">
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden"
+          >
             <div className="text-xs font-normal text-zinc-600 shrink-0">
               请选择要被替换放回的选题：
             </div>
@@ -138,7 +168,9 @@ export function SmartReplaceModal({
                 const sub = claim.subTopic;
                 const isSelected = selectedReturnId === claim.subTopicId;
                 const daysIdle = Math.floor(
-                  (Date.now() - (Date.parse(claim.claimedAt ?? "") || Date.now())) / (1000 * 3600 * 24)
+                  (Date.now() -
+                    (Date.parse(claim.claimedAt ?? "") || Date.now())) /
+                    (1000 * 3600 * 24),
                 );
 
                 return (
@@ -194,7 +226,9 @@ export function SmartReplaceModal({
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium shadow-2xs transition-all disabled:opacity-50"
                 aria-label="确认替换并认领新选题"
               >
-                {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : null}
+                {loading ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : null}
                 <span>{loading ? "替换中..." : "确认替换并认领新选题"}</span>
               </button>
             </div>

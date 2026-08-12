@@ -26,18 +26,18 @@ function getConfidenceDotProps(score: number | null | undefined) {
   const s = score ?? 0.5; // 无 confidence 默认中置信
   if (s >= 0.95) {
     return {
-      color: "bg-emerald-500",
+      color: "bg-[#16A34A]",
       tooltip: "AI 高置信识别",
     };
   }
-  if (s >= 0.80) {
+  if (s >= 0.8) {
     return {
-      color: "bg-amber-500",
+      color: "bg-[#F59E0B]",
       tooltip: "AI 识别，建议核对",
     };
   }
   return {
-    color: "bg-rose-500",
+    color: "bg-[#DC2626]/100",
     tooltip: "AI 识别置信度较低，请务必核对",
   };
 }
@@ -50,20 +50,20 @@ function getStatusBadge(field: SubmissionFieldState) {
     return {
       label: "AI 已识别",
       className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
-      dotClass: "bg-emerald-500",
+      dotClass: "bg-[#16A34A]",
     };
   }
-  if (score >= 0.80) {
+  if (score >= 0.8) {
     return {
       label: "待确认",
       className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
-      dotClass: "bg-amber-500",
+      dotClass: "bg-[#F59E0B]",
     };
   }
   return {
     label: "请核对",
     className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
-    dotClass: "bg-rose-500",
+    dotClass: "bg-[#DC2626]/100",
   };
 }
 
@@ -123,27 +123,30 @@ export function MetricInputCard({
   void statusLabel;
 
   const statusBadge = getStatusBadge(field);
-  const confidenceProps = field.source === "ocr" ? getConfidenceDotProps(field.confidenceScore) : null;
+  const confidenceProps =
+    field.source === "ocr"
+      ? getConfidenceDotProps(field.confidenceScore)
+      : null;
 
   return (
     <div className="space-y-1 transition-colors">
       <div className="flex items-center justify-between gap-1">
-        <Label
-          className={cn(
-            "font-medium text-zinc-500 text-[13px]"
-          )}
-        >
+        <Label className={cn("font-medium text-zinc-500 text-[13px]")}>
           {label}
-          {optional && <span className="ml-1 font-normal opacity-60">可选</span>}
+          {optional && (
+            <span className="ml-1 font-normal opacity-60">可选</span>
+          )}
         </Label>
         {statusBadge && (
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] font-medium tracking-wide",
-              statusBadge.className
+              statusBadge.className,
             )}
           >
-            <span className={cn("h-1.5 w-1.5 rounded-full", statusBadge.dotClass)} />
+            <span
+              className={cn("h-1.5 w-1.5 rounded-full", statusBadge.dotClass)}
+            />
             {statusBadge.label}
           </span>
         )}
@@ -154,11 +157,20 @@ export function MetricInputCard({
           animate={
             field.source === "ocr"
               ? {
-                  boxShadow: ["0 0 0px rgba(217,119,87,0)", "0 0 12px rgba(217,119,87,0.3)", "0 0 0px rgba(217,119,87,0)"],
+                  boxShadow: [
+                    "0 0 0px rgba(217,119,87,0)",
+                    "0 0 12px rgba(217,119,87,0.3)",
+                    "0 0 0px rgba(217,119,87,0)",
+                  ],
                 }
               : {}
           }
-          transition={{ duration: 1.5, ease: "easeInOut", times: [0, 0.5, 1], delay: animationDelay / 1000 }}
+          transition={{
+            duration: 1.5,
+            ease: "easeInOut",
+            times: [0, 0.5, 1],
+            delay: animationDelay / 1000,
+          }}
           className="rounded-xl"
         >
           <Input
@@ -182,7 +194,7 @@ export function MetricInputCard({
               "h-10",
               field.source === "ocr"
                 ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#D97757]"
-                : ""
+                : "",
             )}
           />
         </motion.div>
@@ -193,7 +205,12 @@ export function MetricInputCard({
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <span className={cn("inline-block h-2 w-2 rounded-full ring-1 ring-white shadow-sm", confidenceProps.color)} />
+            <span
+              className={cn(
+                "inline-block h-2 w-2 rounded-full ring-1 ring-white shadow-sm",
+                confidenceProps.color,
+              )}
+            />
             {showTooltip ? (
               <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
                 {confidenceProps.tooltip}

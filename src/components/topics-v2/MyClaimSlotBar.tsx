@@ -26,15 +26,20 @@ export function MyClaimSlotBar({
   const [operatingId, setOperatingId] = useState<string | null>(null);
 
   // 仅筛选有效候选或写作中的认领
-  const activeClaims = claims.filter((c) => c.status === "candidate" || c.status === "scripting");
+  const activeClaims = claims.filter(
+    (c) => c.status === "candidate" || c.status === "scripting",
+  );
   const occupiedCount = activeClaims.length;
 
   // 填充固定 5 个槽位
   const slots: (TopicClaimItem | null)[] = Array.from({ length: 5 }).map(
-    (_, idx) => activeClaims[idx] || null
+    (_, idx) => activeClaims[idx] || null,
   );
 
-  const handleStartScripting = async (e: React.MouseEvent, subTopicId: string) => {
+  const handleStartScripting = async (
+    e: React.MouseEvent,
+    subTopicId: string,
+  ) => {
     e.stopPropagation();
     try {
       setOperatingId(subTopicId);
@@ -73,7 +78,17 @@ export function MyClaimSlotBar({
             <h2 className="text-sm font-semibold text-zinc-900 tracking-tight flex items-center gap-2">
               <span>我的选题槽位</span>
               <span className="text-xs tabular-nums text-zinc-500 font-normal">
-                (<span className={occupiedCount === 5 ? "text-amber-600 font-semibold" : "text-zinc-700 font-semibold"}>{occupiedCount}</span> / 5)
+                (
+                <span
+                  className={
+                    occupiedCount === 5
+                      ? "text-[#F59E0B] font-semibold"
+                      : "text-zinc-700 font-semibold"
+                  }
+                >
+                  {occupiedCount}
+                </span>{" "}
+                / 5)
               </span>
             </h2>
           </div>
@@ -81,7 +96,7 @@ export function MyClaimSlotBar({
 
         <div className="text-xs text-zinc-500 font-normal">
           {occupiedCount === 5 ? (
-            <span className="text-amber-700 bg-amber-50 border border-amber-200/80 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 font-medium">
+            <span className="text-zinc-600 bg-zinc-100 border border-zinc-200/80 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 font-medium">
               <Sparkles className="w-3 h-3" />
               <span>槽位已满（5/5），放回不写的选题解锁新槽位</span>
             </span>
@@ -108,7 +123,9 @@ export function MyClaimSlotBar({
                 <span className="text-xs font-medium text-zinc-500 group-hover:text-zinc-800 transition-colors">
                   空置槽位 {index + 1}
                 </span>
-                <span className="text-[11px] text-zinc-400 mt-0.5 font-normal">去选题池认领</span>
+                <span className="text-[11px] text-zinc-400 mt-0.5 font-normal">
+                  去选题池认领
+                </span>
               </div>
             );
           }
@@ -122,7 +139,7 @@ export function MyClaimSlotBar({
               onClick={() => item.subTopicId && onSelectTopic(item.subTopicId)}
               className={`group relative rounded-xl p-3.5 border transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[110px] shadow-xs ${
                 isScripting
-                  ? "bg-emerald-50/40 border-emerald-200/80 hover:border-emerald-300"
+                  ? "bg-[#16A34A]/10/40 border-zinc-200/80 hover:border-zinc-200"
                   : "bg-white border-zinc-200 hover:border-zinc-300"
               }`}
             >
@@ -130,8 +147,8 @@ export function MyClaimSlotBar({
                 {/* 状态徽章与顶栏 */}
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   {isScripting ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-zinc-800 border border-zinc-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]/100 animate-pulse" />
                       <span>脚本写作中</span>
                     </span>
                   ) : (
@@ -144,8 +161,10 @@ export function MyClaimSlotBar({
                   <button
                     type="button"
                     disabled={operatingId === item.subTopicId}
-                    onClick={(e) => item.subTopicId && handleReturn(e, item.subTopicId)}
-                    className="p-1 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors opacity-70 group-hover:opacity-100"
+                    onClick={(e) =>
+                      item.subTopicId && handleReturn(e, item.subTopicId)
+                    }
+                    className="p-1 text-zinc-400 hover:text-[#DC2626] hover:bg-zinc-100 rounded-md transition-colors opacity-70 group-hover:opacity-100"
                     title="放弃并放回选题池"
                     aria-label="放弃认领"
                   >
@@ -164,8 +183,11 @@ export function MyClaimSlotBar({
                   <button
                     type="button"
                     disabled={operatingId === item.subTopicId}
-                    onClick={(e) => item.subTopicId && handleStartScripting(e, item.subTopicId)}
-                    className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[11px] font-medium transition-all shadow-2xs active:scale-[0.97]"
+                    onClick={(e) =>
+                      item.subTopicId &&
+                      handleStartScripting(e, item.subTopicId)
+                    }
+                    className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-[#16A34A]/80 hover:bg-[#16A34A]/60 text-white text-[11px] font-medium transition-all shadow-2xs active:scale-[0.97]"
                   >
                     <FileText className="w-3 h-3" />
                     <span>去写脚本</span>
@@ -174,7 +196,10 @@ export function MyClaimSlotBar({
                   <button
                     type="button"
                     disabled={operatingId === item.subTopicId}
-                    onClick={(e) => item.subTopicId && handleStartScripting(e, item.subTopicId)}
+                    onClick={(e) =>
+                      item.subTopicId &&
+                      handleStartScripting(e, item.subTopicId)
+                    }
                     className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[11px] font-medium transition-all shadow-2xs active:scale-[0.97]"
                   >
                     <span>开写此题</span>

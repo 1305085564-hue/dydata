@@ -1,19 +1,34 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Undo2, Redo2, Eye, EyeOff, Copy, FileText, Download, History, Cpu, ChevronDown, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Plus,
+  Undo2,
+  Redo2,
+  Eye,
+  EyeOff,
+  Copy,
+  FileText,
+  Download,
+  History,
+  Cpu,
+  ChevronDown,
+  Check,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-import { useRewriteV3Logic } from './useRewriteV3Logic';
-import { TimelineDiff } from './TimelineDiff';
-import { CalmStudioCanvas } from './CalmStudioCanvas';
-import { ChatInspector } from './ChatInspector';
-import { RewriteHistoryV3 } from './RewriteHistoryV3';
-import { SettingsDrawer } from './SettingsDrawer';
+import { useRewriteV3Logic } from "./useRewriteV3Logic";
+import { TimelineDiff } from "./TimelineDiff";
+import { CalmStudioCanvas } from "./CalmStudioCanvas";
+import { ChatInspector } from "./ChatInspector";
+import { RewriteHistoryV3 } from "./RewriteHistoryV3";
+import { SettingsDrawer } from "./SettingsDrawer";
 
 function getStoredSplitRatio() {
-  if (typeof window === 'undefined') return 35;
-  const savedRatio = window.localStorage.getItem('dydata-rewrite-split-ratio-v3');
+  if (typeof window === "undefined") return 35;
+  const savedRatio = window.localStorage.getItem(
+    "dydata-rewrite-split-ratio-v3",
+  );
   if (!savedRatio) return 35;
   const parsed = parseFloat(savedRatio);
   return parsed >= 30 && parsed <= 60 ? parsed : 35;
@@ -32,16 +47,20 @@ export function RewriteWorkbenchV3() {
   useEffect(() => {
     if (!modelDropdownOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target as Node)) {
+      if (
+        modelDropdownRef.current &&
+        !modelDropdownRef.current.contains(e.target as Node)
+      ) {
         setModelDropdownOpen(false);
       }
     };
-    window.addEventListener('mousedown', handleClick);
-    return () => window.removeEventListener('mousedown', handleClick);
+    window.addEventListener("mousedown", handleClick);
+    return () => window.removeEventListener("mousedown", handleClick);
   }, [modelDropdownOpen]);
 
-  const currentModelLabel = state.bootstrap?.modelViews.find((m) => m.id === state.selectedModelViewId)?.label
-    || (state.selectedModelViewId ? '已选模型' : '自动推荐模型');
+  const currentModelLabel =
+    state.bootstrap?.modelViews.find((m) => m.id === state.selectedModelViewId)
+      ?.label || (state.selectedModelViewId ? "已选模型" : "自动推荐模型");
 
   // 左右侧宽度可拖动调节
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,8 +79,8 @@ export function RewriteWorkbenchV3() {
 
   const handleDoubleClick = useCallback(() => {
     setLeftWidthPercent(35);
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('dydata-rewrite-split-ratio-v3');
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("dydata-rewrite-split-ratio-v3");
     }
   }, []);
 
@@ -79,17 +98,20 @@ export function RewriteWorkbenchV3() {
 
     const handleMouseUp = () => {
       setIsResizing(false);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem('dydata-rewrite-split-ratio-v3', leftWidthPercentRef.current.toFixed(2));
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          "dydata-rewrite-split-ratio-v3",
+          leftWidthPercentRef.current.toFixed(2),
+        );
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isResizing]);
 
@@ -104,9 +126,11 @@ export function RewriteWorkbenchV3() {
   // 导出 Markdown 文件
   const handleExportMarkdown = () => {
     if (!state.polishedText) return;
-    const blob = new Blob([state.polishedText], { type: 'text/markdown;charset=utf-8' });
+    const blob = new Blob([state.polishedText], {
+      type: "text/markdown;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `dydata_polished_${Date.now()}.md`;
     document.body.appendChild(link);
@@ -130,15 +154,17 @@ export function RewriteWorkbenchV3() {
       </head>
       <body>
         ${state.polishedText
-          .split('\n\n')
-          .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
-          .join('')}
+          .split("\n\n")
+          .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+          .join("")}
       </body>
       </html>
     `;
-    const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
+    const blob = new Blob([htmlContent], {
+      type: "application/msword;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `dydata_polished_${Date.now()}.doc`;
     document.body.appendChild(link);
@@ -170,9 +196,15 @@ export function RewriteWorkbenchV3() {
     return (
       <div className="flex h-full w-full items-center justify-center bg-zinc-50">
         <div className="max-w-md bg-white border border-zinc-200 p-6 rounded-lg shadow-xl space-y-4">
-          <div className="text-[12px] font-medium uppercase tracking-[0.2em] text-rose-500">初始化异常</div>
-          <h3 className="text-[18px] font-semibold text-zinc-900">{state.errorState.title}</h3>
-          <p className="text-[13px] text-zinc-500 leading-relaxed">{state.errorState.message}</p>
+          <div className="text-[12px] font-medium uppercase tracking-[0.2em] text-[#DC2626]">
+            初始化异常
+          </div>
+          <h3 className="text-[18px] font-semibold text-zinc-900">
+            {state.errorState.title}
+          </h3>
+          <p className="text-[13px] text-zinc-500 leading-relaxed">
+            {state.errorState.message}
+          </p>
           <button
             onClick={() => window.location.reload()}
             className="w-full bg-[#D97757] text-white hover:bg-[#C96442] font-medium py-2 rounded-lg text-[12px] transition-all active:scale-[0.98]"
@@ -190,8 +222,10 @@ export function RewriteWorkbenchV3() {
       <div className="flex h-full w-full flex-col overflow-hidden bg-zinc-50/50">
         <header className="relative z-10 flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-5">
           <div className="flex items-center gap-2">
-            <span className="text-[13px] font-medium text-zinc-900">定稿阅览室</span>
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[12px] font-medium text-emerald-600 uppercase tracking-wide">
+            <span className="text-[13px] font-medium text-zinc-900">
+              定稿阅览室
+            </span>
+            <span className="rounded bg-[#16A34A]/100/10 px-1.5 py-0.5 text-[12px] font-medium text-[#16A34A] uppercase tracking-wide">
               沉浸模式
             </span>
           </div>
@@ -219,7 +253,7 @@ export function RewriteWorkbenchV3() {
               className="inline-flex h-8 items-center justify-center rounded-lg bg-zinc-100 px-3 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 transition-all relative active:scale-[0.98]"
             >
               <Copy className="h-3.5 w-3.5 mr-1 text-zinc-500" />
-              <span>{copiedAll ? '已复制' : '复制全文'}</span>
+              <span>{copiedAll ? "已复制" : "复制全文"}</span>
             </button>
             <button
               onClick={() => setPresentationMode(false)}
@@ -231,12 +265,14 @@ export function RewriteWorkbenchV3() {
         </header>
         <div className="flex-1 overflow-y-auto flex justify-center py-10 px-6">
           <div className="w-full max-w-3xl border border-zinc-200 bg-white rounded-lg p-10 select-text">
-            <div className="prose prose-stone max-w-none leading-relaxed text-[13px] space-y-6 text-zinc-700">
-              {state.polishedText.split('\n\n').map((para, i) => (
+            <div className="max-w-none space-y-6 text-[13px] leading-relaxed text-zinc-700">
+              {state.polishedText.split("\n\n").map((para, i) => (
                 <p key={i}>{para}</p>
               ))}
               {!state.polishedText && (
-                <p className="py-12 text-center italic text-zinc-500">暂无定稿内容</p>
+                <p className="py-12 text-center italic text-zinc-500">
+                  暂无定稿内容
+                </p>
               )}
             </div>
           </div>
@@ -268,9 +304,9 @@ export function RewriteWorkbenchV3() {
                 "inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
                 state.isHistoryOpen
                   ? "bg-zinc-100 text-zinc-950 font-semibold"
-                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
+                  : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950",
               )}
-              title={state.isHistoryOpen ? '收起历史对话' : '查看历史对话'}
+              title={state.isHistoryOpen ? "收起历史对话" : "查看历史对话"}
             >
               <History className="h-3 w-3 text-zinc-500" />
               <span>历史记录</span>
@@ -300,31 +336,45 @@ export function RewriteWorkbenchV3() {
                   "inline-flex h-7 max-w-[180px] items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
                   modelDropdownOpen
                     ? "bg-zinc-100 text-zinc-950 font-semibold"
-                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
+                    : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950",
                 )}
                 title="选择模型组合"
               >
                 <Cpu className="h-3 w-3 text-zinc-500 shrink-0" />
                 <span className="truncate">{currentModelLabel}</span>
-                <ChevronDown className={cn("h-3 w-3 text-zinc-500 shrink-0 transition-transform", modelDropdownOpen && "rotate-180")} />
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 text-zinc-500 shrink-0 transition-transform",
+                    modelDropdownOpen && "rotate-180",
+                  )}
+                />
               </button>
 
               {modelDropdownOpen && (
                 <div className="absolute top-full left-0 mt-1.5 w-56 rounded-lg border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-xl p-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                   <button
-                    onClick={() => { actions.setSelectedModelViewId(''); setModelDropdownOpen(false); }}
+                    onClick={() => {
+                      actions.setSelectedModelViewId("");
+                      setModelDropdownOpen(false);
+                    }}
                     className={cn(
                       "w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] transition-colors",
                       !state.selectedModelViewId
                         ? "bg-[#D97757]/10 text-[#D97757]"
-                        : "text-zinc-700 hover:bg-zinc-50"
+                        : "text-zinc-700 hover:bg-zinc-50",
                     )}
                   >
                     <span>自动推荐模型</span>
-                    {!state.selectedModelViewId && <Check className="h-3.5 w-3.5 text-[#D97757]" />}
+                    {!state.selectedModelViewId && (
+                      <Check className="h-3.5 w-3.5 text-[#D97757]" />
+                    )}
                   </button>
                   {state.bootstrap.modelViews.map((item) => {
-                    const disabled = (item as { is_enabled?: boolean; isEnabled?: boolean }).is_enabled === false || (item as { is_enabled?: boolean; isEnabled?: boolean }).isEnabled === false;
+                    const disabled =
+                      (item as { is_enabled?: boolean; isEnabled?: boolean })
+                        .is_enabled === false ||
+                      (item as { is_enabled?: boolean; isEnabled?: boolean })
+                        .isEnabled === false;
                     return (
                       <button
                         key={item.id}
@@ -340,13 +390,20 @@ export function RewriteWorkbenchV3() {
                           disabled
                             ? "opacity-50 cursor-not-allowed text-zinc-400"
                             : state.selectedModelViewId === item.id
-                            ? "bg-[#D97757]/10 text-[#D97757]"
-                            : "text-zinc-700 hover:bg-zinc-50"
+                              ? "bg-[#D97757]/10 text-[#D97757]"
+                              : "text-zinc-700 hover:bg-zinc-50",
                         )}
-                        title={disabled ? "已停用" : (item.description || item.label)}
+                        title={
+                          disabled ? "已停用" : item.description || item.label
+                        }
                       >
-                        <span className="truncate pr-2">{item.label}{disabled ? " (已停用)" : ""}</span>
-                        {state.selectedModelViewId === item.id && <Check className="h-3.5 w-3.5 text-[#D97757] shrink-0" />}
+                        <span className="truncate pr-2">
+                          {item.label}
+                          {disabled ? " (已停用)" : ""}
+                        </span>
+                        {state.selectedModelViewId === item.id && (
+                          <Check className="h-3.5 w-3.5 text-[#D97757] shrink-0" />
+                        )}
                       </button>
                     );
                   })}
@@ -386,13 +443,13 @@ export function RewriteWorkbenchV3() {
             className={cn(
               "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
               showDiffInLatest
-                ? "bg-amber-500/[0.08] text-amber-800 hover:bg-amber-500/[0.12]"
-                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
+                ? "bg-zinc-1000/[0.08] text-zinc-600 hover:bg-zinc-1000/[0.12]"
+                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950",
             )}
-            title={showDiffInLatest ? '关闭修订模式' : '开启修订模式'}
+            title={showDiffInLatest ? "关闭修订模式" : "开启修订模式"}
           >
             {showDiffInLatest ? (
-              <Eye className="h-3 w-3 text-amber-600" />
+              <Eye className="h-3 w-3 text-[#F59E0B]" />
             ) : (
               <EyeOff className="h-3 w-3 text-zinc-500" />
             )}
@@ -406,7 +463,7 @@ export function RewriteWorkbenchV3() {
             className="inline-flex h-7 items-center gap-1 rounded-md bg-zinc-100 px-2.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950 transition-all active:scale-[0.98] disabled:opacity-40"
           >
             <Copy className="h-3 w-3 text-zinc-500" />
-            <span>{copiedAll ? '已复制' : '复制'}</span>
+            <span>{copiedAll ? "已复制" : "复制"}</span>
           </button>
 
           {/* 定稿导出 (唯一主 CTA) */}
@@ -426,7 +483,7 @@ export function RewriteWorkbenchV3() {
         ref={containerRef}
         className={cn(
           "flex-1 flex min-h-0 overflow-hidden relative",
-          isResizing && "select-none cursor-col-resize"
+          isResizing && "select-none cursor-col-resize",
         )}
       >
         {/* 最左边缘：折叠式历史对话舱 */}
@@ -480,11 +537,16 @@ export function RewriteWorkbenchV3() {
           onDoubleClick={handleDoubleClick}
           className={cn(
             "w-[6px] cursor-col-resize shrink-0 transition-colors z-35 relative ml-[-3px] mr-[-3px] flex items-center justify-center group/splitter",
-            isResizing ? "bg-zinc-200" : "bg-transparent hover:bg-zinc-100"
+            isResizing ? "bg-zinc-200" : "bg-transparent hover:bg-zinc-100",
           )}
         >
-          <div className={cn("w-[1px] h-full transition-colors", isResizing ? "bg-zinc-400" : "bg-zinc-200/80")} />
-            <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[12px] px-2 py-1 rounded-lg shadow-lg whitespace-nowrap font-sans font-medium">
+          <div
+            className={cn(
+              "w-[1px] h-full transition-colors",
+              isResizing ? "bg-zinc-400" : "bg-zinc-200/80",
+            )}
+          />
+          <div className="absolute top-12 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover/splitter:opacity-100 transition-opacity duration-200 delay-300 z-50 bg-zinc-900 text-white text-[12px] px-2 py-1 rounded-lg shadow-lg whitespace-nowrap font-sans font-medium">
             双击重置为 35%
           </div>
         </div>

@@ -1,10 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Quote, Check, X, ShieldAlert } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { diffWords, type DiffToken } from './diff-helper';
-import { splitIntoParagraphs, type DocumentParagraph, type Revision } from './useRewriteV3Logic';
+import React, { useState, useEffect, useRef } from "react";
+import { Copy, Quote, Check, X, ShieldAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { diffWords, type DiffToken } from "./diff-helper";
+import {
+  splitIntoParagraphs,
+  type DocumentParagraph,
+  type Revision,
+} from "./useRewriteV3Logic";
 
 interface CalmStudioCanvasProps {
   paragraphs: DocumentParagraph[];
@@ -14,7 +18,7 @@ interface CalmStudioCanvasProps {
   streamingPatchText: string;
   selectedRevisionId: string | null;
   revisions: Revision[];
-  diffMode: 'vs-latest' | 'vs-previous';
+  diffMode: "vs-latest" | "vs-previous";
   showDiffInLatest: boolean;
   onParagraphEdit: (id: string, content: string) => void;
   onReferSelection: (text: string | null) => void;
@@ -42,26 +46,34 @@ export function CalmStudioCanvas({
   onReferSelection,
   onInputChange,
 }: CalmStudioCanvasProps) {
-  const [hoveredParagraphId, setHoveredParagraphId] = useState<string | null>(null);
-  const [editingParagraphId, setEditingParagraphId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [copiedParagraphId, setCopiedParagraphId] = useState<string | null>(null);
+  const [hoveredParagraphId, setHoveredParagraphId] = useState<string | null>(
+    null,
+  );
+  const [editingParagraphId, setEditingParagraphId] = useState<string | null>(
+    null,
+  );
+  const [editContent, setEditContent] = useState("");
+  const [copiedParagraphId, setCopiedParagraphId] = useState<string | null>(
+    null,
+  );
 
   // 划选改写浮条状态
-  const [floatingBar, setFloatingBar] = useState<FloatingSelectionBar | null>(null);
+  const [floatingBar, setFloatingBar] = useState<FloatingSelectionBar | null>(
+    null,
+  );
   const [copiedSelection, setCopiedSelection] = useState(false);
   const canvasScrollRef = useRef<HTMLDivElement>(null);
 
   // 1. 监听全局点击与滚动，及时隐藏划选浮动条
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      const barEl = document.getElementById('text-selection-floating-bar');
+      const barEl = document.getElementById("text-selection-floating-bar");
       if (barEl && !barEl.contains(e.target as Node)) {
         setFloatingBar(null);
       }
     };
-    window.addEventListener('mousedown', handleOutsideClick);
-    return () => window.removeEventListener('mousedown', handleOutsideClick);
+    window.addEventListener("mousedown", handleOutsideClick);
+    return () => window.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
   const handleCanvasScroll = () => {
@@ -71,11 +83,15 @@ export function CalmStudioCanvas({
   };
 
   // 2. 处理划选选区检测
-  const handleTextMouseUp = (e: React.MouseEvent, paragraphId: string, paragraphIndex: number) => {
+  const handleTextMouseUp = (
+    e: React.MouseEvent,
+    paragraphId: string,
+    paragraphIndex: number,
+  ) => {
     if (editingParagraphId) return;
     // 稍作延时以等待 DOM 选区解析就绪
     setTimeout(() => {
-      if (document.activeElement?.tagName === 'TEXTAREA') {
+      if (document.activeElement?.tagName === "TEXTAREA") {
         setFloatingBar(null);
         return;
       }
@@ -98,7 +114,10 @@ export function CalmStudioCanvas({
         let node: Node | null = range.commonAncestorContainer;
         let isInsideParagraph = false;
         while (node) {
-          if (node.nodeType === Node.ELEMENT_NODE && (node as Element).getAttribute('data-paragraph-id') === paragraphId) {
+          if (
+            node.nodeType === Node.ELEMENT_NODE &&
+            (node as Element).getAttribute("data-paragraph-id") === paragraphId
+          ) {
             isInsideParagraph = true;
             break;
           }
@@ -124,11 +143,15 @@ export function CalmStudioCanvas({
 
   // 3. 解析要显示的段落列表
   const completedRevisions = revisions
-    .filter((r) => r.status === 'completed')
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    .filter((r) => r.status === "completed")
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
 
   const latestRevision = completedRevisions.at(-1);
-  const isViewingHistory = selectedRevisionId && selectedRevisionId !== latestRevision?.id;
+  const isViewingHistory =
+    selectedRevisionId && selectedRevisionId !== latestRevision?.id;
   const activeRevision = isViewingHistory
     ? revisions.find((r) => r.id === selectedRevisionId)
     : latestRevision;
@@ -136,24 +159,35 @@ export function CalmStudioCanvas({
   // 用来进行 Diff 对比的对比源版本
   let comparisonRevision: Revision | undefined;
   if (isViewingHistory && activeRevision) {
-    if (diffMode === 'vs-latest') {
+    if (diffMode === "vs-latest") {
       comparisonRevision = latestRevision;
     } else {
-      const idx = completedRevisions.findIndex((r) => r.id === activeRevision.id);
+      const idx = completedRevisions.findIndex(
+        (r) => r.id === activeRevision.id,
+      );
       if (idx > 0) {
         comparisonRevision = completedRevisions[idx - 1];
       }
     }
-  } else if (!isViewingHistory && showDiffInLatest && completedRevisions.length > 1) {
+  } else if (
+    !isViewingHistory &&
+    showDiffInLatest &&
+    completedRevisions.length > 1
+  ) {
     // 正常模式下开启修订模式，默认对比上一个已完成版本
     comparisonRevision = completedRevisions.at(-2);
   }
 
   // 将内容按段落准备好展示
-  let displayParagraphs: Array<{ id: string; content: string; isAbortedShadow?: boolean; sourceType?: string }> = [];
+  let displayParagraphs: Array<{
+    id: string;
+    content: string;
+    isAbortedShadow?: boolean;
+    sourceType?: string;
+  }> = [];
 
   if (isViewingHistory && activeRevision) {
-    const splitTexts = splitIntoParagraphs(activeRevision.fullContent || '');
+    const splitTexts = splitIntoParagraphs(activeRevision.fullContent || "");
     displayParagraphs = splitTexts.map((text: string, idx: number) => ({
       id: `history-${activeRevision.id}-${idx}`,
       content: text,
@@ -167,7 +201,7 @@ export function CalmStudioCanvas({
         return {
           id: originalP?.paragraphId || `stream-${idx}`,
           content: text,
-          sourceType: 'ai',
+          sourceType: "ai",
         };
       });
     } else {
@@ -210,7 +244,9 @@ export function CalmStudioCanvas({
 
     // 在 textarea 挂载后的微任务执行中，将选区还原到 input 中
     setTimeout(() => {
-      const textarea = document.querySelector(`textarea[data-editing-para="${id}"]`) as HTMLTextAreaElement;
+      const textarea = document.querySelector(
+        `textarea[data-editing-para="${id}"]`,
+      ) as HTMLTextAreaElement;
       if (textarea) {
         textarea.focus();
         textarea.setSelectionRange(selStart, selEnd);
@@ -228,7 +264,7 @@ export function CalmStudioCanvas({
   const handleQuote = (index: number, content: string) => {
     onReferSelection(content);
     onInputChange(`【针对第 ${index + 1} 段】 `);
-    const textarea = document.querySelector('textarea');
+    const textarea = document.querySelector("textarea");
     if (textarea) {
       (textarea as HTMLTextAreaElement).focus();
     }
@@ -244,19 +280,28 @@ export function CalmStudioCanvas({
       <div className="flex-1 overflow-y-auto px-10 py-10 space-y-6">
         {displayParagraphs.map((para, index) => {
           const isPatching = generatingParagraphIds.includes(para.id);
-          const isTemporarilyDimmed = isSending && generatingParagraphIds.length > 0 && !isPatching;
+          const isTemporarilyDimmed =
+            isSending && generatingParagraphIds.length > 0 && !isPatching;
 
           const isLastStreamingPara =
-            isSending && generatingParagraphIds.length === 0 && index === displayParagraphs.length - 1;
+            isSending &&
+            generatingParagraphIds.length === 0 &&
+            index === displayParagraphs.length - 1;
 
           const isAbortedShadow = para.isAbortedShadow;
           const isEditing = editingParagraphId === para.id;
 
           // Diff 对比计算
           let diffTokens: DiffToken[] | null = null;
-          if ((isViewingHistory || showDiffInLatest) && comparisonRevision && activeRevision) {
-            const compTexts = splitIntoParagraphs(comparisonRevision.fullContent || '');
-            const compText = compTexts[index] || '';
+          if (
+            (isViewingHistory || showDiffInLatest) &&
+            comparisonRevision &&
+            activeRevision
+          ) {
+            const compTexts = splitIntoParagraphs(
+              comparisonRevision.fullContent || "",
+            );
+            const compText = compTexts[index] || "";
             diffTokens = diffWords(compText, para.content);
           }
 
@@ -266,22 +311,32 @@ export function CalmStudioCanvas({
               data-paragraph-id={para.id}
               onMouseUp={(e) => handleTextMouseUp(e, para.id, index)}
               className={cn(
-                'group relative rounded-lg transition-all duration-300 px-4 py-3 border border-transparent',
+                "group relative rounded-lg transition-all duration-300 px-4 py-3 border border-transparent",
                 // 1. 系统临时暗化
-                isTemporarilyDimmed && 'opacity-25 transition-opacity duration-300',
+                isTemporarilyDimmed &&
+                  "opacity-25 transition-opacity duration-300",
                 // 2. 生成中的段落：带有呼吸高亮
-                isPatching && 'bg-amber-500/[0.03] border-amber-500/20 ring-1 ring-amber-500/10 shadow-sm animate-pulse',
+                isPatching &&
+                  "bg-zinc-1000/[0.03] border-zinc-200 ring-1 ring-[#F59E0B]/10 shadow-sm animate-pulse",
                 // 3. 全局生成流式最后段落（打字重叠）
-                isLastStreamingPara && 'border-l-2 border-amber-500 pl-3 bg-amber-500/[0.02]',
+                isLastStreamingPara &&
+                  "border-l-2 border-[#F59E0B] pl-3 bg-zinc-1000/[0.02]",
                 // 4. 中断的影子：物理降灰 60%
-                isAbortedShadow && 'opacity-60 saturate-50 select-none pointer-events-none',
+                isAbortedShadow &&
+                  "opacity-60 saturate-50 select-none pointer-events-none",
                 // Hover 态微弱反馈
-                !isSending && !isViewingHistory && !isEditing && 'hover:bg-zinc-50/50 hover:border-zinc-200/30'
+                !isSending &&
+                  !isViewingHistory &&
+                  !isEditing &&
+                  "hover:bg-zinc-50/50 hover:border-zinc-200/30",
               )}
-              onMouseEnter={() => !isSending && !isViewingHistory && setHoveredParagraphId(para.id)}
+              onMouseEnter={() =>
+                !isSending &&
+                !isViewingHistory &&
+                setHoveredParagraphId(para.id)
+              }
               onMouseLeave={() => setHoveredParagraphId(null)}
             >
-
               {/* 手工编辑状态 */}
               {isEditing ? (
                 <div className="relative w-full z-15">
@@ -290,20 +345,20 @@ export function CalmStudioCanvas({
                     data-editing-para={para.id}
                     onChange={(e) => {
                       setEditContent(e.target.value);
-                      e.target.style.height = 'auto';
+                      e.target.style.height = "auto";
                       e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
                     ref={(el) => {
                       if (el) {
-                        el.style.height = 'auto';
+                        el.style.height = "auto";
                         el.style.height = `${el.scrollHeight}px`;
                       }
                     }}
                     onBlur={() => handleSaveEdit(para.id)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                         handleSaveEdit(para.id);
-                      } else if (e.key === 'Escape') {
+                      } else if (e.key === "Escape") {
                         setEditingParagraphId(null);
                       }
                     }}
@@ -317,38 +372,44 @@ export function CalmStudioCanvas({
                 <div
                   onDoubleClick={() => handleDoubleClick(para.id, para.content)}
                   className={cn(
-                    'text-[13px] leading-relaxed tracking-wide whitespace-pre-wrap transition-colors text-zinc-700',
-                    isViewingHistory && 'text-zinc-700'
+                    "text-[13px] leading-relaxed tracking-wide whitespace-pre-wrap transition-colors text-zinc-700",
+                    isViewingHistory && "text-zinc-700",
                   )}
-                  title={!isSending && !isViewingHistory ? '双击可编辑该段落' : undefined}
+                  title={
+                    !isSending && !isViewingHistory
+                      ? "双击可编辑该段落"
+                      : undefined
+                  }
                 >
-                  {diffTokens ? (
-                    diffTokens.map((token, tIdx) => {
-                      if (token.type === 'added') {
-                        return (
-                          <ins
-                            key={tIdx}
-                            className="bg-emerald-50 text-emerald-700 no-underline border-b border-emerald-300 px-0.5 rounded"
-                          >
-                            {token.value}
-                          </ins>
-                        );
-                      }
-                      if (token.type === 'removed') {
-                        return (
-                          <del
-                            key={tIdx}
-                            className="bg-rose-50 text-rose-600 line-through decoration-rose-300 px-0.5 rounded opacity-80"
-                          >
-                            {token.value}
-                          </del>
-                        );
-                      }
-                      return <span key={tIdx}>{token.value}</span>;
-                    })
-                  ) : (
-                    para.content || <span className="text-zinc-500 italic select-none">此段内容为空</span>
-                  )}
+                  {diffTokens
+                    ? diffTokens.map((token, tIdx) => {
+                        if (token.type === "added") {
+                          return (
+                            <ins
+                              key={tIdx}
+                              className="bg-[#16A34A]/10 text-zinc-600 no-underline border-b border-zinc-200 px-0.5 rounded"
+                            >
+                              {token.value}
+                            </ins>
+                          );
+                        }
+                        if (token.type === "removed") {
+                          return (
+                            <del
+                              key={tIdx}
+                              className="bg-zinc-100 text-[#DC2626] line-through decoration-[#DC2626]/40 px-0.5 rounded opacity-80"
+                            >
+                              {token.value}
+                            </del>
+                          );
+                        }
+                        return <span key={tIdx}>{token.value}</span>;
+                      })
+                    : para.content || (
+                        <span className="text-zinc-500 italic select-none">
+                          此段内容为空
+                        </span>
+                      )}
                 </div>
               )}
 
@@ -384,13 +445,15 @@ export function CalmStudioCanvas({
         })}
 
         {/* 骨架屏 */}
-        {isSending && generatingParagraphIds.length === 0 && displayParagraphs.length === 0 && (
-          <div className="space-y-4 py-4">
-            <div className="h-4 bg-zinc-100 rounded-lg w-3/4 animate-pulse" />
-            <div className="h-4 bg-zinc-100 rounded-lg w-5/6 animate-pulse [animation-delay:150ms]" />
-            <div className="h-4 bg-zinc-100 rounded-lg w-2/3 animate-pulse [animation-delay:300ms]" />
-          </div>
-        )}
+        {isSending &&
+          generatingParagraphIds.length === 0 &&
+          displayParagraphs.length === 0 && (
+            <div className="space-y-4 py-4">
+              <div className="h-4 bg-zinc-100 rounded-lg w-3/4 animate-pulse" />
+              <div className="h-4 bg-zinc-100 rounded-lg w-5/6 animate-pulse [animation-delay:150ms]" />
+              <div className="h-4 bg-zinc-100 rounded-lg w-2/3 animate-pulse [animation-delay:300ms]" />
+            </div>
+          )}
       </div>
 
       {/* 4. 划选文字悬浮 Action Bar (工业级原位体验) */}
@@ -398,18 +461,20 @@ export function CalmStudioCanvas({
         <div
           id="text-selection-floating-bar"
           style={{
-            position: 'fixed',
+            position: "fixed",
             left: `${floatingBar.rect.left + floatingBar.rect.width / 2}px`,
             top: `${floatingBar.rect.top - 42}px`,
-            transform: 'translateX(-50%)',
+            transform: "translateX(-50%)",
           }}
           className="flex items-center gap-1 bg-zinc-900/95 backdrop-blur-md text-white p-0.5 rounded-lg shadow-xl z-50 animate-in fade-in slide-in-from-bottom-1.5 duration-150 select-none border border-zinc-800/60"
         >
           <button
             onClick={() => {
               onReferSelection(floatingBar.text);
-              onInputChange(`【针对第 ${floatingBar.paragraphIndex + 1} 段选区】 `);
-              const textarea = document.querySelector('textarea');
+              onInputChange(
+                `【针对第 ${floatingBar.paragraphIndex + 1} 段选区】 `,
+              );
+              const textarea = document.querySelector("textarea");
               if (textarea) {
                 (textarea as HTMLTextAreaElement).focus();
               }
@@ -430,17 +495,23 @@ export function CalmStudioCanvas({
             className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-zinc-800 rounded-lg text-[12px] font-medium text-zinc-100 transition-colors"
           >
             <Copy className="h-3 w-3 text-zinc-500" />
-            <span>{copiedSelection ? '已复制' : '复制'}</span>
+            <span>{copiedSelection ? "已复制" : "复制"}</span>
           </button>
         </div>
       )}
 
       {/* 底部浮标 */}
       {isViewingHistory && activeRevision && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-2 duration-300">
-          <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
-          <div className="text-[12px] text-amber-800 font-medium">
-            正在阅览历史版本 (由 {activeRevision.sourceType === 'fork' ? 'Fork' : activeRevision.sourceType === 'user_edit' ? '人手修改' : 'AI生成'} 创建于 {new Date(activeRevision.createdAt).toLocaleTimeString()})
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-1000/10 border border-zinc-200 px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-2 duration-300">
+          <ShieldAlert className="h-4 w-4 text-[#F59E0B] shrink-0" />
+          <div className="text-[12px] text-zinc-600 font-medium">
+            正在阅览历史版本 (由{" "}
+            {activeRevision.sourceType === "fork"
+              ? "Fork"
+              : activeRevision.sourceType === "user_edit"
+                ? "人手修改"
+                : "AI生成"}{" "}
+            创建于 {new Date(activeRevision.createdAt).toLocaleTimeString()})
           </div>
         </div>
       )}

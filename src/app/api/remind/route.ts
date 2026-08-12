@@ -10,9 +10,21 @@ import {
   shiftDateString,
 } from "@/lib/remind-submission";
 import { buildReminderContent } from "@/lib/飞书提醒";
-import { getChinaWorkingDayReason, getShanghaiYear, hasChinaHolidayPlan, isChinaWorkingDay } from "@/lib/工作日";
-import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
-import type { ExemptionCategory, ExemptionRequestStatus, UserStatus } from "@/types";
+import {
+  getChinaWorkingDayReason,
+  getShanghaiYear,
+  hasChinaHolidayPlan,
+  isChinaWorkingDay,
+} from "@/lib/工作日";
+import {
+  filterActiveMemberships,
+  loadWithMembershipFallback,
+} from "@/lib/member-lifecycle";
+import type {
+  ExemptionCategory,
+  ExemptionRequestStatus,
+  UserStatus,
+} from "@/types";
 
 const REMIND_SOURCE_LABEL = "Vercel Cron /api/remind v2";
 
@@ -47,10 +59,15 @@ type ExemptionRequestRow = {
   end_date: string | null;
 };
 
-function isExemptByRequest(requests: ExemptionRequestRow[], userId: string, date: string): boolean {
+function isExemptByRequest(
+  requests: ExemptionRequestRow[],
+  userId: string,
+  date: string,
+): boolean {
   return requests.some((req) => {
     if (req.applicant_user_id !== userId) return false;
-    if (req.request_status !== "pending" && req.request_status !== "approved") return false;
+    if (req.request_status !== "pending" && req.request_status !== "approved")
+      return false;
     if (!req.end_date) {
       return req.start_date === date;
     }
@@ -98,8 +115,12 @@ export async function GET(request: NextRequest) {
   }
 
   const serviceRoleKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey!);
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey!,
+  );
   const today = getShanghaiDateString();
   const sevenDaysAgo = shiftDateString(today, -7);
 
@@ -110,18 +131,20 @@ export async function GET(request: NextRequest) {
     { data: exemptionRequests, error: exemptionRequestsError },
   ] = await Promise.all([
     loadWithMembershipFallback({
-      loadWithMembership: async () => supabase
-        .from("profiles")
-        .select(
-          "id, name, role, status, membership_status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
-        )
-        .eq("role", "member"),
-      loadWithoutMembership: async () => supabase
-        .from("profiles")
-        .select(
-          "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
-        )
-        .eq("role", "member"),
+      loadWithMembership: async () =>
+        supabase
+          .from("profiles")
+          .select(
+            "id, name, role, status, membership_status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+          )
+          .eq("role", "member"),
+      loadWithoutMembership: async () =>
+        supabase
+          .from("profiles")
+          .select(
+            "id, name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category",
+          )
+          .eq("role", "member"),
     }),
     supabase.from("accounts").select("id, profile_id"),
     supabase
@@ -138,10 +161,13 @@ export async function GET(request: NextRequest) {
   ]);
 
   const profilesError = profilesResult.error;
-  const profiles = filterActiveMemberships((profilesResult.data ?? []) as ProfileRow[]);
+  const profiles = filterActiveMemberships(
+    (profilesResult.data ?? []) as ProfileRow[],
+  );
 
   // exemption_request 查询失败不应阻断主流程
-  const activeExemptionRequests = (exemptionRequests ?? []) as ExemptionRequestRow[];
+  const activeExemptionRequests = (exemptionRequests ??
+    []) as ExemptionRequestRow[];
 
   if (profilesError) {
     return NextResponse.json({ error: profilesError.message }, { status: 500 });
@@ -155,10 +181,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: reportsError.message }, { status: 500 });
   }
 
-  const normalizedProfiles = ((profiles ?? []) as ProfileRow[]).map((profile) => ({
-    ...profile,
-    status: profile.status ?? "active",
-  }));
+  const normalizedProfiles = ((profiles ?? []) as ProfileRow[]).map(
+    (profile) => ({
+      ...profile,
+      status: profile.status ?? "active",
+    }),
+  );
 
   const all = buildSubmissionStatus({
     profiles: normalizedProfiles,
@@ -172,11 +200,19 @@ export async function GET(request: NextRequest) {
     .filter((user) => !user.submitted)
     .map((user) => ({
       ...user,
-      isExemptByRequest: isExemptByRequest(activeExemptionRequests, user.user_id, today),
+      isExemptByRequest: isExemptByRequest(
+        activeExemptionRequests,
+        user.user_id,
+        today,
+      ),
     }));
 
-  const unsubmitted = unsubmittedWithExemptionCheck.filter((user) => !user.isExemptByRequest);
-  const exemptedSkipped = unsubmittedWithExemptionCheck.filter((user) => user.isExemptByRequest);
+  const unsubmitted = unsubmittedWithExemptionCheck.filter(
+    (user) => !user.isExemptByRequest,
+  );
+  const exemptedSkipped = unsubmittedWithExemptionCheck.filter(
+    (user) => user.isExemptByRequest,
+  );
   const submittedCount = all.length - unsubmittedWithExemptionCheck.length;
 
   if (unsubmitted.length === 0) {
@@ -193,14 +229,16 @@ export async function GET(request: NextRequest) {
     today,
   });
 
-  const { content, escalatedMembers, escalationManager } = buildReminderContent({
-    unsubmitted,
-    streakMap,
-    submittedCount,
-    totalCount: all.length,
-    today,
-    sourceLabel: REMIND_SOURCE_LABEL,
-  });
+  const { content, escalatedMembers, escalationManager } = buildReminderContent(
+    {
+      unsubmitted,
+      streakMap,
+      submittedCount,
+      totalCount: all.length,
+      today,
+      sourceLabel: REMIND_SOURCE_LABEL,
+    },
+  );
 
   // 记录已豁免跳过成员到 remind_logs
   for (const member of exemptedSkipped) {
@@ -216,7 +254,10 @@ export async function GET(request: NextRequest) {
 
   const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
   if (!webhookUrl) {
-    return NextResponse.json({ error: "FEISHU_WEBHOOK_URL not configured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "FEISHU_WEBHOOK_URL not configured" },
+      { status: 500 },
+    );
   }
 
   const response = await fetch(webhookUrl, {
@@ -266,7 +307,10 @@ export async function GET(request: NextRequest) {
         response_body: text.slice(0, 500),
       });
     }
-    return NextResponse.json({ error: `Feishu webhook failed: ${text}` }, { status: 500 });
+    return NextResponse.json(
+      { error: `Feishu webhook failed: ${text}` },
+      { status: 500 },
+    );
   }
 
   // 记录发送成功的催交日志
@@ -277,24 +321,6 @@ export async function GET(request: NextRequest) {
       user_name: member.name,
       status: "success",
       is_exempted: false,
-    });
-  }
-
-  // 同步往通知中心推条目（站内待办，源头去重 = target_date+user_id）
-  const { emit } = await import("@/lib/notifications/server");
-  for (const member of unsubmitted) {
-    if (!member.user_id) continue;
-    await emit({
-      recipients: [member.user_id],
-      type: "report.remind",
-      category: "todo",
-      severity: "warning",
-      title: `请尽快填写 ${today} 的日报`,
-      body: "你的日报尚未提交，请尽快补上以免影响排行榜与团队节奏。",
-      actionLabel: "去填报",
-      actionUrl: "/dashboard",
-      sourceType: "report.remind",
-      sourceId: `${today}:${member.user_id}`,
     });
   }
 

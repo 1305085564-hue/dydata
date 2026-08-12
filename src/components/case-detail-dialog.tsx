@@ -3,7 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Check, Copy, Edit2, Loader2, Save, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Copy,
+  Edit2,
+  Loader2,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -41,7 +50,9 @@ function renderHighlightedText(text: string, highlights: string[]) {
   }
 
   // Escape special regex characters in highlights
-  const escapedHighlights = activeHighlights.map((h) => h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const escapedHighlights = activeHighlights.map((h) =>
+    h.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  );
   // Create a regex matching any of the highlights, global
   const regex = new RegExp(`(${escapedHighlights.join("|")})`, "g");
   const parts = text.split(regex);
@@ -54,7 +65,7 @@ function renderHighlightedText(text: string, highlights: string[]) {
           return (
             <mark
               key={index}
-              className="bg-rose-100 text-rose-700 border-b border-rose-400 font-medium px-0.5 rounded-sm select-none"
+              className="bg-zinc-100 text-zinc-600 border-b border-zinc-200 font-medium px-0.5 rounded-sm select-none"
             >
               {part}
             </mark>
@@ -92,7 +103,10 @@ type DetailRow = ViolationDetail & {
   revision_missing_fields?: string[] | null;
 };
 
-type DetailRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+type DetailRequest = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
 
 export async function fetchViolationDetail(
   caseId: string,
@@ -194,7 +208,9 @@ export function CaseDetailDialog({
       .catch((cause) => {
         if (!cancelled) {
           setData(null);
-          setLoadError(cause instanceof Error ? cause.message : "话术详情加载失败，请重试");
+          setLoadError(
+            cause instanceof Error ? cause.message : "话术详情加载失败，请重试",
+          );
         }
       })
       .finally(() => {
@@ -240,7 +256,7 @@ export function CaseDetailDialog({
               script_text: editText.trim(),
               highlighted_sections: highlightedSections,
             }
-          : null
+          : null,
       );
       setIsEditing(false);
       feedbackToast.success("已保存修改");
@@ -286,16 +302,21 @@ export function CaseDetailDialog({
                 undone = true;
                 clearTimeout(commitTimer);
                 try {
-                  const restoreRes = await fetch("/api/violations/review/restore", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ snapshots: [snapshot] }),
-                  });
+                  const restoreRes = await fetch(
+                    "/api/violations/review/restore",
+                    {
+                      method: "POST",
+                      headers: { "content-type": "application/json" },
+                      body: JSON.stringify({ snapshots: [snapshot] }),
+                    },
+                  );
                   if (!restoreRes.ok) throw new Error("撤销失败");
                   feedbackToast.success("已恢复话术");
                   router.refresh();
                 } catch (e) {
-                  feedbackToast.error(e instanceof Error ? e.message : "撤销失败");
+                  feedbackToast.error(
+                    e instanceof Error ? e.message : "撤销失败",
+                  );
                   router.refresh();
                 }
               },
@@ -331,7 +352,9 @@ export function CaseDetailDialog({
   const isConversion = data?.purpose === "conversion";
   const passRate = data ? getPassRate(data) : null;
   const screenshots = data?.screenshot_paths ?? [];
-  const testRecords = (data?.test_records ?? data?.violation_test_records ?? []) as ViolationTestRecord[];
+  const testRecords = (data?.test_records ??
+    data?.violation_test_records ??
+    []) as ViolationTestRecord[];
   const passedCount = data?.pass_count ?? 0;
   const failedCount = data?.fail_count ?? 0;
   const totalTests = passedCount + failedCount;
@@ -343,7 +366,10 @@ export function CaseDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl" showCloseButton={false}>
+      <DialogContent
+        className="max-h-[88vh] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl"
+        showCloseButton={false}
+      >
         <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4 backdrop-blur-md">
           <div className="flex items-start justify-between">
             <div>
@@ -378,8 +404,13 @@ export function CaseDetailDialog({
             </div>
           ) : loadError ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <AlertTriangle className="size-5 text-[#C9604D]" aria-hidden="true" />
-              <p className="mt-3 text-[13px] font-medium text-zinc-700">{loadError}</p>
+              <AlertTriangle
+                className="size-5 text-[#C9604D]"
+                aria-hidden="true"
+              />
+              <p className="mt-3 text-[13px] font-medium text-zinc-700">
+                {loadError}
+              </p>
               <button
                 type="button"
                 onClick={() => setReloadToken((value) => value + 1)}
@@ -391,381 +422,418 @@ export function CaseDetailDialog({
           ) : data ? (
             <>
               {data.status === "needs_revision" && (
-                <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 text-[12px] text-amber-800 flex items-start gap-2.5">
+                <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-100 p-4 text-[12px] text-zinc-600 flex items-start gap-2.5">
                   <AlertTriangle className="size-4.5 text-[#D99E55] shrink-0 mt-0.5" />
                   <div>
-                  <p className="text-[#D99E55]">缺失凭证打回中</p>
-                    {data.revision_note && <p className="mt-1 text-zinc-700">{data.revision_note}</p>}
+                    <p className="text-[#D99E55]">缺失凭证打回中</p>
+                    {data.revision_note && (
+                      <p className="mt-1 text-zinc-700">{data.revision_note}</p>
+                    )}
                   </div>
                 </div>
               )}
               <div className="space-y-6 pt-5">
-              {/* 标签行 */}
-              <div className="flex flex-wrap items-center gap-2">
-                {!isConversion && <UsageStateBadge usageState={data.usage_state} size="md" />}
-                {!isConversion && (
-                  <PassRateBadge passCount={data.pass_count} failCount={data.fail_count} />
-                )}
-                <span className="inline-flex items-center rounded-lg border border-zinc-200 px-2 py-0.5 text-[12px] text-zinc-700">
-                  {data.category || "其他"}
-                </span>
-                {confidence ? (
-                  <span
-                    className="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[12px]"
-                    style={{
-                      borderColor: `${confidence.toneHex}33`,
-                      color: confidence.toneHex,
-                    }}
-                    title={confidence.hint}
-                  >
-                    <span
-                      className="size-1.5 rounded-full"
-                      style={{ backgroundColor: confidence.toneHex }}
+                {/* 标签行 */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {!isConversion && (
+                    <UsageStateBadge usageState={data.usage_state} size="md" />
+                  )}
+                  {!isConversion && (
+                    <PassRateBadge
+                      passCount={data.pass_count}
+                      failCount={data.fail_count}
                     />
-                    {confidence.label}
+                  )}
+                  <span className="inline-flex items-center rounded-lg border border-zinc-200 px-2 py-0.5 text-[12px] text-zinc-700">
+                    {data.category || "其他"}
                   </span>
-                ) : null}
-              </div>
-
-              {/* 话术全文 + 管理操作按钮 */}
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[12px] uppercase tracking-[0.25em] text-zinc-500">
-                    话术全文
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    {isEditing ? (
-                      <>
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={handleSaveEdit}
-                          className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/10 px-2 text-[12px] font-medium text-[#6FAA7D] transition-all hover:bg-[#6FAA7D]/15 active:translate-y-0 disabled:opacity-60"
-                        >
-                          {saving ? (
-                            <Loader2 className="size-3 animate-spin" />
-                          ) : (
-                            <Save className="size-3" />
-                          )}
-                          保存
-                        </button>
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() => {
-                            setIsEditing(false);
-                            setEditText(data.script_text || "");
-                          }}
-                          className="inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-700 transition-all hover:bg-zinc-50 active:translate-y-0"
-                        >
-                          取消
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleCopy}
-                          className={cn(
-                            "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[12px] transition-all active:translate-y-0",
-                            copied
-                              ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
-                              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:text-zinc-900",
-                          )}
-                        >
-                          {copied ? (
-                            <>
-                              <Check className="size-3 stroke-[2]" />
-                              已复制
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="size-3 stroke-[1.75]" />
-                              复制
-                            </>
-                          )}
-                        </button>
-                        {canManage && !showReviewPanel && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditText(data.script_text || "");
-                                setIsEditing(true);
-                              }}
-                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-700 transition-all hover:border-zinc-300 hover:text-zinc-900 active:translate-y-0"
-                            >
-                              <Edit2 className="size-3 text-zinc-500" />
-                              编辑
-                            </button>
-                            <button
-                              type="button"
-                              disabled={deleting}
-                              onClick={handleDelete}
-                              className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#C9604D]/25 bg-white px-2 text-[12px] text-[#C9604D] transition-all hover:bg-[#C9604D]/5 active:translate-y-0 disabled:opacity-60"
-                            >
-                              {deleting ? (
-                                <Loader2 className="size-3 animate-spin" />
-                              ) : (
-                                <Trash2 className="size-3" />
-                              )}
-                              下架
-                            </button>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-                {isEditing ? (
-                  <textarea
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    disabled={saving}
-                    className="w-full min-h-[120px] rounded-lg border border-zinc-300 bg-white p-2.5 text-[13px] leading-[1.6] text-zinc-800 outline-none focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20 disabled:bg-zinc-50 disabled:text-zinc-500"
-                    placeholder="请输入修改后的话术原文"
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    <p
-                      onMouseUp={handleTextMouseUp}
-                      className="whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700 select-text"
+                  {confidence ? (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[12px]"
+                      style={{
+                        borderColor: `${confidence.toneHex}33`,
+                        color: confidence.toneHex,
+                      }}
+                      title={confidence.hint}
                     >
-                      {renderHighlightedText(data.script_text, highlightedSections)}
+                      <span
+                        className="size-1.5 rounded-full"
+                        style={{ backgroundColor: confidence.toneHex }}
+                      />
+                      {confidence.label}
+                    </span>
+                  ) : null}
+                </div>
+
+                {/* 话术全文 + 管理操作按钮 */}
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50/40 p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-[12px] uppercase tracking-[0.25em] text-zinc-500">
+                      话术全文
                     </p>
-
-                    {canManage && selectedText && (
-                      <div className="flex items-center gap-2 pt-1 border-t border-zinc-100 animate-fadeIn">
-                        <button
-                          type="button"
-                          onClick={handleAddHighlight}
-                          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 transition-all hover:bg-rose-100 active:translate-y-0"
-                        >
-                          <AlertTriangle className="size-3 text-rose-500" />
-                          标记选中文案为违规段落:
-                          <span className="max-w-[150px] truncate bg-rose-200/50 px-1 rounded">
-                            “{selectedText}”
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedText("")}
-                          className="text-zinc-400 hover:text-zinc-600 text-[11px]"
-                        >
-                          取消
-                        </button>
-                      </div>
-                    )}
-
-                    {highlightedSections.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 items-center pt-2 border-t border-zinc-100/50">
-                        <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-                          已标记违规段落 ({highlightedSections.length})：
-                        </span>
-                        {highlightedSections.map((h, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
+                    <div className="flex items-center gap-1.5">
+                      {isEditing ? (
+                        <>
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={handleSaveEdit}
+                            className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#6FAA7D]/30 bg-[#6FAA7D]/10 px-2 text-[12px] font-medium text-[#6FAA7D] transition-all hover:bg-[#6FAA7D]/15 active:translate-y-0 disabled:opacity-60"
                           >
-                            <span className="max-w-[150px] truncate">{h}</span>
-                            {canManage && (
+                            {saving ? (
+                              <Loader2 className="size-3 animate-spin" />
+                            ) : (
+                              <Save className="size-3" />
+                            )}
+                            保存
+                          </button>
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => {
+                              setIsEditing(false);
+                              setEditText(data.script_text || "");
+                            }}
+                            className="inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-700 transition-all hover:bg-zinc-50 active:translate-y-0"
+                          >
+                            取消
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleCopy}
+                            className={cn(
+                              "inline-flex h-7 items-center gap-1 rounded-lg border px-2 text-[12px] transition-all active:translate-y-0",
+                              copied
+                                ? "border-[#6FAA7D]/30 bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                                : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:text-zinc-900",
+                            )}
+                          >
+                            {copied ? (
+                              <>
+                                <Check className="size-3 stroke-[2]" />
+                                已复制
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="size-3 stroke-[1.75]" />
+                                复制
+                              </>
+                            )}
+                          </button>
+                          {canManage && !showReviewPanel && (
+                            <>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveHighlight(h)}
-                                className="text-rose-400 hover:text-rose-700 transition-colors"
+                                onClick={() => {
+                                  setEditText(data.script_text || "");
+                                  setIsEditing(true);
+                                }}
+                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 text-[12px] text-zinc-700 transition-all hover:border-zinc-300 hover:text-zinc-900 active:translate-y-0"
                               >
-                                <X className="size-3" />
+                                <Edit2 className="size-3 text-zinc-500" />
+                                编辑
                               </button>
-                            )}
+                              <button
+                                type="button"
+                                disabled={deleting}
+                                onClick={handleDelete}
+                                className="inline-flex h-7 items-center gap-1 rounded-lg border border-[#C9604D]/25 bg-white px-2 text-[12px] text-[#C9604D] transition-all hover:bg-[#C9604D]/5 active:translate-y-0 disabled:opacity-60"
+                              >
+                                {deleting ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-3" />
+                                )}
+                                下架
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {isEditing ? (
+                    <textarea
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      disabled={saving}
+                      className="w-full min-h-[120px] rounded-lg border border-zinc-300 bg-white p-2.5 text-[13px] leading-[1.6] text-zinc-800 outline-none focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/20 disabled:bg-zinc-50 disabled:text-zinc-500"
+                      placeholder="请输入修改后的话术原文"
+                    />
+                  ) : (
+                    <div className="space-y-3">
+                      <p
+                        onMouseUp={handleTextMouseUp}
+                        className="whitespace-pre-wrap text-[13px] leading-[1.7] text-zinc-700 select-text"
+                      >
+                        {renderHighlightedText(
+                          data.script_text,
+                          highlightedSections,
+                        )}
+                      </p>
+
+                      {canManage && selectedText && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-zinc-100 animate-fadeIn">
+                          <button
+                            type="button"
+                            onClick={handleAddHighlight}
+                            className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600 transition-all hover:bg-zinc-100 active:translate-y-0"
+                          >
+                            <AlertTriangle className="size-3 text-zinc-500" />
+                            标记选中文案为违规段落:
+                            <span className="max-w-[150px] truncate bg-zinc-100 px-1 rounded">
+                              “{selectedText}”
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedText("")}
+                            className="text-zinc-400 hover:text-zinc-600 text-[11px]"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      )}
+
+                      {highlightedSections.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 items-center pt-2 border-t border-zinc-100/50">
+                          <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                            已标记违规段落 ({highlightedSections.length})：
                           </span>
-                        ))}
-                      </div>
-                    )}
+                          {highlightedSections.map((h, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 border border-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
+                            >
+                              <span className="max-w-[150px] truncate">
+                                {h}
+                              </span>
+                              {canManage && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveHighlight(h)}
+                                  className="text-zinc-400 hover:text-zinc-600 transition-colors"
+                                >
+                                  <X className="size-3" />
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 统计指标 */}
+                {isConversion ? (
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <StatBlock
+                      label="转化率"
+                      value={formatConversionRate(data)}
+                      accent
+                    />
+                    <StatBlock
+                      label="使用次数"
+                      value={formatCount(data.usage_count)}
+                    />
+                    <StatBlock
+                      label="累计播放"
+                      value={formatCount(data.total_views)}
+                    />
+                    <StatBlock
+                      label="累计涨粉"
+                      value={formatCount(data.total_follows)}
+                    />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    <StatBlock
+                      label="通过率"
+                      value={passRate === null ? "—" : `${passRate}%`}
+                      accent
+                    />
+                    <StatBlock
+                      label="测试账号"
+                      value={String(totalTests)}
+                      sublabel={
+                        totalTests > 0
+                          ? `${passedCount} 通过 · ${failedCount} 违规`
+                          : undefined
+                      }
+                    />
+                    <StatBlock
+                      label="使用次数"
+                      value={formatCount(data.usage_count)}
+                    />
                   </div>
                 )}
-              </div>
 
-              {/* 统计指标 */}
-              {isConversion ? (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <StatBlock label="转化率" value={formatConversionRate(data)} accent />
-                  <StatBlock label="使用次数" value={formatCount(data.usage_count)} />
-                  <StatBlock label="累计播放" value={formatCount(data.total_views)} />
-                  <StatBlock label="累计涨粉" value={formatCount(data.total_follows)} />
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-2">
-                  <StatBlock
-                    label="通过率"
-                    value={passRate === null ? "—" : `${passRate}%`}
-                    accent
-                  />
-                  <StatBlock
-                    label="测试账号"
-                    value={String(totalTests)}
-                    sublabel={
-                      totalTests > 0
-                        ? `${passedCount} 通过 · ${failedCount} 违规`
-                        : undefined
-                    }
-                  />
-                  <StatBlock label="使用次数" value={formatCount(data.usage_count)} />
-                </div>
-              )}
-
-              {/* 管理员点评 */}
-              {data.admin_conclusion ? (
-                <div className="rounded-xl border border-[#D97757]/15 bg-[#D97757]/[0.04] p-4">
-                  <p className="text-[12px] uppercase tracking-[0.25em] text-[#D97757]">
-                    管理员点评
-                  </p>
-                  <p className="mt-2 text-[13px] leading-[1.7] text-zinc-700">
-                    {data.admin_conclusion}
-                  </p>
-                </div>
-              ) : null}
-
-              {/* 截图 */}
-              {screenshots.length > 0 ? (
-                <div>
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-[12px] uppercase tracking-[0.25em] text-zinc-500">
-                      截图 · {screenshots.length} 张
+                {/* 管理员点评 */}
+                {data.admin_conclusion ? (
+                  <div className="rounded-xl border border-[#D97757]/15 bg-[#D97757]/[0.04] p-4">
+                    <p className="text-[12px] uppercase tracking-[0.25em] text-[#D97757]">
+                      管理员点评
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => handleScreenshotClick(screenshots, 0)}
-                      className="text-[12px] text-zinc-500 transition-colors hover:text-zinc-900"
-                    >
-                      查看大图
-                    </button>
+                    <p className="mt-2 text-[13px] leading-[1.7] text-zinc-700">
+                      {data.admin_conclusion}
+                    </p>
                   </div>
-                  <div className="mt-2 grid grid-cols-4 gap-2">
-                    {screenshots.slice(0, 7).map((path, idx) => {
-                      const isLast = idx === 6 && screenshots.length > 7;
-                      const isHero = idx === 0;
-                      return (
-                        <button
-                          key={path}
-                          type="button"
-                          onClick={() => handleScreenshotClick(screenshots, idx)}
-                          className={cn(
-                            "group/thumb relative aspect-[3/4] shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-all",
-                            "hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-[0_8px_20px_-10px_rgba(28,25,23,0.18)]",
-                            isHero && "col-span-2 row-span-2 aspect-[3/2]",
-                          )}
-                        >
-                          <Image
-                            src={`/api/violations/screenshot/${encodeURI(path)}`}
-                            alt={`截图 ${idx + 1}`}
-                            fill
-                            unoptimized
-                            sizes={isHero ? "320px" : "160px"}
-                            className="object-cover transition-transform group-hover/thumb:scale-[1.04]"
-                          />
-                          {isHero ? (
-                            <span className="absolute left-2 top-2 inline-flex items-center rounded bg-black/55 px-1.5 py-0.5 text-[12px] uppercase tracking-wider text-white backdrop-blur-sm">
-                              主图
-                            </span>
-                          ) : null}
-                          {isLast ? (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[13px] text-white">
-                              +{screenshots.length - 7}
-                            </div>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
+                ) : null}
 
-              {/* 测试明细 */}
-              {testRecords.length > 0 ? (
-                <div>
-                  <p className="text-[12px] uppercase tracking-[0.25em] text-zinc-500">
-                    多号测试明细 · {testRecords.length} 条
-                  </p>
-                  <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                    {testRecords.slice(0, 8).map((record) => (
-                      <li
-                        key={record.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px]"
+                {/* 截图 */}
+                {screenshots.length > 0 ? (
+                  <div>
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-[12px] uppercase tracking-[0.25em] text-zinc-500">
+                        截图 · {screenshots.length} 张
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleScreenshotClick(screenshots, 0)}
+                        className="text-[12px] text-zinc-500 transition-colors hover:text-zinc-900"
                       >
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <span
-                            className="size-1.5 shrink-0 rounded-full"
-                            style={{
-                              backgroundColor: record.passed ? "#6FAA7D" : "#C9604D",
-                            }}
-                          />
-                          <span className="truncate text-zinc-700">
-                            {record.account_name_snapshot ?? "未命名账号"}
-                          </span>
-                        </div>
-                        <span
-                          className="shrink-0"
-                          style={{ color: record.passed ? "#6FAA7D" : "#C9604D" }}
-                        >
-                          {record.passed ? "通过" : "违规"}
-                        </span>
-                        <span className="shrink-0 tabular-nums text-zinc-500">
-                          {formatDateTime(record.tested_at)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+                        查看大图
+                      </button>
+                    </div>
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {screenshots.slice(0, 7).map((path, idx) => {
+                        const isLast = idx === 6 && screenshots.length > 7;
+                        const isHero = idx === 0;
+                        return (
+                          <button
+                            key={path}
+                            type="button"
+                            onClick={() =>
+                              handleScreenshotClick(screenshots, idx)
+                            }
+                            className={cn(
+                              "group/thumb relative aspect-[3/4] shrink-0 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 transition-all",
+                              "hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-[0_8px_20px_-10px_rgba(28,25,23,0.18)]",
+                              isHero && "col-span-2 row-span-2 aspect-[3/2]",
+                            )}
+                          >
+                            <Image
+                              src={`/api/violations/screenshot/${encodeURI(path)}`}
+                              alt={`截图 ${idx + 1}`}
+                              fill
+                              unoptimized
+                              sizes={isHero ? "320px" : "160px"}
+                              className="object-cover transition-transform group-hover/thumb:scale-[1.04]"
+                            />
+                            {isHero ? (
+                              <span className="absolute left-2 top-2 inline-flex items-center rounded bg-black/55 px-1.5 py-0.5 text-[12px] uppercase tracking-wider text-white backdrop-blur-sm">
+                                主图
+                              </span>
+                            ) : null}
+                            {isLast ? (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/45 text-[13px] text-white">
+                                +{screenshots.length - 7}
+                              </div>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
 
-              {/* 元数据 */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-zinc-200 pt-4 text-[12px] sm:grid-cols-4">
-                <MetaRow label="提交人" value={getSubmitterName(data)} />
-                <MetaRow label="时间" value={formatDateTime(data.created_at)} />
-                <MetaRow label="账号" value={getAccountName(data)} />
-                <MetaRow label="团队" value={getTeamName(data)} />
-              </div>
-            </div>
-
-            {/* 审核决策 — 仅审核工作台，独立于详情内容 */}
-            {showReviewPanel ? (
-              <div className="-mx-6 mt-6 border-t border-zinc-200 bg-zinc-50/60 px-6 py-5">
-                {isConversion ? (
-                  <DataEnrichmentPanel
-                    caseId={data.id}
-                    caseDetail={data}
-                    onProcessed={() => {
-                      onReviewSuccess?.();
-                      onOpenChange(false);
-                    }}
-                    onClose={() => onOpenChange(false)}
-                  />
-                ) : (
-                  <>
-                    <p className="mb-3 text-[12px] uppercase tracking-[0.25em] text-zinc-500">
-                      审核决策
+                {/* 测试明细 */}
+                {testRecords.length > 0 ? (
+                  <div>
+                    <p className="text-[12px] uppercase tracking-[0.25em] text-zinc-500">
+                      多号测试明细 · {testRecords.length} 条
                     </p>
-                    <ReviewDecisionPanel
+                    <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      {testRecords.slice(0, 8).map((record) => (
+                        <li
+                          key={record.id}
+                          className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px]"
+                        >
+                          <div className="flex min-w-0 flex-1 items-center gap-2">
+                            <span
+                              className="size-1.5 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor: record.passed
+                                  ? "#6FAA7D"
+                                  : "#C9604D",
+                              }}
+                            />
+                            <span className="truncate text-zinc-700">
+                              {record.account_name_snapshot ?? "未命名账号"}
+                            </span>
+                          </div>
+                          <span
+                            className="shrink-0"
+                            style={{
+                              color: record.passed ? "#6FAA7D" : "#C9604D",
+                            }}
+                          >
+                            {record.passed ? "通过" : "违规"}
+                          </span>
+                          <span className="shrink-0 tabular-nums text-zinc-500">
+                            {formatDateTime(record.tested_at)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {/* 元数据 */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-zinc-200 pt-4 text-[12px] sm:grid-cols-4">
+                  <MetaRow label="提交人" value={getSubmitterName(data)} />
+                  <MetaRow
+                    label="时间"
+                    value={formatDateTime(data.created_at)}
+                  />
+                  <MetaRow label="账号" value={getAccountName(data)} />
+                  <MetaRow label="团队" value={getTeamName(data)} />
+                </div>
+              </div>
+
+              {/* 审核决策 — 仅审核工作台，独立于详情内容 */}
+              {showReviewPanel ? (
+                <div className="-mx-6 mt-6 border-t border-zinc-200 bg-zinc-50/60 px-6 py-5">
+                  {isConversion ? (
+                    <DataEnrichmentPanel
                       caseId={data.id}
-                      purpose="violation"
-                      initialStatus={data.status}
-                      initialUsageState={data.usage_state}
-                      initialRiskLevel={data.risk_level}
-                      initialPromotionLevel={data.promotion_level}
-                      initialAdminConclusion={data.admin_conclusion}
-                      initialSuggestedAction={data.suggested_action}
-                      initialReasonTagIds={[]}
-                      isOwner={isOwner}
-                      highlightedSections={highlightedSections}
-                      onSuccess={() => {
+                      caseDetail={data}
+                      onProcessed={() => {
                         onReviewSuccess?.();
                         onOpenChange(false);
                       }}
+                      onClose={() => onOpenChange(false)}
                     />
-                  </>
-                )}
-              </div>
-            ) : null}
+                  ) : (
+                    <>
+                      <p className="mb-3 text-[12px] uppercase tracking-[0.25em] text-zinc-500">
+                        审核决策
+                      </p>
+                      <ReviewDecisionPanel
+                        caseId={data.id}
+                        purpose="violation"
+                        initialStatus={data.status}
+                        initialUsageState={data.usage_state}
+                        initialRiskLevel={data.risk_level}
+                        initialPromotionLevel={data.promotion_level}
+                        initialAdminConclusion={data.admin_conclusion}
+                        initialSuggestedAction={data.suggested_action}
+                        initialReasonTagIds={[]}
+                        isOwner={isOwner}
+                        highlightedSections={highlightedSections}
+                        onSuccess={() => {
+                          onReviewSuccess?.();
+                          onOpenChange(false);
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -792,7 +860,9 @@ function StatBlock({
         accent ? "border-[#D97757]/20 bg-[#D97757]/[0.03]" : "border-zinc-200",
       )}
     >
-      <p className="text-[12px] uppercase tracking-[0.18em] text-zinc-500">{label}</p>
+      <p className="text-[12px] uppercase tracking-[0.18em] text-zinc-500">
+        {label}
+      </p>
       <p
         className={cn(
           "mt-0.5 text-[18px] font-semibold tabular-nums",

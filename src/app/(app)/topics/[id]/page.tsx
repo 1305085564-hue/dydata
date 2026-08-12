@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   parseSubTopicDetailResponse,
   parseSubTopicWorksResponse,
@@ -15,7 +21,7 @@ import {
   DETAIL_PAGE_SIZE,
   type SubTopicDetail,
   type WorkItem,
-  type ReferenceWork
+  type ReferenceWork,
 } from "../topic-helpers";
 import {
   ChevronLeft,
@@ -32,7 +38,7 @@ import {
   FileText,
   RotateCcw,
   Film,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
@@ -66,7 +72,11 @@ interface MyClaimSubTopicItem {
   sub_topic_claims?: SubTopicClaim[];
 }
 
-export default function SubTopicDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function SubTopicDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const resolvedParams = use(params);
   const subTopicId = resolvedParams.id;
   const router = useRouter();
@@ -78,7 +88,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
   const [claimsData, setClaimsData] = useState<ClaimsApiResponse>({
     claims: [],
     candidateCount: 0,
-    scriptingCount: 0
+    scriptingCount: 0,
   });
   const [claimsError, setClaimsError] = useState<string | null>(null);
 
@@ -93,7 +103,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
 
   // 作品列表、排序与分页
   const [works, setWorks] = useState<WorkItem[]>([]);
-  const [similarReferences, setSimilarReferences] = useState<ReferenceWork[]>([]);
+  const [similarReferences, setSimilarReferences] = useState<ReferenceWork[]>(
+    [],
+  );
   const [worksTotal, setWorksTotal] = useState(0);
   const [worksPage, setWorksPage] = useState(1);
   const [worksPageSize, setWorksPageSize] = useState(DETAIL_PAGE_SIZE);
@@ -123,7 +135,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     const getUserId = async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
       }
@@ -144,31 +158,36 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       setMyClaims(data.items || []);
     } catch (err) {
       console.error("加载我的认领状态失败:", err);
-      setMyClaimsError(err instanceof Error ? err.message : "获取我的认领状态失败");
+      setMyClaimsError(
+        err instanceof Error ? err.message : "获取我的认领状态失败",
+      );
     }
   }, []);
 
   // 加载作品列表
-  const fetchWorks = useCallback(async (page = 1, sort: "best" | "recent" = "best") => {
-    setLoadingWorks(true);
-    try {
-      const res = await fetch(
-        `/api/topics/sub-topics/${subTopicId}/works?page=${page}&page_size=${DETAIL_PAGE_SIZE}&sort=${sort}`
-      );
-      if (!res.ok) throw new Error("获取作品失败");
-      const data = await res.json();
-      const parsed = parseSubTopicWorksResponse(data);
-      setWorks(parsed.items);
-      setSimilarReferences(parsed.similarReferences);
-      setWorksTotal(parsed.total);
-      setWorksPage(parsed.page);
-      setWorksPageSize(parsed.pageSize);
-    } catch (err) {
-      console.error("加载作品数据失败:", err);
-    } finally {
-      setLoadingWorks(false);
-    }
-  }, [subTopicId]);
+  const fetchWorks = useCallback(
+    async (page = 1, sort: "best" | "recent" = "best") => {
+      setLoadingWorks(true);
+      try {
+        const res = await fetch(
+          `/api/topics/sub-topics/${subTopicId}/works?page=${page}&page_size=${DETAIL_PAGE_SIZE}&sort=${sort}`,
+        );
+        if (!res.ok) throw new Error("获取作品失败");
+        const data = await res.json();
+        const parsed = parseSubTopicWorksResponse(data);
+        setWorks(parsed.items);
+        setSimilarReferences(parsed.similarReferences);
+        setWorksTotal(parsed.total);
+        setWorksPage(parsed.page);
+        setWorksPageSize(parsed.pageSize);
+      } catch (err) {
+        console.error("加载作品数据失败:", err);
+      } finally {
+        setLoadingWorks(false);
+      }
+    },
+    [subTopicId],
+  );
 
   // 加载详情接口
   const fetchDetail = useCallback(async () => {
@@ -197,7 +216,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       }
     } catch (err) {
       feedbackToast.error("加载详情失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
       setDetail(null);
     } finally {
@@ -218,7 +237,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       setClaimsData({
         claims: Array.isArray(data.claims) ? data.claims : [],
         candidateCount: data.candidateCount ?? 0,
-        scriptingCount: data.scriptingCount ?? 0
+        scriptingCount: data.scriptingCount ?? 0,
       });
     } catch (err) {
       console.error("加载撞车动态失败:", err);
@@ -234,18 +253,22 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     void loadAllData();
   }, [loadAllData]);
 
-  const isOwner = Boolean(currentUserId && detail?.created_by === currentUserId);
+  const isOwner = Boolean(
+    currentUserId && detail?.created_by === currentUserId,
+  );
 
   // 解析当前用户认领状态
   const currentSubTopicItem = myClaims.find((item) => item.id === subTopicId);
   const myClaimRecord = currentSubTopicItem?.sub_topic_claims?.find(
-    (c) => c.user_id === currentUserId && c.status !== "returned"
+    (c) => c.user_id === currentUserId && c.status !== "returned",
   );
   const isClaimedByMe = !!myClaimRecord;
 
   // 整理出所有 candidate 选项用于替换弹窗
   const activeCandidateItems = myClaims.filter((item) => {
-    const claim = item.sub_topic_claims?.find((c) => c.user_id === currentUserId);
+    const claim = item.sub_topic_claims?.find(
+      (c) => c.user_id === currentUserId,
+    );
     return claim?.status === "candidate";
   });
   const isLimitReached = activeCandidateItems.length >= 5;
@@ -266,7 +289,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     setIsClaiming(true);
     try {
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
-        method: "POST"
+        method: "POST",
       });
       const data = await res.json();
 
@@ -282,7 +305,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       await loadAllData();
     } catch (err) {
       feedbackToast.error("认领失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setIsClaiming(false);
@@ -294,9 +317,12 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     if (isUpdatingClaim) return;
     setIsUpdatingClaim(true);
     try {
-      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/start-scripting`, {
-        method: "POST"
-      });
+      const res = await fetch(
+        `/api/topics/sub-topics/${subTopicId}/start-scripting`,
+        {
+          method: "POST",
+        },
+      );
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "标记脚本中失败");
@@ -305,7 +331,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       await loadAllData();
     } catch (err) {
       feedbackToast.error("更新状态失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setIsUpdatingClaim(false);
@@ -319,7 +345,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     try {
       const request = getClaimToggleRequest(subTopicId, true);
       const res = await fetch(request.endpoint, {
-        method: "POST"
+        method: "POST",
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -329,7 +355,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       await loadAllData();
     } catch (err) {
       feedbackToast.error("放回失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setIsUpdatingClaim(false);
@@ -345,7 +371,10 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       const replaceRes = await fetch("/api/topics/sub-topics/replace-claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ returned_sub_topic_id: selectedReturnId, target_sub_topic_id: subTopicId }),
+        body: JSON.stringify({
+          returned_sub_topic_id: selectedReturnId,
+          target_sub_topic_id: subTopicId,
+        }),
       });
       if (!replaceRes.ok) throw new Error("替换认领失败");
 
@@ -354,7 +383,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       await loadAllData();
     } catch (err) {
       feedbackToast.error("替换失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setIsReplacing(false);
@@ -377,8 +406,8 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
           title: editTitle.trim(),
           hook: editHook.trim() || null,
           emotion_tag: editEmotionTag.trim() || null,
-          audience: editAudience.trim() || null
-        })
+          audience: editAudience.trim() || null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "修改失败");
@@ -387,7 +416,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       await loadAllData();
     } catch (err) {
       feedbackToast.error("修改失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setIsSubmittingEdit(false);
@@ -400,7 +429,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
     setDeleteErrorMsg(null);
     try {
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}`, {
-        method: "DELETE"
+        method: "DELETE",
       });
       const data = await res.json();
       if (res.status === 409) {
@@ -408,7 +437,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
         setDeleteErrorMsg(
           count
             ? `该选题已有 ${count} 条作品关联，删除会切断数据回流。请先处理关联作品。`
-            : `该选题已有关联作品，删除会切断数据回流。请先处理关联作品。`
+            : `该选题已有关联作品，删除会切断数据回流。请先处理关联作品。`,
         );
         return;
       }
@@ -418,7 +447,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       router.push("/topics");
     } catch (err) {
       feedbackToast.error("删除失败", {
-        details: err instanceof Error ? err.message : String(err)
+        details: err instanceof Error ? err.message : String(err),
       });
     } finally {
       setIsDeleting(false);
@@ -446,7 +475,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
   if (!detail) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
-        <p className="text-[14px] text-zinc-500">无法显示选题信息，该选题可能已被删除。</p>
+        <p className="text-[14px] text-zinc-500">
+          无法显示选题信息，该选题可能已被删除。
+        </p>
         <Link href="/topics">
           <Button variant="outline" size="sm">
             返回选题池
@@ -502,7 +533,12 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             <AlertTriangle className="size-4 text-[#D99E55] shrink-0" />
             <span>我的认领状态加载失败：{myClaimsError}</span>
           </div>
-          <Button size="xs" variant="outline" onClick={() => void fetchMyClaims()} className="h-7 text-[12px] border-zinc-200 bg-white hover:bg-zinc-50">
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => void fetchMyClaims()}
+            className="h-7 text-[12px] border-zinc-200 bg-white hover:bg-zinc-50"
+          >
             <RefreshCw className="size-3 mr-1" />
             重新加载
           </Button>
@@ -511,7 +547,6 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
 
       {/* L1 唯一纯白主画板 (L1 White Surface Artboard) */}
       <div className="rounded-2xl border border-zinc-200 bg-white p-7 sm:p-9 md:p-10 shadow-xs space-y-12">
-        
         {/* L1-A: 选题核心描述区 */}
         <div className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
@@ -538,7 +573,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                         onClick={() => void handleStartScripting()}
                         className="h-9.5 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-100 hover:text-zinc-950 text-zinc-800 text-[12.5px] font-medium transition-colors"
                       >
-                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <FileText className="size-3.5 mr-1.5 text-zinc-600" />}
+                        {isUpdatingClaim ? (
+                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                        ) : (
+                          <FileText className="size-3.5 mr-1.5 text-zinc-600" />
+                        )}
                         标记脚本中
                       </Button>
                       <Button
@@ -547,9 +586,13 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                         disabled={isUpdatingClaim}
                         onClick={() => void handleReturnClaim()}
                         title="再次点击放回选题池"
-                        className="h-9.5 px-3.5 rounded-xl border-emerald-500/25 bg-emerald-500/10 text-[#5B9668] hover:bg-emerald-500/20 text-[12.5px] font-medium transition-colors"
+                        className="h-9.5 px-3.5 rounded-xl border-zinc-200 bg-[#16A34A]/100/10 text-[#5B9668] hover:bg-[#16A34A]/100/20 text-[12.5px] font-medium transition-colors"
                       >
-                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <Check className="size-3.5 mr-1.5" />}
+                        {isUpdatingClaim ? (
+                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                        ) : (
+                          <Check className="size-3.5 mr-1.5" />
+                        )}
                         已认领
                       </Button>
                     </>
@@ -566,7 +609,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                         onClick={() => void handleReturnClaim()}
                         className="h-9.5 px-3.5 rounded-xl border-zinc-200 bg-zinc-50 text-zinc-600 hover:bg-zinc-100 text-[12.5px] font-medium transition-colors"
                       >
-                        {isUpdatingClaim ? <Loader2 className="size-3.5 animate-spin mr-1.5" /> : <RotateCcw className="size-3.5 mr-1.5 text-zinc-500" />}
+                        {isUpdatingClaim ? (
+                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
+                        ) : (
+                          <RotateCcw className="size-3.5 mr-1.5 text-zinc-500" />
+                        )}
                         放回选题池
                       </Button>
                     </>
@@ -578,10 +625,16 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   onClick={() => void handleClaim()}
                   className={cn(
                     "h-9.5 px-5.5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all active:scale-[0.98]",
-                    isLimitReached ? "bg-[#D97757]/90 hover:bg-[#D97757]" : "bg-[#D97757] hover:bg-[#D97757]/90"
+                    isLimitReached
+                      ? "bg-[#D97757]/90 hover:bg-[#D97757]"
+                      : "bg-[#D97757] hover:bg-[#D97757]/90",
                   )}
                 >
-                  {isClaiming ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Plus className="size-4 mr-1.5" />}
+                  {isClaiming ? (
+                    <Loader2 className="size-4 animate-spin mr-1.5" />
+                  ) : (
+                    <Plus className="size-4 mr-1.5" />
+                  )}
                   {isLimitReached ? "认领此题 (选替换)" : "认领此选题"}
                 </Button>
               )}
@@ -604,18 +657,24 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             {detail.emotion_tag && (
               <span className="flex items-center gap-1.5">
                 <span className="text-zinc-400">情绪标签:</span>
-                <strong className="text-zinc-700 font-medium">{detail.emotion_tag}</strong>
+                <strong className="text-zinc-700 font-medium">
+                  {detail.emotion_tag}
+                </strong>
               </span>
             )}
             {detail.audience && (
               <span className="flex items-center gap-1.5">
                 <span className="text-zinc-400">目标受众:</span>
-                <strong className="text-zinc-700 font-medium">{detail.audience}</strong>
+                <strong className="text-zinc-700 font-medium">
+                  {detail.audience}
+                </strong>
               </span>
             )}
             <span className="flex items-center gap-1.5">
               <span className="text-zinc-400">录入时间:</span>
-              <strong className="text-zinc-600 font-normal">{formatShanghaiDateOnly(new Date(detail.created_at))}</strong>
+              <strong className="text-zinc-600 font-normal">
+                {formatShanghaiDateOnly(new Date(detail.created_at))}
+              </strong>
             </span>
           </div>
         </div>
@@ -632,7 +691,11 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             </div>
             {!claimsError && (
               <span className="text-[12.5px] text-zinc-500">
-                已有 <strong className="text-[#D97757] font-semibold tabular-nums">{totalInFlightCount}</strong> 人在做
+                已有{" "}
+                <strong className="text-[#D97757] font-semibold tabular-nums">
+                  {totalInFlightCount}
+                </strong>{" "}
+                人在做
                 {claimsData.scriptingCount > 0 && (
                   <span className="text-[#C9604D] ml-1 font-medium">
                     （含 {claimsData.scriptingCount} 人脚本中）
@@ -648,7 +711,12 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 <AlertTriangle className="size-4 shrink-0" />
                 <span>撞车动态加载失败：{claimsError}</span>
               </div>
-              <Button size="xs" variant="outline" onClick={() => void fetchClaims()} className="h-7 text-[12px] border-zinc-200 bg-white">
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => void fetchClaims()}
+                className="h-7 text-[12px] border-zinc-200 bg-white"
+              >
                 <RefreshCw className="size-3 mr-1" />
                 重新加载
               </Button>
@@ -666,7 +734,7 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     "flex items-center justify-between p-3.5 rounded-xl text-[12.5px] transition-colors",
                     c.status === "scripting"
                       ? "bg-[#C9604D]/10 text-[#C9604D] font-medium"
-                      : "bg-zinc-100/60 hover:bg-zinc-100 text-zinc-700"
+                      : "bg-zinc-100/60 hover:bg-zinc-100 text-zinc-700",
                   )}
                 >
                   <div className="flex items-center gap-2 font-medium">
@@ -675,7 +743,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                   <div className="flex items-center gap-2 text-[11px] opacity-80">
                     <span className="font-medium">
-                      {c.status === "scripting" ? "⚠️ 脚本写作中" : "候选思考中"}
+                      {c.status === "scripting"
+                        ? "⚠️ 脚本写作中"
+                        : "候选思考中"}
                     </span>
                     <span>{formatShanghaiDateOnly(new Date(c.claimedAt))}</span>
                   </div>
@@ -686,7 +756,10 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
-        <div id="associated-works-section" className="pt-8 border-t border-zinc-100 space-y-3 scroll-mt-6">
+        <div
+          id="associated-works-section"
+          className="pt-8 border-t border-zinc-100 space-y-3 scroll-mt-6"
+        >
           {/* L1-C: 已关联创作作品（标题与首个作品紧密结合） */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
@@ -702,7 +775,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 onClick={() => handleSortChange("best")}
                 className={cn(
                   "px-3 py-1 rounded-md transition-all font-medium",
-                  worksSort === "best" ? "bg-white text-zinc-900 shadow-2xs" : "text-zinc-500 hover:text-zinc-900"
+                  worksSort === "best"
+                    ? "bg-white text-zinc-900 shadow-2xs"
+                    : "text-zinc-500 hover:text-zinc-900",
                 )}
               >
                 爆款优先
@@ -711,7 +786,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 onClick={() => handleSortChange("recent")}
                 className={cn(
                   "px-3 py-1 rounded-md transition-all font-medium",
-                  worksSort === "recent" ? "bg-white text-zinc-900 shadow-2xs" : "text-zinc-500 hover:text-zinc-900"
+                  worksSort === "recent"
+                    ? "bg-white text-zinc-900 shadow-2xs"
+                    : "text-zinc-500 hover:text-zinc-900",
                 )}
               >
                 最新发布
@@ -741,20 +818,32 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                     className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-zinc-50/80 text-[12.5px] transition-colors"
                   >
                     <div className="space-y-0.5">
-                      <div className="font-semibold text-zinc-900">{w.video_title}</div>
+                      <div className="font-semibold text-zinc-900">
+                        {w.video_title}
+                      </div>
                       <div className="flex items-center gap-3.5 text-[11px] text-zinc-500">
                         {w.account_name && <span>账号: {w.account_name}</span>}
                         {(w.uploadedAt || w.uploaded_at) && (
-                          <span>发布时间: {formatShanghaiDateOnly(new Date(w.uploadedAt || w.uploaded_at || ""))}</span>
+                          <span>
+                            发布时间:{" "}
+                            {formatShanghaiDateOnly(
+                              new Date(w.uploadedAt || w.uploaded_at || ""),
+                            )}
+                          </span>
                         )}
                       </div>
                     </div>
                     {snap && (
                       <div className="text-right tabular-nums">
                         <div className="font-semibold text-zinc-900">
-                          {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount.toLocaleString()} 播放
+                          {playCount >= 10000
+                            ? `${(playCount / 10000).toFixed(1)}w`
+                            : playCount.toLocaleString()}{" "}
+                          播放
                         </div>
-                        <div className="text-[11px] text-zinc-500">{likesCount.toLocaleString()} 点赞</div>
+                        <div className="text-[11px] text-zinc-500">
+                          {likesCount.toLocaleString()} 点赞
+                        </div>
                       </div>
                     )}
                   </div>
@@ -766,7 +855,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
           {/* 分页控制栏 */}
           {worksTotal > worksPageSize && (
             <div className="flex items-center justify-between pt-4 text-[12px] text-zinc-500 border-t border-zinc-100">
-              <span>共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页</span>
+              <span>
+                共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页
+              </span>
               <div className="flex items-center gap-1.5">
                 <Button
                   size="xs"
@@ -799,16 +890,26 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               </div>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {similarReferences.map((ref, idx) => (
-                  <div key={ref.id || idx} className="p-3.5 rounded-xl bg-zinc-100/50 hover:bg-zinc-100/80 transition-colors text-[12px] space-y-1">
-                    <div className="font-medium text-zinc-850 truncate">{ref.video_title || ref.title || "未命名参考"}</div>
+                  <div
+                    key={ref.id || idx}
+                    className="p-3.5 rounded-xl bg-zinc-100/50 hover:bg-zinc-100/80 transition-colors text-[12px] space-y-1"
+                  >
+                    <div className="font-medium text-zinc-850 truncate">
+                      {ref.video_title || ref.title || "未命名参考"}
+                    </div>
                     <div className="flex items-center justify-between text-[11px] text-zinc-500">
                       <span>{ref.account_name || "全库爆款参考"}</span>
                       {(() => {
-                        const playCount = ref.play_count ?? ref.video_metrics_snapshots?.[0]?.play_count;
+                        const playCount =
+                          ref.play_count ??
+                          ref.video_metrics_snapshots?.[0]?.play_count;
                         if (typeof playCount === "number") {
                           return (
                             <span className="font-semibold text-zinc-700 tabular-nums">
-                              {playCount >= 10000 ? `${(playCount / 10000).toFixed(1)}w` : playCount} 播放
+                              {playCount >= 10000
+                                ? `${(playCount / 10000).toFixed(1)}w`
+                                : playCount}{" "}
+                              播放
                             </span>
                           );
                         }
@@ -827,11 +928,15 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="sm:max-w-lg p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-zinc-900 text-[16px] font-semibold">编辑选题</DialogTitle>
+            <DialogTitle className="text-zinc-900 text-[16px] font-semibold">
+              编辑选题
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
             <div className="space-y-1">
-              <label className="text-[12px] font-medium text-zinc-600">选题标题 (必填)</label>
+              <label className="text-[12px] font-medium text-zinc-600">
+                选题标题 (必填)
+              </label>
               <input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -840,7 +945,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[12px] font-medium text-zinc-600">一句话钩子 (选填)</label>
+              <label className="text-[12px] font-medium text-zinc-600">
+                一句话钩子 (选填)
+              </label>
               <textarea
                 value={editHook}
                 onChange={(e) => setEditHook(e.target.value)}
@@ -849,7 +956,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[12px] font-medium text-zinc-600">情绪标签</label>
+                <label className="text-[12px] font-medium text-zinc-600">
+                  情绪标签
+                </label>
                 <input
                   value={editEmotionTag}
                   onChange={(e) => setEditEmotionTag(e.target.value)}
@@ -857,7 +966,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[12px] font-medium text-zinc-600">目标受众</label>
+                <label className="text-[12px] font-medium text-zinc-600">
+                  目标受众
+                </label>
                 <input
                   value={editAudience}
                   onChange={(e) => setEditAudience(e.target.value)}
@@ -866,9 +977,25 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditDialogOpen(false)} className="rounded-xl border-zinc-200 text-zinc-600">取消</Button>
-              <Button type="submit" size="sm" disabled={isSubmittingEdit} className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90">
-                {isSubmittingEdit ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}保存修改
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditDialogOpen(false)}
+                className="rounded-xl border-zinc-200 text-zinc-600"
+              >
+                取消
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isSubmittingEdit}
+                className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90"
+              >
+                {isSubmittingEdit ? (
+                  <Loader2 className="size-3.5 animate-spin mr-1" />
+                ) : null}
+                保存修改
               </Button>
             </div>
           </form>
@@ -891,7 +1018,13 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 {deleteErrorMsg}
               </div>
               <div className="flex items-center justify-end gap-2">
-                <Button type="button" size="sm" variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-zinc-200">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDeleteDialogOpen(false)}
+                  className="rounded-xl border-zinc-200"
+                >
                   取消
                 </Button>
                 <a
@@ -908,11 +1041,26 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                 确认要删除此选题吗？若该选题已有作品关联，系统将拦截阻断。
               </p>
               <div className="flex items-center justify-end gap-2">
-                <Button type="button" size="sm" variant="outline" disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)} className="rounded-xl border-zinc-200">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={isDeleting}
+                  onClick={() => setDeleteDialogOpen(false)}
+                  className="rounded-xl border-zinc-200"
+                >
                   取消
                 </Button>
-                <Button type="button" size="sm" disabled={isDeleting} onClick={() => void handleDeleteSubmit()} className="rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90">
-                  {isDeleting ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isDeleting}
+                  onClick={() => void handleDeleteSubmit()}
+                  className="rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90"
+                >
+                  {isDeleting ? (
+                    <Loader2 className="size-3.5 animate-spin mr-1" />
+                  ) : null}
                   确认删除
                 </Button>
               </div>
@@ -930,14 +1078,17 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               <span>候选位已满 (5/5) · 请选择替换</span>
             </DialogTitle>
             <DialogDescription className="text-zinc-500 text-[12.5px]">
-              您的候选选题库已达 5 条上限。请选择一条放回选题池，以便腾出空间认领本题。
+              您的候选选题库已达 5
+              条上限。请选择一条放回选题池，以便腾出空间认领本题。
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-2 space-y-2 max-h-[220px] overflow-y-auto pr-1">
             {activeCandidateItems.map((item) => {
               const isSelected = selectedReturnId === item.id;
-              const claimRecord = item.sub_topic_claims?.find((c) => c.user_id === currentUserId);
+              const claimRecord = item.sub_topic_claims?.find(
+                (c) => c.user_id === currentUserId,
+              );
               const claimedAtText = claimRecord?.claimed_at
                 ? formatShanghaiDateTime(claimRecord.claimed_at)
                 : "已认领";
@@ -948,7 +1099,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                   onClick={() => setSelectedReturnId(item.id)}
                   className={cn(
                     "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-150",
-                    isSelected ? "border-[#D97757] bg-[#D97757]/5 shadow-xs" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                    isSelected
+                      ? "border-[#D97757] bg-[#D97757]/5 shadow-xs"
+                      : "border-zinc-200 bg-white hover:bg-zinc-50",
                   )}
                 >
                   <div className="space-y-0.5 min-w-0 pr-2">
@@ -959,14 +1112,23 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
                       认领时间: {claimedAtText}
                     </div>
                   </div>
-                  {isSelected && <Check className="size-4 text-[#D97757] shrink-0" />}
+                  {isSelected && (
+                    <Check className="size-4 text-[#D97757] shrink-0" />
+                  )}
                 </div>
               );
             })}
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-100">
-            <Button type="button" variant="outline" size="sm" disabled={isReplacing} onClick={() => setReplaceDialogOpen(false)} className="rounded-xl border-zinc-200">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isReplacing}
+              onClick={() => setReplaceDialogOpen(false)}
+              className="rounded-xl border-zinc-200"
+            >
               取消
             </Button>
             <Button
@@ -976,7 +1138,9 @@ export default function SubTopicDetailPage({ params }: { params: Promise<{ id: s
               onClick={() => void handleConfirmReplace()}
               className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90"
             >
-              {isReplacing ? <Loader2 className="size-3.5 animate-spin mr-1" /> : null}
+              {isReplacing ? (
+                <Loader2 className="size-3.5 animate-spin mr-1" />
+              ) : null}
               确认替换并认领
             </Button>
           </div>
