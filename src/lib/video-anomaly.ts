@@ -48,3 +48,18 @@ export function deriveVideoPunishType({
 }) {
   return normalizeVideoPunishType(punishType) ?? normalizeVideoPunishType(anomalyStatus);
 }
+
+export function formatAnomalyStatusText(status: string | null | undefined): string {
+  if (!status) return "正常";
+  const s = status.trim();
+  if (s === "normal" || s === "正常") return "正常";
+  if (s === "abnormal" || s === "异常") return "异常";
+  if (s === "limited" || s === "限流") return "限流";
+  if (s === "deleted" || s === "删稿") return "删稿";
+  if (s === "traffic_boost" || s === "paid_boost" || s === "投流") return "投流";
+  if (s === "activity_boost" || s === "campaign_intervention" || s === "活动干预") return "活动干预";
+  if (s === "under_24h" || s === "pending" || s === "未满24h") return "未满24h";
+  if (s === "halve" || s === "腰斩") return "腰斩";
+  return s;
+}
+

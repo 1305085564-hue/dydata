@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
 import { formatBigNumber, type PersonDetailData } from "./types";
+import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 
 interface PersonalCardProps {
   userId: string | null;
@@ -326,11 +327,11 @@ export function PersonalCard({ userId, year, month, onClose }: PersonalCardProps
                               </div>
                             </td>
                             <td className="py-1.5 px-3 text-right pr-3">
-                              {rec.anomaly == null || rec.anomaly === "正常" ? (
+                              {rec.anomaly == null || rec.anomaly === "正常" || rec.anomaly === "normal" ? (
                                 <span className="text-zinc-400">—</span>
                               ) : (
                                 <Badge variant="secondary" className="text-[10px] bg-amber-50 text-amber-800">
-                                  {rec.anomaly}
+                                  {formatAnomalyStatusText(rec.anomaly)}
                                 </Badge>
                               )}
                             </td>

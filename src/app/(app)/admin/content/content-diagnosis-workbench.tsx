@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 import type {
   ContentFeedbackCardDetail,
   ContentFeedbackCardView,
@@ -758,7 +759,7 @@ export function ContentDiagnosisWorkbench({
 
           {video && (
             <Badge variant="outline" className={`h-6 text-[11.5px] font-medium ${statusBadgeClass[video.anomaly_status]}`}>
-              {video.anomaly_status}
+              {formatAnomalyStatusText(video.anomaly_status)}
             </Badge>
           )}
         </div>
@@ -840,7 +841,7 @@ export function ContentDiagnosisWorkbench({
                           <div className="flex flex-wrap items-center gap-1">
                             {item.anomaly_status !== "normal" && item.anomaly_status !== "正常" && (
                               <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
-                                {item.anomaly_status}
+                                {formatAnomalyStatusText(item.anomaly_status)}
                               </span>
                             )}
                             {item.play_change_signal === "halve" && (
@@ -913,7 +914,7 @@ export function ContentDiagnosisWorkbench({
                       <div className="flex flex-wrap items-center gap-1">
                         {item.anomaly_status !== "normal" && item.anomaly_status !== "正常" && (
                           <span className="rounded bg-[#C9604D]/10 px-1 py-0.2 text-[10px] font-medium text-[#C9604D]">
-                            {item.anomaly_status}
+                            {formatAnomalyStatusText(item.anomaly_status)}
                           </span>
                         )}
                         {item.play_change_signal === "halve" && (

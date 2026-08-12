@@ -64,15 +64,26 @@ interface VideoDetailDialogProps {
   onLifecycleChanged: () => void;
 }
 
-const statusBadgeConfig: Record<Video["anomaly_status"], { label: string; className: string }> = {
+const statusBadgeConfig: Record<string, { label: string; className: string }> = {
   normal: { label: "正常", className: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
   abnormal: { label: "异常", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
   正常: { label: "正常", className: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
+  异常: { label: "异常", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
   删稿: { label: "删稿", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
+  deleted: { label: "删稿", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
   限流: { label: "限流", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
+  limited: { label: "限流", className: "bg-rose-50 text-rose-700 border-rose-200/60" },
   投流: { label: "投流", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  traffic_boost: { label: "投流", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  paid_boost: { label: "投流", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
   活动干预: { label: "活动干预", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  activity_boost: { label: "活动干预", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  campaign_intervention: { label: "活动干预", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
   "未满24h": { label: "未满24h", className: "bg-zinc-100 text-zinc-500 border-zinc-200" },
+  under_24h: { label: "未满24h", className: "bg-zinc-100 text-zinc-500 border-zinc-200" },
+  pending: { label: "未满24h", className: "bg-zinc-100 text-zinc-500 border-zinc-200" },
+  腰斩: { label: "腰斩", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
+  halve: { label: "腰斩", className: "bg-amber-50 text-amber-700 border-amber-200/60" },
 };
 
 function formatDateTime(value: string | null) {
