@@ -68,7 +68,6 @@ import {
   toScreenshotUploadErrorMessage,
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
-import { useNotifications } from "@/components/notifications/notification-store";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
@@ -79,6 +78,8 @@ import {
   addRoleOverride as addSubmissionRoleOverride,
   normalizeOptionalText,
   removeRoleOverride as removeSubmissionRoleOverride,
+  findNextScreenshotUploadRole,
+  type ScreenshotUploadSlotRole,
   preserveBizDateWhenPublishedAtChanges,
   setOperatorToSelf as resolveSelfOperatorUserId,
   setOperatorUser as resolveSelectedOperatorUserId,
@@ -242,10 +243,15 @@ const OVERVIEW_FIELDS: EditableMetricKey[] = [
 ];
 
 const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
-  screenshot_1: "截图1",
-  screenshot_2: "截图2",
-  screenshot_3: "截图3",
+  screenshot_1: "互动截图",
+  screenshot_2: "完播截图",
+  screenshot_3: "补充截图",
 };
+
+const VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
+  "screenshot_1",
+  "screenshot_2",
+];
 
 function createInitialMeta(today: string, userId: string): FormMetaState {
   const publishedAt = getDefaultPublishedAtValue();
@@ -567,6 +573,20 @@ export function VideoSubmitForm({
     () => createEditableSlots(),
   );
   const slotsRef = useRef(slots);
+  const updateSlotsState = useCallback(
+    (
+      updater:
+        | Record<SubmissionSlotRole, SlotViewState>
+        | ((current: Record<SubmissionSlotRole, SlotViewState>) => Record<SubmissionSlotRole, SlotViewState>),
+    ) => {
+      setSlots((current) => {
+        const next = typeof updater === "function" ? updater(current) : updater;
+        slotsRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -923,7 +943,7 @@ export function VideoSubmitForm({
     );
     setHasManualOperatorSelection(draft.hasManualOperatorSelection ?? false);
     setFields(draft.fields);
-    setSlots((current) => ({
+    updateSlotsState((current) => ({
       screenshot_1: {
         ...current.screenshot_1,
         ...draft.slots.screenshot_1,
@@ -946,7 +966,7 @@ export function VideoSubmitForm({
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
     feedbackToast.success("草稿已恢复");
-  }, [restoreDraft, userId]);
+  }, [restoreDraft, updateSlotsState, userId]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
@@ -994,7 +1014,7 @@ export function VideoSubmitForm({
 
     setMeta(nextMeta);
     setFields(createEditableFields());
-    setSlots(createEditableSlots());
+    updateSlotsState(createEditableSlots());
     setIsSubmitted(false);
     setSubmittedVideo(null);
     setQualityCheck({ data: null, loading: false });
@@ -1012,6 +1032,7 @@ export function VideoSubmitForm({
     today,
     userId,
     submittedViewActive,
+    updateSlotsState,
   ]);
 
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
@@ -1089,19 +1110,8 @@ export function VideoSubmitForm({
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
-  function handleFieldFocus(key: EditableMetricKey) {
+  function getSlotRoleForMetric(key: EditableMetricKey): SubmissionSlotRole {
     if (
-      [
-        "play_count",
-        "follower_gain",
-        "likes",
-        "comments",
-        "shares",
-        "favorites",
-      ].includes(key)
-    ) {
-      setFocusedRole("screenshot_1");
-    } else if (
       [
         "avg_play_duration",
         "bounce_rate_2s",
@@ -1109,32 +1119,37 @@ export function VideoSubmitForm({
         "completion_rate",
       ].includes(key)
     ) {
-      setFocusedRole("screenshot_2");
-    } else if (key === "follower_convert") {
-      setFocusedRole("screenshot_3");
+      return "screenshot_2";
     }
-    // 计算左侧 ocrSummary 高亮索引
-    const slot = focusedRole ? slots[focusedRole] : null;
-    if (slot?.ocrSummary) {
-      const labelMap: Record<EditableMetricKey, string> = {
-        play_count: "播放量",
-        follower_gain: "涨粉",
-        follower_convert: "导粉",
-        likes: "点赞",
-        comments: "评论",
-        shares: "分享",
-        favorites: "收藏",
-        avg_play_duration: "均播",
-        bounce_rate_2s: "跳出",
-        completion_rate_5s: "5s完播",
-        completion_rate: "完播",
-      };
-      const keyword = labelMap[key];
-      if (keyword) {
-        const idx = slot.ocrSummary.findIndex((line) => line.includes(keyword));
-        setHighlightedOcrIndex(idx >= 0 ? idx : null);
-      }
+    return "screenshot_1";
+  }
+
+  function handleFieldFocus(key: EditableMetricKey) {
+    const nextFocusedRole = getSlotRoleForMetric(key);
+    setFocusedRole(nextFocusedRole);
+
+    const slot = slots[nextFocusedRole];
+    if (!slot?.ocrSummary) {
+      setHighlightedOcrIndex(null);
+      return;
     }
+
+    const labelMap: Record<EditableMetricKey, string> = {
+      play_count: "播放量",
+      follower_gain: "涨粉",
+      follower_convert: "导粉",
+      likes: "点赞",
+      comments: "评论",
+      shares: "分享",
+      favorites: "收藏",
+      avg_play_duration: "均播",
+      bounce_rate_2s: "跳出",
+      completion_rate_5s: "5s完播",
+      completion_rate: "完播",
+    };
+    const keyword = labelMap[key];
+    const idx = slot.ocrSummary.findIndex((line) => line.includes(keyword));
+    setHighlightedOcrIndex(idx >= 0 ? idx : null);
   }
 
   function handleFieldBlur() {
@@ -1167,7 +1182,7 @@ export function VideoSubmitForm({
     } else if (issue.suggestedFix === "reupload_screenshot") {
       setIsSubmitted(false);
       setQualityCheck({ data: null, loading: false });
-      setSlots((current) => ({
+      updateSlotsState((current) => ({
         ...current,
         screenshot_1: { ...createEditableSlots().screenshot_1 },
         screenshot_2: { ...createEditableSlots().screenshot_2 },
@@ -1213,13 +1228,13 @@ export function VideoSubmitForm({
       }
 
       // Revoke old blob URL for this slot to avoid leak when uploading a new file over an existing one
-      const oldUrl = slots[role]?.previewUrl ?? slots[role]?.assetUrl;
+      const oldUrl = slotsRef.current[role]?.previewUrl ?? slotsRef.current[role]?.assetUrl;
       if (oldUrl && oldUrl.startsWith("blob:")) {
         URL.revokeObjectURL(oldUrl);
         blobUrlsRef.current.delete(oldUrl);
       }
 
-      setSlots((current) => ({
+      updateSlotsState((current) => ({
         ...current,
         [role]: {
           ...current[role],
@@ -1259,7 +1274,7 @@ export function VideoSubmitForm({
         blobUrlsRef.current.add(previewUrl);
 
         phase = "ocr";
-        setSlots((current) => ({
+        updateSlotsState((current) => ({
           ...current,
           [role]: {
             ...current[role],
@@ -1328,16 +1343,29 @@ export function VideoSubmitForm({
           targetRole = "screenshot_2";
         }
 
+        const targetSlotSnapshot = slotsRef.current[targetRole];
+        const targetSlotCanReceive =
+          targetSlotSnapshot.status === "empty" ||
+          targetSlotSnapshot.status === "failed";
+        const targetSlotCanSwap =
+          !targetSlotCanReceive &&
+          (targetSlotSnapshot.status === "pending_confirm" ||
+            Boolean(targetSlotSnapshot.ocrFallback));
         const shouldAutoMoveSlot =
-          role !== targetRole &&
-          (slotsRef.current[targetRole].status === "empty" ||
-            slotsRef.current[targetRole].status === "failed");
-        setSlots((current) => {
+          role !== targetRole && (targetSlotCanReceive || targetSlotCanSwap);
+
+        updateSlotsState((current) => {
           const newSlotData = {
             ...current[role],
-            status: data.slot_status === "failed" && assetUrl ? "pending_confirm" : data.slot_status,
+            status:
+              data.slot_status === "failed" && assetUrl
+                ? "pending_confirm"
+                : data.slot_status,
             confirmed: Boolean(assetUrl),
-            requiresManualConfirmation: data.requires_manual_confirmation || data.slot_status === "failed" || usedAssetRoleFallback,
+            requiresManualConfirmation:
+              data.requires_manual_confirmation ||
+              data.slot_status === "failed" ||
+              usedAssetRoleFallback,
             confidenceScore: data.confidence_score,
             error:
               data.slot_status === "failed"
@@ -1351,34 +1379,56 @@ export function VideoSubmitForm({
             ocrFallback: data.slot_status === "failed" || usedAssetRoleFallback,
           };
 
-          if (
-            role !== targetRole &&
-            (current[targetRole].status === "empty" ||
-              current[targetRole].status === "failed")
-          ) {
-            return {
-              ...current,
-              [targetRole]: {
-                ...newSlotData,
-                role: targetRole,
-              },
-              [role]: {
-                role: role,
-                required: current[role].required,
-                status: "empty",
-                confidenceScore: null,
-                requiresManualConfirmation: false,
-                confirmed: false,
-                fileName: undefined,
-                error: null,
-                assetUrl: null,
-                previewUrl: null,
-                file: null,
-                recognizedFields: null,
-                ocrSummary: undefined,
-                ocrFallback: false,
-              },
-            };
+          if (role !== targetRole) {
+            const targetSlot = current[targetRole];
+            const canMoveToTarget =
+              targetSlot.status === "empty" || targetSlot.status === "failed";
+            const canSwapWithFallback =
+              !canMoveToTarget &&
+              (targetSlot.status === "pending_confirm" ||
+                Boolean(targetSlot.ocrFallback));
+
+            if (canMoveToTarget) {
+              return {
+                ...current,
+                [targetRole]: {
+                  ...newSlotData,
+                  role: targetRole,
+                },
+                [role]: {
+                  role,
+                  required: current[role].required,
+                  status: "empty",
+                  confidenceScore: null,
+                  requiresManualConfirmation: false,
+                  confirmed: false,
+                  fileName: undefined,
+                  error: null,
+                  assetUrl: null,
+                  previewUrl: null,
+                  file: null,
+                  recognizedFields: null,
+                  ocrSummary: undefined,
+                  ocrFallback: false,
+                },
+              };
+            }
+
+            if (canSwapWithFallback) {
+              return {
+                ...current,
+                [targetRole]: {
+                  ...newSlotData,
+                  role: targetRole,
+                  required: current[targetRole].required,
+                },
+                [role]: {
+                  ...targetSlot,
+                  role,
+                  required: current[role].required,
+                },
+              };
+            }
           }
 
           return {
@@ -1404,7 +1454,6 @@ export function VideoSubmitForm({
 
         if (data.slot_status === "failed") {
           feedbackToast.error(`${resolvedError || OCR_FAIL_MESSAGE}，截图已保留，可直接手动填写指标`);
-          setActivePanelTab("confirm");
           return;
         }
 
@@ -1471,7 +1520,7 @@ export function VideoSubmitForm({
           phase === "upload"
             ? toScreenshotUploadErrorMessage(error)
             : toOcrErrorMessage(error);
-        setSlots((current) => ({
+        updateSlotsState((current) => ({
           ...current,
           [role]: {
             ...current[role],
@@ -1487,14 +1536,16 @@ export function VideoSubmitForm({
           },
         }));
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [account, slots],
+    [account, supabase.auth, updateSlotsState, userId],
   );
 
   function handleSlotRetry(role: SubmissionSlotRole) {
     const slot = slots[role];
-    if (slot.status !== "failed" || !slot.file) {
+    if (
+      !slot.file ||
+      !(slot.status === "failed" || slot.status === "pending_confirm" || slot.ocrFallback)
+    ) {
       return;
     }
     void handleSlotUpload(role, slot.file);
@@ -1680,99 +1731,35 @@ export function VideoSubmitForm({
   }
 
   /* ---------------------------------------------------------------- */
-  /* 双态面板状态及队列上传 */
+  /* 队列多图上传 */
   /* ---------------------------------------------------------------- */
-  const [activePanelTab, setActivePanelTab] = useState<"upload" | "confirm">(
-    "upload",
-  );
-  const isAbnormalStatus = meta.anomalyStatus === "abnormal";
-
   // 统一的多图指派与上传
   const handleUnifiedUpload = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return;
-      const roles: SubmissionSlotRole[] = [
-        "screenshot_1",
-        "screenshot_2",
-        "screenshot_3",
-      ];
-      const uploadsToStart: { role: SubmissionSlotRole; file: File }[] = [];
 
-      let fileIndex = 0;
-      for (const role of roles) {
-        if (fileIndex >= files.length) break;
-        const slot = slots[role];
-        if (slot.status === "empty" || slot.status === "failed") {
-          uploadsToStart.push({ role, file: files[fileIndex] });
-          fileIndex++;
-        }
+      let uploadedCount = 0;
+      for (const file of files) {
+        const role = findNextScreenshotUploadRole(
+          slotsRef.current,
+          VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER,
+        );
+        if (!role) break;
+
+        // 必须串行：每张图识别并自动归位后，再给下一张图找最新空槽。
+        // 否则两张截图同时占住彼此目标槽，会出现“互动图在完播槽、完播图在互动槽”的互卡状态。
+        await handleSlotUpload(role, file);
+        uploadedCount++;
       }
 
-      await Promise.all(
-        uploadsToStart.map(({ role, file }) => handleSlotUpload(role, file)),
-      );
-
-      if (fileIndex < files.length) {
-        toast.warning(`槽位已满，仅上传了前 ${uploadsToStart.length} 张图片`);
+      if (uploadedCount < files.length) {
+        toast.warning(`槽位已满，仅上传了前 ${uploadedCount} 张图片`);
       }
     },
-    [slots, handleSlotUpload],
+    [handleSlotUpload],
   );
 
-  // 1. OCR 识别完成自动切 Tab 逻辑
-  const autoAdvancedRef = useRef(false);
-  useEffect(() => {
-    if (autoAdvancedRef.current) return;
-    if (isAbnormalStatus) return;
-    const slot1 = slots.screenshot_1;
-    const slot2 = slots.screenshot_2;
-    if (!slot1 || !slot2) return;
-
-    const bothConfirmed =
-      slot1.status === "confirmed" && slot2.status === "confirmed";
-    const anyPending =
-      slot1.status === "pending_confirm" ||
-      slot2.status === "pending_confirm" ||
-      slot1.status === "uploading" ||
-      slot2.status === "uploading" ||
-      slot1.status === "recognizing" ||
-      slot2.status === "recognizing";
-
-    if (bothConfirmed && !anyPending) {
-      autoAdvancedRef.current = true;
-      const timer = window.setTimeout(() => {
-        setActivePanelTab("confirm");
-      }, 350);
-      return () => window.clearTimeout(timer);
-    }
-    return undefined;
-  }, [slots, isAbnormalStatus]);
-
-  // 当用户主动清空/重置截图槽位时，重置自动切换标志，并且如果无任何上传图片，强制回切 upload 面板
-  useEffect(() => {
-    const slot1 = slots.screenshot_1;
-    const slot2 = slots.screenshot_2;
-    const anyEmpty = slot1?.status === "empty" || slot2?.status === "empty";
-    if (anyEmpty) {
-      autoAdvancedRef.current = false;
-    }
-
-    const hasAnyUpload = Object.values(slots).some(
-      (slot) => slot.status !== "empty",
-    );
-    if (!hasAnyUpload && !isAbnormalStatus) {
-      setActivePanelTab("upload");
-    }
-  }, [slots, isAbnormalStatus]);
-
-  // 异常状态(限流/删稿)下强行锁死为 confirm 态并隐藏上传
-  useEffect(() => {
-    if (isAbnormalStatus) {
-      setActivePanelTab("confirm");
-    }
-  }, [isAbnormalStatus]);
-
-  // 2. 快捷键：Ctrl+Enter 快捷提交，Esc 切换 Tab 面板
+  // 快捷键：Ctrl+Enter / Cmd+Enter 快捷提交
   const isSubmittingRef = useRef(isSubmitting);
   const canSubmitRef = useRef(canActuallySubmit);
   useEffect(() => {
@@ -1825,14 +1812,6 @@ export function VideoSubmitForm({
         event.preventDefault();
         if (canSubmitRef.current) triggerSubmit();
         return;
-      }
-
-      if (event.key === "Escape") {
-        if (document.querySelector('[role="dialog"]')) {
-          return;
-        }
-        event.preventDefault();
-        setActivePanelTab((tab) => (tab === "upload" ? "confirm" : "upload"));
       }
     }
     window.addEventListener("keydown", onKey);
@@ -2052,7 +2031,7 @@ export function VideoSubmitForm({
                       URL.revokeObjectURL(targetSlot.previewUrl);
                       blobUrlsRef.current.delete(targetSlot.previewUrl);
                     }
-                    setSlots((current) => ({
+                    updateSlotsState((current) => ({
                       ...current,
                       [deleteTargetRole]: {
                         ...createEditableSlots()[deleteTargetRole],
@@ -2080,7 +2059,7 @@ export function VideoSubmitForm({
             animate={shakeForm ? "animate" : { opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div className="mx-auto max-w-4xl space-y-3.5 py-0">
+            <div className="mx-auto max-w-6xl space-y-3.5 py-0">
               {/* 草稿恢复 banner */}
               {showDraftBanner && (
                 <div className="flex items-center justify-between rounded-xl border border-transparent bg-[#F59E0B]/10 px-4 py-2.5 text-[12px]">
@@ -2107,12 +2086,13 @@ export function VideoSubmitForm({
                   </div>
                 </div>
               )}
-              {/* 1. 局部双态自管理容器 */}
-              <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-7 shadow-xs">
-                <div className="mb-4 flex items-center justify-between pb-3 border-b border-zinc-100">
+              {/* 1. 核心指标与截图对照区 (并排二合一卡片) */}
+              <div className="relative rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 shadow-xs">
+                {/* 顶部标题与状态选择 */}
+                <div className="mb-5 flex items-center justify-between pb-3.5 border-b border-zinc-100">
                   <div className="flex items-center gap-3">
-                    <span className="text-[13px] font-medium text-zinc-700">
-                      核心指标与截图
+                    <span className="text-[14px] font-semibold text-zinc-800">
+                      核心数据与截图核对
                     </span>
                     <div className="flex items-center gap-2">
                       <VideoStatusSegmented
@@ -2135,238 +2115,76 @@ export function VideoSubmitForm({
                       )}
                     </div>
                   </div>
-
-                  {/* 仅当有已上传图片时且处于正常状态下显示 Tab 切换 */}
-                  {!isAbnormalStatus &&
-                    Object.values(slots).some(
-                      (slot) => slot.status !== "empty",
-                    ) && (
-                      <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5">
-                        <button
-                          type="button"
-                          onClick={() => setActivePanelTab("upload")}
-                          title="Esc 快速切换"
-                          className={cn(
-                            "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
-                            activePanelTab === "upload"
-                              ? "bg-white text-zinc-700 shadow-sm"
-                              : "text-zinc-500 hover:text-zinc-700",
-                          )}
-                        >
-                          截图列表
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActivePanelTab("confirm")}
-                          title="Esc 快速切换"
-                          className={cn(
-                            "rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-150",
-                            activePanelTab === "confirm"
-                              ? "bg-white text-zinc-700 shadow-sm"
-                              : "text-zinc-500 hover:text-zinc-700",
-                          )}
-                        >
-                          指标核对
-                        </button>
-                      </div>
-                    )}
                 </div>
 
-                {/* 局部面板过渡内容：锁定高度，防抖，支持 smooth scroll/overflow */}
-                <div className="min-h-[290px] max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
-                  {activePanelTab === "upload" ? (
-                    <div ref={slotsSectionRef} className="space-y-4">
-                      <截图槽位区
-                        slots={slots}
-                        onSelectFile={handleSlotUpload}
-                        onUploadFiles={handleUnifiedUpload}
-                        onDelete={(role) => setDeleteTargetRole(role)}
-                        onRetry={handleSlotRetry}
-                        onManualFill={(role) => {
-                          setSlots((current) => {
-                            const hasUploadedScreenshot = Boolean(current[role].assetUrl);
-                            return {
-                              ...current,
-                              [role]: {
-                                ...current[role],
-                                status: hasUploadedScreenshot ? "confirmed" : "empty",
-                                confirmed: hasUploadedScreenshot,
-                                requiresManualConfirmation: false,
-                                error: null,
-                                assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
-                                previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
-                                file: hasUploadedScreenshot ? current[role].file : null,
-                                fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
-                                recognizedFields: null,
-                                ocrSummary: undefined,
-                                ocrFallback: hasUploadedScreenshot,
-                              },
-                            };
-                          });
-                          // 识别失败后点「手输」，自动切换到指标核对 tab，否则用户看不到输入框
-                          setActivePanelTab("confirm");
-                        }}
-                        screenshotsRequired={screenshotsRequired}
-                        focusedRole={focusedRole}
-                        highlightedOcrIndex={highlightedOcrIndex}
-                      />
-                    </div>
-                  ) : (
-                    <motion.div
-                      ref={metricsSectionRef}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-6"
-                    >
-                      <指标分组区
-                        fields={fields}
-                        onFieldChange={updateField}
-                        onFocusField={handleFieldFocus}
-                        onBlurField={handleFieldBlur}
-                        anomalyStatus={meta.anomalyStatus}
-                      />
-                      <导粉话术采集区
-                        visible={parseMetric(fields.follower_convert.value) > 0}
-                        value={scriptText}
-                        onChange={setScriptText}
-                        hasAttemptedSubmit={hasAttemptedSubmit}
-                      />
-                    </motion.div>
-                  )}
+                {/* 二合一网格：左 340px 截图，右 1fr 指标 */}
+                <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-6 items-stretch">
+                  {/* 左栏：截图佐证区 */}
+                  <div ref={slotsSectionRef} className="h-full min-h-[320px]">
+                    <截图槽位区
+                      slots={slots}
+                      onSelectFile={handleSlotUpload}
+                      onUploadFiles={handleUnifiedUpload}
+                      onDelete={(role) => setDeleteTargetRole(role)}
+                      onRetry={handleSlotRetry}
+                      onManualFill={(role) => {
+                        updateSlotsState((current) => {
+                          const hasUploadedScreenshot = Boolean(current[role].assetUrl);
+                          return {
+                            ...current,
+                            [role]: {
+                              ...current[role],
+                              status: hasUploadedScreenshot ? "confirmed" : "empty",
+                              confirmed: hasUploadedScreenshot,
+                              requiresManualConfirmation: false,
+                              error: null,
+                              assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
+                              previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
+                              file: hasUploadedScreenshot ? current[role].file : null,
+                              fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
+                              recognizedFields: null,
+                              ocrSummary: undefined,
+                              ocrFallback: hasUploadedScreenshot,
+                            },
+                          };
+                        });
+                        metricsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                      screenshotsRequired={screenshotsRequired}
+                      focusedRole={focusedRole}
+                      highlightedOcrIndex={highlightedOcrIndex}
+                    />
+                  </div>
+
+                  {/* 右栏：指标分组与导粉话术区 */}
+                  <div ref={metricsSectionRef} className="space-y-5 flex flex-col justify-between">
+                    <指标分组区
+                      fields={fields}
+                      onFieldChange={updateField}
+                      onFocusField={handleFieldFocus}
+                      onBlurField={handleFieldBlur}
+                      anomalyStatus={meta.anomalyStatus}
+                    />
+                    <导粉话术采集区
+                      visible={parseMetric(fields.follower_convert.value) > 0}
+                      value={scriptText}
+                      onChange={setScriptText}
+                      hasAttemptedSubmit={hasAttemptedSubmit}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* 2. 视频信息及基础元数据表单（与上卡片 100% 物理齐平对齐） */}
+              {/* 2. 视频信息及基础元数据表单（与上卡片 100% 物理垂直对齐：左 340px 团队配置，右 1fr 标题文案） */}
               <div
                 ref={metaSectionRef}
-                className="relative rounded-2xl border border-zinc-200 bg-white p-7 shadow-xs"
+                className="relative rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 shadow-xs"
               >
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-4 items-stretch">
-                  {/* 【左栏：内容创作区 (1fr 动态自适应高度，与右侧虚线框永远底部齐平)】 */}
-                  <div className="space-y-4 flex flex-col h-full min-w-0">
-                    {/* 视频标题 */}
-                    <div
-                      className="space-y-1 shrink-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
-                      data-missing={
-                        hasAttemptedSubmit &&
-                        meta.anomalyStatus !== "abnormal" &&
-                        issueSummary.missingRequiredMeta.includes("videoTitle")
-                      }
-                    >
-                      <Label
-                        htmlFor="video_title"
-                        className="text-[13px] font-medium text-zinc-600"
-                      >
-                        视频标题{" "}
-                        {meta.anomalyStatus !== "abnormal" && (
-                          <span className="text-[#C9604D]">*</span>
-                        )}
-                      </Label>
-                      <Input
-                        id="video_title"
-                        value={meta.videoTitle}
-                        onChange={(event) =>
-                          updateMeta("videoTitle", event.target.value)
-                        }
-                        placeholder="输入视频标题"
-                        className="h-10.5 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-150"
-                        aria-invalid={
-                          hasAttemptedSubmit &&
-                          meta.anomalyStatus !== "abnormal" &&
-                          issueSummary.missingRequiredMeta.includes(
-                            "videoTitle",
-                          )
-                            ? "true"
-                            : "false"
-                        }
-                        aria-describedby={
-                          hasAttemptedSubmit &&
-                          meta.anomalyStatus !== "abnormal" &&
-                          issueSummary.missingRequiredMeta.includes(
-                            "videoTitle",
-                          )
-                            ? "video_title_error"
-                            : undefined
-                        }
-                      />
-                      {hasAttemptedSubmit &&
-                      meta.anomalyStatus !== "abnormal" &&
-                      issueSummary.missingRequiredMeta.includes(
-                        "videoTitle",
-                      ) ? (
-                        <p
-                          id="video_title_error"
-                          role="alert"
-                          className="text-[12px] font-medium text-[#C9604D]"
-                        >
-                          必填，仍未填写视频标题
-                        </p>
-                      ) : null}
-                    </div>
-
-                    {/* 视频文案 (flex-1 自动调高填满全高，与右侧虚线框完美动态平齐) */}
-                    <div
-                      className="flex-1 flex flex-col min-h-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
-                      data-missing={
-                        hasAttemptedSubmit &&
-                        issueSummary.missingRequiredMeta.includes("content")
-                      }
-                    >
-                      <div className="flex items-center justify-between shrink-0">
-                        <Label
-                          htmlFor="content"
-                          className="text-[13px] font-medium text-zinc-600"
-                        >
-                          文案 <span className="text-[#C9604D]">*</span>
-                        </Label>
-                        <button
-                          type="button"
-                          onClick={handlePasteContent}
-                          className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors duration-150 focus-visible:outline-none cursor-pointer"
-                        >
-                          <ClipboardPaste size={14} className="stroke-[1.5]" />
-                          一键粘贴
-                        </button>
-                      </div>
-                      <textarea
-                        id="content"
-                        value={meta.content}
-                        onChange={(event) =>
-                          updateMeta("content", event.target.value)
-                        }
-                        placeholder="粘贴视频文案..."
-                        className="mt-1.5 flex-1 min-h-[160px] w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3.5 text-[13px] leading-[1.75] tracking-[0.005em] text-zinc-700 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-200 overflow-y-auto custom-scrollbar"
-                        aria-invalid={
-                          hasAttemptedSubmit &&
-                          issueSummary.missingRequiredMeta.includes("content")
-                            ? "true"
-                            : "false"
-                        }
-                        aria-describedby={
-                          hasAttemptedSubmit &&
-                          issueSummary.missingRequiredMeta.includes("content")
-                            ? "content_error"
-                            : undefined
-                        }
-                      />
-                      {hasAttemptedSubmit &&
-                      issueSummary.missingRequiredMeta.includes("content") ? (
-                        <p
-                          id="content_error"
-                          role="alert"
-                          className="mt-1 text-[12px] font-medium text-[#C9604D] shrink-0"
-                        >
-                          必填，仍未填写文案
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {/* 【右栏：属性配置区 (280px 固定物理宽度，与上卡片对齐)】 */}
-                  <div className="w-full md:w-[280px] shrink-0 rounded-xl border border-dashed border-zinc-200/90 bg-zinc-50/40 p-3.5 space-y-3.5 flex flex-col justify-between">
+                <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-6 items-stretch">
+                  {/* 【左栏：属性与协作配置区 (340px 严格对齐上方的 340px 截图区)】 */}
+                  <div className="w-full shrink-0 rounded-xl border border-dashed border-zinc-200/90 bg-zinc-50/40 p-3.5 space-y-3.5 flex flex-col justify-between">
                     {/* 团队分工 */}
-                    <div className="space-y-2.5 pt-1.5 pb-0.5">
+                    <div className="space-y-2.5 pt-1 pb-0.5">
                       <div className="flex items-center justify-between">
                         <Label className="text-[13px] font-semibold text-zinc-700 select-none">
                           团队分工
@@ -2393,9 +2211,7 @@ export function VideoSubmitForm({
                           {isScriptAuthorVisible && (
                             <RoleItemSelectorRow
                               label="文案"
-                              icon={
-                                <FileText className="size-3.5 text-zinc-500 stroke-[1.75]" />
-                              }
+                              icon={<FileText className="size-3.5 text-zinc-500 stroke-[1.75]" />}
                               roleKey="script_author"
                               selectedUserId={meta.scriptAuthorUserId}
                               operatorMembers={operatorMembers}
@@ -2413,13 +2229,10 @@ export function VideoSubmitForm({
                             />
                           )}
 
-                          {/* 剪辑行 */}
                           {isVideoEditorVisible && (
                             <RoleItemSelectorRow
                               label="剪辑"
-                              icon={
-                                <Scissors className="size-3.5 text-zinc-500 stroke-[1.75]" />
-                              }
+                              icon={<Scissors className="size-3.5 text-zinc-500 stroke-[1.75]" />}
                               roleKey="video_editor"
                               selectedUserId={meta.videoEditorUserId}
                               operatorMembers={operatorMembers}
@@ -2430,22 +2243,17 @@ export function VideoSubmitForm({
                               setRoleSearchQuery={setRoleSearchQuery}
                               filteredMembersForRole={filteredMembersForRole}
                               onSelectUser={(id) => {
-                                setRoleUser("video_editor", id, {
-                                  isManual: true,
-                                });
+                                setRoleUser("video_editor", id, { isManual: true });
                                 if (id === userId) hideRole("video_editor");
                               }}
                               onResetSelf={() => hideRole("video_editor")}
                             />
                           )}
 
-                          {/* 运营行 */}
                           {isOperatorVisible && (
                             <RoleItemSelectorRow
                               label="运营"
-                              icon={
-                                <Rocket className="size-3.5 text-zinc-500 stroke-[1.75]" />
-                              }
+                              icon={<Rocket className="size-3.5 text-zinc-500 stroke-[1.75]" />}
                               roleKey="operator"
                               selectedUserId={meta.operatorUserId}
                               operatorMembers={operatorMembers}
@@ -2466,8 +2274,8 @@ export function VideoSubmitForm({
                       )}
                     </div>
 
-                    {/* 模块三：已记配置 (纯留白隔离，增加充裕呼吸步长) */}
-                    <div className="space-y-2 pt-3">
+                    {/* 话题标签与视频形式记忆配置 */}
+                    <div className="space-y-2 pt-2 border-t border-zinc-200/60">
                       {!isMemoryExpanded ? (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
@@ -2475,10 +2283,10 @@ export function VideoSubmitForm({
                               已记配置：
                             </span>
                             <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-2 py-0.5 text-[11.5px] font-medium">
-                              {meta.topicTag}
+                              {meta.topicTag || "未选"}
                             </span>
                             <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-2 py-0.5 text-[11.5px] font-medium">
-                              {meta.videoForm}
+                              {meta.videoForm || "未选"}
                             </span>
                           </div>
                           <button
@@ -2555,7 +2363,7 @@ export function VideoSubmitForm({
                       )}
                     </div>
 
-                    {/* 模块四：异常状态补充输入 */}
+                    {/* 异常状态补充输入 */}
                     {meta.anomalyStatus === "abnormal" && (
                       <div className="flex flex-col gap-3 rounded-xl border border-transparent bg-[#F59E0B]/[0.08] p-3.5">
                         <div className="flex flex-col gap-1.5">
@@ -2595,8 +2403,8 @@ export function VideoSubmitForm({
                       </div>
                     )}
 
-                    {/* 模块五：展开更多设置 (Accordion) */}
-                    <div className="pt-1">
+                    {/* 展开更多设置 (Accordion) */}
+                    <div className="pt-1 border-t border-zinc-200/60">
                       <button
                         type="button"
                         onClick={() =>
@@ -2667,6 +2475,111 @@ export function VideoSubmitForm({
                           </motion.div>
                         )}
                       </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {/* 【右栏：内容创作区 (1fr 动态自适应高度，与上方的 1fr 指标区完全对齐)】 */}
+                  <div className="space-y-4 flex flex-col h-full min-w-0">
+                    {/* 视频标题 */}
+                    <div
+                      className="space-y-1 shrink-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
+                      data-missing={
+                        hasAttemptedSubmit &&
+                        meta.anomalyStatus !== "abnormal" &&
+                        issueSummary.missingRequiredMeta.includes("videoTitle")
+                      }
+                    >
+                      <Label
+                        htmlFor="video_title"
+                        className="text-[13px] font-medium text-zinc-600"
+                      >
+                        视频标题{" "}
+                        {meta.anomalyStatus !== "abnormal" && (
+                          <span className="text-[#C9604D]">*</span>
+                        )}
+                      </Label>
+                      <Input
+                        id="video_title"
+                        value={meta.videoTitle}
+                        onChange={(event) =>
+                          updateMeta("videoTitle", event.target.value)
+                        }
+                        placeholder="输入视频标题"
+                        className="h-10.5 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-150"
+                        aria-invalid={
+                          hasAttemptedSubmit &&
+                          meta.anomalyStatus !== "abnormal" &&
+                          issueSummary.missingRequiredMeta.includes(
+                            "videoTitle",
+                          )
+                            ? "true"
+                            : "false"
+                        }
+                      />
+                      {hasAttemptedSubmit &&
+                      meta.anomalyStatus !== "abnormal" &&
+                      issueSummary.missingRequiredMeta.includes(
+                        "videoTitle",
+                      ) ? (
+                        <p
+                          id="video_title_error"
+                          role="alert"
+                          className="text-[12px] font-medium text-[#C9604D]"
+                        >
+                          必填，仍未填写视频标题
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {/* 视频文案 (flex-1 自动调高填满全高，与左侧 340px 容器完美平齐) */}
+                    <div
+                      className="flex-1 flex flex-col min-h-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#C9604D]/40 data-[missing=true]:bg-zinc-50 data-[missing=true]:p-3"
+                      data-missing={
+                        hasAttemptedSubmit &&
+                        issueSummary.missingRequiredMeta.includes("content")
+                      }
+                    >
+                      <div className="flex items-center justify-between shrink-0">
+                        <Label
+                          htmlFor="content"
+                          className="text-[13px] font-medium text-zinc-600"
+                        >
+                          文案 <span className="text-[#C9604D]">*</span>
+                        </Label>
+                        <button
+                          type="button"
+                          onClick={handlePasteContent}
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors duration-150 focus-visible:outline-none cursor-pointer"
+                        >
+                          <ClipboardPaste size={14} className="stroke-[1.5]" />
+                          一键粘贴
+                        </button>
+                      </div>
+                      <textarea
+                        id="content"
+                        value={meta.content}
+                        onChange={(event) =>
+                          updateMeta("content", event.target.value)
+                        }
+                        placeholder="粘贴视频文案..."
+                        className="mt-1.5 flex-1 min-h-[160px] w-full resize-none rounded-xl border border-transparent bg-zinc-100/70 px-4 py-3.5 text-[13px] leading-[1.75] tracking-[0.005em] text-zinc-700 placeholder:text-zinc-400 outline-none focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5 transition-all duration-200 overflow-y-auto custom-scrollbar"
+                        aria-invalid={
+                          hasAttemptedSubmit &&
+                          issueSummary.missingRequiredMeta.includes("content")
+                            ? "true"
+                            : "false"
+                        }
+                      />
+                      {hasAttemptedSubmit &&
+                      issueSummary.missingRequiredMeta.includes("content") ? (
+                        <p
+                          id="content_error"
+                          role="alert"
+                          className="mt-1 text-[12px] font-medium text-[#C9604D] shrink-0"
+                        >
+                          必填，仍未填写文案
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </div>

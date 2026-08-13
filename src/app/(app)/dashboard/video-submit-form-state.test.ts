@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   addRoleOverride,
+  findNextScreenshotUploadRole,
   removeRoleOverride,
   setOperatorToSelf,
   setOperatorUser,
@@ -117,5 +118,49 @@ test("选择发布时间不应改动归属日期", () => {
   assert.equal(
     preserveBizDateWhenPublishedAtChanges("2026-07-15"),
     "2026-07-15",
+  );
+});
+
+test("多图上传每张图都按当前最新空槽分配，避免两张截图互相占位", () => {
+  assert.equal(
+    findNextScreenshotUploadRole({
+      screenshot_1: { status: "empty" },
+      screenshot_2: { status: "empty" },
+      screenshot_3: { status: "empty" },
+    }),
+    "screenshot_1",
+  );
+
+  assert.equal(
+    findNextScreenshotUploadRole({
+      screenshot_1: { status: "empty" },
+      screenshot_2: { status: "confirmed" },
+      screenshot_3: { status: "empty" },
+    }),
+    "screenshot_1",
+  );
+
+  assert.equal(
+    findNextScreenshotUploadRole({
+      screenshot_1: { status: "recognizing" },
+      screenshot_2: { status: "confirmed" },
+      screenshot_3: { status: "empty" },
+    }),
+    "screenshot_3",
+  );
+});
+
+
+test("可限制多图上传只使用界面可见的两个截图槽", () => {
+  assert.equal(
+    findNextScreenshotUploadRole(
+      {
+        screenshot_1: { status: "confirmed" },
+        screenshot_2: { status: "confirmed" },
+        screenshot_3: { status: "empty" },
+      },
+      ["screenshot_1", "screenshot_2"],
+    ),
+    null,
   );
 });

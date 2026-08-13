@@ -616,7 +616,7 @@ export function VideoSubmitPanel({
         <Card className={cn(
           "mx-auto overflow-hidden",
           embeddedChrome
-            ? "max-w-3xl rounded-none border-none bg-transparent shadow-none"
+            ? "max-w-6xl rounded-none border-none bg-transparent shadow-none"
             : "max-w-6xl rounded-2xl border border-zinc-200 bg-white",
         )}>
           {!embeddedChrome ? (

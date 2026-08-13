@@ -83,3 +83,22 @@ export function shouldAutoRedirectToGrowthAfterSubmit({
 export function preserveBizDateWhenPublishedAtChanges(currentBizDate: string) {
   return currentBizDate;
 }
+
+export type ScreenshotUploadSlotRole = "screenshot_1" | "screenshot_2" | "screenshot_3";
+export type ScreenshotUploadSlotLike = { status: string };
+
+export const SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
+  "screenshot_1",
+  "screenshot_2",
+  "screenshot_3",
+];
+
+export function findNextScreenshotUploadRole(
+  slots: Record<ScreenshotUploadSlotRole, ScreenshotUploadSlotLike>,
+  order: ScreenshotUploadSlotRole[] = SCREENSHOT_UPLOAD_SLOT_ORDER,
+): ScreenshotUploadSlotRole | null {
+  return order.find((role) => {
+    const status = slots[role]?.status;
+    return status === "empty" || status === "failed";
+  }) ?? null;
+}
