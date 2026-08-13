@@ -1,12 +1,9 @@
 "use client";
 
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { toast } from "sonner";
-import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -18,7 +15,6 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import type { Video, VideoTagReviewDimension } from "@/types";
 import {
-  getExemptionDatesForMonth,
   getExemptionStateForDate,
   type ExemptionGrantLike,
   type ExemptionProfileLike,
@@ -183,7 +179,6 @@ export function VideoSubmitPanel({
   userExemptionGrants,
   embeddedChrome = false,
   selectedAccountId: controlledSelectedAccountId,
-  onSelectedAccountChange,
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
 }: VideoSubmitPanelProps) {
@@ -197,12 +192,11 @@ export function VideoSubmitPanel({
   }, [router]);
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
-  const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
+  const internalSelectedAccountId = accounts[0]?.id ?? "";
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
   const [isDataViewOpen, setIsDataViewOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isExempting, setIsExempting] = useState(false);
   const [watchConclusion, setWatchConclusion] = useState<string | null>(null);
   const [editingReport, setEditingReport] = useState<MonthReport | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
@@ -223,13 +217,6 @@ export function VideoSubmitPanel({
   });
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
-  const setSelectedAccountId = useCallback(
-    (accountId: string) => {
-      setInternalSelectedAccountId(accountId);
-      onSelectedAccountChange?.(accountId);
-    },
-    [onSelectedAccountChange],
-  );
   const setActiveBizDate = useCallback(
     (date: string) => {
       setInternalActiveBizDate(date);
@@ -251,16 +238,21 @@ export function VideoSubmitPanel({
 
   useEffect(() => {
     if ((!isDataViewOpen && !isHistoryOpen) || activityData || activityError) return;
-    void loadActivity();
+    const timeoutId = window.setTimeout(() => {
+      void loadActivity();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [activityData, activityError, isDataViewOpen, isHistoryOpen, loadActivity]);
 
   useEffect(() => {
-    if (!hasPendingExemption) {
+    if (hasPendingExemption) return;
+    try {
+      window.localStorage.removeItem("dydata:dismissed-pending-exemption");
+    } catch {}
+    const timeoutId = window.setTimeout(() => {
       setDismissedPendingExemption(false);
-      try {
-        window.localStorage.removeItem("dydata:dismissed-pending-exemption");
-      } catch {}
-    }
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [hasPendingExemption]);
 
   useEffect(() => {
@@ -311,24 +303,6 @@ export function VideoSubmitPanel({
     [mergedTodayReports, selectedAccount],
   );
 
-  const [isLate, setIsLate] = useState(false);
-  useEffect(() => {
-    const check = () => {
-      const now = new Date();
-      setIsLate(now.getHours() > 11 || (now.getHours() === 11 && now.getMinutes() >= 15));
-    };
-    check();
-    const timer = setInterval(check, 60_000);
-    return () => clearInterval(timer);
-  }, []);
-
-
-  const monthExemptionDates = useMemo(
-    () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),
-    [today, userExemptionGrants, userExemptionProfile],
-  );
-
-
   const activeDateReport = useMemo(
     () =>
       mergedMonthReports
@@ -337,18 +311,6 @@ export function VideoSubmitPanel({
     [activeBizDate, mergedMonthReports, selectedAccountId],
   );
 
-  const submittedDates = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          mergedMonthReports
-            .filter((report) => report.account_id === selectedAccountId)
-            .map((report) => report.report_date)
-            .filter(Boolean),
-        ),
-      ),
-    [mergedMonthReports, selectedAccountId],
-  );
   const historyReports = activityData?.history ?? history;
   const isActivityLoading = (isDataViewOpen || isHistoryOpen) && !activityData && !activityError;
 
@@ -453,75 +415,6 @@ export function VideoSubmitPanel({
     } catch {}
   }
 
-  function openBackfillForDate(date: string) {
-    setActiveBizDate(date);
-    setRequestedMode("backfill");
-    setIsDataViewOpen(false);
-    setPendingBackfillDate(date);
-    setPendingFocusDate(date);
-  }
-
-  function getReportForDate(date: string) {
-    return (
-      mergedMonthReports
-        .filter((report) => report.report_date === date && report.account_id === selectedAccountId)
-        .sort((left, right) => (right.uploaded_at ?? "").localeCompare(left.uploaded_at ?? ""))[0] ?? null
-    );
-  }
-
-  function openSubmittedDate(date: string) {
-    setIsDataViewOpen(false);
-
-    if (date === today && selectedSummary) {
-      setActiveBizDate(date);
-      setPendingFocusDate(date);
-      setRequestedMode("editToday");
-      return;
-    }
-
-    const matchedReport = getReportForDate(date);
-    if (matchedReport) {
-      // 开编辑弹窗时禁止 setActiveBizDate：父级用 账号-日期 作 key，
-      // 改日期会重挂整个面板、清掉 editingReport（弹窗秒关的同类根因）
-      setRequestedMode(null);
-      setEditingReport(matchedReport);
-      return;
-    }
-
-    setActiveBizDate(date);
-    setPendingFocusDate(date);
-  }
-
-  function jumpFromDataView(date: string) {
-    const dateReport = getReportForDate(date);
-    const dateExemptionState = getExemptionStateForDate(
-      userExemptionProfile,
-      date,
-      userExemptionGrants,
-    );
-    const dateStatus = resolveSubmissionDayStatus({
-      date,
-      today,
-      report: date === today ? selectedSummary : dateReport,
-      exemption: dateExemptionState,
-    });
-
-    if (dateStatus.state === "submitted") {
-      openSubmittedDate(date);
-      return;
-    }
-
-    if (dateStatus.canBackfill) {
-      openBackfillForDate(date);
-      return;
-    }
-
-    setActiveBizDate(date);
-    setRequestedMode(null);
-    setIsDataViewOpen(false);
-    setPendingFocusDate(date);
-  }
-
   function handleHistoryReportOpen(report: {
     id: string;
     account_id: string;
@@ -549,50 +442,25 @@ export function VideoSubmitPanel({
     setEditingReport(report);
   }
 
-  const handleApplyExemption = useCallback(async (date: string) => {
-    if (!selectedAccountId) {
-      toast.error("未选择有效账号");
-      return;
-    }
-    setIsExempting(true);
-    try {
-      const response = await fetch("/api/exemptions/apply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          account_id: selectedAccountId,
-          exemption_type: "single",
-          start_date: date,
-          end_date: null,
-          reason: "当日未产出/漏交补报申请",
-        }),
-      });
-
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload.error || "豁免申请失败，请稍后重试");
-      }
-
-      toast.success("豁免申请提交成功，请等待管理员审批");
-      setIsDataViewOpen(false);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "豁免申请发生异常");
-    } finally {
-      setIsExempting(false);
-    }
-  }, [selectedAccountId]);
-
   useEffect(() => {
     if (!selectedAccountId) return;
-    setWatchConclusion(null);
-    fetch(`/api/dashboard/watch-overview?account_id=${selectedAccountId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.conclusion) {
-          setWatchConclusion(data.conclusion);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch watch overview", err));
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      setWatchConclusion(null);
+      fetch(`/api/dashboard/watch-overview?account_id=${selectedAccountId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled && data && data.conclusion) {
+            setWatchConclusion(data.conclusion);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch watch overview", err));
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
   }, [selectedAccountId]);
 
   if (!accounts.length) {

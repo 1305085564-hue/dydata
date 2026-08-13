@@ -15,7 +15,6 @@ interface MetricInputCardProps {
   onChange: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
-  size?: "primary" | "secondary";
   optional?: boolean;
   animationDelay?: number;
   inputRef?: React.Ref<HTMLInputElement>;
@@ -75,7 +74,6 @@ export function MetricInputCard({
   onChange,
   onFocus,
   onBlur,
-  size = "secondary",
   optional = false,
   animationDelay = 0,
   inputRef,

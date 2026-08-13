@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useCallback, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
 import { cn } from "@/lib/utils";
@@ -131,7 +131,6 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 field={fields[item.key]}
                 step={item.step}
                 suffix={item.suffix}
-                size="primary"
                 optional={item.optional}
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
@@ -153,7 +152,6 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                 key={item.key}
                 label={item.label}
                 field={fields[item.key]}
-                size="secondary"
                 onChange={(value) => onFieldChange(item.key, value)}
                 onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                 onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
@@ -201,8 +199,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                     field={fields[item.key]}
                     step={item.step}
                     suffix={item.suffix}
-                    size="secondary"
-                    optional={retentionOptional}
+                        optional={retentionOptional}
                     onChange={(value) => onFieldChange(item.key, value)}
                     onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                     onBlur={onBlurField ? () => onBlurField(item.key) : undefined}

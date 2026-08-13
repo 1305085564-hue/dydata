@@ -47,7 +47,6 @@ interface ProductionControlSystemProps {
 export function ProductionControlSystem({
   today,
   userDisplayName,
-  userRole,
   accounts,
   userId,
   todayReports,

@@ -114,16 +114,6 @@ function getCalendarCells({
   };
 }
 
-function getStateText(state: SubmissionCalendarDateState) {
-  if (state === "submitted") return "已交";
-  if (state === "waive") return "免交";
-  if (state === "leave") return "请假";
-  if (state === "pending") return "审批中";
-  if (state === "unsubmitted") return "未交";
-  if (state === "future") return "未到";
-  return "漏交";
-}
-
 export function SubmissionCalendar({
   today,
   submittedDates,
@@ -134,8 +124,10 @@ export function SubmissionCalendar({
   selectedDate = null,
   selectedDates = [],
   onDateSelect,
-  compact = false,
+  compact: _compact = false,
 }: SubmissionCalendarProps) {
+  void _compact;
+
   const [displayDate, setDisplayDate] = useState(() => {
     if (
       selectedDate &&
