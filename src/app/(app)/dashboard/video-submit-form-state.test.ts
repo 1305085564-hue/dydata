@@ -126,7 +126,6 @@ test("多图上传每张图都按当前最新空槽分配，避免两张截图�
     findNextScreenshotUploadRole({
       screenshot_1: { status: "empty" },
       screenshot_2: { status: "empty" },
-      screenshot_3: { status: "empty" },
     }),
     "screenshot_1",
   );
@@ -135,7 +134,6 @@ test("多图上传每张图都按当前最新空槽分配，避免两张截图�
     findNextScreenshotUploadRole({
       screenshot_1: { status: "empty" },
       screenshot_2: { status: "confirmed" },
-      screenshot_3: { status: "empty" },
     }),
     "screenshot_1",
   );
@@ -144,9 +142,8 @@ test("多图上传每张图都按当前最新空槽分配，避免两张截图�
     findNextScreenshotUploadRole({
       screenshot_1: { status: "recognizing" },
       screenshot_2: { status: "confirmed" },
-      screenshot_3: { status: "empty" },
     }),
-    "screenshot_3",
+    null,
   );
 });
 
@@ -157,7 +154,6 @@ test("可限制多图上传只使用界面可见的两个截图槽", () => {
       {
         screenshot_1: { status: "confirmed" },
         screenshot_2: { status: "confirmed" },
-        screenshot_3: { status: "empty" },
       },
       ["screenshot_1", "screenshot_2"],
     ),

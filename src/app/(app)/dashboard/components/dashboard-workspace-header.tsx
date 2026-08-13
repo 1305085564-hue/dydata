@@ -149,7 +149,6 @@ export function DashboardWorkspaceHeader({
                   today={today}
                   submittedDates={submittedDates}
                   selectedDate={activeBizDate}
-                  compact
                   onDateSelect={(date) => {
                     onDateChange(date);
                     setIsCalendarOpen(false);

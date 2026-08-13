@@ -21,7 +21,6 @@ interface SubmissionCalendarProps {
   selectedDate?: string | null;
   selectedDates?: string[];
   onDateSelect?: (date: string, hasSubmission: boolean) => void;
-  compact?: boolean;
 }
 
 const WEEK_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
@@ -124,9 +123,7 @@ export function SubmissionCalendar({
   selectedDate = null,
   selectedDates = [],
   onDateSelect,
-  compact: _compact = false,
 }: SubmissionCalendarProps) {
-  void _compact;
 
   const [displayDate, setDisplayDate] = useState(() => {
     if (

@@ -230,68 +230,6 @@
     padding: 0.625rem 0.875rem;
   }
 
-  /* ─── form layout ─── */
-  .dashboard-form-layout {
-    display: grid;
-    gap: 1rem;
-    align-items: start;
-  }
-
-  .dashboard-form-column {
-    display: grid;
-    gap: 1rem;
-    align-content: start;
-  }
-
-  .dashboard-form-import-card,
-  .dashboard-form-entry-card {
-    min-width: 0;
-  }
-
-  .dashboard-form-section {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .dashboard-form-section-divider {
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--color-border) 90%, white) 18%,
-      color-mix(in srgb, var(--color-border) 90%, white) 82%,
-      transparent 100%
-    );
-  }
-
-  .dashboard-form-floating-bar {
-    position: fixed;
-    right: 1rem;
-    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-    left: 1rem;
-    z-index: 32;
-    pointer-events: none;
-    justify-content: flex-end;
-  }
-
-  .dashboard-form-floating-panel {
-    width: min(100%, 28rem);
-    border-radius: 1.35rem;
-    border: 1px solid color-mix(in srgb, var(--color-border) 76%, white);
-    background: color-mix(in srgb, var(--glass-bg) 96%, white);
-    padding: 1rem 1.05rem;
-    box-shadow:
-      0 20px 45px -28px rgba(28, 25, 23, 0.45),
-      0 10px 24px -20px rgba(28, 25, 23, 0.22);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
-    pointer-events: auto;
-  }
-
-  .dashboard-form-inline-action {
-    margin-top: 0.25rem;
-  }
-
   /* ─── date panel ─── */
   .dashboard-date-panel {
     display: grid;
@@ -695,29 +633,16 @@
   .dark .glass-metric,
   .dark .glass-field,
   .dark .glass-chip,
-  .dark .dashboard-mobile-submit-bar,
-  .dark .dashboard-form-floating-panel {
+  .dark .dashboard-mobile-submit-bar {
     border-color: color-mix(in srgb, var(--color-border) 84%, transparent);
   }
 
   .dark .dashboard-summary-bar,
   .dark .glass-chip,
   .dark .glass-metric,
-  .dark .glass-field,
-  .dark .dashboard-form-floating-panel {
+  .dark .glass-field {
     background: color-mix(in srgb, var(--glass-bg) 90%, transparent);
   }
-
-  .dark .dashboard-form-section-divider {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--color-border) 86%, transparent) 18%,
-      color-mix(in srgb, var(--color-border) 86%, transparent) 82%,
-      transparent 100%
-    );
-  }
-
   .dark .glass-metric-primary {
     background: transparent;
     border-left: 2px solid var(--color-primary);

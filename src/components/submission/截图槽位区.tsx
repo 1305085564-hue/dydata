@@ -69,7 +69,6 @@ export function SubmissionSlotsSection({
   const slotInputRefs = useRef<Record<SubmissionSlotRole, HTMLInputElement | null>>({
     screenshot_1: null,
     screenshot_2: null,
-    screenshot_3: null,
   });
 
   const extractImageFiles = (fileList: FileList | null): File[] => {

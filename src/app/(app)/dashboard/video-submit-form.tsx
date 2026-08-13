@@ -245,7 +245,6 @@ const OVERVIEW_FIELDS: EditableMetricKey[] = [
 const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
   screenshot_1: "互动截图",
   screenshot_2: "完播截图",
-  screenshot_3: "补充截图",
 };
 
 const VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
@@ -415,7 +414,6 @@ function createEditableSlots(): Record<SubmissionSlotRole, SlotViewState> {
   return {
     screenshot_1: { ...initial.screenshot_1 },
     screenshot_2: { ...initial.screenshot_2 },
-    screenshot_3: { ...initial.screenshot_3 },
   };
 }
 
@@ -886,7 +884,6 @@ export function VideoSubmitForm({
       slots: {
         screenshot_1: { ...slots.screenshot_1, file: null, previewUrl: null },
         screenshot_2: { ...slots.screenshot_2, file: null, previewUrl: null },
-        screenshot_3: { ...slots.screenshot_3, file: null, previewUrl: null },
       },
       scriptText,
       keywordInput,
@@ -953,12 +950,6 @@ export function VideoSubmitForm({
       screenshot_2: {
         ...current.screenshot_2,
         ...draft.slots.screenshot_2,
-        file: null,
-        previewUrl: null,
-      },
-      screenshot_3: {
-        ...current.screenshot_3,
-        ...draft.slots.screenshot_3,
         file: null,
         previewUrl: null,
       },
@@ -1036,9 +1027,7 @@ export function VideoSubmitForm({
   ]);
 
   const submissionState = buildSubmissionState(slots, fields, isSubmitted);
-  const screenshotsRequired = areSubmissionScreenshotsRequired(
-    meta.anomalyStatus,
-  );
+  const screenshotsRequired = areSubmissionScreenshotsRequired(meta.anomalyStatus);
   const issueSummary = useMemo(
     () =>
       summarizeSubmissionIssues(submissionState, {
@@ -1186,7 +1175,6 @@ export function VideoSubmitForm({
         ...current,
         screenshot_1: { ...createEditableSlots().screenshot_1 },
         screenshot_2: { ...createEditableSlots().screenshot_2 },
-        screenshot_3: { ...createEditableSlots().screenshot_3 },
       }));
     } else if (issue.suggestedFix === "manual_review") {
       toast.message("请联系管理员复核");

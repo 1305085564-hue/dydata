@@ -234,7 +234,6 @@ function ExemptionModal({
                   selectedDates={selectedDates}
                   onDateSelect={(date) => toggleDate(date)}
                   className="border-none bg-transparent shadow-none"
-                  compact
                 />
               </div>
             </div>

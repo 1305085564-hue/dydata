@@ -44,7 +44,6 @@ test("存在上传中或识别中槽位时为识别中", () => {
     slots: {
       screenshot_1: createSlot({ status: "recognizing" }),
       screenshot_2: createSlot({ role: "screenshot_2" }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
   });
 
@@ -56,7 +55,6 @@ test("必传槽已识别但未确认时为待确认", () => {
     slots: {
       screenshot_1: createSlot({ status: "pending_confirm", requiresManualConfirmation: true }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
   });
 
@@ -73,7 +71,6 @@ test("OCR 失败但截图已上传并转手输时不再卡住提交", () => {
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true, requiresManualConfirmation: false }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "pending_confirm", confirmed: true, requiresManualConfirmation: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
   });
 
@@ -93,12 +90,12 @@ test("OCR 失败但截图已上传并转手输时不再卡住提交", () => {
   });
 });
 
+
 test("上传两张必传截图后即可提交", () => {
   const state = createInitialSubmissionState({
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
   });
 
@@ -114,7 +111,6 @@ test("问题汇总只保留截图与话题标签缺项", () => {
     slots: {
       screenshot_1: createSlot(),
       screenshot_2: createSlot({ role: "screenshot_2", status: "pending_confirm", requiresManualConfirmation: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
     fields: {
       play_count: createField(),
@@ -151,7 +147,6 @@ test("标题和文案缺失时仍不能提交，但不再要求内容标签", ()
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
   });
 
@@ -173,7 +168,6 @@ test("标题、文案和话题标签齐全时可提交，即使内容标签为�
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
   });
 
@@ -218,7 +212,6 @@ test("限流时留存字段为空不计入缺项", () => {
     slots: {
       screenshot_1: createSlot({ status: "confirmed", confirmed: true }),
       screenshot_2: createSlot({ role: "screenshot_2", status: "confirmed", confirmed: true }),
-      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
     },
     fields: {
       play_count: createField({ value: "100" }),

@@ -84,13 +84,12 @@ export function preserveBizDateWhenPublishedAtChanges(currentBizDate: string) {
   return currentBizDate;
 }
 
-export type ScreenshotUploadSlotRole = "screenshot_1" | "screenshot_2" | "screenshot_3";
+export type ScreenshotUploadSlotRole = "screenshot_1" | "screenshot_2";
 export type ScreenshotUploadSlotLike = { status: string };
 
 export const SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
   "screenshot_1",
   "screenshot_2",
-  "screenshot_3",
 ];
 
 export function findNextScreenshotUploadRole(

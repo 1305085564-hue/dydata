@@ -19,11 +19,11 @@ import {
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
-import { DashboardForm, type DashboardReportData } from "./dashboard-form";
 import {
   getDashboardStatusClass,
 } from "./dashboard-visuals";
 import { HistoryList } from "./history-list";
+import { HistoryReportEditForm, type HistoryReportEditData } from "./history-report-edit-form";
 import { VideoSubmitForm } from "./video-submit-form";
 import {
   getTodaySubmissionSummary,
@@ -116,29 +116,6 @@ interface VideoSubmitPanelProps {
   onSelectedAccountChange?: (accountId: string) => void;
   activeBizDate?: string;
   onActiveBizDateChange?: (date: string) => void;
-}
-
-function toDashboardReportData(report: MonthReport): DashboardReportData {
-  return {
-    id: report.id,
-    account_id: report.account_id,
-    title: report.title ?? "",
-    report_date: report.report_date,
-    play_count: report.play_count,
-    completion_rate: report.completion_rate,
-    avg_play_duration: report.avg_play_duration,
-    bounce_rate_2s: report.bounce_rate_2s,
-    completion_rate_5s: report.completion_rate_5s,
-    likes: report.likes ?? 0,
-    comments: report.comments ?? 0,
-    shares: report.shares ?? 0,
-    favorites: report.favorites ?? 0,
-    follower_gain: report.follower_gain ?? 0,
-    follower_convert: report.follower_convert ?? null,
-    content: report.content ?? null,
-    published_at: report.published_at,
-    uploaded_at: report.uploaded_at ?? "",
-  };
 }
 
 function toOverrideReport(summaryOverride: TodaySubmissionReportLike): MonthReport | null {
@@ -802,12 +779,13 @@ export function VideoSubmitPanel({
             <DialogTitle>查看并修改日报数据</DialogTitle>
           </DialogHeader>
           {editingReport ? (
-            <DashboardForm
-              accounts={accounts.map((account) => ({ id: account.id, name: account.display_name }))}
-              defaultAccountId={editingReport.account_id}
-              today={today}
-              existingData={toDashboardReportData(editingReport)}
-              actionBarMode="inline"
+            <HistoryReportEditForm
+              key={`history-edit-${editingReport.id}-${editingReport.uploaded_at ?? editingReport.report_date}`}
+              report={editingReport as HistoryReportEditData}
+              onSaved={() => {
+                setEditingReport(null);
+                void loadActivity();
+              }}
             />
           ) : null}
         </DialogContent>

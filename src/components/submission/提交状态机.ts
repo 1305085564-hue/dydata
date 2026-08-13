@@ -1,9 +1,6 @@
 import { normalizeVideoAnomalyStatus } from "@/lib/video-anomaly";
 
-export type SubmissionSlotRole =
-  | "screenshot_1"
-  | "screenshot_2"
-  | "screenshot_3";
+export type SubmissionSlotRole = "screenshot_1" | "screenshot_2";
 
 export type SubmissionSlotStatus =
   | "empty"
@@ -110,7 +107,6 @@ export function createInitialSubmissionState(
     slots: {
       screenshot_1: createSlot("screenshot_1", true),
       screenshot_2: createSlot("screenshot_2", true),
-      screenshot_3: createSlot("screenshot_3", false),
       ...overrides.slots,
     },
     fields: {

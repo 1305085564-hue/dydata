@@ -108,6 +108,7 @@ export function getTodaySubmissionSummary(
   };
 }
 
+
 export function resolveSubmitPanelMode({
   summary,
   requestedMode,
