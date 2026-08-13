@@ -67,6 +67,32 @@ test("必传槽已识别但未确认时为待确认", () => {
   });
 });
 
+
+test("OCR 失败但截图已上传并转手输时不再卡住提交", () => {
+  const state = createInitialSubmissionState({
+    slots: {
+      screenshot_1: createSlot({ status: "confirmed", confirmed: true, requiresManualConfirmation: false }),
+      screenshot_2: createSlot({ role: "screenshot_2", status: "pending_confirm", confirmed: true, requiresManualConfirmation: true }),
+      screenshot_3: createSlot({ role: "screenshot_3", required: false }),
+    },
+  });
+
+  const summary = summarizeSubmissionIssues(state, {
+    topicTag: "复盘",
+    anomalyStatus: "正常",
+    videoTitle: "标题",
+    content: "文案",
+  });
+
+  assert.deepEqual(summary.failedRequiredSlots, []);
+  assert.deepEqual(summary.pendingSlotConfirmations, []);
+  assert.equal(summary.canSubmit, true);
+  assert.deepEqual(canSubmit(state, { anomalyStatus: "正常" }), {
+    ok: true,
+    reason: null,
+  });
+});
+
 test("上传两张必传截图后即可提交", () => {
   const state = createInitialSubmissionState({
     slots: {

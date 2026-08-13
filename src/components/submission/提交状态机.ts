@@ -143,12 +143,12 @@ export function summarizeSubmissionIssues(
     .filter((slot) => slot.status === "empty")
     .map((slot) => slot.role);
   const failedRequiredSlots = requiredSlots
-    .filter((slot) => slot.status === "failed")
+    .filter((slot) => slot.status === "failed" && !slot.confirmed)
     .map((slot) => slot.role);
   const pendingSlotConfirmations = requiredSlots
     .filter(
       (slot) =>
-        slot.status === "pending_confirm" ||
+        (slot.status === "pending_confirm" && !slot.confirmed) ||
         ((slot.status === "uploading" || slot.status === "recognizing" || slot.status === "confirmed") && !slot.confirmed)
     )
     .map((slot) => slot.role);

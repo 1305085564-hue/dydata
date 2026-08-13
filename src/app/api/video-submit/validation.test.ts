@@ -234,6 +234,36 @@ test("导粉话术为空时保持可选，不阻断旧填报链路", () => {
   assert.equal(result.normalized.script_format, "oral");
 });
 
+
+test("提交接口允许 OCR 失败后保留已上传截图并手动填指标", () => {
+  const result = validateVideoSubmitPayload({
+    account_id: "acc-1",
+    video_title: "标题",
+    content: "文案",
+    assets: [
+      {
+        role: "screenshot_2",
+        url: "https://dydata.cc/api/submission-screenshots/file?path=user-1%2Faccount-1%2Fscreenshot_2%2Fretention.png",
+        confirmed: true,
+        confidence_score: 0,
+        recognized_fields: null,
+        screenshot_type: "retention",
+      },
+    ],
+    metrics: {
+      play_count: 100,
+      avg_play_duration: 12.5,
+      completion_rate: 33.3,
+    },
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.normalized.assets[0].role, "screenshot_2");
+  assert.equal(result.normalized.assets[0].confirmed, true);
+  assert.equal(result.normalized.metrics.avg_play_duration, 12.5);
+});
+
 test("提交幂等 id 对同一份规范化数据保持稳定", () => {
   const base = {
     account_id: "acc-1",

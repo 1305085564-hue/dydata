@@ -15,6 +15,7 @@ interface SubmissionSlotsProps {
       assetUrl?: string | null;
       ocrSummary?: string[];
       errorCode?: string | null;
+      ocrFallback?: boolean;
     }
   >;
   onSelectFile: (role: SubmissionSlotRole, file: File) => void;
@@ -139,6 +140,7 @@ export function SubmissionSlotsSection({
             const isWarning = slot.status === "pending_confirm" || ((slot.confidenceScore ?? 1) < 0.7 && slot.status !== "failed");
             const isError = slot.status === "failed";
             const isSuccess = slot.status === "confirmed" && !isWarning;
+            const shouldShowManualFill = Boolean(onManualFill) && (isError || slot.ocrFallback || slot.status === "pending_confirm");
 
             return (
               <div
@@ -221,10 +223,10 @@ export function SubmissionSlotsSection({
                             <RefreshCw className="size-3" />
                           </button>
                         )}
-                        {onManualFill && (
+                        {shouldShowManualFill && (
                           <button
                             type="button"
-                            onClick={() => onManualFill(item.role)}
+                            onClick={() => onManualFill?.(item.role)}
                             className="inline-flex h-6 items-center justify-center rounded-lg bg-white px-1.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-200 border border-zinc-300 transition-colors"
                           >
                             手输
@@ -254,11 +256,12 @@ export function SubmissionSlotsSection({
                       : slot.fileName || (item.role === "screenshot_1" ? "流量指标图已读取" : "留存完播图已读取")}
                 </div>
                 {/* 识别失败时给出明确的截图类型提示，减少上传错误截图的情况 */}
-                {isError && (
+                {(isError || slot.ocrFallback) && (
                   <div className="text-[11px] text-[#C9604D]/80 mt-0.5 leading-snug">
-                    {item.role === "screenshot_1"
-                      ? "需含播放量/点赞/评论等互动数据截图"
-                      : "需含均播时长/完播率/留存曲线截图"}
+                    {slot.error ||
+                      (item.role === "screenshot_1"
+                        ? "需含播放量/点赞/评论等互动数据截图"
+                        : "需含均播时长/完播率/留存曲线截图")}
                   </div>
                 )}
               </div>

@@ -3,21 +3,29 @@ import assert from "node:assert/strict";
 
 import {
   getScreenshotTypeByAssetRole,
+  getScreenshotTypeFallbackByAssetRole,
   parseClassificationContent,
   parseCurveContent,
   parseOcrResponse,
   parseRetentionContent,
 } from "./route";
 
-test("asset_role 强制映射截图类型", () => {
+test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映射为 OCR 类型", () => {
   assert.equal(getScreenshotTypeByAssetRole("overview"), "data");
   assert.equal(getScreenshotTypeByAssetRole("traffic_curve"), "curve");
   assert.equal(getScreenshotTypeByAssetRole("retention_curve"), "retention");
   assert.equal(getScreenshotTypeByAssetRole("engagement_extra"), "data");
   assert.equal(getScreenshotTypeByAssetRole("other"), "data");
-  assert.equal(getScreenshotTypeByAssetRole("screenshot_1"), "data");
-  assert.equal(getScreenshotTypeByAssetRole("screenshot_2"), "retention");
+  assert.equal(getScreenshotTypeByAssetRole("screenshot_1"), null);
+  assert.equal(getScreenshotTypeByAssetRole("screenshot_2"), null);
   assert.equal(getScreenshotTypeByAssetRole("unknown"), null);
+});
+
+test("AI 分类失败时按槽位做兜底，避免完播截图误跑互动 OCR", () => {
+  assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_1"), "data");
+  assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_2"), "retention");
+  assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_3"), "data");
+  assert.equal(getScreenshotTypeFallbackByAssetRole("unknown"), "data");
 });
 
 test("自动分类识别截图类型", () => {

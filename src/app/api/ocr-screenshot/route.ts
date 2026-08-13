@@ -8,6 +8,7 @@ import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signa
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
+type ScreenshotTypeSource = "explicit" | "classification" | "asset_role_fallback";
 type ScreenshotTypeInput =
   | ScreenshotType
   | "overview"
@@ -112,6 +113,11 @@ type ImagePayloadSuccess = {
   downloadMs?: number;
 };
 
+type ResolvedScreenshotType = {
+  type: ScreenshotType;
+  source: ScreenshotTypeSource;
+};
+
 type ImagePayloadError = {
   error: string;
 };
@@ -183,11 +189,8 @@ export async function POST(request: NextRequest) {
 
     timings.download_ms = imagePayload.downloadMs ?? 0;
     const dataUrl = imagePayload.dataUrl;
-    const forcedScreenshotType = getScreenshotTypeByAssetRole(imagePayload.assetRole);
-    const screenshotType =
-      forcedScreenshotType ??
-      imagePayload.screenshotType ??
-      (await detectScreenshotType(dataUrl, timings));
+    const resolvedScreenshotType = await resolveScreenshotType(imagePayload, dataUrl, timings);
+    const screenshotType = resolvedScreenshotType.type;
     const prompt = buildPromptByType(screenshotType);
 
     try {
@@ -220,7 +223,7 @@ export async function POST(request: NextRequest) {
         if (!parsed) {
           return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
         }
-        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, timings });
+        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, screenshot_type_source: resolvedScreenshotType.source, timings });
       }
 
       if (screenshotType === "retention") {
@@ -230,7 +233,7 @@ export async function POST(request: NextRequest) {
         if (!parsed) {
           return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
         }
-        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, timings });
+        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, screenshot_type_source: resolvedScreenshotType.source, timings });
       }
 
       const parsed = parseOcrResponse(content, "data");
@@ -242,10 +245,10 @@ export async function POST(request: NextRequest) {
       }
 
       if (parsed.slot_status === "failed") {
-        return NextResponse.json({ data: parsed, screenshot_type: screenshotType, timings }, { status: 200 });
+        return NextResponse.json({ data: parsed, screenshot_type: screenshotType, screenshot_type_source: resolvedScreenshotType.source, timings }, { status: 200 });
       }
 
-      return NextResponse.json({ data: parsed, screenshot_type: screenshotType, timings });
+      return NextResponse.json({ data: parsed, screenshot_type: screenshotType, screenshot_type_source: resolvedScreenshotType.source, timings });
     } catch (error) {
       timings.total_ms = Date.now() - startTime;
       const message = error instanceof Error ? error.message : "截图识别出错，请稍后重试或手动输入";
@@ -411,10 +414,31 @@ function inferMimeTypeFromPath(path: string): string {
   }
 }
 
+async function resolveScreenshotType(
+  imagePayload: ImagePayloadSuccess,
+  dataUrl: string,
+  timings?: Partial<OcrTimings>
+): Promise<ResolvedScreenshotType> {
+  if (imagePayload.screenshotType) {
+    return { type: imagePayload.screenshotType, source: "explicit" };
+  }
+
+  const classified = await detectScreenshotType(dataUrl, timings);
+  if (classified) {
+    return { type: classified, source: "classification" };
+  }
+
+  return {
+    type: getScreenshotTypeFallbackByAssetRole(imagePayload.assetRole),
+    source: "asset_role_fallback",
+  };
+}
+
 async function detectScreenshotType(
   dataUrl: string,
   timings?: Partial<OcrTimings>
-): Promise<ScreenshotType> {
+): Promise<ScreenshotType | null> {
+  const classifyStart = Date.now();
   try {
     const messages: AiMessage[] = [{
       role: "user",
@@ -424,7 +448,6 @@ async function detectScreenshotType(
       ],
     }];
 
-    const classifyStart = Date.now();
     const result = await callAi({
       messages,
       maxTokens: 300,
@@ -433,13 +456,14 @@ async function detectScreenshotType(
       featureKey: "ocr_screenshot",
       databaseOnly: true,
     });
+
+    return parseClassificationContent(result.content);
+  } catch {
+    return null;
+  } finally {
     if (timings) {
       timings.classify_ms = Date.now() - classifyStart;
     }
-
-    return parseClassificationContent(result.content) ?? "data";
-  } catch {
-    return "data";
   }
 }
 
@@ -945,6 +969,14 @@ function normalizeConfidence(value: unknown): ConfidenceLevel {
 
 export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
   return normalizeScreenshotTypeInput(assetRole);
+}
+
+export function getScreenshotTypeFallbackByAssetRole(assetRole: unknown): ScreenshotType {
+  if (assetRole === "screenshot_2") {
+    return "retention";
+  }
+
+  return "data";
 }
 
 function normalizeScreenshotType(value: unknown): ScreenshotType | null {

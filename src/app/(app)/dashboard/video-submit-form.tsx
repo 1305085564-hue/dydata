@@ -169,6 +169,7 @@ type OcrApiPayload = {
     error_code?: string;
   };
   error?: string;
+  screenshot_type_source?: "explicit" | "classification" | "asset_role_fallback";
   timings?: {
     download_ms?: number;
     classify_ms?: number;
@@ -227,6 +228,7 @@ type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   screenshotType?: "data" | "curve" | "retention" | null;
   recognizedFields?: Record<string, string | number | boolean | null> | null;
   ocrSummary?: string[];
+  ocrFallback?: boolean;
 };
 
 const OVERVIEW_FIELDS: EditableMetricKey[] = [
@@ -1229,6 +1231,8 @@ export function VideoSubmitForm({
       }));
 
       let phase: "upload" | "ocr" = "upload";
+      let uploadedAssetUrl: string | null = null;
+      let uploadedPreviewUrl: string | null = null;
       try {
         const {
           data: { user },
@@ -1250,6 +1254,8 @@ export function VideoSubmitForm({
         });
         const uploadMs = Math.round(performance.now() - uploadStart);
         const previewUrl = URL.createObjectURL(file);
+        uploadedAssetUrl = assetUrl;
+        uploadedPreviewUrl = previewUrl;
         blobUrlsRef.current.add(previewUrl);
 
         phase = "ocr";
@@ -1258,6 +1264,8 @@ export function VideoSubmitForm({
           [role]: {
             ...current[role],
             status: "recognizing",
+            assetUrl,
+            previewUrl,
           },
         }));
 
@@ -1300,6 +1308,7 @@ export function VideoSubmitForm({
 
         const { data } = payload;
         const detectedType = data.screenshot_type;
+        const usedAssetRoleFallback = payload.screenshot_type_source === "asset_role_fallback";
         const ocrSummary = buildOcrSummary(
           detectedType,
           data.recognized_fields,
@@ -1326,9 +1335,9 @@ export function VideoSubmitForm({
         setSlots((current) => {
           const newSlotData = {
             ...current[role],
-            status: data.slot_status,
-            confirmed: data.slot_status === "confirmed",
-            requiresManualConfirmation: data.requires_manual_confirmation,
+            status: data.slot_status === "failed" && assetUrl ? "pending_confirm" : data.slot_status,
+            confirmed: Boolean(assetUrl),
+            requiresManualConfirmation: data.requires_manual_confirmation || data.slot_status === "failed" || usedAssetRoleFallback,
             confidenceScore: data.confidence_score,
             error:
               data.slot_status === "failed"
@@ -1339,6 +1348,7 @@ export function VideoSubmitForm({
             screenshotType: detectedType,
             recognizedFields: data.recognized_fields,
             ocrSummary,
+            ocrFallback: data.slot_status === "failed" || usedAssetRoleFallback,
           };
 
           if (
@@ -1366,6 +1376,7 @@ export function VideoSubmitForm({
                 file: null,
                 recognizedFields: null,
                 ocrSummary: undefined,
+                ocrFallback: false,
               },
             };
           }
@@ -1392,7 +1403,8 @@ export function VideoSubmitForm({
         }
 
         if (data.slot_status === "failed") {
-          feedbackToast.error(resolvedError || OCR_FAIL_MESSAGE);
+          feedbackToast.error(`${resolvedError || OCR_FAIL_MESSAGE}，截图已保留，可直接手动填写指标`);
+          setActivePanelTab("confirm");
           return;
         }
 
@@ -1463,10 +1475,15 @@ export function VideoSubmitForm({
           ...current,
           [role]: {
             ...current[role],
-            status: "failed",
-            confirmed: false,
+            status: uploadedAssetUrl ? "pending_confirm" : "failed",
+            confirmed: Boolean(uploadedAssetUrl),
             requiresManualConfirmation: true,
-            error: message,
+            assetUrl: uploadedAssetUrl ?? current[role].assetUrl ?? null,
+            previewUrl: uploadedPreviewUrl ?? current[role].previewUrl ?? null,
+            error: uploadedAssetUrl
+              ? `${message}，截图已保留，可直接手动填写指标`
+              : message,
+            ocrFallback: Boolean(uploadedAssetUrl),
           },
         }));
       }
@@ -2166,21 +2183,26 @@ export function VideoSubmitForm({
                         onDelete={(role) => setDeleteTargetRole(role)}
                         onRetry={handleSlotRetry}
                         onManualFill={(role) => {
-                          setSlots((current) => ({
-                            ...current,
-                            [role]: {
-                              ...current[role],
-                              status: "empty",
-                              confirmed: false,
-                              error: null,
-                              assetUrl: null,
-                              previewUrl: null,
-                              file: null,
-                              fileName: undefined,
-                              recognizedFields: null,
-                              ocrSummary: undefined,
-                            },
-                          }));
+                          setSlots((current) => {
+                            const hasUploadedScreenshot = Boolean(current[role].assetUrl);
+                            return {
+                              ...current,
+                              [role]: {
+                                ...current[role],
+                                status: hasUploadedScreenshot ? "confirmed" : "empty",
+                                confirmed: hasUploadedScreenshot,
+                                requiresManualConfirmation: false,
+                                error: null,
+                                assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
+                                previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
+                                file: hasUploadedScreenshot ? current[role].file : null,
+                                fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
+                                recognizedFields: null,
+                                ocrSummary: undefined,
+                                ocrFallback: hasUploadedScreenshot,
+                              },
+                            };
+                          });
                           // 识别失败后点「手输」，自动切换到指标核对 tab，否则用户看不到输入框
                           setActivePanelTab("confirm");
                         }}
