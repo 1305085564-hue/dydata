@@ -582,15 +582,16 @@ function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
     case "engagement_extra":
     case "other":
     case "data":
-    case "screenshot_1":
       return "data";
     case "traffic_curve":
     case "curve":
       return "curve";
     case "retention_curve":
     case "retention":
-    case "screenshot_2":
       return "retention";
+    // screenshot_1 / screenshot_2 / screenshot_3 不再强制绑定类型，
+    // 交由 AI 自动分类（detectScreenshotType），配合 client 端已有的自动换槽逻辑，
+    // 让用户随便上传哪张截图，系统自动路由到正确槽位。
     default:
       return null;
   }

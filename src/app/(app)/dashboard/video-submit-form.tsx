@@ -2181,6 +2181,8 @@ export function VideoSubmitForm({
                               ocrSummary: undefined,
                             },
                           }));
+                          // 识别失败后点「手输」，自动切换到指标核对 tab，否则用户看不到输入框
+                          setActivePanelTab("confirm");
                         }}
                         screenshotsRequired={screenshotsRequired}
                         focusedRole={focusedRole}

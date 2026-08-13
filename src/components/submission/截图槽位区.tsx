@@ -253,6 +253,14 @@ export function SubmissionSlotsSection({
                       ? "AI 正在分析图片数据..."
                       : slot.fileName || (item.role === "screenshot_1" ? "流量指标图已读取" : "留存完播图已读取")}
                 </div>
+                {/* 识别失败时给出明确的截图类型提示，减少上传错误截图的情况 */}
+                {isError && (
+                  <div className="text-[11px] text-[#C9604D]/80 mt-0.5 leading-snug">
+                    {item.role === "screenshot_1"
+                      ? "需含播放量/点赞/评论等互动数据截图"
+                      : "需含均播时长/完播率/留存曲线截图"}
+                  </div>
+                )}
               </div>
             );
           })}

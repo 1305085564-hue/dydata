@@ -682,6 +682,35 @@ export function VideoSubmitPanel({
             )}
           >
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
+
+            {/* 补交入口 —— embeddedChrome 模式下 CardHeader 不渲染，此处补充始终可见的入口 */}
+            <div className="flex items-center justify-between">
+              <span className="text-[12px] text-zinc-400">
+                {activeBizDate !== today ? `当前补交：${activeBizDate}` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={openDatePicker}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
+              >
+                <History className="size-3.5" />
+                补交历史数据
+              </button>
+              {/* embedded 模式下 CardHeader 不渲染，需在此补充隐藏日期输入让 openDatePicker() 可用 */}
+              {embeddedChrome && (
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={activeBizDate}
+                  max={today}
+                  onChange={(e) => selectBizDate(e.target.value)}
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+
             {hasPendingExemption && !dismissedPendingExemption && (
               <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-4 text-[13px] text-zinc-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
