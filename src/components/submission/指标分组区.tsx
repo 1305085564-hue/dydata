@@ -116,14 +116,14 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
   const showInteractionWarning = playCount > 0 && interactions > playCount;
 
   return (
-    <motion.div variants={itemVariants} className="flex h-full flex-col space-y-4">
-      {/* 彻底去除最上方的“指标录入”标题和描述段落，直接平铺核心和互动数据 */}
-      <div className="flex flex-1 flex-col gap-6">
+    <motion.div variants={itemVariants} className="flex h-full flex-col space-y-2">
+      {/* 直接平铺核心、互动和完播留存数据网格 */}
+      <div className="flex flex-1 flex-col gap-3.5">
         
-        {/* 1. 核心数据网格 (移除标题占行) */}
-        <div className="relative pl-3.5">
-          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D97757]/70" />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {/* 1. 核心数据网格 (3列等分，彻底消除第4列空白) */}
+        <div className="relative pl-3">
+          <div className="absolute left-0 top-[6%] bottom-[6%] w-[2.5px] rounded-full bg-[#D97757]" />
+          <div className="grid grid-cols-3 gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -143,10 +143,10 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           </div>
         </div>
 
-        {/* 2. 互动数据网格 (移除标题占行，警告提示改为底部紧凑漂浮) */}
-        <div className="relative pl-3.5">
-          <div className="absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full bg-[#D99E55]/70" />
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {/* 2. 互动数据网格 (4列紧凑排布) */}
+        <div className="relative pl-3">
+          <div className="absolute left-0 top-[6%] bottom-[6%] w-[2.5px] rounded-full bg-[#D99E55]" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -162,18 +162,18 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             ))}
           </div>
           {showInteractionWarning && (
-            <div className="mt-2 pl-1 text-[12px] font-medium text-[#D99E55] transition-opacity duration-150">
+            <div className="mt-1 pl-1 text-[11.5px] font-medium text-[#D99E55] transition-opacity duration-150">
               ⚠️ 互动数据总和已超过播放量，请核对输入
             </div>
           )}
         </div>
 
-        {/* 3. 完播留存网格 (支持异常状态折叠，且完全移除标题及说明占行) */}
-        <div className="relative pl-3.5">
+        {/* 3. 完播留存网格 (4列紧凑排布) */}
+        <div className="relative pl-3">
           <div
             className={cn(
-              "absolute left-0 top-[5%] bottom-[5%] w-[2px] rounded-full transition-colors duration-150",
-              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/70"
+              "absolute left-0 top-[6%] bottom-[6%] w-[2.5px] rounded-full transition-colors duration-150",
+              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]"
             )}
           />
           
@@ -182,7 +182,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             <button
               type="button"
               onClick={() => setIsRetentionExpanded(true)}
-              className="flex items-center gap-1.5 py-1 text-[12px] font-medium text-zinc-500 hover:text-[#D97757] transition-colors focus:outline-none"
+              className="flex items-center gap-1.5 py-1 text-[11.5px] font-medium text-zinc-500 hover:text-[#D97757] transition-colors focus:outline-none"
             >
               <span>[+] 展开完播留存指标录入 (可选)</span>
             </button>
@@ -190,8 +190,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
           {/* 完播内容呈现区 */}
           {isRetentionExpanded && (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {RETENTION_ITEMS.map((item, index) => (
                   <指标输入卡
                     key={item.key}
@@ -199,7 +199,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                     field={fields[item.key]}
                     step={item.step}
                     suffix={item.suffix}
-                        optional={retentionOptional}
+                    optional={retentionOptional}
                     onChange={(value) => onFieldChange(item.key, value)}
                     onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
                     onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
@@ -216,7 +216,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
                   <button
                     type="button"
                     onClick={() => setIsRetentionExpanded(false)}
-                    className="text-[12px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus:outline-none"
+                    className="text-[11px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus:outline-none"
                   >
                     [-] 收起完播指标
                   </button>

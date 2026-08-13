@@ -461,8 +461,8 @@ export function VideoSubmitPanel({
         <Card className={cn(
           "mx-auto overflow-hidden",
           embeddedChrome
-            ? "max-w-6xl rounded-none border-none bg-transparent shadow-none"
-            : "max-w-6xl rounded-2xl border border-zinc-200 bg-white",
+            ? "max-w-5xl rounded-none border-none bg-transparent shadow-none"
+            : "max-w-5xl rounded-2xl border border-zinc-200 bg-white",
         )}>
           {!embeddedChrome ? (
           <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
@@ -488,11 +488,11 @@ export function VideoSubmitPanel({
                     >
                       <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
                       <div className="flex flex-col leading-none space-y-1">
-                        <span className="text-[20px] font-semibold tabular-nums tracking-tight text-zinc-900 tabular-nums">
-                          {activeBizDate}
+                        <span className="text-[16px] font-semibold tracking-tight text-zinc-900">
+                          提交历史
                         </span>
-                        <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
-                          切换日期 / 历史补填 ▾
+                        <span className="text-[12px] font-normal tabular-nums text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                          {activeBizDate} ▾
                         </span>
                       </div>
                     </button>
@@ -528,33 +528,19 @@ export function VideoSubmitPanel({
           >
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
 
-            {/* 补交入口 —— embeddedChrome 模式下 CardHeader 不渲染，此处补充始终可见的入口 */}
-            <div className="flex items-center justify-between">
-              <span className="text-[12px] text-zinc-400">
-                {activeBizDate !== today ? `当前补交：${activeBizDate}` : ""}
-              </span>
-              <button
-                type="button"
-                onClick={openDatePicker}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
-              >
-                <History className="size-3.5" />
-                补交历史数据
-              </button>
-              {/* embedded 模式下 CardHeader 不渲染，需在此补充隐藏日期输入让 openDatePicker() 可用 */}
-              {embeddedChrome && (
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  value={activeBizDate}
-                  max={today}
-                  onChange={(e) => selectBizDate(e.target.value)}
-                  className="sr-only"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                />
-              )}
-            </div>
+            {/* embedded 模式隐藏日期输入，供快捷跳转/选择器使用 */}
+            {embeddedChrome && (
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={activeBizDate}
+                max={today}
+                onChange={(e) => selectBizDate(e.target.value)}
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+            )}
 
             {hasPendingExemption && !dismissedPendingExemption && (
               <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-4 text-[13px] text-zinc-700">

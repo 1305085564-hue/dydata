@@ -63,101 +63,99 @@ export function DashboardWorkspaceHeader({
   }, [isCalendarOpen]);
 
   return (
-    <div className="mx-auto mb-1.5 max-w-6xl">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex items-center gap-2 text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
-            <Activity size={14} className="text-zinc-700" /> 数据台
+    <div className="mx-auto mb-2 max-w-5xl">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* 左侧：分类 + 融入日期的交互式大标题 */}
+        <div className="min-w-0 space-y-1">
+          <div className="flex items-center gap-1.5 text-[11.5px] font-medium uppercase tracking-[0.2em] text-zinc-400">
+            <Activity size={13} className="text-zinc-600" /> 数据台
           </div>
-          <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-            <h2 className="text-[24px] font-semibold tracking-tight text-zinc-900">
-              今日提交
-            </h2>
-            <nav
-              className="flex flex-wrap items-center gap-x-1.5 gap-y-1"
-              aria-label="数据快捷入口"
+
+          <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
+            <button
+              type="button"
+              onClick={() => setIsCalendarOpen((prev) => !prev)}
+              className="group inline-flex items-center gap-2 rounded-xl text-left outline-none select-none cursor-pointer transition-colors"
+              aria-expanded={isCalendarOpen}
+              aria-label="切换填报日期"
             >
-              {utilityActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={action.key}
-                    type="button"
-                    onClick={() => onDashboardAction(action.key)}
-                    className="group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[14px] font-medium text-zinc-600 transition-all duration-200 ease-out hover:bg-zinc-100 hover:text-zinc-950 hover:scale-105 hover:font-semibold focus-visible:bg-zinc-200/80 focus-visible:text-zinc-950 focus-visible:outline-none"
-                  >
-                    <Icon
-                      size={15}
-                      className="stroke-[1.6] text-zinc-500 transition-all duration-200 group-hover:text-zinc-900 group-hover:scale-110"
-                    />
-                    {action.label}
-                  </button>
-                );
-              })}
-              <QuickExemptionButton
-                hasPending={hasPendingExemption}
-                today={today}
-                submittedDates={submittedDates}
-                initialSelectedDates={[today]}
-                variant="subtle"
+              <h2 className="text-[22px] sm:text-[24px] font-semibold tracking-tight text-zinc-900 group-hover:text-[#D97757] transition-colors flex items-center gap-2">
+                {activeBizDate === today ? (
+                  <>
+                    <span>今日提交</span>
+                    <span className="text-[16px] sm:text-[18px] font-normal text-zinc-400 group-hover:text-zinc-600 tabular-nums transition-colors">
+                      · {activeBizDate}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[#D97757] flex items-center gap-1.5">
+                      <span className="inline-block size-2 rounded-full bg-[#D97757] animate-pulse" />
+                      补交历史
+                    </span>
+                    <span className="text-[16px] sm:text-[18px] font-normal text-zinc-500 group-hover:text-zinc-700 tabular-nums transition-colors">
+                      · {activeBizDate}
+                    </span>
+                  </>
+                )}
+              </h2>
+              <ChevronDown
+                className={cn(
+                  "size-4 stroke-[2] text-zinc-400 transition-transform duration-200 group-hover:text-[#D97757]",
+                  isCalendarOpen && "rotate-180 text-[#D97757]"
+                )}
               />
-            </nav>
+            </button>
+
+            {/* 锚定在标题正下方的日历 Popover */}
+            {isCalendarOpen && (
+              <div className="absolute left-0 top-full mt-2.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+                <div className="w-[330px] rounded-2xl border border-zinc-200 bg-white/98 p-2.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
+                  <SubmissionCalendar
+                    today={today}
+                    submittedDates={submittedDates}
+                    selectedDate={activeBizDate}
+                    onDateSelect={(date) => {
+                      onDateChange(date);
+                      setIsCalendarOpen(false);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 右侧日期按钮及高阶日历选择器 (High-End Calendar Popover) */}
-        <div className="relative flex shrink-0 items-center gap-2" ref={calendarPopoverRef}>
-          <button
-            type="button"
-            onClick={() => setIsCalendarOpen((prev) => !prev)}
-            aria-expanded={isCalendarOpen}
-            className={cn(
-              "group inline-flex items-center gap-2.5 rounded-xl border px-3 py-1.5 text-left shadow-2xs transition-all duration-200 outline-none select-none cursor-pointer",
-              isCalendarOpen
-                ? "border-[#D97757] bg-white ring-2 ring-[#D97757]/20 scale-[1.02]"
-                : "border-zinc-200/90 bg-zinc-50/80 hover:border-[#D97757] hover:bg-white active:scale-[0.97]"
-            )}
-            aria-label="切换日期或补交历史"
-          >
-            <CalendarDays
-              className={cn(
-                "size-4.5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform duration-150",
-                isCalendarOpen && "scale-110"
-              )}
-            />
-            <div className="flex flex-col leading-none space-y-0.5 min-w-0">
-              <span className="tabular-nums text-[14px] font-semibold tabular-nums text-zinc-900 tracking-tight">
-                {activeBizDate}
-              </span>
-              <span className="text-[11px] font-normal text-zinc-400 group-hover:text-zinc-600 transition-colors">
-                切换日期 / 历史补填
-              </span>
-            </div>
-            <ChevronDown
-              className={cn(
-                "size-3.5 stroke-[1.8] text-zinc-400 shrink-0 transition-transform duration-200 group-hover:text-zinc-700",
-                isCalendarOpen && "rotate-180 text-[#D97757]"
-              )}
-            />
-          </button>
-
-          {/* 高阶精致日历 Popover 浮层（拓宽为 w-[330px]，舒展大方） */}
-          {isCalendarOpen && (
-            <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-              <div className="w-[330px] rounded-2xl border border-zinc-200 bg-white/98 p-2.5 shadow-xl shadow-zinc-900/10 backdrop-blur-2xl ring-1 ring-black/5">
-                <SubmissionCalendar
-                  today={today}
-                  submittedDates={submittedDates}
-                  selectedDate={activeBizDate}
-                  onDateSelect={(date) => {
-                    onDateChange(date);
-                    setIsCalendarOpen(false);
-                  }}
+        {/* 右侧：快捷工具入口 (历史记录 / 申请豁免) */}
+        <nav
+          className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-center"
+          aria-label="数据快捷入口"
+        >
+          {utilityActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                key={action.key}
+                type="button"
+                onClick={() => onDashboardAction(action.key)}
+                className="group inline-flex items-center gap-1.5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 transition-all duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 hover:shadow-2xs cursor-pointer"
+              >
+                <Icon
+                  size={14}
+                  className="stroke-[1.6] text-zinc-500 transition-colors group-hover:text-zinc-900"
                 />
-              </div>
-            </div>
-          )}
-        </div>
+                {action.label}
+              </button>
+            );
+          })}
+          <QuickExemptionButton
+            hasPending={hasPendingExemption}
+            today={today}
+            submittedDates={submittedDates}
+            initialSelectedDates={[today]}
+            variant="subtle"
+          />
+        </nav>
       </div>
     </div>
   );
