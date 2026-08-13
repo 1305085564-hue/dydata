@@ -78,7 +78,7 @@ export function normalizeVideoIdLike(value: unknown) {
 }
 
 function isSubmissionAssetRole(value: unknown): value is SubmissionAssetMeta["role"] {
-  return value === "screenshot_1" || value === "screenshot_2" || value === "screenshot_3";
+  return value === "screenshot_1" || value === "screenshot_2";
 }
 
 export function normalizeSubmissionAssets(value: unknown): SubmissionAssetMeta[] {

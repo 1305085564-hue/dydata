@@ -62,7 +62,6 @@ test("遗留空截图槽状态不算可恢复草稿", () => {
   const draft = createDefaultDraft();
   draft.slots.screenshot_1.status = "idle";
   draft.slots.screenshot_2.status = "idle";
-  (draft.slots as Record<string, { status: string; required: boolean; confirmed: boolean }>).screenshot_3 = { status: "idle", required: false, confirmed: false };
 
   assert.equal(isVideoSubmitDraftEmpty(draft), true);
 });

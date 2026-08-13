@@ -24,7 +24,6 @@ test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映
 test("AI 分类失败时按槽位做兜底，避免完播截图误跑互动 OCR", () => {
   assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_1"), "data");
   assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_2"), "retention");
-  assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_3"), "data");
   assert.equal(getScreenshotTypeFallbackByAssetRole("unknown"), "data");
 });
 

@@ -10,7 +10,7 @@ const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function normalizeAssetRole(value: FormDataEntryValue | null): SubmissionAssetRole | null {
-  return value === "screenshot_1" || value === "screenshot_2" || value === "screenshot_3" ? value : null;
+  return value === "screenshot_1" || value === "screenshot_2" ? value : null;
 }
 
 function getExtension(file: File) {

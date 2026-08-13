@@ -17,10 +17,7 @@ type ScreenshotTypeInput =
   | "engagement_extra"
   | "other"
   | ScreenshotAssetRole;
-export type ScreenshotAssetRole =
-  | "screenshot_1"
-  | "screenshot_2"
-  | "screenshot_3";
+export type ScreenshotAssetRole = "screenshot_1" | "screenshot_2";
 type CurvePattern = "前高后低" | "平稳增长" | "二次起量" | "低开高走" | "断崖式";
 type DropSeverity = "high" | "medium" | "low";
 type TailStrength = "high" | "medium" | "low";
@@ -613,7 +610,7 @@ function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
     case "retention_curve":
     case "retention":
       return "retention";
-    // screenshot_1 / screenshot_2 / screenshot_3 不再强制绑定类型，
+    // screenshot_1 / screenshot_2 不再强制绑定类型，
     // 交由 AI 自动分类（detectScreenshotType），配合 client 端已有的自动换槽逻辑，
     // 让用户随便上传哪张截图，系统自动路由到正确槽位。
     default:
@@ -986,11 +983,7 @@ function normalizeScreenshotType(value: unknown): ScreenshotType | null {
 }
 
 function normalizeAssetRole(value: unknown): ScreenshotAssetRole | null {
-  return value === "screenshot_1" ||
-    value === "screenshot_2" ||
-    value === "screenshot_3"
-    ? value
-    : null;
+  return value === "screenshot_1" || value === "screenshot_2" ? value : null;
 }
 
 function normalizeOptionalText(value: unknown): string | null {
