@@ -54,14 +54,6 @@ const TAB_ORDER: EditableMetricKey[] = [
 
 export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlurField, anomalyStatus }: MetricGroupProps) {
   const retentionOptional = anomalyStatus === "abnormal";
-  const [isRetentionExpanded, setIsRetentionExpanded] = useState(!retentionOptional);
-  const [prevOptional, setPrevOptional] = useState(retentionOptional);
-
-  // 同步重置折叠状态：当异常状态变化时自动切换折叠表现
-  if (retentionOptional !== prevOptional) {
-    setPrevOptional(retentionOptional);
-    setIsRetentionExpanded(!retentionOptional);
-  }
 
   const inputRefs = useRef<Record<EditableMetricKey, HTMLInputElement | null>>({
     play_count: null,
@@ -168,7 +160,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           )}
         </div>
 
-        {/* 3. 完播留存网格 (4列紧凑排布) */}
+        {/* 3. 完播留存网格 (4列始终平铺展开) */}
         <div className="relative pl-3">
           <div
             className={cn(
@@ -177,53 +169,24 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             )}
           />
           
-          {/* 折叠触发条：仅在异常状态且未展开时显示 */}
-          {retentionOptional && !isRetentionExpanded && (
-            <button
-              type="button"
-              onClick={() => setIsRetentionExpanded(true)}
-              className="flex items-center gap-1.5 py-1 text-[11.5px] font-medium text-zinc-500 hover:text-[#D97757] transition-colors focus:outline-none"
-            >
-              <span>[+] 展开完播留存指标录入 (可选)</span>
-            </button>
-          )}
-
-          {/* 完播内容呈现区 */}
-          {isRetentionExpanded && (
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {RETENTION_ITEMS.map((item, index) => (
-                  <指标输入卡
-                    key={item.key}
-                    label={item.label}
-                    field={fields[item.key]}
-                    step={item.step}
-                    suffix={item.suffix}
-                    optional={retentionOptional}
-                    onChange={(value) => onFieldChange(item.key, value)}
-                    onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
-                    onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
-                    animationDelay={index * 120}
-                    inputRef={setRef(item.key)}
-                    onKeyDown={handleKeyDown(item.key)}
-                  />
-                ))}
-              </div>
-              
-              {/* 收起按钮：仅在异常状态已展开时可见 */}
-              {retentionOptional && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsRetentionExpanded(false)}
-                    className="text-[11px] font-medium text-zinc-500 hover:text-zinc-700 transition-colors focus:outline-none"
-                  >
-                    [-] 收起完播指标
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {RETENTION_ITEMS.map((item, index) => (
+              <指标输入卡
+                key={item.key}
+                label={item.label}
+                field={fields[item.key]}
+                step={item.step}
+                suffix={item.suffix}
+                optional={retentionOptional}
+                onChange={(value) => onFieldChange(item.key, value)}
+                onFocus={onFocusField ? () => onFocusField(item.key) : undefined}
+                onBlur={onBlurField ? () => onBlurField(item.key) : undefined}
+                animationDelay={index * 120}
+                inputRef={setRef(item.key)}
+                onKeyDown={handleKeyDown(item.key)}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>

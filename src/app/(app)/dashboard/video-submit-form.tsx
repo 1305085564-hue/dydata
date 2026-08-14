@@ -2817,7 +2817,7 @@ function RoleItemSelectorRow({
             {isOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-20"
+                  className="fixed inset-0 z-40"
                   onClick={() => setActiveRoleDropdown(null)}
                 />
                 <motion.div
@@ -2826,7 +2826,7 @@ function RoleItemSelectorRow({
                   exit={{ opacity: 0, y: isUpward ? 4 : -4, scale: 0.98 }}
                   transition={{ duration: 0.12 }}
                   className={cn(
-                    "absolute right-0 z-30 w-48 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg space-y-1",
+                    "absolute right-0 z-50 w-52 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 space-y-1",
                     isUpward ? "bottom-8.5 mb-0.5" : "top-8.5",
                   )}
                 >
@@ -2843,8 +2843,8 @@ function RoleItemSelectorRow({
 
                   <div className="max-h-52 overflow-y-auto space-y-0.5 pt-0.5 custom-scrollbar">
                     {filteredMembersForRole.length === 0 ? (
-                      <div className="py-2 text-center text-[11px] text-zinc-400">
-                        未找到匹配成员
+                      <div className="py-2.5 text-center text-[11.5px] text-zinc-400">
+                        {operatorMembers.length === 0 ? "加载成员中..." : "未找到匹配成员"}
                       </div>
                     ) : (
                       filteredMembersForRole.map((member) => {
@@ -2859,10 +2859,10 @@ function RoleItemSelectorRow({
                               setActiveRoleDropdown(null);
                             }}
                             className={cn(
-                              "flex h-7 w-full items-center justify-between rounded-md px-2 text-left text-[11px] transition-colors cursor-pointer",
+                              "flex h-7.5 w-full items-center justify-between rounded-md px-2 text-left text-[11.5px] transition-colors cursor-pointer",
                               isSelected
-                                ? "bg-[#5F82A8]/10 text-[#5F82A8] font-medium"
-                                : "text-zinc-700 hover:bg-zinc-100",
+                                ? "bg-zinc-100 text-zinc-900 font-semibold"
+                                : "text-zinc-700 hover:bg-zinc-50",
                             )}
                           >
                             <div className="flex items-center gap-1 truncate">
