@@ -114,7 +114,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         
         {/* 1. 核心数据网格 (3列等分，彻底消除第4列空白) */}
         <div className="relative pl-3">
-          <div className="absolute left-0 top-[6%] bottom-[6%] w-[2.5px] rounded-full bg-[#D97757]" />
+          <div className="absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full bg-[#D97757]/80" />
           <div className="grid grid-cols-3 gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
@@ -137,7 +137,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 2. 互动数据网格 (4列紧凑排布) */}
         <div className="relative pl-3">
-          <div className="absolute left-0 top-[6%] bottom-[6%] w-[2.5px] rounded-full bg-[#D99E55]" />
+          <div className="absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full bg-[#D99E55]/80" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
@@ -164,8 +164,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         <div className="relative pl-3">
           <div
             className={cn(
-              "absolute left-0 top-[6%] bottom-[6%] w-[2.5px] rounded-full transition-colors duration-150",
-              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]"
+              "absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full transition-colors duration-150",
+              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/80"
             )}
           />
           

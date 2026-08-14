@@ -38,16 +38,16 @@ const SLOT_META: Array<{
 }> = [
   {
     role: "screenshot_1",
-    title: "1. 互动数据截图",
+    title: "互动数据",
     shortTitle: "互动截图",
-    description: "播放量 / 点赞 / 评论 / 转发",
+    description: "播放 · 点赞 · 评论 · 转发",
     required: true,
   },
   {
     role: "screenshot_2",
-    title: "2. 完播留存截图",
+    title: "完播留存",
     shortTitle: "完播截图",
-    description: "均播时长 / 完播率 / 留存曲线",
+    description: "均播时长 · 完播率 · 留存",
     required: true,
   },
 ];
@@ -146,21 +146,10 @@ export function SubmissionSlotsSection({
       />
 
       {/* 顶部标题与快速操作栏 */}
-      <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-200/70 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[13px] font-semibold text-zinc-700 select-none">
-            截图佐证对照
-          </span>
-          {screenshotsRequired ? (
-            <span className="rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[11px] font-medium text-[#D97757]">
-              必传 2 张
-            </span>
-          ) : (
-            <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium text-zinc-500">
-              选填
-            </span>
-          )}
-        </div>
+      <div className="flex items-center justify-between pb-1 mb-1.5 shrink-0">
+        <span className="text-[13px] font-semibold text-zinc-700 select-none">
+          截图佐证对照
+        </span>
 
         <button
           type="button"
@@ -220,7 +209,7 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "relative flex flex-col justify-between flex-1 min-h-[92px] rounded-xl border p-2.5 transition-all duration-150",
+                "relative flex flex-col justify-center flex-1 min-h-[92px] rounded-xl border p-3 transition-all duration-150",
                 slot.status === "empty"
                   ? "border-dashed border-zinc-300/90 bg-white/70 hover:border-[#D97757]/70 hover:bg-[#FDF9F7]/40 cursor-pointer shadow-2xs"
                   : "border-zinc-200 bg-white shadow-xs",
@@ -252,33 +241,20 @@ export function SubmissionSlotsSection({
               />
 
               {slot.status === "empty" ? (
-                /* 空槽位态：拖拽与上传引导 */
-                <div className="flex h-full flex-col justify-between select-none py-0.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-semibold text-zinc-700">
-                      {item.title}
-                    </span>
-                    <span className="text-[10.5px] text-zinc-400">
-                      {item.required && screenshotsRequired ? "必传" : "选填"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 py-1">
-                    <div className="flex size-7.5 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-400 group-hover:text-[#D97757] transition-colors">
-                      <UploadCloud className="size-4 stroke-[1.75]" />
+                /* 空槽位态：极简图标与标题排版，高度饱满舒适 */
+                <div className="flex h-full flex-col justify-center select-none py-0.5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-zinc-100/90 text-zinc-400 group-hover:text-[#D97757] group-hover:bg-[#D97757]/10 transition-colors">
+                      <UploadCloud className="size-4.5 stroke-[1.75]" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="text-[11.5px] font-medium text-zinc-600 leading-tight">
-                        点击或拖入截图
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="text-[12.5px] font-semibold text-zinc-700 leading-tight">
+                        {item.title}
                       </div>
-                      <div className="text-[10.5px] text-zinc-400 truncate mt-0.5">
+                      <div className="text-[11px] text-zinc-400 truncate">
                         {item.description}
                       </div>
                     </div>
-                  </div>
-
-                  <div className="text-[10px] text-zinc-400/80 text-right">
-                    支持 Ctrl+V 粘贴
                   </div>
                 </div>
               ) : (

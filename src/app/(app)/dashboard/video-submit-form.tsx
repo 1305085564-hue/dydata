@@ -2244,17 +2244,17 @@ export function VideoSubmitForm({
                       </div>
 
                       {/* 话题标签与视频形式记忆配置 */}
-                      <div className="space-y-1.5 pt-2 border-t border-zinc-200/60">
+                      <div className="space-y-1.5 pt-1.5">
                         {!isMemoryExpanded ? (
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[12px] text-zinc-700 font-semibold">
+                              <span className="text-[12px] text-zinc-600 font-medium">
                                 已记配置：
                               </span>
-                              <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-1.5 py-0.5 text-[11px] font-medium">
+                              <span className="bg-white/90 border border-zinc-200/80 text-zinc-600 rounded-md px-1.5 py-0.5 text-[11px] font-medium shadow-2xs">
                                 {meta.topicTag || "未选"}
                               </span>
-                              <span className="bg-zinc-200/60 text-zinc-700 rounded-md px-1.5 py-0.5 text-[11px] font-medium">
+                              <span className="bg-white/90 border border-zinc-200/80 text-zinc-600 rounded-md px-1.5 py-0.5 text-[11px] font-medium shadow-2xs">
                                 {meta.videoForm || "未选"}
                               </span>
                             </div>
@@ -2373,7 +2373,7 @@ export function VideoSubmitForm({
                       )}
 
                       {/* 展开更多设置 (Accordion) */}
-                      <div className="pt-1 border-t border-zinc-200/60">
+                      <div className="pt-0.5">
                         <button
                           type="button"
                           onClick={() =>
@@ -2470,7 +2470,7 @@ export function VideoSubmitForm({
                     {/* 2. 视频内容创作区 (标题 + 文案) */}
                     <div
                       ref={metaSectionRef}
-                      className="space-y-2.5 pt-3 border-t border-zinc-100 flex-1 flex flex-col justify-between min-w-0"
+                      className="space-y-2.5 pt-2 flex-1 flex flex-col justify-between min-w-0"
                     >
                       {/* 视频标题 */}
                       <div
@@ -2798,7 +2798,7 @@ function RoleItemSelectorRow({
               setRoleSearchQuery("");
               setActiveRoleDropdown(isOpen ? null : roleKey);
             }}
-            className="flex h-7.5 w-full items-center justify-between rounded-lg bg-zinc-100/90 hover:bg-zinc-200/60 border border-zinc-200/40 px-2.5 text-[11.5px] text-zinc-700 focus:outline-none transition-colors"
+            className="flex h-7.5 w-full items-center justify-between rounded-lg bg-white/90 hover:bg-white border border-zinc-200/80 px-2.5 text-[11.5px] text-zinc-700 shadow-2xs focus:outline-none transition-colors"
           >
             <span className="truncate font-medium">
               {currentMember
@@ -2848,7 +2848,7 @@ function RoleItemSelectorRow({
                       </div>
                     ) : (
                       filteredMembersForRole.map((member) => {
-                        const isSelected = selectedUserId === member.id;
+                        const isSelected = member.id === selectedUserId;
                         const isSelf = member.id === userId;
                         return (
                           <button
@@ -2898,7 +2898,7 @@ function RoleItemSelectorRow({
         <button
           type="button"
           onClick={onResetSelf}
-          className="flex size-6 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 transition-colors cursor-pointer shrink-0"
+          className="flex size-6 items-center justify-center rounded-md text-zinc-300 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer shrink-0"
           title="设为达人我自己并隐藏"
         >
           <X className="size-3.5" />

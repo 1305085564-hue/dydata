@@ -135,19 +135,6 @@ export function MetricInputCard({
             <span className="ml-1 font-normal opacity-60">可选</span>
           )}
         </Label>
-        {statusBadge && (
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[12px] font-medium tracking-wide",
-              statusBadge.className,
-            )}
-          >
-            <span
-              className={cn("h-1.5 w-1.5 rounded-full", statusBadge.dotClass)}
-            />
-            {statusBadge.label}
-          </span>
-        )}
       </div>
 
       <div className="relative">
