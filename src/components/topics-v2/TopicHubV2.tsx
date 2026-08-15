@@ -419,12 +419,11 @@ export function TopicHubV2() {
             </div>
           </header>
 
-          {/* 1. 第一优先级：今日最值得写的选题 */}
+          {/* 1. 团队动态：最新认领与成片关联 */}
           <TodayFocusSection
             data={activeTopics}
             loading={activeLoading}
             error={activeError}
-            onClaim={handleClaim}
             onRetry={fetchActiveData}
             onSelectTopic={(id) => setInspectTopicId(id)}
           />
