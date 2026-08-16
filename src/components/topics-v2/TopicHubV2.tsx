@@ -380,8 +380,8 @@ export function TopicHubV2() {
         </div>
       ) : (
         <div className="max-w-7xl mx-auto space-y-6">
-          {/* 全局顶栏：黄金大标题 Header */}
-          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-zinc-200/80">
+          {/* 全局顶栏：黄金大标题 Header (纯留白自然分隔) */}
+          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 sm:pb-3 mb-1">
             <div className="flex items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-semibold text-zinc-900 tracking-tight flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-[#D97757] stroke-[1.8]" />

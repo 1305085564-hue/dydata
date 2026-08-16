@@ -124,8 +124,8 @@ export function TopicPoolExplorer({
       id="topic-pool-explorer"
       className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs"
     >
-      {/* 控制栏：左右主次分层 */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5 pb-4 border-b border-zinc-100">
+      {/* 控制栏：左右主次分层 (纯留白自然分隔，消除横线) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6">
         {/* 左侧：具有主标题分量感的平铺 Tab (14px font-semibold) */}
         <div className="flex items-center gap-1.5">
           <button
@@ -419,12 +419,12 @@ export function TopicPoolExplorer({
               <div
                 key={sub.id}
                 onClick={() => onSelectTopic(sub.id)}
-                className="group relative bg-white border border-zinc-200/90 rounded-xl p-4 hover:border-zinc-300 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-white border border-zinc-200/90 rounded-2xl p-4.5 hover:border-zinc-300/90 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   {/* 顶栏：彻底放空右侧，只保留最纯正通透的母题与分组标签 */}
                   <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
-                    <span className="text-[11px] font-normal px-2 py-0.5 rounded bg-zinc-100/80 text-zinc-600 truncate min-w-0">
+                    <span className="text-[11px] font-normal px-2 py-0.5 rounded-md bg-zinc-100/80 text-zinc-600 truncate min-w-0">
                       {sub.topics?.name || "常规"}{" "}
                       {sub.topic_groups?.name
                         ? `· ${sub.topic_groups.name}`
@@ -432,15 +432,15 @@ export function TopicPoolExplorer({
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1">
+                  <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5 tracking-tight">
                     {sub.title}
                   </h3>
-                  <p className="text-xs text-zinc-500 line-clamp-2 mb-3 leading-relaxed font-normal">
+                  <p className="text-xs text-zinc-500 line-clamp-2 mb-3.5 leading-relaxed font-normal">
                     {sub.hook ? `“${sub.hook}”` : "暂无 Hook"}
                   </p>
                 </div>
 
-                <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between text-xs min-w-0">
+                <div className="pt-1 flex items-center justify-between text-xs min-w-0">
                   {/* 底栏统一冷灰排版：写作中防撞车、均播、认领人次合一 */}
                   <div className="text-zinc-500 text-xs tabular-nums truncate min-w-0 pr-2 flex items-center gap-1.5 font-normal">
                     {(item.scriptingCount ?? 0) > 0 ? (
@@ -479,7 +479,7 @@ export function TopicPoolExplorer({
                         type="button"
                         disabled={operatingId === sub.id}
                         onClick={(e) => handleReturn(e, sub.id)}
-                        className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-xs font-medium transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="px-2.5 py-1 rounded-md bg-zinc-100 hover:bg-zinc-200 text-zinc-600 text-xs font-medium transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                         aria-label="放弃认领"
                       >
                         放弃认领

@@ -44,7 +44,7 @@ export function TodayFocusSection({
 
   if (loading) {
     return (
-      <section className="mb-4">
+      <section className="my-2 sm:my-3.5">
         <div className="h-10 bg-zinc-100/80 rounded-xl border border-zinc-200/60 animate-pulse" />
       </section>
     );
@@ -52,7 +52,7 @@ export function TodayFocusSection({
 
   if (error) {
     return (
-      <section className="mb-4">
+      <section className="my-2 sm:my-3.5">
         <div className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 text-xs">
           <div className="flex items-center gap-2 text-zinc-600">
             <AlertCircle className="w-3.5 h-3.5 text-[#DC2626]" />
@@ -86,9 +86,9 @@ export function TodayFocusSection({
   const pastWorks = (data?.recentlyWorked ?? []).slice(1, 6);
 
   return (
-    <section className="mb-4 transition-all">
+    <section className="my-2 sm:my-3.5 transition-all">
       {/* 单行极简状态条 (Ticker) */}
-      <div className="bg-zinc-50/80 border border-zinc-200/80 rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="bg-zinc-100/60 hover:bg-zinc-100/80 border border-zinc-200/60 rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors shadow-2xs">
         <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
           {/* 最新认领 */}
           {latestClaim ? (
@@ -103,7 +103,7 @@ export function TodayFocusSection({
                 className="text-zinc-700 hover:text-[#D97757] transition-colors truncate font-normal text-left"
                 title={`查看选题《${latestClaim.subTopic?.title || "选题"}》`}
               >
-                <span className="font-medium text-zinc-900">
+                <span className="font-semibold text-zinc-900">
                   {latestClaim.displayName || "团队成员"}
                 </span>
                 <span className="text-zinc-600 ml-1">
@@ -136,7 +136,7 @@ export function TodayFocusSection({
                 className="text-zinc-700 hover:text-[#D97757] transition-colors truncate font-normal text-left"
                 title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
               >
-                <span className="font-medium text-zinc-900">
+                <span className="font-semibold text-zinc-900">
                   《{latestWork.videoTitle}》
                 </span>
                 {latestWork.subTopic?.title && (
@@ -156,7 +156,7 @@ export function TodayFocusSection({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-800 font-medium px-2 py-0.5 rounded-md hover:bg-zinc-200/50 transition-colors shrink-0"
+          className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-900 font-medium px-2 py-0.5 rounded-md hover:bg-zinc-200/60 transition-colors shrink-0"
           aria-expanded={isExpanded}
         >
           <span>动态 ({totalActivityCount})</span>
@@ -170,11 +170,11 @@ export function TodayFocusSection({
 
       {/* 展开的往期历史动态面板（从第 2 条开始展示，上下绝不重复） */}
       {isExpanded && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-2.5 p-3.5 bg-white border border-zinc-200/90 rounded-xl shadow-xs animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 bg-white border border-zinc-200/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-1 duration-150">
           {/* 往期认领列表 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100 text-xs">
-              <span className="font-semibold text-zinc-700 flex items-center gap-1.5">
+              <span className="font-semibold text-zinc-800 flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-[#5F82A8]" />
                 往期认领记录
               </span>
@@ -183,7 +183,7 @@ export function TodayFocusSection({
               </span>
             </div>
             {pastClaims.length === 0 ? (
-              <div className="text-xs text-zinc-400 py-2 text-center">
+              <div className="text-xs text-zinc-400 py-3 text-center">
                 暂无更多往期认领
               </div>
             ) : (
@@ -213,7 +213,7 @@ export function TodayFocusSection({
           {/* 往期成片关联列表 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100 text-xs">
-              <span className="font-semibold text-zinc-700 flex items-center gap-1.5">
+              <span className="font-semibold text-zinc-800 flex items-center gap-1.5">
                 <Video className="w-3.5 h-3.5 text-[#D97757]" />
                 往期成片产出
               </span>
@@ -222,7 +222,7 @@ export function TodayFocusSection({
               </span>
             </div>
             {pastWorks.length === 0 ? (
-              <div className="text-xs text-zinc-400 py-2 text-center">
+              <div className="text-xs text-zinc-400 py-3 text-center">
                 暂无更多往期作品
               </div>
             ) : (
