@@ -382,14 +382,11 @@ export function TopicHubV2() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* 全局顶栏：黄金大标题 Header */}
           <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-zinc-200/80">
-            <div>
-              <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mb-1 flex items-center gap-2">
-                <Lightbulb className="w-6 h-6 text-[#D97757] stroke-[1.8]" />
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-semibold text-zinc-900 tracking-tight flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-[#D97757] stroke-[1.8]" />
                 <span>选题库</span>
               </h1>
-              <p className="text-xs text-zinc-500 font-normal">
-                归纳创作灵感，认领并跟进选题制作，沉淀爆款文案。
-              </p>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
