@@ -58,7 +58,7 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
   }
 
   return (
-    <section className="py-1">
+    <section className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-xs">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h2 className="text-[14px] font-semibold tracking-tight text-zinc-950">经营分析总览</h2>
         <span className="text-[12px] tabular-nums text-zinc-600 font-normal">

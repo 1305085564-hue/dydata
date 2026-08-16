@@ -66,7 +66,7 @@ export function TopicComparisonMatrix({
   }, [loadComparison, retryToken]);
 
   return (
-    <section className="space-y-4 mb-8">
+    <section className="space-y-4 mb-8 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-1">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D97757]/10 text-[#D97757]">

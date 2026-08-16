@@ -151,7 +151,7 @@ export function CollaborationWorkbench({
   }, [tab, year, month, staffCache]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs">
       {/* 整合型流线控制舱：去盒子化平铺 */}
       <div className="flex flex-col gap-3 py-1">
         {/* 控制舱顶栏：月份快捷翻页与标题 */}

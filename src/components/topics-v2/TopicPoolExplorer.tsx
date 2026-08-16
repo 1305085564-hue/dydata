@@ -122,7 +122,7 @@ export function TopicPoolExplorer({
   return (
     <section
       id="topic-pool-explorer"
-      className="space-y-4"
+      className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs"
     >
       {/* 控制栏：左右主次分层 (纯留白自然平铺，微气垫与呼吸微竖线) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-1">

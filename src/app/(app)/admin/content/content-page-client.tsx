@@ -246,7 +246,7 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-4"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs"
     >
       {/* 顶栏控制条：去盒子化平铺展开 */}
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 py-1.5 bg-white/90 backdrop-blur-md transition-all duration-200">
