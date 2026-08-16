@@ -78,15 +78,15 @@ export function TopicComparisonMatrix({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* 微气垫 Tab 维度切换 */}
-          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
+          {/* 维度切换 Tab */}
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => setDimension("topic")}
-              className={`px-2.5 py-1 text-xs rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
                 dimension === "topic"
-                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50 font-medium"
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
               }`}
               aria-label="按母题对比"
             >
@@ -95,19 +95,16 @@ export function TopicComparisonMatrix({
             <button
               type="button"
               onClick={() => setDimension("account")}
-              className={`px-2.5 py-1 text-xs rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
                 dimension === "account"
-                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50 font-medium"
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
               }`}
               aria-label="按账号对比"
             >
               按账号
             </button>
           </div>
-
-          {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
 
           {dimension === "account" && topicsError ? (
             <span className="text-xs text-zinc-500">母题加载失败</span>

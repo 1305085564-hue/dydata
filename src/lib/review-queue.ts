@@ -127,6 +127,7 @@ export interface BuildReviewQueueOptions {
   thresholds?: VideoReviewThresholds;
   sortMode?: QueueSortMode;
   todayDateKey?: string;
+  filterMode?: "queue" | "all";
 }
 
 export function buildReviewQueue({
@@ -137,18 +138,21 @@ export function buildReviewQueue({
   thresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   sortMode = "priority",
   todayDateKey,
+  filterMode = "all",
 }: BuildReviewQueueOptions): VideoRow[] {
   const snapshotMap = snapshots instanceof Map ? snapshots : buildSnapshotMap(snapshots);
   const today = todayDateKey ?? getShanghaiDateString();
-  const rows = videos.filter((video) => {
-    const cardStatus = feedbackCards[video.id]?.workflow_status ?? "not_started";
-    const isToday = getVideoUploadDateKey(video) === today;
-    const hasStrongSignal =
-      video.anomaly_status === "删稿" ||
-      video.anomaly_status === "限流" ||
-      video.play_change_signal === "halve";
-    return isToday || hasStrongSignal || cardStatus === "not_started";
-  });
+  const rows = filterMode === "queue"
+    ? videos.filter((video) => {
+        const cardStatus = feedbackCards[video.id]?.workflow_status ?? "not_started";
+        const isToday = getVideoUploadDateKey(video) === today;
+        const hasStrongSignal =
+          video.anomaly_status === "删稿" ||
+          video.anomaly_status === "限流" ||
+          video.play_change_signal === "halve";
+        return isToday || hasStrongSignal || cardStatus === "not_started";
+      })
+    : videos;
 
   return [...rows].sort((left, right) => {
     if (sortMode === "user") {

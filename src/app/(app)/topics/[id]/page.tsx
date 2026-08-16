@@ -769,16 +769,16 @@ export default function SubTopicDetailPage({
               </h2>
             </div>
 
-            {/* 排序微气垫 Switch */}
-            <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl text-[12px] select-none">
+            {/* 排序 Switch */}
+            <div className="flex items-center gap-1 text-[12px]">
               <button
                 type="button"
                 onClick={() => handleSortChange("best")}
                 className={cn(
-                  "px-3 py-1 rounded-lg transition-all font-medium cursor-pointer",
+                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer",
                   worksSort === "best"
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                 )}
               >
                 爆款优先
@@ -787,10 +787,10 @@ export default function SubTopicDetailPage({
                 type="button"
                 onClick={() => handleSortChange("recent")}
                 className={cn(
-                  "px-3 py-1 rounded-lg transition-all font-medium cursor-pointer",
+                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer",
                   worksSort === "recent"
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                 )}
               >
                 最新发布

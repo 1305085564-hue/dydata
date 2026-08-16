@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
@@ -248,17 +249,36 @@ export function ContentPageClient({
       id="content-review-list"
       className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs"
     >
-      {/* 顶栏控制条：去盒子化平铺展开 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 py-1.5 bg-white/90 backdrop-blur-md transition-all duration-200">
+      {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/95 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="rounded-xl bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-800 select-none">
-            今日待盘
-            <span className="ml-1.5 tabular-nums font-normal text-zinc-800">
-              {data.summary.pendingReviewCount}
-            </span>
+          {/* 视角切换 Tab：待复盘 VS 全部 */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => void loadData("pending", perspective, teamId)}
+              className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
+                view === "pending"
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+              }`}
+            >
+              待复盘 ({data.summary.pendingReviewCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => void loadData("all", perspective, teamId)}
+              className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
+                view === "all"
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+              }`}
+            >
+              全部 ({data.summary.totalVideos})
+            </button>
           </div>
 
-          {/* 团队/公司视角统一选择下拉框 (平铺无框) */}
+          {/* 团队/公司视角统一选择下拉框 (白底实体按键) */}
           {teams.length > 0 || canSwitchPerspective ? (
             <Select
               value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
@@ -270,14 +290,14 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-8 min-w-36 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2.5 cursor-pointer">
+              <SelectTrigger className="h-7.5 min-w-36 rounded-lg border border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-950">
+                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-900">
                     全公司 (全部团队)
                   </SelectItem>
                 )}
@@ -292,9 +312,9 @@ export function ContentPageClient({
 
           {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-zinc-100/70 text-zinc-600 rounded-xl">
+            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] bg-zinc-50/80 text-zinc-600 border border-zinc-200 rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
-              <span className="font-medium text-zinc-800">
+              <span className="font-semibold text-zinc-900">
                 今日异常 ({anomalyVideos.length})
               </span>
               <span className="text-zinc-300">·</span>
@@ -304,7 +324,7 @@ export function ContentPageClient({
                 {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-zinc-300 hidden lg:inline">|</span>
-              <span className="text-zinc-600 truncate max-w-[210px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+              <span className="text-zinc-500 truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
                 最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
                   <span key={v.id}>
                     {i > 0 && "、"}
@@ -321,7 +341,7 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-medium text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-95 transition-all cursor-pointer"
+                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-95 transition-all cursor-pointer"
               >
                 直接去盘 →
               </button>
@@ -329,8 +349,13 @@ export function ContentPageClient({
           )}
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-600">
-          <span className="text-[12px] font-medium text-zinc-400">视频复盘 · 作战舱</span>
+        <div className="ml-auto flex items-center gap-3">
+          <Link
+            href="/admin/videos"
+            className="text-[12px] text-[#D97757] hover:text-[#C46A4D] underline-offset-2 transition-colors font-medium cursor-pointer"
+          >
+            前往素材库（全量账本）→
+          </Link>
         </div>
       </div>
 
@@ -339,7 +364,8 @@ export function ContentPageClient({
         snapshots={data.snapshots}
         feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
-        totalCount={data.summary.totalVideos}
+        totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}
+        view={view}
         hasDeferredData={Boolean(data.isPartial)}
         isDeferredDataLoading={isDeferredLoading}
         onLoadDeferredData={loadDeferredData}

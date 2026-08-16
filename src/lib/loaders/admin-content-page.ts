@@ -416,11 +416,10 @@ export async function loadAdminContentPageData({
   assertSupabaseQuerySucceeded(videosResult.error, "加载内容视频失败");
   assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
   assertSupabaseQuerySucceeded(accountsResult.error, "加载账号列表失败");
-  assertSupabaseQuerySucceeded(reviewedResultsResult.error, "加载复盘结果失败");
   const videosRaw = videosResult.data;
   const profiles = profilesResult.data;
   const accounts = accountsResult.data;
-  const reviewedResults = reviewedResultsResult.data;
+  const reviewedResults = reviewedResultsResult?.error ? [] : (reviewedResultsResult?.data ?? []);
 
   const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
     (left, right) => getVideoSortTimestamp(right) - getVideoSortTimestamp(left),
@@ -574,8 +573,8 @@ export async function loadAdminContentInitialData(args: {
   const { data, error } = await args.supabase.rpc(ADMIN_CONTENT_FIRST_SCREEN_RPC, {
     p_visible_user_ids: args.scope.visibleUserIds,
     p_view: args.view ?? "pending",
-    p_limit_rows: ADMIN_CONTENT_INITIAL_LIMIT,
-    p_candidate_limit: ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
+    p_limit_rows: 500,
+    p_candidate_limit: 1000,
   });
 
   if (error || !data || typeof data !== "object") {

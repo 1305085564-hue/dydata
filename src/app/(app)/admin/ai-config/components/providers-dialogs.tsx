@@ -372,12 +372,12 @@ export function ModelDialog({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[12px] text-zinc-600 font-medium">快捷一键填选模型：</span>
-                <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
                     className={cn(
-                      "px-2.5 py-0.5 text-[11px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "used" ? "bg-white text-zinc-950 shadow-2xs font-medium" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                      "px-2.5 py-1 text-[11px] rounded-lg transition-all cursor-pointer font-medium",
+                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757] font-semibold" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                     )}
                     onClick={() => setPresetTab("used")}
                   >
@@ -386,8 +386,8 @@ export function ModelDialog({
                   <button
                     type="button"
                     className={cn(
-                      "px-2.5 py-0.5 text-[11px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "latest" ? "bg-white text-[#D97757] shadow-2xs font-medium" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                      "px-2.5 py-1 text-[11px] rounded-lg transition-all cursor-pointer font-medium",
+                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757] font-semibold" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                     )}
                     onClick={() => setPresetTab("latest")}
                   >

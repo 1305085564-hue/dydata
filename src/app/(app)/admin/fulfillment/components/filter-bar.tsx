@@ -116,17 +116,17 @@ export function FilterBar({
       {/* 时间筛选 + 团队筛选 行 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {/* 微气垫 Tab 时间预设切换 */}
-          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
+          {/* 时间预设切换 Tab */}
+          <div className="flex items-center gap-1">
             {PRESET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => handlePresetChange(opt.value)}
-                className={`rounded-lg px-3 py-1 text-xs font-medium transition-all duration-150 cursor-pointer ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
                   range === opt.value
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                 }`}
               >
                 {opt.label}
@@ -134,12 +134,9 @@ export function FilterBar({
             ))}
           </div>
 
-          {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
-
-          {/* 团队筛选 (平铺无框微胶囊) */}
+          {/* 团队筛选 (白底实体按键) */}
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
-            <SelectTrigger size="sm" className="h-7 w-36 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 px-2 text-xs text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none">
+            <SelectTrigger size="sm" className="w-36 bg-white border border-zinc-200 shadow-2xs">
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
             <SelectContent>
@@ -151,7 +148,6 @@ export function FilterBar({
               ))}
             </SelectContent>
           </Select>
-
         </div>
 
         {/* 飞书催交总开关 */}

@@ -315,7 +315,7 @@ export function ResultTrend({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
+          <div className="flex items-center gap-1">
             {(
               [
                 ["playCount", "播放量"],
@@ -326,10 +326,10 @@ export function ResultTrend({
                 key={key}
                 type="button"
                 className={cn(
-                  "h-6 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer",
+                  "h-7 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer",
                   metric === key
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                 )}
                 onClick={() => setMetric(key)}
               >
@@ -339,16 +339,16 @@ export function ResultTrend({
           </div>
           {/* 结构呼吸微竖线 */}
           <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
-          <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
+          <div className="flex items-center gap-1">
             {([7, 30] as const).map((value) => (
               <button
                 key={value}
                 type="button"
                 className={cn(
-                  "h-6 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer",
+                  "h-7 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer",
                   range === value
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                 )}
                 onClick={() => setRange(value)}
               >

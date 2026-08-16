@@ -66,18 +66,18 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
         </span>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {/* 微气垫 Tab 时间预设切换 */}
-          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
+          {/* 时间预设切换 Tab */}
+          <div className="flex items-center gap-1">
             {presetOptions.map((option) => (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => onChange(option.value)}
                 className={cn(
-                  "px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                  "h-7 rounded-lg px-3 text-[12px] font-medium transition-all cursor-pointer",
                   preset === option.value
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                    ? "bg-[#D97757] text-white hover:bg-[#C96442] shadow-2xs font-medium"
+                    : "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
                 )}
               >
                 {option.label}
@@ -85,26 +85,21 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
             ))}
           </div>
 
-          {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
-
           {preset === "custom" ? (
             <div className="flex items-center gap-1.5">
               <Input
                 type="date"
                 value={from}
                 onChange={(event) => onChange("custom", { from: event.target.value, to })}
-                className="h-7 w-[130px] border-0 bg-zinc-100/70 hover:bg-zinc-100 focus:bg-white text-[12px] text-zinc-800 rounded-lg"
+                className="h-7 w-[135px] border border-zinc-200 bg-white hover:border-zinc-300 focus:bg-white text-[12px] text-zinc-800 rounded-lg shadow-2xs"
               />
               <span className="text-[12px] text-zinc-400 font-normal">→</span>
               <Input
                 type="date"
                 value={to}
                 onChange={(event) => onChange("custom", { from, to: event.target.value })}
-                className="h-7 w-[130px] border-0 bg-zinc-100/70 hover:bg-zinc-100 focus:bg-white text-[12px] text-zinc-800 rounded-lg"
+                className="h-7 w-[135px] border border-zinc-200 bg-white hover:border-zinc-300 focus:bg-white text-[12px] text-zinc-800 rounded-lg shadow-2xs"
               />
-              {/* 结构呼吸微竖线 */}
-              <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
             </div>
           ) : null}
 

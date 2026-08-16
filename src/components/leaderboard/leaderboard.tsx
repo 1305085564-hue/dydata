@@ -310,7 +310,7 @@ function SegmentedControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
+    <div className="flex items-center gap-1">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -318,10 +318,10 @@ function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer",
+              "px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer",
               active
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             )}
             onClick={() => onChange(option.value)}
           >

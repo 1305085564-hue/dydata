@@ -246,16 +246,16 @@ function ExemptionModal({
                     申请类型
                     <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                   </p>
-                  <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
+                  <div className="grid grid-cols-2 gap-1 rounded-lg bg-zinc-100 p-1 select-none">
                     <button
                       type="button"
                       onClick={() => setCategory("leave")}
                       title="病假/事假/外勤（计入考核天数）"
                       className={cn(
-                        "flex h-7 items-center justify-center rounded-lg text-xs font-medium transition-all duration-150 ease-out cursor-pointer",
+                        "flex h-7 items-center justify-center rounded-md text-xs font-medium transition-all duration-150 ease-out cursor-pointer",
                         category === "leave"
-                          ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                          : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                          ? "bg-white text-zinc-950 shadow-sm font-semibold"
+                          : "text-zinc-500 hover:text-zinc-900",
                       )}
                     >
                       请假（该交不交）
@@ -265,10 +265,10 @@ function ExemptionModal({
                       onClick={() => setCategory("waive")}
                       title="账号限流/停用/放假（剔除考核分母）"
                       className={cn(
-                        "flex h-7 items-center justify-center rounded-lg text-xs font-medium transition-all duration-150 ease-out cursor-pointer",
+                        "flex h-7 items-center justify-center rounded-md text-xs font-medium transition-all duration-150 ease-out cursor-pointer",
                         category === "waive"
-                          ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                          : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                          ? "bg-white text-zinc-950 shadow-sm font-semibold"
+                          : "text-zinc-500 hover:text-zinc-900",
                       )}
                     >
                       豁免（不该交不交）

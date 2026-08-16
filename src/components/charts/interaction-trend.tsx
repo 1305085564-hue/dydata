@@ -294,16 +294,16 @@ export function InteractionTrend({
             {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时暂无对比线。"}
           </p>
         </div>
-        <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
+        <div className="flex items-center gap-1">
           {([7, 30] as const).map((value) => (
             <button
               key={value}
               type="button"
               className={cn(
-                "h-6 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer",
+                "h-7 rounded-lg px-2.5 text-[12px] font-medium transition-all cursor-pointer",
                 range === value
-                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
               )}
               onClick={() => setRange(value)}
             >

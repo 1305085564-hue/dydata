@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
 import type { ContentFeedbackCardView, ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
@@ -23,6 +22,7 @@ interface ContentListProps {
   feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
+  view?: "pending" | "all";
   hasDeferredData?: boolean;
   isDeferredDataLoading?: boolean;
   onLoadDeferredData?: () => Promise<void>;
@@ -45,7 +45,7 @@ type SortField =
   | "avg_play_duration"
   | "completion_rate";
 
-const DEFAULT_PAGE_SIZE = 30;
+const DEFAULT_PAGE_SIZE = 20;
 
 function formatCount(val: number | null | undefined): string {
   if (val === null || val === undefined) return "—";
@@ -121,6 +121,7 @@ export function ContentList({
   snapshots,
   feedbackCards,
   reviewReadiness,
+  view = "pending",
   hasDeferredData = false,
   isDeferredDataLoading = false,
   onLoadDeferredData,
@@ -162,8 +163,9 @@ export function ContentList({
       reviewReadiness,
       thresholds,
       sortMode: "priority",
+      filterMode: view === "all" ? "all" : "all",
     });
-  }, [feedbackCards, reviewReadiness, snapshotMap, thresholds, videos]);
+  }, [feedbackCards, reviewReadiness, snapshotMap, thresholds, videos, view]);
 
   const handleSort = useCallback((field: SortField) => {
     if (sortField === field) {
@@ -312,31 +314,16 @@ export function ContentList({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 顶部标题与视图切换平铺 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 py-1">
-        <div className="flex items-center gap-2">
-          <p className="text-[14px] font-semibold text-zinc-950">今日待盘队列</p>
-          <p className="text-[12px] text-zinc-600 font-normal">
-            共 <span className="tabular-nums font-normal text-zinc-800">{queueRows.length}</span> 条
-            <span className="mx-1.5 text-zinc-300">·</span>
-            <Link
-              href="/admin/videos"
-              className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 transition-colors font-medium"
-            >
-              前往素材库（全量账本）→
-            </Link>
-          </p>
-        </div>
-
-        {/* 窄屏 (<1280px) 视图分段切换器 (微气垫岛屿) */}
-        <div className="inline-flex xl:hidden items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
+      {/* 窄屏 (<1280px) 视图分段切换器 */}
+      <div className="flex xl:hidden items-center justify-end py-0.5">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setViewMode("interaction")}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               viewMode === "interaction"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             互动数据
@@ -346,8 +333,8 @@ export function ContentList({
             onClick={() => setViewMode("completion")}
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               viewMode === "completion"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             完播数据

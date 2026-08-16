@@ -151,30 +151,30 @@ export function CollaborationWorkbench({
   }, [tab, year, month, staffCache]);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs">
-      {/* 整合型流线控制舱：去盒子化平铺 */}
-      <div className="flex flex-col gap-3 py-1">
+    <div className="space-y-4">
+      {/* 整合型流线控制舱：L1 纯白纸感底板 */}
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-2xs space-y-3.5">
         {/* 控制舱顶栏：月份快捷翻页与标题 */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-200/60">
           <div className="flex items-center gap-3">
-            {/* 快捷翻月控制组 (微底气垫) */}
-            <div className="flex items-center gap-0.5 bg-zinc-100/70 p-0.5 rounded-lg">
+            {/* 快捷翻月控制组 */}
+            <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-zinc-200 shadow-2xs">
               <button
                 type="button"
                 onClick={handlePrevMonth}
                 title="上一月"
-                className="size-7 rounded flex items-center justify-center text-zinc-600 hover:text-zinc-950 hover:bg-white active:scale-95 transition-all cursor-pointer"
+                className="size-7 rounded flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <div className="w-32">
+              <div className="w-36">
                 <Select value={currentMonthValue} onValueChange={handleMonthChange}>
-                  <SelectTrigger className="h-7 text-xs bg-transparent border-0 shadow-none font-medium text-zinc-800 hover:text-zinc-950 transition-colors focus:ring-0">
+                  <SelectTrigger className="h-7 text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-zinc-50 transition-colors focus:ring-0 cursor-pointer">
                     <SelectValue placeholder="选择月份" />
                   </SelectTrigger>
                   <SelectContent>
                     {monthOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                      <SelectItem key={opt.value} value={opt.value} className="text-[13px]">
                         {opt.label}
                       </SelectItem>
                     ))}
@@ -185,13 +185,13 @@ export function CollaborationWorkbench({
                 type="button"
                 onClick={handleNextMonth}
                 title="下一月"
-                className="size-7 rounded flex items-center justify-center text-zinc-600 hover:text-zinc-950 hover:bg-white active:scale-95 transition-all cursor-pointer"
+                className="size-7 rounded flex items-center justify-center text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
               >
                 <ChevronRight className="size-4" />
               </button>
             </div>
 
-            <span className="text-[14px] font-semibold text-zinc-950 tracking-tight">
+            <span className="text-[14px] font-semibold text-zinc-900 tracking-tight">
               {year} 年 {month} 月 团队协作概览
             </span>
           </div>
@@ -200,15 +200,15 @@ export function CollaborationWorkbench({
           <HealthBar summary={summary} />
         </div>
 
-        {/* 角色导航 Tab (微气垫岛屿平铺) */}
-        <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none w-fit">
+        {/* 暖橙主体风格导航 Tab */}
+        <div className="flex items-center gap-1.5 pt-1">
           <button
             type="button"
             onClick={() => handleTabChange("talents")}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
               tab === "talents"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             达人 ({talents.length})
@@ -217,10 +217,10 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("operators")}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
               tab === "operators"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             运营团队 ({operators.length})
@@ -229,10 +229,10 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("writers")}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
               tab === "writers"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             文案人员
@@ -241,10 +241,10 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("editors")}
-            className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
               tab === "editors"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             }`}
           >
             剪辑人员
