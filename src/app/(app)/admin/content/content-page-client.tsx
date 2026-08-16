@@ -246,19 +246,19 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-4"
     >
-      {/* 顶栏控制条：Sticky 纸感与环境融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/90 p-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
+      {/* 顶栏控制条：去盒子化平铺展开 */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-1 transition-all duration-200">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="rounded-lg bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-700">
+          <div className="rounded-xl bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-800 select-none">
             今日待盘
-            <span className="ml-1.5 tabular-nums font-semibold text-zinc-900">
+            <span className="ml-1.5 tabular-nums font-normal text-zinc-800">
               {data.summary.pendingReviewCount}
             </span>
           </div>
 
-          {/* 团队/公司视角统一选择下拉框 */}
+          {/* 团队/公司视角统一选择下拉框 (平铺无框) */}
           {teams.length > 0 || canSwitchPerspective ? (
             <Select
               value={perspective === "company" ? "all_company" : (teamId ?? teams[0]?.id ?? "all_company")}
@@ -270,14 +270,14 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-8 min-w-36 rounded-lg border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs">
+              <SelectTrigger className="h-8 min-w-36 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2.5 cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-900">
+                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-950">
                     全公司 (全部团队)
                   </SelectItem>
                 )}
@@ -292,9 +292,9 @@ export function ContentPageClient({
 
           {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-zinc-50/80 text-zinc-600 rounded-lg shadow-2xs">
+            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] bg-zinc-100/70 text-zinc-600 rounded-xl">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
-              <span className="font-semibold text-zinc-900">
+              <span className="font-medium text-zinc-800">
                 今日异常 ({anomalyVideos.length})
               </span>
               <span className="text-zinc-300">·</span>
@@ -304,14 +304,14 @@ export function ContentPageClient({
                 {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
               </span>
               <span className="text-zinc-300 hidden lg:inline">|</span>
-              <span className="text-zinc-500 truncate max-w-[210px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+              <span className="text-zinc-600 truncate max-w-[210px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
                 最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
                   <span key={v.id}>
                     {i > 0 && "、"}
                     <button
                       type="button"
                       onClick={() => setSelectedVideoId(v.id)}
-                      className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 font-medium transition-colors"
+                      className="text-[#D97757] hover:text-[#C46A4D] underline-offset-2 font-medium transition-colors cursor-pointer"
                     >
                       {v.profiles?.name || "未知"}({v.anomaly_status === "正常" && v.play_change_signal === "halve" ? "腰斩" : (v.anomaly_status || "异常")})
                     </button>
@@ -321,7 +321,7 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-95 transition-all"
+                className="text-[11px] font-medium text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-95 transition-all cursor-pointer"
               >
                 直接去盘 →
               </button>
@@ -329,7 +329,7 @@ export function ContentPageClient({
           )}
         </div>
 
-        <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500">
+        <div className="ml-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-600">
           <span className="text-[12px] font-medium text-zinc-400">视频复盘 · 作战舱</span>
         </div>
       </div>

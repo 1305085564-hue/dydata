@@ -122,27 +122,27 @@ export function TopicPoolExplorer({
   return (
     <section
       id="topic-pool-explorer"
-      className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-xs"
+      className="space-y-4"
     >
-      {/* 控制栏：左右主次分层 (纯留白自然分隔，消除横线) */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6">
-        {/* 左侧：具有主标题分量感的平铺 Tab (14px font-semibold) */}
-        <div className="flex items-center gap-1.5">
+      {/* 控制栏：左右主次分层 (纯留白自然平铺，微气垫与呼吸微竖线) */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-1">
+        {/* 左侧：微气垫 Tab 视角切换群 */}
+        <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
           <button
             type="button"
             onClick={() => onViewChange("all")}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               currentView === "all"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
+                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             }`}
           >
             <span>全部</span>
             {totalCount > 0 && (
               <span
-                className={`text-xs tabular-nums ${
+                className={`text-[11px] tabular-nums ${
                   currentView === "all"
-                    ? "text-[#D97757]/80 font-semibold"
+                    ? "text-[#D97757] font-medium"
                     : "text-zinc-400 font-normal"
                 }`}
               >
@@ -153,10 +153,10 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_claims")}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               currentView === "my_claims"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
+                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             }`}
           >
             我的认领
@@ -164,10 +164,10 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_created")}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               currentView === "my_created"
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
+                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             }`}
           >
             我录入的
@@ -309,12 +309,15 @@ export function TopicPoolExplorer({
             <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 pointer-events-none" />
           </div>
 
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+
           {/* 网格/表格模式切换 (去框平铺) */}
           <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => setDisplayMode("grid")}
-              className={`p-1.5 rounded-lg transition-all ${
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 displayMode === "grid"
                   ? "bg-zinc-100 text-zinc-900 font-medium"
                   : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100/60"
@@ -327,7 +330,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={() => setDisplayMode("table")}
-              className={`p-1.5 rounded-lg transition-all ${
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                 displayMode === "table"
                   ? "bg-zinc-100 text-zinc-900 font-medium"
                   : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100/60"
@@ -339,11 +342,14 @@ export function TopicPoolExplorer({
             </button>
           </div>
 
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+
           {/* 主 CTA：录入 (修复双加号，单加号图标 + 录入) */}
           <button
             type="button"
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs ml-0.5"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
             aria-label="录入选题"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -601,30 +607,30 @@ export function TopicPoolExplorer({
         </div>
       )}
 
-      {/* 分页条（有数据时才显示） */}
+      {/* 分页条（纯留白自然平铺沉底） */}
       {totalCount > 0 && (
-        <div className="flex items-center justify-between pt-4 mt-4 border-t border-zinc-100 text-xs text-zinc-500 font-normal">
+        <div className="flex items-center justify-between py-2 px-1 select-none text-xs text-zinc-600 font-normal">
           <span>
-            共 <span className="font-medium text-zinc-700 tabular-nums">{totalCount}</span> 条记录，本页 <span className="font-medium text-zinc-700 tabular-nums">{visibleItems.length}</span> 条
+            共 <span className="font-normal text-zinc-800 tabular-nums">{totalCount}</span> 条记录，本页 <span className="font-normal text-zinc-800 tabular-nums">{visibleItems.length}</span> 条
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="px-2.5 py-1 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.97] transition-all disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+              className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-600 transition-all cursor-pointer active:scale-95"
               aria-label="上一页"
             >
               上一页
             </button>
-            <span className="text-zinc-700 font-medium tabular-nums px-1">
+            <span className="text-zinc-800 font-medium tabular-nums px-1 text-[11.5px]">
               第 {currentPage} 页
             </span>
             <button
               type="button"
               disabled={currentPage * 50 >= totalCount}
               onClick={() => onPageChange(currentPage + 1)}
-              className="px-2.5 py-1 rounded-lg border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.97] transition-all disabled:opacity-40 disabled:pointer-events-none shadow-2xs"
+              className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-600 transition-all cursor-pointer active:scale-95"
               aria-label="下一页"
             >
               下一页

@@ -554,98 +554,98 @@ export function VideoDetailDialog({
 
                   <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 pt-1 sm:grid-cols-3 xl:grid-cols-4 text-[12px]">
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">点赞数</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">点赞数</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatNumber(snapshot.likes)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">评论数</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">评论数</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatNumber(snapshot.comments)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">分享数</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">分享数</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatNumber(snapshot.shares)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">收藏数</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">收藏数</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatNumber(snapshot.favorites)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">涨粉量</span>
-                      <span className="font-semibold tabular-nums text-[#16A34A]">
+                      <span className="text-zinc-600">涨粉量</span>
+                      <span className="font-medium tabular-nums text-[#16A34A]">
                         +{formatNumber(snapshot.follower_gain)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">掉粉量</span>
-                      <span className="font-semibold tabular-nums text-[#DC2626]">
+                      <span className="text-zinc-600">掉粉量</span>
+                      <span className="font-medium tabular-nums text-[#DC2626]">
                         -{formatNumber(snapshot.follower_loss)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">导粉量</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">导粉量</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatNumber(snapshot.follower_convert)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">主页访问</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">主页访问</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatNumber(snapshot.homepage_visits)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">导粉率</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">导粉率</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatPercent(fanConv)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">主页访问率</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">主页访问率</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatPercent(homepageVisit)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">粉丝播放占比</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">粉丝播放占比</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatPercent(snapshot.fan_play_ratio)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">封面点击率</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">封面点击率</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatPercent(snapshot.cover_click_rate)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">平均播放时长</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">平均播放时长</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatDuration(snapshot.avg_play_duration)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">2s 跳出率</span>
-                      <span className="font-semibold tabular-nums text-[#DC2626]">
+                      <span className="text-zinc-600">2s 跳出率</span>
+                      <span className="font-medium tabular-nums text-[#DC2626]">
                         {formatPercent(snapshot.bounce_rate_2s)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">5s 完播率</span>
-                      <span className="font-semibold tabular-nums text-[#16A34A]">
+                      <span className="text-zinc-600">5s 完播率</span>
+                      <span className="font-medium tabular-nums text-[#16A34A]">
                         {formatPercent(snapshot.completion_rate_5s)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-zinc-100/60">
-                      <span className="text-zinc-500">平均播放进度</span>
-                      <span className="font-semibold tabular-nums text-zinc-900">
+                      <span className="text-zinc-600">平均播放进度</span>
+                      <span className="font-medium tabular-nums text-zinc-950">
                         {formatPercent(snapshot.avg_play_ratio)}
                       </span>
                     </div>
@@ -720,17 +720,17 @@ export function VideoDetailDialog({
                           const isSelected = assetLevel === level;
                           const levelStyles: Record<VideoAssetLevel, string> = {
                             S: isSelected
-                              ? "bg-zinc-1000 text-white border-zinc-200 font-semibold shadow-xs"
-                              : "bg-zinc-100 text-zinc-600 border-zinc-200/60 hover:bg-zinc-100",
+                              ? "bg-[#D97757] text-white border-[#D97757] font-medium shadow-2xs"
+                              : "bg-zinc-100 text-zinc-600 border-zinc-200/60 hover:bg-zinc-200/50",
                             A: isSelected
-                              ? "bg-zinc-900 text-white border-zinc-900 font-semibold shadow-xs"
-                              : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200",
+                              ? "bg-zinc-950 text-white border-zinc-950 font-medium shadow-2xs"
+                              : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200/50",
                             B: isSelected
-                              ? "bg-zinc-700 text-white border-zinc-700 font-semibold shadow-xs"
-                              : "bg-zinc-50 text-zinc-700 border-zinc-200 hover:bg-zinc-100",
+                              ? "bg-zinc-800 text-white border-zinc-800 font-medium shadow-2xs"
+                              : "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200/50",
                             C: isSelected
-                              ? "bg-zinc-500 text-white border-zinc-500 font-semibold shadow-xs"
-                              : "bg-zinc-50 text-zinc-500 border-zinc-200 hover:bg-zinc-100",
+                              ? "bg-zinc-600 text-white border-zinc-600 font-medium shadow-2xs"
+                              : "bg-zinc-100 text-zinc-600 border-zinc-200 hover:bg-zinc-200/50",
                           };
                           return (
                             <button

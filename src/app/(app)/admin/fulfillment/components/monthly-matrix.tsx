@@ -447,7 +447,7 @@ export function MonthlyMatrix({
           )}
 
           {hoveredCell.appeal && (
-            <div className="w-full border border-[#F59E0B]/20 bg-zinc-1000/10 p-1.5 rounded text-[#B45309] mt-1">
+            <div className="w-full border border-[#F59E0B]/20 bg-zinc-950/10 p-1.5 rounded text-[#B45309] mt-1">
               <div className="flex items-center gap-1 font-normal text-[11px]">
                 <span className="size-1 bg-[#F59E0B] rounded-full" />
                 员工申诉 (

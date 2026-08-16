@@ -2705,7 +2705,7 @@ function VideoStatusSegmented({
       role="radiogroup"
       aria-label="视频状态"
       onKeyDown={handleKeyDown}
-      className="inline-flex h-9 items-center rounded-lg bg-zinc-100 p-1"
+      className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none"
     >
       {VIDEO_STATUS_OPTIONS.map((option) => {
         const isActive = value === option.value;
@@ -2717,13 +2717,13 @@ function VideoStatusSegmented({
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-[12px] font-medium tracking-tight transition-all duration-150 ease-out",
+              "inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-xs font-medium tracking-tight transition-all duration-150 ease-out cursor-pointer",
               isActive
                 ? cn(
-                    "bg-white text-zinc-950 shadow-sm font-semibold",
+                    "bg-white text-zinc-950 shadow-2xs font-medium",
                     option.activeTextClass,
                   )
-                : "text-zinc-500 hover:text-zinc-900",
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
             )}
           >
             <span

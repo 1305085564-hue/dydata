@@ -1547,7 +1547,7 @@ export function AdminModulesContentV2({
                           className={cn(
                             "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors",
                             loginInfo.isLoginStale
-                              ? "bg-zinc-1000/10 text-zinc-600 border border-zinc-200"
+                              ? "bg-zinc-950/10 text-zinc-600 border border-zinc-200"
                               : "bg-zinc-100 text-zinc-600",
                           )}
                         >

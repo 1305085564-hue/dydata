@@ -181,39 +181,42 @@ export function Leaderboard({
     : METRICS;
 
   return (
-    <div className="glass-card-static space-y-4 p-4 sm:p-5">
-      <div className="space-y-2 rounded-2xl bg-muted/50 p-2 ring-1 ring-foreground/8 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-        <SegmentedControl
-          options={TYPE_OPTIONS}
-          value={boardType}
-          onChange={(value) => setBoardType(value as LeaderboardType)}
-        />
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4">
+      {/* 顶栏控制舱：平铺微气垫与呼吸微竖线 */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between py-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedControl
+            options={TYPE_OPTIONS}
+            value={boardType}
+            onChange={(value) => setBoardType(value as LeaderboardType)}
+          />
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
           <SegmentedControl
             options={RANGE_OPTIONS}
             value={range}
             onChange={(value) => setRange(value as LeaderboardRange)}
           />
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            className="h-11 rounded-2xl bg-background/80 px-3 md:h-8"
-            onClick={() => setCompact((prev) => !prev)}
-          >
-            {compact ? (
-              <>
-                <ChevronDown className="size-3.5" />
-                展开完整数据
-              </>
-            ) : (
-              <>
-                <ChevronUp className="size-3.5" />
-                收起次要数据
-              </>
-            )}
-          </Button>
         </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="h-7 rounded-lg bg-zinc-100/70 hover:bg-zinc-100 hover:text-zinc-950 px-3 text-xs text-zinc-600 font-medium cursor-pointer"
+          onClick={() => setCompact((prev) => !prev)}
+        >
+          {compact ? (
+            <>
+              <ChevronDown className="size-3.5" />
+              展开完整数据
+            </>
+          ) : (
+            <>
+              <ChevronUp className="size-3.5" />
+              收起次要数据
+            </>
+          )}
+        </Button>
       </div>
 
       {items.length === 0 ? (
@@ -307,23 +310,23 @@ function SegmentedControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="inline-flex w-full flex-wrap gap-1 rounded-2xl bg-background/70 p-1 ring-1 ring-foreground/8 md:w-auto">
+    <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
       {options.map((option) => {
         const active = option.value === value;
         return (
-          <Button
+          <button
             key={option.value}
             type="button"
-            size="sm"
-            variant="ghost"
             className={cn(
-              "h-11 rounded-xl px-3 text-[13px] font-medium text-muted-foreground md:h-8",
-              active && "bg-background text-foreground shadow-sm ring-1 ring-foreground/8"
+              "px-3 py-1 text-xs font-medium rounded-lg transition-all cursor-pointer",
+              active
+                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             )}
             onClick={() => onChange(option.value)}
           >
             {option.label}
-          </Button>
+          </button>
         );
       })}
     </div>

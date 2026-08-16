@@ -15,7 +15,6 @@ import {
   YAxis,
 } from "recharts";
 
-import { Button } from "@/components/ui/button";
 import { ANIMATION_TIMINGS } from "@/lib/animations";
 import {
   CHART_AXIS_TICK,
@@ -295,20 +294,21 @@ export function InteractionTrend({
             {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时暂无对比线。"}
           </p>
         </div>
-        <div className="inline-flex w-fit rounded-md border border-zinc-200 bg-zinc-100 p-0.5">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
           {([7, 30] as const).map((value) => (
-            <Button
+            <button
               key={value}
-              size="sm"
-              variant="ghost"
+              type="button"
               className={cn(
-                "h-7 rounded-lg px-2 text-[12px] text-zinc-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-zinc-700",
-                range === value && "border border-zinc-200 bg-white text-zinc-700",
+                "h-6 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer",
+                range === value
+                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
               )}
               onClick={() => setRange(value)}
             >
               {value}天
-            </Button>
+            </button>
           ))}
         </div>
       </div>

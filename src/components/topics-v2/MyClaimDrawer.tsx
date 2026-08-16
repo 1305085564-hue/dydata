@@ -165,7 +165,7 @@ export function MyClaimDrawer({
                     className={`flex-1 border-r border-white transition-colors duration-200 ${
                       idx < candidateCount
                         ? candidateCount === 5
-                          ? "bg-zinc-1000"
+                          ? "bg-[#DC2626]"
                           : "bg-[#D97757]"
                         : "bg-zinc-200"
                     }`}

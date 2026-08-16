@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { AnalyticsRangePreset } from "@/lib/analytics-access";
@@ -59,47 +58,53 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
   }
 
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white px-4 py-3">
+    <section className="py-1">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="text-[13px] font-medium tracking-tight text-zinc-900">经营分析总览</h2>
-        <span className="text-[12px] tabular-nums text-zinc-500">
+        <h2 className="text-[14px] font-semibold tracking-tight text-zinc-950">经营分析总览</h2>
+        <span className="text-[12px] tabular-nums text-zinc-600 font-normal">
           {from} 至 {to}
         </span>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap items-center gap-1">
+          {/* 微气垫 Tab 时间预设切换 */}
+          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
             {presetOptions.map((option) => (
-              <Button
+              <button
                 key={option.value}
-                size="sm"
-                className={cn(
-                  "h-7 rounded-lg px-3 text-[12px]",
-                  preset === option.value
-                    ? "border-transparent bg-[#D97757] text-white hover:bg-[#C96442]"
-                    : "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
-                )}
+                type="button"
                 onClick={() => onChange(option.value)}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                  preset === option.value
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
+                )}
               >
                 {option.label}
-              </Button>
+              </button>
             ))}
           </div>
 
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+
           {preset === "custom" ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Input
                 type="date"
                 value={from}
                 onChange={(event) => onChange("custom", { from: event.target.value, to })}
-                className="h-8 w-[140px] border-zinc-200 bg-white text-[12px]"
+                className="h-7 w-[130px] border-0 bg-zinc-100/70 hover:bg-zinc-100 focus:bg-white text-[12px] text-zinc-800 rounded-lg"
               />
-              <span className="text-[12px] text-zinc-500">→</span>
+              <span className="text-[12px] text-zinc-400 font-normal">→</span>
               <Input
                 type="date"
                 value={to}
                 onChange={(event) => onChange("custom", { from, to: event.target.value })}
-                className="h-8 w-[140px] border-zinc-200 bg-white text-[12px]"
+                className="h-7 w-[130px] border-0 bg-zinc-100/70 hover:bg-zinc-100 focus:bg-white text-[12px] text-zinc-800 rounded-lg"
               />
+              {/* 结构呼吸微竖线 */}
+              <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
             </div>
           ) : null}
 
@@ -107,10 +112,10 @@ export function AnalyticsPageHeader({ preset, from, to, onChange }: AnalyticsPag
             type="button"
             onClick={() => void handleExport()}
             disabled={isExporting}
-            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-3 text-[12px] font-medium text-white transition-[background-color] duration-150 hover:bg-[#C96442] active:translate-y-0"
+            className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] px-3 text-[12px] font-medium text-white transition-all shadow-2xs cursor-pointer"
           >
-            <Download className="size-3.5 stroke-[1.5]" />
-            {isExporting ? "导出中..." : "导出"}
+            <Download className="size-3.5 stroke-[2]" />
+            <span>{isExporting ? "导出中..." : "导出"}</span>
           </button>
         </div>
       </div>

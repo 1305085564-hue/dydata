@@ -14,7 +14,6 @@ import {
   YAxis,
 } from "recharts";
 
-import { Button } from "@/components/ui/button";
 import { 补全连续日期, 平移日期字符串, 日期相差天数, getTrendAxisUpperBound } from "@/lib/趋势图";
 import { GROWTH_STALE_DAYS_THRESHOLD } from "@/lib/growth-page";
 import { ANIMATION_TIMINGS } from "@/lib/animations";
@@ -315,42 +314,46 @@ export function ResultTrend({
             {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时暂无对比线。"}
           </p>
         </div>
-        <div className="flex flex-col gap-1.5 sm:items-end">
-          <div className="inline-flex w-fit rounded-md border border-zinc-200 bg-zinc-100 p-0.5">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
             {(
               [
                 ["playCount", "播放量"],
                 ["followerGain", "涨粉"],
               ] as const
             ).map(([key, label]) => (
-              <Button
+              <button
                 key={key}
-                size="sm"
-                variant="ghost"
+                type="button"
                 className={cn(
-                  "h-7 rounded-lg px-2 text-[12px] text-zinc-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-zinc-700",
-                  metric === key && "border border-zinc-200 bg-white text-zinc-700",
+                  "h-6 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer",
+                  metric === key
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
                 )}
                 onClick={() => setMetric(key)}
               >
                 {label}
-              </Button>
+              </button>
             ))}
           </div>
-          <div className="inline-flex w-fit rounded-md border border-zinc-200 bg-zinc-100 p-0.5">
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+          <div className="inline-flex items-center gap-1 rounded-xl bg-zinc-100/70 p-1 select-none">
             {([7, 30] as const).map((value) => (
-              <Button
+              <button
                 key={value}
-                size="sm"
-                variant="ghost"
+                type="button"
                 className={cn(
-                  "h-7 rounded-lg px-2 text-[12px] text-zinc-500 shadow-none transition-colors duration-[var(--duration-micro)] hover:bg-white hover:text-zinc-700",
-                  range === value && "border border-zinc-200 bg-white text-zinc-700",
+                  "h-6 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer",
+                  range === value
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
                 )}
                 onClick={() => setRange(value)}
               >
                 {value}天
-              </Button>
+              </button>
             ))}
           </div>
         </div>

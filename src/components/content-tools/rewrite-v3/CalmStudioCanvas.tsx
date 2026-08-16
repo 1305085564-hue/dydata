@@ -317,10 +317,10 @@ export function CalmStudioCanvas({
                   "opacity-25 transition-opacity duration-300",
                 // 2. 生成中的段落：带有呼吸高亮
                 isPatching &&
-                  "bg-zinc-1000/[0.03] border-zinc-200 ring-1 ring-[#F59E0B]/10 shadow-sm animate-pulse",
+                  "bg-zinc-950/[0.03] border-zinc-200 ring-1 ring-[#F59E0B]/10 shadow-sm animate-pulse",
                 // 3. 全局生成流式最后段落（打字重叠）
                 isLastStreamingPara &&
-                  "border-l-2 border-[#F59E0B] pl-3 bg-zinc-1000/[0.02]",
+                  "border-l-2 border-[#F59E0B] pl-3 bg-zinc-950/[0.02]",
                 // 4. 中断的影子：物理降灰 60%
                 isAbortedShadow &&
                   "opacity-60 saturate-50 select-none pointer-events-none",
@@ -502,7 +502,7 @@ export function CalmStudioCanvas({
 
       {/* 底部浮标 */}
       {isViewingHistory && activeRevision && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-1000/10 border border-zinc-200 px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-2 duration-300">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-zinc-950/10 border border-zinc-200 px-4 py-2 rounded-lg flex items-center gap-2.5 z-40 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-2 duration-300">
           <ShieldAlert className="h-4 w-4 text-[#F59E0B] shrink-0" />
           <div className="text-[12px] text-zinc-600 font-medium">
             正在阅览历史版本 (由{" "}

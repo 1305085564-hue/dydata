@@ -312,12 +312,12 @@ export function SubmissionCalendar({
                     isSelected
                       ? "bg-white"
                       : isSubmitted
-                        ? "bg-[#16A34A]/100"
+                        ? "bg-[#16A34A]"
                         : isLeave
-                          ? "bg-zinc-1000"
+                          ? "bg-[#D97757]"
                           : isPendingState
-                            ? "bg-zinc-1000 animate-pulse ring-2 ring-[#F59E0B]/40"
-                            : "bg-zinc-1000",
+                            ? "bg-[#F59E0B] animate-pulse ring-2 ring-[#F59E0B]/40"
+                            : "bg-zinc-400",
                   )}
                 />
               )}
@@ -327,19 +327,19 @@ export function SubmissionCalendar({
       </div>
 
       {/* 底部微型极简图例说明 (Minimal Footer Legend) */}
-      <div className="pt-2 border-t border-zinc-100 flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-zinc-400">
+      <div className="pt-2 border-t border-zinc-100 flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-zinc-600">
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#16A34A]/100" /> 已交/免交
+          <span className="size-1.5 rounded-full bg-[#16A34A]" /> 已交/免交
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-zinc-1000 animate-pulse ring-1 ring-[#F59E0B]/50" />{" "}
+          <span className="size-1.5 rounded-full bg-[#F59E0B] animate-pulse ring-1 ring-[#F59E0B]/50" />{" "}
           审批中
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-zinc-1000" /> 请假
+          <span className="size-1.5 rounded-full bg-[#D97757]" /> 请假
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-zinc-1000" /> 未交/漏交
+          <span className="size-1.5 rounded-full bg-zinc-400" /> 未交/漏交
         </span>
       </div>
     </section>

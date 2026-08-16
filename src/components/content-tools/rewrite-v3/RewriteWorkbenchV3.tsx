@@ -443,8 +443,8 @@ export function RewriteWorkbenchV3() {
             className={cn(
               "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
               showDiffInLatest
-                ? "bg-zinc-1000/[0.08] text-zinc-600 hover:bg-zinc-1000/[0.12]"
-                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950",
+                ? "bg-zinc-950/[0.08] text-zinc-600 hover:bg-zinc-950/[0.12]"
+                : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200 hover:text-zinc-950",
             )}
             title={showDiffInLatest ? "关闭修订模式" : "开启修订模式"}
           >

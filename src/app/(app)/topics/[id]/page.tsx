@@ -769,26 +769,28 @@ export default function SubTopicDetailPage({
               </h2>
             </div>
 
-            {/* 排序 Segmented Switch */}
-            <div className="flex items-center gap-1 bg-zinc-100 p-0.5 rounded-lg text-[12px]">
+            {/* 排序微气垫 Switch */}
+            <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl text-[12px] select-none">
               <button
+                type="button"
                 onClick={() => handleSortChange("best")}
                 className={cn(
-                  "px-3 py-1 rounded-md transition-all font-medium",
+                  "px-3 py-1 rounded-lg transition-all font-medium cursor-pointer",
                   worksSort === "best"
-                    ? "bg-white text-zinc-900 shadow-2xs"
-                    : "text-zinc-500 hover:text-zinc-900",
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
                 )}
               >
                 爆款优先
               </button>
               <button
+                type="button"
                 onClick={() => handleSortChange("recent")}
                 className={cn(
-                  "px-3 py-1 rounded-md transition-all font-medium",
+                  "px-3 py-1 rounded-lg transition-all font-medium cursor-pointer",
                   worksSort === "recent"
-                    ? "bg-white text-zinc-900 shadow-2xs"
-                    : "text-zinc-500 hover:text-zinc-900",
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
                 )}
               >
                 最新发布
@@ -852,11 +854,11 @@ export default function SubTopicDetailPage({
             </div>
           )}
 
-          {/* 分页控制栏 */}
+          {/* 分页控制栏 (纯留白自然平铺沉底) */}
           {worksTotal > worksPageSize && (
-            <div className="flex items-center justify-between pt-4 text-[12px] text-zinc-500 border-t border-zinc-100">
+            <div className="flex items-center justify-between py-2 px-1 text-[12px] text-zinc-600 select-none">
               <span>
-                共 {worksTotal} 条作品 · 第 {worksPage} / {totalPages} 页
+                共 <span className="font-normal text-zinc-800 tabular-nums">{worksTotal}</span> 条作品 · 第 <span className="font-normal text-zinc-800 tabular-nums">{worksPage}</span> / <span className="font-normal text-zinc-800 tabular-nums">{totalPages}</span> 页
               </span>
               <div className="flex items-center gap-1.5">
                 <Button
@@ -864,7 +866,7 @@ export default function SubTopicDetailPage({
                   variant="ghost"
                   disabled={worksPage <= 1 || loadingWorks}
                   onClick={() => handlePageChange(worksPage - 1)}
-                  className="h-7 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
+                  className="h-7 text-[11.5px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 cursor-pointer"
                 >
                   上一页
                 </Button>
@@ -873,7 +875,7 @@ export default function SubTopicDetailPage({
                   variant="ghost"
                   disabled={worksPage >= totalPages || loadingWorks}
                   onClick={() => handlePageChange(worksPage + 1)}
-                  className="h-7 text-[12px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950"
+                  className="h-7 text-[11.5px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 cursor-pointer"
                 >
                   下一页
                 </Button>

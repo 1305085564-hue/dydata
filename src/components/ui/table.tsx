@@ -24,7 +24,7 @@ function Table({ className, freezeFirst, stickyHeader, ...props }: TableProps) {
         data-slot="table"
         data-freeze-first={freezeFirst}
         className={cn(
-          "w-full caption-bottom text-[13px] text-zinc-700 dark:text-[#E7E5E4] tabular-nums",
+          "w-full caption-bottom text-[13px] text-zinc-800 dark:text-[#E7E5E4] tabular-nums",
           freezeFirst && [
             "[&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:z-30 [&_th:first-child]:bg-white/95 [&_th:first-child]:backdrop-blur-md [&_th:first-child]:dark:bg-zinc-900/95",
             "[&_td:first-child]:sticky [&_td:first-child]:left-0 [&_td:first-child]:z-20 [&_td:first-child]:bg-white [&_td:first-child]:dark:bg-zinc-900",
@@ -69,7 +69,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "bg-zinc-50 font-medium text-zinc-700",
+        "bg-zinc-50 font-medium text-zinc-800",
         className
       )}
       {...props}
@@ -95,7 +95,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-zinc-500 [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-10 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90",
+        "h-9 px-3 text-left align-middle whitespace-nowrap text-[12px] font-medium text-zinc-600 [&:has([role=checkbox])]:pr-0 [[data-sticky-header]_&]:sticky [[data-sticky-header]_&]:top-0 z-10 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90",
         className
       )}
       {...props}
@@ -123,7 +123,7 @@ function TableCaption({
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-[13px] text-zinc-500", className)}
+      className={cn("mt-4 text-[13px] text-zinc-600", className)}
       {...props}
     />
   )

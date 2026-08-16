@@ -116,17 +116,17 @@ export function FilterBar({
       {/* 时间筛选 + 团队筛选 行 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {/* 时间预设平铺 Tab */}
-          <div className="flex items-center gap-1.5">
+          {/* 微气垫 Tab 时间预设切换 */}
+          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
             {PRESET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => handlePresetChange(opt.value)}
-                className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all duration-150 cursor-pointer ${
+                className={`rounded-lg px-3 py-1 text-xs font-medium transition-all duration-150 cursor-pointer ${
                   range === opt.value
-                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
                 }`}
               >
                 {opt.label}
@@ -134,9 +134,12 @@ export function FilterBar({
             ))}
           </div>
 
-          {/* 团队筛选 */}
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+
+          {/* 团队筛选 (平铺无框微胶囊) */}
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
-            <SelectTrigger size="sm" className="w-40">
+            <SelectTrigger size="sm" className="h-7 w-36 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 px-2 text-xs text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none">
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
             <SelectContent>

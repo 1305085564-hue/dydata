@@ -411,15 +411,15 @@ export function MemberDrawer({
 
             {/* 员工申诉状态 (新集成) */}
             {dateAppeal && (
-              <section className="rounded-xl border border-zinc-200 bg-zinc-1000/[0.03] p-4 space-y-3">
+              <section className="rounded-xl border border-zinc-200 bg-zinc-950/[0.03] p-4 space-y-3">
                 <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#D99E55]">
                   <span className="size-2 rounded-full bg-[#F59E0B]" />
                   员工发起申诉
                 </h4>
-                <div className="text-[13px] text-zinc-700 bg-white border border-zinc-200 p-2.5 rounded-lg italic">
+                <div className="text-[13px] text-zinc-800 bg-white border border-zinc-200 p-2.5 rounded-lg italic">
                   “{dateAppeal.reason}”
                 </div>
-                <p className="text-[12px] text-zinc-500">
+                <p className="text-[12px] text-zinc-600">
                   提交时间:{" "}
                   {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}
                 </p>

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   AiProviderKeyModel,
   useAiConfig,
-  AiConfigBundle,
 } from "../hooks/use-ai-config";
 import { Button } from "@/components/ui/button";
 import {
@@ -219,6 +218,37 @@ export default function ModelsClient() {
     return model?.model_id || null;
   }, [defaultBinding, bundle]);
 
+  const [now] = useState(() => Date.now());
+  const globalModelOptions = useMemo(() => {
+    if (!bundle) return [];
+    return bundle.models.map((m) => {
+      const key = bundle.keys.find((k) => k.id === m.key_id);
+      const provider = bundle.providers.find(
+        (p) => p.id === key?.provider_id,
+      );
+      const isKeyHealthy =
+        key?.is_enabled &&
+        (!key.unhealthy_until ||
+          new Date(key.unhealthy_until).getTime() <= now);
+      const isEnabled =
+        m.is_enabled &&
+        (key ? key.is_enabled : true) &&
+        (provider ? provider.is_enabled : true);
+      const statusPrefix = !isEnabled
+        ? "- [已停用]"
+        : isKeyHealthy
+          ? "• [正常]"
+          : "× [异常]";
+
+      return {
+        id: m.id,
+        model_id: m.model_id,
+        isEnabled,
+        label: `${statusPrefix} ${m.display_name || m.model_id} (${provider?.name || "未知渠道"})`,
+      };
+    });
+  }, [bundle, now]);
+
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
@@ -344,52 +374,31 @@ export default function ModelsClient() {
 
   return (
     <div className="space-y-5">
-      {/* 规范 2.2：自然色差 Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl border border-zinc-200/50">
+      {/* 规范 2.2：自然色差 Header Bar (微气垫平铺) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-100/70 p-2 px-3 rounded-xl select-none">
         <div className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-[#D97757]" />
-          <span className="text-[13px] font-medium text-zinc-900">
+          <span className="text-[13px] font-medium text-zinc-950">
             全局默认主模型：
           </span>
           <select
-            className="h-8 px-2.5 text-[12px] rounded-lg border border-zinc-200 bg-white font-medium text-zinc-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D97757]/40"
+            className="h-7 px-2.5 text-[12px] rounded-lg border-0 bg-white font-medium text-zinc-800 shadow-2xs hover:bg-zinc-50 focus:outline-none cursor-pointer"
             value={currentDefaultModelId || ""}
             onChange={(e) => handleSetGlobalDefault(e.target.value)}
           >
             <option value="" disabled>
               -- 选择全局默认主型号 --
             </option>
-            {bundle.models.map((m) => {
-              const key = bundle.keys.find((k) => k.id === m.key_id);
-              const provider = bundle.providers.find(
-                (p) => p.id === key?.provider_id,
-              );
-              const isKeyHealthy =
-                key?.is_enabled &&
-                (!key.unhealthy_until ||
-                  new Date(key.unhealthy_until).getTime() <= Date.now());
-              const isEnabled =
-                m.is_enabled &&
-                (key ? key.is_enabled : true) &&
-                (provider ? provider.is_enabled : true);
-              const statusPrefix = !isEnabled
-                ? "- [已停用]"
-                : isKeyHealthy
-                  ? "• [正常]"
-                  : "× [异常]";
-
-              return (
-                <option
-                  key={m.id}
-                  value={m.model_id}
-                  disabled={!isEnabled}
-                  className={!isEnabled ? "text-zinc-400" : ""}
-                >
-                  {statusPrefix} {m.display_name || m.model_id} (
-                  {provider?.name || "未知渠道"})
-                </option>
-              );
-            })}
+            {globalModelOptions.map((opt) => (
+              <option
+                key={opt.id}
+                value={opt.model_id}
+                disabled={!opt.isEnabled}
+                className={!opt.isEnabled ? "text-zinc-400" : ""}
+              >
+                {opt.label}
+              </option>
+            ))}
           </select>
         </div>
 

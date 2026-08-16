@@ -149,7 +149,7 @@ function getVideoStatusInfo(
   const isHalve = playChangeSignal === "halve";
   if (status === "deleted" || status === "删稿") {
     return {
-      dotColor: "bg-zinc-1000",
+      dotColor: "bg-[#DC2626]",
       textColor: "text-[#DC2626]",
       bgColor: "bg-zinc-100",
       label: "删稿",
@@ -162,7 +162,7 @@ function getVideoStatusInfo(
     status === "异常"
   ) {
     return {
-      dotColor: "bg-zinc-1000",
+      dotColor: "bg-[#DC2626]",
       textColor: "text-[#DC2626]",
       bgColor: "bg-zinc-100",
       label: status === "limited" || status === "限流" ? "限流" : "异常",
@@ -170,7 +170,7 @@ function getVideoStatusInfo(
   }
   if (isHalve || status === "halve" || status === "腰斩") {
     return {
-      dotColor: "bg-zinc-1000",
+      dotColor: "bg-[#F59E0B]",
       textColor: "text-[#F59E0B]",
       bgColor: "bg-zinc-100",
       label: "腰斩",
@@ -178,7 +178,7 @@ function getVideoStatusInfo(
   }
   if (status === "traffic_boost" || status === "投流") {
     return {
-      dotColor: "bg-zinc-1000",
+      dotColor: "bg-[#F59E0B]",
       textColor: "text-[#F59E0B]",
       bgColor: "bg-zinc-100",
       label: "投流",
@@ -186,7 +186,7 @@ function getVideoStatusInfo(
   }
   if (status === "activity_boost" || status === "活动干预") {
     return {
-      dotColor: "bg-zinc-1000",
+      dotColor: "bg-[#F59E0B]",
       textColor: "text-[#F59E0B]",
       bgColor: "bg-zinc-100",
       label: "活动干预",
@@ -637,13 +637,13 @@ export function VideoList({
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
       return (
-        <span className="text-[10px] text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
           ↕
         </span>
       );
     }
     return (
-      <span className="text-[10.5px] font-semibold text-zinc-900">
+      <span className="text-[10.5px] font-medium text-zinc-950">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -707,38 +707,38 @@ export function VideoList({
   }
 
   return (
-    <div className="flex flex-1 flex-col min-h-0 space-y-3">
-      {/* 🚀 控制舱（视图切换 + 公司团队视角 + 多维筛选器 + 资产统计） */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xs">
-        {/* 左侧：视图胶囊 + 范围选择 + 响应式筛选器 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-center gap-2">
-          {/* 待处理 / 全部 / 回收站 平铺 Tab */}
-          <div className="inline-flex items-center gap-1.5">
+    <div className="flex flex-1 flex-col min-h-0 space-y-4">
+      {/* 🚀 控制舱（去盒子化：通过留白、微岛屿与微竖线清晰分区，不堆叠实体硬框） */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-1">
+        {/* 左侧：视图切换群 + 范围与条件筛选群 */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* 1. 待处理 / 全部 / 回收站 视角切片（独立微底气垫，消除硬边框） */}
+          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
             <button
               type="button"
               onClick={() => onSwitchView("pending")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "pending"
-                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
               }`}
             >
               <span>待处理</span>
-              <span className={`text-[11px] tabular-nums ${view === "pending" ? "font-semibold text-[#D97757]" : "text-zinc-400"}`}>
+              <span className={`text-[11px] tabular-nums ${view === "pending" ? "font-medium text-[#D97757]" : "text-zinc-400"}`}>
                 {summary?.pendingCount ?? 0}
               </span>
             </button>
             <button
               type="button"
               onClick={() => onSwitchView("all")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "all"
-                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
               }`}
             >
               <span>全部</span>
-              <span className={`text-[11px] tabular-nums ${view === "all" ? "font-semibold text-[#D97757]" : "text-zinc-400"}`}>
+              <span className={`text-[11px] tabular-nums ${view === "all" ? "font-medium text-[#D97757]" : "text-zinc-400"}`}>
                 {summary?.totalVideos ?? videoRows.length}
               </span>
             </button>
@@ -746,10 +746,10 @@ export function VideoList({
               <button
                 type="button"
                 onClick={() => onSwitchView("trash")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   view === "trash"
-                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
                 }`}
               >
                 回收站
@@ -757,23 +757,28 @@ export function VideoList({
             )}
           </div>
 
-          {/* 公司 / 团队范围选择下拉框 (对齐视频复盘) */}
-          {(safeTeams.length > 0 || canSwitchPerspective) && (
-            <Select
-              value={
-                perspective === "company"
-                  ? "all_company"
-                  : (teamId ?? safeTeams[0]?.id ?? "all_company")
-              }
-              onValueChange={(val) => {
-                if (val === "all_company") {
-                  onSwitchPerspective("company");
-                } else {
-                  onSwitchTeam(val);
+          {/* 结构呼吸微竖线 */}
+          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-1" />
+
+          {/* 2. 筛选器群（通透平铺，靠微留白与微背景形成秩序） */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* 公司 / 团队范围选择下拉框 */}
+            {(safeTeams.length > 0 || canSwitchPerspective) && (
+              <Select
+                value={
+                  perspective === "company"
+                    ? "all_company"
+                    : (teamId ?? safeTeams[0]?.id ?? "all_company")
                 }
-              }}
-            >
-              <SelectTrigger className="h-8 min-w-32 rounded-lg border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs">
+                onValueChange={(val) => {
+                  if (val === "all_company") {
+                    onSwitchPerspective("company");
+                  } else {
+                    onSwitchTeam(val);
+                  }
+                }}
+              >
+              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2.5">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company"
                     ? "全公司 (全部团队)"
@@ -805,12 +810,12 @@ export function VideoList({
           {/* 细分割线 */}
           <div className="h-4 w-px bg-zinc-200 hidden md:block" />
 
-          {/* 负责人筛选 */}
+          {/* 负责人筛选 (平铺无框) */}
           <Select
             value={filters.profileId}
             onValueChange={(value) => updateFilter("profileId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-zinc-200 bg-white text-[12px]">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -823,12 +828,12 @@ export function VideoList({
             </SelectContent>
           </Select>
 
-          {/* 账号筛选 */}
+          {/* 账号筛选 (平铺无框) */}
           <Select
             value={filters.accountId}
             onValueChange={(value) => updateFilter("accountId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-zinc-200 bg-white text-[12px]">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
               <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -841,24 +846,24 @@ export function VideoList({
             </SelectContent>
           </Select>
 
-          {/* 日期范围 */}
+          {/* 日期范围 (轻量微胶囊) */}
           <div className="flex items-center gap-1 col-span-2 sm:col-span-1 lg:col-span-auto">
             <Input
               type="date"
               value={filters.startDate}
               onChange={(e) => updateFilter("startDate", e.target.value)}
-              className="h-8 w-28 rounded-lg border border-zinc-200 bg-white text-[11.5px] text-zinc-700 px-2"
+              className="h-8 w-28 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[11.5px] text-zinc-700 px-2 focus:bg-white focus:ring-1 focus:ring-zinc-300"
             />
             <span className="text-zinc-400 text-[11px]">—</span>
             <Input
               type="date"
               value={filters.endDate}
               onChange={(e) => updateFilter("endDate", e.target.value)}
-              className="h-8 w-28 rounded-lg border border-zinc-200 bg-white text-[11.5px] text-zinc-700 px-2"
+              className="h-8 w-28 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[11.5px] text-zinc-700 px-2 focus:bg-white focus:ring-1 focus:ring-zinc-300"
             />
           </div>
 
-          {/* 状态筛选 */}
+          {/* 状态筛选 (平铺无框) */}
           <Select
             value={filters.status}
             onValueChange={(value) =>
@@ -868,7 +873,7 @@ export function VideoList({
               )
             }
           >
-            <SelectTrigger className="h-8 w-24 rounded-lg border-zinc-200 bg-white text-[12px]">
+            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
               <SelectValue>{statusLabel(filters.status)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -884,46 +889,47 @@ export function VideoList({
           <Button
             variant="ghost"
             size="xs"
-            className="h-8 rounded-lg text-[12px] text-zinc-500 hover:text-zinc-800"
+            className="h-8 rounded-lg text-[12px] text-zinc-600 hover:text-zinc-950"
             onClick={handleReset}
           >
             重置
           </Button>
         </div>
+      </div>
 
         {/* 右侧：资产统计 */}
-        <div className="ml-auto hidden xl:flex items-center gap-3 text-[11.5px] text-zinc-500 shrink-0">
+        <div className="ml-auto hidden xl:flex items-center gap-3 text-[11.5px] text-zinc-600 shrink-0">
           <span>
             已入库{" "}
-            <span className="tabular-nums font-semibold text-[#6FAA7D]">
+            <span className="tabular-nums font-medium text-[#6FAA7D]">
               {assetSummary?.readyCount ?? 0}
             </span>
           </span>
-          <span>·</span>
+          <span className="text-zinc-300">·</span>
           <span>
             待整理{" "}
-            <span className="tabular-nums font-semibold text-[#D99E55]">
+            <span className="tabular-nums font-medium text-[#D99E55]">
               {assetSummary?.pendingLibraryCount ?? 0}
             </span>
           </span>
-          <span>·</span>
+          <span className="text-zinc-300">·</span>
           <span>
             已评级{" "}
-            <span className="tabular-nums font-semibold text-zinc-700">
+            <span className="tabular-nums font-medium text-zinc-800">
               {assetSummary?.gradedCount ?? 0}
             </span>
           </span>
         </div>
       </div>
 
-      {/* 表格容器（黄金舒适行高 ~40px，py-2，吸顶毛玻璃表头，标题列宽严格对齐视频复盘） */}
+      {/* 表格容器（平铺极简微边框，消除额外卡片阴影） */}
       <div
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-2xs"
+        className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-100"
         style={{ maxHeight: "calc(100vh - 260px)" }}
       >
         <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur border-b border-zinc-200 text-[12px] font-medium text-zinc-500 select-none">
+          <thead className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur border-b border-zinc-200 text-[12px] font-medium text-zinc-600 select-none">
             <tr>
               {canManageLifecycle && (
                 <th className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0">
@@ -937,8 +943,8 @@ export function VideoList({
               <th className="py-2 px-2 text-center w-20 shrink-0 whitespace-nowrap">
                 {view === "trash" ? "状态/操作者" : "状态"}
               </th>
-              {/* 标题列宽收敛至与视频复盘完全一致的 w-[220px] 2xl:w-[280px] min-w-[180px] */}
-              <th className="py-2 px-3 text-left w-[220px] 2xl:w-[280px] min-w-[180px]">
+              {/* 标题列宽收敛至与视频复盘完全一致的 w-[185px] 2xl:w-[225px] min-w-[160px] */}
+              <th className="py-2 px-3 text-left w-[185px] 2xl:w-[225px] min-w-[160px]">
                 视频标题 / 账号
               </th>
               <th className="py-2 px-2.5 text-left w-20 2xl:w-24 whitespace-nowrap">
@@ -1052,12 +1058,12 @@ export function VideoList({
                     </td>
 
                     {/* 视频标题与账号（单行紧凑排版，带 Tooltip） */}
-                    <td className="py-2 px-3 w-[220px] 2xl:w-[280px] min-w-[180px]">
+                    <td className="py-2 px-3 w-[185px] 2xl:w-[225px] min-w-[160px]">
                       <div
                         className="flex items-center gap-1.5 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <span className="truncate font-medium text-zinc-900 group-hover:text-zinc-950 transition-colors">
+                        <span className="truncate font-normal text-zinc-800 group-hover:text-zinc-950 transition-colors">
                           {video.video_title?.trim() ||
                             video.content?.slice(0, 50) ||
                             "未命名视频"}
@@ -1076,7 +1082,7 @@ export function VideoList({
                     </td>
 
                     {/* 发布时间 / 回收时间 */}
-                    <td className="py-2 px-2.5 text-[11.5px] text-zinc-500 tabular-nums whitespace-nowrap w-24 2xl:w-28">
+                    <td className="py-2 px-2.5 text-[11.5px] text-zinc-600 tabular-nums whitespace-nowrap w-24 2xl:w-28">
                       {view === "trash"
                         ? formatDateTime(video.trashed_at ?? null)
                         : formatDateTime(video.published_at ?? null)}
@@ -1085,15 +1091,15 @@ export function VideoList({
                     {/* 24h播放量 */}
                     {view !== "trash" && (
                       <>
-                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-800 tabular-nums font-medium whitespace-nowrap w-20 2xl:w-26">
+                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums font-normal whitespace-nowrap w-20 2xl:w-26">
                           {formatCount(snapshot?.play_count)}
                         </td>
-                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums whitespace-nowrap w-18 2xl:w-24">
+                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums font-normal whitespace-nowrap w-18 2xl:w-24">
                           {formatPercent(
                             snapshot ? interactionRate(snapshot) : null,
                           )}
                         </td>
-                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums whitespace-nowrap w-16 2xl:w-22">
+                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums font-normal whitespace-nowrap w-16 2xl:w-22">
                           {formatCount(snapshot?.follower_gain)}
                         </td>
                       </>
