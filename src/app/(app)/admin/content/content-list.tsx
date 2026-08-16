@@ -557,21 +557,21 @@ export function ContentList({
                     </td>
 
                     {/* 涨粉 */}
-                    <td className="py-2 px-1.5 text-right tabular-nums text-zinc-800 whitespace-nowrap">
+                    <td className="py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap">
                       {formatCount(item.followerGain)}
                     </td>
 
                     {/* 互动明细与互动率 */}
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-800 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.likes)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-800 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.comments)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-800 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.shares)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-800 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.favorites)}
                     </td>
                     <td className={`py-2 px-2 text-right tabular-nums font-normal text-zinc-800 whitespace-nowrap ${interactiveColClass}`}>
@@ -579,16 +579,16 @@ export function ContentList({
                     </td>
 
                     {/* 完播指标 */}
-                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-800 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
                       {formatPercent(item.bounceRate2s)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-800 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
                       {formatPercent(item.completionRate5s)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-800 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
                       {formatDuration(item.avgPlayDuration)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-800 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
                       {formatPercent(item.completionRate)}
                     </td>
 

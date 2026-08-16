@@ -314,7 +314,7 @@ export function SubmissionCalendar({
                       : isSubmitted
                         ? "bg-[#16A34A]"
                         : isLeave
-                          ? "bg-[#D97757]"
+                          ? "bg-[#4A7FB5]"
                           : isPendingState
                             ? "bg-[#F59E0B] animate-pulse ring-2 ring-[#F59E0B]/40"
                             : "bg-zinc-400",
@@ -336,7 +336,7 @@ export function SubmissionCalendar({
           审批中
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#D97757]" /> 请假
+          <span className="size-1.5 rounded-full bg-[#4A7FB5]" /> 请假
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-zinc-400" /> 未交/漏交

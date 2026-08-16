@@ -249,7 +249,7 @@ export function ContentPageClient({
       className="flex flex-1 flex-col scroll-mt-8 space-y-4"
     >
       {/* 顶栏控制条：去盒子化平铺展开 */}
-      <div className="flex flex-wrap items-center justify-between gap-3 py-1 transition-all duration-200">
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 py-1.5 bg-white/90 backdrop-blur-md transition-all duration-200">
         <div className="flex flex-wrap items-center gap-3">
           <div className="rounded-xl bg-zinc-100/70 px-3 py-1.5 text-[12px] font-medium text-zinc-800 select-none">
             今日待盘
