@@ -321,14 +321,14 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             </div>
           </div>
 
-          <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <div className="mb-4 rounded-xl bg-zinc-50 p-3">
             <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-1">
                 <p className="text-[13px] font-medium text-zinc-900">推荐窗口说明</p>
                 <p className="line-clamp-2 text-[12px] leading-[1.6] text-zinc-500">{recommendationMeta.description}</p>
               </div>
               {recommendationMeta.hasRecommendation ? (
-                <div className="rounded-lg border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-white px-3 py-2 text-[13px]">
+                <div className="rounded-lg border-l-[2px] border-l-[#D97757] bg-white px-3 py-2 text-[13px] shadow-2xs">
                   <p className="font-medium text-zinc-900">{recommendationMeta.title}</p>
                   <p className="mt-1 text-zinc-500">
                     窗口样本 {recommendationWindowStats?.count ?? 0} 条，窗口总播放{" "}
@@ -336,7 +336,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-[13px] text-zinc-500">
+                <div className="rounded-xl bg-white px-4 py-3 text-[13px] text-zinc-500">
                   没有强推荐的原因：连续 3 小时内还没有累计到足够多的有效样本。
                 </div>
               )}
@@ -415,7 +415,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="mt-3 flex flex-col gap-2 rounded-xl bg-zinc-50 p-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-3 text-[13px] text-zinc-700">
               <div className="flex items-center gap-2">
                 <span className="inline-flex size-3 rounded bg-zinc-100 ring-1 ring-zinc-200" />
@@ -447,7 +447,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               时段详情
             </div>
             {selectedCell ? (
-              <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[12px] text-zinc-500">
+              <div className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-1 text-[12px] text-zinc-600">
                 <Pin className="size-3" />
                 已锁定
               </div>

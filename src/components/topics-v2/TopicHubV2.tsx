@@ -405,7 +405,7 @@ export function TopicHubV2() {
                 type="button"
                 onClick={refreshAll}
                 disabled={activeLoading || poolLoading || claimsLoading}
-                className="p-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 active:scale-[0.97] text-zinc-600 hover:text-zinc-900 transition-all shadow-2xs disabled:opacity-60"
+                className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 active:scale-[0.97] transition-colors disabled:opacity-50 cursor-pointer"
                 title="刷新最新数据"
                 aria-label="刷新最新数据"
               >

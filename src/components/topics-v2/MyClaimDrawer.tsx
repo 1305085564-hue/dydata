@@ -96,7 +96,7 @@ export function MyClaimDrawer({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label="打开我的选题库槽位"
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 active:scale-[0.97] transition-all shadow-2xs"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 active:scale-[0.97] transition-all cursor-pointer"
       >
         <span className="w-2 h-2 rounded-full bg-[#D97757]" />
         <Layers className="w-3.5 h-3.5 text-zinc-500" />
@@ -107,7 +107,7 @@ export function MyClaimDrawer({
           <span>5</span>
         </div>
         {scriptingCount > 0 && (
-          <span className="text-xs bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full font-medium">
             {scriptingCount} 脚本中
           </span>
         )}
@@ -227,7 +227,7 @@ export function MyClaimDrawer({
                               <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
                                 {sub?.title || "选题名"}
                               </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600 border border-zinc-200/80">
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600">
                                 候选准备
                               </span>
                             </div>
@@ -295,7 +295,7 @@ export function MyClaimDrawer({
                               <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
                                 {sub?.title || "选题名"}
                               </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600 border border-zinc-200">
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600">
                                 脚本中
                               </span>
                             </div>

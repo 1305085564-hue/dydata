@@ -116,17 +116,17 @@ export function FilterBar({
       {/* 时间筛选 + 团队筛选 行 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          {/* 时间预设按钮 */}
-          <div className="flex items-center gap-1 rounded-lg bg-zinc-100/50 p-1">
+          {/* 时间预设平铺 Tab */}
+          <div className="flex items-center gap-1.5">
             {PRESET_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => handlePresetChange(opt.value)}
-                className={`rounded-md px-2.5 py-1 text-[13px] transition-all duration-150 ${
+                className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all duration-150 cursor-pointer ${
                   range === opt.value
-                    ? "bg-white font-medium text-zinc-900 ring-1 ring-zinc-200"
-                    : "text-zinc-500 hover:text-zinc-700"
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                 }`}
               >
                 {opt.label}
@@ -153,7 +153,7 @@ export function FilterBar({
 
         {/* 飞书催交总开关 */}
         <div 
-          className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 transition-colors duration-200"
+          className="flex items-center gap-2 rounded-lg bg-zinc-50/80 px-3 py-1.5 transition-colors duration-200"
           title="开启后，系统将在每日 18:00 自动向今日未提交视频的成员发送飞书消息提醒"
         >
           <span className="text-[12px] font-medium text-zinc-700">飞书自动催交</span>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import type { FulfillmentMemberSummary, FulfillmentStatus } from "@/types/fulfillment";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -249,7 +249,7 @@ export function ExceptionQueue({
                     </td>
                     <td className="px-3 py-1.5">
                       {member.consecutiveMissing > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-md border border-[#C9604D]/15 bg-[#C9604D]/[0.04] px-2 py-0.5 text-[12px] font-normal text-[#C9604D]">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-[#C9604D]/10 px-2 py-0.5 text-[12px] font-normal text-[#C9604D]">
                           <span className="size-1 rounded-full bg-[#C9604D]" />
                           {member.consecutiveMissing} 天
                         </span>
@@ -276,11 +276,11 @@ export function ExceptionQueue({
                       </span>
                     </td>
                     <td className="px-3 py-1.5">
-                      <div className="flex items-center justify-end gap-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
+                      <div className="flex items-center justify-end gap-1.5 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="h-7 px-2.5 text-[12px] border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 font-medium"
+                          className="h-7 px-2.5 text-[12px] text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 font-medium rounded-lg"
                           disabled={isMarking}
                           onClick={() => requestQuickMark(member.userId, member.userName, "confirmed_published")}
                         >
@@ -292,8 +292,8 @@ export function ExceptionQueue({
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             render={
-                              <Button variant="outline" size="sm" className="h-7 px-2.5 text-[12px] border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900">
-                                异常打标 <ChevronDown className="ml-1 size-3 text-zinc-500" />
+                              <Button variant="ghost" size="sm" className="h-7 px-2 text-[12px] text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 rounded-lg">
+                                异常打标 <ChevronDown className="ml-1 size-3 text-zinc-400" />
                               </Button>
                             }
                           />

@@ -712,33 +712,33 @@ export function VideoList({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white p-2.5 shadow-2xs">
         {/* 左侧：视图胶囊 + 范围选择 + 响应式筛选器 */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-center gap-2">
-          {/* 待处理 / 全部 / 回收站 视图胶囊 */}
-          <div className="inline-flex items-center rounded-lg border border-zinc-200 bg-zinc-100/80 p-0.5 text-[12px]">
+          {/* 待处理 / 全部 / 回收站 平铺 Tab */}
+          <div className="inline-flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => onSwitchView("pending")}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
                 view === "pending"
-                  ? "bg-white text-zinc-950 shadow-2xs"
-                  : "text-zinc-500 hover:text-zinc-800"
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
               }`}
             >
-              待处理
-              <span className="ml-1 text-[11px] tabular-nums font-semibold text-[#D97757]">
+              <span>待处理</span>
+              <span className={`text-[11px] tabular-nums ${view === "pending" ? "font-semibold text-[#D97757]" : "text-zinc-400"}`}>
                 {summary?.pendingCount ?? 0}
               </span>
             </button>
             <button
               type="button"
               onClick={() => onSwitchView("all")}
-              className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
                 view === "all"
-                  ? "bg-white text-zinc-950 shadow-2xs"
-                  : "text-zinc-500 hover:text-zinc-800"
+                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
               }`}
             >
-              全部
-              <span className="ml-1 text-[11px] tabular-nums font-medium text-zinc-500">
+              <span>全部</span>
+              <span className={`text-[11px] tabular-nums ${view === "all" ? "font-semibold text-[#D97757]" : "text-zinc-400"}`}>
                 {summary?.totalVideos ?? videoRows.length}
               </span>
             </button>
@@ -746,10 +746,10 @@ export function VideoList({
               <button
                 type="button"
                 onClick={() => onSwitchView("trash")}
-                className={`px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   view === "trash"
-                    ? "bg-white text-zinc-950 shadow-2xs"
-                    : "text-zinc-500 hover:text-zinc-800"
+                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                 }`}
               >
                 回收站

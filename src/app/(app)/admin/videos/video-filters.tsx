@@ -116,14 +116,14 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           type="date"
           value={filters.startDate}
           onChange={(event) => updateFilter("startDate", event.target.value)}
-          className="h-8 w-32 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-700 focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
+          className="h-8 w-32 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[12px] text-zinc-700 focus:bg-white focus:ring-1 focus:ring-zinc-300"
         />
-        <span className="text-zinc-500">—</span>
+        <span className="text-zinc-400 text-xs">—</span>
         <Input
           type="date"
           value={filters.endDate}
           onChange={(event) => updateFilter("endDate", event.target.value)}
-          className="h-8 w-32 rounded-lg border border-zinc-200 bg-white text-[12px] text-zinc-700 focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
+          className="h-8 w-32 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[12px] text-zinc-700 focus:bg-white focus:ring-1 focus:ring-zinc-300"
         />
       </div>
 

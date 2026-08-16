@@ -69,6 +69,7 @@ export function PersonalCard({
 
   useEffect(() => {
     if (!userId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(null);
       return;
     }
@@ -151,27 +152,27 @@ export function PersonalCard({
                   <DialogTitle className="text-[18px] font-semibold text-zinc-900">
                     {data.name}
                   </DialogTitle>
-                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200">
+                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[11px] font-normal text-zinc-500">
                     个人协作档案
                   </span>
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-[12px] text-zinc-500">
                   <span>本月分工：</span>
-                  <span className="rounded bg-zinc-100/80 px-1.5 py-0.5 text-[#4A7FB5] border border-zinc-200 font-medium">
+                  <span className="rounded bg-zinc-100/80 px-1.5 py-0.5 text-[#4A7FB5] font-medium">
                     文案{" "}
                     <strong className="font-semibold">
                       {data.currentMonth.writerCount}
                     </strong>{" "}
                     篇
                   </span>
-                  <span className="rounded bg-zinc-100/80 px-1.5 py-0.5 text-[#7B6BA5] border border-zinc-200 font-medium">
+                  <span className="rounded bg-zinc-100/80 px-1.5 py-0.5 text-[#7B6BA5] font-medium">
                     剪辑{" "}
                     <strong className="font-semibold">
                       {data.currentMonth.editorCount}
                     </strong>{" "}
                     条
                   </span>
-                  <span className="rounded bg-orange-50/80 px-1.5 py-0.5 text-[#D97757] border border-orange-200/50 font-medium">
+                  <span className="rounded bg-[#D97757]/10 px-1.5 py-0.5 text-[#D97757] font-medium">
                     运营{" "}
                     <strong className="font-semibold">
                       {data.currentMonth.operatorCount}

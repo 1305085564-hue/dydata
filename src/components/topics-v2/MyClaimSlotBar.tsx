@@ -16,9 +16,6 @@ interface MyClaimSlotBarProps {
 
 export function MyClaimSlotBar({
   claims,
-  loading,
-  error,
-  onRetry,
   onStartScripting,
   onReturnClaim,
   onSelectTopic,
@@ -96,7 +93,7 @@ export function MyClaimSlotBar({
 
         <div className="text-xs text-zinc-500 font-normal">
           {occupiedCount === 5 ? (
-            <span className="text-zinc-600 bg-zinc-100 border border-zinc-200/80 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 font-medium">
+            <span className="text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 font-medium">
               <Sparkles className="w-3 h-3" />
               <span>槽位已满（5/5），放回不写的选题解锁新槽位</span>
             </span>
@@ -147,12 +144,12 @@ export function MyClaimSlotBar({
                 {/* 状态徽章与顶栏 */}
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   {isScripting ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-zinc-800 border border-zinc-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A]/100 animate-pulse" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-zinc-800">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
                       <span>脚本写作中</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 border border-zinc-200/80">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700">
                       <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
                       <span>已认领候选</span>
                     </span>

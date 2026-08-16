@@ -142,7 +142,7 @@ export function SmartReplaceModal({
                 《{targetTopic.title}》
               </span>
             </p>
-            <div className="bg-zinc-100/80 border border-zinc-200/80 rounded-xl p-3 text-xs text-zinc-600 font-normal">
+            <div className="bg-zinc-50 rounded-xl p-3 text-xs text-zinc-600 font-normal">
               系统已为您自动推荐放回
               <span className="font-medium">挂机时间最长</span>
               的候选选题。脚本中的选题不会出现在替换列表。

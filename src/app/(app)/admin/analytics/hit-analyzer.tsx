@@ -770,36 +770,40 @@ export function HitAnalyzer({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">快速筛选</span>
-            {filters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveFilter(filter.id)}
-                className={cn(
-                  "rounded-lg border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                  activeFilter === filter.id
-                    ? "border-[#D97757]/40 bg-white text-[#D97757]"
-                    : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
-                )}
-              >
-                {filter.label}
-              </button>
-            ))}
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              <span className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">时间周期</span>
-              {timePresetOptions.map((preset) => (
+            <div className="flex items-center gap-1">
+              {filters.map((filter) => (
                 <button
-                  key={preset.id}
-                  onClick={() => applyTimePreset(preset.id)}
+                  key={filter.id}
+                  onClick={() => setActiveFilter(filter.id)}
                   className={cn(
-                    "rounded-lg border px-3 py-1 text-[12px] font-medium transition-[background-color,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                    activeTimePreset === preset.id
-                      ? "border-[#D97757]/40 bg-white text-[#D97757]"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50",
+                    "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-all duration-150 cursor-pointer",
+                    activeFilter === filter.id
+                      ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                      : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                   )}
                 >
-                  {preset.label}
+                  {filter.label}
                 </button>
               ))}
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <span className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">时间周期</span>
+              <div className="flex items-center gap-1">
+                {timePresetOptions.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => applyTimePreset(preset.id)}
+                    className={cn(
+                      "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-all duration-150 cursor-pointer",
+                      activeTimePreset === preset.id
+                        ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                        : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
+                    )}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -807,27 +811,27 @@ export function HitAnalyzer({
             <div className="space-y-2">
               <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">成员</p>
               {lockedSubmitter ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl bg-zinc-50 px-3 py-2 text-[12px] text-zinc-700">
                   <span className="font-medium">当前联动成员：</span>
-                  <span className="rounded-lg bg-white px-2.5 py-1 font-medium text-zinc-900">{lockedSubmitter}</span>
+                  <span className="rounded-lg bg-white px-2.5 py-1 font-medium text-zinc-900 shadow-2xs">{lockedSubmitter}</span>
                   <button
                     type="button"
                     onClick={() => onLockedSubmitterChange?.(null)}
-                    className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1 font-medium text-zinc-700 transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-50"
+                    className="rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-2.5 py-1 font-medium transition-colors"
                   >
                     清除
                   </button>
                 </div>
               ) : null}
               <div className="flex flex-wrap items-center justify-between gap-2 text-[12px] text-zinc-500">
-                <span className="rounded-full bg-white px-2.5 py-1 font-medium">已选 {effectiveSelectedSubmitters.length} 人</span>
+                <span className="rounded-full bg-zinc-100 px-2.5 py-1 font-medium text-zinc-600">已选 {effectiveSelectedSubmitters.length} 人</span>
                 {submitterPageCount > 1 ? (
                   <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-zinc-500">
                     <button
                       type="button"
                       onClick={() => setSubmitterPage((current) => Math.max(0, current - 1))}
                       disabled={safeSubmitterPage === 0}
- className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-950 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+ className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       上一页
                     </button>
@@ -839,7 +843,7 @@ export function HitAnalyzer({
                       type="button"
                       onClick={() => setSubmitterPage((current) => Math.min(submitterPageCount - 1, current + 1))}
                       disabled={safeSubmitterPage >= submitterPageCount - 1}
- className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-zinc-100 hover:text-zinc-950 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+ className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[12px] font-medium text-zinc-500 transition-[background-color,color] duration-150 hover:bg-zinc-100 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       下一页
                     </button>
@@ -867,10 +871,10 @@ export function HitAnalyzer({
                       });
                     }}
                     className={cn(
-                      "min-w-0 truncate rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:translate-y-0",
+                      "min-w-0 truncate rounded-full px-2.5 py-1 text-[12px] font-medium transition-colors cursor-pointer",
                       effectiveSelectedSubmitters.includes(name)
-                        ? "border-zinc-200 bg-white text-zinc-700"
-                        : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700",
+                        ? "bg-[#5F82A8]/15 text-[#5F82A8] font-semibold"
+                        : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900",
                     )}
                   >
                     {name}
@@ -879,7 +883,7 @@ export function HitAnalyzer({
               </div>
             </div>
 
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-2.5">
+            <div className="rounded-xl bg-zinc-50 p-2.5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">时间范围</p>
