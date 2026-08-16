@@ -78,7 +78,13 @@ export function TodayFocusSection({
     (data?.recentlyClaimed.length ?? 0) + (data?.recentlyWorked.length ?? 0);
 
   if (totalActivityCount === 0) {
-    return null;
+    return (
+      <section className="my-2 sm:my-3.5">
+        <div className="rounded-xl bg-zinc-50/70 px-3.5 py-2 text-xs text-zinc-500">
+          暂无团队动态，认领或产出成片后会自动出现。
+        </div>
+      </section>
+    );
   }
 
   // 展开列表展示第 2 条及往后的历史记录，彻底避免与顶部单行第 1 条重复
