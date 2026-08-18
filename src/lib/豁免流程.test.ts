@@ -79,7 +79,7 @@ test("buildGrantDraft 对永久豁免缺少原因时报错", async () => {
   );
 });
 
-test("buildRequestDraft 生成申请时保留语义分类", async () => {
+test("buildRequestDraft 生成申请时保留语义分类并默认为待审批", async () => {
   const mod = await loadModule();
   assert.ok(mod, "应提供 豁免流程 模块");
 
@@ -101,7 +101,11 @@ test("buildRequestDraft 生成申请时保留语义分类", async () => {
   assert.equal(request.start_date, "2026-03-25");
   assert.equal(request.end_date, "2026-03-28");
   assert.equal(request.reason, "家中有事");
-  assert.equal("request_status" in request, false);
+  assert.equal(request.request_status, "pending");
+
+  const legacyRequest = mod.stripExemptionCategoryFromRequestDraft(request);
+  assert.equal("exemption_category" in legacyRequest, false);
+  assert.equal(legacyRequest.request_status, "pending");
 });
 
 test("normalizeGrantMode 兼容旧模式", async () => {
