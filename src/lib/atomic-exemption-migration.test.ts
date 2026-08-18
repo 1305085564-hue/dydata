@@ -10,6 +10,10 @@ const closureSql = readFileSync(
   new URL("../../supabase/migrations/20260807103000_permission_v2_contract_closure.sql", import.meta.url),
   "utf8",
 );
+const activeScopeSql = readFileSync(
+  new URL("../../supabase/migrations/20260818100000_exemption_active_scope.sql", import.meta.url),
+  "utf8",
+);
 const dashboardActions = readFileSync(
   new URL("../app/(app)/dashboard/actions.ts", import.meta.url),
   "utf8",
@@ -126,4 +130,13 @@ test("权限 V2 收口 migration 的豁免审批改用新权限键和 visible_us
   assert.match(closureSql, /visible_user_ids\(v_actor\.id\)/i);
   assert.doesNotMatch(closureSql, /managed_group/i);
   assert.doesNotMatch(closureSql, /has_permission\('manage_violations'\)/i);
+});
+
+test("豁免当前操作使用 active visible 范围，不能操作 archived 成员", () => {
+  assert.match(activeScopeSql, /create or replace function public\.active_visible_user_ids/i);
+  assert.match(activeScopeSql, /membership_status[\s\S]*archived/i);
+  assert.match(activeScopeSql, /apply_exemption_grant_atomically[\s\S]*active_visible_user_ids/i);
+  assert.match(activeScopeSql, /clear_exemption_grant_atomically[\s\S]*active_visible_user_ids/i);
+  assert.match(activeScopeSql, /review_exemption_request_atomically[\s\S]*active_visible_user_ids/i);
+  assert.match(activeScopeSql, /grant execute on function public\.active_visible_user_ids\(uuid\) to authenticated/i);
 });

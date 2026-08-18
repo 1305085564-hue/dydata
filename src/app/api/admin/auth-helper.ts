@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { inferDataScope } from "@/lib/data-access-scope";
+import { resolveDataScope } from "@/lib/data-access-scope";
 import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
 import type { DataScope, PermissionKey, Permissions, UserRole } from "@/types";
@@ -93,7 +93,11 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
       role,
       permissions,
       name: profile.name ?? null,
-      dataScope: (profile.data_scope as DataScope | null | undefined) ?? inferDataScope(role, permissions),
+      dataScope: resolveDataScope(
+        role,
+        profile.data_scope as DataScope | null | undefined,
+        permissions,
+      ),
       teamId: profile.team_id ?? null,
     },
   };

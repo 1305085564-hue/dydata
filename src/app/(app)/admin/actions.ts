@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { getTeamMeta, getTeamOptions } from "@/lib/teams";
 import { getUserPermissions, hasPermission } from "@/lib/permissions";
 import {
@@ -46,6 +48,16 @@ const SAFE_EXEMPTION_REQUEST_INPUT_ERRORS = new Set([
   "豁免至少选择1天",
   "永久豁免必须填写原因",
 ]);
+
+function hasActiveScopeAccess(
+  scope: Awaited<ReturnType<typeof buildDataAccessScope>> | null,
+  userId: string,
+) {
+  if (!scope) return false;
+  if (scope.role === "owner" || scope.kind === "all") return true;
+  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
+  return activeVisibleUserIds.includes(userId);
+}
 
 async function writeAuditLog(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -126,9 +138,32 @@ async function applyGrantToProfile(
 export async function updateExemption(values: ExemptionFormValues): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (!hasExemptionManagementPermission(perm.role, perm.permissions)) return { error: "无权限" };
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+  const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
+    profile: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+      data_scope: perm.dataScope,
+      team_id: perm.teamId ?? null,
+    },
+  });
+  if (!scope) return { error: "用户信息不存在" };
+
+  const { data: target, error: targetError } = await adminSupabase
+    .from("profiles")
+    .select("id, membership_status")
+    .eq("id", values.userId)
+    .maybeSingle();
+  if (targetError) return { error: targetError.message };
+  if (!target) return { error: "用户不存在" };
+  if (target.membership_status === "archived") return { error: "已归档账号不能修改豁免，请先恢复账号" };
+  if (!hasActiveScopeAccess(scope, values.userId)) {
+    return { error: "不能操作已归档或当前管理范围外的成员" };
+  }
 
   try {
     if (values.mode === "none") {
@@ -184,9 +219,33 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
 export async function clearExemption(userId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (!hasExemptionManagementPermission(perm.role, perm.permissions)) return { error: "无权限" };
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+  const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
+    profile: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+      data_scope: perm.dataScope,
+      team_id: perm.teamId ?? null,
+    },
+  });
+  if (!scope) return { error: "用户信息不存在" };
+
+  const { data: target, error: targetError } = await adminSupabase
+    .from("profiles")
+    .select("id, membership_status")
+    .eq("id", userId)
+    .maybeSingle();
+  if (targetError) return { error: targetError.message };
+  if (!target) return { error: "用户不存在" };
+  if (target.membership_status === "archived") return { error: "已归档账号不能修改豁免，请先恢复账号" };
+  if (!hasActiveScopeAccess(scope, userId)) {
+    return { error: "不能操作已归档或当前管理范围外的成员" };
+  }
+
   const result = await clearExemptionGrantAtomically({
     supabase,
     userId,
@@ -278,9 +337,32 @@ export async function reviewExemptionRequest(input: {
 }): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
+  if (!hasExemptionManagementPermission(perm.role, perm.permissions)) return { error: "无权限" };
 
   const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+  const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
+    profile: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+      data_scope: perm.dataScope,
+      team_id: perm.teamId ?? null,
+    },
+  });
+  if (!scope) return { error: "用户信息不存在" };
+
+  const { data: requestRow, error: requestError } = await adminSupabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, request_status")
+    .eq("id", input.requestId)
+    .maybeSingle();
+  if (requestError) return { error: requestError.message };
+  if (!requestRow) return { error: "豁免申请不存在" };
+  if (!hasActiveScopeAccess(scope, requestRow.applicant_user_id)) {
+    return { error: "不能操作已归档或当前管理范围外的成员" };
+  }
+
   const result = await reviewExemptionRequestAtomically({
     supabase,
     requestId: input.requestId,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import { hasExemptionManagementPermission } from "@/lib/exemption-permissions";
 import { hasPermission } from "@/lib/permission-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -61,6 +62,29 @@ export async function requireOwnerOrAdminActor() {
 
   return {
     supabase: createAdminClient(),
+    actor: auth.actor,
+    scope: permissionContext.scope,
+  };
+}
+
+export async function requireExemptionManagerActor() {
+  const auth = await requireAdminActor();
+  if ("error" in auth) {
+    return { response: NextResponse.json({ error: auth.error }, { status: auth.status }) };
+  }
+
+  if (!hasExemptionManagementPermission(auth.actor.role, auth.actor.permissions)) {
+    return { response: NextResponse.json({ error: "无权限" }, { status: 403 }) };
+  }
+
+  const permissionContext = await buildPermissionContextForActor(auth.actor);
+  if (!permissionContext) {
+    return { response: NextResponse.json({ error: "用户信息不存在" }, { status: 403 }) };
+  }
+
+  return {
+    supabase: auth.supabase,
+    adminSupabase: createAdminClient(),
     actor: auth.actor,
     scope: permissionContext.scope,
   };

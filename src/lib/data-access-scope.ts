@@ -49,6 +49,15 @@ export function inferDataScope(
   return "self";
 }
 
+export function resolveDataScope(
+  role: UserRole | string | null | undefined,
+  configuredScope: DataScope | null | undefined,
+  permissions: Permissions | null | undefined,
+): DataScope {
+  if (role === "owner") return "all";
+  return configuredScope ?? inferDataScope(role, permissions);
+}
+
 async function loadProfile(adminSupabase: ScopeSupabase, userId: string): Promise<ScopeProfileInput | null> {
   const primary = await adminSupabase
     .from("profiles")
@@ -86,7 +95,7 @@ export async function buildDataAccessScope(
   if (!profile) return null;
 
   const role = (profile.role ?? "member") as UserRole;
-  const kind = (profile.data_scope ?? inferDataScope(role, profile.permissions)) as DataAccessScopeKind;
+  const kind = resolveDataScope(role, profile.data_scope, profile.permissions) as DataAccessScopeKind;
   const effectiveTeamId = profile.team_id ?? options.teamId ?? null;
 
   let visibleRows: Array<{ id: string; membership_status?: string | null }> = [

@@ -224,7 +224,7 @@ export async function submitExemptionRequest(input: {
           teamId,
           draftCount: drafts.length,
         });
-        return { error: `提交失败：${error.message || "未知错误"}` };
+        return { error: "提交豁免申请失败" };
       }
 
       const fallback = await supabase
@@ -237,7 +237,7 @@ export async function submitExemptionRequest(input: {
           userId: user.id,
           teamId,
         });
-        return { error: `提交失败：${fallback.error.message || "未知错误"}` };
+        return { error: "提交豁免申请失败" };
       }
     }
   } catch (error) {

@@ -30,6 +30,7 @@ type AdminCandidateRow = {
   role: UserRole;
   permissions: Permissions | null;
   team_id: string | null;
+  membership_status?: string | null;
 };
 
 export async function buildPermissionRequestApplyResponse(
@@ -73,7 +74,7 @@ export async function buildPermissionRequestApplyResponse(
 
   const { data: adminProfiles, error: adminError } = await admin
     .from("profiles")
-    .select("id, role, permissions, team_id")
+    .select("id, role, permissions, team_id, membership_status")
     .in("role", ["owner", "admin"]);
 
   if (adminError) {
@@ -83,6 +84,7 @@ export async function buildPermissionRequestApplyResponse(
   const recipients = ((adminProfiles ?? []) as AdminCandidateRow[])
     .filter((profile) => {
       if (profile.id === user.id) return false;
+      if (profile.membership_status === "archived") return false;
       if (profile.role === "owner") return true;
       return profile.role === "admin"
         && profile.team_id === requesterProfile.team_id

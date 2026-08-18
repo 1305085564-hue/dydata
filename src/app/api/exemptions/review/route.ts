@@ -4,7 +4,7 @@ import {
   UUID_PATTERN,
   isRecord,
   readJsonBody,
-  requireOwnerOrAdminActor,
+  requireExemptionManagerActor,
 } from "@/app/api/production/_shared";
 import { reviewExemptionRequestAtomically } from "@/lib/exemption-review";
 
@@ -14,12 +14,12 @@ type ReviewExemptionPayload = {
 };
 
 type ReviewExemptionDeps = {
-  requireOwnerOrAdminActor: typeof requireOwnerOrAdminActor;
+  requireExemptionManagerActor: typeof requireExemptionManagerActor;
   reviewExemptionRequestAtomically: typeof reviewExemptionRequestAtomically;
 };
 
 const defaultDeps: ReviewExemptionDeps = {
-  requireOwnerOrAdminActor,
+  requireExemptionManagerActor,
   reviewExemptionRequestAtomically,
 };
 
@@ -48,7 +48,7 @@ export async function buildReviewExemptionResponse(
   const payload = parseReviewExemptionPayload(input);
   if ("response" in payload) return payload.response;
 
-  const auth = await deps.requireOwnerOrAdminActor();
+  const auth = await deps.requireExemptionManagerActor();
   if ("response" in auth && auth.response) return auth.response;
 
   const result = await deps.reviewExemptionRequestAtomically({

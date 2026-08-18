@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserContext } from "@/lib/current-user-context";
-import { inferDataScope } from "@/lib/data-access-scope";
+import { resolveDataScope } from "@/lib/data-access-scope";
 import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
 import type { DataScope, Permissions, UserRole } from "@/types";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -45,7 +45,11 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
   if (!isMissingColumn(primary.error, "data_scope")) {
     assertSupabaseQuerySucceeded(primary.error, "加载用户权限失败");
     profile = primary.data as typeof profile;
-    dataScope = (profile?.data_scope as DataScope | null | undefined) ?? "self";
+    dataScope = resolveDataScope(
+      profile?.role,
+      profile?.data_scope as DataScope | null | undefined,
+      profile?.permissions,
+    );
   } else {
     // data_scope 列尚未迁移，降级查询并从 role 推断
     const fallback = await adminSupabase
@@ -55,7 +59,7 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
       .single();
     assertSupabaseQuerySucceeded(fallback.error, "加载用户权限失败");
     profile = fallback.data as typeof profile;
-    dataScope = inferDataScope(profile?.role, profile?.permissions);
+    dataScope = resolveDataScope(profile?.role, null, profile?.permissions);
   }
 
   if (!profile) return null;

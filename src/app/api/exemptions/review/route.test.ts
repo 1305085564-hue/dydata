@@ -21,7 +21,13 @@ test("豁免审核 API 使用用户会话客户端调用 RPC", async () => {
   const response = await buildReviewExemptionResponse(
     { request_id: "123e4567-e89b-42d3-a456-426614174000", action: "approved" },
     {
-      requireOwnerOrAdminActor: async () => ({ supabase: sessionClient, actor: mockAdminActor(), scope: { kind: "team" } }) as never,
+      requireExemptionManagerActor: async () =>
+        ({
+          supabase: sessionClient,
+          adminSupabase: { marker: "admin-client" },
+          actor: mockAdminActor(),
+          scope: { kind: "team", visibleUserIds: ["member-1"], activeVisibleUserIds: ["member-1"] },
+        }) as never,
       reviewExemptionRequestAtomically: async (input) => {
         receivedClient = input.supabase;
         return { ok: true as const, data: { request_id: input.requestId } };
@@ -37,7 +43,7 @@ test("豁免审核 API 把数据库越权固定映射为 403", async () => {
   const response = await buildReviewExemptionResponse(
     { request_id: "123e4567-e89b-42d3-a456-426614174000", action: "approved" },
     {
-      requireOwnerOrAdminActor: async () => ({ supabase: {}, user: { id: "reviewer-1" } }) as never,
+      requireExemptionManagerActor: async () => ({ supabase: {}, user: { id: "reviewer-1" } }) as never,
       reviewExemptionRequestAtomically: async () => ({
         ok: false as const,
         status: 403,

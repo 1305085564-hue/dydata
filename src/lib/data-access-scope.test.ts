@@ -136,6 +136,25 @@ test("buildDataAccessScope: activeVisibleUserIds excludes non-active members", a
   assert.deepEqual(scope.activeVisibleUserIds!.sort(), ["u1", "u3"]);
 });
 
+test("buildDataAccessScope: owner 即使残留 team data_scope 也保持全局范围", async () => {
+  const profile = makeProfile({
+    id: "owner-1",
+    role: "owner",
+    data_scope: "team",
+    team_id: "team-A",
+  });
+  const supabase = makeFakeSupabase([
+    { id: "owner-1", team_id: "team-A", membership_status: "active" },
+    { id: "member-other-team", team_id: "team-B", membership_status: "active" },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "owner-1", { profile });
+
+  assert.ok(scope);
+  assert.equal(scope.kind, "all");
+  assert.deepEqual(scope.activeVisibleUserIds!.sort(), ["member-other-team", "owner-1"]);
+});
+
 // ---------------------------------------------------------------------------
 // canAccessOwner
 // ---------------------------------------------------------------------------
