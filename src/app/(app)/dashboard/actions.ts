@@ -184,6 +184,13 @@ export async function submitExemptionRequest(input: {
     user.id,
     getTeamMeta(user.user_metadata).teamId,
   );
+
+  // 校验 team_id 必须存在
+  if (!teamId) {
+    console.error("[exemptions] missing team_id for user", user.id);
+    return { error: "账号未分配团队，请联系管理员" };
+  }
+
   const drafts =
     input.dates && input.dates.length > 0
       ? buildRequestDraftsForDates({
@@ -211,8 +218,13 @@ export async function submitExemptionRequest(input: {
     const { error } = await supabase.from("exemption_request").insert(drafts);
     if (error) {
       if (!isMissingExemptionRequestCategoryError(error)) {
-        console.error("[exemptions] failed to submit dashboard request", error);
-        return { error: "提交豁免申请失败" };
+        console.error("[exemptions] failed to submit dashboard request", {
+          error,
+          userId: user.id,
+          teamId,
+          draftCount: drafts.length,
+        });
+        return { error: `提交失败：${error.message || "未知错误"}` };
       }
 
       const fallback = await supabase
@@ -220,13 +232,17 @@ export async function submitExemptionRequest(input: {
         .insert(drafts.map((draft) => stripExemptionCategoryFromRequestDraft(draft)));
 
       if (fallback.error) {
-        console.error("[exemptions] failed to submit legacy dashboard request", fallback.error);
-        return { error: "提交豁免申请失败" };
+        console.error("[exemptions] failed to submit legacy dashboard request", {
+          error: fallback.error,
+          userId: user.id,
+          teamId,
+        });
+        return { error: `提交失败：${fallback.error.message || "未知错误"}` };
       }
     }
   } catch (error) {
-    console.error("[exemptions] dashboard request threw", error);
-    return { error: "提交豁免申请失败" };
+    console.error("[exemptions] dashboard request threw", { error, userId: user.id, teamId });
+    return { error: "提交豁免申请失败（系统异常）" };
   }
 
   revalidatePath("/dashboard");
