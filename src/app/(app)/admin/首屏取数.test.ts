@@ -161,6 +161,18 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       submitted_by: "user-1",
       submitted_by_name: "张三",
     },
+    {
+      id: "video-archived",
+      account_name: "归档账号",
+      video_title: "归档成员视频",
+      published_at: "2026-05-31T07:30:00.000Z",
+      play_change_signal: "halve",
+      play_count_change_pct: -60,
+      current_play_count: 6000,
+      previous_play_count: 15000,
+      submitted_by: "archived-user",
+      submitted_by_name: "归档成员",
+    },
   ];
   const pendingSubmissions = [
     {
@@ -169,6 +181,13 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       team_id: "team-1",
       team_name: "运营一组",
       last_report_date: "2026-05-30",
+    },
+    {
+      profile_id: "archived-user",
+      name: "归档成员",
+      team_id: null,
+      team_name: null,
+      last_report_date: "2026-05-20",
     },
   ];
   const pendingExemptions: ExemptionRequestRow[] = [
@@ -181,6 +200,15 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       reason: "请假",
       created_at: "2026-05-31T07:00:00.000Z",
     },
+    {
+      id: "exemption-archived",
+      applicant_user_id: "archived-user",
+      applicant_name: "归档成员",
+      exemption_type: "yesterday",
+      exemption_category: null,
+      reason: "历史申请",
+      created_at: "2026-05-31T06:30:00.000Z",
+    },
   ];
   const pendingJoinRequests: AdminRequestRow[] = [
     {
@@ -192,14 +220,25 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
       targetTeamName: "增长组",
       createdAt: "2026-05-31T06:00:00.000Z",
     },
+    {
+      id: "join-archived",
+      applicantUserId: "archived-user",
+      applicantName: "归档成员",
+      applicantEmail: null,
+      targetTeamId: "team-2",
+      targetTeamName: "增长组",
+      createdAt: "2026-05-31T05:30:00.000Z",
+    },
   ];
 
   const rpcCalls: string[] = [];
+  const rpcArgs = new Map<string, Record<string, unknown> | undefined>();
   const result = await mod.loadAdminFirstScreenData("2026-05-31", {
     requireAdminServiceClient: async () => ({
       supabase: {
-        rpc(name: string) {
+        rpc(name: string, args?: Record<string, unknown>) {
           rpcCalls.push(name);
+          rpcArgs.set(name, args);
           if (name === "admin_cockpit_summary") {
             return Promise.resolve({ data: summaryRow, error: null });
           }
@@ -220,7 +259,8 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
         teamId: null,
         groupId: null,
         kind: "all",
-        visibleUserIds: ["user-1", "user-2", "user-3", "user-4"],
+        visibleUserIds: ["user-1", "user-2", "user-3", "user-4", "archived-user"],
+        activeVisibleUserIds: ["user-1", "user-2", "user-3", "user-4"],
       },
     }),
     listPendingRequestsForAdmin: async () => ({ ok: true, data: pendingJoinRequests }),
@@ -232,16 +272,21 @@ test("/admin 首屏取数不再等待 alerts 聚合，只保留 summary 与队�
     "admin_anomaly_videos_today",
     "admin_pending_submissions_today",
   ]);
+  assert.deepEqual(rpcArgs.get("admin_anomaly_videos_today"), {
+    p_visible_user_ids: ["user-1", "user-2", "user-3", "user-4"],
+    target_date: "2026-05-31",
+    limit_rows: 10,
+  });
   assert.deepEqual(result, {
     summary: {
       pending_videos: 1,
       pending_submissions: 1,
       pending_exemptions: 1,
     },
-    pendingVideos,
-    pendingSubmissions,
-    pendingExemptions,
-    pendingJoinRequests,
+    pendingVideos: [pendingVideos[0]],
+    pendingSubmissions: [pendingSubmissions[0]],
+    pendingExemptions: [pendingExemptions[0]],
+    pendingJoinRequests: [pendingJoinRequests[0]],
   });
   assert.equal("alerts" in result, false);
   assert.equal("alertsUpdatedAt" in result, false);

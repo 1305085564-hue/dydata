@@ -31,13 +31,13 @@ function getCacheKey(input: {
   date: string;
   userId: string;
   scopeKind: string;
-  visibleUserIds: string[];
+  activeVisibleUserIds: string[];
 }) {
   return [
     input.date,
     input.userId,
     input.scopeKind,
-    [...input.visibleUserIds].sort().join(","),
+    [...input.activeVisibleUserIds].sort().join(","),
   ].join("|");
 }
 
@@ -64,11 +64,13 @@ export async function buildSidebarBadgesResponse(
   const authMs = nowMs() - authStart;
   if ("response" in auth) return auth.response;
 
+  const activeVisibleUserIds = auth.scope.activeVisibleUserIds ?? [];
+
   const cacheKey = getCacheKey({
     date,
     userId: auth.scope.userId,
     scopeKind: auth.scope.kind,
-    visibleUserIds: auth.scope.visibleUserIds,
+    activeVisibleUserIds,
   });
   const cached = sidebarBadgesCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
@@ -100,7 +102,7 @@ export async function buildSidebarBadgesResponse(
   const dataStart = nowMs();
   const result = await auth.supabase.rpc(SIDEBAR_BADGES_RPC, {
     p_target_date: date,
-    p_visible_user_ids: auth.scope.visibleUserIds,
+    p_visible_user_ids: activeVisibleUserIds,
   });
   const dataMs = nowMs() - dataStart;
   const unwrapped = unwrapRpc<SidebarBadgesPayload>(result, "获取侧边栏徽标失败");

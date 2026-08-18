@@ -21,7 +21,8 @@ function buildAuth(scopeKind: "all" | "team" = "all") {
     permissions: {},
     teamId: scopeKind === "all" ? null : "team-1",
     kind: scopeKind,
-    visibleUserIds: ["u-1", "u-2"],
+    visibleUserIds: ["u-1", "u-2", "archived-user"],
+    activeVisibleUserIds: ["u-1", "u-2"],
   };
   return {
     supabase: {
@@ -88,10 +89,23 @@ test("sidebar-badges 改走单 summary RPC，不再 route 内 fan-out 查表", a
 });
 
 test("sidebar-badges owner 全局视角直接复用 summary 输出", async () => {
+  let receivedUserIds: string[] | null = null;
   const response = await buildSidebarBadgesResponse(
     { nextUrl: new URL("https://example.com/api/admin/sidebar-badges?date=2026-05-25") } as never,
     {
-      requireAdminServiceClient: async () => buildAuth("all"),
+      requireAdminServiceClient: async () => ({
+        ...buildAuth("all"),
+        supabase: {
+          rpc(name: string, args: { p_visible_user_ids: string[] }) {
+            assert.equal(name, "admin_sidebar_badges_summary");
+            receivedUserIds = args.p_visible_user_ids;
+            return Promise.resolve({
+              data: { cockpit: 12, videos: 3, content: 1, conversion_hub: 7, ai_channels: 0 },
+              error: null,
+            });
+          },
+        } as never,
+      }),
       recordObservation: async () => undefined,
     },
   );
@@ -105,6 +119,7 @@ test("sidebar-badges owner 全局视角直接复用 summary 输出", async () =>
     conversion_hub: 7,
     ai_channels: 0,
   });
+  assert.deepEqual(receivedUserIds, ["u-1", "u-2"]);
 });
 
 test("sidebar-badges 同一用户同一范围 60 秒内复用内存缓存", async () => {

@@ -1,4 +1,4 @@
-import { filterScopedRows, requireAdminServiceClient, unwrapRpc } from "@/app/api/admin/cockpit/_shared";
+import { requireAdminServiceClient, unwrapRpc } from "@/app/api/admin/cockpit/_shared";
 import type { ExemptionRequestRow } from "@/app/(app)/admin/豁免申请列表";
 import { listPendingRequestsForAdmin, type AdminRequestRow } from "@/lib/team-join/service";
 
@@ -93,6 +93,16 @@ export async function loadAdminFirstScreenData(
     return createEmptyAdminFirstScreenData();
   }
 
+  const activeVisibleUserIds = auth.scope.activeVisibleUserIds ?? [];
+  const activeUserIdSet = new Set(activeVisibleUserIds);
+  const filterCurrentOperationRows = <T,>(
+    rows: T[] | null | undefined,
+    getUserId: (row: T) => string | null | undefined,
+  ) => (rows ?? []).filter((row) => {
+    const userId = getUserId(row);
+    return typeof userId === "string" && activeUserIdSet.has(userId);
+  });
+
   const [
     summaryResult,
     videosResult,
@@ -102,25 +112,30 @@ export async function loadAdminFirstScreenData(
   ] = await Promise.all([
     auth.supabase.rpc("admin_cockpit_summary", { target_date: date }),
     auth.supabase.rpc("admin_anomaly_videos_today", {
-      p_visible_user_ids: auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
+      p_visible_user_ids: activeVisibleUserIds,
       target_date: date,
       limit_rows: 10,
     }),
     auth.supabase.rpc("admin_pending_submissions_today", { target_date: date }),
-    deps.loadPendingExemptionRows(auth.supabase),
+    deps.loadPendingExemptionRows(auth.supabase, activeVisibleUserIds),
     deps.listPendingRequestsForAdmin(),
   ]);
 
   const summary = unwrapRpc<Record<string, number>>(summaryResult).data;
-  const pendingVideos = filterScopedRows(auth.scope, unwrapRpc<PendingVideoRow[]>(videosResult).data, (row) => row.submitted_by);
-  const pendingSubmissions = filterScopedRows(auth.scope, unwrapRpc<PendingSubmissionRow[]>(submissionsResult).data, (row) => row.profile_id);
-  const pendingExemptions = filterScopedRows(
-    auth.scope,
+  const pendingVideos = filterCurrentOperationRows(
+    unwrapRpc<PendingVideoRow[]>(videosResult).data,
+    (row) => row.submitted_by,
+  );
+  const pendingSubmissions = filterCurrentOperationRows(
+    unwrapRpc<PendingSubmissionRow[]>(submissionsResult).data,
+    (row) => row.profile_id,
+  );
+  const pendingExemptions = filterCurrentOperationRows(
     exemptionsResult,
     (row) => row.applicant_user_id,
   );
   const pendingJoinRequests = joinRequestsResult.ok
-    ? filterScopedRows(auth.scope, joinRequestsResult.data, (row) => row.applicantUserId)
+    ? filterCurrentOperationRows(joinRequestsResult.data, (row) => row.applicantUserId)
     : [];
 
   return {
@@ -144,12 +159,16 @@ type AdminSupabase = Awaited<ReturnType<typeof requireAdminServiceClient>> exten
 
 export async function loadPendingExemptionRows(
   supabase: AdminSupabase,
+  activeVisibleUserIds: string[],
 ): Promise<ExemptionRequestRow[]> {
+  if (activeVisibleUserIds.length === 0) return [];
+
   try {
     const { data: requests } = await supabase
       .from("exemption_request")
       .select("id, applicant_user_id, exemption_type, exemption_category, reason, created_at")
       .eq("request_status", "pending")
+      .in("applicant_user_id", activeVisibleUserIds)
       .order("created_at", { ascending: false })
       .limit(8);
 

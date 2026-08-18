@@ -5,6 +5,7 @@ import { __internal, buildQueueOverviewResponse, type QueueOverviewDeps } from "
 
 test("queue-overview 返回完整抽屉数据和底部指标", async () => {
   __internal.resetQueueOverviewCache();
+  let receivedMetricUserIds: string[] | null = null;
   const response = await buildQueueOverviewResponse(
     { nextUrl: new URL("https://dydata.cc/api/admin/cockpit/queue-overview?date=2026-06-02") } as never,
     {
@@ -21,7 +22,8 @@ test("queue-overview 返回完整抽屉数据和底部指标", async () => {
           teamId: null,
           groupId: null,
           kind: "all",
-          visibleUserIds: ["user-1", "user-2", "user-3", "user-4"],
+          visibleUserIds: ["user-1", "user-2", "user-3", "user-4", "archived-user"],
+          activeVisibleUserIds: ["user-1", "user-2", "user-3", "user-4"],
         },
       }),
       loadAdminFirstScreenData: async () => ({
@@ -78,12 +80,15 @@ test("queue-overview 返回完整抽屉数据和底部指标", async () => {
       }),
       loadPendingExemptionRows: async () => [],
       listPendingRequestsForAdmin: async () => ({ ok: true, data: [] }),
-      loadQueueMetricSummary: async () => ({
-        newVideosToday: 1,
-        weeklySubmissionRate: 40,
-        weeklyReviewedCount: 1,
-        caseLibraryPendingCount: 1,
-      }),
+      loadQueueMetricSummary: async (_date, userIds) => {
+        receivedMetricUserIds = userIds;
+        return {
+          newVideosToday: 1,
+          weeklySubmissionRate: 40,
+          weeklyReviewedCount: 1,
+          caseLibraryPendingCount: 1,
+        };
+      },
     },
   );
 
@@ -98,6 +103,7 @@ test("queue-overview 返回完整抽屉数据和底部指标", async () => {
   assert.equal(payload.metrics.weeklySubmissionRate, 40);
   assert.equal(payload.metrics.weeklyReviewedCount, 1);
   assert.equal(payload.metrics.caseLibraryPendingCount, 1);
+  assert.deepEqual(receivedMetricUserIds, ["user-1", "user-2", "user-3", "user-4"]);
 });
 
 test("queue-overview 同日期同 scope 60 秒内复用服务端缓存", async () => {
@@ -120,6 +126,7 @@ test("queue-overview 同日期同 scope 60 秒内复用服务端缓存", async (
         groupId: null,
         kind: "all" as const,
         visibleUserIds: ["user-1"],
+        activeVisibleUserIds: ["user-1"],
       },
     }),
     loadAdminFirstScreenData: async () => {

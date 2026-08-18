@@ -27,7 +27,7 @@ export type QueueOverviewDeps = {
   loadAdminFirstScreenData: typeof loadAdminFirstScreenData;
   loadPendingExemptionRows: typeof loadPendingExemptionRows;
   listPendingRequestsForAdmin: typeof listPendingRequestsForAdmin;
-  loadQueueMetricSummary: (date: string, visibleUserIds: string[] | null) => Promise<QueueMetricSummary>;
+  loadQueueMetricSummary: (date: string, activeVisibleUserIds: string[]) => Promise<QueueMetricSummary>;
 };
 
 const QUEUE_OVERVIEW_CACHE_TTL_MS = 60_000;
@@ -37,15 +37,22 @@ function buildQueueOverviewCacheKey(input: {
   date: string;
   userId: string;
   scopeKind: string;
-  visibleUserIds: string[];
+  activeVisibleUserIds: string[];
 }) {
   return [
     input.date,
     input.userId,
     input.scopeKind,
-    [...input.visibleUserIds].sort().join(","),
+    [...input.activeVisibleUserIds].sort().join(","),
   ].join("|");
 }
+
+const EMPTY_QUEUE_METRICS: QueueMetricSummary = {
+  newVideosToday: 0,
+  weeklySubmissionRate: 0,
+  weeklyReviewedCount: 0,
+  caseLibraryPendingCount: 0,
+};
 
 export async function buildQueueOverviewResponse(
   request: NextRequest,
@@ -57,11 +64,13 @@ export async function buildQueueOverviewResponse(
   const auth = await deps.requireAdminServiceClient();
   if ("response" in auth) return auth.response;
 
+  const activeVisibleUserIds = auth.scope.activeVisibleUserIds ?? [];
+
   const cacheKey = buildQueueOverviewCacheKey({
     date,
     userId: auth.scope.userId,
     scopeKind: auth.scope.kind,
-    visibleUserIds: auth.scope.visibleUserIds,
+    activeVisibleUserIds,
   });
   const cached = queueOverviewCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
@@ -77,10 +86,9 @@ export async function buildQueueOverviewResponse(
     listPendingRequestsForAdmin: deps.listPendingRequestsForAdmin,
     loadPendingExemptionRows: deps.loadPendingExemptionRows,
   });
-  const metricsPromise = deps.loadQueueMetricSummary(
-    date,
-    auth.scope.kind === "all" ? null : auth.scope.visibleUserIds,
-  );
+  const metricsPromise = activeVisibleUserIds.length === 0
+    ? Promise.resolve(EMPTY_QUEUE_METRICS)
+    : deps.loadQueueMetricSummary(date, activeVisibleUserIds);
   const [initial, metrics] = await Promise.all([initialPromise, metricsPromise]);
 
   const payload: QueueOverviewPayload = {
