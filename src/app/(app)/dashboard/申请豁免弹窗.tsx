@@ -136,10 +136,6 @@ function ExemptionModal({
     const submittedReason = reason.trim();
     const submittedCategory = category;
 
-    setLocalHasPending(true);
-    setOpen(false);
-    feedbackToast.success("申请已提交，等待管理员审批");
-
     startTransition(async () => {
       const result = await submitExemptionRequest({
         mode: "range",
@@ -149,11 +145,11 @@ function ExemptionModal({
       });
 
       if (result.error) {
-        setLocalHasPending(false);
-        setSelectedDates(submittedDates);
-        setReason(submittedReason);
-        setOpen(true);
         feedbackToast.error(result.error);
+      } else {
+        setLocalHasPending(true);
+        setOpen(false);
+        feedbackToast.success("申请已提交，等待管理员审批");
       }
     });
   }
