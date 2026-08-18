@@ -7,11 +7,11 @@ import { normalizePublishedAtForStorage } from "@/lib/日报";
 import {
   buildRequestDraft,
   buildRequestDraftsForDates,
-  loadApplicantTeamId,
   isMissingExemptionRequestCategoryError,
   stripExemptionCategoryFromRequestDraft,
   type GrantMode,
 } from "@/lib/豁免流程";
+import { loadApplicantTeamId } from "@/lib/豁免";
 import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
