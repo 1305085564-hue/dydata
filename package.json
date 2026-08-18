@@ -14,7 +14,9 @@
     "seed:topics": "tsx scripts/seed-topic-library.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
     "perf:ttfb": "node scripts/measure-ttfb.mjs",
-    "analyze": "ANALYZE=true next build"
+    "analyze": "ANALYZE=true next build",
+    "douyin:excel": "tsx tools/douyin-creator-export/create-excel.ts",
+    "douyin:collect": "tsx tools/douyin-creator-export/collect.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -52,6 +54,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.2.10",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.1",
     "typescript": "^5"
