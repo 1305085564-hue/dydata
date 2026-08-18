@@ -7,8 +7,27 @@ import {
   formatExemptionDetail,
   getExemptionDatesForMonth,
   getExemptionStateForDate,
+  loadApplicantTeamId,
   type ExemptionFormValues,
 } from "./豁免";
+
+function mockTeamLookup(teamId: string | null) {
+  return {
+    from() {
+      return {
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        async maybeSingle() {
+          return { data: teamId == null ? null : { team_id: teamId }, error: null };
+        },
+      };
+    },
+  } as never;
+}
 
 test("单日免交在指定日期生效并返回绿色语义标签", () => {
   const profile = buildExemptionFields({
@@ -146,6 +165,16 @@ test("已有单天免交可回填到表单", () => {
       reason: "周末免交",
     },
   );
+});
+
+test("提交豁免申请时优先读取 profiles.team_id", async () => {
+  const teamId = await loadApplicantTeamId(mockTeamLookup("team-1"), "user-1", "meta-team");
+  assert.equal(teamId, "team-1");
+});
+
+test("profiles.team_id 缺失时才回退到 metadata", async () => {
+  const teamId = await loadApplicantTeamId(mockTeamLookup(null), "user-1", "meta-team");
+  assert.equal(teamId, "meta-team");
 });
 
 test("审计详情会包含语义标签和日期模式", () => {

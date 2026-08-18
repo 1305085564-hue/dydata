@@ -7,6 +7,7 @@ import { normalizePublishedAtForStorage } from "@/lib/日报";
 import {
   buildRequestDraft,
   buildRequestDraftsForDates,
+  loadApplicantTeamId,
   isMissingExemptionRequestCategoryError,
   stripExemptionCategoryFromRequestDraft,
   type GrantMode,
@@ -178,11 +179,16 @@ export async function submitExemptionRequest(input: {
   if ((existing?.length ?? 0) > 0) return { error: "已有待审批申请" };
 
   const today = formatShanghaiDateOnly();
+  const teamId = await loadApplicantTeamId(
+    supabase,
+    user.id,
+    getTeamMeta(user.user_metadata).teamId,
+  );
   const drafts =
     input.dates && input.dates.length > 0
       ? buildRequestDraftsForDates({
           applicantUserId: user.id,
-          teamId: getTeamMeta(user.user_metadata).teamId,
+          teamId,
           category: input.category,
           reason: input.reason,
           dates: input.dates,
@@ -191,7 +197,7 @@ export async function submitExemptionRequest(input: {
       : [
           buildRequestDraft({
             applicantUserId: user.id,
-            teamId: getTeamMeta(user.user_metadata).teamId,
+            teamId,
             mode: input.mode,
             category: input.category,
             reason: input.reason,

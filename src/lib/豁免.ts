@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { ExemptionCategory, UserStatus } from "@/types";
 
 export type ExemptionType = "permanent" | "temporary";
@@ -47,10 +49,30 @@ export interface ExemptionGrantLike {
   created_at?: string | null;
 }
 
+type ApplicantTeamLookupClient = Pick<SupabaseClient, "from">;
+
 export function normalizeExemptionCategory(
   category?: ExemptionCategory | null,
 ): ExemptionCategory {
   return category === "leave" ? "leave" : "waive";
+}
+
+export async function loadApplicantTeamId(
+  supabase: ApplicantTeamLookupClient,
+  userId: string,
+  fallbackTeamId: string | null = null,
+) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("team_id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (data) {
+    return data.team_id ?? null;
+  }
+
+  return fallbackTeamId;
 }
 
 export function getExemptionCategoryLabel(category?: ExemptionCategory | null) {
