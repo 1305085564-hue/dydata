@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { resolveDataScope } from "@/lib/data-access-scope";
-import { hasAnyPermission, hasPermission } from "@/lib/permission-utils";
+import { fixedPermissions, hasCompanyPermission } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
-import type { DataScope, PermissionKey, Permissions, UserRole } from "@/types";
+import { resolveCompanyRole } from "@/lib/company-permissions";
+import type { CompanyRole, DataScope, PermissionKey, Permissions, UserRole } from "@/types";
 
 export { toBoolean, toObject, toTrimmedString };
 
@@ -13,6 +14,9 @@ export type AdminActor = {
   name: string | null;
   dataScope: DataScope;
   teamId?: string | null;
+  companyRole?: CompanyRole;
+  groupMode?: boolean;
+  membershipStatus?: "active" | "archived";
 };
 
 type RequireAdminActorOptions = {
@@ -43,7 +47,7 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
 
   const primary = await supabase
     .from("profiles")
-    .select("id, name, role, permissions, data_scope, team_id")
+    .select("id, name, role, company_role, permissions, data_scope, membership_status, team_id")
     .eq("id", user.id)
     .single();
 
@@ -51,14 +55,21 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     id: string;
     name: string | null;
     role: UserRole | null;
+    company_role?: CompanyRole | string | null;
     permissions: Permissions | null;
     data_scope?: DataScope | null;
+    membership_status?: "active" | "archived" | string | null;
     team_id: string | null;
   } | null;
 
   if (!primary.error) {
     profile = primary.data as typeof profile;
-  } else if (primary.error.message.includes("data_scope") || primary.error.message.includes("Could not find")) {
+  } else if (
+    primary.error.message.includes("data_scope")
+    || primary.error.message.includes("company_role")
+    || primary.error.message.includes("membership_status")
+    || primary.error.message.includes("Could not find")
+  ) {
     const fallback = await supabase
       .from("profiles")
       .select("id, name, role, permissions, team_id")
@@ -76,11 +87,17 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     return { error: "用户信息不存在", status: 403 as const };
   }
 
-  const role = profile.role as UserRole;
-  const permissions = (profile.permissions ?? {}) as Permissions;
+  const companyRole = resolveCompanyRole(profile.company_role ?? profile.role);
+  if (!companyRole) return { error: "无权限", status: 403 as const };
+  if (profile.membership_status === "archived") {
+    return { error: "无权限", status: 403 as const };
+  }
+
+  const role = (companyRole === "company_owner" ? "owner" : companyRole) as UserRole;
+  const permissions = fixedPermissionsForActor(companyRole, profile.permissions);
   const allowed = options.requiredPermission
-    ? hasPermission(role, permissions, options.requiredPermission)
-    : hasAnyPermission(role, permissions);
+    ? hasCompanyPermission(companyRole, options.requiredPermission)
+    : Object.values(permissions).some((value) => value === true);
 
   if (!allowed) {
     return { error: "无权限", status: 403 as const };
@@ -97,10 +114,21 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
         role,
         profile.data_scope as DataScope | null | undefined,
         permissions,
+        companyRole,
       ),
       teamId: profile.team_id ?? null,
+      companyRole,
+      groupMode: false,
+      membershipStatus: "active",
     },
   };
+}
+
+function fixedPermissionsForActor(
+  companyRole: CompanyRole,
+  legacyPermissions: Permissions | null | undefined,
+) {
+  return fixedPermissions(companyRole, legacyPermissions, false);
 }
 
 export function parseDate(value: string | null) {

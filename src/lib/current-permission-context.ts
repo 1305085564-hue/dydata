@@ -36,6 +36,9 @@ export async function buildPermissionContextFromPermissionInfo(
       permissions: permissionInfo.permissions,
       data_scope: permissionInfo.dataScope,
       team_id: permissionInfo.teamId ?? null,
+      company_role: permissionInfo.companyRole,
+      group_mode: permissionInfo.groupMode === true,
+      membership_status: permissionInfo.membershipStatus,
     },
   });
   if (!scope) return null;
@@ -57,6 +60,9 @@ export async function buildPermissionContextForActor(
     permissions: actor.permissions,
     dataScope: actor.dataScope ?? "self",
     teamId: actor.teamId ?? null,
+    companyRole: actor.companyRole,
+    groupMode: actor.groupMode,
+    membershipStatus: actor.membershipStatus,
   } satisfies UserPermissionInfo;
   return buildPermissionContextFromPermissionInfo(permissionInfo, options);
 }

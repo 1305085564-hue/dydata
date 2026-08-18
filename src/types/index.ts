@@ -1,3 +1,5 @@
+export type CompanyRole = "member" | "admin" | "company_owner";
+/** `owner` is retained only while old database rows are being migrated. */
 export type UserRole = "member" | "admin" | "owner";
 export type UserStatus = "active" | "exempt";
 export type MembershipStatus = "active" | "archived";
@@ -22,6 +24,13 @@ export type PermissionKey =
 export const PERMISSION_KEYS = Object.values(PERMISSION_CATEGORIES).flat() as PermissionKey[];
 
 export type Permissions = Partial<Record<PermissionKey, boolean>>;
+
+export type GroupPermissionQualification = {
+  user_id: string;
+  granted_at: string;
+  granted_by: string | null;
+  revoked_at: string | null;
+};
 
 export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   view_analytics: "经营分析",
@@ -68,6 +77,8 @@ export interface Profile {
   name: string;
   email?: string | null;
   role: UserRole;
+  company_role?: CompanyRole;
+  has_group_owner_qualification?: boolean;
   status: UserStatus;
   membership_status?: MembershipStatus;
   archived_at?: string | null;

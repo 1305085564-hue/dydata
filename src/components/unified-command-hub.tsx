@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import {
   X,
   Check,
@@ -245,10 +246,21 @@ export function UnifiedCommandHub({
     }
   };
 
-  // Filter dynamic lists
-  const activeTodos = notifications.filter(
-    (n) => n.category === "todo" && n.status === "unread",
-  );
+  // Filter dynamic lists with priority sort (P0 critical -> P1 warning -> P2 default)
+  const activeTodos = useMemo(() => {
+    return notifications
+      .filter((n) => n.category === "todo" && n.status === "unread")
+      .sort((a, b) => {
+        const severityRank = (s?: string) =>
+          s === "critical" ? 0 : s === "warning" ? 1 : 2;
+        const rankDiff = severityRank(a.severity) - severityRank(b.severity);
+        if (rankDiff !== 0) return rankDiff;
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      });
+  }, [notifications]);
+
 
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
@@ -619,32 +631,27 @@ export function UnifiedCommandHub({
               {/* TODOS TAB */}
               {activeTab === "todos" && (
                 <div className="space-y-3">
-                  {/* 日常发布管理入口 (微气垫卡片) */}
-                  {isAdmin && (
-                    <div className="flex items-center justify-between rounded-xl bg-zinc-50/70 p-3 border border-zinc-200/70 hover:bg-white hover:border-zinc-300 hover:shadow-xs transition-all">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="flex size-7.5 items-center justify-center rounded-lg bg-[#D97757]/10 text-[#D97757] shrink-0">
-                          <CalendarDays className="size-4 stroke-[2]" />
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-[12px] font-semibold text-zinc-900 leading-none">
-                            日常发布管理
-                          </h4>
-                          <p className="text-[11px] text-zinc-400 mt-1 truncate">
-                            查看团队成员作品交档与申诉处理
-                          </p>
-                        </div>
-                      </div>
-                      <Link
-                        href="/admin/fulfillment"
-                        onClick={() => onOpenChange(false)}
-                        className="inline-flex h-6.5 items-center justify-center rounded-lg bg-white border border-zinc-200/80 px-2.5 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-all active:scale-95 shrink-0 shadow-2xs"
-                      >
-                        <span>进入</span>
-                        <ArrowRight className="size-3 ml-1" />
-                      </Link>
+                  {/* Header Flat Toolbar */}
+                  <div className="flex items-center justify-between pb-1 px-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[13px] font-semibold text-zinc-900">
+                        待处理事项
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 tabular-nums">
+                        {activeTodos.length} 条
+                      </span>
                     </div>
-                  )}
+
+                    {activeTodos.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => void markAllRead()}
+                        className="text-[12px] text-zinc-500 hover:text-zinc-900 transition-colors px-2 py-0.5 rounded-md hover:bg-zinc-100"
+                      >
+                        全部已读
+                      </button>
+                    )}
+                  </div>
 
                   {loading && activeTodos.length === 0 && (
                     <div className="py-12 text-center text-[12px] text-zinc-500 animate-pulse">
@@ -654,96 +661,130 @@ export function UnifiedCommandHub({
 
                   {/* Active Todos List */}
                   {!loading && activeTodos.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-14 text-center">
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
                       <div className="flex size-10 items-center justify-center rounded-xl bg-[#16A34A]/10 text-[#16A34A] mb-2.5">
                         <CheckCircle2 className="size-5 stroke-[2]" />
                       </div>
                       <h3 className="text-[13px] font-medium text-zinc-900">
                         今日待办已全部完成
                       </h3>
-                      <p className="text-[12px] text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
+                      <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-zinc-500">
                         团队目前没有未处理的违规审核或履约卡点，状态良好。
                       </p>
+                      {isAdmin && (
+                        <Link
+                          href="/admin/fulfillment"
+                          onClick={() => onOpenChange(false)}
+                          className="mt-3.5 inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-all active:scale-95 shadow-2xs"
+                        >
+                          <span>前往日常发布管理</span>
+                          <ArrowRight className="size-3" />
+                        </Link>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <div className="text-[11px] font-semibold text-zinc-400 mb-1 px-0.5">
-                        进行中 ({activeTodos.length})
-                      </div>
                       <AnimatePresence initial={false}>
-                        {activeTodos.map((todo) => (
-                          <motion.div
-                            key={todo.id}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{
-                              opacity: 0,
-                              x: -30,
-                              height: 0,
-                              marginBottom: 0,
-                              padding: 0,
-                            }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 500,
-                              damping: 30,
-                            }}
-                            className="group flex items-start gap-2.5 rounded-xl border border-zinc-200/70 bg-zinc-50/50 p-3 hover:bg-white hover:border-zinc-300 hover:shadow-xs transition-all"
-                          >
-                            <button
-                              onClick={() => handleToggleTodo(todo)}
-                              aria-label={`标记完成：${todo.title}`}
-                              className="mt-0.5 text-zinc-400 hover:text-[#D97757] transition-colors shrink-0 outline-none"
-                            >
-                              <Circle className="size-4 stroke-[1.8]" />
-                            </button>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span
-                                  className={cn(
-                                    "inline-flex px-1.5 py-0.2 rounded text-[10px] font-medium tracking-wide",
-                                    getSeverityBadge(todo.severity),
-                                  )}
-                                >
-                                  {todo.severity === "critical"
-                                    ? "P0 急需"
-                                    : todo.severity === "warning"
-                                      ? "P1 高优"
-                                      : "P2 常规"}
-                                </span>
-                                <span className="text-[11px] text-zinc-400 tabular-nums">
-                                  截止于 {relativeTime(todo.created_at)}
-                                </span>
-                              </div>
-                              <h4 className="text-[12px] font-semibold text-zinc-900 leading-snug mt-1">
-                                {todo.title}
-                              </h4>
-                              {todo.body && (
-                                <p className="text-[11px] text-zinc-500 leading-relaxed mt-0.5">
-                                  {todo.body}
-                                </p>
-                              )}
+                        {activeTodos.map((todo: AnyNotificationRow) => {
 
-                              {todo.action_url && (
-                                <div className="mt-1.5 flex items-center justify-end">
-                                  <Link
-                                    href={todo.action_url}
-                                    onClick={() => {
-                                      if (todo.status === "unread")
-                                        void markRead(todo.id);
-                                      onOpenChange(false);
-                                    }}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D97757] hover:underline"
-                                  >
-                                    {todo.action_label || "立即处理"}
-                                    <ArrowRight className="size-2.5" />
-                                  </Link>
-                                </div>
+                          const isCritical = todo.severity === "critical";
+                          const isWarning = todo.severity === "warning";
+                          return (
+                            <motion.div
+                              key={todo.id}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{
+                                opacity: 0,
+                                x: -30,
+                                height: 0,
+                                marginBottom: 0,
+                                padding: 0,
+                              }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 500,
+                                damping: 30,
+                              }}
+                              className={cn(
+                                "group flex items-start gap-2.5 rounded-xl border p-3 transition-all",
+                                isCritical
+                                  ? "border-l-[3px] border-l-[#DC2626] border-zinc-200/80 bg-rose-50/[0.15] hover:bg-white hover:border-zinc-300 hover:shadow-xs"
+                                  : isWarning
+                                    ? "border-l-[3px] border-l-[#F59E0B] border-zinc-200/80 bg-amber-50/[0.1] hover:bg-white hover:border-zinc-300 hover:shadow-xs"
+                                    : "border-zinc-200/70 bg-zinc-50/50 hover:bg-white hover:border-zinc-300 hover:shadow-xs",
                               )}
-                            </div>
-                          </motion.div>
-                        ))}
+                            >
+                              <button
+                                onClick={() => handleToggleTodo(todo)}
+                                aria-label={`标记完成：${todo.title}`}
+                                className="mt-0.5 text-zinc-400 hover:text-[#D97757] transition-colors shrink-0 outline-none"
+                              >
+                                <Circle className="size-4 stroke-[1.8]" />
+                              </button>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "inline-flex px-1.5 py-0.2 rounded text-[10px] font-medium tracking-wide",
+                                      getSeverityBadge(todo.severity),
+                                    )}
+                                  >
+                                    {isCritical
+                                      ? "P0 急需"
+                                      : isWarning
+                                        ? "P1 高优"
+                                        : "P2 常规"}
+                                  </span>
+                                  <span className="text-[11px] text-zinc-400 tabular-nums">
+                                    截止于 {relativeTime(todo.created_at)}
+                                  </span>
+                                </div>
+                                <h4 className="text-[12px] font-semibold text-zinc-900 leading-snug mt-1">
+                                  {todo.title}
+                                </h4>
+                                {todo.body && (
+                                  <p className="text-[11px] text-zinc-500 leading-relaxed mt-0.5">
+                                    {todo.body}
+                                  </p>
+                                )}
+
+                                {todo.action_url && (
+                                  <div className="mt-2 flex items-center justify-end">
+                                    <Link
+                                      href={todo.action_url}
+                                      onClick={() => {
+                                        if (todo.status === "unread")
+                                          void markRead(todo.id);
+                                        onOpenChange(false);
+                                      }}
+                                      className="inline-flex h-6 items-center gap-1 rounded-md bg-[#D97757]/10 px-2 text-[11px] font-medium text-[#D97757] hover:bg-[#D97757]/20 transition-colors"
+                                    >
+                                      <span>{todo.action_label || "立即处理"}</span>
+                                      <ArrowRight className="size-2.5" />
+                                    </Link>
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        })}
                       </AnimatePresence>
+                    </div>
+                  )}
+
+                  {/* Admin Bottom Quick Channel */}
+                  {isAdmin && activeTodos.length > 0 && (
+                    <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400 px-1">
+                      <span>团队履约概况</span>
+                      <Link
+                        href="/admin/fulfillment"
+                        onClick={() => onOpenChange(false)}
+                        className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors font-medium"
+                      >
+                        <span>进入日常发布管理</span>
+                        <ArrowRight className="size-2.5" />
+                      </Link>
                     </div>
                   )}
 
