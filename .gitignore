@@ -70,5 +70,3 @@ wrangler.jsonc.*.bak
 output/
 .claude/
 supabase/.temp/
-tools/douyin-creator-export/.profile/
-tools/douyin-creator-export/.tmp/
