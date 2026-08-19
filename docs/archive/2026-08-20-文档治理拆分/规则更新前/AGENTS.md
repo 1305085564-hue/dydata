@@ -49,22 +49,12 @@
 - 高风险链路（权限、登录、RLS、Auth 封禁）首次改动前，先 grep 调用点列出受影响文件清单，清单列完即动手。
 - 交付报告必须分层：最终报告必须分清"完整修复""止血未完整""预存问题""新增问题"，禁止把临时方案说成完整完成。
 
-### 数据、权限与发布硬规矩
+### 数据与发布硬规矩
 
-- 先选对数据库客户端：浏览器端和普通服务端客户端受 RLS 约束；`createAdminClient` / `createServiceClient` 会绕过 RLS。任何 service role 接口都必须先做等价鉴权或对象归属/可见范围校验，再返回数据；涉及 RLS、service role 或成员范围时整读 `docs/权限与安全说明.md`。
 - `select` 只能写线上真实存在的字段；不确定先查真实表结构和已执行 migration。
-- 读取可能尚未上线或历史记录可能缺失的列时，必须返回空值或默认值等兼容降级，不能让一个缺列拖垮整页；降级只覆盖发布窗口，不能替代 migration、schema cache 刷新和验收。
-- 数据库结构或 RLS 变更只能新增 migration，禁止修改旧 migration。
+- 数据库结构变更只能新增 migration，禁止修改旧 migration。
 - 前端传给后端但后端没有接收逻辑的字段，必须补后端或删除，不能留下幽灵字段。
-- 含新字段的接口必须完成“生产 migration → 刷新 PostgREST schema cache → 真实角色请求验收”三步；三步完成并写入日志前，不能标为已上线。详细卡点见 `docs/代码治理手册.md`。
-- 多表先写后回滚不是真事务：必须保留原始错误，回滚错误单独记录；`rollbackSafely` 的返回错误不能丢弃。回滚受 RLS 限制的表时，使用已完成等价鉴权的 service role 客户端，避免静默 0 行残留。
-- 接口报“找不到”、404 或“字段不存在”时，依次区分：记录确实不存在、RLS/鉴权过滤、生命周期或业务状态过滤、PostgREST schema cache 未刷新；不能只查前两类。
-- 成员当前操作（指派、提醒、履约、协作、权限修改）只能用 `activeVisibleUserIds`；历史数据查询（日报、视频、协作统计、审计）用包含 archived 成员的 `visibleUserIds`。成员范围逻辑必须复用 `src/lib/data-access-scope.ts`，禁止在接口里另写一套。
-- 成员归档、恢复和移出团队是不同动作：`archiveMember` / `restoreMember` 都是 owner-only；归档要清空团队、降为 member、封禁 Auth、保存快照并保留业务历史；恢复回到 active、无团队、member、空权限并解封；`removeFromTeam` 只清空团队归属，账号仍可登录。具体服务语义整读 `docs/权限与安全说明.md`。
-- 浏览器认证会话只能更新自己的 `profiles.name`，不能直接 insert profile，也不能修改生命周期、角色、权限或团队字段；这些管理操作统一走已鉴权的服务端生命周期服务。
-- 成员邮箱与 `last_sign_in_at` 只从 Supabase Auth Users 补齐、只用于管理端展示，不新增同名 `profiles` 字段；`last_sign_in_at` 不是在线或最后访问时间。
-- 成员“本月实发 / 应发”按页面 `queryDate` 所在自然月、`daily_reports.user_id + report_date` 聚合：实发按作品数，应发按自然日扣除豁免/请假并按入职或创建时间裁剪；`monthly_published_days` 只作辅助天数，不代表登录或在线。
-- 成员生命周期的生产发布必须按权限文档指定顺序在 Supabase SQL Editor 逐条执行兼容 migration、写保护 migration，再做精确 migration repair；禁止用 `supabase db push` 混入无关 pending migration，也不能依赖未经确认可用的 `exec_sql` RPC。脚本 dry-run、schema cache/OpenAPI 确认、真实角色验收和历史数据对账都是强制卡点，不能互相替代。
+- 含新字段的接口必须完成“生产 migration → 刷新 PostgREST schema cache → 真实角色请求验收”三步；详细卡点见 `docs/代码治理手册.md`。
 
 ### 架构与性能
 
