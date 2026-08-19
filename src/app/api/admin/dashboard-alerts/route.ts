@@ -20,7 +20,7 @@ const dashboardAlertsCache = new Map<string, { expiresAt: number; payload: Recor
 
 function buildDashboardAlertsCacheKey(input: {
   userId: string;
-  role: "owner" | "admin";
+  role: "owner" | "admin" | "member";
   teamId: string | null;
   activeVisibleUserIds: string[];
 }) {
@@ -33,7 +33,7 @@ function buildDashboardAlertsCacheKey(input: {
 }
 
 function toDashboardScope(scope: DataAccessScope): DashboardAlertScope | null {
-  if (scope.role !== "owner" && scope.role !== "admin") {
+  if (scope.role !== "owner" && scope.role !== "admin" && !(scope.kind === "all" && scope.groupMode === true)) {
     return null;
   }
 
@@ -115,7 +115,7 @@ export async function buildDashboardAlertsResponse(
     ...result,
     meta: {
       generatedAt: new Date().toISOString(),
-      scope: resolved.scope.role === "owner" ? "all" : "team",
+      scope: auth.actor.groupMode === true ? "all" : "team",
       teamId: resolved.scope.teamId,
     },
   };

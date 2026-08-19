@@ -41,8 +41,8 @@ export default async function AdminVideosPage({ searchParams }: Props) {
   if (!canAccessAdminPath("/admin/videos", perm.role, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
-  if (view === "trash" && perm.role !== "owner" && perm.role !== "admin") redirect("/admin/videos");
-  const canSwitchPerspective = perm.role === "owner";
+  if (view === "trash" && perm.permissions.manage_videos !== true) redirect("/admin/videos");
+  const canSwitchPerspective = perm.groupMode === true;
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
 
   return (

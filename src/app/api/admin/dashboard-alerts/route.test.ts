@@ -160,3 +160,48 @@ test("dashboard-alerts GET 同 scope 60 秒内复用服务端缓存", async () =
   assert.equal(first.headers.get("cache-control"), "private, max-age=60");
   assert.equal(second.headers.get("cache-control"), "private, max-age=60");
 });
+
+test("集团模式下 runtime member 可以进入告警聚合", async () => {
+  __internal.resetDashboardAlertsCache();
+  const response = await buildDashboardAlertsResponse({
+    requireAdminActor: async () => ({
+      supabase: {} as never,
+      actor: {
+        userId: "group-member-1",
+        role: "member" as const,
+        groupMode: true,
+        permissions: { view_analytics: true },
+        name: "集团成员",
+        dataScope: "all" as const,
+      },
+    }),
+    createAdminClient: () => ({}) as never,
+    buildDataAccessScope: async () => ({
+      userId: "group-member-1",
+      role: "member" as const,
+      groupMode: true,
+      permissions: { view_analytics: true },
+      teamId: "company-1",
+      kind: "all" as const,
+      visibleUserIds: ["group-member-1", "member-2"],
+      activeVisibleUserIds: ["group-member-1", "member-2"],
+    }),
+    aggregateDashboardAlerts: async ({ scope }) => {
+      assert.equal(scope.role, "member");
+      assert.deepEqual(scope.activeVisibleUserIds, ["group-member-1", "member-2"]);
+      return {
+        alerts: [],
+        groupedBySeverity: { critical: [], warning: [], info: [] },
+        summary: {
+          total: 0,
+          critical: 0,
+          warning: 0,
+          info: 0,
+          bySource: { submission: 0, playback: 0, violation: 0, conversion: 0, upload: 0, task: 0 },
+        },
+      };
+    },
+  });
+
+  assert.equal(response.status, 200);
+});

@@ -6,7 +6,7 @@ import {
   parseMarkPayload,
   parseRemovePayload,
   requireOwnerOrAdminRole,
-  requireOwnerOrTeamAdminRole,
+  requireSystemPermission,
   requireActiveVisibleUsers,
   requireVisibleUsers,
 } from "./_shared";
@@ -77,6 +77,11 @@ test("fulfillment 写接口只允许 admin 或 owner 角色", async () => {
   } as never);
   assert.equal(memberResponse?.status, 403);
 
+  const groupModeMemberResponse = requireOwnerOrAdminRole({
+    actor: { role: "member", groupMode: true },
+  } as never);
+  assert.equal(groupModeMemberResponse, null);
+
   const adminResponse = requireOwnerOrAdminRole({
     actor: { role: "admin" },
   } as never);
@@ -88,21 +93,21 @@ test("fulfillment 写接口只允许 admin 或 owner 角色", async () => {
   assert.equal(ownerResponse, null);
 });
 
-test("全局配置至少要求 owner 或 admin", () => {
-  const adminResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "admin" },
+test("集团系统配置只认 manage_system，旧 owner 名称不能绕过", () => {
+  const adminResponse = requireSystemPermission({
+    actor: { role: "admin", permissions: { manage_fulfillment: true } },
   } as never);
-  assert.equal(adminResponse, null);
+  assert.equal(adminResponse?.status, 403);
 
-  const ownerResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "owner" },
+  const ownerResponse = requireSystemPermission({
+    actor: { role: "owner", permissions: {} },
   } as never);
-  assert.equal(ownerResponse, null);
+  assert.equal(ownerResponse?.status, 403);
 
-  const memberResponse = requireOwnerOrTeamAdminRole({
-    actor: { role: "member" },
+  const groupModeResponse = requireSystemPermission({
+    actor: { role: "admin", permissions: { manage_system: true }, groupMode: true },
   } as never);
-  assert.equal(memberResponse?.status, 403);
+  assert.equal(groupModeResponse, null);
 });
 
 test("fulfillment 当前写操作只能操作 active 成员，owner 也不能绕过", () => {

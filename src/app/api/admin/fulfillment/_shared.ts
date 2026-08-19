@@ -99,15 +99,15 @@ export function parseRemovePayload(input: unknown): { data: RemovePayload } | { 
 
 export function requireOwnerOrAdminRole(auth: Awaited<ReturnType<typeof requireAdminServiceClient>>) {
   if ("response" in auth) return auth.response;
-  if (auth.actor.role !== "admin" && auth.actor.role !== "owner") {
+  if (auth.actor.role !== "admin" && auth.actor.role !== "owner" && auth.actor.groupMode !== true) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;
 }
 
-export function requireOwnerOrTeamAdminRole(auth: Awaited<ReturnType<typeof requireAdminServiceClient>>) {
+export function requireSystemPermission(auth: Awaited<ReturnType<typeof requireAdminServiceClient>>) {
   if ("response" in auth) return auth.response;
-  if (auth.actor.role !== "owner" && auth.actor.role !== "admin") {
+  if (auth.actor.permissions.manage_system !== true) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;

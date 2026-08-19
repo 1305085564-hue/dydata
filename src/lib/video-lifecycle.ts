@@ -27,17 +27,21 @@ function firstAccount(value: LifecycleVideoRow["accounts"]) {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role">, action: VideoLifecycleAction) {
-  if (actor.role === "owner") return true;
+export function canOperateVideoLifecycle(actor: Pick<AdminActor, "role" | "companyRole" | "groupMode">, action: VideoLifecycleAction) {
+  if (actor.groupMode === true || actor.companyRole === "company_owner") return true;
   return action !== "purge" && actor.role === "admin";
 }
 
 export function canOperateVideoWithinScope(
-  actor: Pick<AdminActor, "role">,
-  scope: Pick<DataAccessScope, "visibleUserIds">,
+  actor: Pick<AdminActor, "role" | "companyRole" | "groupMode">,
+  scope: Pick<DataAccessScope, "kind" | "visibleUserIds" | "activeVisibleUserIds">,
   ownerUserId: string,
 ) {
-  return actor.role === "owner" || scope.visibleUserIds.includes(ownerUserId);
+  void actor;
+  const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
+  return scope.kind === "all"
+    ? activeVisibleUserIds.includes(ownerUserId)
+    : activeVisibleUserIds.includes(ownerUserId);
 }
 
 export function isPurgeEligible(trashedAt: string | null, now = new Date()) {
@@ -79,7 +83,18 @@ export async function performVideoLifecycleAction(
   }
 
   const supabase = deps.createAdminClient();
-  const scope = await deps.buildDataAccessScope(supabase, auth.actor.userId);
+  const scope = await deps.buildDataAccessScope(supabase, auth.actor.userId, {
+    profile: {
+      id: auth.actor.userId,
+      role: auth.actor.role,
+      permissions: auth.actor.permissions,
+      data_scope: auth.actor.dataScope,
+      team_id: auth.actor.teamId ?? null,
+      company_role: auth.actor.companyRole,
+      group_mode: auth.actor.groupMode,
+      membership_status: auth.actor.membershipStatus,
+    },
+  });
   if (!scope) return { ok: false, status: 403, error: "用户权限范围加载失败" };
 
   const { data, error } = await supabase

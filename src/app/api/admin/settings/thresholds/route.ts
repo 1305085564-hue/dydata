@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import {
   readJsonBody,
   requireAdminServiceClient,
-  requireOwnerOrTeamAdminRole,
+  requireSystemPermission,
 } from "../../fulfillment/_shared";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -19,13 +19,13 @@ const SETTINGS_DESCRIPTION = "视频复盘与素材库异常警戒阈值";
 type ThresholdsRouteDeps = {
   createClient: typeof createClient;
   requireAdminServiceClient: typeof requireAdminServiceClient;
-  requireOwnerOrTeamAdminRole: typeof requireOwnerOrTeamAdminRole;
+  requireSystemPermission: typeof requireSystemPermission;
 };
 
 const defaultDeps: ThresholdsRouteDeps = {
   createClient,
   requireAdminServiceClient,
-  requireOwnerOrTeamAdminRole,
+  requireSystemPermission,
 };
 
 function isMissingSystemSettingsTableError(error: { code?: string | null; message?: string | null } | null | undefined) {
@@ -86,7 +86,7 @@ export async function buildVideoReviewThresholdsPatchResponse(
   if ("response" in payload) return payload.response;
 
   const auth = await deps.requireAdminServiceClient();
-  const forbidden = deps.requireOwnerOrTeamAdminRole(auth);
+  const forbidden = deps.requireSystemPermission(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
 

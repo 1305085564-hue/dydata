@@ -20,12 +20,35 @@ const activeMember: MemberLifecycleProfile = {
   membership_status: "active",
 };
 
-test("归档只允许 owner 操作，不能归档自己或 owner", () => {
-  assert.equal(canArchiveMember({ actorRole: "owner", actorId: "owner-1", target: activeMember }), true);
+test("公司所有者只能归档本公司成员，集团模式可跨公司", () => {
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-1",
+    actorId: "owner-1",
+    target: activeMember,
+  }), true);
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: "team-2",
+    actorId: "admin-1",
+    target: activeMember,
+  }), false);
   assert.equal(canArchiveMember({ actorRole: "admin", actorId: "admin-1", target: activeMember }), false);
+  assert.equal(canArchiveMember({
+    actorRole: "admin",
+    actorPermissions: { manage_members: true },
+    actorTeamId: null,
+    groupMode: true,
+    actorId: "group-owner-1",
+    target: activeMember,
+  }), true);
   assert.equal(
     canArchiveMember({
-      actorRole: "owner",
+      actorRole: "admin",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "team-1",
       actorId: "owner-1",
       target: { ...activeMember, id: "owner-1", role: "owner" },
     }),
@@ -34,11 +57,16 @@ test("归档只允许 owner 操作，不能归档自己或 owner", () => {
 });
 
 test("已归档成员的归档与恢复动作幂等", () => {
-  const archived = { ...activeMember, membership_status: "archived" as const, team_id: null };
+  const archived = {
+    ...activeMember,
+    membership_status: "archived" as const,
+    team_id: null,
+    archive_snapshot: { team_id: "team-1" },
+  };
 
-  assert.equal(canArchiveMember({ actorRole: "owner", actorId: "owner-1", target: archived }), true);
-  assert.equal(canRestoreMember({ actorRole: "owner", actorId: "owner-1", target: archived }), true);
-  assert.equal(canRestoreMember({ actorRole: "admin", actorId: "admin-1", target: archived }), false);
+  assert.equal(canArchiveMember({ actorRole: "admin", actorPermissions: { manage_members: true }, actorTeamId: "team-1", actorId: "owner-1", target: archived }), true);
+  assert.equal(canRestoreMember({ actorRole: "admin", actorPermissions: { manage_members: true }, actorTeamId: "team-1", actorId: "owner-1", target: archived }), true);
+  assert.equal(canRestoreMember({ actorRole: "admin", actorPermissions: { manage_members: true }, actorTeamId: "team-2", actorId: "admin-1", target: archived }), false);
   assert.equal(normalizeMembershipStatus(undefined), "active");
   assert.equal(normalizeMembershipStatus("archived"), "archived");
 });
@@ -65,10 +93,11 @@ test("归档快照保留旧归属与权限，但写入最低权限和空团队",
     archive_snapshot: {
       role: "admin",
       permissions: { manage_members: true, view_analytics: true },
-      team_id: "team-1",
+    team_id: "team-1",
       team_name: "内容一部",
     },
     role: "member",
+    company_role: "member",
     permissions: {},
     team_id: null,
   });
@@ -82,6 +111,7 @@ test("恢复始终回到未分配团队的普通成员和空权限", () => {
     archive_reason: null,
     archive_snapshot: null,
     role: "member",
+    company_role: "member",
     permissions: {},
     team_id: null,
   });

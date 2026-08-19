@@ -9,7 +9,7 @@ import {
   performVideoLifecycleAction,
 } from "./video-lifecycle";
 
-function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active" | "trashed" | "purged"; trashedAt?: string | null; storageError?: boolean; includeScreenshot?: boolean }) {
+function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active" | "trashed" | "purged"; trashedAt?: string | null; storageError?: boolean; includeScreenshot?: boolean; companyRole?: "company_owner"; groupMode?: boolean }) {
   const rpcCalls: Array<Record<string, unknown>> = [];
   const video = {
     id: "video-1",
@@ -37,27 +37,29 @@ function lifecycleDeps(input: { role: "owner" | "admin"; lifecycleState: "active
   return {
     rpcCalls,
     deps: {
-      requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", role: input.role } }),
+      requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "admin-1", role: input.role, companyRole: input.companyRole, groupMode: input.groupMode } }),
       createAdminClient: () => supabase as never,
       buildDataAccessScope: async () => ({ visibleUserIds: ["team-user"] }),
     } as never,
   };
 }
 
-test("回收站允许 owner 和 admin 操作，永久删除只允许 owner", () => {
-  assert.equal(canOperateVideoLifecycle({ role: "owner" }, "trash"), true);
-  assert.equal(canOperateVideoLifecycle({ role: "owner" }, "purge"), true);
-  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "restore"), true);
+test("回收站允许管理员和公司所有者操作，永久删除只允许公司所有者或集团模式", () => {
+  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "trash"), true);
+  assert.equal(canOperateVideoLifecycle({ role: "admin", companyRole: "company_owner" }, "purge"), true);
   assert.equal(canOperateVideoLifecycle({ role: "admin" }, "purge"), false);
+  assert.equal(canOperateVideoLifecycle({ role: "admin", groupMode: true }, "purge"), true);
+  assert.equal(canOperateVideoLifecycle({ role: "member", groupMode: true }, "purge"), true);
+  assert.equal(canOperateVideoLifecycle({ role: "admin" }, "restore"), true);
   assert.equal(canOperateVideoLifecycle({ role: "admin" }, "trash"), true);
   assert.equal(canOperateVideoLifecycle({ role: "member" }, "trash"), false);
 });
 
-test("team_admin 只能处理可见范围内作品，owner 不受团队范围限制", () => {
-  const scope = { visibleUserIds: ["team-user"] };
+test("当前操作只处理 active 成员，集团范围也不绕过归档", () => {
+  const scope = { kind: "team" as const, visibleUserIds: ["team-user", "archived-user"], activeVisibleUserIds: ["team-user"] };
   assert.equal(canOperateVideoWithinScope({ role: "admin" }, scope, "team-user"), true);
-  assert.equal(canOperateVideoWithinScope({ role: "admin" }, scope, "other-user"), false);
-  assert.equal(canOperateVideoWithinScope({ role: "owner" }, scope, "other-user"), true);
+  assert.equal(canOperateVideoWithinScope({ role: "admin" }, scope, "archived-user"), false);
+  assert.equal(canOperateVideoWithinScope({ role: "admin", groupMode: true }, { ...scope, kind: "all", activeVisibleUserIds: ["team-user"] }, "other-user"), false);
 });
 
 test("永久删除必须在回收满30天后", () => {
@@ -80,7 +82,7 @@ test("回收与恢复经原子生命周期 RPC 执行", async () => {
 });
 
 test("已永久删除作品重复 purge 只重试截图清理，不重复写生命周期审计", async () => {
-  const retry = lifecycleDeps({ role: "owner", lifecycleState: "purged", trashedAt: "2026-06-01T00:00:00.000Z", storageError: true, includeScreenshot: true });
+  const retry = lifecycleDeps({ role: "admin", companyRole: "company_owner", lifecycleState: "purged", trashedAt: "2026-06-01T00:00:00.000Z", storageError: true, includeScreenshot: true });
   const result = await performVideoLifecycleAction({ videoId: "video-1", action: "purge" }, retry.deps);
   assert.equal(result.ok, true);
   if (!result.ok) return;

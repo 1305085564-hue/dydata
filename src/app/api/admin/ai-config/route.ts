@@ -8,7 +8,7 @@ import { buildAiKeyPatch } from "@/lib/ai-config/key-patch";
 import { swapKeyPriority } from "@/lib/ai-config/swap-key-priority";
 import { clearFeaturePromptCache } from "@/lib/ai/load-feature-prompt";
 import {
-  requireOwnerActor,
+  requireSystemActor,
   toBoolean,
   toNullableString,
   toPriority,
@@ -38,7 +38,7 @@ type AiConfigBody = {
   data?: unknown;
 };
 
-type SupabaseClient = Awaited<ReturnType<typeof requireOwnerActor>> extends infer T
+type SupabaseClient = Awaited<ReturnType<typeof requireSystemActor>> extends infer T
   ? T extends { supabase: infer S }
     ? S
     : never
@@ -342,7 +342,7 @@ async function changeFeatureLifecycle(
 }
 
 export async function GET() {
-  const auth = await requireOwnerActor();
+  const auth = await requireSystemActor();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
@@ -450,7 +450,7 @@ async function handleTestKey(supabase: SupabaseClient, data: Record<string, unkn
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireOwnerActor();
+  const auth = await requireSystemActor();
   if ("error" in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }

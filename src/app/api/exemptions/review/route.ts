@@ -55,6 +55,7 @@ export async function buildReviewExemptionResponse(
     supabase: auth.supabase,
     requestId: payload.data.requestId,
     decision: payload.data.action,
+    groupModeTokenHash: auth.actor?.groupModeTokenHash,
   });
 
   if (!result.ok) {

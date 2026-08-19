@@ -61,7 +61,9 @@ test("content list route 显式走 full 取数并回传 Server-Timing", async ()
         supabase: {} as never,
         actor: {
           userId: "owner-1",
-          role: "owner" as const,
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
           permissions: { review_content: true },
           name: "阿禅",
           dataScope: "all" as const,
@@ -112,6 +114,63 @@ test("content list route 拒绝 initial mode 误用", async () => {
   assert.match(JSON.stringify(await response.json()), /mode/);
 });
 
+test("公司所有者默认只能使用本公司视角，集团模式才能加载全部公司", async () => {
+  __internal.resetAdminContentListCache();
+  let teamOptionCalls = 0;
+  let receivedOptions: unknown = null;
+  const response = await buildAdminContentListResponse(
+    buildRequest("https://dydata.cc/api/admin/content/list?view=all&scope=company&mode=full"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "company-owner-1",
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: false,
+          permissions: { review_content: true },
+          name: "公司所有者",
+          dataScope: "team" as const,
+          teamId: "company-1",
+        },
+      }),
+      getTeamOptions: async () => {
+        teamOptionCalls += 1;
+        return [{ id: "company-2", name: "公司二" }];
+      },
+      getCurrentPermissionContext: async (_actor, options) => {
+        receivedOptions = options;
+        return {
+          permissionInfo: {
+            userId: "company-owner-1",
+            name: "公司所有者",
+            role: "admin" as const,
+            companyRole: "company_owner" as const,
+            permissions: { review_content: true },
+            dataScope: "team" as const,
+            teamId: "company-1",
+          },
+          scope: {
+            userId: "company-owner-1",
+            role: "admin" as const,
+            companyRole: "company_owner" as const,
+            permissions: { review_content: true },
+            teamId: "company-1",
+            kind: "team" as const,
+            visibleUserIds: ["company-owner-1", "member-1"],
+          },
+        };
+      },
+      createAdminClient: () => ({}) as never,
+      loadAdminContentFullData: async () => buildContentPayload(),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(teamOptionCalls, 0);
+  assert.deepEqual(receivedOptions, { perspective: "team", teamId: "company-1" });
+});
+
 test("content list route 同 scope+参数 60 秒内复用服务端缓存", async () => {
   __internal.resetAdminContentListCache();
 
@@ -123,7 +182,9 @@ test("content list route 同 scope+参数 60 秒内复用服务端缓存", async
         supabase: {} as never,
         actor: {
           userId: "owner-1",
-          role: "owner" as const,
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
           permissions: { review_content: true },
           name: "阿禅",
           dataScope: "all" as const,
@@ -135,7 +196,9 @@ test("content list route 同 scope+参数 60 秒内复用服务端缓存", async
         permissionInfo: {
           userId: "owner-1",
           name: "阿禅",
-          role: "owner" as const,
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
           permissions: { review_content: true },
           dataScope: "all" as const,
           teamId: null,
@@ -163,7 +226,9 @@ test("content list route 同 scope+参数 60 秒内复用服务端缓存", async
         supabase: {} as never,
         actor: {
           userId: "owner-1",
-          role: "owner" as const,
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
           permissions: { review_content: true },
           name: "阿禅",
           dataScope: "all" as const,
@@ -175,14 +240,16 @@ test("content list route 同 scope+参数 60 秒内复用服务端缓存", async
         permissionInfo: {
           userId: "owner-1",
           name: "阿禅",
-          role: "owner" as const,
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
           permissions: { review_content: true },
           dataScope: "all" as const,
           teamId: null,
         },
         scope: {
           userId: "owner-1",
-          role: "owner" as const,
+          role: "admin" as const,
           permissions: { review_content: true },
           teamId: null,
           kind: "all" as const,

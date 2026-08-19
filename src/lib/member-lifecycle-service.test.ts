@@ -26,6 +26,7 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
       id: "member-1",
       name: "成员甲",
       role: "admin",
+      company_role: "admin",
       permissions: { manage_members: true, view_analytics: true },
       team_id: "team-1",
       membership_status: "active",
@@ -130,7 +131,12 @@ function createFakeClient(options: { profile?: Partial<MemberLifecycleProfileRow
   return { client: client as never, state };
 }
 
-const owner = { id: "owner-1", role: "owner" as const };
+const owner = {
+  id: "owner-1",
+  role: "admin" as const,
+  permissions: { manage_members: true },
+  teamId: "team-1",
+};
 
 test("归档成功后封禁 Auth、清空组织信息并保留归档快照", async () => {
   const { client, state } = createFakeClient();
@@ -151,6 +157,7 @@ test("归档成功后封禁 Auth、清空组织信息并保留归档快照", asy
   assert.equal(state.profile.archive_reason, "长期离职");
   assert.deepEqual(state.profile.archive_snapshot, {
     role: "admin",
+    company_role: "admin",
     permissions: { manage_members: true, view_analytics: true },
     team_id: "team-1",
     team_name: "内容一部",

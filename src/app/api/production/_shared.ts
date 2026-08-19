@@ -91,14 +91,14 @@ export async function requireExemptionManagerActor() {
 }
 
 export function isProductionManagerRole(role: string, permissions: Record<string, boolean | undefined>) {
-  return role === "owner" || hasPermission(role as never, permissions as never, "manage_fulfillment");
+  return hasPermission(role as never, permissions as never, "manage_fulfillment");
 }
 
 export function requireGlobalProductionActor(
   auth: Awaited<ReturnType<typeof requireOwnerOrAdminActor>>,
 ) {
   if ("response" in auth) return auth.response;
-  if (auth.actor.role !== "owner" && !hasPermission(auth.actor.role, auth.actor.permissions, "manage_fulfillment")) {
+  if (!hasPermission(auth.actor.role, auth.actor.permissions, "manage_fulfillment")) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
   return null;

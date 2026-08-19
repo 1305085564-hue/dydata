@@ -1,9 +1,11 @@
-import type { Permissions, UserRole } from "@/types";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
+import { resolveCompanyRole } from "@/lib/company-permissions";
 
 export interface TeamManagementProfile {
   id: string;
   name: string;
   role: UserRole;
+  company_role?: CompanyRole | string | null;
   status?: string | null;
   permissions?: Permissions | null;
   team_id?: string | null;
@@ -19,8 +21,8 @@ export type TeamManagementAccess =
     }
   | {
       level: "admin";
-      canView: true;
-      canEditMembers: true;
+      canView: boolean;
+      canEditMembers: boolean;
       teamIds: string[];
     }
   | {
@@ -41,13 +43,35 @@ export function isTeamAdmin(profile: Pick<TeamManagementProfile, "role" | "permi
   return profile.role === "admin" && profile.permissions?.manage_members === true;
 }
 
-export function resolveTeamManagementAccess(actor: TeamManagementProfile): TeamManagementAccess {
-  if (actor.role === "owner") {
+export function resolveTeamManagementAccess(
+  actor: TeamManagementProfile,
+  groupMode = false,
+): TeamManagementAccess {
+  if (groupMode) {
     return {
       level: "owner",
       canView: true,
       canEditMembers: true,
       teamIds: null,
+    };
+  }
+
+  const companyRole = resolveCompanyRole(actor.company_role ?? actor.role);
+
+  if (companyRole === "company_owner") {
+    if (actor.team_id) {
+      return {
+        level: "admin",
+        canView: true,
+        canEditMembers: true,
+        teamIds: [actor.team_id],
+      };
+    }
+    return {
+      level: "admin",
+      canView: false,
+      canEditMembers: false,
+      teamIds: [],
     };
   }
 

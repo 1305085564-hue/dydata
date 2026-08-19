@@ -14,7 +14,7 @@ test("诊断工作台只在选中视频后按需加载", () => {
   assert.match(source, /if \(selectedVideoId\)/);
 });
 
-test("归因舱向 owner 和 admin 提供移入回收站入口", () => {
+test("归因舱按固定视频管理权限提供移入回收站入口", () => {
   const pageSource = readFileSync(
     resolve(process.cwd(), "src/app/(app)/admin/content/content-page-client.tsx"),
     "utf8",
@@ -25,7 +25,7 @@ test("归因舱向 owner 和 admin 提供移入回收站入口", () => {
   );
 
   assert.match(pageSource, /canOperateLifecycle=/);
-  assert.match(pageSource, /permissionInfo\.role === "owner" \|\| permissionInfo\.role === "admin"/);
+  assert.match(pageSource, /permissionInfo\.permissions\.manage_videos === true/);
   assert.match(workbenchSource, /canOperateLifecycle: boolean/);
   assert.match(workbenchSource, /onLifecycleChanged: \(\) => void/);
   assert.match(workbenchSource, /移入回收站/);

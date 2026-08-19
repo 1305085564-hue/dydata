@@ -5,6 +5,7 @@ import {
   sanitizePermissions,
 } from "@/app/(app)/admin/权限管理";
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
+import { canArchiveMember } from "@/lib/member-lifecycle";
 import type { Permissions, UserRole } from "@/types";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { toOptionalString, toTrimmedString } from "./utils";
@@ -13,18 +14,19 @@ type AdminToolProfile = {
   id: string;
   name?: string | null;
   role: UserRole;
+  company_role?: "member" | "admin" | "company_owner" | null;
   permissions?: Permissions | null;
   team_id?: string | null;
   status?: string | null;
 };
 
 function canManageTarget(
-  actor: { id: string; role: UserRole; permissions: Permissions; team_id?: string | null },
-  target: { id: string; role: UserRole; team_id?: string | null },
+  actor: { id: string; role: UserRole; permissions: Permissions; team_id?: string | null; groupMode?: boolean },
+  target: { id: string; role: UserRole; company_role?: "member" | "admin" | "company_owner" | null; team_id?: string | null },
 ) {
   if (actor.id === target.id) return false;
-  if (target.role === "owner") return false;
-  if (actor.role === "owner") return true;
+  if (target.role === "owner" || target.company_role === "company_owner") return false;
+  if (actor.groupMode === true) return true;
   if (actor.role !== "admin" || actor.permissions.manage_members !== true) return false;
   return Boolean(actor.team_id && target.team_id && actor.team_id === target.team_id);
 }
@@ -33,10 +35,18 @@ export const ARCHIVE_ROLLBACK_GUIDANCE =
   "归档同时涉及 Auth 封禁和 profile 多字段修改，禁止直接 SQL 回滚，请使用 restoreMember 正式恢复流程。";
 
 async function loadActorAndTargetProfiles(service: ReturnType<typeof createAdminClient>, actorId: string, targetId: string) {
-  const { data, error } = await service
+  let { data, error } = await service
     .from("profiles")
-    .select("id, name, role, permissions, team_id, status")
+    .select("id, name, role, company_role, permissions, team_id, status")
     .in("id", [actorId, targetId]);
+  if (error?.message?.includes("company_role")) {
+    const legacy = await service
+      .from("profiles")
+      .select("id, name, role, permissions, team_id, status")
+      .in("id", [actorId, targetId]);
+    data = legacy.data as unknown as typeof data;
+    error = legacy.error;
+  }
   if (error) return { error: error.message };
 
   const profiles = (data ?? []) as AdminToolProfile[];
@@ -66,8 +76,24 @@ export async function kickUser(
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
   const { actor, target: profile } = profilesResult;
   if (!profile) return { success: false, error: "用户不存在" };
-  if (context.actorRole !== "owner") return { success: false, error: "只有 owner 可以归档账号" };
+  if (context.actorPermissions.manage_members !== true) return { success: false, error: "无权限归档账号" };
   if (context.actorId === userId) return { success: false, error: "不能归档自己" };
+  if (!canArchiveMember({
+    actorRole: context.actorRole,
+    actorPermissions: context.actorPermissions,
+    actorTeamId: context.actorTeamId,
+    groupMode: context.groupMode,
+    actorId: context.actorId,
+    target: {
+      id: profile.id,
+      role: profile.role,
+      company_role: profile.company_role,
+      permissions: profile.permissions ?? {},
+      team_id: profile.team_id ?? null,
+    },
+  })) {
+    return { success: false, error: "不能归档当前管理范围外的成员" };
+  }
 
   const backupSql = ARCHIVE_ROLLBACK_GUIDANCE;
   const affectedData = {
@@ -91,6 +117,8 @@ export async function kickUser(
       id: context.actorId,
       role: context.actorRole,
       permissions: context.actorPermissions,
+      teamId: context.actorTeamId,
+      groupMode: context.groupMode,
     },
     targetId: userId,
     reason,
@@ -141,7 +169,7 @@ export async function changeUserRole(
       actorPermissions: context.actorPermissions,
       actorTeamId: actor?.team_id ?? null,
       targetId: userId,
-      targetRole: before.role,
+      targetRole: before.company_role === "company_owner" ? "owner" : before.role,
       targetPermissions: before.permissions ?? {},
       targetTeamId: before.team_id ?? null,
       newRole: requestedRole,
@@ -153,7 +181,9 @@ export async function changeUserRole(
   const backupSql = `UPDATE profiles SET role='${before.role}' WHERE id='${userId}';`;
   if (dryRun) return { success: true, backupSql, beforeSnapshot: before, affectedData: { userId, newRole: requestedRole } };
 
-  const payload = requestedRole === "member" ? { role: requestedRole, permissions: {} } : { role: requestedRole };
+  const payload = requestedRole === "member"
+    ? { role: requestedRole, company_role: requestedRole, permissions: {} }
+    : { role: requestedRole, company_role: requestedRole };
   const { data: updatedProfile, error } = await service
     .from("profiles")
     .update(payload)
@@ -165,7 +195,7 @@ export async function changeUserRole(
     return { success: false, error: "角色更新未生效，请刷新后重试", backupSql, beforeSnapshot: before };
   }
 
-  const { data: after } = await service.from("profiles").select("id, role, permissions").eq("id", userId).single();
+    const { data: after } = await service.from("profiles").select("id, role, company_role, permissions").eq("id", userId).single();
   return { success: true, data: { userId, newRole: requestedRole }, backupSql, beforeSnapshot: before, afterSnapshot: after };
 }
 
@@ -186,7 +216,7 @@ export async function updateUserPermissions(
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
   const { actor, target: before } = profilesResult;
   if (!actor || !before) return { success: false, error: "用户不存在" };
-  if (!canManageTarget({ id: context.actorId, role: context.actorRole, permissions: context.actorPermissions, team_id: actor?.team_id ?? null }, before)) {
+  if (!canManageTarget({ id: context.actorId, role: context.actorRole, permissions: context.actorPermissions, team_id: actor?.team_id ?? null, groupMode: context.groupMode }, before)) {
     return {
       success: false,
       error: context.actorRole === "admin" ? "负责人只能修改本团队权限" : "无权限",

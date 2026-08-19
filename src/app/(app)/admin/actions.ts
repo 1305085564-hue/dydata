@@ -28,6 +28,7 @@ import {
 } from "@/lib/exemption-review";
 import type { DataScope, Permissions, UserRole } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { buildCompanyRoleProfilePatch } from "@/lib/company-permissions";
 import {
   archiveMemberWithClient,
   removeMemberFromTeamWithClient,
@@ -54,7 +55,6 @@ function hasActiveScopeAccess(
   userId: string,
 ) {
   if (!scope) return false;
-  if (scope.role === "owner" || scope.kind === "all") return true;
   const activeVisibleUserIds = scope.activeVisibleUserIds ?? scope.visibleUserIds;
   return activeVisibleUserIds.includes(userId);
 }
@@ -113,6 +113,7 @@ async function applyGrantToProfile(
     category?: "waive" | "leave" | null;
     reason?: string | null;
     requestId: string | null;
+    groupModeTokenHash?: string;
     today?: string;
     startDate?: string | null;
     endDate?: string | null;
@@ -131,6 +132,7 @@ async function applyGrantToProfile(
     supabase,
     draft,
     replaceExisting: shouldReplaceExisting,
+    groupModeTokenHash: input.groupModeTokenHash,
   });
   return result.ok ? {} : { error: result.message };
 }
@@ -149,6 +151,9 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
+      company_role: perm.companyRole,
+      group_mode: perm.groupMode,
+      group_mode_token_hash: perm.groupModeTokenHash,
     },
   });
   if (!scope) return { error: "用户信息不存在" };
@@ -170,6 +175,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       const result = await clearExemptionGrantAtomically({
         supabase,
         userId: values.userId,
+        groupModeTokenHash: perm.groupModeTokenHash,
       });
       if (!result.ok) return { error: result.message };
       await writeAuditLog(supabase, perm.userId, "clear_exempt", values.userId, "清除豁免");
@@ -191,6 +197,7 @@ export async function updateExemption(values: ExemptionFormValues): Promise<{ er
       startDate: values.mode === "range" ? values.startDate ?? null : values.date ?? null,
       endDate: values.mode === "range" ? values.endDate ?? null : values.date ?? null,
       replaceExisting: true,
+      groupModeTokenHash: perm.groupModeTokenHash,
     });
 
     if (result.error) {
@@ -230,6 +237,9 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
+      company_role: perm.companyRole,
+      group_mode: perm.groupMode,
+      group_mode_token_hash: perm.groupModeTokenHash,
     },
   });
   if (!scope) return { error: "用户信息不存在" };
@@ -249,6 +259,7 @@ export async function clearExemption(userId: string): Promise<{ error?: string }
   const result = await clearExemptionGrantAtomically({
     supabase,
     userId,
+    groupModeTokenHash: perm.groupModeTokenHash,
   });
   if (!result.ok) return { error: result.message };
 
@@ -348,6 +359,9 @@ export async function reviewExemptionRequest(input: {
       permissions: perm.permissions,
       data_scope: perm.dataScope,
       team_id: perm.teamId ?? null,
+      company_role: perm.companyRole,
+      group_mode: perm.groupMode,
+      group_mode_token_hash: perm.groupModeTokenHash,
     },
   });
   if (!scope) return { error: "用户信息不存在" };
@@ -367,6 +381,7 @@ export async function reviewExemptionRequest(input: {
     supabase,
     requestId: input.requestId,
     decision: input.decision,
+    groupModeTokenHash: perm.groupModeTokenHash,
   });
   if (!result.ok) return { error: result.message };
 
@@ -447,7 +462,7 @@ export async function updatePermissions(
 
   const { data: target, error: targetError } = await adminSupabase
     .from("profiles")
-    .select("role, permissions, team_id, membership_status")
+    .select("role, company_role, permissions, team_id, membership_status")
     .eq("id", targetUserId)
     .maybeSingle();
   if (targetError) return { error: targetError.message };
@@ -459,8 +474,9 @@ export async function updatePermissions(
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: perm.teamId,
+    groupMode: perm.groupMode,
     targetId: targetUserId,
-    targetRole: target.role as UserRole,
+    targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
     targetPermissions: (target.permissions ?? {}) as Permissions,
     targetTeamId: target.team_id ?? null,
     newPermissions,
@@ -530,7 +546,7 @@ export async function updateMemberTeam(
 
   const { data: profileRows, error: profileError } = await adminSupabase
     .from("profiles")
-    .select("id, role, name, permissions, team_id, membership_status")
+    .select("id, role, company_role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
   if (profileError) return { error: profileError.message };
 
@@ -543,8 +559,9 @@ export async function updateMemberTeam(
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: actor?.team_id ?? null,
+    groupMode: perm.groupMode,
     targetId: targetUserId,
-    targetRole: target.role as UserRole,
+    targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
     targetTeamId: target.team_id ?? null,
     newTeamId,
   });
@@ -563,6 +580,8 @@ export async function updateMemberTeam(
         id: perm.userId,
         role: perm.role,
         permissions: perm.permissions,
+        teamId: perm.teamId,
+        groupMode: perm.groupMode,
       },
       targetId: targetUserId,
     });
@@ -592,6 +611,8 @@ export async function updateMemberTeam(
       id: perm.userId,
       role: perm.role,
       permissions: perm.permissions,
+      teamId: perm.teamId,
+      groupMode: perm.groupMode,
     },
     targetId: targetUserId,
     newTeamId,
@@ -624,7 +645,7 @@ export async function archiveMember(
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.role !== "owner") return { error: "只有 owner 可以归档账号" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
   if (targetUserId === perm.userId) return { error: "不能归档自己" };
   if (!reason?.trim()) return { error: "归档必须填写原因" };
 
@@ -637,6 +658,8 @@ export async function archiveMember(
       id: perm.userId,
       role: perm.role,
       permissions: perm.permissions,
+      teamId: perm.teamId,
+      groupMode: perm.groupMode,
     },
     targetId: targetUserId,
     reason,
@@ -662,7 +685,7 @@ export async function archiveMember(
 export async function restoreMember(targetUserId: string): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
-  if (perm.role !== "owner") return { error: "只有 owner 可以恢复账号" };
+  if (!hasPermission(perm.role, perm.permissions, "manage_members")) return { error: "无权限" };
   if (targetUserId === perm.userId) return { error: "不能恢复自己" };
 
   const supabase = await createClient();
@@ -673,6 +696,8 @@ export async function restoreMember(targetUserId: string): Promise<{ error?: str
       id: perm.userId,
       role: perm.role,
       permissions: perm.permissions,
+      teamId: perm.teamId,
+      groupMode: perm.groupMode,
     },
     targetId: targetUserId,
   });
@@ -709,7 +734,7 @@ export async function resetMemberPassword(
   const adminSupabase = createAdminClient();
   const { data: profileRows, error: profileError } = await adminSupabase
     .from("profiles")
-    .select("id, role, name, permissions, team_id, membership_status")
+    .select("id, role, company_role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
   if (profileError) return { error: profileError.message };
 
@@ -722,8 +747,9 @@ export async function resetMemberPassword(
     actorId: perm.userId,
     actorPermissions: perm.permissions,
     actorTeamId: actor?.team_id ?? null,
+    groupMode: perm.groupMode,
     targetId: targetUserId,
-    targetRole: target.role as UserRole,
+    targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
     targetPermissions: (target.permissions ?? {}) as Permissions,
     targetTeamId: target.team_id ?? null,
   })) {
@@ -758,7 +784,7 @@ export async function changeRole(
 
   const { data: profileRows, error: profileError } = await adminSupabase
     .from("profiles")
-    .select("id, role, name, permissions, team_id, membership_status")
+    .select("id, role, company_role, name, permissions, team_id, membership_status")
     .in("id", [perm.userId, targetUserId]);
   if (profileError) return { error: profileError.message };
 
@@ -766,7 +792,9 @@ export async function changeRole(
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
   if (target.membership_status === "archived") return { error: "已归档账号不能修改角色，请先恢复账号" };
-  if (target.role === "owner") return { error: "不能修改其他创始人" };
+  if (target.company_role === "company_owner" || target.role === "owner") {
+    return { error: "不能修改其他公司所有者" };
+  }
 
   if (
     !canChangeMemberRole({
@@ -774,8 +802,9 @@ export async function changeRole(
       actorId: perm.userId,
       actorPermissions: perm.permissions,
       actorTeamId: actor?.team_id ?? null,
+      groupMode: perm.groupMode,
       targetId: targetUserId,
-      targetRole: target.role as UserRole,
+      targetRole: target.company_role === "company_owner" ? "owner" : target.role as UserRole,
       targetPermissions: (target.permissions ?? {}) as Permissions,
       targetTeamId: target.team_id ?? null,
       newRole,
@@ -784,8 +813,7 @@ export async function changeRole(
     return { error: perm.role === "owner" ? "不能修改该用户角色" : "负责人只能调整本团队组员和组长" };
   }
 
-  const updateData: { role: string; permissions?: Record<string, never> } = { role: newRole };
-  if (newRole === "member") updateData.permissions = {};
+  const updateData = buildCompanyRoleProfilePatch(newRole);
 
   const { data: updatedProfile, error } = await adminSupabase
     .from("profiles")

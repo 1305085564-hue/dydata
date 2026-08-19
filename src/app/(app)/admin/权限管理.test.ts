@@ -93,7 +93,7 @@ test("保存时返回所有发生权限变化的成员（含 admin 与 member �
   ]);
 });
 
-test("owner 给 admin 改权限时会完整保留所有权限 key 并支持 dataScope", () => {
+test("公司所有者在本公司给 admin 改权限时会完整保留权限 key", () => {
   const newPermissions = {
     view_analytics: true,
     manage_members: true,
@@ -103,12 +103,14 @@ test("owner 给 admin 改权限时会完整保留所有权限 key 并支持 data
 
   assert.deepEqual(
     resolvePermissionUpdate({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "admin-1",
       targetRole: "admin",
       targetPermissions: {},
+      targetTeamId: "company-a",
       newPermissions,
       newDataScope: "team",
     }),
@@ -116,7 +118,7 @@ test("owner 给 admin 改权限时会完整保留所有权限 key 并支持 data
   );
 });
 
-test("owner 给 member 改权限时会完整保留所有权限 key", () => {
+test("公司所有者在本公司给 member 改权限时会过滤未知权限 key", () => {
   const newPermissions = {
     manage_members: true,
     view_analytics: true,
@@ -136,12 +138,14 @@ test("owner 给 member 改权限时会完整保留所有权限 key", () => {
 
   assert.deepEqual(
     resolvePermissionUpdate({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "member-1",
       targetRole: "member",
       targetPermissions: {},
+      targetTeamId: "company-a",
       newPermissions,
     }),
     {
@@ -259,9 +263,9 @@ test("角色改为成员时清空权限，改回管理员时保留当前本地�
   ]);
 });
 
-test("成员管理能力会按 owner 与 admin 权限返回", () => {
+test("成员管理能力按固定 manage_members 权限返回", () => {
   assert.deepEqual(
-    getPermissionManagerCapabilities("owner", {}),
+    getPermissionManagerCapabilities("admin", { manage_members: true }),
     {
       canEditPermissions: true,
       canChangeRole: true,
@@ -335,15 +339,17 @@ test("负责人可以把本团队组员调整为管理员，但不能越权设�
   );
 });
 
-test("创始人仍可调整非 owner 成员角色", () => {
+test("公司所有者可调整本公司非所有者成员角色，但不能调整所有者", () => {
   assert.equal(
     canChangeMemberRole({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "member-1",
       targetRole: "member",
       targetPermissions: {},
+      targetTeamId: "company-a",
       newRole: "admin",
     }),
     true,
@@ -351,51 +357,59 @@ test("创始人仍可调整非 owner 成员角色", () => {
 
   assert.equal(
     canChangeMemberRole({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "owner-2",
       targetRole: "owner",
       targetPermissions: {},
+      targetTeamId: "company-a",
       newRole: "admin",
     }),
     false,
   );
 });
 
-test("移除目标规则会拦住自己与越权目标", () => {
+test("移除目标规则会拦住自己、跨公司目标和所有者", () => {
   assert.equal(
     canRemoveMemberTarget({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "member-1",
       targetRole: "member",
       targetPermissions: {},
+      targetTeamId: "company-a",
     }),
     true,
   );
 
   assert.equal(
     canRemoveMemberTarget({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
-      targetId: "admin-1",
-      targetRole: "admin",
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
+      targetId: "member-2",
+      targetRole: "member",
       targetPermissions: {},
+      targetTeamId: "company-b",
     }),
-    true,
+    false,
   );
 
   assert.equal(
     canRemoveMemberTarget({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "owner-1",
       targetRole: "owner",
       targetPermissions: {},
+      targetTeamId: "company-a",
     }),
     false,
   );
@@ -477,16 +491,31 @@ test("权限管理写入必须确认真实命中目标行", () => {
   assert.equal(isProfileWriteApplied({ id: null }), false);
 });
 
-test("创始人可以调配任意非创始人成员团队", () => {
+test("公司所有者不能跨公司调配，集团模式可以调配非所有者成员", () => {
   assert.deepEqual(
     resolveMemberTeamTransfer({
-      actorRole: "owner",
+      actorRole: "admin",
       actorId: "owner-1",
-      actorPermissions: {},
+      actorPermissions: { manage_members: true },
+      actorTeamId: "company-a",
       targetId: "member-1",
       targetRole: "member",
-      targetTeamId: "team-1",
-      newTeamId: "team-2",
+      targetTeamId: "company-a",
+      newTeamId: "company-b",
+    }),
+    { shouldApply: false, error: "负责人只能调配本团队/未分配成员" },
+  );
+
+  assert.deepEqual(
+    resolveMemberTeamTransfer({
+      actorRole: "admin",
+      actorId: "group-owner-1",
+      actorPermissions: { manage_members: true },
+      groupMode: true,
+      targetId: "member-1",
+      targetRole: "member",
+      targetTeamId: "company-a",
+      newTeamId: "company-b",
     }),
     { shouldApply: true },
   );

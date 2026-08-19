@@ -1,0 +1,20 @@
+{
+  "migration": "20260819130700",
+  "source_migration": "20260628113000",
+  "captured_at": "2026-08-19T09:54:31.525165+00:00",
+  "capture_note": "Captured immediately before the idempotent knowledge_cases foundation migration; target relation and all target objects were absent.",
+  "ledger_rows": [],
+  "relation": {"regclass": null, "exists": false},
+  "columns": [],
+  "constraints": [],
+  "indexes": [],
+  "policies": [],
+  "table_acl": null,
+  "row_count": 0,
+  "related_tables": {
+    "case_taxonomies": null,
+    "knowledge_case_taxonomy_links": null,
+    "knowledge_case_status_logs": null,
+    "case_usages": null
+  }
+}

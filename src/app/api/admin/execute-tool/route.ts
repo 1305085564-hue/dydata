@@ -138,7 +138,7 @@ async function loadPendingAction(
     return null;
   }
 
-  if (auth.actor.role !== "owner" && data.admin_id !== auth.actor.userId) {
+  if (auth.actor.groupMode !== true && data.admin_id !== auth.actor.userId) {
     return null;
   }
 
@@ -181,6 +181,8 @@ export async function buildExecuteToolResponse(
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
         actorPermissions: auth.actor.permissions,
+        actorTeamId: auth.actor.teamId,
+        groupMode: auth.actor.groupMode,
       },
     });
 
@@ -232,6 +234,8 @@ export async function buildExecuteToolResponse(
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
         actorPermissions: auth.actor.permissions,
+        actorTeamId: auth.actor.teamId,
+        groupMode: auth.actor.groupMode,
       },
     });
 
@@ -280,6 +284,8 @@ export async function buildExecuteToolResponse(
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
         actorPermissions: auth.actor.permissions,
+        actorTeamId: auth.actor.teamId,
+        groupMode: auth.actor.groupMode,
       },
   });
 

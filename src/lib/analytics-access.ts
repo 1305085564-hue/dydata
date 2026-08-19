@@ -53,8 +53,6 @@ export function canAccessAdmin(role: UserRole, permissions: Permissions = {}) {
 }
 
 export function canAccessAdminPath(pathname: string, role: UserRole, permissions: Permissions = {}) {
-  if (role === "owner") return true;
-
   if (pathname === "/admin/settings" || pathname.startsWith("/admin/settings/")) {
     return hasPermission(role, permissions, "manage_system");
   }
@@ -88,13 +86,13 @@ export function buildAnalyticsAccessContext({ userId, role, permissions = {}, te
     userId,
     role,
     effectiveTeamId: teamId ?? null,
-    canViewAllMembers: role === "owner" || hasPermission(role, permissions, "manage_members"),
+    canViewAllMembers: hasPermission(role, permissions, "manage_members"),
   };
 }
 
 export function getNavigationAccess(role: UserRole, permissions: Permissions = {}): NavigationAccess {
   return {
-    showAnalytics: role === "owner" || hasPermission(role, permissions, "view_analytics"),
+    showAnalytics: hasPermission(role, permissions, "view_analytics"),
     showAdmin: canAccessAdmin(role, permissions),
   };
 }

@@ -85,11 +85,16 @@ export async function buildAdminContentListResponse(
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
-  const teams = auth.actor.role === "owner" ? await deps.getTeamOptions() : [];
+  const canUseGroupPerspective = auth.actor.groupMode === true;
+  const teams = canUseGroupPerspective
+    ? await deps.getTeamOptions()
+    : auth.actor.teamId
+      ? [{ id: auth.actor.teamId }]
+      : [];
   const scope = resolveAdminDataPerspective({
     requestedPerspective: request.nextUrl.searchParams.get("scope"),
     requestedTeamId: request.nextUrl.searchParams.get("teamId"),
-    canUseCompanyPerspective: auth.actor.role === "owner",
+    canUseCompanyPerspective: canUseGroupPerspective,
     availableTeamIds: teams.map((team) => team.id),
     fallbackTeamId: auth.actor.teamId ?? null,
   });

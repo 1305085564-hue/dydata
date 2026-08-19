@@ -3,8 +3,8 @@ import test from "node:test";
 
 import { hasExemptionManagementPermission } from "./exemption-permissions";
 
-test("owner 永远可以管理豁免", () => {
-  assert.equal(hasExemptionManagementPermission("owner", {}), true);
+test("旧 owner 名称不能绕过豁免权限", () => {
+  assert.equal(hasExemptionManagementPermission("owner", {}), false);
 });
 
 test("manage_fulfillment 或 review_violations 可以管理豁免", () => {

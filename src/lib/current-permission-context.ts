@@ -38,6 +38,7 @@ export async function buildPermissionContextFromPermissionInfo(
       team_id: permissionInfo.teamId ?? null,
       company_role: permissionInfo.companyRole,
       group_mode: permissionInfo.groupMode === true,
+      group_mode_token_hash: permissionInfo.groupModeTokenHash,
       membership_status: permissionInfo.membershipStatus,
     },
   });
@@ -62,6 +63,7 @@ export async function buildPermissionContextForActor(
     teamId: actor.teamId ?? null,
     companyRole: actor.companyRole,
     groupMode: actor.groupMode,
+    groupModeTokenHash: actor.groupModeTokenHash,
     membershipStatus: actor.membershipStatus,
   } satisfies UserPermissionInfo;
   return buildPermissionContextFromPermissionInfo(permissionInfo, options);

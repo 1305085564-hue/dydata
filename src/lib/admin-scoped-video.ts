@@ -50,7 +50,18 @@ export async function requireScopedAdminVideo({
   }
 
   const supabase = createAdminClient();
-  const scope = await buildDataAccessScope(supabase, auth.actor.userId);
+  const scope = await buildDataAccessScope(supabase, auth.actor.userId, {
+    profile: {
+      id: auth.actor.userId,
+      role: auth.actor.role,
+      permissions: auth.actor.permissions,
+      data_scope: auth.actor.dataScope,
+      team_id: auth.actor.teamId ?? null,
+      company_role: auth.actor.companyRole,
+      group_mode: auth.actor.groupMode,
+      membership_status: auth.actor.membershipStatus,
+    },
+  });
   if (!scope) {
     return { error: "用户权限范围加载失败", status: 403 as const };
   }

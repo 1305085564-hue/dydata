@@ -170,7 +170,7 @@ export async function buildAttributionResponse(
   if ("error" in auth) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
-  if (auth.actor.role !== "owner" && auth.actor.role !== "admin") {
+  if (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true) {
     return NextResponse.json({ ok: false, error: "无权限补录协作归属" }, { status: 403 });
   }
   const context = await deps.buildPermissionContextForActor(auth.actor);

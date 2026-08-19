@@ -94,6 +94,9 @@ export async function loadAdminFirstScreenData(
   }
 
   const activeVisibleUserIds = auth.scope.activeVisibleUserIds ?? [];
+  const groupModeRpcParams = auth.actor?.groupModeTokenHash
+    ? { target_date: date, p_group_mode_token_hash: auth.actor.groupModeTokenHash }
+    : { target_date: date };
   const activeUserIdSet = new Set(activeVisibleUserIds);
   const filterCurrentOperationRows = <T,>(
     rows: T[] | null | undefined,
@@ -110,13 +113,19 @@ export async function loadAdminFirstScreenData(
     exemptionsResult,
     joinRequestsResult,
   ] = await Promise.all([
-    auth.supabase.rpc("admin_cockpit_summary", { target_date: date }),
+    auth.supabase.rpc(
+      auth.actor?.groupModeTokenHash ? "admin_cockpit_summary_v2" : "admin_cockpit_summary",
+      groupModeRpcParams,
+    ),
     auth.supabase.rpc("admin_anomaly_videos_today", {
       p_visible_user_ids: activeVisibleUserIds,
       target_date: date,
       limit_rows: 10,
     }),
-    auth.supabase.rpc("admin_pending_submissions_today", { target_date: date }),
+    auth.supabase.rpc(
+      auth.actor?.groupModeTokenHash ? "admin_pending_submissions_today_v2" : "admin_pending_submissions_today",
+      groupModeRpcParams,
+    ),
     deps.loadPendingExemptionRows(auth.supabase, activeVisibleUserIds),
     deps.listPendingRequestsForAdmin(),
   ]);

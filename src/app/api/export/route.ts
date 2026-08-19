@@ -29,7 +29,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
-  const scope = await buildDataAccessScope(adminSupabase, user.id);
+  const scope = await buildDataAccessScope(adminSupabase, user.id, {
+    profile: {
+      id: permissionInfo.userId,
+      role: permissionInfo.role,
+      permissions: permissionInfo.permissions,
+      data_scope: permissionInfo.dataScope,
+      team_id: permissionInfo.teamId,
+      company_role: permissionInfo.companyRole,
+      group_mode: permissionInfo.groupMode,
+    },
+  });
   if (!scope) {
     return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
   }

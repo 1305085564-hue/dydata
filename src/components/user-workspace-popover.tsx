@@ -131,7 +131,7 @@ export function UserWorkspacePopover({
             </span>
           </div>
           <span className="truncate text-[10px] font-normal leading-none text-zinc-400 mt-0.5 max-w-[115px] tracking-tight">
-            {role === "owner" ? "创始人" : role === "admin" ? "管理员" : "成员"}
+            {role === "owner" || role === "company_owner" ? "公司所有者" : role === "admin" ? "管理员" : "成员"}
           </span>
         </div>
 

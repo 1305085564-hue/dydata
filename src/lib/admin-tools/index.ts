@@ -1,4 +1,4 @@
-import { TOOL_PERMISSION_MAP, type AdminAiToolName } from "@/lib/admin-ai/core";
+import { isWhitelistedToolName, TOOL_PERMISSION_MAP, type AdminAiToolName } from "@/lib/admin-ai/core";
 import type { ToolContext, ToolExecutionInput, ToolExecutionResult } from "./types";
 import { toBoolean } from "./utils";
 import { getUserInfo, getAnomalousData, getTaskStatus } from "./data-query";
@@ -8,12 +8,15 @@ import { retryContentBreakdown, retryDailyReview, clearCache } from "./task-mana
 import { diagnoseIssue } from "./diagnosis";
 
 function hasToolPermission(input: ToolContext, toolName: AdminAiToolName) {
-  if (input.actorRole === "owner") return true;
   const required = TOOL_PERMISSION_MAP[toolName];
   return input.actorPermissions?.[required] === true;
 }
 
 export async function executeAdminTool(input: ToolExecutionInput): Promise<ToolExecutionResult> {
+  if (!isWhitelistedToolName(input.toolName)) {
+    return { success: false, error: "未注册工具，禁止执行" };
+  }
+
   if (!hasToolPermission(input.context, input.toolName as AdminAiToolName)) {
     return { success: false, error: "无权限执行该工具" };
   }

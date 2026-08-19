@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { getUserPermissions } from "@/lib/permissions";
+import { hasPermission } from "@/lib/permission-utils";
 import { createSkill, listAvailableSkills, type SkillScope } from "@/lib/rewrite/skills";
 import { requireAuth, jsonResponse, errorResponse, parseJsonBody } from "@/lib/rewrite/api-helpers";
 import { NextRequest } from "next/server";
@@ -92,9 +93,11 @@ export async function buildRewriteSkillsPostResponse(
   }
 
   const permissionInfo = await actualDeps.getUserPermissions();
-  const isOwner = permissionInfo?.role === "owner";
-  if (scope !== "private" && !isOwner) {
-    return actualDeps.errorResponse("只有 owner 可以创建平台或公开 skill", 403);
+  const canManageSystem = permissionInfo
+    ? hasPermission(permissionInfo.role, permissionInfo.permissions, "manage_system")
+    : false;
+  if (scope !== "private" && !canManageSystem) {
+    return actualDeps.errorResponse("只有集团模式可以创建平台或公开 skill", 403);
   }
 
   const service = actualDeps.createServiceClient();

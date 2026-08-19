@@ -46,10 +46,10 @@ const archivedProfiles: TeamViewProfile[] = [
   },
 ];
 
-test("非 owner 的团队筛选只展示当前可管理团队，不暴露全量团队", () => {
+test("未进入集团模式的团队筛选只展示当前可管理团队，进入集团模式后展示全量团队", () => {
   assert.deepEqual(
     getVisibleTeamOptions({
-      isOwner: false,
+      groupMode: false,
       allTeams: teams,
       manageableTeams: [teams[0]],
     }),
@@ -58,7 +58,7 @@ test("非 owner 的团队筛选只展示当前可管理团队，不暴露全量�
 
   assert.deepEqual(
     getVisibleTeamOptions({
-      isOwner: true,
+      groupMode: true,
       allTeams: teams,
       manageableTeams: [teams[0]],
     }),

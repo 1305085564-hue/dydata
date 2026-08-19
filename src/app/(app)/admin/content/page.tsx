@@ -40,7 +40,7 @@ export default async function AdminContentPage({ searchParams }: Props) {
   if (!canAccessAdminPath("/admin/content", perm.role, perm.permissions)) redirect("/dashboard");
 
   const view = normalizeView(params.view);
-  const canSwitchPerspective = perm.role === "owner";
+  const canSwitchPerspective = perm.groupMode === true;
   const teams = canSwitchPerspective ? await getTeamOptions() : [];
 
   return (

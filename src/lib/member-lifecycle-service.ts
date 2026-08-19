@@ -30,6 +30,8 @@ export type MemberLifecycleActor = {
   id: string;
   role: UserRole;
   permissions?: Permissions | null;
+  teamId?: string | null;
+  groupMode?: boolean;
 };
 
 export type MemberLifecycleOperationResult =
@@ -71,6 +73,11 @@ function isMissingLifecycleColumnError(error: PostgrestErrorLike) {
     "archive_reason",
     "archive_snapshot",
   ].some((column) => message.includes(column));
+}
+
+function isMissingCompanyRoleColumnError(error: PostgrestErrorLike) {
+  const message = error?.message ?? "";
+  return message.includes("company_role") || message.includes("Could not find the 'company_role' column");
 }
 
 function operationFailure(
@@ -178,9 +185,25 @@ async function restoreAuthUserMetadata(
 async function loadTargetProfile(client: MemberLifecycleClient, targetId: string) {
   const result = await client
     .from("profiles")
-    .select("id, name, role, permissions, team_id, membership_status, archived_at, archived_by, archive_reason, archive_snapshot")
+    .select("id, name, role, company_role, permissions, team_id, membership_status, archived_at, archived_by, archive_reason, archive_snapshot")
     .eq("id", targetId)
     .maybeSingle<MemberLifecycleProfileRow>();
+
+  if (isMissingCompanyRoleColumnError(result.error)) {
+    const fallback = await client
+      .from("profiles")
+      .select("id, name, role, permissions, team_id, membership_status, archived_at, archived_by, archive_reason, archive_snapshot")
+      .eq("id", targetId)
+      .maybeSingle<MemberLifecycleProfileRow>();
+    if (fallback.error) {
+      if (isMissingLifecycleColumnError(fallback.error)) {
+        return { error: "成员生命周期数据库迁移未完成，请先执行 member_lifecycle migration" };
+      }
+      return { error: fallback.error.message ?? "加载成员资料失败" };
+    }
+    if (!fallback.data) return { error: "用户不存在" };
+    return { profile: fallback.data };
+  }
 
   if (result.error) {
     if (isMissingLifecycleColumnError(result.error)) {
@@ -208,6 +231,7 @@ function toProfileSnapshot(profile: MemberLifecycleProfileRow): Record<string, u
     id: profile.id,
     name: profile.name ?? null,
     role: profile.role,
+    ...(profile.company_role !== undefined ? { company_role: profile.company_role } : {}),
     permissions: profile.permissions ?? {},
     team_id: profile.team_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
@@ -221,6 +245,7 @@ function toProfileSnapshot(profile: MemberLifecycleProfileRow): Record<string, u
 function buildOriginalProfilePatch(profile: MemberLifecycleProfileRow): Record<string, unknown> {
   return {
     role: profile.role,
+    ...(profile.company_role !== undefined ? { company_role: profile.company_role } : {}),
     permissions: profile.permissions ?? {},
     team_id: profile.team_id ?? null,
     membership_status: normalizeMembershipStatus(profile.membership_status),
@@ -301,7 +326,7 @@ export async function transferMemberToTeamWithClient(input: {
 
   const target = loaded.profile;
   if (input.actor.id === target.id) return operationFailure("transfer_team", "校验", new Error("不能调配自己"));
-  if (target.role === "owner") return operationFailure("transfer_team", "校验", new Error("不能调配创始人"));
+  if (target.role === "owner" || target.company_role === "company_owner") return operationFailure("transfer_team", "校验", new Error("不能调配公司所有者"));
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return operationFailure("transfer_team", "校验", new Error("已归档账号不能调配团队，请先恢复账号"));
   }
@@ -389,7 +414,7 @@ export async function removeMemberFromTeamWithClient(input: {
 
   const target = loaded.profile;
   if (input.actor.id === target.id) return operationFailure("remove_from_team", "校验", new Error("不能移出自己"));
-  if (target.role === "owner") return operationFailure("remove_from_team", "校验", new Error("不能移出创始人"));
+  if (target.role === "owner" || target.company_role === "company_owner") return operationFailure("remove_from_team", "校验", new Error("不能移出公司所有者"));
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return {
       ok: true,
@@ -485,8 +510,15 @@ export async function archiveMemberWithClient(input: {
   }
   const target = loaded.profile;
 
-  if (!canArchiveMember({ actorRole: input.actor.role, actorId: input.actor.id, target })) {
-    return operationFailure("archive", "权限校验", new Error(input.actor.role === "owner" ? "不能归档该用户" : "只有 owner 可以归档账号"));
+  if (!canArchiveMember({
+    actorRole: input.actor.role,
+    actorPermissions: input.actor.permissions,
+    actorTeamId: input.actor.teamId,
+    groupMode: input.actor.groupMode,
+    actorId: input.actor.id,
+    target,
+  })) {
+    return operationFailure("archive", "权限校验", new Error("不能归档当前管理范围外的成员"));
   }
   if (normalizeMembershipStatus(target.membership_status) === "archived") {
     return {
@@ -508,6 +540,7 @@ export async function archiveMemberWithClient(input: {
   const beforeSnapshot = toProfileSnapshot(target);
   const archiveSnapshot: MemberArchiveSnapshot = {
     role: target.role,
+    ...(target.company_role !== undefined ? { company_role: target.company_role } : {}),
     permissions: target.permissions ?? {},
     team_id: target.team_id ?? null,
     team_name: team.name,
@@ -519,6 +552,9 @@ export async function archiveMemberWithClient(input: {
     archivedAt: input.archivedAt,
     snapshot: archiveSnapshot,
   });
+  if (target.company_role === undefined) {
+    delete (profilePatch as Partial<Record<keyof typeof profilePatch, unknown>>).company_role;
+  }
 
   const banError = await setAuthBan(input.client, target.id, true);
   if (banError) return operationFailure("archive", "Auth 封禁", banError);
@@ -586,8 +622,15 @@ export async function restoreMemberWithClient(input: {
   }
   const target = loaded.profile;
 
-  if (!canRestoreMember({ actorRole: input.actor.role, actorId: input.actor.id, target })) {
-    return operationFailure("restore", "权限校验", new Error(input.actor.role === "owner" ? "不能恢复该用户" : "只有 owner 可以恢复账号"));
+  if (!canRestoreMember({
+    actorRole: input.actor.role,
+    actorPermissions: input.actor.permissions,
+    actorTeamId: input.actor.teamId,
+    groupMode: input.actor.groupMode,
+    actorId: input.actor.id,
+    target,
+  })) {
+    return operationFailure("restore", "权限校验", new Error("不能恢复当前管理范围外的成员"));
   }
   if (normalizeMembershipStatus(target.membership_status) === "active") {
     return {
@@ -603,6 +646,9 @@ export async function restoreMemberWithClient(input: {
   if (!auth.ok) return operationFailure("restore", "读取 Auth 用户", auth.error);
   const beforeSnapshot = toProfileSnapshot(target);
   const restorePatch = buildRestoreMemberProfilePatch();
+  if (target.company_role === undefined) {
+    delete (restorePatch as Partial<Record<keyof typeof restorePatch, unknown>>).company_role;
+  }
 
   const unbanError = await setAuthBan(input.client, target.id, false);
   if (unbanError) return operationFailure("restore", "解除 Auth 封禁", unbanError);

@@ -193,9 +193,8 @@ export function VideoDetailDialog({
   const [copiedContent, setCopiedContent] = useState(false);
   const [showFullMetrics, setShowFullMetrics] = useState(false);
 
-  const canOperate =
-    permissionInfo.role === "owner" || permissionInfo.role === "admin";
-  const isOwner = permissionInfo.role === "owner";
+  const canOperate = permissionInfo.permissions.manage_videos === true;
+  const canPurge = permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true;
 
   useEffect(() => {
     setAssetLevel(assetRecord?.asset_level ?? null);
@@ -329,7 +328,7 @@ export function VideoDetailDialog({
                       <RotateCcw className="size-3.5" />
                       恢复作品
                     </button>
-                    {isOwner &&
+                    {canPurge &&
                       (() => {
                         const eligible = isPurgeEligible(
                           video.trashed_at ?? null,
@@ -372,7 +371,7 @@ export function VideoDetailDialog({
             <>
               {/* 锁定提示横幅 */}
               {video.lifecycle_state === "trashed" &&
-                isOwner &&
+                canPurge &&
                 !isPurgeEligible(video.trashed_at ?? null) && (
                   <div className="flex items-start gap-2.5 rounded-xl border border-zinc-200/80 bg-zinc-100/60 p-3.5 text-[12px] text-zinc-600 leading-relaxed shadow-2xs">
                     <AlertTriangle className="size-4 text-[#F59E0B] shrink-0 mt-0.5" />

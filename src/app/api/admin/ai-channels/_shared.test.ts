@@ -1,7 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { maskApiKey, normalizeChannelRow, type AiChannelRow } from "./_shared";
+import { maskApiKey, normalizeChannelRow, requireSystemActor, type AiChannelRow } from "./_shared";
+
+test("AI 系统配置要求 manage_system 权限", async () => {
+  let requiredPermission: string | undefined;
+  const denied = await requireSystemActor({
+    requireAdminActor: async (options) => {
+      requiredPermission = options?.requiredPermission;
+      return { error: "无权限", status: 403 } as const;
+    },
+  });
+
+  assert.equal(requiredPermission, "manage_system");
+  assert.deepEqual(denied, { error: "无权限", status: 403 });
+});
 
 test("maskApiKey 保留前4后4，避免后台所有渠道都只显示三颗星", () => {
   assert.equal(maskApiKey("sk-1234567890abcd"), "sk-1***abcd");

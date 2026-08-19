@@ -6,6 +6,26 @@ import {
   buildAdminSystemSettingsPostResponse,
   parseSystemSettingsPayload,
 } from "./route";
+import { requireSystemPermission } from "../../fulfillment/_shared";
+import { fixedPermissionsForRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
+
+function systemSettingsAuth(companyRole: "member" | "admin" | "company_owner") {
+  return {
+    supabase: {
+      from: () => ({
+        upsert: async () => ({ error: null }),
+      }),
+    },
+    actor: {
+      userId: `${companyRole}-1`,
+      role: runtimeRoleForCompanyRole(companyRole),
+      companyRole,
+      permissions: fixedPermissionsForRole(companyRole),
+      name: null,
+      dataScope: companyRole === "member" ? "self" : "team",
+    },
+  } as never;
+}
 
 test("system settings payload 只接受 boolean", () => {
   const invalid = parseSystemSettingsPayload({ feishuFulfillmentReminderEnabled: "true" });
@@ -35,7 +55,7 @@ test("admin system settings GET 返回当前履约飞书开关", async () => {
         },
         actor: { role: "owner", userId: "owner-1" },
       }) as never,
-    requireOwnerOrTeamAdminRole: () => null,
+    requireSystemPermission: () => null,
   });
 
   assert.ok(response);
@@ -69,7 +89,7 @@ test("admin system settings GET 缺少系统配置表时明确失败，不读取
         },
         actor: { role: "owner", userId: "owner-1" },
       }) as never,
-    requireOwnerOrTeamAdminRole: () => null,
+    requireSystemPermission: () => null,
   });
 
   assert.ok(response);
@@ -99,7 +119,7 @@ test("admin system settings POST 写入开关", async () => {
           },
           actor: { role: "admin", userId: "admin-1" },
         }) as never,
-      requireOwnerOrTeamAdminRole: () => null,
+      requireSystemPermission: () => null,
     },
   );
 
@@ -142,7 +162,7 @@ test("admin system settings POST 缺少系统配置表时明确失败，不写�
           },
           actor: { role: "admin", userId: "admin-1" },
         }) as never,
-      requireOwnerOrTeamAdminRole: () => null,
+      requireSystemPermission: () => null,
     },
   );
 
@@ -150,4 +170,27 @@ test("admin system settings POST 缺少系统配置表时明确失败，不写�
   assert.equal(response.status, 500);
   assert.equal(writes.length, 1);
   assert.equal(writes[0]?.table, "system_settings");
+});
+
+test("系统设置 POST 只允许公司所有者，管理员和成员收到真实的 403 响应", async () => {
+  for (const [companyRole, expectedStatus] of [
+    ["company_owner", 200],
+    ["admin", 403],
+    ["member", 403],
+  ] as const) {
+    const response = await buildAdminSystemSettingsPostResponse(
+      new Request("https://dydata.cc/api/admin/system/settings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ feishuFulfillmentReminderEnabled: true }),
+      }),
+      {
+        requireAdminServiceClient: async () => systemSettingsAuth(companyRole),
+        requireSystemPermission,
+      },
+    );
+
+    assert.ok(response);
+    assert.equal(response.status, expectedStatus, companyRole);
+  }
 });

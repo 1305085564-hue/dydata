@@ -6,7 +6,7 @@ import { executeAdminTool } from "./index";
 const ownerContext = { actorId: "o1", actorRole: "owner", actorPermissions: {} } as const;
 
 test("未注册工具即使 owner 也不能执行", async () => {
-  assert.deepEqual(await executeAdminTool({ toolName: "unknown", params: {}, context: ownerContext as never }), { success: false, error: "未注册工具，禁止执行" });
+  assert.deepEqual(await executeAdminTool({ toolName: "unknown", params: {}, context: { ...ownerContext, actorPermissions: { manage_system: true }, actorRole: "admin" } as never }), { success: false, error: "未注册工具，禁止执行" });
 });
 
 test("普通成员无权限时在调用工具前返回错误", async () => {

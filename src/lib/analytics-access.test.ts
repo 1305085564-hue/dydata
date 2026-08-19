@@ -53,16 +53,18 @@ test("管理员入口按权限键放行", () => {
   assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_members: true }), false);
 });
 
-test("发布管理页面允许 owner、具备发布权限的管理员和可见成员访问", () => {
-  assert.equal(canAccessAdminPath("/admin/fulfillment", "owner"), true);
+test("发布管理页面只按固定权限放行，旧 owner 名称不能绕过", () => {
+  assert.equal(canAccessAdminPath("/admin/fulfillment", "owner"), false);
+  assert.equal(canAccessAdminPath("/admin/fulfillment", "owner", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "admin", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment/detail", "admin", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "member", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "member"), false);
 });
 
-test("协作管理允许 owner 和具备分析权限的角色访问", () => {
-  assert.equal(canAccessAdminPath("/admin/collaboration", "owner"), true);
+test("协作管理只按分析权限放行", () => {
+  assert.equal(canAccessAdminPath("/admin/collaboration", "owner"), false);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "owner", { view_analytics: true }), true);
   assert.equal(canAccessAdminPath("/admin/collaboration/person", "admin", { view_analytics: true }), true);
   assert.equal(canAccessAdminPath("/admin/collaboration", "member", { view_analytics: true }), true);
   assert.equal(canAccessAdminPath("/admin/collaboration", "member"), false);
@@ -71,7 +73,8 @@ test("协作管理允许 owner 和具备分析权限的角色访问", () => {
 test("系统设置和成员管理按对应权限放行", () => {
   assert.equal(canAccessAdminPath("/admin/modules", "admin", { manage_members: true }), true);
   assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_system: true }), true);
-  assert.equal(canAccessAdminPath("/admin/settings", "owner"), true);
+  assert.equal(canAccessAdminPath("/admin/settings", "owner"), false);
+  assert.equal(canAccessAdminPath("/admin/settings", "owner", { manage_system: true }), true);
 });
 
 test("导航权限区分成员与管理员入口", () => {
@@ -86,6 +89,11 @@ test("导航权限区分成员与管理员入口", () => {
   });
 
   assert.deepEqual(getNavigationAccess("owner"), {
+    showAnalytics: false,
+    showAdmin: false,
+  });
+
+  assert.deepEqual(getNavigationAccess("owner", { view_analytics: true }), {
     showAnalytics: true,
     showAdmin: true,
   });

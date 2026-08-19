@@ -235,7 +235,7 @@ export function ContentPageClient({
         feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
         onVideoSelect={setSelectedVideoId}
-        canOperateLifecycle={permissionInfo.role === "owner" || permissionInfo.role === "admin"}
+        canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
         onLifecycleChanged={() => {
           setSelectedVideoId(null);
           void loadData(view, perspective, teamId);

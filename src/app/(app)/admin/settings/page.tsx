@@ -37,7 +37,7 @@ export default async function AdminSettingsPage() {
   if (!permission) redirect("/login");
   if (!canAccessAdminPath("/admin/settings", permission.role, permission.permissions)) redirect("/admin");
   const isOwner = permission.role === "owner" || permission.permissions.manage_system === true;
-  const canManageThresholds = isOwner || permission.role === "admin";
+  const canManageThresholds = isOwner;
 
   const supabase = await createClient();
   const today = getShanghaiDate();

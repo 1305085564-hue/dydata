@@ -46,7 +46,7 @@ function formatEntities(alert: Alert) {
 }
 
 function toDashboardScope(rawScope: Awaited<ReturnType<typeof buildDataAccessScope>>): DashboardAlertScope | null {
-  if (!rawScope || (rawScope.role !== "owner" && rawScope.role !== "admin")) {
+  if (!rawScope || (rawScope.role !== "owner" && rawScope.role !== "admin" && !(rawScope.kind === "all" && rawScope.groupMode === true))) {
     return null;
   }
 

@@ -1,0 +1,50 @@
+{
+  "functions": [
+    {
+      "acl": [
+        "=X/postgres",
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "admin_cockpit_summary",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_cockpit_summary(target_date date DEFAULT CURRENT_DATE)\n RETURNS jsonb\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  pending_videos_count int;\n  pending_violations_count int;\n  pending_submissions_count int;\n  pending_exemptions_count int;\n  day_start timestamptz;\n  day_end timestamptz;\nbegin\n  if not public.is_admin_or_owner() then\n    raise exception 'permission denied';\n  end if;\n\n  day_start := ((target_date)::text || ' 00:00:00 Asia/Shanghai')::timestamptz;\n  day_end := (((target_date + 1))::text || ' 00:00:00 Asia/Shanghai')::timestamptz;\n\n  select count(*)::int\n  into pending_videos_count\n  from public.videos v\n  where v.created_at >= day_start\n    and v.created_at < day_end\n    and (\n      v.anomaly_status <> '正常'\n      or not exists (\n        select 1\n        from public.video_tags vt\n        where vt.video_id = v.id\n      )\n    );\n\n  select count(*)::int\n  into pending_violations_count\n  from public.violation_cases vc\n  where vc.status = 'submitted'\n    and vc.is_deleted = false;\n\n  select count(*)::int\n  into pending_submissions_count\n  from public.profiles p\n  where coalesce(p.status, 'active') = 'active'\n    and not (\n      coalesce(p.exempt_type, '') = 'permanent'\n      or (\n        p.exempt_type = 'temporary'\n        and p.exempt_start_date is not null\n        and p.exempt_end_date is not null\n        and target_date between p.exempt_start_date and p.exempt_end_date\n      )\n      or exists (\n        select 1\n        from public.exemption_grant eg\n        where eg.user_id = p.id\n          and eg.status = 'active'\n          and eg.start_date is not null\n          and target_date >= eg.start_date\n          and (eg.end_date is null or target_date <= eg.end_date)\n      )\n    )\n    and not exists (\n      select 1\n      from public.daily_reports dr\n      where dr.user_id = p.id\n        and dr.report_date = target_date\n    );\n\n  select count(*)::int\n  into pending_exemptions_count\n  from public.exemption_request er\n  where er.request_status = 'pending';\n\n  return jsonb_build_object(\n    'pending_videos', pending_videos_count,\n    'pending_violations', pending_violations_count,\n    'pending_submissions', pending_submissions_count,\n    'pending_exemptions', pending_exemptions_count\n  );\nend;\n$function$\n",
+      "definition_md5": "ffd4cfab8697867344a9137a4a95c29e",
+      "identity_arguments": "target_date date"
+    },
+    {
+      "acl": [
+        "=X/postgres",
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "name": "admin_pending_submissions_today",
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_pending_submissions_today(target_date date DEFAULT CURRENT_DATE)\n RETURNS TABLE(profile_id uuid, name text, team_id uuid, team_name text, last_report_date date)\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nBEGIN\n  IF NOT public.is_admin_or_owner() THEN\n    RAISE EXCEPTION 'permission denied';\n  END IF;\n\n  RETURN QUERY\n  SELECT\n    p.id AS profile_id,\n    p.name,\n    p.team_id,\n    t.name AS team_name,\n    (\n      SELECT max(dr_last.report_date)\n      FROM public.daily_reports dr_last\n      WHERE dr_last.user_id = p.id\n        AND dr_last.report_date < target_date\n    ) AS last_report_date\n  FROM public.profiles p\n  LEFT JOIN public.teams t ON t.id = p.team_id\n  WHERE COALESCE(p.status, 'active') = 'active'\n    AND NOT (\n      COALESCE(p.exempt_type, '') = 'permanent'\n      OR (\n        p.exempt_type = 'temporary'\n        AND p.exempt_start_date IS NOT NULL\n        AND p.exempt_end_date IS NOT NULL\n        AND target_date BETWEEN p.exempt_start_date AND p.exempt_end_date\n      )\n      OR EXISTS (\n        SELECT 1\n        FROM public.exemption_grant eg\n        WHERE eg.user_id = p.id\n          AND eg.status = 'active'\n          AND eg.start_date IS NOT NULL\n          AND target_date >= eg.start_date\n          AND (eg.end_date IS NULL OR target_date <= eg.end_date)\n      )\n    )\n    AND NOT EXISTS (\n      SELECT 1\n      FROM public.daily_reports dr\n      WHERE dr.user_id = p.id\n        AND dr.report_date = target_date\n    )\n  ORDER BY t.name NULLS LAST, p.name;\nEND;\n$function$\n",
+      "definition_md5": "01999cae2ed48666fbdc9fdf06a45473",
+      "identity_arguments": "target_date date"
+    }
+  ],
+  "migration": "20260819100000",
+  "captured_at": "2026-08-19T09:24:24.108828+00:00",
+  "ledger_rows": [],
+  "queue_source_counts": {
+    "videos": 1026,
+    "daily_reports": 958,
+    "violation_cases": 27,
+    "exemption_requests": 175
+  },
+  "reconcile_migration": "20260819130300",
+  "profile_status_counts": [
+    {
+      "count": 70,
+      "membership_status": "active"
+    },
+    {
+      "count": 5,
+      "membership_status": "archived"
+    }
+  ]
+}

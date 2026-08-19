@@ -34,7 +34,7 @@ export type AlertSupabase = ReturnType<typeof createAdminClient>;
 
 export interface DashboardAlertScope {
   actorUserId: string;
-  role: Extract<UserRole, "owner" | "admin">;
+  role: Extract<UserRole, "owner" | "admin" | "member">;
   teamId: string | null;
   visibleUserIds: string[];
   activeVisibleUserIds?: string[];

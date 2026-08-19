@@ -42,7 +42,7 @@ test("parseLimit clamps list sizes", () => {
   assert.equal(parseLimit("abc", 20), 20);
 });
 
-test("全局产量配置只允许 owner 或带 manage_fulfillment 的管理员", () => {
+test("产量配置只允许带 manage_fulfillment 的角色", () => {
   const groupLeaderResponse = requireGlobalProductionActor({
     actor: { role: "admin", permissions: {} },
   } as never);
@@ -53,11 +53,12 @@ test("全局产量配置只允许 owner 或带 manage_fulfillment 的管理员",
   } as never), null);
   assert.equal(requireGlobalProductionActor({
     actor: { role: "owner", permissions: {} },
-  } as never), null);
+  } as never)?.status, 403);
 });
 
 test("产量管理入口按业务角色放行，不看原始 admin 字段", () => {
-  assert.equal(isProductionManagerRole("owner", {}), true);
+  assert.equal(isProductionManagerRole("owner", {}), false);
+  assert.equal(isProductionManagerRole("owner", { manage_fulfillment: true }), true);
   assert.equal(isProductionManagerRole("admin", { manage_fulfillment: true }), true);
   assert.equal(isProductionManagerRole("admin", {}), false);
   assert.equal(isProductionManagerRole("member", {}), false);

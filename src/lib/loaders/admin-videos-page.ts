@@ -139,7 +139,7 @@ export async function loadAdminVideosPageData({
           },
         })
       : null);
-  if (view === "trash" && (!resolvedScope || (resolvedScope.role !== "owner" && resolvedScope.role !== "admin"))) {
+  if (view === "trash" && (!resolvedScope || resolvedScope.permissions.manage_videos !== true)) {
     return emptyAdminVideosPageData(mode);
   }
 

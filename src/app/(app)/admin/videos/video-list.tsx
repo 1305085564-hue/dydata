@@ -268,8 +268,8 @@ export function VideoList({
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const hasTriggeredDeferredRef = useRef(false);
-  const canManageLifecycle =
-    permissionInfo.role === "owner" || permissionInfo.role === "admin";
+  const canManageLifecycle = permissionInfo.permissions.manage_videos === true;
+  const canPurge = permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true;
   const safeTeams = teams ?? [];
   const selectedTeamName = safeTeams.find((t) => t.id === teamId)?.name;
 
@@ -1117,7 +1117,7 @@ export function VideoList({
                           >
                             恢复
                           </button>
-                          {permissionInfo.role === "owner" &&
+                          {canPurge &&
                             (() => {
                               const eligible = isPurgeEligible(
                                 video.trashed_at ?? null,

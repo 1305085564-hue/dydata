@@ -67,8 +67,8 @@ function isNonEmptyString(value: unknown): value is string {
 
 function isVisibleAdminScope(
   scope: DataAccessScope | null,
-): scope is DataAccessScope & { role: "owner" | "admin" } {
-  return Boolean(scope && (scope.role === "owner" || scope.role === "admin"));
+): scope is DataAccessScope {
+  return Boolean(scope && (scope.role === "owner" || scope.role === "admin" || (scope.kind === "all" && scope.groupMode === true)));
 }
 
 function normalizeExecuteAction(value: unknown): SuggestionAction | null {
@@ -209,7 +209,7 @@ export async function buildMemberAiSuggestionResponse(
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  if (auth.actor.role !== "owner" && auth.actor.role !== "admin") {
+  if (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true) {
     return NextResponse.json({ error: "仅 owner 和负责人可使用该功能" }, { status: 403 });
   }
 

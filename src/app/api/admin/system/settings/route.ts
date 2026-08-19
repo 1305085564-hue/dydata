@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import {
   readJsonBody,
   requireAdminServiceClient,
-  requireOwnerOrTeamAdminRole,
+  requireSystemPermission,
 } from "../../fulfillment/_shared";
 
 export const FEISHU_FULFILLMENT_REMINDER_KEY = "feishu_fulfillment_reminder_enabled";
@@ -41,17 +41,17 @@ export function parseSystemSettingsPayload(
 
 type SettingsRouteDeps = {
   requireAdminServiceClient: typeof requireAdminServiceClient;
-  requireOwnerOrTeamAdminRole: typeof requireOwnerOrTeamAdminRole;
+  requireSystemPermission: typeof requireSystemPermission;
 };
 
 const defaultDeps: SettingsRouteDeps = {
   requireAdminServiceClient,
-  requireOwnerOrTeamAdminRole,
+  requireSystemPermission,
 };
 
 export async function buildAdminSystemSettingsGetResponse(deps: SettingsRouteDeps = defaultDeps) {
   const auth = await deps.requireAdminServiceClient();
-  const forbidden = deps.requireOwnerOrTeamAdminRole(auth);
+  const forbidden = deps.requireSystemPermission(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
 
@@ -81,7 +81,7 @@ export async function buildAdminSystemSettingsPostResponse(
   if ("response" in payload) return payload.response;
 
   const auth = await deps.requireAdminServiceClient();
-  const forbidden = deps.requireOwnerOrTeamAdminRole(auth);
+  const forbidden = deps.requireSystemPermission(auth);
   if (forbidden) return forbidden;
   if ("response" in auth) return auth.response;
 

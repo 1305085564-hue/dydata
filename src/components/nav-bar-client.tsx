@@ -60,6 +60,8 @@ interface NavBarClientProps {
   showAdmin: boolean;
   showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
+  canEnterGroupMode?: boolean;
+  groupModeActive?: boolean;
   accounts?: Account[];
 }
 
@@ -70,6 +72,8 @@ export function NavBarClient({
   showAdmin,
   showAiCopywriting = true,
   showSystemSettings = false,
+  canEnterGroupMode = false,
+  groupModeActive = false,
   accounts = [],
 }: NavBarClientProps) {
   const pathname = usePathname();
@@ -752,6 +756,8 @@ export function NavBarClient({
           onOpenChange={setSettingsOpen}
           profileName={name}
           profileRole={role}
+          canEnterGroupMode={canEnterGroupMode}
+          groupModeActive={groupModeActive}
           accounts={accounts}
           selectedAccountId={selectedAccountId}
         />

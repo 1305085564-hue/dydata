@@ -62,12 +62,12 @@ export const DEFAULT_PERMISSIONS_BY_ROLE: Record<UserRole, PermissionKey[]> = {
   owner: [...PERMISSION_KEYS],
   admin: [
     "view_analytics",
-    "export_data",
+    "view_conversion",
     "review_content",
     "manage_fulfillment",
     "manage_videos",
+    "review_violations",
     "use_ai_copy",
-    "use_ai_assist",
   ],
   member: [],
 };

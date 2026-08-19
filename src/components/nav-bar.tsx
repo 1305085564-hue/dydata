@@ -54,6 +54,8 @@ export async function NavBar() {
       showAdmin={navigation.showAdmin}
       showAiCopywriting={showAiCopywriting}
       showSystemSettings={showSystemSettings}
+      canEnterGroupMode={permissionInfo?.hasGroupOwnerQualification === true}
+      groupModeActive={permissionInfo?.groupMode === true}
       accounts={displayAccounts}
     />
   );

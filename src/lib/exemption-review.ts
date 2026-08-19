@@ -48,9 +48,11 @@ export async function applyExemptionGrantAtomically(input: {
   supabase: ExemptionRpcClient;
   draft: GrantDraft;
   replaceExisting: boolean;
+  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    const { data, error } = await input.supabase.rpc("apply_exemption_grant_atomically", {
+    const rpcName = input.groupModeTokenHash ? "apply_exemption_grant_atomically_v2" : "apply_exemption_grant_atomically";
+    const params = {
       p_user_id: input.draft.grant.user_id,
       p_grant_start_date: input.draft.grant.start_date,
       p_grant_end_date: input.draft.grant.end_date,
@@ -58,7 +60,9 @@ export async function applyExemptionGrantAtomically(input: {
       p_exemption_category: input.draft.grant.exemption_category,
       p_reason: input.draft.profile.exempt_reason,
       p_replace_existing: input.replaceExisting,
-    });
+      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
+    };
+    const { data, error } = await input.supabase.rpc(rpcName, params);
 
     return error ? toFailure(error) : { ok: true, data };
   } catch (error) {
@@ -69,10 +73,13 @@ export async function applyExemptionGrantAtomically(input: {
 export async function clearExemptionGrantAtomically(input: {
   supabase: ExemptionRpcClient;
   userId: string;
+  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    const { data, error } = await input.supabase.rpc("clear_exemption_grant_atomically", {
+    const rpcName = input.groupModeTokenHash ? "clear_exemption_grant_atomically_v2" : "clear_exemption_grant_atomically";
+    const { data, error } = await input.supabase.rpc(rpcName, {
       p_user_id: input.userId,
+      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 
     return error ? toFailure(error) : { ok: true, data };
@@ -85,11 +92,14 @@ export async function reviewExemptionRequestAtomically(input: {
   supabase: ExemptionRpcClient;
   requestId: string;
   decision: ReviewDecision;
+  groupModeTokenHash?: string;
 }): Promise<ExemptionRpcResult> {
   try {
-    const { data, error } = await input.supabase.rpc("review_exemption_request_atomically", {
+    const rpcName = input.groupModeTokenHash ? "review_exemption_request_atomically_v2" : "review_exemption_request_atomically";
+    const { data, error } = await input.supabase.rpc(rpcName, {
       p_request_id: input.requestId,
       p_decision: input.decision,
+      ...(input.groupModeTokenHash ? { p_group_mode_token_hash: input.groupModeTokenHash } : {}),
     });
 
     return error ? toFailure(error) : { ok: true, data };

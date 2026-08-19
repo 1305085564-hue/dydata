@@ -26,6 +26,7 @@ export const DEFAULT_PERMISSIONS_BY_COMPANY_ROLE: Record<CompanyRole, readonly P
     "manage_videos",
     "manage_members",
     "review_violations",
+    "manage_system",
     "use_ai_copy",
     "use_ai_assist",
   ],
@@ -54,6 +55,22 @@ export function resolveCompanyRole(value: unknown): CompanyRole | null {
 
 export function isCompanyRole(value: unknown): value is CompanyRole {
   return value === "member" || value === "admin" || value === "company_owner";
+}
+
+export function buildCompanyRoleProfilePatch(role: "member" | "admin") {
+  return {
+    role,
+    company_role: role,
+    ...(role === "member" ? { permissions: {} } : {}),
+  } as const;
+}
+
+/**
+ * Old UI and service contracts only understand member/admin/owner. Never emit
+ * owner here: that value still triggers legacy group-wide bypasses.
+ */
+export function runtimeRoleForCompanyRole(role: CompanyRole): UserRole {
+  return role === "member" ? "member" : "admin";
 }
 
 export function fixedPermissionsForRole(

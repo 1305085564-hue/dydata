@@ -6,11 +6,10 @@ import type { CompanyRole, PermissionKey, Permissions, UserRole } from "@/types"
  * `hasCompanyPermission`, which does not trust the legacy JSON column.
  */
 export function hasPermission(
-  role: UserRole | undefined,
+  _role: UserRole | undefined,
   permissions: Permissions,
   key: PermissionKey,
 ): boolean {
-  if (role === "owner") return true;
   return permissions[key] === true;
 }
 
@@ -31,10 +30,9 @@ export function fixedPermissions(
 }
 
 export function hasAnyPermission(
-  role: import("@/types").UserRole | undefined,
+  _role: import("@/types").UserRole | undefined,
   permissions: import("@/types").Permissions,
 ): boolean {
-  if (role === "owner") return true;
   return Object.values(permissions).some((value) => value === true);
 }
 

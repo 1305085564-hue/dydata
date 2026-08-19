@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveDataScope } from "@/lib/data-access-scope";
 import { fixedPermissions, hasCompanyPermission } from "@/lib/permission-utils";
 import { toBoolean, toObject, toTrimmedString } from "@/lib/type-guards";
-import { resolveCompanyRole } from "@/lib/company-permissions";
+import { resolveCompanyRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
+import { resolveGroupModeForUser } from "@/lib/group-mode-server";
 import type { CompanyRole, DataScope, PermissionKey, Permissions, UserRole } from "@/types";
 
 export { toBoolean, toObject, toTrimmedString };
@@ -16,6 +17,7 @@ export type AdminActor = {
   teamId?: string | null;
   companyRole?: CompanyRole;
   groupMode?: boolean;
+  groupModeTokenHash?: string;
   membershipStatus?: "active" | "archived";
 };
 
@@ -93,10 +95,12 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     return { error: "无权限", status: 403 as const };
   }
 
-  const role = (companyRole === "company_owner" ? "owner" : companyRole) as UserRole;
-  const permissions = fixedPermissionsForActor(companyRole, profile.permissions);
+  const groupModeState = await resolveGroupModeForUser(user.id);
+  const groupMode = groupModeState.active;
+  const role = runtimeRoleForCompanyRole(companyRole);
+  const permissions = fixedPermissionsForActor(companyRole, profile.permissions, groupMode);
   const allowed = options.requiredPermission
-    ? hasCompanyPermission(companyRole, options.requiredPermission)
+    ? hasCompanyPermission(companyRole, options.requiredPermission, groupMode)
     : Object.values(permissions).some((value) => value === true);
 
   if (!allowed) {
@@ -115,10 +119,12 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
         profile.data_scope as DataScope | null | undefined,
         permissions,
         companyRole,
+        groupMode,
       ),
       teamId: profile.team_id ?? null,
       companyRole,
-      groupMode: false,
+      groupMode,
+      groupModeTokenHash: groupModeState.tokenHash ?? undefined,
       membershipStatus: "active",
     },
   };
@@ -127,8 +133,9 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
 function fixedPermissionsForActor(
   companyRole: CompanyRole,
   legacyPermissions: Permissions | null | undefined,
+  groupMode: boolean,
 ) {
-  return fixedPermissions(companyRole, legacyPermissions, false);
+  return fixedPermissions(companyRole, legacyPermissions, groupMode);
 }
 
 export function parseDate(value: string | null) {

@@ -33,7 +33,7 @@ function isAuthError(result: AdminActorResult): result is Extract<AdminActorResu
 }
 
 function toDashboardScope(scope: DataAccessScope): DashboardAlertScope | null {
-  if (scope.role !== "owner" && scope.role !== "admin") {
+  if (scope.role !== "owner" && scope.role !== "admin" && !(scope.kind === "all" && scope.groupMode === true)) {
     return null;
   }
 
@@ -208,6 +208,8 @@ export async function buildExecuteDashboardAlertResponse(
         actorId: auth.actor.userId,
         actorRole: auth.actor.role,
         actorPermissions: auth.actor.permissions,
+        actorTeamId: auth.actor.teamId,
+        groupMode: auth.actor.groupMode,
       },
     });
 

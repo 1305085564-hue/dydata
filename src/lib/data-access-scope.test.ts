@@ -32,13 +32,18 @@ function makeProfile(overrides: Partial<ScopeProfileInput> = {}): ScopeProfileIn
  * `from("profiles").select(...)` chain.  Supports `.eq("team_id", ...)`
  * by filtering rows whose `team_id` matches.
  */
-function makeFakeSupabase(rows: Array<{ id: string; team_id?: string | null; membership_status?: string | null }>) {
+function makeFakeSupabase(rows: Array<{
+  id: string;
+  team_id?: string | null;
+  membership_status?: string | null;
+  archive_snapshot?: { team_id?: string | null } | null;
+}>) {
   function builder() {
     let filtered = [...rows];
     const chain: Record<string, unknown> = {
       select: () => chain,
-      eq: (_col: string, val: string) => {
-        filtered = filtered.filter((r) => r.team_id === val);
+      eq: (col: string, val: string) => {
+        filtered = filtered.filter((r) => r[col as keyof typeof r] === val);
         return chain;
       },
       single: () => Promise.resolve({ data: filtered[0] ?? null, error: null }),
@@ -55,10 +60,11 @@ function makeFakeSupabase(rows: Array<{ id: string; team_id?: string | null; mem
 // buildDataAccessScope — self scope
 // ---------------------------------------------------------------------------
 
-test("inferDataScope: owner/admin/member fallback mapping is stable", () => {
-  assert.equal(inferDataScope("owner", {}), "all");
+test("inferDataScope: 旧 owner 按公司所有者处理，只有集团模式是全局范围", () => {
+  assert.equal(inferDataScope("owner", {}), "team");
   assert.equal(inferDataScope("admin", {}), "team");
   assert.equal(inferDataScope("member", {}), "self");
+  assert.equal(inferDataScope("owner", {}, "company_owner", true), "all");
 });
 
 test("buildDataAccessScope: self scope returns only the user's own id", async () => {
@@ -75,8 +81,8 @@ test("buildDataAccessScope: self scope returns only the user's own id", async ()
 // buildDataAccessScope — team scope
 // ---------------------------------------------------------------------------
 
-test("buildDataAccessScope: team scope returns all members of the same team", async () => {
-  const profile = makeProfile({ id: "u1", data_scope: "team", team_id: "team-A" });
+test("buildDataAccessScope: admin returns all members of the same company", async () => {
+  const profile = makeProfile({ id: "u1", role: "admin", data_scope: "all", team_id: "team-A" });
   const supabase = makeFakeSupabase([
     { id: "u1", team_id: "team-A" },
     { id: "u2", team_id: "team-A" },
@@ -93,8 +99,8 @@ test("buildDataAccessScope: team scope returns all members of the same team", as
 // buildDataAccessScope — all scope
 // ---------------------------------------------------------------------------
 
-test("buildDataAccessScope: all scope returns every user", async () => {
-  const profile = makeProfile({ id: "u1", data_scope: "all" });
+test("buildDataAccessScope: active group mode returns every user", async () => {
+  const profile = makeProfile({ id: "u1", role: "owner", data_scope: "self", group_mode: true });
   const supabase = makeFakeSupabase([
     { id: "u1" },
     { id: "u2" },
@@ -124,7 +130,7 @@ test("buildDataAccessScope: returns null when profile is null", async () => {
 // ---------------------------------------------------------------------------
 
 test("buildDataAccessScope: activeVisibleUserIds excludes non-active members", async () => {
-  const profile = makeProfile({ id: "u1", data_scope: "all" });
+  const profile = makeProfile({ id: "u1", role: "owner", group_mode: true });
   const supabase = makeFakeSupabase([
     { id: "u1", membership_status: "active" },
     { id: "u2", membership_status: "archived" },
@@ -136,7 +142,32 @@ test("buildDataAccessScope: activeVisibleUserIds excludes non-active members", a
   assert.deepEqual(scope.activeVisibleUserIds!.sort(), ["u1", "u3"]);
 });
 
-test("buildDataAccessScope: owner 即使残留 team data_scope 也保持全局范围", async () => {
+test("buildDataAccessScope: 历史范围保留归档前属于本公司的成员", async () => {
+  const profile = makeProfile({ id: "owner-1", role: "owner", team_id: "company-1" });
+  const supabase = makeFakeSupabase([
+    { id: "owner-1", team_id: "company-1", membership_status: "active" },
+    {
+      id: "archived-1",
+      team_id: null,
+      membership_status: "archived",
+      archive_snapshot: { team_id: "company-1" },
+    },
+    {
+      id: "archived-other-company",
+      team_id: null,
+      membership_status: "archived",
+      archive_snapshot: { team_id: "company-2" },
+    },
+  ]);
+
+  const scope = await buildDataAccessScope(supabase as never, "owner-1", { profile });
+
+  assert.ok(scope);
+  assert.deepEqual(scope.visibleUserIds.sort(), ["archived-1", "owner-1"]);
+  assert.deepEqual(scope.activeVisibleUserIds, ["owner-1"]);
+});
+
+test("buildDataAccessScope: 迁移前的 owner 也只能落到本公司范围", async () => {
   const profile = makeProfile({
     id: "owner-1",
     role: "owner",
@@ -151,8 +182,8 @@ test("buildDataAccessScope: owner 即使残留 team data_scope 也保持全局�
   const scope = await buildDataAccessScope(supabase as never, "owner-1", { profile });
 
   assert.ok(scope);
-  assert.equal(scope.kind, "all");
-  assert.deepEqual(scope.activeVisibleUserIds!.sort(), ["member-other-team", "owner-1"]);
+  assert.equal(scope.kind, "team");
+  assert.deepEqual(scope.activeVisibleUserIds, ["owner-1"]);
 });
 
 // ---------------------------------------------------------------------------

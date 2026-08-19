@@ -84,7 +84,9 @@ async function ModulesDataContainer({
     <AdminModulesContentV2
       currentUserId={data.currentUserId}
       currentUserRole={data.perm.role}
-      currentUserBusinessRole={data.perm.role}
+      currentUserBusinessRole={data.perm.companyRole === "company_owner" ? "owner" : data.perm.role}
+      currentUserCompanyRole={data.perm.companyRole}
+      currentUserGroupMode={data.perm.groupMode}
       currentUserPermissions={data.perm.permissions}
       permissionManagerCapabilities={data.permissionManagerCapabilities}
       allProfiles={data.allProfiles}

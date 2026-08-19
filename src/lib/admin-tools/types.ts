@@ -4,6 +4,8 @@ export type ToolContext = {
   actorId: string;
   actorRole: UserRole;
   actorPermissions: Permissions;
+  actorTeamId?: string | null;
+  groupMode?: boolean;
 };
 
 export type ToolExecutionInput = {

@@ -26,17 +26,10 @@ export type AiChannelRow = {
 
 type AdminAuthResult = Awaited<ReturnType<typeof requireAdminActor>>;
 
-export async function requireOwnerActor() {
-  const auth = await requireAdminActor();
-  if ("error" in auth) {
-    return auth;
-  }
-
-  if (auth.actor.role !== "owner") {
-    return { error: "仅 owner 可操作 AI 渠道", status: 403 as const };
-  }
-
-  return auth;
+export async function requireSystemActor(
+  deps: { requireAdminActor: typeof requireAdminActor } = { requireAdminActor },
+) {
+  return deps.requireAdminActor({ requiredPermission: "manage_system" });
 }
 
 
@@ -211,4 +204,4 @@ export function toAdminResponseError(error: unknown, fallbackMessage: string) {
   return fallbackMessage;
 }
 
-export type OwnerAuth = Exclude<AdminAuthResult, { error: string; status: number }>;
+export type SystemAuth = Exclude<AdminAuthResult, { error: string; status: number }>;

@@ -9,15 +9,61 @@ import {
   type TeamManagementProfile,
 } from "./team-management";
 
-test("owner 可以查看并编辑所有团队成员", () => {
-  const access = resolveTeamManagementAccess({ id: "owner-1", name: "阿禅", role: "owner" });
+test("groupMode=true 可以查看并编辑所有团队成员", () => {
+  const access = resolveTeamManagementAccess({ id: "owner-1", name: "阿禅", role: "admin", company_role: "company_owner" }, true);
   assert.equal(access.level, "owner");
   assert.equal(access.canView, true);
   assert.equal(access.canEditMembers, true);
   assert.equal(access.teamIds, null);
 });
 
-test("admin 只能查看并编辑自己的团队", () => {
+test("company_owner 在 groupMode=false 时只能查看并编辑自己公司的团队", () => {
+  const access = resolveTeamManagementAccess({
+    id: "owner-1",
+    name: "阿禅",
+    role: "admin",
+    company_role: "company_owner",
+    team_id: "team-1",
+  }, false);
+  assert.equal(access.level, "admin");
+  assert.equal(access.canView, true);
+  assert.equal(access.canEditMembers, true);
+  assert.deepEqual(access.teamIds, ["team-1"]);
+});
+
+test("company_owner 不能仅因 role=owner 获得集团范围", () => {
+  const access = resolveTeamManagementAccess({
+    id: "owner-1",
+    name: "阿禅",
+    role: "owner",
+    team_id: "team-1",
+  }, false);
+  assert.equal(access.canView, true);
+  assert.equal(access.canEditMembers, true);
+  assert.deepEqual(access.teamIds, ["team-1"]);
+});
+
+test("groupMode 关闭或过期后回到当前公司范围", () => {
+  const beforeAccess = resolveTeamManagementAccess({
+    id: "owner-1",
+    name: "阿禅",
+    role: "admin",
+    company_role: "company_owner",
+    team_id: "team-1",
+  }, true);
+  assert.equal(beforeAccess.teamIds, null);
+
+  const afterAccess = resolveTeamManagementAccess({
+    id: "owner-1",
+    name: "阿禅",
+    role: "admin",
+    company_role: "company_owner",
+    team_id: "team-1",
+  }, false);
+  assert.deepEqual(afterAccess.teamIds, ["team-1"]);
+});
+
+test("admin 只能查看并编辑自己的团队，不能跨公司", () => {
   const access = resolveTeamManagementAccess({
     id: "admin-1",
     name: "十八",
@@ -30,9 +76,10 @@ test("admin 只能查看并编辑自己的团队", () => {
   assert.deepEqual(access.teamIds, ["team-1"]);
 });
 
-test("member 没有团队时不可见", () => {
+test("member 没有团队时不可见，且无法编辑成员", () => {
   const access = resolveTeamManagementAccess({ id: "member-1", name: "成员甲", role: "member" });
   assert.equal(access.canView, false);
+  assert.equal(access.canEditMembers, false);
   assert.deepEqual(access.teamIds, []);
 });
 

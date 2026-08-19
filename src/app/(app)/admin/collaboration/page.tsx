@@ -56,10 +56,7 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
             year={year}
             month={month}
             tab={tab}
-            isOwnerOrTeamAdmin={
-              permissionInfo.role === "owner" ||
-              permissionInfo.role === "admin"
-            }
+            isOwnerOrTeamAdmin={permissionInfo.permissions.view_analytics === true}
           />
         </Suspense>
       </div>

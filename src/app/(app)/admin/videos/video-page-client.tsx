@@ -47,7 +47,7 @@ export function VideoPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
 
-  const canAccessTrash = permissionInfo.role === "owner" || permissionInfo.role === "admin";
+  const canAccessTrash = permissionInfo.permissions.manage_videos === true;
 
   useEffect(() => {
     if (initialView === "trash" && !canAccessTrash) {

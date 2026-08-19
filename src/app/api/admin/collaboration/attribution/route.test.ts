@@ -21,7 +21,7 @@ function request() {
   });
 }
 
-function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?: string[]) {
+function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?: string[], actorOverrides: Record<string, unknown> = {}) {
   let updateCalled = false;
   return {
     value: {
@@ -33,6 +33,7 @@ function deps(reportOwnerId: string, videoUpdated = false, activeVisibleUserIds?
           permissions: {},
           name: "老板",
           dataScope: "all" as const,
+          ...actorOverrides,
         },
       }),
       buildPermissionContextForActor: async () => ({
@@ -87,4 +88,15 @@ test("补录接口保留归档成员历史可见，但拒绝继续修改其日�
   assert.equal(response.status, 403);
   assert.deepEqual(await response.json(), { ok: false, error: "不能修改已归档或当前权限范围外的日报" });
   assert.equal(injected.wasUpdateCalled(), false);
+});
+
+test("集团模式下 runtime member 可以补录当前范围内的协作归属", async () => {
+  const injected = deps(targetId, false, undefined, {
+    role: "member",
+    groupMode: true,
+  });
+  const response = await buildAttributionResponse(request(), injected.value);
+
+  assert.equal(response.status, 200);
+  assert.equal(injected.wasUpdateCalled(), true);
 });

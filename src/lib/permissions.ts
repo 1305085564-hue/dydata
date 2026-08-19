@@ -3,7 +3,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { resolveDataScope } from "@/lib/data-access-scope";
 import { fixedPermissions, hasAnyPermission, hasPermission } from "@/lib/permission-utils";
-import { resolveCompanyRole } from "@/lib/company-permissions";
+import { resolveCompanyRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
+import { resolveGroupModeForUser } from "@/lib/group-mode-server";
 import type { CompanyRole, DataScope, Permissions, UserRole } from "@/types";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 
@@ -17,6 +18,8 @@ export interface UserPermissionInfo {
   companyRole?: CompanyRole;
   membershipStatus?: "active" | "archived";
   groupMode?: boolean;
+  groupModeTokenHash?: string;
+  hasGroupOwnerQualification?: boolean;
 }
 
 function isMissingColumnError(error: { message?: string; code?: string } | null | undefined) {
@@ -48,7 +51,7 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
   const adminSupabase = createAdminClient();
   const primary = await adminSupabase
     .from("profiles")
-    .select("id, name, role, permissions, data_scope, membership_status, team_id")
+    .select("id, name, role, company_role, permissions, data_scope, membership_status, team_id")
     .eq("id", user.id)
     .single();
 
@@ -91,8 +94,25 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
 
   const companyRole = resolveCompanyRole(profile.company_role ?? profile.role);
   if (!companyRole) return null;
-  const role = companyRole === "company_owner" ? "owner" : companyRole;
-  const permissions = fixedPermissions(companyRole, profile.permissions, false);
+  if (profile.membership_status === "archived") return null;
+  const groupModeState = await resolveGroupModeForUser(user.id, adminSupabase);
+  const groupMode = groupModeState.active;
+  let hasGroupOwnerQualification = groupMode;
+  if (!hasGroupOwnerQualification) {
+    try {
+      const qualification = await adminSupabase
+        .from("group_permission_qualifications")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .is("revoked_at", null)
+        .maybeSingle();
+      hasGroupOwnerQualification = !qualification.error && Boolean(qualification.data);
+    } catch {
+      hasGroupOwnerQualification = false;
+    }
+  }
+  const role = runtimeRoleForCompanyRole(companyRole);
+  const permissions = fixedPermissions(companyRole, profile.permissions, groupMode);
 
   return {
     userId: user.id,
@@ -103,7 +123,9 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
     teamId: profile.team_id ?? null,
     companyRole,
     membershipStatus: profile.membership_status === "archived" ? "archived" : "active",
-    groupMode: false,
+    groupMode,
+    groupModeTokenHash: groupModeState.tokenHash ?? undefined,
+    hasGroupOwnerQualification,
   };
 });
 

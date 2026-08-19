@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useTransition } from "react";
-import { X, User, Shield, Check, Plus, Settings2, LogOut } from "lucide-react";
+import { X, User, Shield, Check, Plus, Settings2, LogOut, Building2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import { feedbackToast } from "@/components/ui/feedback-toast";
@@ -27,12 +28,57 @@ interface PremiumSettingsModalProps {
   onOpenChange: (open: boolean) => void;
   profileName: string;
   profileRole: string;
+  canEnterGroupMode?: boolean;
+  groupModeActive?: boolean;
   accounts: Account[];
   selectedAccountId: string;
 }
 
+export interface GroupModeSettingsControlProps {
+  canEnterGroupMode: boolean;
+  isGroupModeActive: boolean;
+  pending: boolean;
+  onChange: () => void | Promise<void>;
+}
+
+export function GroupModeSettingsControl({
+  canEnterGroupMode,
+  isGroupModeActive,
+  pending,
+  onChange,
+}: GroupModeSettingsControlProps) {
+  if (!canEnterGroupMode) return null;
+
+  return (
+    <div
+      data-testid="group-mode-settings-control"
+      className="flex items-center justify-between gap-4 border-b border-zinc-300/70 pb-4 dark:border-zinc-800"
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Building2 className="size-4 shrink-0 text-[#5F82A8]" />
+        <div>
+          <span className="block text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
+            {isGroupModeActive ? "集团模式" : "公司模式"}
+          </span>
+          <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4]">
+            {isGroupModeActive ? "30 分钟内可管理集团范围" : "当前只管理所在公司"}
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onChange}
+        disabled={pending}
+        className="shrink-0 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+      >
+        {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
+      </button>
+    </div>
+  );
+}
+
 function roleLabel(role: string) {
-  if (role === "owner") return "创始人";
+  if (role === "owner" || role === "company_owner") return "公司所有者";
   if (role === "admin") return "管理员";
   return "成员";
 }
@@ -42,9 +88,12 @@ export function PremiumSettingsModal({
   onOpenChange,
   profileName,
   profileRole,
+  canEnterGroupMode = false,
+  groupModeActive = false,
   accounts,
   selectedAccountId,
 }: PremiumSettingsModalProps) {
+  const router = useRouter();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [activeTab, setActiveTab] = useState<"profile" | "accounts" | "system">(
@@ -53,6 +102,8 @@ export function PremiumSettingsModal({
   const [editingName, setEditingName] = useState(profileName);
   const [isPending, startTransition] = useTransition();
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isGroupModeActive, setIsGroupModeActive] = useState(groupModeActive);
+  const [groupModePending, setGroupModePending] = useState(false);
 
   // Accounts state management inside setting
   const [newAccName, setNewAccName] = useState("");
@@ -115,6 +166,20 @@ export function PremiumSettingsModal({
     };
   }, [onOpenChange, open]);
 
+  useEffect(() => {
+    if (!open || !canEnterGroupMode) return;
+    let active = true;
+    void fetch("/api/group-mode/status", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        if (active && payload) setIsGroupModeActive(payload.active === true);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [canEnterGroupMode, open]);
+
   if (!open) return null;
 
   const handleProfileSubmit = (e: React.FormEvent) => {
@@ -146,6 +211,29 @@ export function PremiumSettingsModal({
         }, 1200);
       }
     });
+  };
+
+  const handleGroupModeChange = async () => {
+    if (groupModePending) return;
+    setGroupModePending(true);
+    try {
+      const response = await fetch(
+        isGroupModeActive ? "/api/group-mode/exit" : "/api/group-mode/enter",
+        { method: "POST" },
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        feedbackToast.error(typeof payload.error === "string" ? payload.error : "集团模式切换失败");
+        return;
+      }
+      setIsGroupModeActive(!isGroupModeActive);
+      feedbackToast.success(isGroupModeActive ? "已退出集团模式" : "已进入集团模式");
+      router.refresh();
+    } catch {
+      feedbackToast.error("集团模式切换失败");
+    } finally {
+      setGroupModePending(false);
+    }
   };
 
   const handleAddAccount = () => {
@@ -611,6 +699,13 @@ export function PremiumSettingsModal({
                 </div>
 
                 <div className="space-y-4">
+                  <GroupModeSettingsControl
+                    canEnterGroupMode={canEnterGroupMode}
+                    isGroupModeActive={isGroupModeActive}
+                    pending={groupModePending}
+                    onChange={handleGroupModeChange}
+                  />
+
                   {/* Cron Remind Setting */}
                   <div className="flex items-center justify-between gap-4 p-3 rounded-xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20">
                     <div>

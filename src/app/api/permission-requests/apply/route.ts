@@ -28,6 +28,7 @@ function toTrimmedString(value: unknown): string | null {
 type AdminCandidateRow = {
   id: string;
   role: UserRole;
+  company_role?: "member" | "admin" | "company_owner" | null;
   permissions: Permissions | null;
   team_id: string | null;
   membership_status?: string | null;
@@ -72,10 +73,19 @@ export async function buildPermissionRequestApplyResponse(
   }
   const requesterName = toTrimmedString(requesterProfile.name) || "未知用户";
 
-  const { data: adminProfiles, error: adminError } = await admin
+  let { data: adminProfiles, error: adminError } = await admin
     .from("profiles")
-    .select("id, role, permissions, team_id, membership_status")
+    .select("id, role, company_role, permissions, team_id, membership_status")
     .in("role", ["owner", "admin"]);
+
+  if (adminError?.message?.includes("company_role")) {
+    const legacy = await admin
+      .from("profiles")
+      .select("id, role, permissions, team_id, membership_status")
+      .in("role", ["owner", "admin"]);
+    adminProfiles = legacy.data as typeof adminProfiles;
+    adminError = legacy.error;
+  }
 
   if (adminError) {
     return NextResponse.json({ error: "查询管理员失败，请稍后重试" }, { status: 500 });
@@ -85,10 +95,13 @@ export async function buildPermissionRequestApplyResponse(
     .filter((profile) => {
       if (profile.id === user.id) return false;
       if (profile.membership_status === "archived") return false;
-      if (profile.role === "owner") return true;
-      return profile.role === "admin"
-        && profile.team_id === requesterProfile.team_id
-        && profile.permissions?.manage_members === true;
+      return profile.team_id === requesterProfile.team_id
+        && (profile.company_role === "company_owner"
+          || profile.role === "owner"
+          || profile.role === "admin")
+        && (profile.company_role === "company_owner"
+          || profile.role === "owner"
+          || profile.permissions?.manage_members === true)
     })
     .map((profile) => profile.id);
 

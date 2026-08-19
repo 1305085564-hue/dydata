@@ -61,7 +61,9 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
         supabase: {} as never,
         actor: {
           userId: "owner-1",
-          role: "owner" as const,
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
           permissions: { manage_videos: true },
           name: "阿禅",
           dataScope: "all" as const,
@@ -93,7 +95,7 @@ test("videos list route 显式走 full 取数并回传 Server-Timing", async () 
   assert.match(response.headers.get("server-timing") ?? "", /total;dur=/);
 });
 
-test("trash 仅允许 owner/team_admin，并把 trash 传给加载器", async () => {
+test("trash 只按视频管理权限放行，并把 trash 传给加载器", async () => {
   const adminClient = {} as never;
   let receivedView: unknown = null;
   const base = {
@@ -113,8 +115,78 @@ test("trash 仅允许 owner/team_admin，并把 trash 传给加载器", async ()
 
   const allowed = await buildAdminVideosListResponse(buildRequest("https://dydata.cc/api/admin/videos/list?view=trash"), {
     ...base,
-    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "owner", permissions: {}, name: null } }),
+    requireAdminActor: async () => ({ supabase: {} as never, actor: { userId: "u1", role: "admin", permissions: { manage_videos: true }, name: null, teamId: "company-1" } }),
   } as never);
   assert.equal(allowed.status, 200);
   assert.equal(receivedView, "trash");
+});
+
+test("集团模式下 runtime member 也能查看回收站", async () => {
+  const response = await buildAdminVideosListResponse(
+    buildRequest("https://dydata.cc/api/admin/videos/list?view=trash&scope=company"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "group-member-1",
+          role: "member" as const,
+          companyRole: "member" as const,
+          groupMode: true,
+          permissions: { manage_videos: true },
+          name: "集团成员",
+          dataScope: "all" as const,
+          teamId: "company-1",
+        },
+      }),
+      getTeamOptions: async () => [{ id: "company-1" }, { id: "company-2" }],
+      getCurrentPermissionContext: async () => ({
+        permissionInfo: { userId: "group-member-1" },
+        scope: { kind: "all", visibleUserIds: ["group-member-1"] },
+      }),
+      createAdminClient: () => ({}) as never,
+      loadAdminVideosFullData: async () => buildVideosPayload(),
+    } as never,
+  );
+
+  assert.equal(response.status, 200);
+});
+
+test("集团模式使用集团视角并且只在此时加载全部公司", async () => {
+  let teamOptionCalls = 0;
+  let receivedOptions: unknown = null;
+  const response = await buildAdminVideosListResponse(
+    buildRequest("https://dydata.cc/api/admin/videos/list?view=all&scope=company"),
+    {
+      requireAdminActor: async () => ({
+        supabase: {} as never,
+        actor: {
+          userId: "group-owner-1",
+          role: "admin" as const,
+          companyRole: "company_owner" as const,
+          groupMode: true,
+          permissions: { manage_videos: true },
+          name: "集团所有者",
+          dataScope: "all" as const,
+          teamId: "company-1",
+        },
+      }),
+      getTeamOptions: async () => {
+        teamOptionCalls += 1;
+        return [{ id: "company-1", name: "公司一" }, { id: "company-2", name: "公司二" }];
+      },
+      getCurrentPermissionContext: async (_actor, options) => {
+        receivedOptions = options;
+        return {
+          permissionInfo: { userId: "group-owner-1" },
+          scope: { kind: "all", visibleUserIds: ["group-owner-1", "member-2"] },
+        } as never;
+      },
+      createAdminClient: () => ({}) as never,
+      loadAdminVideosFullData: async () => buildVideosPayload(),
+    },
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(teamOptionCalls, 1);
+  assert.deepEqual(receivedOptions, { perspective: "company", teamId: null });
 });

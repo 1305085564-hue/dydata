@@ -7,6 +7,8 @@ import {
   buildVideoReviewThresholdsPatchResponse,
   parseThresholdsPayload,
 } from "./route";
+import { requireSystemPermission } from "../../fulfillment/_shared";
+import { fixedPermissionsForRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
 
 const thresholds = {
   bounce_rate_2s: 30,
@@ -15,6 +17,25 @@ const thresholds = {
   completion_rate: 5,
   play_count: 1000,
 };
+
+function thresholdsAuth(companyRole: "member" | "admin" | "company_owner") {
+  return {
+    supabase: {
+      from: () => ({
+        upsert: async () => ({ error: null }),
+        insert: async () => ({ error: null }),
+      }),
+    },
+    actor: {
+      userId: `${companyRole}-1`,
+      role: runtimeRoleForCompanyRole(companyRole),
+      companyRole,
+      permissions: fixedPermissionsForRole(companyRole),
+      name: null,
+      dataScope: companyRole === "member" ? "self" : "team",
+    },
+  } as never;
+}
 
 test("阈值接口只接受完整且合法的配置", () => {
   const invalid = parseThresholdsPayload({ ...thresholds, completion_rate: 120 });
@@ -37,7 +58,7 @@ test("阈值 GET 允许普通登录用户读取当前配置", async () => {
       }),
     }) as never,
     requireAdminServiceClient: (() => Promise.resolve({})) as never,
-    requireOwnerOrTeamAdminRole: (() => null) as never,
+    requireSystemPermission: (() => null) as never,
   });
 
   assert.equal(response.status, 200);
@@ -55,7 +76,7 @@ test("阈值 GET 在配置为空时返回默认值", async () => {
       }),
     }) as never,
     requireAdminServiceClient: (() => Promise.resolve({})) as never,
-    requireOwnerOrTeamAdminRole: (() => null) as never,
+    requireSystemPermission: (() => null) as never,
   });
 
   assert.equal(response.status, 200);
@@ -87,7 +108,7 @@ test("阈值 PATCH 写配置并记录审计", async () => {
         },
         actor: { userId: "owner-1", role: "owner" },
       }) as never,
-      requireOwnerOrTeamAdminRole: (() => null) as never,
+      requireSystemPermission: (() => null) as never,
     },
   );
 
@@ -99,7 +120,7 @@ test("阈值 PATCH 写配置并记录审计", async () => {
   assert.equal(writes[1]?.payload.action, "video_review_thresholds_updated");
 });
 
-test("阈值 PATCH 拒绝 group_leader 等非 owner/team_admin 角色", async () => {
+test("阈值 PATCH 拒绝没有集团系统权限的管理员", async () => {
   const response = await buildVideoReviewThresholdsPatchResponse(
     new Request("https://dydata.cc/api/admin/settings/thresholds", {
       method: "PATCH",
@@ -112,10 +133,34 @@ test("阈值 PATCH 拒绝 group_leader 等非 owner/team_admin 角色", async ()
         supabase: {} as never,
         actor: { userId: "leader-1", role: "admin" },
       }) as never,
-      requireOwnerOrTeamAdminRole: () => NextResponse.json({ error: "无权限" }, { status: 403 }),
+      requireSystemPermission: () => NextResponse.json({ error: "无权限" }, { status: 403 }),
     },
   );
 
   assert.ok(response);
   assert.equal(response.status, 403);
+});
+
+test("阈值 PATCH 只允许公司所有者，管理员和成员收到真实的 403 响应", async () => {
+  for (const [companyRole, expectedStatus] of [
+    ["company_owner", 200],
+    ["admin", 403],
+    ["member", 403],
+  ] as const) {
+    const response = await buildVideoReviewThresholdsPatchResponse(
+      new Request("https://dydata.cc/api/admin/settings/thresholds", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(thresholds),
+      }),
+      {
+        createClient: (() => Promise.resolve({})) as never,
+        requireAdminServiceClient: async () => thresholdsAuth(companyRole),
+        requireSystemPermission,
+      },
+    );
+
+    assert.ok(response);
+    assert.equal(response.status, expectedStatus, companyRole);
+  }
 });

@@ -1,4 +1,4 @@
-import type { Permissions, UserRole } from "@/types";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 export type MembershipStatus = "active" | "archived";
 
@@ -9,6 +9,7 @@ export interface MembershipQueryResult<T> {
 
 export interface MemberArchiveSnapshot {
   role: UserRole;
+  company_role?: CompanyRole | null;
   permissions: Permissions;
   team_id: string | null;
   team_name?: string | null;
@@ -17,9 +18,11 @@ export interface MemberArchiveSnapshot {
 export interface MemberLifecycleProfile {
   id: string;
   role: UserRole;
+  company_role?: CompanyRole | null;
   permissions: Permissions | null;
   team_id: string | null;
   membership_status?: MembershipStatus | string | null;
+  archive_snapshot?: { team_id?: string | null } | null;
 }
 
 export interface ArchiveMemberProfilePatch {
@@ -29,6 +32,7 @@ export interface ArchiveMemberProfilePatch {
   archive_reason: string;
   archive_snapshot: MemberArchiveSnapshot;
   role: "member";
+  company_role: "member";
   permissions: Permissions;
   team_id: null;
 }
@@ -40,6 +44,7 @@ export interface RestoreMemberProfilePatch {
   archive_reason: null;
   archive_snapshot: null;
   role: "member";
+  company_role: "member";
   permissions: Permissions;
   team_id: null;
 }
@@ -99,24 +104,34 @@ export async function loadWithMembershipFallback<T>(input: {
 
 export function canArchiveMember(input: {
   actorRole: UserRole;
+  actorPermissions?: Permissions | null;
+  actorTeamId?: string | null;
+  groupMode?: boolean;
   actorId: string;
   target: MemberLifecycleProfile;
 }) {
-  if (input.actorRole !== "owner") return false;
+  if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
-  if (input.target.role === "owner") return false;
-  return true;
+  if (input.target.role === "owner" || input.target.company_role === "company_owner") return false;
+  if (input.groupMode === true) return true;
+  const targetTeamId = input.target.team_id ?? input.target.archive_snapshot?.team_id ?? null;
+  return Boolean(input.actorTeamId && targetTeamId && input.actorTeamId === targetTeamId);
 }
 
 export function canRestoreMember(input: {
   actorRole: UserRole;
+  actorPermissions?: Permissions | null;
+  actorTeamId?: string | null;
+  groupMode?: boolean;
   actorId: string;
   target: MemberLifecycleProfile;
 }) {
-  if (input.actorRole !== "owner") return false;
+  if (input.groupMode !== true && input.actorPermissions?.manage_members !== true) return false;
   if (input.actorId === input.target.id) return false;
-  if (input.target.role === "owner") return false;
-  return true;
+  if (input.target.role === "owner" || input.target.company_role === "company_owner") return false;
+  if (input.groupMode === true) return true;
+  const targetTeamId = input.target.team_id ?? input.target.archive_snapshot?.team_id ?? null;
+  return Boolean(input.actorTeamId && targetTeamId && input.actorTeamId === targetTeamId);
 }
 
 export function buildArchiveMemberProfilePatch(input: {
@@ -133,6 +148,7 @@ export function buildArchiveMemberProfilePatch(input: {
     archive_reason: input.reason.trim(),
     archive_snapshot: input.snapshot,
     role: "member",
+    company_role: "member",
     permissions: {},
     team_id: null,
   };
@@ -146,6 +162,7 @@ export function buildRestoreMemberProfilePatch(): RestoreMemberProfilePatch {
     archive_reason: null,
     archive_snapshot: null,
     role: "member",
+    company_role: "member",
     permissions: {},
     team_id: null,
   };

@@ -1,0 +1,27 @@
+{
+  "migration": "20260819120000",
+  "snapshot_kind": "reconstructed_from_pre_execution_queries_and_prior_snapshots",
+  "company_role_column_existed": false,
+  "group_permission_qualifications_existed": false,
+  "group_mode_sessions_existed": false,
+  "qualification_count": 0,
+  "profile_total": 75,
+  "profile_distribution": [
+    {"role": "admin", "data_scope": "all", "membership_status": "active", "count": 18},
+    {"role": "admin", "data_scope": "team", "membership_status": "active", "count": 1},
+    {"role": "member", "data_scope": "self", "membership_status": "active", "count": 50},
+    {"role": "member", "data_scope": "self", "membership_status": "archived", "count": 5},
+    {"role": "owner", "data_scope": "all", "membership_status": "active", "count": 1}
+  ],
+  "overwritten_function_hashes": [
+    {"function": "has_permission(text)", "definition_md5": "657914b491a58d4f28ae5be66b30cc75", "definition_source": "2026-08-19-对账-20260805120000-前快照.json"},
+    {"function": "get_data_scope()", "definition_md5": "513981b1bfc8098be6506e537866ba0d", "definition_source": "20260819130100_reconcile_owner_scope_consistency.sql"},
+    {"function": "visible_user_ids(uuid)", "definition_md5": "4d1b2caacfa567422ed72f7f43cf0fc6", "definition_source": "20260819130100_reconcile_owner_scope_consistency.sql"},
+    {"function": "active_visible_user_ids(uuid)", "definition_md5": "df54132ee8fc453735bbef5d95a12059", "definition_source": "20260819130100_reconcile_owner_scope_consistency.sql"},
+    {"function": "apply_exemption_grant_atomically(uuid,date,date,text,text,text,boolean)", "definition_md5": "275b69197a9099cddb8743aaf3240abc", "definition_source": "2026-08-19-对账-20260818100000-补齐前快照.json with visible_user_ids replaced by active_visible_user_ids"},
+    {"function": "clear_exemption_grant_atomically(uuid)", "definition_md5": "54371c5b6187c7e87b4bf61e07018b40", "definition_source": "2026-08-19-对账-20260818100000-补齐前快照.json with visible_user_ids replaced by active_visible_user_ids"},
+    {"function": "review_exemption_request_atomically(uuid,text)", "definition_md5": "94ed603cd3e8418cc0d17c39efc42636", "definition_source": "2026-08-19-对账-20260818100000-补齐前快照.json with visible_user_ids replaced by active_visible_user_ids"},
+    {"function": "admin_cockpit_summary(date)", "definition_md5": "a4c0d9ef40064b75af655a02c86d79e0", "definition_source": "20260819130300_reconcile_admin_current_scope_archived.sql"},
+    {"function": "admin_pending_submissions_today(date)", "definition_md5": "a82e2871a36d49ea293b0f4a85e96052", "definition_source": "20260819130300_reconcile_admin_current_scope_archived.sql"}
+  ]
+}

@@ -23,7 +23,7 @@ import {
 } from "@/lib/team-management";
 import { inferDataScope } from "@/lib/data-access-scope";
 import { getTeamOptions } from "@/lib/teams";
-import type { Permissions, UserRole } from "@/types";
+import type { CompanyRole, Permissions, UserRole } from "@/types";
 
 import { shiftDateOnly } from "./shared";
 
@@ -41,7 +41,13 @@ type AdminModuleProfileRow = AdminModuleMemberProfileLike & {
 export interface AdminModulesData {
   currentUserId: string;
   queryDate: string;
-  perm: { role: UserRole; permissions: Permissions };
+  perm: {
+    role: UserRole;
+    permissions: Permissions;
+    companyRole?: CompanyRole;
+    groupMode?: boolean;
+    teamId?: string | null;
+  };
   permissionManagerCapabilities: ReturnType<typeof getPermissionManagerCapabilities>;
   allProfiles: AdminModuleMemberSummary[];
   archivedProfiles?: AdminModuleMemberSummary[];
@@ -335,14 +341,16 @@ function filterVisibleArchivedProfiles(
   profiles: AdminModuleMemberSummary[],
   access: TeamManagementAccess,
 ) {
-  if (access.level === "owner") return profiles;
-  if (!access.canView || access.teamIds === null) return [];
+  if (!access.canView) return [];
+  if (access.teamIds === null) return profiles;
+  if (access.teamIds.length === 0) return [];
 
   const visibleTeamIds = new Set(access.teamIds);
   return profiles.filter((profile) => {
-    const archivedTeamId = profile.archive_snapshot && typeof profile.archive_snapshot.team_id === "string"
-      ? profile.archive_snapshot.team_id
-      : null;
+    const archivedTeamId =
+      (profile.archive_snapshot && typeof profile.archive_snapshot.team_id === "string"
+        ? profile.archive_snapshot.team_id
+        : null) ?? profile.team_id ?? null;
     return Boolean(archivedTeamId && visibleTeamIds.has(archivedTeamId));
   });
 }
@@ -395,7 +403,14 @@ function buildAdminModulesTeamManagementPayload({
   teams,
   allProfiles,
 }: {
-  perm: { userId: string; role: UserRole; permissions: Permissions };
+  perm: {
+    userId: string;
+    role: UserRole;
+    permissions: Permissions;
+    companyRole?: CompanyRole;
+    groupMode?: boolean;
+    teamId?: string | null;
+  };
   teams: Array<{ id: string; name: string }>;
   allProfiles: AdminModuleMemberSummary[];
 }): AdminModulesTeamManagementData {
@@ -409,10 +424,11 @@ function buildAdminModulesTeamManagementPayload({
       id: perm.userId,
       name: "",
       role: perm.role,
+      company_role: perm.companyRole,
       permissions: perm.permissions,
-      team_id: null,
+      team_id: perm.teamId ?? null,
     } satisfies TeamManagementProfile);
-  const teamManagementAccess = resolveTeamManagementAccess(actorProfile);
+  const teamManagementAccess = resolveTeamManagementAccess(actorProfile, perm.groupMode ?? false);
   const visibleTeamManagementProfiles = filterVisibleTeamManagementProfiles(
     teamManagementAccess,
     normalizedHydratedProfiles as TeamManagementProfile[],
@@ -464,7 +480,14 @@ export async function loadAdminModulesTeamManagementData(): Promise<AdminModules
   const activeProfiles = hydratedProfiles.filter(isActiveMembership);
 
   return buildAdminModulesTeamManagementPayload({
-    perm,
+    perm: {
+      userId: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+      companyRole: perm.companyRole,
+      groupMode: perm.groupMode,
+      teamId: perm.teamId,
+    },
     teams,
     allProfiles: activeProfiles,
   });
@@ -491,7 +514,14 @@ export async function loadAdminModulesData({
   );
   const activeProfiles = hydratedProfiles.filter(isActiveMembership);
   const teamManagement = buildAdminModulesTeamManagementPayload({
-    perm: context.perm,
+    perm: {
+      userId: context.user.id,
+      role: context.perm.role,
+      permissions: context.perm.permissions,
+      companyRole: context.perm.companyRole,
+      groupMode: context.perm.groupMode,
+      teamId: context.perm.teamId,
+    },
     teams,
     allProfiles: activeProfiles,
   });
@@ -517,11 +547,14 @@ export async function loadAdminModulesData({
     perm: {
       role: context.perm.role,
       permissions: context.perm.permissions,
+      companyRole: context.perm.companyRole,
+      groupMode: context.perm.groupMode,
+      teamId: context.perm.teamId,
     },
     permissionManagerCapabilities: context.permissionManagerCapabilities,
     allProfiles: visibleActiveProfilesWithMonthlyStats,
     archivedProfiles,
-    teams,
+    teams: context.perm.groupMode ? teams : teamManagement.teams,
     teamManagement,
   };
 }

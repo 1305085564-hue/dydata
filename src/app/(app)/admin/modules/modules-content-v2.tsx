@@ -80,6 +80,7 @@ function truncateTeamName6(name?: string | null): string {
 
 import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
 import type {
+  CompanyRole,
   DataScope,
   ExemptionCategory,
   PermissionCategory,
@@ -148,6 +149,8 @@ interface TeamV2ContentProps {
   currentUserId: string;
   currentUserRole: UserRole;
   currentUserBusinessRole?: UserRole;
+  currentUserCompanyRole?: CompanyRole;
+  currentUserGroupMode?: boolean;
   currentUserPermissions: Permissions;
   permissionManagerCapabilities: {
     canRemoveMember: boolean;
@@ -201,6 +204,9 @@ export function AdminModulesContentV2({
   currentUserId,
   currentUserRole,
   currentUserBusinessRole,
+  currentUserCompanyRole,
+  currentUserGroupMode,
+  currentUserPermissions = {},
   permissionManagerCapabilities,
   allProfiles,
   archivedProfiles: initialArchivedProfiles = [],
@@ -211,10 +217,25 @@ export function AdminModulesContentV2({
   focusMemberId,
 }: TeamV2ContentProps) {
   const router = useRouter();
-  const effectiveRole = currentUserBusinessRole ?? currentUserRole;
-  const isOwner = effectiveRole === "owner";
+  const isGroupMode = Boolean(currentUserGroupMode);
+  const isCompanyOwner =
+    currentUserCompanyRole === "company_owner" ||
+    currentUserBusinessRole === "owner" ||
+    currentUserRole === "owner";
+  const canManageCompany = isCompanyOwner || isGroupMode;
+
+  const canChangeRole = canManageCompany || permissionManagerCapabilities.canChangeRole;
+  const canResetPassword = canManageCompany || currentUserPermissions.manage_members === true;
+  const canManageExemption =
+    canManageCompany ||
+    currentUserPermissions.manage_fulfillment === true ||
+    currentUserPermissions.manage_members === true ||
+    currentUserPermissions.review_violations === true;
+  const canArchive = canManageCompany;
+
   const initialVisibleTeams = getVisibleTeamOptions({
-    isOwner,
+    isOwner: isGroupMode,
+    groupMode: isGroupMode,
     allTeams: initialTeams,
     manageableTeams: teamManagement.teams,
   });
@@ -223,7 +244,8 @@ export function AdminModulesContentV2({
     currentUserId,
     profiles: allProfiles,
     visibleTeams: initialVisibleTeams,
-    isOwner,
+    isOwner: isGroupMode,
+    groupMode: isGroupMode,
   });
 
   const [localTeams, setLocalTeams] =
@@ -1069,7 +1091,7 @@ export function AdminModulesContentV2({
                       </option>
                     );
                   })}
-                  {isOwner && (
+                  {canManageCompany && (
                     <option value="__manage__">⚙️ 管理团队架构...</option>
                   )}
                 </select>
@@ -1107,7 +1129,7 @@ export function AdminModulesContentV2({
               </div>
 
               {/* 架构管理独立按钮 */}
-              {isOwner && (
+              {canManageCompany && (
                 <Button
                   variant="outline"
                   onClick={() => setTeamManagementDialogOpen(true)}
@@ -1120,7 +1142,7 @@ export function AdminModulesContentV2({
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
               {memberView === "active" &&
-                isOwner &&
+                canManageCompany &&
                 selectableFilteredMemberIds.length > 0 && (
                   <button
                     type="button"
@@ -1312,7 +1334,7 @@ export function AdminModulesContentV2({
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex items-start gap-2">
-                              {isOwner &&
+                              {canManageCompany &&
                                 !isArchivedView &&
                                 member.id !== currentUserId && (
                                   <div
@@ -1390,7 +1412,7 @@ export function AdminModulesContentV2({
                           <div className="flex items-end justify-between gap-2 pt-2">
                             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                               {isArchivedView ||
-                              !isOwner ||
+                              !canManageCompany ||
                               member.id === currentUserId ? (
                                 <span className="inline-flex items-center rounded-lg bg-zinc-100 px-2 py-0.5 text-[12px] text-zinc-700 font-medium">
                                   {isArchivedView
@@ -1474,7 +1496,7 @@ export function AdminModulesContentV2({
                           type="button"
                           variant="outline"
                           onClick={() => setRestoreTarget(member)}
-                          disabled={!isOwner || isPending}
+                          disabled={!canManageCompany || isPending}
                           className="h-8 w-full rounded-lg border-zinc-300 text-[12px] text-zinc-700 hover:bg-zinc-50"
                         >
                           <RotateCcw className="size-3.5" />
@@ -1685,69 +1707,72 @@ export function AdminModulesContentV2({
                 />
 
                 {/* 低权重区：高级账户与团队管理 */}
-                {(isOwner || permissionManagerCapabilities.canRemoveMember) &&
+                {(canManageCompany || permissionManagerCapabilities.canRemoveMember) &&
                   activeMember.id !== currentUserId &&
-                  activeMember.role !== "owner" && (
+                  activeMember.role !== "owner" &&
+                  activeMember.membership_status !== "archived" && (
                     <div className="pt-4 border-t border-zinc-200/80 space-y-3">
                       <h4 className="text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-400">
                         账户与团队管理
                       </h4>
 
                       <div className="space-y-1">
-                        {isOwner && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => setRoleChangeTarget(activeMember)}
-                              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
-                            >
-                              <span className="flex items-center gap-2">
-                                <Settings className="size-3.5 text-zinc-400" />
-                                {activeMember.role === "admin"
-                                  ? "降级为普通组员"
-                                  : "提升为管理员"}
-                              </span>
-                              <span className="text-[11px] text-zinc-400">
-                                切换身份
-                              </span>
-                            </button>
+                        {canChangeRole && (
+                          <button
+                            type="button"
+                            onClick={() => setRoleChangeTarget(activeMember)}
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Settings className="size-3.5 text-zinc-400" />
+                              {activeMember.role === "admin"
+                                ? "降级为普通组员"
+                                : "提升为管理员"}
+                            </span>
+                            <span className="text-[11px] text-zinc-400">
+                              切换身份
+                            </span>
+                          </button>
+                        )}
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPasswordResetTarget(activeMember)
-                              }
-                              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
-                            >
-                              <span className="flex items-center gap-2">
-                                <KeyRound className="size-3.5 text-zinc-400" />
-                                重置账户密码
-                              </span>
-                              <span className="text-[11px] text-zinc-400">
-                                快捷重置
-                              </span>
-                            </button>
+                        {canResetPassword && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPasswordResetTarget(activeMember)
+                            }
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                          >
+                            <span className="flex items-center gap-2">
+                              <KeyRound className="size-3.5 text-zinc-400" />
+                              重置账户密码
+                            </span>
+                            <span className="text-[11px] text-zinc-400">
+                              快捷重置
+                            </span>
+                          </button>
+                        )}
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExemptionMemberId(activeMember.id)
-                              }
-                              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
-                            >
-                              <span className="flex items-center gap-2">
-                                <ShieldAlert className="size-3.5 text-zinc-400" />
-                                {activeMemberIsCurrentlyExempt
-                                  ? "调整日报豁免"
-                                  : "开启日报豁免"}
-                              </span>
-                              <span className="text-[11px] text-zinc-400">
-                                {activeMemberIsCurrentlyExempt
-                                  ? "已生效"
-                                  : "未生效"}
-                              </span>
-                            </button>
-                          </>
+                        {canManageExemption && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExemptionMemberId(activeMember.id)
+                            }
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                          >
+                            <span className="flex items-center gap-2">
+                              <ShieldAlert className="size-3.5 text-zinc-400" />
+                              {activeMemberIsCurrentlyExempt
+                                ? "调整日报豁免"
+                                : "开启日报豁免"}
+                            </span>
+                            <span className="text-[11px] text-zinc-400">
+                              {activeMemberIsCurrentlyExempt
+                                ? "已生效"
+                                : "未生效"}
+                            </span>
+                          </button>
                         )}
 
                         {permissionManagerCapabilities.canRemoveMember && (
@@ -1766,7 +1791,7 @@ export function AdminModulesContentV2({
                           </button>
                         )}
 
-                        {isOwner && (
+                        {canArchive && (
                           <button
                             type="button"
                             onClick={() => {
@@ -2085,7 +2110,7 @@ export function AdminModulesContentV2({
             <span>已选择 {selectedMemberIds.length} 人</span>
           </div>
 
-          {isOwner && (
+          {canManageCompany && (
             <select
               defaultValue=""
               onChange={(e) => {
@@ -2107,7 +2132,7 @@ export function AdminModulesContentV2({
             </select>
           )}
 
-          {isOwner && (
+          {canManageCompany && (
             <Button
               variant="outline"
               size="sm"
@@ -2146,7 +2171,7 @@ export function AdminModulesContentV2({
 
           <div className="space-y-4 py-2">
             {/* 快捷新建团队 */}
-            {isOwner && (
+            {canManageCompany && (
               <div className="space-y-1.5 bg-zinc-50 p-3.5 rounded-xl border border-zinc-200/60">
                 <Label
                   htmlFor="dialog-team-name"
@@ -2202,7 +2227,7 @@ export function AdminModulesContentV2({
                           {count} 人
                         </span>
                       </div>
-                      {isOwner && count === 0 && (
+                      {canManageCompany && count === 0 && (
                         <Button
                           variant="ghost"
                           size="sm"
