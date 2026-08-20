@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasPermission as hasUnifiedPermission } from "@/lib/permission-utils";
+import {
+  hasCompanyPermission,
+  hasPermission as hasUnifiedPermission,
+} from "@/lib/permission-utils";
 import { isCaseLibraryView } from "@/lib/case-library/shared";
 import { buildCreateViolationResponse } from "./create-route-helpers";
 import {
@@ -125,11 +128,13 @@ export async function buildViolationsListResponse(
     return jsonServerError("用户资料不存在");
   }
 
-  const canManageViolations = hasUnifiedPermission(
-    profile.role,
-    profile.permissions as Permissions,
-    "review_violations",
-  );
+  const canManageViolations =
+    hasCompanyPermission(profile.role, "review_violations") ||
+    hasUnifiedPermission(
+      profile.role,
+      profile.permissions as Permissions,
+      "review_violations",
+    );
   const effectiveView = (requestedView ?? (canManageViolations ? "admin" : "staff")) as ViolationsListView;
 
   if (effectiveView === "admin" && !canManageViolations) {

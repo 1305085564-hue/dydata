@@ -1321,7 +1321,7 @@ export async function loadTopicPool(
   } catch (error) {
     return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
   }
-  let builtItems = items.map((item) => buildTopicPoolItem(
+  const builtItems = items.map((item) => buildTopicPoolItem(
     item,
     userId,
     scope,

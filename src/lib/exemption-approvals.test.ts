@@ -41,7 +41,7 @@ test("collectApprovalRequestIds 过滤非法编号并去重", () => {
   );
 });
 
-test("getCommandHubDefaultTab 按 待办 -> 审批 -> 通知 的顺序切换", () => {
+test("getCommandHubDefaultTab 按 待办 -> 审批 的顺序切换", () => {
   assert.equal(
     getCommandHubDefaultTab({ todoCount: 2, approvalCount: 5, isAdmin: true }),
     "todos",
@@ -52,6 +52,6 @@ test("getCommandHubDefaultTab 按 待办 -> 审批 -> 通知 的顺序切换", (
   );
   assert.equal(
     getCommandHubDefaultTab({ todoCount: 0, approvalCount: 5, isAdmin: false }),
-    "notifications",
+    "todos",
   );
 });

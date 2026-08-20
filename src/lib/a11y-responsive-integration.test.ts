@@ -36,7 +36,10 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
   assert.match(rewrite, /aria-current=\{isViewActive \? "true" : undefined\}/);
   assert.match(modules, /aria-selected=\{memberView === "active"\}/);
-  assert.match(modules, /aria-current=\{isCurrentMemberActive \? "true" : undefined\}/);
+  assert.match(
+    modules,
+    /aria-current=\{\s*isCurrentMemberActive \? "true" : undefined\s*\}/,
+  );
   assert.match(rewrite, /opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100/);
 });
 

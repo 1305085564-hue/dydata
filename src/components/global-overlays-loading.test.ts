@@ -15,8 +15,14 @@ test("全局布局不在首屏静态引入选题录入器", () => {
 test("导航栏只在首次打开后加载命令中心和设置弹窗", () => {
   const nav = readSource("src/components/nav-bar-client.tsx");
 
-  assert.match(nav, /dynamic\(\s*\(\) => import\("@\/components\/unified-command-hub"\)/);
-  assert.match(nav, /dynamic\(\s*\(\) => import\("@\/components\/premium-settings-modal"\)/);
+  assert.match(
+    nav,
+    /dynamic\(\s*\(\)\s*=>\s*import\("@\/components\/unified-command-hub"\)/,
+  );
+  assert.match(
+    nav,
+    /dynamic\(\s*\(\)\s*=>\s*import\("@\/components\/premium-settings-modal"\)/,
+  );
   assert.match(nav, /commandHubLoaded &&/);
   assert.match(nav, /settingsLoaded &&/);
 });
