@@ -25,7 +25,6 @@ import {
   collectApprovalRequestIds,
   resolveApprovalRequestId,
 } from "@/lib/exemption-approvals";
-import { reviewExemptionRequest } from "@/app/(app)/admin/actions";
 
 interface ExemptionRequest {
   id: string;
@@ -141,19 +140,19 @@ export function UnifiedCommandHub({
 
     setActionProcessing({ id: requestId, action });
     try {
-      const result = await reviewExemptionRequest({
-        requestId,
-        decision: action === "approved" ? "approved" : "rejected",
+      const res = await fetch("/api/exemptions/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: requestId, action }),
       });
-
-      if (result.error) {
-        toast.error("操作失败", { description: result.error });
-      } else {
+      if (res.ok) {
         toast.success(action === "approved" ? "审批已通过" : "审批已拒绝");
         await fetchApprovals();
+      } else {
+        const json = await res.json();
+        toast.error("操作失败", { description: json.error || "未知原因" });
       }
-    } catch (error) {
-      console.error("[unified-command-hub] 审批失败:", error);
+    } catch {
       toast.error("网络异常，请重试");
     } finally {
       setActionProcessing(null);
@@ -170,18 +169,18 @@ export function UnifiedCommandHub({
       await Promise.all(
         idsArray.map(async (id) => {
           try {
-            const result = await reviewExemptionRequest({
-              requestId: id,
-              decision: "approved",
+            const res = await fetch("/api/exemptions/review", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ request_id: id, action: "approved" }),
             });
-            if (result.error) {
-              console.error("[unified-command-hub] 批量审批失败:", { id, error: result.error });
-              failCount++;
-            } else {
+            if (res.ok) {
               successCount++;
+            } else {
+              failCount++;
             }
           } catch (e) {
-            console.error("[unified-command-hub] 批量审批异常:", e);
+            console.error(e);
             failCount++;
           }
         }),
