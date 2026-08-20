@@ -37,10 +37,14 @@ export type GetNavItemsInput = {
   showAdmin: boolean;
   showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
+  canAccessTeamManagement?: boolean;
   permissions?: Permissions | null;
 };
 
 export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
+  const shouldShowTeamManagement =
+    input.canAccessTeamManagement ?? input.permissions?.manage_members === true;
+
   const groups: NavGroup[] = [
     {
       key: "dashboard",
@@ -127,13 +131,18 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
   });
 
   // 5. 管理中心 (分组下拉) - 全员可见完整生态
-  const adminChildren: NavSubItem[] = [
-    {
+  const adminChildren: NavSubItem[] = [];
+
+  if (shouldShowTeamManagement) {
+    adminChildren.push({
       href: "/admin/modules",
       label: "成员管理",
       icon: UsersRound,
       match: (pathname) => pathname === "/admin/modules" || pathname.startsWith("/admin/modules/"),
-    },
+    });
+  }
+
+  adminChildren.push(
     {
       href: "/admin/settings",
       label: "系统维护",
@@ -152,7 +161,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       icon: CalendarDays,
       match: (pathname) => pathname === "/admin/fulfillment" || pathname.startsWith("/admin/fulfillment/"),
     },
-  ];
+  );
 
   if (input.showAdmin) {
     groups.push({

@@ -41,11 +41,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         >
           <NavBar />
         </Suspense>
-        {/* JoinBanner 现在只往通知中心注册条目，无视觉占位 */}
-        <Suspense fallback={null}>
-          <JoinBanner />
-        </Suspense>
         <main className="app-main w-full min-h-screen px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(var(--app-top-offset)+0.75rem)] sm:px-6">
+          {/* JoinBanner 会在无团队/待审核时给出顶部工作台提示 */}
+          <Suspense fallback={null}>
+            <JoinBanner />
+          </Suspense>
           {children}
         </main>
         <FeedbackNotificationBridge />

@@ -7,8 +7,6 @@ import {
   User,
   UsersRound,
   LogOut,
-  Settings,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -25,6 +23,7 @@ interface Account {
 interface UserWorkspacePopoverProps {
   name: string;
   role: string;
+  canAccessTeamManagement?: boolean;
   accounts: Account[];
   selectedAccountId: string;
   onOpenSettings: () => void;
@@ -33,6 +32,7 @@ interface UserWorkspacePopoverProps {
 export function UserWorkspacePopover({
   name,
   role,
+  canAccessTeamManagement = false,
   accounts = [],
   selectedAccountId,
   onOpenSettings,
@@ -234,14 +234,26 @@ export function UserWorkspacePopover({
               <span>账号与偏好设置</span>
             </button>
 
-            <Link
-              href="/admin/modules"
-              onClick={() => setIsOpen(false)}
-              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-900 group/btn"
-            >
-              <UsersRound className="size-4 text-zinc-400 group-hover/btn:text-[#D97757] transition-colors" />
-              <span>成员与团队架构</span>
-            </Link>
+            {canAccessTeamManagement ? (
+              <Link
+                href="/admin/modules"
+                onClick={() => setIsOpen(false)}
+                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-900 group/btn"
+              >
+                <UsersRound className="size-4 text-zinc-400 group-hover/btn:text-[#D97757] transition-colors" />
+                <span>成员与团队架构</span>
+              </Link>
+            ) : (
+              <div
+                aria-disabled="true"
+                title="当前账号没有成员管理权限"
+                className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-400"
+              >
+                <UsersRound className="size-4 text-zinc-300" />
+                <span>成员与团队架构</span>
+                <span className="ml-auto text-[11px] text-zinc-400">需权限</span>
+              </div>
+            )}
 
             <button
               type="button"

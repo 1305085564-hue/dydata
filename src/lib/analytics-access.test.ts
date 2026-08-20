@@ -8,6 +8,10 @@ import {
   getPresetRange,
   restrictPersonRows,
 } from "./analytics-access";
+import {
+  fixedPermissionsForRole,
+  runtimeRoleForCompanyRole,
+} from "./company-permissions";
 
 test("成员没有 team_id 时保持空团队，且不能查看全部成员", () => {
   const context = buildAnalyticsAccessContext({
@@ -72,6 +76,14 @@ test("协作管理只按分析权限放行", () => {
 
 test("系统设置和成员管理按对应权限放行", () => {
   assert.equal(canAccessAdminPath("/admin/modules", "admin", { manage_members: true }), true);
+  assert.equal(
+    canAccessAdminPath(
+      "/admin/modules",
+      runtimeRoleForCompanyRole("company_owner"),
+      fixedPermissionsForRole("company_owner"),
+    ),
+    true,
+  );
   assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_system: true }), true);
   assert.equal(canAccessAdminPath("/admin/settings", "owner"), false);
   assert.equal(canAccessAdminPath("/admin/settings", "owner", { manage_system: true }), true);

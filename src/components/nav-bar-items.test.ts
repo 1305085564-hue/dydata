@@ -4,7 +4,11 @@ import assert from "node:assert/strict";
 import { getNavGroups, getNavItems } from "./nav-bar-items";
 
 test("管理员 5 大分组结构完整解析", () => {
-  const groups = getNavGroups({ showAdmin: true, showSystemSettings: true });
+  const groups = getNavGroups({
+    showAdmin: true,
+    showSystemSettings: true,
+    permissions: { manage_members: true },
+  });
 
   assert.deepEqual(
     groups.map((g) => ({
@@ -74,7 +78,7 @@ test("统一主导航按具体权限暴露管理子项", () => {
   });
   assert.deepEqual(
     contentOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
   );
 
   const videosOnly = getNavItems({
@@ -83,8 +87,14 @@ test("统一主导航按具体权限暴露管理子项", () => {
   });
   assert.deepEqual(
     videosOnly.map((item) => item.href),
-    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/modules", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
+    ["/dashboard", "/topics", "/content-tools/rewrite", "/admin/content", "/admin/videos", "/violations", "/growth", "/admin/analytics", "/admin/collaboration", "/admin/settings", "/admin/ai-config", "/admin/fulfillment"],
   );
+
+  const memberManager = getNavItems({
+    showAdmin: true,
+    permissions: { manage_members: true },
+  });
+  assert.equal(memberManager.some((item) => item.href === "/admin/modules"), true);
 });
 
 test("未授予 AI 文案权限时隐藏文案助手入口", () => {

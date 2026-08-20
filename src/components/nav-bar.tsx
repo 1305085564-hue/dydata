@@ -1,4 +1,5 @@
 import { getNavigationAccess } from "@/lib/analytics-access";
+import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { hasPermission } from "@/lib/permission-utils";
 import { getUserPermissions } from "@/lib/permissions";
@@ -30,6 +31,7 @@ export async function NavBar() {
   const navigation = getNavigationAccess(role, permissions);
   const showAiCopywriting = hasPermission(role, permissions, "use_ai_copy");
   const showSystemSettings = hasPermission(role, permissions, "manage_system");
+  const canAccessTeamManagement = canAccessAdminPath("/admin/modules", role, permissions);
 
   const displayAccounts = (accounts ?? []).map((account, index, list) => ({
     id: account.id,
@@ -54,6 +56,7 @@ export async function NavBar() {
       showAdmin={navigation.showAdmin}
       showAiCopywriting={showAiCopywriting}
       showSystemSettings={showSystemSettings}
+      canAccessTeamManagement={canAccessTeamManagement}
       canEnterGroupMode={permissionInfo?.hasGroupOwnerQualification === true}
       groupModeActive={permissionInfo?.groupMode === true}
       accounts={displayAccounts}

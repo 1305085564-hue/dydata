@@ -60,6 +60,7 @@ interface NavBarClientProps {
   showAdmin: boolean;
   showAiCopywriting?: boolean;
   showSystemSettings?: boolean;
+  canAccessTeamManagement?: boolean;
   canEnterGroupMode?: boolean;
   groupModeActive?: boolean;
   accounts?: Account[];
@@ -72,6 +73,7 @@ export function NavBarClient({
   showAdmin,
   showAiCopywriting = true,
   showSystemSettings = false,
+  canAccessTeamManagement = false,
   canEnterGroupMode = false,
   groupModeActive = false,
   accounts = [],
@@ -84,9 +86,10 @@ export function NavBarClient({
         showAdmin,
         showAiCopywriting,
         showSystemSettings,
+        canAccessTeamManagement,
         permissions,
       }),
-    [permissions, showAdmin, showAiCopywriting, showSystemSettings],
+    [canAccessTeamManagement, permissions, showAdmin, showAiCopywriting, showSystemSettings],
   );
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -591,6 +594,7 @@ export function NavBarClient({
               <UserWorkspacePopover
                 name={name}
                 role={role}
+                canAccessTeamManagement={canAccessTeamManagement}
                 accounts={accounts}
                 selectedAccountId={selectedAccountId}
                 onOpenSettings={handleSettingsOpen}

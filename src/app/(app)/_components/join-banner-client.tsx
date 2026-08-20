@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 
+import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
-import { useNotifications } from "@/components/notifications/notification-store";
+import { cn } from "@/lib/utils";
 import type { TeamOption } from "@/lib/teams";
 
+import { Clock, Users } from "lucide-react";
 import { ApplyJoinDialog } from "./apply-join-dialog";
 import { cancelJoinRequestAction } from "./join-actions";
 
@@ -16,12 +18,16 @@ type Props =
 export function JoinBannerClient(props: Props) {
   const [, startTransition] = useTransition();
   const [applyOpen, setApplyOpen] = useState(false);
-  const { setLocalNotification } = useNotifications();
 
   const openApply = useCallback(() => setApplyOpen(true), []);
 
   const requestId = props.mode === "pending" ? props.requestId : null;
   const targetTeamName = props.mode === "pending" ? props.targetTeamName : null;
+  const isUnassigned = props.mode === "unassigned";
+  const bannerTitle = isUnassigned ? "你还未加入团队" : "团队申请审核中";
+  const bannerBody = isUnassigned
+    ? "目前只能查看自己的数据。申请加入团队后，才能参与团队协作和豁免流程。"
+    : `目标团队：${targetTeamName || "未知"}`;
 
   const handleCancel = useCallback(() => {
     if (!requestId) return;
@@ -35,43 +41,80 @@ export function JoinBannerClient(props: Props) {
     });
   }, [requestId, startTransition]);
 
-  useEffect(() => {
-    if (props.mode === "unassigned") {
-      setLocalNotification("team.unassigned", {
-        key: "team.unassigned",
-        type: "team.unassigned",
-        category: "todo",
-        severity: "warning",
-        title: "你还未加入团队",
-        body: "目前仅能查看自己的数据，申请加入后即可参与团队协作。",
-        primaryActionLabel: "申请加入团队",
-        primaryAction: openApply,
-      });
-      return () => setLocalNotification("team.unassigned", null);
-    }
+  return (
+    <>
+      <div className="mx-auto mb-3.5 w-full max-w-7xl sm:mb-4">
+        <div className="flex flex-col gap-3 rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs transition-all sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
+          {/* 左侧：图标、标题与说明 */}
+          <div className="flex min-w-0 items-start gap-3 sm:items-center">
+            <div
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                isUnassigned
+                  ? "bg-[#D97757]/10 text-[#D97757]"
+                  : "bg-[#5F82A8]/10 text-[#5F82A8]",
+              )}
+            >
+              {isUnassigned ? (
+                <Users className="size-4 stroke-[1.8]" />
+              ) : (
+                <Clock className="size-4 stroke-[1.8]" />
+              )}
+            </div>
 
-    setLocalNotification("team.pending", {
-      key: "team.pending",
-      type: "team.pending",
-      category: "todo",
-      severity: "info",
-      title: "团队申请审核中",
-      body: `目标团队：${targetTeamName || "未知"}`,
-      primaryActionLabel: "撤销申请",
-      primaryAction: handleCancel,
-    });
-    return () => setLocalNotification("team.pending", null);
-  }, [props.mode, targetTeamName, openApply, handleCancel, setLocalNotification]);
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-[13.5px] font-semibold tracking-tight text-zinc-900 sm:text-[14px]">
+                  {bannerTitle}
+                </h2>
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-medium tracking-wide",
+                    isUnassigned
+                      ? "bg-[#D97757]/10 text-[#D97757]"
+                      : "bg-[#5F82A8]/10 text-[#5F82A8]",
+                  )}
+                >
+                  {isUnassigned ? "未加入" : "审核中"}
+                </span>
+              </div>
+              <p className="text-[12px] leading-relaxed text-zinc-500 sm:text-[12.5px]">
+                {bannerBody}
+              </p>
+            </div>
+          </div>
 
-  if (props.mode === "unassigned") {
-    return (
-      <ApplyJoinDialog
-        teams={props.teams}
-        open={applyOpen}
-        onOpenChange={setApplyOpen}
-      />
-    );
-  }
+          {/* 右侧：主操作与辅助提示 */}
+          <div className="flex shrink-0 items-center justify-between gap-3 sm:flex-col sm:items-end sm:gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant={isUnassigned ? "default" : "outline"}
+              onClick={isUnassigned ? openApply : handleCancel}
+              className={
+                isUnassigned
+                  ? "px-3.5 text-xs sm:text-[13px]"
+                  : "border-zinc-200 px-3.5 text-xs text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 sm:text-[13px]"
+              }
+            >
+              {isUnassigned ? "申请加入团队" : "撤销申请"}
+            </Button>
+            <span className="hidden text-[11.5px] text-zinc-400 sm:inline-block">
+              {isUnassigned
+                ? "通过后即可提交日报、豁免和协作内容。"
+                : "审核通过前仍可继续使用当前账号。"}
+            </span>
+          </div>
+        </div>
+      </div>
 
-  return null;
+      {props.mode === "unassigned" ? (
+        <ApplyJoinDialog
+          teams={props.teams}
+          open={applyOpen}
+          onOpenChange={setApplyOpen}
+        />
+      ) : null}
+    </>
+  );
 }
