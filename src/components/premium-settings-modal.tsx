@@ -47,8 +47,6 @@ export function GroupModeSettingsControl({
   pending,
   onChange,
 }: GroupModeSettingsControlProps) {
-  if (!canEnterGroupMode) return null;
-
   return (
     <div
       data-testid="group-mode-settings-control"
@@ -61,18 +59,28 @@ export function GroupModeSettingsControl({
             {isGroupModeActive ? "集团模式" : "公司模式"}
           </span>
           <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4]">
-            {isGroupModeActive ? "30 分钟内可管理集团范围" : "当前只管理所在公司"}
+            {isGroupModeActive
+              ? "30 分钟内可管理集团范围"
+              : canEnterGroupMode
+                ? "当前只管理所在公司"
+                : "当前只管理所在公司；未获集团资格"}
           </span>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onChange}
-        disabled={pending}
-        className="shrink-0 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
-      >
-        {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
-      </button>
+      {canEnterGroupMode ? (
+        <button
+          type="button"
+          onClick={onChange}
+          disabled={pending}
+          className="shrink-0 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        >
+          {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
+        </button>
+      ) : (
+        <span className="shrink-0 text-[12px] font-medium text-zinc-400">
+          需集团资格
+        </span>
+      )}
     </div>
   );
 }
