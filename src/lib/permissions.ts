@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { resolveDataScope } from "@/lib/data-access-scope";
 import { fixedPermissions, hasAnyPermission, hasPermission } from "@/lib/permission-utils";
-import { resolveCompanyRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
+import { canEnterGroupMode, resolveCompanyRole, runtimeRoleForCompanyRole } from "@/lib/company-permissions";
 import { resolveGroupModeForUser } from "@/lib/group-mode-server";
 import type { CompanyRole, DataScope, Permissions, UserRole } from "@/types";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
@@ -97,20 +97,7 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
   if (profile.membership_status === "archived") return null;
   const groupModeState = await resolveGroupModeForUser(user.id, adminSupabase);
   const groupMode = groupModeState.active;
-  let hasGroupOwnerQualification = groupMode;
-  if (!hasGroupOwnerQualification) {
-    try {
-      const qualification = await adminSupabase
-        .from("group_permission_qualifications")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .is("revoked_at", null)
-        .maybeSingle();
-      hasGroupOwnerQualification = !qualification.error && Boolean(qualification.data);
-    } catch {
-      hasGroupOwnerQualification = false;
-    }
-  }
+  const hasGroupOwnerQualification = canEnterGroupMode(companyRole, profile.membership_status);
   const role = runtimeRoleForCompanyRole(companyRole);
   const permissions = fixedPermissions(companyRole, profile.permissions, groupMode);
 

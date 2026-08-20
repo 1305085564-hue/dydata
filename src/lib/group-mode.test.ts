@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { GROUP_MODE_COOKIE, GROUP_MODE_TTL_SECONDS, hashGroupModeToken } from "@/lib/group-mode";
+import { GROUP_MODE_COOKIE, hashGroupModeToken } from "@/lib/group-mode";
 
-test("group mode uses a private cookie and a bounded lifetime", () => {
+test("group mode uses a private cookie and is ended explicitly", () => {
   assert.equal(GROUP_MODE_COOKIE, "dydata-group-mode");
-  assert.equal(GROUP_MODE_TTL_SECONDS, 30 * 60);
 });
 
 test("group mode token hashing is deterministic and does not return the raw token", () => {

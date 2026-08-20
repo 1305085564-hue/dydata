@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { canEnterGroupMode } from "@/lib/company-permissions";
 import {
   GROUP_MODE_COOKIE,
   hashGroupModeToken,
@@ -19,13 +20,12 @@ export async function resolveGroupModeForUser(
   const tokenHash = hashGroupModeToken(rawToken);
 
   try {
-    const [qualification, session] = await Promise.all([
+    const [profile, session] = await Promise.all([
       adminSupabase
-        .from("group_permission_qualifications")
-        .select("user_id")
-        .eq("user_id", userId)
-        .is("revoked_at", null)
-        .maybeSingle(),
+        .from("profiles")
+        .select("role, company_role, membership_status")
+        .eq("id", userId)
+        .single(),
       adminSupabase
         .from("group_mode_sessions")
         .select("token_hash, expires_at, revoked_at")
@@ -35,7 +35,16 @@ export async function resolveGroupModeForUser(
         .maybeSingle(),
     ]);
 
-    if (qualification.error || session.error || !qualification.data || !session.data) {
+    if (
+      profile.error
+      || session.error
+      || !profile.data
+      || !canEnterGroupMode(
+        profile.data.company_role ?? profile.data.role,
+        profile.data.membership_status,
+      )
+      || !session.data
+    ) {
       return { active: false as const, tokenHash: null };
     }
 

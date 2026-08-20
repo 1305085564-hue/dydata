@@ -1,8 +1,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { canEnterGroupMode } from "@/lib/company-permissions";
 import {
   GROUP_MODE_COOKIE,
-  GROUP_MODE_TTL_SECONDS,
   createGroupModeToken,
   hashGroupModeToken,
   isGroupModeActive,
@@ -17,22 +17,17 @@ export async function getGroupModeUser() {
 
 export async function hasGroupModeQualification(userId: string) {
   const adminSupabase = createAdminClient();
-  const [qualification, profile] = await Promise.all([
-    adminSupabase
-      .from("group_permission_qualifications")
-      .select("user_id")
-      .eq("user_id", userId)
-      .is("revoked_at", null)
-      .maybeSingle(),
-    adminSupabase
-      .from("profiles")
-      .select("membership_status")
-      .eq("id", userId)
-      .single(),
-  ]);
+  const profile = await adminSupabase
+    .from("profiles")
+    .select("role, company_role, membership_status")
+    .eq("id", userId)
+    .single();
 
-  if (qualification.error || profile.error) throw new Error("集团权限状态读取失败");
-  return Boolean(qualification.data) && profile.data?.membership_status !== "archived";
+  if (profile.error) throw new Error("集团权限状态读取失败");
+  return canEnterGroupMode(
+    profile.data?.company_role ?? profile.data?.role,
+    profile.data?.membership_status,
+  );
 }
 
 export async function enterGroupMode(userId: string) {
@@ -41,8 +36,8 @@ export async function enterGroupMode(userId: string) {
   }
 
   const adminSupabase = createAdminClient();
+  const token = createGroupModeToken();
   const now = new Date();
-  const token = createGroupModeToken(now);
   const revoke = await adminSupabase
     .from("group_mode_sessions")
     .update({ revoked_at: now.toISOString() })
@@ -55,7 +50,7 @@ export async function enterGroupMode(userId: string) {
     .insert({
       user_id: userId,
       token_hash: token.tokenHash,
-      expires_at: token.expiresAt.toISOString(),
+      expires_at: token.expiresAt,
     })
     .select("expires_at")
     .single();
@@ -66,6 +61,9 @@ export async function enterGroupMode(userId: string) {
 
 export async function getGroupModeStatus(userId: string, rawToken: string | undefined) {
   if (!rawToken) return { active: false as const, expiresAt: null };
+  if (!(await hasGroupModeQualification(userId))) {
+    return { active: false as const, expiresAt: null };
+  }
 
   const adminSupabase = createAdminClient();
   const result = await adminSupabase
@@ -102,7 +100,6 @@ export function groupModeCookieOptions() {
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict" as const,
     path: "/",
-    maxAge: GROUP_MODE_TTL_SECONDS,
   };
 }
 

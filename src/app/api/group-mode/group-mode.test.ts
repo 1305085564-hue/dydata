@@ -4,10 +4,10 @@ import test from "node:test";
 import {
   createGroupModeToken,
   GROUP_MODE_COOKIE,
-  GROUP_MODE_TTL_SECONDS,
   hashGroupModeToken,
   isGroupModeActive,
 } from "@/lib/group-mode";
+import { canEnterGroupMode } from "@/lib/company-permissions";
 import { buildDataAccessScope } from "@/lib/data-access-scope";
 
 const QUALIFIED_USER_ID = "11111111-1111-4111-8111-111111111111";
@@ -17,36 +17,11 @@ const TEAM_A_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const TEAM_B_ID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 
 function createMockGroupModeAdminClient(config: {
-  qualifications: Array<{ user_id: string; revoked_at: string | null }>;
   profiles: Array<{ id: string; membership_status: string; team_id?: string | null; role?: string; company_role?: string }>;
-  sessions: Array<{ user_id: string; token_hash: string; expires_at: string; revoked_at: string | null }>;
+  sessions: Array<{ user_id: string; token_hash: string; expires_at: string | null; revoked_at: string | null }>;
 }) {
   return {
     from(table: string): unknown {
-      if (table === "group_permission_qualifications") {
-        let filterUserId: string | null = null;
-        let filterRevokedNull = false;
-        return {
-          select() { return this; },
-          eq(col: string, val: string) {
-            if (col === "user_id") filterUserId = val;
-            return this;
-          },
-          is(col: string, val: unknown) {
-            if (col === "revoked_at" && val === null) filterRevokedNull = true;
-            return this;
-          },
-          maybeSingle: async () => {
-            const found = config.qualifications.find((q) => {
-              if (filterUserId && q.user_id !== filterUserId) return false;
-              if (filterRevokedNull && q.revoked_at !== null) return false;
-              return true;
-            });
-            return { data: found ? { user_id: found.user_id } : null, error: null };
-          },
-        };
-      }
-
       if (table === "profiles") {
         let filterId: string | null = null;
         return {
@@ -57,7 +32,16 @@ function createMockGroupModeAdminClient(config: {
           },
           single: async () => {
             const found = config.profiles.find((p) => p.id === filterId);
-            return { data: found ? { membership_status: found.membership_status } : null, error: null };
+            return {
+              data: found
+                ? {
+                    membership_status: found.membership_status,
+                    role: found.role ?? null,
+                    company_role: found.company_role ?? null,
+                  }
+                : null,
+              error: null,
+            };
           },
         };
       }
@@ -97,7 +81,7 @@ function createMockGroupModeAdminClient(config: {
               },
             };
           },
-          insert(payload: { user_id: string; token_hash: string; expires_at: string }) {
+          insert(payload: { user_id: string; token_hash: string; expires_at: string | null }) {
             const session = {
               user_id: payload.user_id,
               token_hash: payload.token_hash,
@@ -131,43 +115,29 @@ function createMockGroupModeAdminClient(config: {
 }
 
 // 1. Group Mode Token Specification
-test("集团模式令牌：固定30分钟有效期、SHA-256 哈希不可逆存储", () => {
+test("集团模式令牌：手动退出、SHA-256 哈希不可逆存储", () => {
   assert.equal(GROUP_MODE_COOKIE, "dydata-group-mode");
-  assert.equal(GROUP_MODE_TTL_SECONDS, 1800); // 30 mins
 
-  const now = new Date("2026-08-20T12:00:00.000Z");
-  const tokenObj = createGroupModeToken(now);
+  const tokenObj = createGroupModeToken();
 
   assert.equal(typeof tokenObj.token, "string");
   assert.ok(tokenObj.token.length >= 32);
-  assert.equal(tokenObj.expiresAt.toISOString(), "2026-08-20T12:30:00.000Z");
+  assert.equal(tokenObj.expiresAt, null);
   assert.equal(tokenObj.tokenHash, hashGroupModeToken(tokenObj.token));
 
-  // Active check
   assert.equal(
     isGroupModeActive({
       tokenHash: tokenObj.tokenHash,
-      expiresAt: tokenObj.expiresAt.toISOString(),
+      expiresAt: tokenObj.expiresAt,
       revokedAt: null,
     }, new Date("2026-08-20T12:15:00.000Z")),
     true,
   );
 
-  // Expired check
   assert.equal(
     isGroupModeActive({
       tokenHash: tokenObj.tokenHash,
-      expiresAt: tokenObj.expiresAt.toISOString(),
-      revokedAt: null,
-    }, new Date("2026-08-20T12:30:01.000Z")),
-    false,
-  );
-
-  // Revoked check
-  assert.equal(
-    isGroupModeActive({
-      tokenHash: tokenObj.tokenHash,
-      expiresAt: tokenObj.expiresAt.toISOString(),
+      expiresAt: tokenObj.expiresAt,
       revokedAt: "2026-08-20T12:10:00.000Z",
     }, new Date("2026-08-20T12:15:00.000Z")),
     false,
@@ -175,75 +145,47 @@ test("集团模式令牌：固定30分钟有效期、SHA-256 哈希不可逆存�
 });
 
 // 2. Group Mode Qualification Verification
-test("hasGroupModeQualification: 无资格账号与已归档账号返回 false，合法在职账号返回 true", async () => {
+test("hasGroupModeQualification: 在职公司所有者可直接进入，普通角色与归档账号拒绝", async () => {
   const dbState = {
-    qualifications: [
-      { user_id: QUALIFIED_USER_ID, revoked_at: null },
-      { user_id: ARCHIVED_QUALIFIED_USER_ID, revoked_at: null },
-    ],
     profiles: [
-      { id: QUALIFIED_USER_ID, membership_status: "active" },
-      { id: UNQUALIFIED_USER_ID, membership_status: "active" },
-      { id: ARCHIVED_QUALIFIED_USER_ID, membership_status: "archived" },
+      { id: QUALIFIED_USER_ID, membership_status: "active", company_role: "company_owner" },
+      { id: "legacy-owner", membership_status: "active", role: "owner" },
+      { id: UNQUALIFIED_USER_ID, membership_status: "active", company_role: "admin" },
+      { id: "member-user", membership_status: "active", company_role: "member" },
+      { id: ARCHIVED_QUALIFIED_USER_ID, membership_status: "archived", company_role: "company_owner" },
     ],
     sessions: [],
   };
 
   const mockAdmin = createMockGroupModeAdminClient(dbState);
-
-  // Helper check using mock
-  async function checkQualification(userId: string) {
-    const [qualification, profile] = await Promise.all([
-      mockAdmin
-        .from("group_permission_qualifications")
-        .select()
-        .eq("user_id", userId)
-        .is("revoked_at", null)
-        .maybeSingle(),
-      mockAdmin
-        .from("profiles")
-        .select()
-        .eq("id", userId)
-        .single(),
-    ]);
-    return Boolean(qualification.data) && profile.data?.membership_status !== "archived";
-  }
-
-  assert.equal(await checkQualification(QUALIFIED_USER_ID), true);
-  assert.equal(await checkQualification(UNQUALIFIED_USER_ID), false);
-  assert.equal(await checkQualification(ARCHIVED_QUALIFIED_USER_ID), false);
+  void mockAdmin;
+  assert.equal(canEnterGroupMode("company_owner", "active"), true);
+  assert.equal(canEnterGroupMode("owner", "active"), true);
+  assert.equal(canEnterGroupMode("admin", "active"), false);
+  assert.equal(canEnterGroupMode("member", "active"), false);
+  assert.equal(canEnterGroupMode("company_owner", "archived"), false);
 });
 
 // 3. Group Mode Enter, Status, Exit Full Lifecycle
-test("集团模式完整生命周期：无资格拒绝 403，有资格发令牌，退出作废，单公司模式自动回退", async () => {
+test("集团模式完整生命周期：普通账号拒绝，公司所有者发令牌，退出作废", async () => {
   const dbState = {
-    qualifications: [{ user_id: QUALIFIED_USER_ID, revoked_at: null }],
     profiles: [
       { id: QUALIFIED_USER_ID, membership_status: "active", team_id: TEAM_A_ID, role: "admin", company_role: "company_owner" },
       { id: UNQUALIFIED_USER_ID, membership_status: "active", team_id: TEAM_A_ID, role: "admin", company_role: "admin" },
     ],
-    sessions: [] as Array<{ user_id: string; token_hash: string; expires_at: string; revoked_at: string | null }>,
+    sessions: [] as Array<{ user_id: string; token_hash: string; expires_at: string | null; revoked_at: string | null }>,
   };
 
-  const mockAdmin = createMockGroupModeAdminClient(dbState);
+  assert.equal(canEnterGroupMode(dbState.profiles[1].company_role, dbState.profiles[1].membership_status), false);
 
-  // Step 1: Unqualified user enters group mode -> 403 Forbidden
-  const unqualifiedQual = Boolean(
-    (await mockAdmin.from("group_permission_qualifications").select().eq("user_id", UNQUALIFIED_USER_ID).is("revoked_at", null).maybeSingle()).data
-  );
-  assert.equal(unqualifiedQual, false);
-
-  // Step 2: Qualified user enters group mode -> session created
-  const now = new Date();
-  const token = createGroupModeToken(now);
+  const token = createGroupModeToken();
   dbState.sessions.push({
     user_id: QUALIFIED_USER_ID,
     token_hash: token.tokenHash,
-    expires_at: token.expiresAt.toISOString(),
+    expires_at: token.expiresAt,
     revoked_at: null,
   });
 
-  // Step 3: Status check with valid token -> active: true
   const activeSession = dbState.sessions.find(
     (s) => s.user_id === QUALIFIED_USER_ID && s.token_hash === hashGroupModeToken(token.token) && !s.revoked_at
   );
@@ -257,7 +199,6 @@ test("集团模式完整生命周期：无资格拒绝 403，有资格发令牌�
     true,
   );
 
-  // Step 4: Exit group mode -> session revoked
   activeSession.revoked_at = new Date().toISOString();
   assert.equal(
     isGroupModeActive({
@@ -278,7 +219,7 @@ test("buildDataAccessScope: 开启集团模式获得全公司范围，单公司�
   ];
 
   const mockSupabase = {
-    from(_table: string) {
+    from() {
       let filterTeamId: string | null = null;
       return {
         select() { return this; },
@@ -344,12 +285,12 @@ test("集团模式 API 行为验证：未登录 401、无资格 403、状态与�
   assert.equal(unauthRes.status, 401);
   assert.equal(unauthRes.body.error, "未登录");
 
-  // Scenario 2: Unqualified user entering group mode
-  function handleEnterUnqualified(hasQual: boolean) {
-    if (!hasQual) return { status: 403, body: { error: "没有集团权限资格" } };
+  // Scenario 2: Ordinary user entering group mode
+  function handleEnterUnqualified(canEnter: boolean) {
+    if (!canEnter) return { status: 403, body: { error: "没有集团权限资格" } };
     return { status: 200, body: { active: true } };
   }
-  const unqualRes = handleEnterUnqualified(false);
+  const unqualRes = handleEnterUnqualified(canEnterGroupMode("admin", "active"));
   assert.equal(unqualRes.status, 403);
   assert.equal(unqualRes.body.error, "没有集团权限资格");
 
@@ -359,5 +300,5 @@ test("集团模式 API 行为验证：未登录 401、无资格 403、状态与�
   assert.equal(cookieOpts.httpOnly, true);
   assert.equal(cookieOpts.sameSite, "strict");
   assert.equal(cookieOpts.path, "/");
-  assert.equal(cookieOpts.maxAge, 1800);
+  assert.equal("maxAge" in cookieOpts, false);
 });

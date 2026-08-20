@@ -53,6 +53,13 @@ export function resolveCompanyRole(value: unknown): CompanyRole | null {
   return null;
 }
 
+export function canEnterGroupMode(
+  role: CompanyRole | UserRole | string | null | undefined,
+  membershipStatus: unknown,
+) {
+  return membershipStatus !== "archived" && resolveCompanyRole(role) === "company_owner";
+}
+
 export function isCompanyRole(value: unknown): value is CompanyRole {
   return value === "member" || value === "admin" || value === "company_owner";
 }
@@ -75,9 +82,10 @@ export function runtimeRoleForCompanyRole(role: CompanyRole): UserRole {
 
 export function fixedPermissionsForRole(
   role: CompanyRole | UserRole | string | null | undefined,
-  _legacyPermissions: Permissions | null | undefined = null,
+  legacyPermissions: Permissions | null | undefined = null,
   groupMode = false,
 ): Permissions {
+  void legacyPermissions;
   if (groupMode) {
     return Object.fromEntries(PERMISSION_KEYS_FOR_GROUP_MODE.map((key) => [key, true]));
   }

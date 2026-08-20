@@ -7,6 +7,7 @@ import {
   DEFAULT_PERMISSIONS_BY_COMPANY_ROLE,
   PERMISSION_KEYS_FOR_GROUP_MODE,
   buildCompanyRoleProfilePatch,
+  canEnterGroupMode,
   fixedPermissionsForRole,
   hasFixedPermission,
   resolveCompanyRole,
@@ -26,6 +27,14 @@ test("legacy owner is treated as company_owner, not a group-wide role", () => {
   assert.equal(resolveCompanyRole("owner"), "company_owner");
   assert.equal(resolveCompanyRole("admin"), "admin");
   assert.equal(resolveCompanyRole("member"), "member");
+});
+
+test("只有在职 company_owner 或迁移中的 legacy owner 可以进入集团模式", () => {
+  assert.equal(canEnterGroupMode("company_owner", "active"), true);
+  assert.equal(canEnterGroupMode("owner", "active"), true);
+  assert.equal(canEnterGroupMode("admin", "active"), false);
+  assert.equal(canEnterGroupMode("member", "active"), false);
+  assert.equal(canEnterGroupMode("company_owner", "archived"), false);
 });
 
 test("固定权限忽略旧的逐人开关，并按公司角色返回真实系统设置权限", () => {

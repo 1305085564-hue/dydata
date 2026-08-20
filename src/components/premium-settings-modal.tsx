@@ -50,19 +50,40 @@ export function GroupModeSettingsControl({
   return (
     <div
       data-testid="group-mode-settings-control"
-      className="flex items-center justify-between gap-4 border-b border-zinc-300/70 pb-4 dark:border-zinc-800"
+      className={cn(
+        "flex items-center justify-between gap-4 p-3 rounded-xl border transition-all duration-200",
+        isGroupModeActive
+          ? "border-[#D97757]/40 bg-[#D97757]/5 dark:border-[#D97757]/30 dark:bg-[#D97757]/10"
+          : "border-zinc-300/80 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-900/20",
+      )}
     >
       <div className="flex min-w-0 items-center gap-2.5">
-        <Building2 className="size-4 shrink-0 text-[#5F82A8]" />
+        <div
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+            isGroupModeActive
+              ? "bg-[#D97757]/15 text-[#D97757]"
+              : "bg-zinc-200/70 text-[#5F82A8] dark:bg-zinc-800 dark:text-zinc-400",
+          )}
+        >
+          <Building2 className="size-4 shrink-0" />
+        </div>
         <div>
-          <span className="block text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
-            {isGroupModeActive ? "集团模式" : "公司模式"}
-          </span>
-          <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4]">
+          <div className="flex items-center gap-2">
+            <span className="block text-[13px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
+              {isGroupModeActive ? "全集团广角视野" : "公司模式"}
+            </span>
+            {isGroupModeActive && (
+              <span className="rounded bg-[#D97757]/15 px-1.5 py-0.5 text-[10px] font-medium text-[#D97757]">
+                已开启
+              </span>
+            )}
+          </div>
+          <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
             {isGroupModeActive
-              ? "30 分钟内可管理集团范围"
+              ? "当前可查看与管理全集团所有团队数据"
               : canEnterGroupMode
-                ? "当前只管理所在公司"
+                ? "当前聚焦本公司数据（可一键切换为全集团视野）"
                 : "当前只管理所在公司；未获集团资格"}
           </span>
         </div>
@@ -72,7 +93,12 @@ export function GroupModeSettingsControl({
           type="button"
           onClick={onChange}
           disabled={pending}
-          className="shrink-0 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-800 transition-colors hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          className={cn(
+            "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40 disabled:cursor-not-allowed disabled:opacity-60",
+            isGroupModeActive
+              ? "border-[#D97757]/30 bg-white text-[#D97757] hover:bg-[#D97757]/10 dark:bg-zinc-900 dark:hover:bg-[#D97757]/20"
+              : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800",
+          )}
         >
           {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
         </button>
