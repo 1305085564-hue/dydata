@@ -368,12 +368,37 @@ export async function reviewExemptionRequest(input: {
 
   const { data: requestRow, error: requestError } = await adminSupabase
     .from("exemption_request")
-    .select("id, applicant_user_id, request_status")
+    .select("id, applicant_user_id, request_status, team_id")
     .eq("id", input.requestId)
     .maybeSingle();
-  if (requestError) return { error: requestError.message };
-  if (!requestRow) return { error: "豁免申请不存在" };
+  if (requestError) {
+    console.error("[reviewExemption] 查询申请失败:", { requestId: input.requestId, error: requestError });
+    return { error: requestError.message };
+  }
+  if (!requestRow) {
+    console.error("[reviewExemption] 申请不存在:", {
+      requestId: input.requestId,
+      reviewerId: perm.userId,
+      reviewerTeamId: perm.teamId,
+    });
+    return { error: "豁免申请不存在" };
+  }
+
+  console.log("[reviewExemption] 查询到申请:", {
+    requestId: requestRow.id,
+    applicantUserId: requestRow.applicant_user_id,
+    requestStatus: requestRow.request_status,
+    requestTeamId: requestRow.team_id,
+    reviewerId: perm.userId,
+    reviewerRole: perm.role,
+    reviewerTeamId: perm.teamId,
+  });
   if (!hasActiveScopeAccess(scope, requestRow.applicant_user_id)) {
+    console.error("[reviewExemption] 范围校验失败:", {
+      requestId: input.requestId,
+      applicantUserId: requestRow.applicant_user_id,
+      scopeVisibleUserIds: scope.activeVisibleUserIds ?? scope.visibleUserIds,
+    });
     return { error: "不能操作已归档或当前管理范围外的成员" };
   }
 
@@ -383,7 +408,20 @@ export async function reviewExemptionRequest(input: {
     decision: input.decision,
     groupModeTokenHash: perm.groupModeTokenHash,
   });
-  if (!result.ok) return { error: result.message };
+  if (!result.ok) {
+    console.error("[reviewExemption] 数据库函数执行失败:", {
+      requestId: input.requestId,
+      decision: input.decision,
+      error: result.message,
+      cause: (result as any).cause,
+    });
+    return { error: result.message };
+  }
+
+  console.log("[reviewExemption] 审批成功:", {
+    requestId: input.requestId,
+    decision: input.decision,
+  });
 
   await writeAuditLog(
     supabase,

@@ -66,14 +66,28 @@ function RequestRow({
     );
 
     startTransition(async () => {
+      console.log("[豁免审批] 请求参数:", {
+        requestId: request.id,
+        applicantUserId: request.applicant_user_id,
+        applicantName: request.applicant_name,
+        decision,
+      });
+
       const result = await reviewExemptionRequest({
         requestId: request.id,
         decision,
       });
 
       if (result.error) {
+        console.error("[豁免审批] 失败:", {
+          error: result.error,
+          requestId: request.id,
+          applicantName: request.applicant_name,
+        });
         onRestore?.(request);
-        feedbackToast.error(result.error);
+        feedbackToast.error(`${result.error}（申请ID: ${request.id.slice(0, 8)}...）`);
+      } else {
+        console.log("[豁免审批] 成功:", { requestId: request.id });
       }
     });
   }
