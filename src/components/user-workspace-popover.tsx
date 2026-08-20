@@ -8,7 +8,6 @@ import {
   UsersRound,
   LogOut,
 } from "lucide-react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { setDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
@@ -235,14 +234,13 @@ export function UserWorkspacePopover({
             </button>
 
             {canAccessTeamManagement ? (
-              <Link
+              <a
                 href="/admin/modules"
-                onClick={() => setIsOpen(false)}
                 className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-900 group/btn"
               >
                 <UsersRound className="size-4 text-zinc-400 group-hover/btn:text-[#D97757] transition-colors" />
                 <span>成员与团队架构</span>
-              </Link>
+              </a>
             ) : (
               <div
                 aria-disabled="true"

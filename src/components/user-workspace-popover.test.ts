@@ -13,5 +13,6 @@ test("无成员管理权限时不再无条件显示成员与团队架构链接",
 });
 
 test("有成员管理权限时仍保留成员与团队架构链接", () => {
-  assert.match(source, /href="\/admin\/modules"/);
+  assert.match(source, /<a[\s\S]*href="\/admin\/modules"/);
+  assert.doesNotMatch(source, /import Link from "next\/link"/);
 });
