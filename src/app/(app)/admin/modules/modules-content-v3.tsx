@@ -22,12 +22,11 @@ import {
   RotateCcw,
   ChevronDown,
   Building2,
-  Mail,
   UserMinus,
-  Play,
   AlertCircle,
   ArrowRight,
   Settings,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -291,19 +290,20 @@ export function AdminModulesContentV3({
 
   // 4. Drawer (Inspector) states
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
-  const [drawerTab, setDrawerTab] = useState<"overview" | "team_role" | "permissions" | "exemption">("overview");
   const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
   const [draftDataScope, setDraftDataScope] = useState<DataScope>("self");
   const [isPermissionsDirty, setIsPermissionsDirty] = useState(false);
 
-  // Exemption form inside Drawer
+  // Exemption state
+  const [isExemptionDialogOpen, setIsExemptionDialogOpen] = useState(false);
   const [exemptionMode, setExemptionMode] = useState<"none" | "permanent" | "range">("none");
   const [exemptionCategory, setExemptionCategory] = useState<ExemptionCategory>("leave");
   const [exemptionStartDate, setExemptionStartDate] = useState(defaultDate);
   const [exemptionEndDate, setExemptionEndDate] = useState(defaultDate);
   const [exemptionReason, setExemptionReason] = useState("");
 
-  // AI Suggestion state inside Drawer
+  // AI Suggestion state
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<{
     status: "normal" | "warning" | "critical";
     summary: string;
@@ -428,8 +428,9 @@ export function AdminModulesContentV3({
       setDraftPermissions(member.permissions ?? {});
       setDraftDataScope(member.data_scope ?? "self");
       setIsPermissionsDirty(false);
-      setDrawerTab("overview");
       setAiSuggestion(null);
+      setIsExemptionDialogOpen(false);
+      setIsAiDialogOpen(false);
 
       // Populate exemption form
       if (member.exempt_type === "permanent") {
@@ -1512,630 +1513,580 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 overflow-y-auto bg-zinc-50">
+        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-zinc-200 shadow-xl">
           {activeMember && (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
-              <div className="p-6 border-b border-zinc-200/80">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="size-11 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[16px]">
-                      {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <SheetTitle className="text-[17px] font-semibold text-zinc-950">
-                          {activeMember.name || "未命名"}
-                        </SheetTitle>
-                        {activeMember.role === "owner" ? (
-                          <Badge variant="accent">创始人</Badge>
-                        ) : activeMember.role === "admin" ? (
-                          <Badge variant="success">主管</Badge>
-                        ) : (
-                          <Badge variant="secondary">组员</Badge>
-                        )}
-                        {activeMember.membership_status === "archived" && (
-                          <Badge variant="neutral">已归档</Badge>
-                        )}
-                      </div>
-                      <SheetDescription className="text-[12px] text-zinc-500 mt-1 flex flex-wrap items-center gap-2">
-                        <Mail className="size-3 text-zinc-400" />
-                        <span>{activeMember.email || "未绑定邮箱"}</span>
-                        <span>·</span>
-                        <Building2 className="size-3 text-zinc-400" />
-                        <span>{activeMember.team_name || "未分配团队"}</span>
-                      </SheetDescription>
-                    </div>
+              <div className="p-6 pb-4 border-b border-zinc-100 flex items-start justify-between gap-3 shrink-0">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="size-11 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[15px] shrink-0 mt-0.5">
+                    {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                   </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <SheetTitle className="text-[16px] font-semibold text-zinc-950 truncate">
+                        {activeMember.name || "未命名"}
+                      </SheetTitle>
+                      <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-zinc-100 text-zinc-700 shrink-0">
+                        {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "主管" : "组员"}
+                      </span>
+                      {activeMember.membership_status === "archived" && (
+                        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-zinc-100 text-zinc-400 shrink-0">
+                          已归档
+                        </span>
+                      )}
+                    </div>
+                    <SheetDescription className="text-[12px] text-zinc-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      {activeMember.team_name && <span>{activeMember.team_name}</span>}
+                      {activeMember.email && (
+                        <>
+                          {activeMember.team_name && <span className="text-zinc-300">·</span>}
+                          <span className="truncate">{activeMember.email}</span>
+                        </>
+                      )}
+                      {activeMember.last_sign_in_at && (
+                        <>
+                          <span className="text-zinc-300">|</span>
+                          <span className="text-[11px] text-zinc-400">
+                            上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
+                          </span>
+                        </>
+                      )}
+                    </SheetDescription>
+                  </div>
+                </div>
 
+                <div className="flex items-center gap-2 shrink-0">
+                  {activeMember.membership_status !== "archived" && activeMember.role !== "owner" && (
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      onClick={() => {
+                        setIsAiDialogOpen(true);
+                        if (!aiSuggestion) handleFetchAiSuggestion();
+                      }}
+                      className="h-7 px-2.5 text-[12px] text-zinc-700 hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
+                    >
+                      <Sparkles className="size-3.5 text-[#D97757]" />
+                      AI 诊断
+                    </Button>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
                       setActiveMemberId(null);
                       setAiSuggestion(null);
                     }}
-                    className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg"
+                    className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
                   >
                     <X className="size-4" />
                   </button>
                 </div>
+              </div>
 
-                {/* 抽屉 4 大功能 Tab */}
-                <div className="mt-5 flex border-b border-zinc-200">
+              {/* 抽屉内容主体（单页直通） */}
+              <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                {/* 1. 细粒度权限配置 (标准 MemberPermissionEditor) */}
+                <MemberPermissionEditor
+                  member={{
+                    id: activeMember.id,
+                    name: activeMember.name ?? "",
+                    email: activeMember.email,
+                    last_sign_in_at: activeMember.last_sign_in_at,
+                    role: activeMember.role,
+                    teamId: activeMember.team_id,
+                    teamName: activeMember.team_name,
+                    permissions: activeMember.permissions ?? {},
+                    data_scope: activeMember.data_scope,
+                    status: normalizeUserStatus(activeMember.status),
+                    exempt_type: (activeMember.exempt_type as "permanent" | "temporary") || null,
+                    exempt_start_date: activeMember.exempt_start_date,
+                    exempt_end_date: activeMember.exempt_end_date,
+                    exempt_reason: activeMember.exempt_reason,
+                    exemption_category: (activeMember.exemption_category as ExemptionCategory) || null,
+                  }}
+                  draftPermissions={draftPermissions}
+                  draftDataScope={draftDataScope}
+                  onTogglePermission={(key: PermissionKey, checked: boolean) => {
+                    setDraftPermissions((prev) => ({ ...prev, [key]: checked }));
+                    setIsPermissionsDirty(true);
+                  }}
+                  onToggleCategory={(category: PermissionCategory) => {
+                    const keys = PERMISSION_CATEGORIES[category];
+                    const isAllChecked = keys.every((k) => draftPermissions[k] === true);
+                    setDraftPermissions((prev) => {
+                      const next = { ...prev };
+                      keys.forEach((k) => {
+                        next[k] = !isAllChecked;
+                      });
+                      return next;
+                    });
+                    setIsPermissionsDirty(true);
+                  }}
+                  onToggleAllPermissions={() => {
+                    const isAllChecked = PERMISSION_KEYS.every((k) => draftPermissions[k] === true);
+                    setDraftPermissions((prev) => {
+                      const next = { ...prev };
+                      PERMISSION_KEYS.forEach((k) => {
+                        next[k] = !isAllChecked;
+                      });
+                      return next;
+                    });
+                    setIsPermissionsDirty(true);
+                  }}
+                  onChangeDataScope={(scope: DataScope) => {
+                    setDraftDataScope(scope);
+                    setIsPermissionsDirty(true);
+                  }}
+                  canEdit={permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner"}
+                  isSaving={isPending}
+                />
+
+                {/* 2. 账户与团队管理（高密度统一清单） */}
+                {activeMember.membership_status !== "archived" && (
+                  <div className="pt-4 border-t border-zinc-100 space-y-2">
+                    <h4 className="text-[13px] font-medium text-zinc-500 px-1">账户与团队管理</h4>
+                    <div className="divide-y divide-zinc-100 rounded-xl bg-zinc-50/60 p-1">
+                      {/* 所属团队 */}
+                      <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                          <Building2 className="size-4 text-zinc-400 shrink-0" />
+                          <span className="text-[13px] text-zinc-800 font-medium">所属团队</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {canEditTeamMembers ? (
+                            <Select
+                              value={activeMember.team_id || "__unassigned__"}
+                              onValueChange={(val) => {
+                                if (val) {
+                                  const newId = val === "__unassigned__" ? null : val;
+                                  handleTransferMemberTeam(activeMember.id, newId);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="h-7 text-[12px] border-transparent bg-transparent hover:bg-zinc-200/50 min-w-[110px] text-right font-normal">
+                                <SelectValue placeholder="未分配团队">
+                                  {activeMember.team_name || (activeMember.team_id ? localTeams.find(t => t.id === activeMember.team_id)?.name : "未分配团队")}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__unassigned__">未分配团队</SelectItem>
+                                {localTeams.map((t) => (
+                                  <SelectItem key={t.id} value={t.id}>
+                                    {t.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <span className="text-[12px] text-zinc-500">
+                              {activeMember.team_name || "未分配团队"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 系统角色切换 */}
+                      {activeMember.role !== "owner" && (
+                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <Settings className="size-4 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800 font-medium">
+                              {activeMember.role === "admin" ? "降为普通组员" : "提升为管理员"}
+                            </span>
+                          </div>
+                          {canManageMembers ? (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleRole(activeMember)}
+                              className="text-[12px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                            >
+                              切换身份
+                            </button>
+                          ) : (
+                            <span className="text-[12px] text-zinc-400">
+                              {activeMember.role === "admin" ? "管理员" : "普通组员"}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 重置密码 */}
+                      {canManageMembers && (
+                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <KeyRound className="size-4 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800 font-medium">重置账户密码</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPasswordResetTarget(activeMember);
+                              setNewPassword("");
+                            }}
+                            className="text-[12px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                          >
+                            快捷重置
+                          </button>
+                        </div>
+                      )}
+
+                      {/* 日报豁免与请假 */}
+                      {canManageFulfillment && (
+                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <Clock className="size-4 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800 font-medium">日报豁免与请假</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsExemptionDialogOpen(true)}
+                            className="text-[12px] text-zinc-400 hover:text-zinc-900 transition-colors flex items-center gap-1"
+                          >
+                            <span>
+                              {activeMember.exempt_type === "permanent"
+                                ? "永久豁免"
+                                : activeMember.exempt_type === "temporary"
+                                ? `${activeMember.exemption_category === "leave" ? "请假中" : "免交中"}`
+                                : "未生效"}
+                            </span>
+                            <span className="text-zinc-300">›</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {/* 移出团队 */}
+                      {canEditTeamMembers && activeMember.team_id && (
+                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <UserMinus className="size-4 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800 font-medium">移出团队</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleTransferMemberTeam(activeMember.id, null)}
+                            className="text-[12px] text-zinc-400 hover:text-red-600 transition-colors"
+                          >
+                            保留账号
+                          </button>
+                        </div>
+                      )}
+
+                      {/* 归档账号 */}
+                      {isCompanyOwner && activeMember.role !== "owner" && (
+                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-red-50/50 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                            <Trash2 className="size-4 text-red-500 shrink-0" />
+                            <span className="text-[13px] text-red-600 font-medium">归档账号</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setArchiveTarget(activeMember);
+                              setArchiveReason("");
+                            }}
+                            className="text-[12px] text-red-500 hover:text-red-700 font-medium transition-colors"
+                          >
+                            高风险操作
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 抽屉底部保存栏 */}
+              {permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
+                <div className="p-4 border-t border-zinc-200/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
                   <button
                     type="button"
-                    onClick={() => setDrawerTab("overview")}
+                    onClick={() => {
+                      setDraftPermissions(activeMember.permissions ?? {});
+                      setDraftDataScope(activeMember.data_scope ?? "self");
+                      setIsPermissionsDirty(false);
+                    }}
+                    disabled={!isPermissionsDirty || isPending}
                     className={cn(
-                      "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
-                      drawerTab === "overview"
-                        ? "border-[#D97757] text-[#D97757] font-medium"
-                        : "border-transparent text-zinc-600 hover:text-zinc-950"
+                      "text-[12px] font-medium transition-colors",
+                      isPermissionsDirty ? "text-zinc-600 hover:text-zinc-950" : "text-zinc-300 cursor-not-allowed"
                     )}
                   >
-                    概览与 AI 诊断
+                    取消修改
                   </button>
 
-                  {activeMember.membership_status !== "archived" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setDrawerTab("team_role")}
-                        className={cn(
-                          "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
-                          drawerTab === "team_role"
-                            ? "border-[#D97757] text-[#D97757] font-medium"
-                            : "border-transparent text-zinc-600 hover:text-zinc-950"
-                        )}
-                      >
-                        团队与角色
-                      </button>
-
-                      {permissionManagerCapabilities.canEditPermissions && (
-                        <button
-                          type="button"
-                          onClick={() => setDrawerTab("permissions")}
-                          className={cn(
-                            "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
-                            drawerTab === "permissions"
-                              ? "border-[#D97757] text-[#D97757] font-medium"
-                              : "border-transparent text-zinc-600 hover:text-zinc-950"
-                          )}
-                        >
-                          权限配置
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => setDrawerTab("exemption")}
-                        className={cn(
-                          "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
-                          drawerTab === "exemption"
-                            ? "border-[#D97757] text-[#D97757] font-medium"
-                            : "border-transparent text-zinc-600 hover:text-zinc-950"
-                        )}
-                      >
-                        豁免与生命周期
-                      </button>
-                    </>
-                  )}
+                  <Button
+                    variant="default"
+                    size="sm"
+                    disabled={!isPermissionsDirty || isPending}
+                    onClick={handleSavePermissions}
+                    className={cn(
+                      "text-[12px] h-8 px-4",
+                      isPermissionsDirty
+                        ? "bg-[#D97757] hover:bg-[#C96442]"
+                        : "bg-zinc-100 text-zinc-400 hover:bg-zinc-100 cursor-not-allowed shadow-none"
+                    )}
+                  >
+                    {isPending ? "保存中..." : isPermissionsDirty ? "保存权限设置" : "已是最新"}
+                  </Button>
                 </div>
-              </div>
-
-              {/* 抽屉内容主体 */}
-              <div className="p-6 space-y-5 flex-1">
-                {/* 1. 概览与 AI 诊断 */}
-                {drawerTab === "overview" && (
-                  <div className="space-y-5">
-                    <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-[13px] font-medium text-zinc-900">本月发布概况</h4>
-                        <span className="text-[12px] text-zinc-500 tabular-nums">
-                          实发天数：{activeMember.monthly_published_days ?? 0} 天
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 pt-1">
-                        <div>
-                          <p className="text-[12px] text-zinc-500">本月实发作品</p>
-                          <p className="text-[20px] font-semibold text-zinc-900 mt-0.5 tabular-nums">
-                            {activeMember.monthly_published_count ?? 0}
-                            <span className="text-[12px] font-normal text-zinc-500 ml-1">条</span>
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[12px] text-zinc-500">本月应发作品</p>
-                          <p className="text-[20px] font-semibold text-zinc-900 mt-0.5 tabular-nums">
-                            {activeMember.monthly_required_count ?? 0}
-                            <span className="text-[12px] font-normal text-zinc-500 ml-1">条</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-[13px] font-medium text-zinc-900">当前豁免状态</h4>
-                        {activeMember.exempt_type ? (
-                          <Badge variant="accent">
-                            {activeMember.exempt_type === "permanent" ? "永久豁免" : "区间豁免"}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">正常发布</Badge>
-                        )}
-                      </div>
-                      {activeMember.exempt_type ? (
-                        <div className="text-[12px] text-zinc-600 space-y-1 mt-2">
-                          <p>
-                            分类：<strong>{activeMember.exemption_category === "leave" ? "请假" : "免交"}</strong>
-                          </p>
-                          {activeMember.exempt_type === "temporary" && (
-                            <p>
-                              时间：{activeMember.exempt_start_date} 至 {activeMember.exempt_end_date}
-                            </p>
-                          )}
-                          {activeMember.exempt_reason && <p>原因：{activeMember.exempt_reason}</p>}
-                        </div>
-                      ) : (
-                        <p className="text-[12px] text-zinc-500 mt-1">该成员当前无特殊豁免或请假记录。</p>
-                      )}
-                    </div>
-
-                    {/* AI 顾问 (支持 execute_tool 及 409 二次确认) */}
-                    {activeMember.membership_status !== "archived" && activeMember.role !== "owner" && (
-                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="size-4 text-[#D97757]" />
-                            <h4 className="text-[13px] font-medium text-zinc-900">AI 成员管理顾问</h4>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="xs"
-                            disabled={aiSuggestion?.loading}
-                            onClick={handleFetchAiSuggestion}
-                            className="text-[12px] gap-1"
-                          >
-                            <RefreshCw className={cn("size-3", aiSuggestion?.loading && "animate-spin")} />
-                            {aiSuggestion?.suggestions ? "重新诊断" : "生成管理诊断"}
-                          </Button>
-                        </div>
-
-                        {aiSuggestion?.loading && (
-                          <div className="py-6 text-center text-[12px] text-zinc-500 space-y-2">
-                            <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
-                            <p>正在结合近期填报、播放量与异常数据生成诊断...</p>
-                          </div>
-                        )}
-
-                        {aiSuggestion?.error && (
-                          <div className="p-3 bg-red-50 text-red-700 rounded-lg text-[12px] flex items-center gap-2">
-                            <AlertCircle className="size-4 shrink-0" />
-                            <span>{aiSuggestion.error}</span>
-                          </div>
-                        )}
-
-                        {aiSuggestion?.suggestions && !aiSuggestion.loading && (
-                          <div className="space-y-3 pt-2">
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant={
-                                   aiSuggestion.status === "critical"
-                                    ? "destructive"
-                                    : aiSuggestion.status === "warning"
-                                    ? "warning"
-                                    : "success"
-                                }
-                              >
-                                {aiSuggestion.status === "critical"
-                                  ? "需重点跟进"
-                                  : aiSuggestion.status === "warning"
-                                  ? "建议关注"
-                                  : "状态正常"}
-                              </Badge>
-                              <p className="text-[13px] font-medium text-zinc-800">{aiSuggestion.summary}</p>
-                            </div>
-
-                            {aiSuggestion.suggestions.length > 0 && (
-                              <div className="divide-y divide-zinc-100 mt-2">
-                                {aiSuggestion.suggestions.map((s, idx) => {
-                                  const key = `${s.label}-${idx}`;
-                                  const isBusy = executingAiKey === key;
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className="py-3 flex items-start justify-between gap-2"
-                                    >
-                                      <div className="text-[12px] space-y-0.5">
-                                        <p className="font-medium text-zinc-900">{s.label}</p>
-                                        <p className="text-zinc-500">{s.description}</p>
-                                      </div>
-                                      <div className="shrink-0 flex items-center gap-1">
-                                        {s.action.type === "navigate" && (
-                                          <Button
-                                            variant="ghost"
-                                            size="xs"
-                                            onClick={() => {
-                                              if ("href" in s.action) router.push(s.action.href);
-                                            }}
-                                            className="text-[#D97757] text-[12px]"
-                                          >
-                                            前往 <ArrowRight className="size-3 ml-0.5" />
-                                          </Button>
-                                        )}
-                                        {s.action.type === "execute_tool" && (
-                                          <Button
-                                            variant="default"
-                                            size="xs"
-                                            disabled={isBusy}
-                                            onClick={() => handleExecuteAiSuggestion(s, key)}
-                                            className="bg-[#D97757] hover:bg-[#C96442] text-[12px] gap-1"
-                                          >
-                                            <Play className="size-3 fill-current" />
-                                            {isBusy ? "执行中..." : "一键执行"}
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {!aiSuggestion && (
-                          <p className="text-[12px] text-zinc-500">
-                            点击右上角按钮，AI 将综合分析该成员的填报周期、异常断流及表现提出运营建议。
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 2. 团队与角色管理 (包含 3.2 独立移出团队) */}
-                {drawerTab === "team_role" && (
-                  <div className="space-y-5">
-                    <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
-                      <div>
-                        <h4 className="text-[13px] font-medium text-zinc-900">所属团队调配</h4>
-                        <p className="text-[12px] text-zinc-500 mt-0.5">调整该成员归属团队或移出当前团队</p>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Select
-                          value={activeMember.team_id || "__unassigned__"}
-                          disabled={!canEditTeamMembers}
-                          onValueChange={(val) => {
-                            if (val) {
-                              const newId = val === "__unassigned__" ? null : val;
-                              handleTransferMemberTeam(activeMember.id, newId);
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="选择所属团队" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__unassigned__">未分配团队（移出）</SelectItem>
-                            {localTeams.map((t) => (
-                              <SelectItem key={t.id} value={t.id}>
-                                {t.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        {canEditTeamMembers && activeMember.team_id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={isPending}
-                            onClick={() => handleTransferMemberTeam(activeMember.id, null)}
-                            className="text-zinc-600 hover:text-red-600 shrink-0 text-[12px]"
-                            title="移出当前团队（保留账号与数据）"
-                          >
-                            <UserMinus className="size-3.5 mr-1 text-red-500" />
-                            移出
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {canManageMembers && activeMember.role !== "owner" && (
-                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
-                        <div>
-                          <h4 className="text-[13px] font-medium text-zinc-900">系统角色变更</h4>
-                          <p className="text-[12px] text-zinc-500 mt-0.5">
-                            主管可负责本团队日常管理；变更为组员将清空自定义权限
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (activeMember.role !== "member") handleToggleRole(activeMember);
-                            }}
-                            className={cn(
-                              "p-3 rounded-lg border text-left transition-colors",
-                              activeMember.role === "member"
-                                ? "border-zinc-900 bg-zinc-50 font-medium"
-                                : "border-zinc-200 bg-white hover:bg-zinc-50"
-                            )}
-                          >
-                            <p className="text-[13px] font-medium text-zinc-900">普通组员</p>
-                            <p className="text-[12px] text-zinc-500 mt-0.5">仅查看和提交个人数据</p>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (activeMember.role !== "admin") handleToggleRole(activeMember);
-                            }}
-                            className={cn(
-                              "p-3 rounded-lg border text-left transition-colors",
-                              activeMember.role === "admin"
-                                ? "border-zinc-900 bg-zinc-50 font-medium"
-                                : "border-zinc-200 bg-white hover:bg-zinc-50"
-                            )}
-                          >
-                            <p className="text-[13px] font-medium text-zinc-900">团队主管</p>
-                            <p className="text-[12px] text-zinc-500 mt-0.5">负责本团队日常业务与审批</p>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {canManageMembers && (
-                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 flex items-center justify-between">
-                        <div>
-                          <h4 className="text-[13px] font-medium text-zinc-900">重置登录密码</h4>
-                          <p className="text-[12px] text-zinc-500 mt-0.5">为成员重置一个临时的登录密码</p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setPasswordResetTarget(activeMember);
-                            setNewPassword("");
-                          }}
-                        >
-                          <KeyRound className="size-3.5 mr-1" />
-                          重置密码
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 3. 细粒度权限配置 (标准 MemberPermissionEditor) */}
-                {drawerTab === "permissions" && (
-                  <div className="space-y-5">
-                    <MemberPermissionEditor
-                      member={{
-                        id: activeMember.id,
-                        name: activeMember.name ?? "",
-                        email: activeMember.email,
-                        last_sign_in_at: activeMember.last_sign_in_at,
-                        role: activeMember.role,
-                        teamId: activeMember.team_id,
-                        teamName: activeMember.team_name,
-                        permissions: activeMember.permissions ?? {},
-                        data_scope: activeMember.data_scope,
-                        status: normalizeUserStatus(activeMember.status),
-                        exempt_type: (activeMember.exempt_type as "permanent" | "temporary") || null,
-                        exempt_start_date: activeMember.exempt_start_date,
-                        exempt_end_date: activeMember.exempt_end_date,
-                        exempt_reason: activeMember.exempt_reason,
-                        exemption_category: (activeMember.exemption_category as ExemptionCategory) || null,
-                      }}
-                      draftPermissions={draftPermissions}
-                      draftDataScope={draftDataScope}
-                      onTogglePermission={(key: PermissionKey, checked: boolean) => {
-                        setDraftPermissions((prev) => ({ ...prev, [key]: checked }));
-                        setIsPermissionsDirty(true);
-                      }}
-                      onToggleCategory={(category: PermissionCategory) => {
-                        const keys = PERMISSION_CATEGORIES[category];
-                        const isAllChecked = keys.every((k) => draftPermissions[k] === true);
-                        setDraftPermissions((prev) => {
-                          const next = { ...prev };
-                          keys.forEach((k) => {
-                            next[k] = !isAllChecked;
-                          });
-                          return next;
-                        });
-                        setIsPermissionsDirty(true);
-                      }}
-                      onToggleAllPermissions={() => {
-                        const isAllChecked = PERMISSION_KEYS.every((k) => draftPermissions[k] === true);
-                        setDraftPermissions((prev) => {
-                          const next = { ...prev };
-                          PERMISSION_KEYS.forEach((k) => {
-                            next[k] = !isAllChecked;
-                          });
-                          return next;
-                        });
-                        setIsPermissionsDirty(true);
-                      }}
-                      onChangeDataScope={(scope: DataScope) => {
-                        setDraftDataScope(scope);
-                        setIsPermissionsDirty(true);
-                      }}
-                      canEdit={permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner"}
-                      isSaving={isPending}
-                    />
-
-                    {permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner" && (
-                      <div className="pt-2">
-                        <Button
-                          variant="default"
-                          disabled={!isPermissionsDirty || isPending}
-                          onClick={handleSavePermissions}
-                          className="w-full bg-[#D97757] hover:bg-[#C96442]"
-                        >
-                          {isPending ? "保存中..." : "保存权限设置"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* 4. 豁免与账号生命周期 */}
-                {drawerTab === "exemption" && (
-                  <div className="space-y-5">
-                    {canManageFulfillment && (
-                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-4">
-                        <div>
-                          <h4 className="text-[13px] font-medium text-zinc-900">豁免与请假规则配置</h4>
-                          <p className="text-[12px] text-zinc-500 mt-0.5">
-                            设置成员免发或请假区间，避免系统产生催发与缺发预警
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2 bg-zinc-100/80 p-1 rounded-xl">
-                          <button
-                            type="button"
-                            onClick={() => setExemptionMode("none")}
-                            className={cn(
-                              "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
-                              exemptionMode === "none"
-                                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                                : "text-zinc-600 hover:text-zinc-950"
-                            )}
-                          >
-                            正常（无豁免）
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setExemptionMode("range")}
-                            className={cn(
-                              "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
-                              exemptionMode === "range"
-                                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                                : "text-zinc-600 hover:text-zinc-950"
-                            )}
-                          >
-                            区间请假/免交
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setExemptionMode("permanent")}
-                            className={cn(
-                              "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
-                              exemptionMode === "permanent"
-                                ? "bg-white text-zinc-950 shadow-2xs font-medium"
-                                : "text-zinc-600 hover:text-zinc-950"
-                            )}
-                          >
-                            永久豁免
-                          </button>
-                        </div>
-
-                        {exemptionMode !== "none" && (
-                          <div className="space-y-3 pt-2">
-                            <div>
-                              <label className="text-[12px] font-medium text-zinc-700 block mb-1">
-                                豁免性质
-                              </label>
-                              <div className="flex gap-4">
-                                <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
-                                  <input
-                                    type="radio"
-                                    name="exemptionCategory"
-                                    checked={exemptionCategory === "leave"}
-                                    onChange={() => setExemptionCategory("leave")}
-                                    className="text-[#D97757]"
-                                  />
-                                  <span>请假</span>
-                                </label>
-                                <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
-                                  <input
-                                    type="radio"
-                                    name="exemptionCategory"
-                                    checked={exemptionCategory === "waive"}
-                                    onChange={() => setExemptionCategory("waive")}
-                                    className="text-[#D97757]"
-                                  />
-                                  <span>免交</span>
-                                </label>
-                              </div>
-                            </div>
-
-                            {exemptionMode === "range" && (
-                              <div className="grid grid-cols-2 gap-3">
-                                 <div>
-                                   <label className="text-[12px] text-zinc-500 block mb-1">开始日期</label>
-                                   <Input
-                                     type="date"
-                                     value={exemptionStartDate}
-                                     onChange={(e) => setExemptionStartDate(e.target.value)}
-                                   />
-                                 </div>
-                                 <div>
-                                   <label className="text-[12px] text-zinc-500 block mb-1">结束日期</label>
-                                   <Input
-                                     type="date"
-                                     value={exemptionEndDate}
-                                     onChange={(e) => setExemptionEndDate(e.target.value)}
-                                   />
-                                 </div>
-                              </div>
-                            )}
-
-                            <div>
-                              <label className="text-[12px] text-zinc-500 block mb-1">豁免原因说明</label>
-                              <Input
-                                type="text"
-                                placeholder="例如：事假、外出培训、设备调试"
-                                value={exemptionReason}
-                                onChange={(e) => setExemptionReason(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        <Button
-                          variant="default"
-                          disabled={isPending}
-                          onClick={handleSaveExemption}
-                          className="w-full bg-[#D97757] hover:bg-[#C96442]"
-                        >
-                          {isPending ? "保存中..." : "保存豁免状态"}
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* 危险区：归档账号 */}
-                    {isCompanyOwner && activeMember.role !== "owner" && (
-                      <div className="space-y-3 pt-3 border-t border-red-100">
-                        <div>
-                          <h4 className="text-[13px] font-medium text-red-950">危险区域：账号归档</h4>
-                          <p className="text-[12px] text-red-700 mt-0.5">
-                            归档将立即封禁该账号的 Auth 登录权限并移出团队，历史日报与数据将完整保留供追溯。
-                          </p>
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            setArchiveTarget(activeMember);
-                            setArchiveReason("");
-                          }}
-                          className="w-full bg-[#C9604D] hover:bg-[#C9604D]/90"
-                        >
-                          归档该账号
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           )}
         </SheetContent>
       </Sheet>
 
       {/* ── Dialogs ── */}
+
+      {/* AI 诊断弹窗 */}
+      <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
+        <DialogContent className="max-w-[480px] p-6 rounded-2xl">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-[#D97757]" />
+                <DialogTitle className="text-[16px] font-semibold text-zinc-950">AI 成员管理诊断</DialogTitle>
+              </div>
+              <Button
+                variant="ghost"
+                size="xs"
+                disabled={aiSuggestion?.loading}
+                onClick={handleFetchAiSuggestion}
+                className="text-[12px] text-[#D97757] hover:bg-[#D97757]/10 hover:text-[#C96442] gap-1"
+              >
+                <RefreshCw className={cn("size-3", aiSuggestion?.loading && "animate-spin")} />
+                刷新分析
+              </Button>
+            </div>
+            <DialogDescription className="text-[12px] text-zinc-500">
+              综合分析近期填报周期、异常断流及个人表现
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {aiSuggestion?.loading && (
+              <div className="py-8 text-center text-[12px] text-zinc-500 space-y-2 bg-zinc-50 rounded-xl">
+                <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
+                <p>正在结合近期填报、播放量与异常数据生成诊断...</p>
+              </div>
+            )}
+
+            {aiSuggestion?.error && (
+              <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[12px] flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>{aiSuggestion.error}</span>
+              </div>
+            )}
+
+            {aiSuggestion?.suggestions && !aiSuggestion.loading && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 bg-zinc-50 rounded-xl">
+                  <Badge
+                    variant={
+                      aiSuggestion.status === "critical"
+                        ? "destructive"
+                        : aiSuggestion.status === "warning"
+                        ? "warning"
+                        : "success"
+                    }
+                  >
+                    {aiSuggestion.status === "critical"
+                      ? "需重点跟进"
+                      : aiSuggestion.status === "warning"
+                      ? "建议关注"
+                      : "状态正常"}
+                  </Badge>
+                  <p className="text-[13px] font-medium text-zinc-800">{aiSuggestion.summary}</p>
+                </div>
+
+                {aiSuggestion.suggestions.length > 0 && (
+                  <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-100 bg-white p-2">
+                    {aiSuggestion.suggestions.map((s, idx) => {
+                      const key = `${s.label}-${idx}`;
+                      const isBusy = executingAiKey === key;
+                      return (
+                        <div key={idx} className="py-2.5 px-2 flex items-start justify-between gap-2">
+                          <div className="text-[12px] space-y-0.5">
+                            <p className="font-medium text-zinc-900">{s.label}</p>
+                            <p className="text-zinc-500 text-[11px]">{s.description}</p>
+                          </div>
+                          <div className="shrink-0 flex items-center gap-1">
+                            {s.action.type === "navigate" && (
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                onClick={() => {
+                                  if ("href" in s.action) router.push(s.action.href);
+                                }}
+                                className="text-[#D97757] text-[12px]"
+                              >
+                                前往 <ArrowRight className="size-3 ml-0.5" />
+                              </Button>
+                            )}
+                            {s.action.type === "execute_tool" && (
+                              <Button
+                                variant="default"
+                                size="xs"
+                                disabled={isBusy}
+                                onClick={() => handleExecuteAiSuggestion(s, key)}
+                                className="bg-[#D97757] hover:bg-[#C96442] text-[12px]"
+                              >
+                                {isBusy ? "执行中..." : "一键执行"}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 日报豁免与请假弹窗 */}
+      <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
+        <DialogContent className="max-w-[440px] p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-[16px] font-semibold text-zinc-950">设置日报豁免与请假</DialogTitle>
+            <DialogDescription className="text-[12px] text-zinc-500">
+              设置免交或请假区间，系统将不会产生催发与缺发预警
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-3 gap-1 bg-zinc-100 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setExemptionMode("none")}
+                className={cn(
+                  "py-1.5 text-[12px] font-medium rounded-lg transition-colors",
+                  exemptionMode === "none"
+                    ? "bg-white text-zinc-950 shadow-xs"
+                    : "text-zinc-600 hover:text-zinc-950"
+                )}
+              >
+                正常发布
+              </button>
+              <button
+                type="button"
+                onClick={() => setExemptionMode("range")}
+                className={cn(
+                  "py-1.5 text-[12px] font-medium rounded-lg transition-colors",
+                  exemptionMode === "range"
+                    ? "bg-white text-zinc-950 shadow-xs"
+                    : "text-zinc-600 hover:text-zinc-950"
+                )}
+              >
+                区间请假
+              </button>
+              <button
+                type="button"
+                onClick={() => setExemptionMode("permanent")}
+                className={cn(
+                  "py-1.5 text-[12px] font-medium rounded-lg transition-colors",
+                  exemptionMode === "permanent"
+                    ? "bg-white text-zinc-950 shadow-xs"
+                    : "text-zinc-600 hover:text-zinc-950"
+                )}
+              >
+                永久豁免
+              </button>
+            </div>
+
+            {exemptionMode !== "none" && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="text-[12px] font-medium text-zinc-700 block mb-1.5">
+                    豁免性质
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="dialogExemptionCategory"
+                        checked={exemptionCategory === "leave"}
+                        onChange={() => setExemptionCategory("leave")}
+                        className="text-[#D97757]"
+                      />
+                      <span>请假</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="dialogExemptionCategory"
+                        checked={exemptionCategory === "waive"}
+                        onChange={() => setExemptionCategory("waive")}
+                        className="text-[#D97757]"
+                      />
+                      <span>免交</span>
+                    </label>
+                  </div>
+                </div>
+
+                {exemptionMode === "range" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[12px] text-zinc-500 block mb-1">开始日期</label>
+                      <Input
+                        type="date"
+                        className="h-8.5 text-[12px]"
+                        value={exemptionStartDate}
+                        onChange={(e) => setExemptionStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[12px] text-zinc-500 block mb-1">结束日期</label>
+                      <Input
+                        type="date"
+                        className="h-8.5 text-[12px]"
+                        value={exemptionEndDate}
+                        onChange={(e) => setExemptionEndDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[12px] text-zinc-500 block mb-1">原因说明</label>
+                  <Input
+                    type="text"
+                    placeholder="例如：事假、外出培训、设备调试"
+                    className="h-8.5 text-[12px]"
+                    value={exemptionReason}
+                    onChange={(e) => setExemptionReason(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsExemptionDialogOpen(false)}
+              className="text-[12px] h-8"
+            >
+              取消
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isPending}
+              onClick={async () => {
+                await handleSaveExemption();
+                setIsExemptionDialogOpen(false);
+              }}
+              className="bg-[#D97757] hover:bg-[#C96442] text-[12px] h-8 px-4"
+            >
+              {isPending ? "保存中..." : "保存豁免状态"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 3.4 团队架构管理弹窗 (支持删除空团队与新建) */}
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
