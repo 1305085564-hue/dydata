@@ -378,9 +378,6 @@ export function NavBarClient({
                     <span className="text-[13px] font-semibold tracking-tight text-zinc-900 leading-none">
                       DYData
                     </span>
-                    <span className="rounded-md border border-zinc-200 bg-zinc-100/80 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-zinc-600 uppercase leading-none">
-                      PRO
-                    </span>
                   </div>
                   <div className="mt-1 text-[11px] font-normal tracking-wider text-zinc-400 uppercase leading-none transition-colors duration-200 group-hover:text-zinc-500">
                     短视频数据工作台
@@ -414,8 +411,8 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-all duration-150 ease-out group origin-center",
                           isGroupActive
-                            ? "text-zinc-950 font-semibold bg-zinc-100/90 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]"
-                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/80 active:scale-95",
+                            ? "text-[#5F82A8] font-semibold bg-zinc-100/70"
+                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
                         )}
                       >
                         {isGroupActive && (
@@ -458,8 +455,8 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-all duration-150 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
-                            ? "text-zinc-950 font-semibold bg-zinc-100/90 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.04)]"
-                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/80 active:scale-95",
+                            ? "text-[#5F82A8] font-semibold bg-zinc-100/70"
+                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
                         )}
                       >
                         {isGroupActive && (
@@ -493,7 +490,7 @@ export function NavBarClient({
                           onMouseEnter={() => handleDropdownOpen(group.key)}
                           onMouseLeave={handleDropdownCloseLater}
                         >
-                          <div className="w-56 rounded-2xl border border-zinc-200/80 bg-white/90 p-1.5 shadow-2xl shadow-zinc-900/8 backdrop-blur-2xl ring-1 ring-black/5">
+                          <div className="w-56 rounded-xl border border-zinc-200/80 bg-white/95 p-1.5 shadow-xl shadow-zinc-900/8 backdrop-blur-2xl ring-1 ring-black/5">
                             <div className="space-y-0.5">
                               {group.children.map((child: NavSubItem) => {
                                 const active = child.match(pathname);
@@ -508,10 +505,10 @@ export function NavBarClient({
                                     }
                                     onClick={() => setActiveDropdownGroup(null)}
                                     className={cn(
-                                      "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[13px] transition-all duration-150 group/item",
+                                      "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-all duration-150 group/item",
                                       active
-                                        ? "bg-zinc-100 text-zinc-950 font-semibold"
-                                        : "text-zinc-600 font-medium hover:bg-zinc-100/80 hover:text-zinc-950 hover:translate-x-0.5",
+                                        ? "bg-zinc-100 text-[#5F82A8] font-semibold"
+                                        : "text-zinc-600 font-medium hover:bg-zinc-100/80 hover:text-zinc-950",
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">
@@ -555,7 +552,7 @@ export function NavBarClient({
                       ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
                       : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 active:scale-95 border border-transparent",
                     commandHubOpen &&
-                      "bg-zinc-900 text-white font-semibold shadow-md border-transparent",
+                      "bg-zinc-100 text-zinc-950 font-semibold border-zinc-200/80 shadow-sm",
                   )}
                   title="待办与通知中心"
                   aria-label="待办与通知中心"

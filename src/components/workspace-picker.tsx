@@ -79,21 +79,17 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#D97757]/20 outline-none",
+          "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#5F82A8]/20 outline-none",
           "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70 active:scale-[0.98]",
-          isOpen && "text-zinc-900 bg-zinc-100/80"
+          isOpen && "text-zinc-900 bg-zinc-100/80 font-semibold"
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <div className="relative shrink-0 flex items-center justify-center size-2.5">
-            <span className="absolute inline-flex h-2.5 w-2.5 rounded-full bg-[#16A34A]/40 motion-safe:animate-ping" />
-            <div className="relative size-2 rounded-full bg-[#16A34A]" />
-          </div>
           <div className="min-w-0 flex flex-col">
             <span className="truncate text-[12px] font-medium leading-tight text-zinc-900 max-w-[120px]">
               {selectedAccount?.display_name || "选择账号"}
             </span>
-            <span className="truncate text-[10px] font-normal leading-none text-zinc-500 mt-0.5 max-w-[125px] tracking-tight">
+            <span className="truncate text-[11px] font-normal leading-none text-zinc-500 mt-0.5 max-w-[125px] tracking-tight">
               {(() => {
                 if (!selectedAccount) return "dydata";
                 const cleanName = selectedAccount.display_name.replace(/^(抖音|小红书|视频号|B站)-/, "").trim();
@@ -118,7 +114,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         <div
           id={menuId}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-2xl border bg-white/95 p-1.5 shadow-xl shadow-zinc-900/5 duration-150 border-zinc-200 backdrop-blur-xl ring-1 ring-black/5"
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 md:left-0 mt-1.5 z-50 w-64 origin-top-left overflow-hidden rounded-xl border bg-white/95 p-1.5 shadow-xl shadow-zinc-900/5 duration-150 border-zinc-200 backdrop-blur-xl ring-1 ring-black/5"
           )}
         >
           {/* Account List */}
@@ -140,14 +136,14 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                       setIsOpen(false);
                     }}
                     className={cn(
-                      "flex w-full items-center justify-between gap-2.5 rounded-xl px-2.5 py-2 text-left transition-all duration-150 group/item",
+                      "flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all duration-150 group/item",
                       isSelected
-                        ? "bg-[#D97757]/10 text-[#D97757]"
+                        ? "bg-[#5F82A8]/10 text-[#5F82A8]"
                         : "hover:bg-zinc-100/80 text-zinc-700 hover:text-zinc-900"
                     )}
                   >
                     <div className="flex flex-col min-w-0">
-                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#D97757] font-semibold" : "text-zinc-800")}>
+                      <span className={cn("truncate text-[12px] font-medium tracking-tight", isSelected ? "text-[#5F82A8] font-semibold" : "text-zinc-800")}>
                         {account.display_name}
                       </span>
                       <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-zinc-500 font-normal min-w-0">
@@ -175,7 +171,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                     </div>
                     
                     {isSelected && (
-                      <Check className="size-4 shrink-0 text-[#D97757]" />
+                      <Check className="size-4 shrink-0 text-[#5F82A8]" />
                     )}
                   </button>
                 );

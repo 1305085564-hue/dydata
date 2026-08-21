@@ -347,12 +347,12 @@ export function UnifiedCommandHub({
             {/* Header & Spring Segmented Controller */}
             <div className="flex shrink-0 items-center justify-between border-b border-zinc-100 bg-zinc-50/80 px-3.5 py-2.5">
               {/* Spring Segmented Tab Bar */}
-              <div className="flex items-center gap-0.5 rounded-xl bg-zinc-200/70 p-0.5">
+              <div className="flex items-center gap-0.5 rounded-lg bg-zinc-100 p-0.5 border border-zinc-200/60">
                 <button
                   type="button"
                   onClick={() => onTabChange("todos")}
                   className={cn(
-                    "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
+                    "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                     activeTab === "todos"
                       ? "text-zinc-950 font-semibold"
                       : "text-zinc-500 hover:text-zinc-800 font-medium",

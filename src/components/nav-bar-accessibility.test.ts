@@ -13,15 +13,13 @@ test("主导航与顶部按钮暴露清晰的语义标签", () => {
   assert.match(source, /aria-controls="mobile-navigation-menu"/);
 });
 
-test("工作账号与通知入口保留键盘可达和动画降级", () => {
+test("工作账号与通知入口保留键盘可达和无障碍属性", () => {
   const workspace = readFileSync(resolve(process.cwd(), "src/components/workspace-picker.tsx"), "utf8");
   const persona = readFileSync(resolve(process.cwd(), "src/components/user-workspace-popover.tsx"), "utf8");
 
   assert.match(workspace, /aria-expanded=\{isOpen\}/);
   assert.match(workspace, /aria-controls=\{menuId\}/);
   assert.match(workspace, /role="group" aria-label="工作账号列表"/);
-  assert.match(workspace, /motion-safe:animate-ping/);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);
-  assert.match(persona, /motion-safe:animate-ping/);
 });

@@ -53,8 +53,8 @@ export function GroupModeSettingsControl({
       className={cn(
         "flex items-center justify-between gap-4 p-3 rounded-xl border transition-all duration-200",
         isGroupModeActive
-          ? "border-[#D97757]/40 bg-[#D97757]/5 dark:border-[#D97757]/30 dark:bg-[#D97757]/10"
-          : "border-zinc-300/80 bg-zinc-100/50 dark:border-zinc-800 dark:bg-zinc-900/20",
+          ? "border-[#D97757]/40 bg-[#D97757]/5"
+          : "border-zinc-200 bg-zinc-50/70",
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5">
@@ -63,14 +63,14 @@ export function GroupModeSettingsControl({
             "flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors",
             isGroupModeActive
               ? "bg-[#D97757]/15 text-[#D97757]"
-              : "bg-zinc-200/70 text-[#5F82A8] dark:bg-zinc-800 dark:text-zinc-400",
+              : "bg-zinc-100 text-[#5F82A8]",
           )}
         >
           <Building2 className="size-4 shrink-0" />
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="block text-[13px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
+            <span className="block text-[13px] font-medium text-zinc-900">
               {isGroupModeActive ? "全集团广角视野" : "公司模式"}
             </span>
             {isGroupModeActive && (
@@ -79,7 +79,7 @@ export function GroupModeSettingsControl({
               </span>
             )}
           </div>
-          <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
+          <span className="block text-[12px] text-zinc-500 mt-0.5">
             {isGroupModeActive
               ? "当前可查看与管理全集团所有团队数据"
               : canEnterGroupMode
@@ -96,8 +96,8 @@ export function GroupModeSettingsControl({
           className={cn(
             "shrink-0 rounded-md border px-3 py-1.5 text-[12px] font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40 disabled:cursor-not-allowed disabled:opacity-60",
             isGroupModeActive
-              ? "border-[#D97757]/30 bg-white text-[#D97757] hover:bg-[#D97757]/10 dark:bg-zinc-900 dark:hover:bg-[#D97757]/20"
-              : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800",
+              ? "border-[#D97757]/30 bg-white text-[#D97757] hover:bg-[#D97757]/10"
+              : "border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100",
           )}
         >
           {pending ? "处理中" : isGroupModeActive ? "退出" : "进入"}
@@ -147,6 +147,11 @@ export function PremiumSettingsModal({
   const [accountActionPending, setAccountActionPending] = useState<
     string | null
   >(null);
+
+  // Inline editing state for account name & remark (replacing prompt)
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<"name" | "remark" | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
 
   // Theme or toggle state
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -307,60 +312,66 @@ export function PremiumSettingsModal({
     });
   };
 
-  const handleRenameAccount = (
-    accountId: string,
-    currentAccountName: string,
-  ) => {
-    const newName = prompt(
-      "请输入新的抖音账号名称(英文/数字/中文，建议与抖音一致):",
-      currentAccountName,
-    );
-    if (newName === null) return;
-    const trimmed = newName.trim();
-    if (!trimmed) {
-      feedbackToast.error("账号名称不能为空");
-      return;
-    }
-    if (trimmed.length > 30) {
-      feedbackToast.error("账号名称最多 30 个字符");
-      return;
-    }
-    if (trimmed === currentAccountName) return;
-
-    setAccountActionPending(accountId + "-name");
-    startTransition(async () => {
-      const result = await updateAccountName(accountId, trimmed);
-      setAccountActionPending(null);
-      if (result?.error) {
-        feedbackToast.error(result.error);
-      } else {
-        feedbackToast.success("抖音账号名称已更新");
-      }
-    });
+  const startEditAccountName = (acc: Account) => {
+    setEditingAccountId(acc.id);
+    setEditingField("name");
+    setEditValue(acc.name);
   };
 
-  const handleEditAccountRemark = (
-    accountId: string,
-    currentRemark: string,
-  ) => {
-    const newRemark = prompt(
-      "请输入新的账号备注名 (如: 探店主理人):",
-      currentRemark,
-    );
-    if (newRemark === null) return;
-    const trimmed = newRemark.trim();
-    if (trimmed === currentRemark) return;
+  const startEditAccountRemark = (acc: Account) => {
+    setEditingAccountId(acc.id);
+    setEditingField("remark");
+    setEditValue(acc.remark || "");
+  };
 
-    setAccountActionPending(accountId + "-remark");
-    startTransition(async () => {
-      const result = await updateAccountRemark(accountId, trimmed);
-      setAccountActionPending(null);
-      if (result?.error) {
-        feedbackToast.error(result.error);
-      } else {
-        feedbackToast.success("账号备注已更新");
+  const handleCancelInlineEdit = () => {
+    setEditingAccountId(null);
+    setEditingField(null);
+    setEditValue("");
+  };
+
+  const handleSaveInlineEdit = (accountId: string) => {
+    if (!editingField) return;
+    const trimmed = editValue.trim();
+    if (editingField === "name") {
+      if (!trimmed) {
+        feedbackToast.error("账号名称不能为空");
+        return;
       }
-    });
+      if (trimmed.length > 30) {
+        feedbackToast.error("账号名称最多 30 个字符");
+        return;
+      }
+      setAccountActionPending(accountId + "-name");
+      startTransition(async () => {
+        const result = await updateAccountName(accountId, trimmed);
+        setAccountActionPending(null);
+        if (result?.error) {
+          feedbackToast.error(result.error);
+        } else {
+          feedbackToast.success("抖音账号名称已更新");
+          setEditingAccountId(null);
+          setEditingField(null);
+        }
+      });
+    } else if (editingField === "remark") {
+      if (trimmed.length > 30) {
+        feedbackToast.error("账号备注名最多 30 个字符");
+        return;
+      }
+      setAccountActionPending(accountId + "-remark");
+      startTransition(async () => {
+        const result = await updateAccountRemark(accountId, trimmed);
+        setAccountActionPending(null);
+        if (result?.error) {
+          feedbackToast.error(result.error);
+        } else {
+          feedbackToast.success("账号备注已更新");
+          setEditingAccountId(null);
+          setEditingField(null);
+        }
+      });
+    }
   };
 
   return (
@@ -389,7 +400,7 @@ export function PremiumSettingsModal({
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className={cn(
             "relative flex h-[min(620px,calc(100dvh-2rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl sm:h-[520px] sm:flex-row",
-            "border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950",
+            "border-zinc-200",
           )}
         >
           {/* Close button */}
@@ -398,17 +409,17 @@ export function PremiumSettingsModal({
             type="button"
             aria-label="关闭设置"
             onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-800 text-zinc-500 dark:text-[#E7E5E4] hover:text-zinc-950 dark:hover:text-white transition-colors"
+            className="absolute right-4 top-4 z-10 flex size-7 items-center justify-center rounded-lg border border-zinc-200 hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950 transition-colors"
           >
             <X className="size-4" />
           </button>
 
           {/* Left Sidebar Tab Navigation */}
-          <div className="w-full shrink-0 border-b border-zinc-300/60 bg-zinc-100/50 p-3 pt-11 dark:border-zinc-800/80 dark:bg-zinc-900/20 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
+          <div className="w-full shrink-0 border-b border-zinc-200 bg-zinc-50/70 p-3 pt-11 sm:flex sm:w-52 sm:flex-col sm:justify-between sm:border-b-0 sm:border-r sm:p-4 sm:pt-12">
             <div className="flex gap-1 overflow-x-auto sm:block sm:space-y-1">
               <h2
                 id="premium-settings-title"
-                className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-zinc-500 sm:dark:text-[#E7E5E4]"
+                className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:px-3 sm:text-[12px] sm:font-medium sm:uppercase sm:tracking-wider sm:text-zinc-400"
               >
                 账号与设置
               </h2>
@@ -417,10 +428,10 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("profile")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-150 sm:w-full",
                   activeTab === "profile"
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]",
+                    ? "bg-zinc-200/80 text-zinc-900 font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
                 <User className="size-4 text-[#D97757]" />
@@ -431,10 +442,10 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("accounts")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-150 sm:w-full",
                   activeTab === "accounts"
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]",
+                    ? "bg-zinc-200/80 text-zinc-900 font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
                 <Shield className="size-4 text-[#5F82A8]" />
@@ -445,10 +456,10 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("system")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-200 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-150 sm:w-full",
                   activeTab === "system"
-                    ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-900 dark:text-white"
-                    : "text-zinc-700 hover:text-zinc-900 dark:hover:text-[#E7E5E4]",
+                    ? "bg-zinc-200/80 text-zinc-900 font-semibold"
+                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
                 <Settings2 className="size-4 text-[#16A34A]" />
@@ -456,44 +467,41 @@ export function PremiumSettingsModal({
               </button>
             </div>
 
-            <div className="mt-2 space-y-3 sm:mt-0">
+            <div className="mt-2 space-y-2 sm:mt-0">
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#DC2626] hover:bg-zinc-100 transition-all duration-200"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-zinc-600 hover:text-[#DC2626] hover:bg-zinc-100 transition-all duration-150"
                 >
-                  <LogOut className="size-4 text-[#DC2626]" />
+                  <LogOut className="size-4 text-zinc-400 group-hover:text-[#DC2626]" />
                   退出当前系统
                 </button>
               </form>
-              <div className="hidden px-3 text-[12px] text-zinc-500 dark:text-[#E7E5E4] sm:block">
-                DYData v2.1 • 企业授权
-              </div>
             </div>
           </div>
 
           {/* Right Main Details Content */}
-          <div className="min-w-0 flex-1 overflow-y-auto p-4 pt-5 sm:p-6 sm:pt-12">
+          <div className="min-w-0 flex-1 overflow-y-auto p-4 pt-5 sm:p-6 sm:pt-10">
             {/* TAB 1: PROFILE */}
             {activeTab === "profile" && (
               <motion.div
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
+                className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[13px] font-medium text-zinc-900 dark:text-white tracking-tight">
+                  <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
                     个人资料设置
                   </h3>
-                  <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
+                  <p className="text-[12px] text-zinc-500 mt-1">
                     修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
                 </div>
 
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  {/* Name input */}
+                  {/* Name input - Flat & Minimal */}
                   <div className="space-y-1.5">
-                    <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-500">
+                    <label className="text-[12px] font-medium text-zinc-700">
                       显示名称
                     </label>
                     <div className="flex gap-2">
@@ -503,11 +511,7 @@ export function PremiumSettingsModal({
                         onChange={(e) => setEditingName(e.target.value)}
                         placeholder="输入您的姓名"
                         maxLength={20}
-                        className={cn(
-                          "flex-1 rounded-lg border py-1.5 px-3 text-[12px] tracking-tight outline-none transition-all duration-200",
-                          "border-zinc-300 bg-white focus:border-zinc-400 focus:ring-0",
-                          "dark:border-zinc-800 dark:bg-zinc-900 dark:focus:border-zinc-600",
-                        )}
+                        className="flex-1 rounded-lg border border-zinc-300 bg-white py-1.5 px-3 text-[12px] tracking-tight text-zinc-900 outline-none transition-all duration-150 focus:border-zinc-400"
                         required
                         disabled={isPending}
                       />
@@ -515,10 +519,10 @@ export function PremiumSettingsModal({
                         type="submit"
                         disabled={isPending}
                         className={cn(
-                          "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-all duration-200 min-w-[80px]",
+                          "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-all duration-150 min-w-[80px]",
                           saveSuccess
-                            ? "bg-[#16A34A]/100"
-                            : "bg-[#D97757] hover:bg-[#C96442]",
+                            ? "bg-[#16A34A]"
+                            : "bg-[#D97757] hover:bg-[#C46A4D]",
                         )}
                       >
                         {isPending ? (
@@ -530,7 +534,7 @@ export function PremiumSettingsModal({
                         )}
                       </button>
                     </div>
-                    <div className="flex justify-between items-center text-[12px] text-zinc-500">
+                    <div className="flex justify-between items-center text-[12px] text-zinc-400">
                       <span>支持中英文、字数不超过 20 位。</span>
                       <span>{editingName.length}/20 字符</span>
                     </div>
@@ -538,22 +542,26 @@ export function PremiumSettingsModal({
 
                   {/* Role indicator */}
                   <div className="space-y-1.5 pt-2">
-                    <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-500">
+                    <label className="text-[12px] font-medium text-zinc-700">
                       当前平台身份
                     </label>
-                    <div className="flex items-center gap-3 rounded-xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20 px-3.5 py-3">
-                      <div className="flex size-9 items-center justify-center rounded-xl bg-zinc-900 dark:bg-zinc-800 text-[12px] font-medium text-white">
+                    <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50/70 px-3.5 py-3">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-zinc-900 text-[12px] font-medium text-white shrink-0">
                         {editingName.trim().slice(0, 1).toUpperCase() || "?"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate text-[12px] font-medium text-zinc-900 dark:text-zinc-100">
+                        <p className="truncate text-[12px] font-medium text-zinc-900">
                           {editingName}
                         </p>
-                        <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5 leading-none">
-                          主系统所有者 (Platform Owner)
+                        <p className="text-[12px] text-zinc-500 mt-0.5 leading-none">
+                          {profileRole === "owner" || profileRole === "company_owner"
+                            ? "公司所有者"
+                            : profileRole === "admin"
+                              ? "团队管理员"
+                              : "团队成员"}
                         </p>
                       </div>
-                      <span className="shrink-0 rounded-full border border-[#D97757]/30 bg-[#D97757]/5 px-2.5 py-0.5 text-[12px] font-medium uppercase tracking-wider text-[#D97757]">
+                      <span className="shrink-0 rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-[12px] font-medium text-zinc-700">
                         {roleLabel(profileRole)}
                       </span>
                     </div>
@@ -569,21 +577,22 @@ export function PremiumSettingsModal({
                 animate={{ opacity: 1, x: 0 }}
                 className="space-y-4"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-[13px] font-medium text-zinc-900 dark:text-white tracking-tight">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
                       账号矩阵配置
                     </h3>
-                    <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
+                    <p className="text-[12px] text-zinc-500 mt-0.5">
                       管理绑定在该平台下的抖音企业号。你可以新增、解绑或重命名账号别称。
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={() => setIsAddingAccount(!isAddingAccount)}
-                    className="inline-flex items-center gap-1 bg-zinc-200 dark:bg-zinc-900 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-800 text-zinc-900 dark:text-[#FAFAF9] px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors"
+                    className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                   >
-                    <Plus className="size-3" />
-                    添加新账号
+                    <Plus className="size-3.5" />
+                    新账号
                   </button>
                 </div>
 
@@ -594,7 +603,7 @@ export function PremiumSettingsModal({
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden rounded-xl border border-zinc-300 dark:border-zinc-800 bg-zinc-100/30 dark:bg-zinc-900/10 p-3 space-y-2.5"
+                      className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 space-y-2.5"
                     >
                       <div className="grid grid-cols-3 gap-2">
                         <input
@@ -602,21 +611,21 @@ export function PremiumSettingsModal({
                           placeholder="抖音账号名 (如: dydata)"
                           value={newAccName}
                           onChange={(e) => setNewAccName(e.target.value)}
-                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900"
+                          className="rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300"
                         />
                         <input
                           type="text"
                           placeholder="账号备注名 (如: 探店主理人)"
                           value={newAccRemark}
                           onChange={(e) => setNewAccRemark(e.target.value)}
-                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900"
+                          className="rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300"
                         />
                         <input
                           type="text"
                           placeholder="内容方向 (如: 美食探店)"
                           value={newAccDir}
                           onChange={(e) => setNewAccDir(e.target.value)}
-                          className="rounded-lg border py-1.5 px-3 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900"
+                          className="rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300"
                         />
                       </div>
                       <div className="flex justify-end gap-2">
@@ -629,7 +638,7 @@ export function PremiumSettingsModal({
                         <button
                           onClick={handleAddAccount}
                           disabled={accountActionPending === "add"}
-                          className="inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-950 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
+                          className="inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-950 text-white px-3 py-1 rounded-lg text-[12px] font-medium min-w-[60px]"
                         >
                           {accountActionPending === "add" ? (
                             <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -643,72 +652,125 @@ export function PremiumSettingsModal({
                 </AnimatePresence>
 
                 {/* Accounts list */}
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {accounts.map((acc) => {
-                    const isRenamePending =
-                      accountActionPending === acc.id + "-name";
-                    const isRemarkPending =
-                      accountActionPending === acc.id + "-remark";
+                    const isEditing = editingAccountId === acc.id;
                     const isActive = acc.id === selectedAccountId;
                     return (
                       <div
                         key={acc.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-zinc-300/70 dark:border-zinc-800/80 px-3.5 py-2.5 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900/10"
+                        className={cn(
+                          "rounded-xl border px-3.5 py-2.5 transition-colors",
+                          isEditing
+                            ? "border-zinc-300 bg-zinc-50/80"
+                            : "border-zinc-200 bg-white hover:bg-zinc-50/60",
+                        )}
                       >
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[12px] font-medium text-zinc-900 dark:text-zinc-50 truncate">
-                              {acc.display_name}
-                            </span>
-                            <span className="text-[12px] font-medium text-zinc-500 truncate">
-                              @{acc.name}
-                            </span>
+                        {isEditing ? (
+                          /* Inline Edit Form */
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-[12px] text-zinc-600">
+                              <span className="font-medium">
+                                {editingField === "name"
+                                  ? "修改抖音账号名称"
+                                  : "修改账号备注名"}
+                              </span>
+                              <span className="text-[11px] text-zinc-400">
+                                按 Enter 保存，Esc 取消
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleSaveInlineEdit(acc.id);
+                                  } else if (e.key === "Escape") {
+                                    e.preventDefault();
+                                    handleCancelInlineEdit();
+                                  }
+                                }}
+                                placeholder={
+                                  editingField === "name"
+                                    ? "如: dydata"
+                                    : "如: 探店主理人"
+                                }
+                                className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-[12px] text-zinc-900 outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-200"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleSaveInlineEdit(acc.id)}
+                                disabled={accountActionPending !== null}
+                                className="rounded-lg bg-zinc-900 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-zinc-950 transition-colors disabled:opacity-60"
+                              >
+                                {accountActionPending ? "保存中..." : "保存"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelInlineEdit}
+                                className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[12px] font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
+                              >
+                                取消
+                              </button>
+                            </div>
                           </div>
-                          <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5 truncate">
-                            方向: {acc.content_direction || "未设置内容方向"}
-                          </span>
-                        </div>
+                        ) : (
+                          /* Normal Display Row */
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[13px] font-medium text-zinc-900 truncate">
+                                  {acc.display_name}
+                                </span>
+                                <span className="text-[12px] font-normal text-zinc-400 truncate">
+                                  @{acc.name}
+                                </span>
+                              </div>
+                              <span className="block text-[12px] text-zinc-500 mt-0.5 truncate">
+                                方向: {acc.content_direction || "未设置内容方向"}
+                              </span>
+                            </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-3 shrink-0">
-                          {isActive ? (
-                            <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-[#D97757]/10 text-[#D97757] dark:bg-[#D97757]/20 px-2.5 py-1 rounded-lg">
-                              当前活跃
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDashboardAccount(acc.id);
-                              }}
-                              className="text-[12px] font-medium border border-zinc-300 dark:border-zinc-800 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 px-2.5 py-1 rounded-lg transition-colors"
-                            >
-                              切换为该账号
-                            </button>
-                          )}
+                            {/* Actions - Crisp, Deep, Lean (400 Weight + High Ink Contrast) */}
+                            <div className="flex items-center gap-3 shrink-0">
+                              {isActive ? (
+                                <span className="inline-flex items-center text-[12px] font-normal bg-[#5F82A8]/10 text-[#2E557E] px-2.5 py-0.5 rounded-md">
+                                  当前活跃
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDashboardAccount(acc.id);
+                                  }}
+                                  className="text-[12px] font-normal border border-zinc-300/80 bg-white hover:bg-zinc-50 text-zinc-800 hover:text-zinc-950 px-2.5 py-1 rounded-lg transition-colors shadow-2xs"
+                                >
+                                  切换为该账号
+                                </button>
+                              )}
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleRenameAccount(acc.id, acc.name)
-                            }
-                            disabled={isRenamePending}
-                            className="text-[12px] font-medium text-[#D97757] hover:opacity-85"
-                          >
-                            {isRenamePending ? "正在重命名..." : "修改账号名"}
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => startEditAccountName(acc)}
+                                className="text-[12px] font-normal text-zinc-700 hover:text-zinc-950 transition-colors"
+                              >
+                                修改账号名
+                              </button>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleEditAccountRemark(acc.id, acc.remark || "")
-                            }
-                            disabled={isRemarkPending}
-                            className="text-[12px] font-medium text-zinc-700 hover:text-zinc-900"
-                          >
-                            {isRemarkPending ? "正在保存..." : "修改备注"}
-                          </button>
-                        </div>
+                              <button
+                                type="button"
+                                onClick={() => startEditAccountRemark(acc)}
+                                className="text-[12px] font-normal text-zinc-700 hover:text-zinc-950 transition-colors"
+                              >
+                                修改备注
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -721,18 +783,18 @@ export function PremiumSettingsModal({
               <motion.div
                 initial={{ opacity: 0, x: 8 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
+                className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[13px] font-medium text-zinc-900 dark:text-white tracking-tight">
+                  <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
                     系统参数配置
                   </h3>
-                  <p className="text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
+                  <p className="text-[12px] text-zinc-500 mt-1">
                     配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
                   </p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                   <GroupModeSettingsControl
                     canEnterGroupMode={canEnterGroupMode}
                     isGroupModeActive={isGroupModeActive}
@@ -740,59 +802,47 @@ export function PremiumSettingsModal({
                     onChange={handleGroupModeChange}
                   />
 
-                  {/* Cron Remind Setting */}
-                  <div className="flex items-center justify-between gap-4 p-3 rounded-xl border border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/50 dark:bg-zinc-900/20">
-                    <div>
-                      <span className="text-[12px] font-medium text-zinc-900 dark:text-[#FAFAF9]">
-                        启用每日催交动态提醒
-                      </span>
-                      <span className="block text-[12px] text-zinc-500 dark:text-[#E7E5E4] mt-0.5">
-                        开启后系统将定期在选定时间点推送待办事项给所有未交日报的成员。
-                      </span>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={pushEnabled}
-                        onChange={() => setPushEnabled(!pushEnabled)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:bg-zinc-800 peer-checked:bg-[#D97757]" />
-                    </label>
-                  </div>
-
-                  {/* Scheduled cron input */}
-                  {pushEnabled && (
-                    <div className="space-y-1.5 p-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800">
-                      <label className="text-[12px] font-medium text-zinc-700 dark:text-zinc-500">
-                        提醒定时设置 (24小时制)
+                  {/* Combined Dynamic Reminder Card (Eliminating Dashed Borders) */}
+                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 space-y-3 transition-all">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <span className="text-[13px] font-medium text-zinc-900">
+                          启用每日催交动态提醒
+                        </span>
+                        <span className="block text-[12px] text-zinc-500 mt-0.5">
+                          开启后系统将定期在选定时间点推送待办事项给所有未交日报的成员。
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={pushEnabled}
+                          onChange={() => setPushEnabled(!pushEnabled)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#D97757]" />
                       </label>
-                      <div className="flex gap-2">
+                    </div>
+
+                    {/* Integrated nested scheduling setting */}
+                    {pushEnabled && (
+                      <div className="border-t border-zinc-200/80 pt-3 flex items-center justify-between gap-4 animate-in fade-in duration-200">
+                        <div>
+                          <span className="block text-[12px] font-medium text-zinc-700">
+                            提醒定时设置 (24小时制)
+                          </span>
+                          <span className="block text-[11px] text-zinc-400 mt-0.5">
+                            将在每日 {remindHour} 准时执行推送
+                          </span>
+                        </div>
                         <input
                           type="time"
                           value={remindHour}
                           onChange={(e) => setRemindHour(e.target.value)}
-                          className={cn(
-                            "rounded-lg border py-1 px-2.5 text-[12px] outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-white",
-                          )}
+                          className="rounded-lg border border-zinc-200 bg-white py-1 px-2.5 text-[12px] font-medium text-zinc-900 outline-none focus:border-zinc-300 shadow-2xs"
                         />
-                        <span className="text-[12px] text-zinc-500 flex items-center">
-                          配置与系统 Cron 进程对齐，将在每日 {remindHour}{" "}
-                          准时执行。
-                        </span>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Global configuration status */}
-                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-zinc-50 to-zinc-100/50 dark:from-zinc-900 dark:to-zinc-900/60 border border-zinc-300/50 dark:border-zinc-800 text-[12px] text-zinc-700 dark:text-zinc-500 leading-relaxed">
-                    ⚙️{" "}
-                    <span className="font-medium text-zinc-700 dark:text-zinc-500">
-                      主库参数：
-                    </span>
-                    当前连接 Supabase Singapore 实例，服务状态正常。所有 API
-                    接口已自动检测环境变量 `SUPABASE_SERVICE_ROLE_KEY`
-                    并适配权限。
+                    )}
                   </div>
                 </div>
               </motion.div>

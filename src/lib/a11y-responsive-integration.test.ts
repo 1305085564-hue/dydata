@@ -111,12 +111,10 @@ test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回
   assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);
-  assert.match(persona, /motion-safe:animate-ping/);
   assert.match(workspace, /type="button"[\s\S]*aria-expanded=\{isOpen\}[\s\S]*aria-controls=\{menuId\}/);
   assert.match(workspace, /event\.key !== "Escape"[\s\S]*triggerRef\.current\?\.focus\(\)/);
   assert.match(workspace, /role="group" aria-label="工作账号列表"/);
   assert.match(workspace, /aria-pressed=\{isSelected\}/);
-  assert.match(workspace, /motion-safe:animate-ping/);
 });
 
 test("认证页小号状态文字使用 AA 对比色", () => {
