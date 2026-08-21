@@ -106,13 +106,13 @@ async function ModulesDataContainer({
     focusMemberId: focusMemberId,
   };
 
-  if (viewVersion === "v3" || viewVersion === "3") {
-    return <AdminModulesContentV3 {...commonProps} />;
+  if (viewVersion === "redesign" || viewVersion === "v4" || viewVersion === "4") {
+    return <AdminModulesContentRedesign {...commonProps} />;
   }
 
   if (viewVersion === "v2" || viewVersion === "2") {
     return <AdminModulesContentV2 {...commonProps} />;
   }
 
-  return <AdminModulesContentRedesign {...commonProps} />;
+  return <AdminModulesContentV3 {...commonProps} />;
 }

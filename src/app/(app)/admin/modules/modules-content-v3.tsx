@@ -13,30 +13,33 @@ import {
   UsersRound,
   Plus,
   Trash2,
-  ShieldAlert,
   Sparkles,
   X,
   Search,
   KeyRound,
-  Settings,
   RefreshCw,
   Archive,
   RotateCcw,
   ChevronDown,
-  Clock,
+  Building2,
+  Mail,
+  UserMinus,
+  Play,
+  AlertCircle,
+  ArrowRight,
 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Dialog,
@@ -46,6 +49,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
 
@@ -56,9 +66,10 @@ import {
   changeRole,
   resetMemberPassword,
   updateMemberTeam,
-  removeMemberFromTeam,
   archiveMember,
   restoreMember,
+  updateExemption,
+  clearExemption,
 } from "../actions";
 
 import {
@@ -66,11 +77,8 @@ import {
   rejectJoinRequestAction,
 } from "../join-request-actions";
 
-import { ExemptionDialog } from "../豁免弹窗";
 import { findFocusMember } from "@/lib/admin/find-focus-member";
 import { MemberPermissionEditor } from "../components/member-permission-editor";
-
-import type { PermissionManagerMember } from "../权限管理";
 
 import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
 import type {
@@ -83,7 +91,6 @@ import type {
   UserRole,
   UserStatus,
 } from "@/types";
-import type { ExemptionType } from "@/lib/豁免";
 import {
   ALL_TEAMS_ID,
   countProfilesInTeamForView,
@@ -95,11 +102,12 @@ import {
   resolveDefaultSelectedTeamId,
   retainSelectableMemberIds,
   resolveSelectedTeamAfterTeamDelete,
+  type TeamViewTeamOption,
 } from "./team-view-logic";
 
 /* ─── Types ─── */
 
-interface ProfileSummary {
+export interface ProfileSummary {
   id: string;
   name: string;
   email: string | null;
@@ -126,12 +134,12 @@ interface ProfileSummary {
   monthly_published_days?: number;
 }
 
-interface TeamOption {
+export interface TeamOption {
   id: string;
   name: string;
 }
 
-interface PendingRequest {
+export interface PendingRequest {
   id: string;
   applicantUserId: string;
   applicantName: string;
@@ -141,7 +149,7 @@ interface PendingRequest {
   createdAt: string;
 }
 
-interface TeamV3ContentProps {
+export interface AdminModulesContentProps {
   currentUserId: string;
   currentUserRole: UserRole;
   currentUserBusinessRole?: UserRole;
@@ -159,6 +167,7 @@ interface TeamV3ContentProps {
   teamManagement: {
     access: {
       canView: boolean;
+      canEditMembers?: boolean;
       teamIds: string[] | null;
     };
     teams: TeamOption[];
@@ -169,48 +178,27 @@ interface TeamV3ContentProps {
   focusMemberId?: string;
 }
 
-type AiSuggestion = {
+type AiSuggestionItem = {
   label: string;
   description: string;
-  action: {
-    type: "execute_tool" | "navigate";
-    toolName?: string;
-    toolArgs?: Record<string, unknown>;
-    href?: string;
-  };
+  action:
+    | { type: "execute_tool"; toolName: string; toolArgs?: Record<string, unknown> }
+    | { type: "navigate"; href: string };
 };
 
 /* ─── Helpers ─── */
 
-function truncateTeamName6(name?: string | null): string {
+function truncateTeamName(name?: string | null, maxLen = 8): string {
   if (!name) return "未分配";
-  if (name.length <= 6) return name;
-  return name.slice(0, 6) + "…";
+  if (name.length <= maxLen) return name;
+  return name.slice(0, maxLen) + "…";
 }
 
 function normalizeUserStatus(value: string | null | undefined): UserStatus {
   return value === "exempt" ? "exempt" : "active";
 }
 
-function normalizeExemptionType(
-  value: string | null | undefined,
-): ExemptionType | null {
-  return value === "permanent" || value === "temporary" ? value : null;
-}
-
-function normalizeExemptionCategory(
-  value: string | null | undefined,
-): ExemptionCategory | null {
-  return value === "waive" || value === "leave" ? value : null;
-}
-
-function roleLabel(role: string): string {
-  if (role === "owner") return "创始人";
-  if (role === "admin") return "管理员";
-  return "成员";
-}
-
-/* ─── Component ─── */
+/* ─── Main Component ─── */
 
 export function AdminModulesContentV3({
   currentUserId,
@@ -227,100 +215,107 @@ export function AdminModulesContentV3({
   pendingRequests: initialPendingRequests,
   defaultDate,
   focusMemberId,
-}: TeamV3ContentProps) {
+}: AdminModulesContentProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  // 1. Permission & access context
   const isGroupMode = Boolean(currentUserGroupMode);
-  const isCompanyOwner =
-    currentUserCompanyRole === "company_owner" ||
+  const isOwner =
     currentUserBusinessRole === "owner" ||
+    currentUserCompanyRole === "company_owner" ||
     currentUserRole === "owner";
+  const isCompanyOwner = currentUserCompanyRole === "company_owner" || isOwner;
   const canManageCompany = isCompanyOwner || isGroupMode;
+  const canManageMembers = canManageCompany || currentUserPermissions.manage_members === true;
+  const canManageFulfillment = canManageCompany || currentUserPermissions.manage_fulfillment === true;
+  const canEditTeamMembers = teamManagement.access.canEditMembers || canManageMembers;
 
-  const canChangeRole = canManageCompany || permissionManagerCapabilities.canChangeRole;
-  const canResetPassword = canManageCompany || currentUserPermissions.manage_members === true;
-  const canManageExemption =
-    canManageCompany ||
-    currentUserPermissions.manage_fulfillment === true ||
-    currentUserPermissions.manage_members === true ||
-    currentUserPermissions.review_violations === true;
-  const canArchive = canManageCompany;
-
-  const initialVisibleTeams = getVisibleTeamOptions({
-    isOwner: isGroupMode,
-    groupMode: isGroupMode,
-    allTeams: initialTeams,
-    manageableTeams: teamManagement.teams,
-  });
+  // 2. Compute strictly visible teams according to user data access scope and role
+  const visibleTeamOptions: TeamViewTeamOption[] = useMemo(() => {
+    return getVisibleTeamOptions({
+      isOwner,
+      groupMode: isGroupMode,
+      allTeams: initialTeams,
+      manageableTeams: teamManagement.teams,
+    });
+  }, [isOwner, isGroupMode, initialTeams, teamManagement.teams]);
 
   const initialSelectedTeamId = resolveDefaultSelectedTeamId({
     currentUserId,
     profiles: allProfiles,
-    visibleTeams: initialVisibleTeams,
-    isOwner: isGroupMode,
+    visibleTeams: visibleTeamOptions,
+    isOwner,
     groupMode: isGroupMode,
   });
 
-  /* ─── State ─── */
-
-  const [localTeams, setLocalTeams] = useState<TeamOption[]>(initialVisibleTeams);
+  // 3. Main view states
+  const [localTeams, setLocalTeams] = useState<TeamOption[]>(visibleTeamOptions);
   const [localProfiles, setLocalProfiles] = useState<ProfileSummary[]>(allProfiles);
-  const [localArchivedProfiles, setLocalArchivedProfiles] = useState<ProfileSummary[]>(
-    initialArchivedProfiles,
-  );
-  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(
-    initialPendingRequests,
-  );
+  const [localArchivedProfiles, setLocalArchivedProfiles] = useState<ProfileSummary[]>(initialArchivedProfiles);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
   const [memberView, setMemberView] = useState<"active" | "archived">("active");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(initialSelectedTeamId);
-  const [newTeamName, setNewTeamName] = useState("");
+  const [sortOption, setSortOption] = useState<"role" | "published">("role");
   const [searchQuery, setSearchQuery] = useState("");
-  const [passwordResetTarget, setPasswordResetTarget] = useState<ProfileSummary | null>(null);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [removeTarget, setRemoveTarget] = useState<ProfileSummary | null>(null);
-  const [roleChangeTarget, setRoleChangeTarget] = useState<ProfileSummary | null>(null);
-  const [archiveTarget, setArchiveTarget] = useState<ProfileSummary | null>(null);
-  const [archiveReason, setArchiveReason] = useState("");
-  const [restoreTarget, setRestoreTarget] = useState<ProfileSummary | null>(null);
-  const [deleteTeamTarget, setDeleteTeamTarget] = useState<TeamOption | null>(null);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
+
+  // 4. Drawer (Inspector) states
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
+  const [drawerTab, setDrawerTab] = useState<"overview" | "team_role" | "permissions" | "exemption">("overview");
   const [draftPermissions, setDraftPermissions] = useState<Permissions>({});
   const [draftDataScope, setDraftDataScope] = useState<DataScope>("self");
-  const [exemptionMemberId, setExemptionMemberId] = useState<string | null>(null);
-  const [teamManagementDialogOpen, setTeamManagementDialogOpen] = useState(false);
-  const [sortOption, setSortOption] = useState<"role" | "published">("role");
-  const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
-  const [batchArchiveOpen, setBatchArchiveOpen] = useState(false);
-  const [batchArchiveReason, setBatchArchiveReason] = useState("");
+  const [isPermissionsDirty, setIsPermissionsDirty] = useState(false);
 
+  // Exemption form inside Drawer
+  const [exemptionMode, setExemptionMode] = useState<"none" | "permanent" | "range">("none");
+  const [exemptionCategory, setExemptionCategory] = useState<ExemptionCategory>("leave");
+  const [exemptionStartDate, setExemptionStartDate] = useState(defaultDate);
+  const [exemptionEndDate, setExemptionEndDate] = useState(defaultDate);
+  const [exemptionReason, setExemptionReason] = useState("");
+
+  // AI Suggestion state inside Drawer
   const [aiSuggestion, setAiSuggestion] = useState<{
     status: "normal" | "warning" | "critical";
     summary: string;
-    suggestions: AiSuggestion[];
+    suggestions: AiSuggestionItem[];
     loading: boolean;
+    error?: string | null;
   } | null>(null);
   const [executingAiKey, setExecutingAiKey] = useState<string | null>(null);
+  const [toolConfirmationModal, setToolConfirmationModal] = useState<{
+    toolName: string;
+    toolArgs: Record<string, unknown>;
+    confirmationToken: string;
+    preview?: Record<string, unknown> | null;
+  } | null>(null);
 
-  const [isPending, startTransition] = useTransition();
-  const [isSavingPermissions, startSavingPermissions] = useTransition();
+  // Dialog states
+  const [teamManagementDialogOpen, setTeamManagementDialogOpen] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [deleteTeamTarget, setDeleteTeamTarget] = useState<TeamOption | null>(null);
+  const [passwordResetTarget, setPasswordResetTarget] = useState<ProfileSummary | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [archiveTarget, setArchiveTarget] = useState<ProfileSummary | null>(null);
+  const [archiveReason, setArchiveReason] = useState("");
+  const [restoreTarget, setRestoreTarget] = useState<ProfileSummary | null>(null);
+  const [batchArchiveOpen, setBatchArchiveOpen] = useState(false);
+  const [batchArchiveReason, setBatchArchiveReason] = useState("");
 
-  /* ─── Sync props → state ─── */
-
+  // Sync props → state
   useEffect(() => {
     setLocalProfiles(allProfiles);
     setLocalArchivedProfiles(initialArchivedProfiles);
   }, [allProfiles, initialArchivedProfiles]);
 
   useEffect(() => {
-    setLocalTeams(initialVisibleTeams);
-  }, [initialVisibleTeams]);
+    setLocalTeams(visibleTeamOptions);
+  }, [visibleTeamOptions]);
 
   useEffect(() => {
-    if (selectedTeamId === ALL_TEAMS_ID && initialSelectedTeamId !== ALL_TEAMS_ID) {
-      setSelectedTeamId(initialSelectedTeamId);
-    }
-  }, [initialSelectedTeamId, selectedTeamId]);
+    setPendingRequests(initialPendingRequests);
+  }, [initialPendingRequests]);
 
   useEffect(() => {
     if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((t) => t.id === selectedTeamId)) {
@@ -328,8 +323,7 @@ export function AdminModulesContentV3({
     }
   }, [localTeams, selectedTeamId]);
 
-  /* ─── Fetch emails ─── */
-
+  // Background fetch latest emails
   const hasFetchedEmails = useRef(false);
   useEffect(() => {
     if (hasFetchedEmails.current) return;
@@ -344,33 +338,19 @@ export function AdminModulesContentV3({
         const payload = await response.json();
         if (payload.emails && active) {
           setLocalProfiles((prev) =>
-            prev.map((p) => ({ ...p, email: payload.emails[p.id] ?? p.email })),
+            prev.map((p) => ({ ...p, email: payload.emails[p.id] ?? p.email }))
           );
         }
       } catch {}
     }
     void fetchEmails();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
-  /* ─── Focus member from URL ─── */
-
-  const appliedFocusMemberId = useRef<string | null>(null);
-  useEffect(() => {
-    if (!focusMemberId) return;
-    if (appliedFocusMemberId.current === focusMemberId) return;
-    const member = findFocusMember(localProfiles, focusMemberId);
-    if (!member) return;
-    appliedFocusMemberId.current = focusMemberId;
-    setSelectedTeamId(ALL_TEAMS_ID);
-    setSearchQuery("");
-    setActiveMemberId(member.id);
-  }, [focusMemberId, localProfiles]);
-
-  /* ─── Derived data ─── */
-
-  const profilesForCurrentView =
-    memberView === "archived" ? localArchivedProfiles : localProfiles;
+  // Filtered & Sorted profiles
+  const profilesForCurrentView = memberView === "archived" ? localArchivedProfiles : localProfiles;
 
   const filteredProfiles = useMemo(() => {
     return filterProfilesForMemberView({
@@ -403,116 +383,66 @@ export function AdminModulesContentV3({
     });
   }, [selectableFilteredMemberIds]);
 
-  /* ─── Active member (drawer) ─── */
-
+  // Active member inside Drawer
   const activeMember = useMemo(() => {
-    return localProfiles.find((p) => p.id === activeMemberId) ?? null;
-  }, [localProfiles, activeMemberId]);
-
-  const activeMemberIsOwner = activeMember?.role === "owner";
-  const activeMemberIsCurrentlyExempt = activeMember
-    ? isProfileExemptOnDate(activeMember, defaultDate)
-    : false;
-
-  const initialPermissions = useMemo<Permissions>(() => {
-    if (!activeMember) return {};
-    if (activeMemberIsOwner) {
-      const all: Permissions = {};
-      for (const k of PERMISSION_KEYS) all[k] = true;
-      return all;
-    }
-    return activeMember.permissions || {};
-  }, [activeMember, activeMemberIsOwner]);
-
-  const initialDataScope = useMemo<DataScope>(() => {
-    if (!activeMember) return "self";
-    if (activeMemberIsOwner) return "all";
-    return activeMember.data_scope || "self";
-  }, [activeMember, activeMemberIsOwner]);
-
-  useEffect(() => {
-    if (activeMember) {
-      setDraftPermissions(initialPermissions);
-      setDraftDataScope(initialDataScope);
-    } else {
-      setDraftPermissions({});
-      setDraftDataScope("self");
-    }
-  }, [activeMember, initialPermissions, initialDataScope]);
-
-  const isDirty = useMemo(() => {
-    if (!activeMember || activeMemberIsOwner) return false;
-    const sameDataScope = draftDataScope === initialDataScope;
-    const samePerms = PERMISSION_KEYS.every(
-      (key) => (draftPermissions[key] === true) === (initialPermissions[key] === true),
+    if (!activeMemberId) return null;
+    return (
+      localProfiles.find((p) => p.id === activeMemberId) ||
+      localArchivedProfiles.find((p) => p.id === activeMemberId) ||
+      null
     );
-    return !sameDataScope || !samePerms;
-  }, [activeMember, activeMemberIsOwner, draftDataScope, initialDataScope, draftPermissions, initialPermissions]);
+  }, [localProfiles, localArchivedProfiles, activeMemberId]);
 
-  const activePermissionMember = useMemo<PermissionManagerMember | null>(() => {
-    if (!activeMember) return null;
-    return {
-      id: activeMember.id,
-      name: activeMember.name,
-      email: activeMember.email,
-      role: activeMember.role,
-      teamId: activeMember.team_id,
-      teamName: activeMember.team_name,
-      permissions: activeMember.permissions || {},
-      data_scope: activeMember.data_scope || "self",
-      status: normalizeUserStatus(activeMember.status),
-    };
-  }, [activeMember]);
+  // Open Drawer & initialize state
+  const openMemberDrawer = useCallback(
+    (member: ProfileSummary) => {
+      setActiveMemberId(member.id);
+      setDraftPermissions(member.permissions ?? {});
+      setDraftDataScope(member.data_scope ?? "self");
+      setIsPermissionsDirty(false);
+      setDrawerTab("overview");
+      setAiSuggestion(null);
 
-  /* ─── Permission draft handlers ─── */
-
-  const handleTogglePermission = useCallback(
-    (key: PermissionKey, checked: boolean) => {
-      if (activeMemberIsOwner) return;
-      setDraftPermissions((prev) => ({ ...prev, [key]: checked }));
+      // Populate exemption form
+      if (member.exempt_type === "permanent") {
+        setExemptionMode("permanent");
+        setExemptionCategory((member.exemption_category as ExemptionCategory) ?? "waive");
+        setExemptionReason(member.exempt_reason ?? "");
+        setExemptionStartDate(defaultDate);
+        setExemptionEndDate(defaultDate);
+      } else if (member.exempt_type === "temporary") {
+        setExemptionMode("range");
+        setExemptionCategory((member.exemption_category as ExemptionCategory) ?? "leave");
+        setExemptionReason(member.exempt_reason ?? "");
+        setExemptionStartDate(member.exempt_start_date ?? defaultDate);
+        setExemptionEndDate(member.exempt_end_date ?? defaultDate);
+      } else {
+        setExemptionMode("none");
+        setExemptionCategory("leave");
+        setExemptionReason("");
+        setExemptionStartDate(defaultDate);
+        setExemptionEndDate(defaultDate);
+      }
     },
-    [activeMemberIsOwner],
+    [defaultDate]
   );
 
-  const handleToggleCategory = useCallback(
-    (category: PermissionCategory) => {
-      if (activeMemberIsOwner) return;
-      const keys = PERMISSION_CATEGORIES[category];
-      const allChecked = keys.every((k) => draftPermissions[k] === true);
-      setDraftPermissions((prev) => {
-        const next = { ...prev };
-        for (const k of keys) next[k] = !allChecked;
-        return next;
-      });
-    },
-    [activeMemberIsOwner, draftPermissions],
-  );
+  // Focus member from URL
+  const appliedFocusMemberId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusMemberId) return;
+    if (appliedFocusMemberId.current === focusMemberId) return;
+    const member = findFocusMember(localProfiles, focusMemberId);
+    if (!member) return;
+    appliedFocusMemberId.current = focusMemberId;
+    setSelectedTeamId(ALL_TEAMS_ID);
+    setSearchQuery("");
+    openMemberDrawer(member);
+  }, [focusMemberId, localProfiles, openMemberDrawer]);
 
-  const handleToggleAllPermissions = useCallback(() => {
-    if (activeMemberIsOwner) return;
-    const isAllChecked = PERMISSION_KEYS.every((k) => draftPermissions[k] === true);
-    setDraftPermissions(() => {
-      const next: Permissions = {};
-      if (!isAllChecked) for (const k of PERMISSION_KEYS) next[k] = true;
-      return next;
-    });
-  }, [activeMemberIsOwner, draftPermissions]);
+  // --- ACTIONS ---
 
-  const handleChangeDataScope = useCallback(
-    (scope: DataScope) => {
-      if (activeMemberIsOwner) return;
-      setDraftDataScope(scope);
-    },
-    [activeMemberIsOwner],
-  );
-
-  const handleResetDraft = useCallback(() => {
-    setDraftPermissions(initialPermissions);
-    setDraftDataScope(initialDataScope);
-  }, [initialPermissions, initialDataScope]);
-
-  /* ─── Team management ─── */
-
+  // 1. Team Management
   const handleCreateTeam = () => {
     const name = newTeamName.trim();
     if (!name) return;
@@ -524,9 +454,10 @@ export function AdminModulesContentV3({
       if (res.error) {
         setLocalTeams((prev) => prev.filter((t) => t.id !== tempId));
         setNewTeamName(name);
-        feedbackToast.error(res.error);
+        feedbackToast.error("创建团队失败", { description: res.error });
       } else if (res.team) {
         setLocalTeams((prev) => prev.map((t) => (t.id === tempId ? res.team! : t)));
+        feedbackToast.success(`已创建团队「${name}」`);
         router.refresh();
       }
     });
@@ -536,7 +467,7 @@ export function AdminModulesContentV3({
     setDeleteTeamTarget(null);
     const hasMembers = localProfiles.some((p) => p.team_id === team.id);
     if (hasMembers) {
-      feedbackToast.error("该团队下还有成员，无法删除");
+      feedbackToast.warning("该团队下还有在职成员，请先移出成员后再删除");
       return;
     }
     setLocalTeams((prev) => prev.filter((t) => t.id !== team.id));
@@ -545,333 +476,439 @@ export function AdminModulesContentV3({
       const res = await deleteTeam(team.id);
       if (res.error) {
         setLocalTeams((prev) => [...prev, team]);
-        feedbackToast.error(res.error);
+        feedbackToast.error("删除团队失败", { description: res.error });
       } else {
+        feedbackToast.success("团队已删除");
         router.refresh();
       }
     });
   };
 
-  /* ─── Join request ─── */
-
-  const handleReviewJoinRequest = (requestId: string, action: "approve" | "reject") => {
-    const targetRequest = pendingRequests.find((r) => r.id === requestId);
-    if (!targetRequest) return;
-    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
-    startTransition(async () => {
-      const actionFn = action === "approve" ? approveJoinRequestAction : rejectJoinRequestAction;
-      const res = await actionFn(requestId, "通过管理员工作台一键审批");
-      if (!res.ok) {
-        setPendingRequests((prev) => [...prev, targetRequest]);
-        feedbackToast.error(res.error);
-      } else {
-        const response = await fetch("/api/admin/modules/member-emails", { cache: "no-store" });
-        if (response.ok) router.refresh();
-      }
-    });
-  };
-
-  /* ─── Member mutations ─── */
-
-  const handleToggleRole = () => {
-    if (!roleChangeTarget) return;
-    const member = roleChangeTarget;
-    setRoleChangeTarget(null);
-    const newRole = member.role === "admin" ? "member" : "admin";
-    const prevProfiles = localProfiles;
-    setLocalProfiles((prev) =>
-      prev.map((p) => (p.id === member.id ? { ...p, role: newRole } : p)),
-    );
-    startTransition(async () => {
-      const res = await changeRole(member.id, newRole);
-      if (res.error) {
-        setLocalProfiles(prevProfiles);
-        feedbackToast.error(res.error);
-      } else {
-        router.refresh();
-      }
-    });
-  };
-
+  // 2. Member Team Transfer & Remove
   const handleTransferMemberTeam = (memberId: string, teamId: string | null) => {
     const prevProfiles = localProfiles;
     const targetTeam = localTeams.find((t) => t.id === teamId);
+    const targetTeamName = targetTeam ? targetTeam.name : null;
+
     setLocalProfiles((prev) =>
-      prev.map((p) =>
-        p.id === memberId ? { ...p, team_id: teamId, team_name: targetTeam?.name ?? null } : p,
-      ),
+      prev.map((p) => (p.id === memberId ? { ...p, team_id: teamId, team_name: targetTeamName } : p))
     );
+
     startTransition(async () => {
       const res = await updateMemberTeam(memberId, teamId);
       if (res.error) {
         setLocalProfiles(prevProfiles);
-        feedbackToast.error(res.error);
+        feedbackToast.error("调配团队失败", { description: res.error });
       } else {
+        feedbackToast.success(teamId ? `已调配至 ${targetTeamName}` : "已移出当前团队");
         router.refresh();
       }
     });
   };
 
-  const handleRemoveMemberFromTeam = () => {
-    if (!removeTarget) return;
-    const target = removeTarget;
-    setRemoveTarget(null);
+  // 3. Batch Team Transfer
+  const handleBatchTransferTeam = (teamId: string) => {
+    if (selectedMemberIds.length === 0) return;
+    const targetTeam = localTeams.find((t) => t.id === teamId);
+    const targetTeamName = targetTeam ? targetTeam.name : "未分配";
+    const ids = [...selectedMemberIds];
     const prevProfiles = localProfiles;
+
     setLocalProfiles((prev) =>
       prev.map((p) =>
-        p.id === target.id ? { ...p, team_id: null, team_name: null } : p,
-      ),
+        ids.includes(p.id) ? { ...p, team_id: teamId || null, team_name: targetTeamName } : p
+      )
     );
+    setSelectedMemberIds([]);
+
     startTransition(async () => {
-      const res = await removeMemberFromTeam(target.id);
-      if (res.error) {
+      let failCount = 0;
+      let lastErr = "";
+      for (const id of ids) {
+        const res = await updateMemberTeam(id, teamId || null);
+        if (res.error) {
+          failCount++;
+          lastErr = res.error;
+        }
+      }
+      if (failCount > 0) {
         setLocalProfiles(prevProfiles);
-        setRemoveTarget(target);
-        feedbackToast.error(res.error);
+        feedbackToast.warning(`部分成员调配失败 (${failCount}/${ids.length})`, { description: lastErr });
       } else {
+        feedbackToast.success(`已将 ${ids.length} 位成员调配至「${targetTeamName}」`);
         router.refresh();
       }
     });
   };
 
+  // 4. Single & Batch Archive
   const handleArchiveMember = () => {
     if (!archiveTarget) return;
     const target = archiveTarget;
-    const reason = archiveReason.trim() || "离职/管理员归档";
+    const reason = archiveReason.trim();
+    if (!reason) {
+      feedbackToast.warning("必须填写归档原因");
+      return;
+    }
     const previousProfiles = localProfiles;
     setArchiveTarget(null);
     setArchiveReason("");
     setLocalProfiles((prev) => prev.filter((p) => p.id !== target.id));
     if (activeMemberId === target.id) setActiveMemberId(null);
+
     startTransition(async () => {
       const res = await archiveMember(target.id, reason);
       if (res.error) {
         setLocalProfiles(previousProfiles);
-        setArchiveTarget(target);
-        feedbackToast.error(res.error);
+        feedbackToast.error("归档失败", { description: res.error });
         return;
+      }
+      const archivedItem: ProfileSummary = {
+        ...target,
+        membership_status: "archived",
+        archived_at: new Date().toISOString(),
+        archive_reason: reason,
+        archive_snapshot: { team_id: target.team_id, team_name: target.team_name, role: target.role },
+        team_id: null,
+        team_name: null,
+      };
+      setLocalArchivedProfiles((prev) => [archivedItem, ...prev]);
+      feedbackToast.success(`成员「${target.name}」已归档并封禁登录`);
+      router.refresh();
+    });
+  };
+
+  const handleBatchArchive = () => {
+    if (selectedMemberIds.length === 0) return;
+    const reason = batchArchiveReason.trim();
+    if (!reason) {
+      feedbackToast.warning("必须填写批量归档原因");
+      return;
+    }
+    const ids = [...selectedMemberIds];
+    const prevProfiles = localProfiles;
+    setBatchArchiveOpen(false);
+    setBatchArchiveReason("");
+
+    startTransition(async () => {
+      let failCount = 0;
+      let lastErr = "";
+      const successIds: string[] = [];
+
+      for (const id of ids) {
+        const res = await archiveMember(id, reason);
+        if (res.error) {
+          failCount++;
+          lastErr = res.error;
+        } else {
+          successIds.push(id);
+        }
+      }
+
+      if (successIds.length > 0) {
+        const newlyArchived = prevProfiles
+          .filter((p) => successIds.includes(p.id))
+          .map((p) => ({
+            ...p,
+            membership_status: "archived" as const,
+            archived_at: new Date().toISOString(),
+            archive_reason: reason,
+            archive_snapshot: { team_id: p.team_id, team_name: p.team_name, role: p.role },
+            team_id: null,
+            team_name: null,
+          }));
+        setLocalProfiles((prev) => prev.filter((p) => !successIds.includes(p.id)));
+        setLocalArchivedProfiles((prev) => [...newlyArchived, ...prev]);
+      }
+      setSelectedMemberIds([]);
+
+      if (failCount > 0) {
+        feedbackToast.warning(`部分账号归档完成：成功 ${successIds.length} 位，失败 ${failCount} 位`, {
+          description: lastErr,
+        });
+      } else {
+        feedbackToast.success(`成功批量归档 ${successIds.length} 位成员账号`);
       }
       router.refresh();
     });
   };
 
+  // 5. Restore Member
   const handleRestoreMember = () => {
     if (!restoreTarget) return;
     const target = restoreTarget;
-    const previousArchivedProfiles = localArchivedProfiles;
-    const previousProfiles = localProfiles;
+    const prevArchived = localArchivedProfiles;
     setRestoreTarget(null);
     setLocalArchivedProfiles((prev) => prev.filter((p) => p.id !== target.id));
-    setLocalProfiles((prev) => [
-      ...prev,
-      {
+
+    startTransition(async () => {
+      const res = await restoreMember(target.id);
+      if (res.error) {
+        setLocalArchivedProfiles(prevArchived);
+        feedbackToast.error("恢复账号失败", { description: res.error });
+        return;
+      }
+      const restoredItem: ProfileSummary = {
         ...target,
         role: "member",
         membership_status: "active",
         team_id: null,
         team_name: null,
         permissions: {},
-      },
-    ]);
-    startTransition(async () => {
-      const res = await restoreMember(target.id);
-      if (res.error) {
-        setLocalArchivedProfiles(previousArchivedProfiles);
-        setLocalProfiles(previousProfiles);
-        setRestoreTarget(target);
-        feedbackToast.error(res.error);
-        return;
-      }
+      };
+      setLocalProfiles((prev) => [...prev, restoredItem]);
       setMemberView("active");
       setSelectedTeamId(ALL_TEAMS_ID);
       setSearchQuery("");
       setRestoredFocusId(target.id);
       setTimeout(() => setRestoredFocusId(null), 3000);
+      feedbackToast.success(`已恢复「${target.name}」为在职普通成员`);
       router.refresh();
     });
   };
 
-  /* ─── Batch operations ─── */
-
-  const handleBatchTransferTeam = (teamId: string) => {
-    if (selectedMemberIds.length === 0) return;
-    const targetTeam = localTeams.find((t) => t.id === teamId);
-    const ids = [...selectedMemberIds];
+  // 6. Role Switch (member <-> admin)
+  const handleToggleRole = (member: ProfileSummary) => {
+    const newRole = member.role === "admin" ? "member" : "admin";
     const prevProfiles = localProfiles;
     setLocalProfiles((prev) =>
       prev.map((p) =>
-        ids.includes(p.id)
-          ? { ...p, team_id: teamId || null, team_name: targetTeam ? targetTeam.name : null }
-          : p,
-      ),
+        p.id === member.id
+          ? { ...p, role: newRole, permissions: newRole === "member" ? {} : p.permissions }
+          : p
+      )
     );
-    setSelectedMemberIds([]);
+
     startTransition(async () => {
-      let failCount = 0;
-      for (const id of ids) {
-        const res = await updateMemberTeam(id, teamId || null);
-        if (res.error) failCount++;
-      }
-      if (failCount > 0) {
+      const res = await changeRole(member.id, newRole);
+      if (res.error) {
         setLocalProfiles(prevProfiles);
-        feedbackToast.error(`部分成员划转失败 (${failCount}/${ids.length})`);
+        feedbackToast.error("变更角色失败", { description: res.error });
       } else {
+        feedbackToast.success(`角色已变更为「${newRole === "admin" ? "团队主管" : "普通组员"}」`);
         router.refresh();
       }
     });
   };
 
-  const handleBatchArchive = () => {
-    if (selectedMemberIds.length === 0) return;
-    const reason = batchArchiveReason.trim() || "批量归档（离职）";
-    const ids = [...selectedMemberIds];
-    const prevProfiles = localProfiles;
-    setBatchArchiveOpen(false);
-    setBatchArchiveReason("");
-    setLocalProfiles((prev) => prev.filter((p) => !ids.includes(p.id)));
-    setSelectedMemberIds([]);
+  // 7. Save Permissions
+  const handleSavePermissions = () => {
+    if (!activeMember) return;
     startTransition(async () => {
-      let failCount = 0;
-      for (const id of ids) {
-        const res = await archiveMember(id, reason);
-        if (res.error) failCount++;
+      const res = await updatePermissions(activeMember.id, draftPermissions, draftDataScope);
+      if (res.error) {
+        feedbackToast.error("保存权限失败", { description: res.error });
+        return;
       }
-      if (failCount > 0) {
-        setLocalProfiles(prevProfiles);
-        feedbackToast.error(`部分账号归档失败 (${failCount}/${ids.length})`);
-      } else {
-        router.refresh();
-      }
+      setLocalProfiles((prev) =>
+        prev.map((p) =>
+          p.id === activeMember.id ? { ...p, permissions: draftPermissions, data_scope: draftDataScope } : p
+        )
+      );
+      setIsPermissionsDirty(false);
+      feedbackToast.success("权限配置已保存");
+      router.refresh();
     });
   };
 
-  /* ─── Password reset ─── */
+  // 8. Save Exemption
+  const handleSaveExemption = () => {
+    if (!activeMember) return;
+    startTransition(async () => {
+      if (exemptionMode === "none") {
+        const res = await clearExemption(activeMember.id);
+        if (res.error) {
+          feedbackToast.error("清除豁免失败", { description: res.error });
+          return;
+        }
+        setLocalProfiles((prev) =>
+          prev.map((p) =>
+            p.id === activeMember.id
+              ? {
+                  ...p,
+                  exempt_type: null,
+                  exempt_start_date: null,
+                  exempt_end_date: null,
+                  exempt_reason: null,
+                  exemption_category: null,
+                }
+              : p
+          )
+        );
+        feedbackToast.success("已清除豁免状态");
+      } else {
+        const formValues = {
+          userId: activeMember.id,
+          mode: exemptionMode,
+          category: exemptionCategory,
+          reason: exemptionReason.trim() || undefined,
+          startDate: exemptionMode === "range" ? exemptionStartDate : undefined,
+          endDate: exemptionMode === "range" ? exemptionEndDate : undefined,
+          date: exemptionMode === "permanent" ? defaultDate : undefined,
+        };
+        const res = await updateExemption(formValues);
+        if (res.error) {
+          feedbackToast.error("设置豁免失败", { description: res.error });
+          return;
+        }
+        setLocalProfiles((prev) =>
+          prev.map((p) =>
+            p.id === activeMember.id
+              ? {
+                  ...p,
+                  exempt_type: exemptionMode === "permanent" ? "permanent" : "temporary",
+                  exempt_start_date: exemptionMode === "range" ? exemptionStartDate : null,
+                  exempt_end_date: exemptionMode === "range" ? exemptionEndDate : null,
+                  exempt_reason: exemptionReason.trim() || null,
+                  exemption_category: exemptionCategory,
+                }
+              : p
+          )
+        );
+        feedbackToast.success(exemptionMode === "permanent" ? "已设置永久豁免" : "已设置请假/免交区间");
+      }
+      router.refresh();
+    });
+  };
 
+  // 9. Password Reset
   const handleResetPassword = () => {
     if (!passwordResetTarget) return;
     const target = passwordResetTarget;
     const pwd = newPassword.trim();
     if (pwd.length < 6) {
-      feedbackToast.error("新密码至少需要 6 位");
+      feedbackToast.warning("密码长度不能少于 6 位");
       return;
     }
-    if (pwd !== confirmPassword.trim()) {
-      feedbackToast.error("两次输入的密码不一致");
-      return;
-    }
-    feedbackToast.success("正在重置密码...");
     startTransition(async () => {
       const res = await resetMemberPassword(target.id, pwd);
       if (res.error) {
-        feedbackToast.error(res.error);
+        feedbackToast.error("重置密码失败", { description: res.error });
       } else {
         setPasswordResetTarget(null);
         setNewPassword("");
-        setConfirmPassword("");
+        feedbackToast.success(`已为「${target.name}」重置登录密码`);
       }
     });
   };
 
-  /* ─── Drawer ─── */
+  // 10. Review Join Requests
+  const handleReviewJoinRequest = (requestId: string, action: "approve" | "reject") => {
+    const targetRequest = pendingRequests.find((r) => r.id === requestId);
+    if (!targetRequest) return;
+    setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
 
-  const handleSelectMember = (member: ProfileSummary) => {
-    if (activeMemberId === member.id) {
-      setActiveMemberId(null);
-      setAiSuggestion(null);
-      return;
-    }
-    setActiveMemberId(member.id);
-    setAiSuggestion(null);
+    startTransition(async () => {
+      const actionFn = action === "approve" ? approveJoinRequestAction : rejectJoinRequestAction;
+      const res = await actionFn(requestId, "通过管理员工作台一键审批");
+      if (!res.ok) {
+        setPendingRequests((prev) => [...prev, targetRequest]);
+        feedbackToast.error(action === "approve" ? "审批通过失败" : "驳回申请失败", {
+          description: res.error,
+        });
+      } else {
+        feedbackToast.success(action === "approve" ? "已批准入团申请" : "已驳回入团申请");
+        router.refresh();
+      }
+    });
   };
 
-  const handleSavePermissionsEditor = useCallback(
-    (newPerms: Permissions, newDataScope: DataScope) => {
-      if (!activeMemberId || !activeMember) return;
-      const prevProfiles = localProfiles;
-      setLocalProfiles((prev) =>
-        prev.map((p) =>
-          p.id === activeMemberId ? { ...p, permissions: newPerms, data_scope: newDataScope } : p,
-        ),
-      );
-      startSavingPermissions(async () => {
-        const res = await updatePermissions(activeMemberId, newPerms, newDataScope);
-        if (res.error) {
-          setLocalProfiles(prevProfiles);
-          feedbackToast.error(res.error);
-        } else {
-          router.refresh();
-        }
-      });
-    },
-    [activeMemberId, activeMember, localProfiles, router],
-  );
-
-  /* ─── AI suggestions ─── */
-
+  // 11. AI Suggestions Loader
   const handleFetchAiSuggestion = async () => {
     if (!activeMemberId) return;
-    setAiSuggestion({ status: "normal", summary: "", suggestions: [], loading: true });
+    setAiSuggestion({ status: "normal", summary: "", suggestions: [], loading: true, error: null });
     try {
       const res = await fetch("/api/admin/member-ai-suggestion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId: activeMemberId }),
       });
-      if (!res.ok) throw new Error("API request failed");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setAiSuggestion({
+          status: "critical",
+          summary: "",
+          suggestions: [],
+          loading: false,
+          error: err.error || "获取建议失败",
+        });
+        return;
+      }
       const payload = await res.json();
       setAiSuggestion({
         status: payload.status || "normal",
-        summary: payload.summary || "权限状态良好，与岗位职责高度契合。",
+        summary: payload.summary || "履约与权限状态良好。",
         suggestions: payload.suggestions || [],
         loading: false,
+        error: null,
       });
     } catch {
-      feedbackToast.error("网络异常，请检查连接后重试");
       setAiSuggestion({
         status: "critical",
-        summary: "网络异常，请检查网络连接后重试。",
+        summary: "",
         suggestions: [],
         loading: false,
+        error: "网络异常，无法获取 AI 诊断",
       });
     }
   };
 
-  const handleExecuteAiSuggestion = async (suggestion: AiSuggestion, key: string) => {
-    if (executingAiKey) return;
+  // 12. Execute AI Tool Action (Supporting 409 secondary confirmation)
+  const handleExecuteAiSuggestion = async (
+    suggestion: AiSuggestionItem,
+    key: string,
+    confirmationToken?: string
+  ) => {
+    if (executingAiKey && !confirmationToken) return;
     if (suggestion.action.type === "navigate" && suggestion.action.href) {
       router.push(suggestion.action.href);
       return;
     }
-    if (!suggestion.action.toolName) {
-      toast.info("已切换到 AI 助手对话，请在对话框继续");
-      return;
-    }
+    if (suggestion.action.type !== "execute_tool") return;
+    const action = suggestion.action;
+
     setExecutingAiKey(key);
-    try {
-      const res = await fetch("/api/admin/execute-tool", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          toolName: suggestion.action.toolName,
-          toolArgs: suggestion.action.toolArgs ?? {},
-        }),
-      });
-      const payload = await res.json();
-      if (!res.ok || !payload.success) {
-        feedbackToast.error(payload.error || "AI 执行失败");
-      } else {
-        void handleFetchAiSuggestion();
-        router.refresh();
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/admin/execute-tool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toolName: action.toolName,
+            toolArgs: action.toolArgs ?? {},
+            confirmationToken,
+          }),
+        });
+
+        if (res.status === 409) {
+          const payload = await res.json();
+          setToolConfirmationModal({
+            toolName: action.toolName,
+            toolArgs: action.toolArgs ?? {},
+            confirmationToken: payload.confirmationToken,
+            preview: payload.result?.preview ?? null,
+          });
+          return;
+        }
+
+        const payload = await res.json();
+        if (!res.ok || !payload.success) {
+          feedbackToast.error("执行失败", { description: payload.error || "工具执行出错" });
+        } else {
+          feedbackToast.success("工具执行成功");
+          setToolConfirmationModal(null);
+          void handleFetchAiSuggestion();
+          router.refresh();
+        }
+      } catch {
+        feedbackToast.error("执行超时或网络异常");
+      } finally {
+        setExecutingAiKey(null);
       }
-    } catch {
-      feedbackToast.error("执行超时或网络异常");
-    } finally {
-      setExecutingAiKey(null);
-    }
+    });
   };
 
-  /* ─── Toggle select-all ─── */
-
+  // Select-All toggler
   const handleToggleSelectAll = () => {
     const allIds = selectableFilteredMemberIds;
     const isAllSelected = allIds.every((id) => selectedMemberIds.includes(id));
@@ -882,18 +919,15 @@ export function AdminModulesContentV3({
     }
   };
 
-  /* ─── Render ─── */
-
   return (
     <div className="mt-4 w-full space-y-5 relative">
       <main className="space-y-5">
-
-        {/* ── Pending requests ── */}
+        {/* ── 待审批入团申请预警栏 ── */}
         {pendingRequests.length > 0 && (
-          <section className="rounded-xl border border-zinc-200 bg-zinc-50/60 px-5 py-4">
+          <section className="rounded-2xl border border-zinc-200 bg-zinc-50/70 px-5 py-4">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="text-[13px] font-medium text-zinc-900">待审批入团申请</span>
-              <span className="text-[11px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+              <span className="text-[13px] font-semibold text-zinc-900">待审批入团申请</span>
+              <span className="text-[11px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full tabular-nums">
                 {pendingRequests.length}
               </span>
             </div>
@@ -901,10 +935,10 @@ export function AdminModulesContentV3({
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200/80 bg-white px-4 py-3 shadow-2xs"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-[13px] font-medium text-zinc-900">{req.applicantName}</span>
+                    <span className="text-[13px] font-semibold text-zinc-900">{req.applicantName}</span>
                     <span className="mx-2 text-zinc-300">·</span>
                     <span className="text-[12px] text-zinc-500">{req.targetTeamName}</span>
                     <span className="mx-2 text-zinc-300">·</span>
@@ -912,36 +946,37 @@ export function AdminModulesContentV3({
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleReviewJoinRequest(req.id, "reject")}
-                      disabled={isPending}
-                      className="h-7 px-2.5 text-[12px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md"
-                    >
-                      拒绝
-                    </Button>
-                    <Button
-                      onClick={() => handleReviewJoinRequest(req.id, "approve")}
-                      disabled={isPending}
-                      className="h-7 px-2.5 text-[12px] bg-zinc-900 text-white hover:bg-zinc-800 rounded-md"
-                    >
-                      同意
-                    </Button>
-                  </div>
+                  {canManageMembers && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleReviewJoinRequest(req.id, "reject")}
+                        disabled={isPending}
+                        className="h-7 px-2.5 text-[12px] text-zinc-500 hover:text-red-600 rounded-lg"
+                      >
+                        拒绝
+                      </Button>
+                      <Button
+                        onClick={() => handleReviewJoinRequest(req.id, "approve")}
+                        disabled={isPending}
+                        className="h-7 px-3 text-[12px] bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg"
+                      >
+                        同意
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* ── Toolbar + Member table ── */}
-        <section className="rounded-xl border border-zinc-200 bg-white">
-
-          {/* Toolbar */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-zinc-100">
+        {/* ── 主控制台与高密度成员列表 ── */}
+        <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-xs overflow-hidden">
+          {/* 一体化工具栏 */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-zinc-100 bg-zinc-50/40">
             <div className="flex flex-wrap items-center gap-2">
-              {/* Team selector */}
+              {/* 团队选择器 (带管辖范围隔离) */}
               <div className="relative">
                 <select
                   value={selectedTeamId}
@@ -952,89 +987,95 @@ export function AdminModulesContentV3({
                       setSelectedTeamId(e.target.value);
                     }
                   }}
-                  className="h-8 pl-3 pr-7 text-[12px] font-medium bg-zinc-50 text-zinc-700 border border-zinc-200 rounded-lg outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors"
+                  className="h-8.5 pl-3 pr-7 text-[12px] font-medium bg-white text-zinc-700 border border-zinc-200 rounded-xl outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors shadow-2xs"
                 >
                   <option value={ALL_TEAMS_ID}>
-                    {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
+                    {memberView === "archived" ? "全部归档团队" : "全部团队"} ({profilesForCurrentView.length})
                   </option>
                   {localTeams.map((t) => {
                     const count = countProfilesInTeamForView(profilesForCurrentView, memberView, t.id);
                     return (
                       <option key={t.id} value={t.id}>
-                        {truncateTeamName6(t.name)} ({count})
+                        {truncateTeamName(t.name, 10)} ({count})
                       </option>
                     );
                   })}
-                  {canManageCompany && <option value="__manage__">管理架构…</option>}
+                  {canManageCompany && <option value="__manage__">团队架构管理…</option>}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 size-3 text-zinc-400" />
               </div>
 
-              {/* Sort */}
+              {/* 排序 */}
               <div className="relative">
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as "role" | "published")}
-                  className="h-8 pl-3 pr-7 text-[12px] bg-zinc-50 text-zinc-600 border border-zinc-200 rounded-lg outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors"
+                  className="h-8.5 pl-3 pr-7 text-[12px] bg-white text-zinc-600 border border-zinc-200 rounded-xl outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors shadow-2xs"
                 >
-                  <option value="role">按职位</option>
-                  <option value="published">按发布</option>
+                  <option value="role">按职位排序</option>
+                  <option value="published">按发布达标</option>
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 size-3 text-zinc-400" />
               </div>
 
-              {/* Search */}
+              {/* 搜索框 */}
               <div className="relative">
-                <Search className="absolute left-2.5 top-2 size-3.5 text-zinc-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索…"
-                  className="h-8 pl-8 pr-3 text-[12px] bg-zinc-50 border-zinc-200 rounded-lg w-40 focus:w-56 transition-all"
+                  placeholder="搜索姓名 / 邮箱 / 团队..."
+                  className="h-8.5 pl-8 pr-3 text-[12px] bg-white border-zinc-200 rounded-xl w-44 focus:w-60 transition-all shadow-2xs"
                 />
               </div>
 
               {canManageCompany && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setTeamManagementDialogOpen(true)}
-                  className="h-8 px-2.5 text-[12px] text-zinc-500 hover:text-zinc-700 rounded-lg"
+                  className="h-8.5 px-3 text-[12px] text-zinc-600 rounded-xl border-zinc-200"
                 >
-                  <Settings className="size-3.5" />
+                  <Building2 className="size-3.5 mr-1 text-zinc-400" />
+                  架构
                 </Button>
               )}
             </div>
 
+            {/* 状态切换与计数 */}
             <div className="flex items-center gap-3">
-              {/* View toggle */}
-              <div className="flex items-center bg-zinc-100 rounded-lg p-0.5" role="tablist">
+              <div className="flex items-center bg-zinc-100/80 rounded-xl p-0.5 border border-zinc-200/50" role="tablist">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={memberView === "active"}
                   onClick={() => setMemberView("active")}
                   className={cn(
-                    "px-2.5 py-1 text-[11px] rounded-md transition-colors",
+                    "px-3 py-1.5 text-[11px] rounded-lg transition-colors",
                     memberView === "active"
-                      ? "bg-white text-zinc-900 shadow-sm font-medium"
-                      : "text-zinc-500 hover:text-zinc-700",
+                      ? "bg-white text-zinc-900 shadow-2xs font-semibold"
+                      : "text-zinc-500 hover:text-zinc-700"
                   )}
                 >
-                  正常 {localProfiles.length}
+                  在职 ({localProfiles.length})
                 </button>
                 <button
                   type="button"
                   role="tab"
                   aria-selected={memberView === "archived"}
-                  onClick={() => { setMemberView("archived"); setActiveMemberId(null); setSelectedMemberIds([]); }}
+                  onClick={() => {
+                    setMemberView("archived");
+                    setActiveMemberId(null);
+                    setSelectedMemberIds([]);
+                  }}
                   className={cn(
-                    "px-2.5 py-1 text-[11px] rounded-md transition-colors",
+                    "px-3 py-1.5 text-[11px] rounded-lg transition-colors",
                     memberView === "archived"
-                      ? "bg-white text-zinc-900 shadow-sm font-medium"
-                      : "text-zinc-500 hover:text-zinc-700",
+                      ? "bg-white text-zinc-900 shadow-2xs font-semibold"
+                      : "text-zinc-500 hover:text-zinc-700"
                   )}
                 >
-                  归档 {localArchivedProfiles.length}
+                  已归档 ({localArchivedProfiles.length})
                 </button>
               </div>
 
@@ -1044,9 +1085,9 @@ export function AdminModulesContentV3({
             </div>
           </div>
 
-          {/* Table header */}
+          {/* 表头 */}
           {sortedProfiles.length > 0 && (
-            <div className="flex items-center gap-3 px-5 py-2 text-[11px] text-zinc-400 uppercase tracking-wider border-b border-zinc-100">
+            <div className="flex items-center gap-3 px-5 py-2.5 text-[11px] font-medium text-zinc-400 tracking-wider border-b border-zinc-100 bg-zinc-50/20">
               {canManageCompany && memberView === "active" && (
                 <div className="w-6 shrink-0">
                   <Checkbox
@@ -1055,23 +1096,23 @@ export function AdminModulesContentV3({
                       selectableFilteredMemberIds.every((id) => selectedMemberIds.includes(id))
                     }
                     onCheckedChange={handleToggleSelectAll}
-                    className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                    className="size-3.5 rounded border-zinc-300"
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">成员</div>
-              <div className="w-16 text-center shrink-0">角色</div>
-              <div className="w-24 shrink-0">团队</div>
-              <div className="w-16 text-right shrink-0">发布</div>
+              <div className="flex-1 min-w-0">成员姓名 / 邮箱</div>
+              <div className="w-20 text-center shrink-0">角色</div>
+              <div className="w-28 shrink-0">所属团队</div>
+              <div className="w-28 text-right shrink-0">本月发布</div>
             </div>
           )}
 
-          {/* Member rows */}
+          {/* 成员行列表 */}
           {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <UsersRound className="size-8 text-zinc-300 mb-3" />
-              <p className="text-[13px] text-zinc-500">没有找到成员</p>
-              <p className="text-[12px] text-zinc-400 mt-1">调整筛选或搜索条件试试</p>
+              <UsersRound className="size-8 text-zinc-300 mb-3 stroke-[1.5]" />
+              <p className="text-[13px] font-medium text-zinc-600">没有找到符合条件的成员</p>
+              <p className="text-[12px] text-zinc-400 mt-1">请尝试调整搜索或团队筛选条件</p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100">
@@ -1081,29 +1122,27 @@ export function AdminModulesContentV3({
                 const isRestoredFocus = restoredFocusId === member.id;
                 const isChecked = selectedMemberIds.includes(member.id);
                 const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
-                const archiveSnapshot = member.archive_snapshot ?? {};
-                const archivedTeamName =
-                  typeof archiveSnapshot.team_name === "string" ? archiveSnapshot.team_name : "未分配";
-                const archivedRole =
-                  typeof archiveSnapshot.role === "string"
-                    ? archiveSnapshot.role === "admin" ? "管理员" : "成员"
-                    : "成员";
+                const { text: loginText, isLoginStale } = formatLastLoginDisplay(member.last_sign_in_at);
+
+                const published = member.monthly_published_count ?? 0;
+                const required = member.monthly_required_count ?? 0;
+                const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
 
                 return (
                   <div
                     key={member.id}
                     className={cn(
-                      "group flex items-center gap-3 px-5 py-3 transition-colors",
+                      "group flex items-center gap-3 px-5 py-3 transition-colors select-none",
                       isRestoredFocus
                         ? "bg-amber-50 animate-pulse"
                         : isChecked
-                          ? "bg-zinc-50"
-                          : isCurrentMemberActive
-                            ? "bg-zinc-50/60"
-                            : "hover:bg-zinc-50/60",
+                        ? "bg-zinc-50"
+                        : isCurrentMemberActive
+                        ? "bg-zinc-50/80"
+                        : "hover:bg-zinc-50/50"
                     )}
                   >
-                    {/* Checkbox */}
+                    {/* 勾选框 */}
                     {canManageCompany && !isArchivedView && member.id !== currentUserId && (
                       <div className="w-6 shrink-0">
                         <Checkbox
@@ -1115,79 +1154,83 @@ export function AdminModulesContentV3({
                               setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                             }
                           }}
-                          className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                          className="size-3.5 rounded border-zinc-300"
                         />
                       </div>
                     )}
 
-                    {/* Name + email (clickable) */}
+                    {/* 成员姓名 + 邮箱 + 登录时间 (点击打开抽屉) */}
                     <div
                       role="button"
-                      tabIndex={isArchivedView ? -1 : 0}
-                      className="flex-1 min-w-0 cursor-pointer select-none"
-                      onClick={() => {
-                        if (isArchivedView) return;
-                        if (selectedMemberIds.length > 0) {
-                          if (member.id === currentUserId) return;
-                          if (isChecked) {
-                            setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                          } else {
-                            setSelectedMemberIds((prev) => [...prev, member.id]);
-                          }
-                          return;
-                        }
-                        handleSelectMember(member);
-                      }}
+                      tabIndex={0}
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => openMemberDrawer(member)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          if (!isArchivedView && !selectedMemberIds.length) handleSelectMember(member);
+                          openMemberDrawer(member);
                         }
                       }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-medium text-zinc-900 truncate">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-semibold text-zinc-950 truncate">
                           {member.name}
                         </span>
                         {member.id === currentUserId && (
-                          <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded">
+                          <span className="text-[10px] text-zinc-500 bg-zinc-100 px-1.5 py-0.2 rounded font-normal">
                             我
                           </span>
                         )}
                         {isCurrentlyExempt && (
-                          <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                            豁免
+                          <span className="text-[10px] font-medium text-[#43718E] bg-[#43718E]/10 px-1.5 py-0.2 rounded">
+                            {member.exempt_type === "permanent"
+                              ? "永久豁免"
+                              : member.exemption_category === "leave"
+                              ? "请假"
+                              : "免交"}
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-zinc-400 truncate block">
-                        {member.email || "—"}
-                      </span>
+                      <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5 truncate">
+                        <span className="truncate">{member.email || "未绑定邮箱"}</span>
+                        <span>·</span>
+                        <span
+                          className={cn("truncate", isLoginStale && "text-[#D99E55] font-medium")}
+                          title={loginText}
+                        >
+                          {loginText}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Role badge */}
-                    <div className="w-16 text-center shrink-0">
+                    {/* 角色徽标 */}
+                    <div className="w-20 text-center shrink-0">
                       {isArchivedView ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
                           <Archive className="size-3" />
                           已归档
                         </span>
+                      ) : member.role === "owner" ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                          创始人
+                        </span>
                       ) : member.role === "admin" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-900 font-medium">
-                          <span className="size-1.5 rounded-full bg-zinc-900" />
-                          管理员
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
+                          主管
                         </span>
                       ) : (
-                        <span className="text-[11px] text-zinc-500">成员</span>
+                        <span className="text-[11px] text-zinc-500">组员</span>
                       )}
                     </div>
 
-                    {/* Team */}
-                    <div className="w-24 shrink-0">
+                    {/* 所属团队 */}
+                    <div className="w-28 shrink-0">
                       {isArchivedView ? (
-                        <span className="text-[11px] text-zinc-400">{truncateTeamName6(archivedTeamName)}</span>
-                      ) : !canManageCompany || member.id === currentUserId ? (
-                        <span className="text-[11px] text-zinc-600">{truncateTeamName6(member.team_name)}</span>
+                        <span className="text-[11px] text-zinc-400">
+                          {truncateTeamName(member.archive_snapshot?.team_name as string)}
+                        </span>
+                      ) : !canEditTeamMembers || member.id === currentUserId ? (
+                        <span className="text-[12px] text-zinc-700">{truncateTeamName(member.team_name)}</span>
                       ) : (
                         <div className="relative inline-flex items-center">
                           <select
@@ -1195,39 +1238,55 @@ export function AdminModulesContentV3({
                             onChange={(e) =>
                               handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
                             }
-                            className="h-6 pl-2 pr-5 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-50 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[96px] truncate"
+                            className="h-6.5 pl-2 pr-5 text-[11px] font-medium bg-transparent text-zinc-700 border border-transparent hover:border-zinc-200 hover:bg-zinc-50 rounded-lg outline-none cursor-pointer appearance-none transition-colors max-w-[105px] truncate"
                           >
                             <option value="">未分配</option>
                             {localTeams.map((t) => (
-                              <option key={t.id} value={t.id}>{truncateTeamName6(t.name)}</option>
+                              <option key={t.id} value={t.id}>
+                                {truncateTeamName(t.name)}
+                              </option>
                             ))}
                           </select>
-                          <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <ChevronDown className="pointer-events-none absolute right-1 top-2 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       )}
                     </div>
 
-                    {/* Published count */}
-                    <div className="w-16 text-right shrink-0">
+                    {/* 本月实发 / 应发进度条 (1.5 实发/应发指标进度条升级) */}
+                    <div className="w-28 text-right shrink-0">
                       {isArchivedView ? (
-                        <span className="text-[11px] text-zinc-400">{archivedRole}</span>
-                      ) : (
-                        <span className="text-[12px] tabular-nums text-zinc-500">
-                          {member.monthly_published_count ?? 0}/{member.monthly_required_count ?? 0}
+                        <span className="text-[11px] text-zinc-400">
+                          {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                         </span>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-end gap-1.5 text-[11px] text-zinc-600 tabular-nums">
+                            <span className="font-semibold text-zinc-900">{published}</span>
+                            <span className="text-zinc-400">/</span>
+                            <span>{required}条</span>
+                          </div>
+                          {required > 0 && (
+                            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[#D97757] rounded-full transition-all duration-300"
+                                style={{ width: `${fulfillRatio}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
 
-                    {/* Archived: restore button */}
-                    {isArchivedView && canManageCompany && (
+                    {/* 归档视图下恢复按钮 */}
+                    {isArchivedView && isCompanyOwner && (
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="xs"
                         onClick={() => setRestoreTarget(member)}
                         disabled={isPending}
-                        className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                        className="text-[11px] text-[#D97757] hover:text-[#C96442]"
                       >
-                        <RotateCcw className="size-3" />
+                        恢复
                       </Button>
                     )}
                   </div>
@@ -1238,561 +1297,60 @@ export function AdminModulesContentV3({
         </section>
       </main>
 
-      {/* ── Right-side detail drawer ── */}
-      <Sheet
-        open={activeMember !== null}
-        onOpenChange={(open) => {
-          if (!open) { setActiveMemberId(null); setAiSuggestion(null); }
-        }}
-      >
-        <SheetContent
-          side="right"
-          showCloseButton={false}
-          className="w-full max-w-[480px] gap-0 overflow-hidden p-0 shadow-2xl"
-        >
-          {activeMember && activePermissionMember ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {/* 顶栏信息 */}
-              <div className="flex items-start justify-between border-b border-zinc-200 p-5 bg-white shrink-0">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <SheetTitle className="text-base font-semibold text-zinc-900">
-                      {activeMember.name}
-                    </SheetTitle>
-                    <span
-                      className={cn(
-                        "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[11px] font-medium border",
-                        activeMember.role === "owner"
-                          ? "bg-zinc-900 border-zinc-900 text-white"
-                          : activeMember.role === "admin"
-                            ? "bg-white border-zinc-300 text-zinc-900"
-                            : "bg-zinc-100 border-transparent text-zinc-700",
-                      )}
-                    >
-                      {activeMember.role === "owner"
-                        ? "创始人"
-                        : activeMember.role === "admin"
-                          ? "管理员"
-                          : "成员"}
-                    </span>
-                  </div>
-                  <SheetDescription className="text-[12px] text-zinc-500 leading-normal mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span>
-                      {activeMember.team_name || "未分配团队"} ·{" "}
-                      {activeMember.email || "邮箱同步中"}
-                    </span>
-                    <span className="text-zinc-300">|</span>
-                    {(() => {
-                      const loginInfo = formatLastLoginDisplay(activeMember.last_sign_in_at);
-                      return (
-                        <span
-                          title="这是 Supabase Auth 记录的上次登录时间，不等于当前在线时间或最后访问时间"
-                          className={cn(
-                            "inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors",
-                            loginInfo.isLoginStale
-                              ? "bg-zinc-950/10 text-zinc-600 border border-zinc-200"
-                              : "bg-zinc-100 text-zinc-600",
-                          )}
-                        >
-                          <Clock className="size-3 shrink-0 text-zinc-400" />
-                          上次登录：{loginInfo.text}
-                        </span>
-                      );
-                    })()}
-                  </SheetDescription>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  {permissionManagerCapabilities.canEditPermissions && (
-                    <Button
-                      variant="outline"
-                      onClick={handleFetchAiSuggestion}
-                      disabled={aiSuggestion?.loading}
-                      className="h-8 text-[12px] rounded-lg border-zinc-200 hover:bg-zinc-50 flex items-center gap-1 px-2.5"
-                    >
-                      <Sparkles className="size-3 text-zinc-500" />
-                      AI 诊断
-                    </Button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => { setActiveMemberId(null); setAiSuggestion(null); }}
-                    aria-label="关闭成员权限详情"
-                    className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-all"
-                  >
-                    <X className="size-4.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 唯一主滚动区 */}
-              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
-                {aiSuggestion && (
-                  <div
-                    className={cn(
-                      "rounded-xl border-l-2 bg-zinc-50 p-4 space-y-3",
-                      aiSuggestion.status === "critical"
-                        ? "border-l-red-400"
-                        : "border-l-zinc-300",
-                    )}
-                  >
-                    {aiSuggestion.loading ? (
-                      <div className="flex items-center gap-2 text-[12px] text-zinc-500 py-2">
-                        <RefreshCw className="size-3.5 animate-spin" />
-                        AI 正在深度审查其日常填报及安全审计日志...
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center justify-between border-b border-zinc-200/50 pb-2">
-                          <span
-                            className={cn(
-                              "inline-flex rounded px-1.5 py-0.5 text-[12px] font-medium",
-                              aiSuggestion.status === "critical"
-                                ? "bg-red-100 text-red-600"
-                                : "bg-zinc-100 text-zinc-600",
-                            )}
-                          >
-                            {aiSuggestion.status === "critical"
-                              ? "安全警告"
-                              : "诊断建议"}
-                          </span>
-                          <span className="text-[12px] text-zinc-500">
-                            AI 推理建议
-                          </span>
-                        </div>
-                        <p className="text-[12px] text-zinc-700 leading-relaxed">
-                          {aiSuggestion.summary}
-                        </p>
-
-                        {aiSuggestion.suggestions.length > 0 ? (
-                          aiSuggestion.suggestions.map((sug, idx) => {
-                            const key = `${sug.label}-${idx}`;
-                            const isBusy = executingAiKey === key;
-                            return (
-                              <div
-                                key={idx}
-                                className="bg-white rounded-lg border border-zinc-200 p-2.5 flex items-start justify-between gap-3"
-                              >
-                                <div className="space-y-0.5">
-                                  <h5 className="text-[12px] font-medium text-zinc-900">
-                                    {sug.label}
-                                  </h5>
-                                  <p className="text-[12px] text-zinc-500 leading-relaxed">
-                                    {sug.description}
-                                  </p>
-                                </div>
-                                <Button
-                                  onClick={() =>
-                                    void handleExecuteAiSuggestion(sug, key)
-                                  }
-                                  disabled={Boolean(executingAiKey)}
-                                  className="h-7 px-2.5 bg-zinc-900 text-white hover:bg-zinc-800 rounded text-[12px] shrink-0"
-                                >
-                                  {isBusy ? "执行中..." : "一键部署"}
-                                </Button>
-                              </div>
-                            );
-                          })
-                        ) : (
-                          <div className="flex justify-end pt-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleFetchAiSuggestion}
-                              className="h-7 px-2.5 text-[12px] border-zinc-200 rounded-lg text-zinc-700 hover:bg-zinc-100"
-                            >
-                              <RefreshCw className="size-3 mr-1 text-zinc-500" />
-                              重试
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* 成员权限及数据范围受控编辑表单 */}
-                <MemberPermissionEditor
-                  member={activePermissionMember}
-                  draftPermissions={draftPermissions}
-                  draftDataScope={draftDataScope}
-                  onTogglePermission={handleTogglePermission}
-                  onToggleCategory={handleToggleCategory}
-                  onToggleAllPermissions={handleToggleAllPermissions}
-                  onChangeDataScope={handleChangeDataScope}
-                  canEdit={permissionManagerCapabilities.canEditPermissions}
-                  isSaving={isSavingPermissions}
-                />
-
-                {/* 低权重区：高级账户与团队管理 */}
-                {(canManageCompany || permissionManagerCapabilities.canRemoveMember) &&
-                  activeMember.id !== currentUserId &&
-                  activeMember.role !== "owner" &&
-                  activeMember.membership_status !== "archived" && (
-                    <div className="pt-4 border-t border-zinc-200/80 space-y-3">
-                      <h4 className="text-[12px] font-medium uppercase tracking-[0.12em] text-zinc-400">
-                        账户与团队管理
-                      </h4>
-
-                      <div className="space-y-1">
-                        {canChangeRole && (
-                          <button
-                            type="button"
-                            onClick={() => setRoleChangeTarget(activeMember)}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100"
-                          >
-                            <span className="flex items-center gap-2">
-                              <Settings className="size-3.5 text-zinc-400" />
-                              {activeMember.role === "admin"
-                                ? "降级为普通组员"
-                                : "提升为管理员"}
-                            </span>
-                            <span className="text-[11px] text-zinc-400">
-                              切换身份
-                            </span>
-                          </button>
-                        )}
-
-                        {canResetPassword && (
-                          <button
-                            type="button"
-                            onClick={() => setPasswordResetTarget(activeMember)}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100"
-                          >
-                            <span className="flex items-center gap-2">
-                              <KeyRound className="size-3.5 text-zinc-400" />
-                              重置账户密码
-                            </span>
-                            <span className="text-[11px] text-zinc-400">
-                              快捷重置
-                            </span>
-                          </button>
-                        )}
-
-                        {canManageExemption && (
-                          <button
-                            type="button"
-                            onClick={() => setExemptionMemberId(activeMember.id)}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100"
-                          >
-                            <span className="flex items-center gap-2">
-                              <ShieldAlert className="size-3.5 text-zinc-400" />
-                              {activeMemberIsCurrentlyExempt
-                                ? "调整日报豁免"
-                                : "开启日报豁免"}
-                            </span>
-                            <span className="text-[11px] text-zinc-400">
-                              {activeMemberIsCurrentlyExempt
-                                ? "已生效"
-                                : "未生效"}
-                            </span>
-                          </button>
-                        )}
-
-                        {permissionManagerCapabilities.canRemoveMember && (
-                          <button
-                            type="button"
-                            onClick={() => setRemoveTarget(activeMember)}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100"
-                          >
-                            <span className="flex items-center gap-2">
-                              <UsersRound className="size-3.5 text-zinc-400" />
-                              移出团队
-                            </span>
-                            <span className="text-[11px] text-zinc-400">
-                              保留账号
-                            </span>
-                          </button>
-                        )}
-
-                        {canArchive && (
-                          <button
-                            type="button"
-                            onClick={() => { setArchiveTarget(activeMember); setArchiveReason(""); }}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-red-600 hover:bg-red-50 transition-colors duration-100"
-                          >
-                            <span className="flex items-center gap-2">
-                              <Archive className="size-3.5 text-red-400" />
-                              归档账号
-                            </span>
-                            <span className="text-[11px] text-red-400/70">
-                              高风险操作
-                            </span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-              </div>
-
-              {/* 唯一固定底栏 */}
-              <div className="flex items-center justify-between border-t border-zinc-200 bg-white p-4 px-6 shrink-0">
-                <div className="flex items-center gap-2">
-                  {isDirty && (
-                    <button
-                      type="button"
-                      onClick={handleResetDraft}
-                      disabled={isSavingPermissions}
-                      className="text-[12px] text-zinc-500 hover:text-zinc-800 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-zinc-100"
-                    >
-                      <RotateCcw className="size-3" />
-                      重置
-                    </button>
-                  )}
-                  {activeMemberIsOwner && (
-                    <span className="text-[11px] text-zinc-400">
-                      创始人默认拥有全量权限
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => { setActiveMemberId(null); setAiSuggestion(null); }}
-                    disabled={isSavingPermissions}
-                    className="h-9 px-3.5 text-[12px] text-zinc-600 rounded-xl hover:bg-zinc-100"
-                  >
-                    取消
-                  </Button>
-
-                  <Button
-                    type="button"
-                    onClick={() => handleSavePermissionsEditor(draftPermissions, draftDataScope)}
-                    disabled={
-                      !isDirty ||
-                      !permissionManagerCapabilities.canEditPermissions ||
-                      isSavingPermissions ||
-                      activeMemberIsOwner
-                    }
-                    className={cn(
-                      "h-9 px-5 rounded-xl text-[12px] font-medium transition-all shadow-xs",
-                      isDirty && !isSavingPermissions && !activeMemberIsOwner && permissionManagerCapabilities.canEditPermissions
-                        ? "bg-zinc-900 hover:bg-zinc-800 text-white cursor-pointer"
-                        : "bg-zinc-100 text-zinc-400 cursor-not-allowed shadow-none",
-                    )}
-                  >
-                    {isSavingPermissions
-                      ? "保存中..."
-                      : isDirty
-                        ? "保存变更"
-                        : "已是最新"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
-
-      {/* ── Dialogs ── */}
-
-      {/* Password reset */}
-      <Dialog
-        open={passwordResetTarget !== null}
-        onOpenChange={(o) => {
-          if (!o) { setPasswordResetTarget(null); setNewPassword(""); setConfirmPassword(""); }
-        }}
-      >
-        <DialogContent className="rounded-xl border border-zinc-200 bg-white" showCloseButton>
-          <DialogHeader>
-            <DialogTitle className="text-[15px]">重置密码</DialogTitle>
-            <DialogDescription className="text-[12px]">
-              {passwordResetTarget ? `为 ${passwordResetTarget.name} 设置新密码` : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {passwordResetTarget && (
-            <div className="space-y-3 pt-2">
-              <div className="rounded-lg bg-zinc-50 px-3 py-2 text-[12px]">
-                <span className="font-medium text-zinc-900">{passwordResetTarget.name}</span>
-                <span className="text-zinc-400 ml-2">{passwordResetTarget.email || "未关联邮箱"}</span>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="v3-new-pwd" className="text-[12px]">新密码</Label>
-                <Input
-                  id="v3-new-pwd"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="不得少于 6 位"
-                  className="h-9 rounded-lg bg-zinc-50"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="v3-confirm-pwd" className="text-[12px]">确认密码</Label>
-                <Input
-                  id="v3-confirm-pwd"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="重新输入"
-                  className="h-9 rounded-lg bg-zinc-50"
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => { setPasswordResetTarget(null); setNewPassword(""); setConfirmPassword(""); }}
-              className="h-9 rounded-lg text-[12px]"
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleResetPassword}
-              disabled={isPending}
-              className="h-9 bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg text-[12px]"
-            >
-              确认重置
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete team */}
-      <ConfirmDialog
-        open={deleteTeamTarget !== null}
-        title="删除团队"
-        description={deleteTeamTarget ? `确定删除「${deleteTeamTarget.name}」？此操作不可逆。` : ""}
-        confirmText="确认删除"
-        destructive
-        loading={isPending}
-        onConfirm={() => { if (deleteTeamTarget) handleDeleteTeam(deleteTeamTarget); }}
-        onOpenChange={(o) => { if (!o) setDeleteTeamTarget(null); }}
-      />
-
-      {/* Remove from team */}
-      <ConfirmDialog
-        open={removeTarget !== null}
-        title="移出团队"
-        description={removeTarget ? `确定将 ${removeTarget.name} 移出本团队？账号保留，之后可重新分配。` : ""}
-        confirmText="确认移出"
-        loading={isPending}
-        onConfirm={handleRemoveMemberFromTeam}
-        onOpenChange={(o) => { if (!o) setRemoveTarget(null); }}
-      />
-
-      {/* Archive */}
-      <ConfirmDialog
-        open={archiveTarget !== null}
-        title="归档账号"
-        description={archiveTarget ? `确定归档 ${archiveTarget.name}？归档后禁止登录并清空权限，历史数据保留。` : ""}
-        confirmText="确认归档"
-        destructive
-        loading={isPending}
-        onConfirm={handleArchiveMember}
-        onOpenChange={(o) => { if (!o) setArchiveTarget(null); }}
-      />
-
-      {/* Restore */}
-      <ConfirmDialog
-        open={restoreTarget !== null}
-        title="恢复账号"
-        description={restoreTarget ? `确认恢复 ${restoreTarget.name}？恢复后为未分配团队的普通成员。` : ""}
-        confirmText="确认恢复"
-        loading={isPending}
-        onConfirm={handleRestoreMember}
-        onOpenChange={(open) => { if (!open) setRestoreTarget(null); }}
-      />
-
-      {/* Exemption */}
-      <ExemptionDialog
-        open={exemptionMemberId !== null}
-        profile={
-          exemptionMemberId
-            ? (() => {
-                const target = localProfiles.find((p) => p.id === exemptionMemberId);
-                return target
-                  ? {
-                      id: target.id,
-                      name: target.name,
-                      status: normalizeUserStatus(target.status),
-                      exempt_type: normalizeExemptionType(target.exempt_type),
-                      exempt_start_date: target.exempt_start_date || null,
-                      exempt_end_date: target.exempt_end_date || null,
-                      exempt_reason: target.exempt_reason || null,
-                      exemption_category: normalizeExemptionCategory(target.exemption_category),
-                    }
-                  : null;
-              })()
-            : null
-        }
-        onOpenChange={(o) => {
-          if (!o) { setExemptionMemberId(null); router.refresh(); }
-        }}
-      />
-
-      {/* Batch archive */}
-      <ConfirmDialog
-        open={batchArchiveOpen}
-        title="批量归档"
-        description={`确定归档选中的 ${selectedMemberIds.length} 人？归档后禁止登录并清空权限。`}
-        confirmText={`确认归档 (${selectedMemberIds.length} 人)`}
-        destructive
-        loading={isPending}
-        onConfirm={handleBatchArchive}
-        onOpenChange={(o) => { if (!o) setBatchArchiveOpen(false); }}
-      />
-
-      {/* Role change */}
-      <ConfirmDialog
-        open={roleChangeTarget !== null}
-        title="变更角色"
-        description={
-          roleChangeTarget
-            ? `确认将 ${roleChangeTarget.name} 变更为「${roleChangeTarget.role === "admin" ? "普通组员" : "管理员"}」？`
-            : ""
-        }
-        confirmText="确认变更"
-        loading={isPending}
-        onConfirm={handleToggleRole}
-        onOpenChange={(o) => { if (!o) setRoleChangeTarget(null); }}
-      />
-
-      {/* ── Batch floating bar ── */}
+      {/* ── 3.1 底部批量操作浮动条 (跟随 v3 风格) ── */}
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-xl border border-zinc-200 bg-white/95 backdrop-blur-sm px-4 py-2 shadow-lg"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-sm px-5 py-2.5 shadow-xl animate-in fade-in zoom-in-95"
         >
-          <span className="text-[12px] font-medium text-zinc-700 pr-2 border-r border-zinc-200">
-            已选 {selectedMemberIds.length} 人
+          <span className="text-[12px] font-semibold text-zinc-900 pr-3 border-r border-zinc-200">
+            已选 {selectedMemberIds.length} 位成员
           </span>
 
-          {canManageCompany && (
+          {canManageMembers && (
             <div className="relative">
               <select
                 defaultValue=""
                 onChange={(e) => {
-                  if (e.target.value) { handleBatchTransferTeam(e.target.value); e.target.value = ""; }
+                  if (e.target.value) {
+                    handleBatchTransferTeam(e.target.value);
+                    e.target.value = "";
+                  }
                 }}
-                className="h-7 text-[11px] bg-zinc-50 border border-zinc-200 rounded-md px-2 pr-5 text-zinc-600 outline-none appearance-none cursor-pointer"
+                className="h-7.5 text-[11px] font-medium bg-zinc-50 border border-zinc-200 rounded-xl px-2.5 pr-6 text-zinc-700 outline-none appearance-none cursor-pointer hover:border-zinc-300"
               >
-                <option value="" disabled>调配团队…</option>
-                {localTeams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                <option value="" disabled>
+                  调配至团队…
+                </option>
+                {localTeams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 size-3 text-zinc-400" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-2.5 size-3 text-zinc-400" />
             </div>
           )}
 
-          {canManageCompany && (
+          {isCompanyOwner && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBatchArchiveOpen(true)}
-              className="h-7 px-2 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md"
+              onClick={() => {
+                setBatchArchiveReason("");
+                setBatchArchiveOpen(true);
+              }}
+              className="h-7.5 px-3 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl font-medium"
             >
               <Archive className="size-3 mr-1" />
-              归档
+              批量归档
             </Button>
           )}
 
           <button
             type="button"
             onClick={() => setSelectedMemberIds([])}
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
             title="取消选择"
           >
             <X className="size-3.5" />
@@ -1800,20 +1358,655 @@ export function AdminModulesContentV3({
         </aside>
       )}
 
-      {/* ── Team management dialog ── */}
+      {/* ── 2. 全功能右侧工作台抽屉 (整合 v4 Inspector Sheet) ── */}
+      <Sheet
+        open={activeMember !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveMemberId(null);
+            setAiSuggestion(null);
+          }
+        }}
+      >
+        <SheetContent className="w-full max-w-xl sm:max-w-xl p-0 overflow-y-auto">
+          {activeMember && (
+            <div className="flex flex-col h-full">
+              {/* 抽屉头部 */}
+              <div className="p-6 border-b border-zinc-200/80 bg-zinc-50/50">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-11 rounded-full bg-zinc-200 text-zinc-800 flex items-center justify-center font-bold text-[16px] border border-zinc-300">
+                      {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <SheetTitle className="text-[17px] font-semibold text-zinc-950">
+                          {activeMember.name || "未命名"}
+                        </SheetTitle>
+                        {activeMember.role === "owner" ? (
+                          <Badge variant="accent">创始人</Badge>
+                        ) : activeMember.role === "admin" ? (
+                          <Badge variant="success">主管</Badge>
+                        ) : (
+                          <Badge variant="secondary">组员</Badge>
+                        )}
+                        {activeMember.membership_status === "archived" && (
+                          <Badge variant="neutral">已归档</Badge>
+                        )}
+                      </div>
+                      <SheetDescription className="text-[12px] text-zinc-500 mt-1 flex flex-wrap items-center gap-2">
+                        <Mail className="size-3 text-zinc-400" />
+                        <span>{activeMember.email || "未绑定邮箱"}</span>
+                        <span>·</span>
+                        <Building2 className="size-3 text-zinc-400" />
+                        <span>{activeMember.team_name || "未分配团队"}</span>
+                      </SheetDescription>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMemberId(null);
+                      setAiSuggestion(null);
+                    }}
+                    className="p-1 text-zinc-400 hover:text-zinc-600 rounded-lg"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                {/* 抽屉 4 大功能 Tab */}
+                <div className="mt-5 flex border-b border-zinc-200">
+                  <button
+                    type="button"
+                    onClick={() => setDrawerTab("overview")}
+                    className={cn(
+                      "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
+                      drawerTab === "overview"
+                        ? "border-[#D97757] text-[#D97757] font-semibold"
+                        : "border-transparent text-zinc-600 hover:text-zinc-950"
+                    )}
+                  >
+                    概览与 AI 诊断
+                  </button>
+
+                  {activeMember.membership_status !== "archived" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setDrawerTab("team_role")}
+                        className={cn(
+                          "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
+                          drawerTab === "team_role"
+                            ? "border-[#D97757] text-[#D97757] font-semibold"
+                            : "border-transparent text-zinc-600 hover:text-zinc-950"
+                        )}
+                      >
+                        团队与角色
+                      </button>
+
+                      {permissionManagerCapabilities.canEditPermissions && (
+                        <button
+                          type="button"
+                          onClick={() => setDrawerTab("permissions")}
+                          className={cn(
+                            "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
+                            drawerTab === "permissions"
+                              ? "border-[#D97757] text-[#D97757] font-semibold"
+                              : "border-transparent text-zinc-600 hover:text-zinc-950"
+                          )}
+                        >
+                          权限配置
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => setDrawerTab("exemption")}
+                        className={cn(
+                          "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
+                          drawerTab === "exemption"
+                            ? "border-[#D97757] text-[#D97757] font-semibold"
+                            : "border-transparent text-zinc-600 hover:text-zinc-950"
+                        )}
+                      >
+                        豁免与生命周期
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* 抽屉内容主体 */}
+              <div className="p-6 space-y-6 flex-1">
+                {/* 1. 概览与 AI 诊断 */}
+                {drawerTab === "overview" && (
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-[13px] font-semibold text-zinc-900">本月履约概况</h4>
+                        <span className="text-[12px] text-zinc-500 tabular-nums">
+                          实发天数：{activeMember.monthly_published_days ?? 0} 天
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 pt-1">
+                        <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-100">
+                          <p className="text-[11px] text-zinc-500">本月实发作品</p>
+                          <p className="text-[20px] font-semibold text-zinc-900 mt-0.5 tabular-nums">
+                            {activeMember.monthly_published_count ?? 0}
+                            <span className="text-[12px] font-normal text-zinc-500 ml-1">条</span>
+                          </p>
+                        </div>
+                        <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-100">
+                          <p className="text-[11px] text-zinc-500">本月应发作品</p>
+                          <p className="text-[20px] font-semibold text-zinc-900 mt-0.5 tabular-nums">
+                            {activeMember.monthly_required_count ?? 0}
+                            <span className="text-[12px] font-normal text-zinc-500 ml-1">条</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-[13px] font-semibold text-zinc-900">当前豁免状态</h4>
+                        {activeMember.exempt_type ? (
+                          <Badge variant="accent">
+                            {activeMember.exempt_type === "permanent" ? "永久豁免" : "区间豁免"}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">正常履约</Badge>
+                        )}
+                      </div>
+                      {activeMember.exempt_type ? (
+                        <div className="text-[12px] text-zinc-600 bg-zinc-50 p-3 rounded-xl space-y-1 mt-2">
+                          <p>
+                            分类：<strong>{activeMember.exemption_category === "leave" ? "请假" : "免交"}</strong>
+                          </p>
+                          {activeMember.exempt_type === "temporary" && (
+                            <p>
+                              时间：{activeMember.exempt_start_date} 至 {activeMember.exempt_end_date}
+                            </p>
+                          )}
+                          {activeMember.exempt_reason && <p>原因：{activeMember.exempt_reason}</p>}
+                        </div>
+                      ) : (
+                        <p className="text-[12px] text-zinc-500 mt-1">该成员当前无特殊豁免或请假记录。</p>
+                      )}
+                    </div>
+
+                    {/* AI 顾问 (支持 execute_tool 及 409 二次确认) */}
+                    {activeMember.membership_status !== "archived" && activeMember.role !== "owner" && (
+                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="size-4 text-[#D97757]" />
+                            <h4 className="text-[13px] font-semibold text-zinc-900">AI 成员管理顾问</h4>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            disabled={aiSuggestion?.loading}
+                            onClick={handleFetchAiSuggestion}
+                            className="text-[12px] gap-1"
+                          >
+                            <RefreshCw className={cn("size-3", aiSuggestion?.loading && "animate-spin")} />
+                            {aiSuggestion?.suggestions ? "重新诊断" : "生成管理诊断"}
+                          </Button>
+                        </div>
+
+                        {aiSuggestion?.loading && (
+                          <div className="py-6 text-center text-[12px] text-zinc-500 space-y-2">
+                            <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
+                            <p>正在结合近期填报、播放量与异常数据生成诊断...</p>
+                          </div>
+                        )}
+
+                        {aiSuggestion?.error && (
+                          <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[12px] flex items-center gap-2">
+                            <AlertCircle className="size-4 shrink-0" />
+                            <span>{aiSuggestion.error}</span>
+                          </div>
+                        )}
+
+                        {aiSuggestion?.suggestions && !aiSuggestion.loading && (
+                          <div className="space-y-3 pt-2">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  aiSuggestion.status === "critical"
+                                    ? "destructive"
+                                    : aiSuggestion.status === "warning"
+                                    ? "warning"
+                                    : "success"
+                                }
+                              >
+                                {aiSuggestion.status === "critical"
+                                  ? "需重点跟进"
+                                  : aiSuggestion.status === "warning"
+                                  ? "建议关注"
+                                  : "状态正常"}
+                              </Badge>
+                              <p className="text-[13px] font-medium text-zinc-800">{aiSuggestion.summary}</p>
+                            </div>
+
+                            {aiSuggestion.suggestions.length > 0 && (
+                              <div className="space-y-2 mt-2">
+                                {aiSuggestion.suggestions.map((s, idx) => {
+                                  const key = `${s.label}-${idx}`;
+                                  const isBusy = executingAiKey === key;
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 flex items-start justify-between gap-2"
+                                    >
+                                      <div className="text-[12px] space-y-0.5">
+                                        <p className="font-semibold text-zinc-900">{s.label}</p>
+                                        <p className="text-zinc-500">{s.description}</p>
+                                      </div>
+                                      <div className="shrink-0 flex items-center gap-1">
+                                        {s.action.type === "navigate" && (
+                                          <Button
+                                            variant="ghost"
+                                            size="xs"
+                                            onClick={() => {
+                                              if ("href" in s.action) router.push(s.action.href);
+                                            }}
+                                            className="text-[#D97757] text-[11px]"
+                                          >
+                                            前往 <ArrowRight className="size-3 ml-0.5" />
+                                          </Button>
+                                        )}
+                                        {s.action.type === "execute_tool" && (
+                                          <Button
+                                            variant="default"
+                                            size="xs"
+                                            disabled={isBusy}
+                                            onClick={() => handleExecuteAiSuggestion(s, key)}
+                                            className="bg-[#D97757] hover:bg-[#C96442] text-[11px] gap-1"
+                                          >
+                                            <Play className="size-3 fill-current" />
+                                            {isBusy ? "执行中..." : "一键执行"}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {!aiSuggestion && (
+                          <p className="text-[12px] text-zinc-500">
+                            点击右上角按钮，AI 将综合分析该成员的填报周期、异常断流及表现提出运营建议。
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. 团队与角色管理 (包含 3.2 独立移出团队) */}
+                {drawerTab === "team_role" && (
+                  <div className="space-y-6">
+                    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                      <div>
+                        <h4 className="text-[13px] font-semibold text-zinc-900">所属团队调配</h4>
+                        <p className="text-[12px] text-zinc-500 mt-0.5">调整该成员归属团队或移出当前团队</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Select
+                          value={activeMember.team_id || "__unassigned__"}
+                          disabled={!canEditTeamMembers}
+                          onValueChange={(val) => {
+                            if (val) {
+                              const newId = val === "__unassigned__" ? null : val;
+                              handleTransferMemberTeam(activeMember.id, newId);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="选择所属团队" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__unassigned__">未分配团队（移出）</SelectItem>
+                            {localTeams.map((t) => (
+                              <SelectItem key={t.id} value={t.id}>
+                                {t.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {canEditTeamMembers && activeMember.team_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() => handleTransferMemberTeam(activeMember.id, null)}
+                            className="text-zinc-600 hover:text-red-600 shrink-0 text-[12px]"
+                            title="移出当前团队（保留账号与数据）"
+                          >
+                            <UserMinus className="size-3.5 mr-1 text-red-500" />
+                            移出
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {canManageMembers && activeMember.role !== "owner" && (
+                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                        <div>
+                          <h4 className="text-[13px] font-semibold text-zinc-900">系统角色变更</h4>
+                          <p className="text-[12px] text-zinc-500 mt-0.5">
+                            主管可负责本团队日常管理；变更为组员将清空自定义权限
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (activeMember.role !== "member") handleToggleRole(activeMember);
+                            }}
+                            className={cn(
+                              "p-3 rounded-xl border text-left transition-colors",
+                              activeMember.role === "member"
+                                ? "border-zinc-900 bg-zinc-50 font-medium"
+                                : "border-zinc-200 bg-white hover:bg-zinc-50"
+                            )}
+                          >
+                            <p className="text-[13px] font-semibold text-zinc-900">普通组员</p>
+                            <p className="text-[11px] text-zinc-500 mt-0.5">仅查看和提交个人数据</p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (activeMember.role !== "admin") handleToggleRole(activeMember);
+                            }}
+                            className={cn(
+                              "p-3 rounded-xl border text-left transition-colors",
+                              activeMember.role === "admin"
+                                ? "border-zinc-900 bg-zinc-50 font-medium"
+                                : "border-zinc-200 bg-white hover:bg-zinc-50"
+                            )}
+                          >
+                            <p className="text-[13px] font-semibold text-zinc-900">团队主管</p>
+                            <p className="text-[11px] text-zinc-500 mt-0.5">负责本团队日常业务与审批</p>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {canManageMembers && (
+                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 flex items-center justify-between">
+                        <div>
+                          <h4 className="text-[13px] font-semibold text-zinc-900">重置登录密码</h4>
+                          <p className="text-[12px] text-zinc-500 mt-0.5">为成员重置一个临时的登录密码</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setPasswordResetTarget(activeMember);
+                            setNewPassword("");
+                          }}
+                        >
+                          <KeyRound className="size-3.5 mr-1" />
+                          重置密码
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. 细粒度权限配置 (标准 MemberPermissionEditor) */}
+                {drawerTab === "permissions" && (
+                  <div className="space-y-6">
+                    <MemberPermissionEditor
+                      member={{
+                        id: activeMember.id,
+                        name: activeMember.name ?? "",
+                        email: activeMember.email,
+                        last_sign_in_at: activeMember.last_sign_in_at,
+                        role: activeMember.role,
+                        teamId: activeMember.team_id,
+                        teamName: activeMember.team_name,
+                        permissions: activeMember.permissions ?? {},
+                        data_scope: activeMember.data_scope,
+                        status: normalizeUserStatus(activeMember.status),
+                        exempt_type: (activeMember.exempt_type as "permanent" | "temporary") || null,
+                        exempt_start_date: activeMember.exempt_start_date,
+                        exempt_end_date: activeMember.exempt_end_date,
+                        exempt_reason: activeMember.exempt_reason,
+                        exemption_category: (activeMember.exemption_category as ExemptionCategory) || null,
+                      }}
+                      draftPermissions={draftPermissions}
+                      draftDataScope={draftDataScope}
+                      onTogglePermission={(key: PermissionKey, checked: boolean) => {
+                        setDraftPermissions((prev) => ({ ...prev, [key]: checked }));
+                        setIsPermissionsDirty(true);
+                      }}
+                      onToggleCategory={(category: PermissionCategory) => {
+                        const keys = PERMISSION_CATEGORIES[category];
+                        const isAllChecked = keys.every((k) => draftPermissions[k] === true);
+                        setDraftPermissions((prev) => {
+                          const next = { ...prev };
+                          keys.forEach((k) => {
+                            next[k] = !isAllChecked;
+                          });
+                          return next;
+                        });
+                        setIsPermissionsDirty(true);
+                      }}
+                      onToggleAllPermissions={() => {
+                        const isAllChecked = PERMISSION_KEYS.every((k) => draftPermissions[k] === true);
+                        setDraftPermissions((prev) => {
+                          const next = { ...prev };
+                          PERMISSION_KEYS.forEach((k) => {
+                            next[k] = !isAllChecked;
+                          });
+                          return next;
+                        });
+                        setIsPermissionsDirty(true);
+                      }}
+                      onChangeDataScope={(scope: DataScope) => {
+                        setDraftDataScope(scope);
+                        setIsPermissionsDirty(true);
+                      }}
+                      canEdit={permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner"}
+                      isSaving={isPending}
+                    />
+
+                    {permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner" && (
+                      <div className="pt-2">
+                        <Button
+                          variant="default"
+                          disabled={!isPermissionsDirty || isPending}
+                          onClick={handleSavePermissions}
+                          className="w-full bg-[#D97757] hover:bg-[#C96442]"
+                        >
+                          {isPending ? "保存中..." : "保存权限设置"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. 豁免与账号生命周期 */}
+                {drawerTab === "exemption" && (
+                  <div className="space-y-6">
+                    {canManageFulfillment && (
+                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-4">
+                        <div>
+                          <h4 className="text-[13px] font-semibold text-zinc-900">豁免与请假规则配置</h4>
+                          <p className="text-[12px] text-zinc-500 mt-0.5">
+                            设置成员免发或请假区间，避免系统产生催发与缺发预警
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 bg-zinc-100/80 p-1 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => setExemptionMode("none")}
+                            className={cn(
+                              "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+                              exemptionMode === "none"
+                                ? "bg-white text-zinc-950 shadow-2xs font-semibold"
+                                : "text-zinc-600 hover:text-zinc-950"
+                            )}
+                          >
+                            正常（无豁免）
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setExemptionMode("range")}
+                            className={cn(
+                              "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+                              exemptionMode === "range"
+                                ? "bg-white text-zinc-950 shadow-2xs font-semibold"
+                                : "text-zinc-600 hover:text-zinc-950"
+                            )}
+                          >
+                            区间请假/免交
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setExemptionMode("permanent")}
+                            className={cn(
+                              "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
+                              exemptionMode === "permanent"
+                                ? "bg-white text-zinc-950 shadow-2xs font-semibold"
+                                : "text-zinc-600 hover:text-zinc-950"
+                            )}
+                          >
+                            永久豁免
+                          </button>
+                        </div>
+
+                        {exemptionMode !== "none" && (
+                          <div className="space-y-3 pt-2">
+                            <div>
+                              <label className="text-[12px] font-medium text-zinc-700 block mb-1">
+                                豁免性质
+                              </label>
+                              <div className="flex gap-4">
+                                <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="exemptionCategory"
+                                    checked={exemptionCategory === "leave"}
+                                    onChange={() => setExemptionCategory("leave")}
+                                    className="text-[#D97757]"
+                                  />
+                                  <span>请假</span>
+                                </label>
+                                <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="exemptionCategory"
+                                    checked={exemptionCategory === "waive"}
+                                    onChange={() => setExemptionCategory("waive")}
+                                    className="text-[#D97757]"
+                                  />
+                                  <span>免交</span>
+                                </label>
+                              </div>
+                            </div>
+
+                            {exemptionMode === "range" && (
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="text-[11px] text-zinc-500 block mb-1">开始日期</label>
+                                  <Input
+                                    type="date"
+                                    value={exemptionStartDate}
+                                    onChange={(e) => setExemptionStartDate(e.target.value)}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[11px] text-zinc-500 block mb-1">结束日期</label>
+                                  <Input
+                                    type="date"
+                                    value={exemptionEndDate}
+                                    onChange={(e) => setExemptionEndDate(e.target.value)}
+                                  />
+                                </div>
+                              </div>
+                            )}
+
+                            <div>
+                              <label className="text-[11px] text-zinc-500 block mb-1">豁免原因说明</label>
+                              <Input
+                                type="text"
+                                placeholder="例如：事假、外出培训、设备调试"
+                                value={exemptionReason}
+                                onChange={(e) => setExemptionReason(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        <Button
+                          variant="default"
+                          disabled={isPending}
+                          onClick={handleSaveExemption}
+                          className="w-full bg-[#D97757] hover:bg-[#C96442]"
+                        >
+                          {isPending ? "保存中..." : "保存豁免状态"}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* 危险区：归档账号 */}
+                    {isCompanyOwner && activeMember.role !== "owner" && (
+                      <div className="rounded-2xl border border-red-200 bg-red-50/40 p-4 space-y-3">
+                        <div>
+                          <h4 className="text-[13px] font-semibold text-red-950">危险区域：账号归档</h4>
+                          <p className="text-[12px] text-red-700 mt-0.5">
+                            归档将立即封禁该账号的 Auth 登录权限并移出团队，历史日报与数据将完整保留供追溯。
+                          </p>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            setArchiveTarget(activeMember);
+                            setArchiveReason("");
+                          }}
+                          className="w-full bg-[#C9604D] hover:bg-[#C9604D]/90"
+                        >
+                          归档该账号
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Dialogs ── */}
+
+      {/* 3.4 团队架构管理弹窗 (支持删除空团队与新建) */}
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
-        <DialogContent className="max-w-[440px] p-5 rounded-xl">
+        <DialogContent className="max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[15px] font-semibold">团队架构管理</DialogTitle>
+            <DialogTitle className="text-[16px] font-semibold text-zinc-950">团队架构管理</DialogTitle>
             <DialogDescription className="text-[12px] text-zinc-500">
-              新建或管理团队分组
+              新建团队或维护现有团队架构
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {canManageCompany && (
               <div className="space-y-1.5">
-                <Label htmlFor="v3-team-name" className="text-[12px] font-medium text-zinc-600">
+                <Label htmlFor="v3-team-name" className="text-[12px] font-medium text-zinc-700">
                   新建团队
                 </Label>
                 <div className="flex gap-2">
@@ -1821,13 +2014,13 @@ export function AdminModulesContentV3({
                     id="v3-team-name"
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
-                    placeholder="如: 广州一部"
-                    className="h-8 text-[12px] rounded-lg"
+                    placeholder="例如：深圳一部、杭州运营组"
+                    className="h-8.5 text-[12px] rounded-xl"
                   />
                   <Button
                     onClick={handleCreateTeam}
                     disabled={isPending || !newTeamName.trim()}
-                    className="h-8 px-3 bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg text-[12px] shrink-0"
+                    className="h-8.5 px-3.5 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl text-[12px] shrink-0"
                   >
                     <Plus className="size-3.5 mr-1" />
                     创建
@@ -1836,25 +2029,25 @@ export function AdminModulesContentV3({
               </div>
             )}
 
-            <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
-              <span className="text-[11px] font-medium text-zinc-400">
+            <div className="space-y-2 max-h-[260px] overflow-y-auto pt-2">
+              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <p className="text-[12px] text-zinc-400 py-2">暂无团队</p>
+                <p className="text-[12px] text-zinc-400 py-3 text-center">暂无团队记录</p>
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;
                   return (
                     <div
                       key={team.id}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg border border-zinc-100"
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-zinc-200/70 bg-zinc-50/50"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="size-1.5 rounded-full bg-zinc-400 shrink-0" />
-                        <span className="text-[12px] font-medium text-zinc-800 truncate">{team.name}</span>
-                        <span className="text-[10px] text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded shrink-0">
-                          {count}
+                        <Building2 className="size-3.5 text-zinc-400 shrink-0" />
+                        <span className="text-[13px] font-medium text-zinc-800 truncate">{team.name}</span>
+                        <span className="text-[11px] text-zinc-500 bg-white px-2 py-0.5 rounded-full border border-zinc-200/50 tabular-nums">
+                          {count} 人
                         </span>
                       </div>
                       {canManageCompany && count === 0 && (
@@ -1862,9 +2055,10 @@ export function AdminModulesContentV3({
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleteTeamTarget(team)}
-                          className="h-6 px-2 text-[11px] text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md shrink-0"
+                          className="h-7 px-2 text-[11px] text-zinc-400 hover:text-red-600 rounded-lg shrink-0"
+                          title="删除空团队"
                         >
-                          <Trash2 className="size-3" />
+                          <Trash2 className="size-3.5" />
                         </Button>
                       )}
                     </div>
@@ -1878,9 +2072,245 @@ export function AdminModulesContentV3({
             <Button
               variant="outline"
               onClick={() => setTeamManagementDialogOpen(false)}
-              className="h-8 text-[12px] rounded-lg"
+              className="h-8.5 text-[12px] rounded-xl"
             >
               完成
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 删除空团队确认 */}
+      <ConfirmDialog
+        open={deleteTeamTarget !== null}
+        title="删除团队"
+        description={deleteTeamTarget ? `确定删除「${deleteTeamTarget.name}」？此操作不可撤销。` : ""}
+        confirmText="确认删除"
+        destructive
+        loading={isPending}
+        onConfirm={() => {
+          if (deleteTeamTarget) handleDeleteTeam(deleteTeamTarget);
+        }}
+        onOpenChange={(o) => {
+          if (!o) setDeleteTeamTarget(null);
+        }}
+      />
+
+      {/* 单账号归档弹窗 (带原因输入) */}
+      <Dialog
+        open={archiveTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setArchiveTarget(null);
+            setArchiveReason("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>确认归档成员账号</DialogTitle>
+            <DialogDescription>
+              即将归档「{archiveTarget?.name}」的账号。归档将立即封禁登录并移出团队，历史日报不受影响。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-3 space-y-1.5">
+            <label className="text-[12px] font-medium text-zinc-700 block">
+              归档原因说明 <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="必填，例如：离职、转岗、实习结束"
+              value={archiveReason}
+              onChange={(e) => setArchiveReason(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setArchiveTarget(null);
+                setArchiveReason("");
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isPending || !archiveReason.trim()}
+              onClick={handleArchiveMember}
+            >
+              {isPending ? "处理中..." : "确认归档"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量归档弹窗 */}
+      <Dialog
+        open={batchArchiveOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setBatchArchiveOpen(false);
+            setBatchArchiveReason("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量归档成员账号</DialogTitle>
+            <DialogDescription>
+              即将批量归档选中的 {selectedMemberIds.length} 位成员账号，归档后将封禁登录并移出各自团队。
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-3 space-y-1.5">
+            <label className="text-[12px] font-medium text-zinc-700 block">
+              统一归档原因说明 <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="必填，例如：业务调整批量归档、实习期满离职"
+              value={batchArchiveReason}
+              onChange={(e) => setBatchArchiveReason(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setBatchArchiveOpen(false);
+                setBatchArchiveReason("");
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isPending || !batchArchiveReason.trim()}
+              onClick={handleBatchArchive}
+            >
+              {isPending ? "批量处理中..." : `确认归档 (${selectedMemberIds.length}人)`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 恢复账号确认 */}
+      <ConfirmDialog
+        open={restoreTarget !== null}
+        title="恢复成员账号"
+        description={
+          restoreTarget ? `确认恢复 ${restoreTarget.name}？恢复后将解除封禁，成为未分配团队的在职普通成员。` : ""
+        }
+        confirmText="确认恢复"
+        loading={isPending}
+        onConfirm={handleRestoreMember}
+        onOpenChange={(open) => {
+          if (!open) setRestoreTarget(null);
+        }}
+      />
+
+      {/* 重置密码弹窗 */}
+      <Dialog
+        open={passwordResetTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) {
+            setPasswordResetTarget(null);
+            setNewPassword("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>重置登录密码</DialogTitle>
+            <DialogDescription>
+              为「{passwordResetTarget?.name}」设置新的临时登录密码（至少 6 位）。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-3 space-y-1.5">
+            <label className="text-[12px] font-medium text-zinc-700 block">新密码</label>
+            <Input
+              type="text"
+              placeholder="输入至少 6 位的新密码"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPasswordResetTarget(null);
+                setNewPassword("");
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant="default"
+              disabled={isPending || newPassword.trim().length < 6}
+              onClick={handleResetPassword}
+              className="bg-[#D97757] hover:bg-[#C96442]"
+            >
+              {isPending ? "重置中..." : "确认重置"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI 工具执行二次确认弹窗 (2.2 支持 execute_tool 409 二次确认) */}
+      <Dialog
+        open={Boolean(toolConfirmationModal)}
+        onOpenChange={(open) => !open && setToolConfirmationModal(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="size-5 text-[#D97757]" />
+              确认执行 AI 管理建议动作
+            </DialogTitle>
+            <DialogDescription>
+              该操作属于敏感管理动作（{toolConfirmationModal?.toolName}），请确认预估变更后继续。
+            </DialogDescription>
+          </DialogHeader>
+
+          {toolConfirmationModal?.preview && (
+            <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200/60 text-[12px] space-y-1 text-zinc-700 max-h-48 overflow-y-auto">
+              <pre className="whitespace-pre-wrap font-sans">
+                {JSON.stringify(toolConfirmationModal.preview, null, 2)}
+              </pre>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setToolConfirmationModal(null)}>
+              取消
+            </Button>
+            <Button
+              variant="default"
+              disabled={isPending}
+              onClick={() => {
+                if (toolConfirmationModal) {
+                  const fakeSuggestion: AiSuggestionItem = {
+                    label: "确认执行",
+                    description: "",
+                    action: {
+                      type: "execute_tool",
+                      toolName: toolConfirmationModal.toolName,
+                      toolArgs: toolConfirmationModal.toolArgs,
+                    },
+                  };
+                  handleExecuteAiSuggestion(
+                    fakeSuggestion,
+                    "confirmed",
+                    toolConfirmationModal.confirmationToken
+                  );
+                }
+              }}
+              className="bg-[#D97757] hover:bg-[#C96442]"
+            >
+              {isPending ? "执行中..." : "确认执行"}
             </Button>
           </DialogFooter>
         </DialogContent>
