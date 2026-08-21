@@ -27,6 +27,7 @@ import {
   Play,
   AlertCircle,
   ArrowRight,
+  Settings,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -924,10 +925,10 @@ export function AdminModulesContentV3({
       <main className="space-y-5">
         {/* ── 待审批入团申请预警栏 ── */}
         {pendingRequests.length > 0 && (
-          <section className="rounded-2xl border border-zinc-200 bg-zinc-50/70 px-5 py-4">
+          <section className="rounded-xl border border-zinc-200 bg-zinc-50/60 px-5 py-4">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="text-[13px] font-semibold text-zinc-900">待审批入团申请</span>
-              <span className="text-[11px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full tabular-nums">
+              <span className="text-[13px] font-medium text-zinc-900">待审批入团申请</span>
+              <span className="text-[11px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
                 {pendingRequests.length}
               </span>
             </div>
@@ -935,10 +936,10 @@ export function AdminModulesContentV3({
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200/80 bg-white px-4 py-3 shadow-2xs"
+                  className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-[13px] font-semibold text-zinc-900">{req.applicantName}</span>
+                    <span className="text-[13px] font-medium text-zinc-900">{req.applicantName}</span>
                     <span className="mx-2 text-zinc-300">·</span>
                     <span className="text-[12px] text-zinc-500">{req.targetTeamName}</span>
                     <span className="mx-2 text-zinc-300">·</span>
@@ -952,14 +953,14 @@ export function AdminModulesContentV3({
                         variant="ghost"
                         onClick={() => handleReviewJoinRequest(req.id, "reject")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] text-zinc-500 hover:text-red-600 rounded-lg"
+                        className="h-7 px-2.5 text-[12px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md"
                       >
                         拒绝
                       </Button>
                       <Button
                         onClick={() => handleReviewJoinRequest(req.id, "approve")}
                         disabled={isPending}
-                        className="h-7 px-3 text-[12px] bg-zinc-900 text-white hover:bg-zinc-800 rounded-lg"
+                        className="h-7 px-2.5 text-[12px] bg-zinc-900 text-white hover:bg-zinc-800 rounded-md"
                       >
                         同意
                       </Button>
@@ -972,9 +973,9 @@ export function AdminModulesContentV3({
         )}
 
         {/* ── 主控制台与高密度成员列表 ── */}
-        <section className="rounded-2xl border border-zinc-200/80 bg-white shadow-xs overflow-hidden">
+        <section className="rounded-xl border border-zinc-200 bg-white">
           {/* 一体化工具栏 */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-zinc-100 bg-zinc-50/40">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-zinc-100">
             <div className="flex flex-wrap items-center gap-2">
               {/* 团队选择器 (带管辖范围隔离) */}
               <div className="relative">
@@ -987,10 +988,10 @@ export function AdminModulesContentV3({
                       setSelectedTeamId(e.target.value);
                     }
                   }}
-                  className="h-8.5 pl-3 pr-7 text-[12px] font-medium bg-white text-zinc-700 border border-zinc-200 rounded-xl outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors shadow-2xs"
+                  className="h-8 pl-3 pr-7 text-[12px] font-medium bg-zinc-50 text-zinc-700 border border-zinc-200 rounded-lg outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors"
                 >
                   <option value={ALL_TEAMS_ID}>
-                    {memberView === "archived" ? "全部归档团队" : "全部团队"} ({profilesForCurrentView.length})
+                    {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
                   </option>
                   {localTeams.map((t) => {
                     const count = countProfilesInTeamForView(profilesForCurrentView, memberView, t.id);
@@ -1000,9 +1001,9 @@ export function AdminModulesContentV3({
                       </option>
                     );
                   })}
-                  {canManageCompany && <option value="__manage__">团队架构管理…</option>}
+                  {canManageCompany && <option value="__manage__">管理架构…</option>}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-zinc-400" />
               </div>
 
               {/* 排序 */}
@@ -1010,54 +1011,52 @@ export function AdminModulesContentV3({
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as "role" | "published")}
-                  className="h-8.5 pl-3 pr-7 text-[12px] bg-white text-zinc-600 border border-zinc-200 rounded-xl outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors shadow-2xs"
+                  className="h-8 pl-3 pr-7 text-[12px] bg-zinc-50 text-zinc-600 border border-zinc-200 rounded-lg outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors"
                 >
-                  <option value="role">按职位排序</option>
-                  <option value="published">按发布达标</option>
+                  <option value="role">按职位</option>
+                  <option value="published">按发布</option>
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-zinc-400" />
               </div>
 
               {/* 搜索框 */}
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400" />
+                <Search className="absolute left-2.5 top-2 size-3.5 text-zinc-400" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索姓名 / 邮箱 / 团队..."
-                  className="h-8.5 pl-8 pr-3 text-[12px] bg-white border-zinc-200 rounded-xl w-44 focus:w-60 transition-all shadow-2xs"
+                  placeholder="搜索…"
+                  className="h-8 pl-8 pr-3 text-[12px] bg-zinc-50 border-zinc-200 rounded-lg w-40 focus:w-56 transition-all"
                 />
               </div>
 
               {canManageCompany && (
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
                   onClick={() => setTeamManagementDialogOpen(true)}
-                  className="h-8.5 px-3 text-[12px] text-zinc-600 rounded-xl border-zinc-200"
+                  className="h-8 px-2.5 text-[12px] text-zinc-500 hover:text-zinc-700 rounded-lg"
                 >
-                  <Building2 className="size-3.5 mr-1 text-zinc-400" />
-                  架构
+                  <Settings className="size-3.5" />
                 </Button>
               )}
             </div>
 
             {/* 状态切换与计数 */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center bg-zinc-100/80 rounded-xl p-0.5 border border-zinc-200/50" role="tablist">
+              <div className="flex items-center bg-zinc-100 rounded-lg p-0.5" role="tablist">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={memberView === "active"}
                   onClick={() => setMemberView("active")}
                   className={cn(
-                    "px-3 py-1.5 text-[11px] rounded-lg transition-colors",
+                    "px-2.5 py-1 text-[11px] rounded-md transition-colors",
                     memberView === "active"
-                      ? "bg-white text-zinc-900 shadow-2xs font-semibold"
+                      ? "bg-white text-zinc-900 shadow-sm font-medium"
                       : "text-zinc-500 hover:text-zinc-700"
                   )}
                 >
-                  在职 ({localProfiles.length})
+                  在职 {localProfiles.length}
                 </button>
                 <button
                   type="button"
@@ -1069,13 +1068,13 @@ export function AdminModulesContentV3({
                     setSelectedMemberIds([]);
                   }}
                   className={cn(
-                    "px-3 py-1.5 text-[11px] rounded-lg transition-colors",
+                    "px-2.5 py-1 text-[11px] rounded-md transition-colors",
                     memberView === "archived"
-                      ? "bg-white text-zinc-900 shadow-2xs font-semibold"
+                      ? "bg-white text-zinc-900 shadow-sm font-medium"
                       : "text-zinc-500 hover:text-zinc-700"
                   )}
                 >
-                  已归档 ({localArchivedProfiles.length})
+                  已归档 {localArchivedProfiles.length}
                 </button>
               </div>
 
@@ -1087,7 +1086,7 @@ export function AdminModulesContentV3({
 
           {/* 表头 */}
           {sortedProfiles.length > 0 && (
-            <div className="flex items-center gap-3 px-5 py-2.5 text-[11px] font-medium text-zinc-400 tracking-wider border-b border-zinc-100 bg-zinc-50/20">
+            <div className="flex items-center gap-3 px-5 py-2 text-[11px] text-zinc-400 uppercase tracking-wider border-b border-zinc-100">
               {canManageCompany && memberView === "active" && (
                 <div className="w-6 shrink-0">
                   <Checkbox
@@ -1096,23 +1095,23 @@ export function AdminModulesContentV3({
                       selectableFilteredMemberIds.every((id) => selectedMemberIds.includes(id))
                     }
                     onCheckedChange={handleToggleSelectAll}
-                    className="size-3.5 rounded border-zinc-300"
+                    className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">成员姓名 / 邮箱</div>
-              <div className="w-20 text-center shrink-0">角色</div>
-              <div className="w-28 shrink-0">所属团队</div>
-              <div className="w-28 text-right shrink-0">本月发布</div>
+              <div className="flex-1 min-w-0">成员</div>
+              <div className="w-16 text-center shrink-0">角色</div>
+              <div className="w-24 shrink-0">团队</div>
+              <div className="w-20 text-right shrink-0">发布</div>
             </div>
           )}
 
           {/* 成员行列表 */}
           {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <UsersRound className="size-8 text-zinc-300 mb-3 stroke-[1.5]" />
-              <p className="text-[13px] font-medium text-zinc-600">没有找到符合条件的成员</p>
-              <p className="text-[12px] text-zinc-400 mt-1">请尝试调整搜索或团队筛选条件</p>
+              <UsersRound className="size-8 text-zinc-300 mb-3" />
+              <p className="text-[13px] text-zinc-500">没有找到成员</p>
+              <p className="text-[12px] text-zinc-400 mt-1">调整筛选或搜索条件试试</p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100">
@@ -1122,7 +1121,6 @@ export function AdminModulesContentV3({
                 const isRestoredFocus = restoredFocusId === member.id;
                 const isChecked = selectedMemberIds.includes(member.id);
                 const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
-                const { text: loginText, isLoginStale } = formatLastLoginDisplay(member.last_sign_in_at);
 
                 const published = member.monthly_published_count ?? 0;
                 const required = member.monthly_required_count ?? 0;
@@ -1132,14 +1130,14 @@ export function AdminModulesContentV3({
                   <div
                     key={member.id}
                     className={cn(
-                      "group flex items-center gap-3 px-5 py-3 transition-colors select-none",
+                      "group flex items-center gap-3 px-5 py-3 transition-colors",
                       isRestoredFocus
                         ? "bg-amber-50 animate-pulse"
                         : isChecked
                         ? "bg-zinc-50"
                         : isCurrentMemberActive
-                        ? "bg-zinc-50/80"
-                        : "hover:bg-zinc-50/50"
+                        ? "bg-zinc-50/60"
+                        : "hover:bg-zinc-50/60"
                     )}
                   >
                     {/* 勾选框 */}
@@ -1154,16 +1152,16 @@ export function AdminModulesContentV3({
                               setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                             }
                           }}
-                          className="size-3.5 rounded border-zinc-300"
+                          className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
                         />
                       </div>
                     )}
 
-                    {/* 成员姓名 + 邮箱 + 登录时间 (点击打开抽屉) */}
+                    {/* 成员姓名 + 邮箱 (点击打开抽屉) */}
                     <div
                       role="button"
                       tabIndex={0}
-                      className="flex-1 min-w-0 cursor-pointer"
+                      className="flex-1 min-w-0 cursor-pointer select-none"
                       onClick={() => openMemberDrawer(member)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -1172,50 +1170,36 @@ export function AdminModulesContentV3({
                         }
                       }}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-semibold text-zinc-950 truncate">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13px] font-medium text-zinc-900 truncate">
                           {member.name}
                         </span>
                         {member.id === currentUserId && (
-                          <span className="text-[10px] text-zinc-500 bg-zinc-100 px-1.5 py-0.2 rounded font-normal">
+                          <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded">
                             我
                           </span>
                         )}
                         {isCurrentlyExempt && (
-                          <span className="text-[10px] font-medium text-[#43718E] bg-[#43718E]/10 px-1.5 py-0.2 rounded">
-                            {member.exempt_type === "permanent"
-                              ? "永久豁免"
-                              : member.exemption_category === "leave"
-                              ? "请假"
-                              : "免交"}
+                          <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                            豁免
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5 truncate">
-                        <span className="truncate">{member.email || "未绑定邮箱"}</span>
-                        <span>·</span>
-                        <span
-                          className={cn("truncate", isLoginStale && "text-[#D99E55] font-medium")}
-                          title={loginText}
-                        >
-                          {loginText}
-                        </span>
-                      </div>
+                      <span className="text-[11px] text-zinc-400 truncate block">
+                        {member.email || "—"}
+                      </span>
                     </div>
 
-                    {/* 角色徽标 */}
-                    <div className="w-20 text-center shrink-0">
+                    {/* 角色 */}
+                    <div className="w-16 text-center shrink-0">
                       {isArchivedView ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
                           <Archive className="size-3" />
                           已归档
                         </span>
-                      ) : member.role === "owner" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
-                          创始人
-                        </span>
                       ) : member.role === "admin" ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-900 font-medium">
+                          <span className="size-1.5 rounded-full bg-zinc-900" />
                           主管
                         </span>
                       ) : (
@@ -1223,14 +1207,14 @@ export function AdminModulesContentV3({
                       )}
                     </div>
 
-                    {/* 所属团队 */}
-                    <div className="w-28 shrink-0">
+                    {/* 团队 */}
+                    <div className="w-24 shrink-0">
                       {isArchivedView ? (
                         <span className="text-[11px] text-zinc-400">
                           {truncateTeamName(member.archive_snapshot?.team_name as string)}
                         </span>
                       ) : !canEditTeamMembers || member.id === currentUserId ? (
-                        <span className="text-[12px] text-zinc-700">{truncateTeamName(member.team_name)}</span>
+                        <span className="text-[11px] text-zinc-600">{truncateTeamName(member.team_name)}</span>
                       ) : (
                         <div className="relative inline-flex items-center">
                           <select
@@ -1238,7 +1222,7 @@ export function AdminModulesContentV3({
                             onChange={(e) =>
                               handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
                             }
-                            className="h-6.5 pl-2 pr-5 text-[11px] font-medium bg-transparent text-zinc-700 border border-transparent hover:border-zinc-200 hover:bg-zinc-50 rounded-lg outline-none cursor-pointer appearance-none transition-colors max-w-[105px] truncate"
+                            className="h-6 pl-2 pr-5 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-50 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[96px] truncate"
                           >
                             <option value="">未分配</option>
                             {localTeams.map((t) => (
@@ -1247,28 +1231,26 @@ export function AdminModulesContentV3({
                               </option>
                             ))}
                           </select>
-                          <ChevronDown className="pointer-events-none absolute right-1 top-2 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       )}
                     </div>
 
-                    {/* 本月实发 / 应发进度条 (1.5 实发/应发指标进度条升级) */}
-                    <div className="w-28 text-right shrink-0">
+                    {/* 本月实发 / 应发 (1.5 微进度条) */}
+                    <div className="w-20 text-right shrink-0">
                       {isArchivedView ? (
                         <span className="text-[11px] text-zinc-400">
                           {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                         </span>
                       ) : (
                         <div className="space-y-1">
-                          <div className="flex items-center justify-end gap-1.5 text-[11px] text-zinc-600 tabular-nums">
-                            <span className="font-semibold text-zinc-900">{published}</span>
-                            <span className="text-zinc-400">/</span>
-                            <span>{required}条</span>
-                          </div>
+                          <span className="text-[12px] tabular-nums text-zinc-600 font-medium block">
+                            {published}/{required}
+                          </span>
                           {required > 0 && (
-                            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                            <div className="h-1 w-full bg-zinc-100 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-[#D97757] rounded-full transition-all duration-300"
+                                className="h-full bg-zinc-900 rounded-full transition-all duration-300"
                                 style={{ width: `${fulfillRatio}%` }}
                               />
                             </div>
@@ -1281,12 +1263,12 @@ export function AdminModulesContentV3({
                     {isArchivedView && isCompanyOwner && (
                       <Button
                         variant="ghost"
-                        size="xs"
+                        size="sm"
                         onClick={() => setRestoreTarget(member)}
                         disabled={isPending}
-                        className="text-[11px] text-[#D97757] hover:text-[#C96442]"
+                        className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
                       >
-                        恢复
+                        <RotateCcw className="size-3" />
                       </Button>
                     )}
                   </div>
