@@ -1100,9 +1100,9 @@ export function AdminModulesContentV3({
                 </div>
               )}
               <div className="flex-1 min-w-0">成员</div>
-              <div className="w-16 text-center shrink-0">角色</div>
+              <div className="w-20 text-center shrink-0">角色</div>
               <div className="w-24 shrink-0">团队</div>
-              <div className="w-20 text-right shrink-0">发布</div>
+              <div className="w-28 text-right shrink-0">发布</div>
             </div>
           )}
 
@@ -1190,21 +1190,19 @@ export function AdminModulesContentV3({
                       </span>
                     </div>
 
-                    {/* 角色 */}
-                    <div className="w-16 text-center shrink-0">
+                    {/* 角色徽标 (v4 彩色胶囊设计) */}
+                    <div className="w-20 text-center shrink-0">
                       {isArchivedView ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
                           <Archive className="size-3" />
                           已归档
                         </span>
                       ) : member.role === "owner" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-900 font-medium">
-                          <span className="size-1.5 rounded-full bg-zinc-900" />
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
                           创始人
                         </span>
                       ) : member.role === "admin" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-900 font-medium">
-                          <span className="size-1.5 rounded-full bg-zinc-900" />
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
                           主管
                         </span>
                       ) : (
@@ -1241,21 +1239,23 @@ export function AdminModulesContentV3({
                       )}
                     </div>
 
-                    {/* 本月实发 / 应发 (1.5 极细2px微进度条) */}
-                    <div className="w-20 text-right shrink-0">
+                    {/* 本月实发 / 应发 (v4 橙色微进度条设计) */}
+                    <div className="w-28 text-right shrink-0">
                       {isArchivedView ? (
                         <span className="text-[11px] text-zinc-400">
                           {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                         </span>
                       ) : (
                         <div className="space-y-1">
-                          <span className="text-[12px] tabular-nums text-zinc-600 font-medium block">
-                            {published}/{required}
-                          </span>
+                          <div className="flex items-center justify-end gap-1.5 text-[11px] text-zinc-600 tabular-nums">
+                            <span className="font-semibold text-zinc-900">{published}</span>
+                            <span className="text-zinc-400">/</span>
+                            <span>{required}条</span>
+                          </div>
                           {required > 0 && (
-                            <div className="h-0.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-zinc-800 rounded-full transition-all duration-300"
+                                className="h-full bg-[#D97757] rounded-full transition-all duration-300"
                                 style={{ width: `${fulfillRatio}%` }}
                               />
                             </div>
