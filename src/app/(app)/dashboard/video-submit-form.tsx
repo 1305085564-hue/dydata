@@ -2870,7 +2870,7 @@ function RoleItemSelectorRow({
                                 {member.display_name || member.name}
                               </span>
                               {isSelf && (
-                                <span className="text-[9px] text-[#5F82A8] font-semibold">
+                                <span className="text-[9px] text-[#43718E] font-semibold">
                                   (我)
                                 </span>
                               )}
@@ -2881,7 +2881,7 @@ function RoleItemSelectorRow({
                               )}
                             </div>
                             {isSelected && (
-                              <Check className="size-3 text-[#5F82A8] shrink-0" />
+                              <Check className="size-3 text-[#43718E] shrink-0" />
                             )}
                           </button>
                         );

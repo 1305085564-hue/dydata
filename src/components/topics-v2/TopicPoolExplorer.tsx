@@ -196,7 +196,7 @@ export function TopicPoolExplorer({
               onClick={() => setIsTopicFilterOpen(!isTopicFilterOpen)}
               className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 selectedTopicIds.length > 0
-                  ? "bg-[#5F82A8]/10 text-[#5F82A8] font-semibold"
+                  ? "bg-[#43718E]/10 text-[#43718E] font-semibold"
                   : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-normal"
               }`}
               aria-expanded={isTopicFilterOpen}
@@ -451,7 +451,7 @@ export function TopicPoolExplorer({
                   <div className="text-zinc-500 text-xs tabular-nums truncate min-w-0 pr-2 flex items-center gap-1.5 font-normal">
                     {(item.scriptingCount ?? 0) > 0 ? (
                       <span className="text-zinc-800 font-medium inline-flex items-center gap-1">
-                        <PenTool className="w-3 h-3 text-[#5F82A8]" />
+                        <PenTool className="w-3 h-3 text-[#43718E]" />
                         <span>{item.scriptingCount} 人在写</span>
                       </span>
                     ) : isMyClaimed ? (
@@ -563,7 +563,7 @@ export function TopicPoolExplorer({
                     <td className="py-3 px-3">
                       {(item.scriptingCount ?? 0) > 0 ? (
                         <span className="inline-flex items-center gap-1 text-xs bg-zinc-100 text-zinc-600 border border-zinc-200 px-1.5 py-0.5 rounded font-normal">
-                          <PenTool className="w-3 h-3 text-[#5F82A8]" />
+                          <PenTool className="w-3 h-3 text-[#43718E]" />
                           <span>{item.scriptingCount} 人写作中</span>
                         </span>
                       ) : (item.claimCount || 0) > 0 ? (

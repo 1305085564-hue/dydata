@@ -763,7 +763,7 @@ export default function SubTopicDetailPage({
           {/* L1-C: 已关联创作作品（标题与首个作品紧密结合） */}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Video className="size-4 text-[#5F82A8]" />
+              <Video className="size-4 text-[#43718E]" />
               <h2 className="text-[16px] font-semibold text-zinc-900">
                 已关联创作作品 ({worksTotal})
               </h2>
@@ -800,7 +800,7 @@ export default function SubTopicDetailPage({
 
           {loadingWorks ? (
             <div className="py-10 text-center text-zinc-400 text-[12.5px] flex items-center justify-center gap-2">
-              <Loader2 className="size-4 animate-spin text-[#5F82A8]" />
+              <Loader2 className="size-4 animate-spin text-[#43718E]" />
               <span>加载关联作品中...</span>
             </div>
           ) : works.length === 0 ? (
@@ -1031,7 +1031,7 @@ export default function SubTopicDetailPage({
                 </Button>
                 <a
                   href={`/admin/content?topicId=${subTopicId}`}
-                  className="inline-flex items-center justify-center h-8 px-3 rounded-xl bg-[#5F82A8] text-white hover:bg-[#5F82A8]/90 text-[12px] font-medium transition-all"
+                  className="inline-flex items-center justify-center h-8 px-3 rounded-xl bg-[#43718E] text-white hover:bg-[#43718E]/90 text-[12px] font-medium transition-all"
                 >
                   前往视频管理解绑
                 </a>

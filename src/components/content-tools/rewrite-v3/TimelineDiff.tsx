@@ -96,13 +96,13 @@ export function TimelineDiff({
                 <button
                   key={rev.id}
                   onClick={() => onSelectRevision(rev.id === latestRevision?.id ? null : rev.id)}
-                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-colors duration-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F82A8]/40"
+                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-colors duration-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/40"
                 >
                   {/* 外围 2px 选中导轨 (Selected 状态) */}
                   <span
                     className={cn(
                       'h-4.5 w-4.5 rounded-full flex items-center justify-center border-2 transition-colors duration-100 group-hover:scale-105',
-                      isSelected ? 'border-[#5F82A8]' : 'border-transparent'
+                      isSelected ? 'border-[#43718E]' : 'border-transparent'
                     )}
                   >
                     {/* 内围核心圆点 (AI 实心、人手空心；选中统一石青，未选中统一灰阶) */}
@@ -114,14 +114,14 @@ export function TimelineDiff({
                             cn(
                               'h-2.5 w-2.5',
                               isSelected
-                                ? 'bg-[#5F82A8]'
+                                ? 'bg-[#43718E]'
                                 : 'bg-zinc-300 group-hover:bg-zinc-400'
                             )
                           : // 人手版本：空心环形态
                             cn(
                               'h-2.5 w-2.5 border-2 bg-white',
                               isSelected
-                                ? 'border-[#5F82A8]'
+                                ? 'border-[#43718E]'
                                 : 'border-zinc-300 group-hover:border-zinc-400'
                             )
                       )}
@@ -131,7 +131,7 @@ export function TimelineDiff({
                   {/* 悬浮 CSS Tooltip 浮窗 */}
                   <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-colors duration-100 delay-150 z-50 bg-zinc-900/95 backdrop-blur text-white text-[12px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
                     <div className="flex items-center gap-1.5 font-medium">
-                      <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-[#F59E0B]' : 'bg-[#5F82A8]')} />
+                      <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-[#F59E0B]' : 'bg-[#43718E]')} />
                       <span>第 {index + 1} 版 {isSelected && '(当前预览)'}</span>
                     </div>
                     <div className="text-[12px] text-zinc-500 mt-0.5 flex gap-2">

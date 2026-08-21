@@ -484,7 +484,7 @@ export default function BindingsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-[12px] text-zinc-600 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl">
-        <Info className="size-4 text-[#5F82A8] shrink-0" />
+        <Info className="size-4 text-[#43718E] shrink-0" />
         <span>
           只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
         </span>

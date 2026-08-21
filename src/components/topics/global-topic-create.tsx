@@ -198,7 +198,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                         "flex h-9 items-center justify-center rounded-xl border px-2 text-[12px] font-medium transition-colors duration-100 cursor-pointer truncate",
                         "active:scale-[0.97]",
                         isSelected
-                          ? "border-[#5F82A8]/50 bg-[#5F82A8]/12 text-[#355273] font-semibold ring-2 ring-[#5F82A8]/20 shadow-2xs"
+                          ? "border-[#43718E]/50 bg-[#43718E]/12 text-[#355273] font-semibold ring-2 ring-[#43718E]/20 shadow-2xs"
                           : "border-zinc-200/80 bg-zinc-50/40 text-zinc-600 hover:border-zinc-300 hover:bg-white hover:text-zinc-900"
                       )}
                       title={topic.name}

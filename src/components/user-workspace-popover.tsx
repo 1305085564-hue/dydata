@@ -108,7 +108,7 @@ export function UserWorkspacePopover({
         aria-controls={menuId}
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
-          "flex items-center gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#5F82A8]/20 outline-none",
+          "flex items-center gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
           "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/70 active:scale-[0.98]",
           isOpen && "text-zinc-900 bg-zinc-100/80 font-semibold",
         )}
@@ -170,7 +170,7 @@ export function UserWorkspacePopover({
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
                         isSelected
-                          ? "bg-[#5F82A8]/10 text-[#5F82A8]"
+                          ? "bg-[#43718E]/10 text-[#43718E]"
                           : "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900",
                       )}
                     >
@@ -179,7 +179,7 @@ export function UserWorkspacePopover({
                           className={cn(
                             "truncate text-[12px] font-medium tracking-tight",
                             isSelected
-                              ? "text-[#5F82A8] font-semibold"
+                              ? "text-[#43718E] font-semibold"
                               : "text-zinc-800",
                           )}
                         >
@@ -201,7 +201,7 @@ export function UserWorkspacePopover({
                       </div>
 
                       {isSelected && (
-                        <Check className="size-3.5 shrink-0 text-[#5F82A8]" />
+                        <Check className="size-3.5 shrink-0 text-[#43718E]" />
                       )}
                     </button>
                   );
@@ -223,7 +223,7 @@ export function UserWorkspacePopover({
               }}
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-colors duration-100 hover:bg-zinc-100 hover:text-zinc-950 group/btn"
             >
-              <User className="size-4 text-zinc-400 group-hover/btn:text-[#5F82A8] transition-colors" />
+              <User className="size-4 text-zinc-400 group-hover/btn:text-[#43718E] transition-colors" />
               <span>账号与偏好设置</span>
             </button>
 
@@ -232,7 +232,7 @@ export function UserWorkspacePopover({
                 href="/admin/modules"
                 className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-colors duration-100 hover:bg-zinc-100 hover:text-zinc-950 group/btn"
               >
-                <UsersRound className="size-4 text-zinc-400 group-hover/btn:text-[#5F82A8] transition-colors" />
+                <UsersRound className="size-4 text-zinc-400 group-hover/btn:text-[#43718E] transition-colors" />
                 <span>成员与团队架构</span>
               </a>
             ) : (

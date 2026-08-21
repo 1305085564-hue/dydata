@@ -368,7 +368,7 @@ export function NavBarClient({
                 href="/dashboard"
                 prefetch={false}
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
-                className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F82A8] rounded-xl p-0.5"
+                className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5"
               >
                 <div className="flex size-8.5 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-900 text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-zinc-950 group-hover:border-zinc-800">
                   <Zap className="size-4 stroke-[2.2] fill-current text-white transition-transform duration-200 group-hover:scale-110" />
@@ -411,19 +411,19 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive
-                            ? "text-[#5F82A8] font-semibold bg-zinc-100/70"
+                            ? "text-[#43718E] font-semibold bg-zinc-100/70"
                             : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
                         )}
                       >
                         {isGroupActive && (
-                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#5F82A8] transition-all duration-200" />
+                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#43718E] transition-all duration-200" />
                         )}
                         {Icon && (
                           <Icon
                             className={cn(
                               "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive
-                                ? "text-[#5F82A8]"
+                                ? "text-[#43718E]"
                                 : "text-zinc-400 group-hover:text-zinc-700",
                             )}
                           />
@@ -455,19 +455,19 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#5F82A8] font-semibold bg-zinc-100/70"
+                            ? "text-[#43718E] font-semibold bg-zinc-100/70"
                             : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
                         )}
                       >
                         {isGroupActive && (
-                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#5F82A8] transition-all duration-200" />
+                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#43718E] transition-all duration-200" />
                         )}
                         {GroupIcon && (
                           <GroupIcon
                             className={cn(
                               "size-3.5 stroke-[1.8] shrink-0 mr-0.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive || isDropdownOpen
-                                ? "text-[#5F82A8]"
+                                ? "text-[#43718E]"
                                 : "text-zinc-400 group-hover:text-zinc-700",
                             )}
                           />
@@ -478,7 +478,7 @@ export function NavBarClient({
                           className={cn(
                             "size-3.5 stroke-[2] opacity-50 transition-transform duration-200 ease-out group-hover:opacity-100",
                             isDropdownOpen &&
-                              "rotate-180 text-[#5F82A8] opacity-100",
+                              "rotate-180 text-[#43718E] opacity-100",
                           )}
                         />
                       </button>
@@ -507,7 +507,7 @@ export function NavBarClient({
                                     className={cn(
                                       "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-100 group/item",
                                       active
-                                        ? "bg-zinc-100 text-[#5F82A8] font-semibold"
+                                        ? "bg-zinc-100 text-[#43718E] font-semibold"
                                         : "text-zinc-600 font-medium hover:bg-zinc-100 hover:text-zinc-950",
                                     )}
                                   >
@@ -517,7 +517,7 @@ export function NavBarClient({
                                           className={cn(
                                             "size-4 stroke-[1.8] shrink-0 transition-transform duration-150 group-hover/item:scale-105",
                                             active
-                                              ? "text-[#5F82A8]"
+                                              ? "text-[#43718E]"
                                               : "text-zinc-400 group-hover/item:text-zinc-700",
                                           )}
                                         />
@@ -547,7 +547,7 @@ export function NavBarClient({
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-[#5F82A8]/20",
+                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20",
                     bellBadgeCount > 0
                       ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
                       : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 active:scale-95 border border-transparent",
@@ -612,7 +612,7 @@ export function NavBarClient({
                   <span
                     className={cn(
                       "absolute left-0 top-0.5 h-0.5 w-4 bg-current transition-all duration-300",
-                      isMobileMenuOpen && "top-1.5 rotate-45 text-[#5F82A8]",
+                      isMobileMenuOpen && "top-1.5 rotate-45 text-[#43718E]",
                     )}
                   />
                   <span
@@ -624,7 +624,7 @@ export function NavBarClient({
                   <span
                     className={cn(
                       "absolute left-0 top-2.5 h-0.5 w-4 bg-current transition-all duration-300",
-                      isMobileMenuOpen && "top-1.5 -rotate-45 text-[#5F82A8]",
+                      isMobileMenuOpen && "top-1.5 -rotate-45 text-[#43718E]",
                     )}
                   />
                 </div>
@@ -671,7 +671,7 @@ export function NavBarClient({
                     className={cn(
                       "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",
                       active
-                        ? "bg-[#5F82A8]/10 text-[#5F82A8] font-semibold border-l-2 border-[#5F82A8]"
+                        ? "bg-[#43718E]/10 text-[#43718E] font-semibold border-l-2 border-[#43718E]"
                         : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
                     )}
                   >
@@ -680,7 +680,7 @@ export function NavBarClient({
                         <Icon
                           className={cn(
                             "size-4 stroke-[1.8]",
-                            active ? "text-[#5F82A8]" : "text-zinc-400",
+                            active ? "text-[#43718E]" : "text-zinc-400",
                           )}
                         />
                       )}
@@ -704,7 +704,7 @@ export function NavBarClient({
                     <span
                       className={cn(
                         "text-[11px] font-semibold uppercase tracking-wider",
-                        isGroupActive ? "text-[#5F82A8]" : "text-zinc-400",
+                        isGroupActive ? "text-[#43718E]" : "text-zinc-400",
                       )}
                     >
                       {group.label}
@@ -725,7 +725,7 @@ export function NavBarClient({
                           className={cn(
                             "flex h-9 items-center justify-between rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200",
                             active
-                              ? "bg-white text-[#5F82A8] font-semibold shadow-sm border border-zinc-200"
+                              ? "bg-white text-[#43718E] font-semibold shadow-sm border border-zinc-200"
                               : "text-zinc-700 hover:bg-white/60 hover:text-zinc-900",
                           )}
                         >
@@ -734,7 +734,7 @@ export function NavBarClient({
                               <Icon
                                 className={cn(
                                   "size-3.5 stroke-[1.8]",
-                                  active ? "text-[#5F82A8]" : "text-zinc-400",
+                                  active ? "text-[#43718E]" : "text-zinc-400",
                                 )}
                               />
                             )}

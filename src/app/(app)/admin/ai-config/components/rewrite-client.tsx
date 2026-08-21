@@ -271,7 +271,7 @@ export default function RewriteClient() {
           </div>
         </div>
         <div className="flex items-start gap-2 text-[12px] text-zinc-500 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
-          <Info className="size-4 text-[#5F82A8] shrink-0 mt-0.5" />
+          <Info className="size-4 text-[#43718E] shrink-0 mt-0.5" />
           <span>
             控制前台“文案改写”工作台在不同模式（如<em>快速模式/深度精修</em>）下的模型映射关系。非改写模块高级维护无须修改。
           </span>

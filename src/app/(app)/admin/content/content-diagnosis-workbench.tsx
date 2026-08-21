@@ -1111,7 +1111,7 @@ export function ContentDiagnosisWorkbench({
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
                 <h2 className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.08em] text-zinc-900">
-                  <span className="size-2 rounded-full bg-[#5F82A8]" />
+                  <span className="size-2 rounded-full bg-[#43718E]" />
                   一、归因诊断与多参照系对比
                 </h2>
                 {/* 多选 Tag 控制栏 */}
@@ -1311,7 +1311,7 @@ export function ContentDiagnosisWorkbench({
 
             <div className="space-y-3">
               <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-                <span className="size-1.5 rounded-full bg-[#5F82A8]" />
+                <span className="size-1.5 rounded-full bg-[#43718E]" />
                 三、流量留存曲线漏斗
               </h2>
               {snapshot ? (
@@ -1331,12 +1331,12 @@ export function ContentDiagnosisWorkbench({
                         >
                           <stop
                             offset="5%"
-                            stopColor="#5F82A8"
+                            stopColor="#43718E"
                             stopOpacity={0.15}
                           />
                           <stop
                             offset="95%"
-                            stopColor="#5F82A8"
+                            stopColor="#43718E"
                             stopOpacity={0.0}
                           />
                         </linearGradient>
@@ -1379,7 +1379,7 @@ export function ContentDiagnosisWorkbench({
                       <Area
                         type="monotone"
                         dataKey="rate"
-                        stroke="#5F82A8"
+                        stroke="#43718E"
                         strokeWidth={2}
                         fillOpacity={1}
                         fill="url(#colorRate)"
@@ -1439,7 +1439,7 @@ export function ContentDiagnosisWorkbench({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-                    <span className="size-1.5 rounded-full bg-[#5F82A8]" />
+                    <span className="size-1.5 rounded-full bg-[#43718E]" />
                     台词黄金三段式 (点击句子直接引用)
                   </h3>
                   {video?.video_url && (
@@ -1463,7 +1463,7 @@ export function ContentDiagnosisWorkbench({
                         id={`script-section-${sec.hint}`}
                         className={`rounded-xl border transition-all ${
                           isSectionHighlighted
-                            ? "border-[#5F82A8] bg-[#5F82A8]/[0.02] ring-1 ring-[#5F82A8]/30 shadow-2xs"
+                            ? "border-[#43718E] bg-[#43718E]/[0.02] ring-1 ring-[#43718E]/30 shadow-2xs"
                             : "border-zinc-200 bg-white"
                         } overflow-hidden`}
                       >
@@ -1472,7 +1472,7 @@ export function ContentDiagnosisWorkbench({
                             <span
                               className={`size-1.5 rounded-full ${
                                 sec.hint === "opening"
-                                  ? "bg-[#5F82A8]"
+                                  ? "bg-[#43718E]"
                                   : sec.hint === "middle"
                                     ? "bg-zinc-400"
                                     : "bg-[#6FAA7D]"
@@ -1502,7 +1502,7 @@ export function ContentDiagnosisWorkbench({
                                       isQuoted
                                         ? "bg-[#6FAA7D]/[0.04] border-[#6FAA7D]"
                                         : isHighlighted
-                                          ? "bg-zinc-100/90 border-[#5F82A8]"
+                                          ? "bg-zinc-100/90 border-[#43718E]"
                                           : "hover:bg-zinc-50/70 border-transparent"
                                     }`}
                                   >
@@ -1759,7 +1759,7 @@ export function ContentDiagnosisWorkbench({
                       onClick={() => setShowPreviousFeedback((prev) => !prev)}
                       className="h-8 rounded-lg bg-zinc-100 text-[12px] font-medium text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950 gap-1.5"
                     >
-                      <History className="size-3.5 text-[#5F82A8]" />
+                      <History className="size-3.5 text-[#43718E]" />
                       {showPreviousFeedback
                         ? "关闭上次反馈对比"
                         : "对比上次反馈意见"}
@@ -1830,9 +1830,9 @@ export function ContentDiagnosisWorkbench({
               </details>
 
               {showPreviousFeedback && previousFeedback?.previous && (
-                <div className="border-l-2 border-[#5F82A8]/30 pl-4 space-y-3.5 relative animate-fade-in bg-zinc-50 border border-zinc-200 rounded-xl p-3.5">
+                <div className="border-l-2 border-[#43718E]/30 pl-4 space-y-3.5 relative animate-fade-in bg-zinc-50 border border-zinc-200 rounded-xl p-3.5">
                   <div className="flex items-center justify-between pb-1">
-                    <div className="flex items-center gap-1.5 text-[#5F82A8]">
+                    <div className="flex items-center gap-1.5 text-[#43718E]">
                       <History className="size-4" />
                       <span className="text-[11.5px] font-medium tracking-wider uppercase">
                         上次复盘诊断对比

@@ -34,7 +34,7 @@ const EVENT_TYPE_STYLE: Record<string, { borderColor: string; textColor: string;
 const APPEAL_STATUS_STYLE: Record<string, { borderColor: string; textColor: string; dotColor: string }> = {
   申诉成功: { borderColor: "border-[#6FAA7D]/30", textColor: "text-[#6FAA7D]", dotColor: "#6FAA7D" },
   申诉失败: { borderColor: "border-[#C9604D]/30", textColor: "text-[#C9604D]", dotColor: "#C9604D" },
-  申诉中: { borderColor: "border-[#5F82A8]/30", textColor: "text-[#5F82A8]", dotColor: "#5F82A8" },
+  申诉中: { borderColor: "border-[#43718E]/30", textColor: "text-[#43718E]", dotColor: "#43718E" },
   未申诉: { borderColor: "border-zinc-200", textColor: "text-zinc-500", dotColor: "#78716c" },
 };
 

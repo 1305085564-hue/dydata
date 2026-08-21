@@ -52,7 +52,7 @@ export function JoinBannerClient(props: Props) {
                 "flex size-8 shrink-0 items-center justify-center rounded-lg",
                 isUnassigned
                   ? "bg-[#D97757]/10 text-[#D97757]"
-                  : "bg-[#5F82A8]/10 text-[#5F82A8]",
+                  : "bg-[#43718E]/10 text-[#43718E]",
               )}
             >
               {isUnassigned ? (
@@ -72,7 +72,7 @@ export function JoinBannerClient(props: Props) {
                     "inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-medium tracking-wide",
                     isUnassigned
                       ? "bg-[#D97757]/10 text-[#D97757]"
-                      : "bg-[#5F82A8]/10 text-[#5F82A8]",
+                      : "bg-[#43718E]/10 text-[#43718E]",
                   )}
                 >
                   {isUnassigned ? "未加入" : "审核中"}

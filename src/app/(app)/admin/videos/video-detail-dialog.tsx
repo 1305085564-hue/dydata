@@ -520,9 +520,9 @@ export function VideoDetailDialog({
                     <div className="relative overflow-hidden rounded-xl border border-zinc-200/70 bg-zinc-50/40 p-3.5 transition-all hover:bg-zinc-50/80">
                       <div className="text-[12px] font-medium text-zinc-500 flex items-center justify-between">
                         <span>粉转率</span>
-                        <Sparkles className="size-3.5 text-[#5F82A8]" />
+                        <Sparkles className="size-3.5 text-[#43718E]" />
                       </div>
-                      <div className="mt-1.5 text-[22px] font-semibold tabular-nums text-[#5F82A8] tracking-tight">
+                      <div className="mt-1.5 text-[22px] font-semibold tabular-nums text-[#43718E] tracking-tight">
                         {formatPercent(followerConv)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-zinc-400 font-normal">

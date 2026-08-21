@@ -873,7 +873,7 @@ export function HitAnalyzer({
                     className={cn(
                       "min-w-0 truncate rounded-full px-2.5 py-1 text-[12px] font-medium transition-colors cursor-pointer",
                       effectiveSelectedSubmitters.includes(name)
-                        ? "bg-[#5F82A8]/15 text-[#5F82A8] font-semibold"
+                        ? "bg-[#43718E]/15 text-[#43718E] font-semibold"
                         : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200/70 hover:text-zinc-900",
                     )}
                   >

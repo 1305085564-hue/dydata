@@ -111,7 +111,7 @@ export function RewriteHistoryV3({
                       className={cn(
                         'group flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-left transition-colors duration-100 active:scale-[0.98]',
                         isActive
-                          ? 'bg-[#5F82A8]/15 text-zinc-900 font-medium'
+                          ? 'bg-[#43718E]/15 text-zinc-900 font-medium'
                           : 'text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-900'
                       )}
                     >
@@ -119,7 +119,7 @@ export function RewriteHistoryV3({
                         <span
                           className={cn(
                             'h-1.5 w-1.5 rounded-full shrink-0 transition-colors',
-                            isActive ? 'bg-[#5F82A8]' : 'bg-zinc-300 group-hover:bg-zinc-400'
+                            isActive ? 'bg-[#43718E]' : 'bg-zinc-300 group-hover:bg-zinc-400'
                           )}
                         />
                         <span className="truncate text-[12px] leading-none">

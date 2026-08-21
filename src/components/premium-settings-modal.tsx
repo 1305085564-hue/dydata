@@ -63,7 +63,7 @@ export function GroupModeSettingsControl({
             "flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors",
             isGroupModeActive
               ? "bg-[#D97757]/15 text-[#D97757]"
-              : "bg-zinc-100 text-[#5F82A8]",
+              : "bg-zinc-100 text-[#43718E]",
           )}
         >
           <Building2 className="size-4 shrink-0" />
@@ -448,7 +448,7 @@ export function PremiumSettingsModal({
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
-                <Shield className="size-4 text-[#5F82A8]" />
+                <Shield className="size-4 text-[#43718E]" />
                 矩阵账号管理
               </button>
 
@@ -738,7 +738,7 @@ export function PremiumSettingsModal({
                             {/* Actions - Crisp, Deep, Lean (400 Weight + High Ink Contrast) */}
                             <div className="flex items-center gap-3 shrink-0">
                               {isActive ? (
-                                <span className="inline-flex items-center text-[12px] font-normal bg-[#5F82A8]/10 text-[#2E557E] px-2.5 py-0.5 rounded-md">
+                                <span className="inline-flex items-center text-[12px] font-normal bg-[#43718E]/10 text-[#2E557E] px-2.5 py-0.5 rounded-md">
                                   当前活跃
                                 </span>
                               ) : (

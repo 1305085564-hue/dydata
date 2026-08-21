@@ -99,7 +99,7 @@ export function TodayFocusSection({
           {/* 最新认领 */}
           {latestClaim ? (
             <div className="flex items-center gap-1.5 truncate max-w-full sm:max-w-[48%]">
-              <span className="inline-flex items-center gap-1 text-[#5F82A8] font-medium shrink-0">
+              <span className="inline-flex items-center gap-1 text-[#43718E] font-medium shrink-0">
                 <UserCheck className="w-3.5 h-3.5" />
                 <span>最新认领:</span>
               </span>
@@ -181,7 +181,7 @@ export function TodayFocusSection({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-zinc-100 text-xs">
               <span className="font-semibold text-zinc-800 flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-[#5F82A8]" />
+                <UserCheck className="w-3.5 h-3.5 text-[#43718E]" />
                 往期认领记录
               </span>
               <span className="text-[11px] text-zinc-400 tabular-nums">

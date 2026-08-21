@@ -96,7 +96,7 @@ export function StatsBar({ stats }: StatsBarProps) {
             </div>
             <div className="flex flex-col items-center">
               <span className="text-[12px] text-zinc-500 font-normal flex items-center gap-0.5">
-                <span className="size-1 rounded-full bg-[#5F82A8]" />
+                <span className="size-1 rounded-full bg-[#43718E]" />
                 豁免
               </span>
               <span className="mt-1 text-[13px] font-normal tabular-nums text-zinc-700">
