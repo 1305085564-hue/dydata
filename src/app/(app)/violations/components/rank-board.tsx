@@ -78,7 +78,7 @@ export function RankBoard({
                 </>
               );
 
-              const btnClass = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-all duration-150 hover:bg-zinc-100 active:scale-[0.98]";
+              const btnClass = "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors duration-100 hover:bg-zinc-100 active:scale-[0.98]";
 
               return (
                 <li key={item.id}>
@@ -114,7 +114,7 @@ export function RankBoard({
         <div className="mt-2 border-t border-zinc-100 pt-2.5">
           <Link
             href={viewAllHref}
-            className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-all duration-150 hover:text-zinc-700 active:scale-[0.98]"
+            className="inline-flex items-center gap-1 text-[12px] text-zinc-500 transition-colors duration-100 hover:text-zinc-700 active:scale-[0.98]"
           >
             查看全部
             <ArrowRight className="size-3 stroke-[1.5]" />

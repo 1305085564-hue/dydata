@@ -483,7 +483,7 @@ export function VideoSubmitPanel({
                     <button
                       type="button"
                       onClick={openDatePicker}
-                      className="group inline-flex items-center gap-2.5 rounded-xl border border-zinc-200/90 bg-zinc-50/80 px-3.5 py-2 text-left transition-all duration-150 ease-out hover:border-[#D97757] hover:bg-white active:scale-[0.98] shadow-2xs cursor-pointer"
+                      className="group inline-flex items-center gap-2.5 rounded-xl border border-zinc-200/90 bg-zinc-50/80 px-3.5 py-2 text-left transition-colors duration-100 ease-out hover:border-[#D97757] hover:bg-white active:scale-[0.98] shadow-2xs cursor-pointer"
                       aria-label="选择填报日期或补交历史"
                     >
                       <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
@@ -638,7 +638,7 @@ export function VideoSubmitPanel({
                   <div className="flex shrink-0 flex-col gap-3 lg:w-[200px]">
                     <Button
                       type="button"
-                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white text-[13px] font-medium transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white text-[13px] font-medium transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
                       onClick={handleGoToGrowth}
                     >
                       去查看我的成长与大盘数据 🚀

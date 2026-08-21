@@ -172,7 +172,7 @@ function ExemptionModal({
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
-            : "h-8 border-zinc-200 px-3 text-[12px] font-medium text-zinc-700 shadow-xs transition-all duration-150 ease-out hover:border-zinc-300 hover:bg-white active:scale-95",
+            : "h-8 border-zinc-200 px-3 text-[12px] font-medium text-zinc-700 shadow-xs transition-colors duration-100 ease-out hover:border-zinc-300 hover:bg-white active:scale-95",
           triggerClassName,
         )}
       >
@@ -197,7 +197,7 @@ function ExemptionModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white/98 p-0 shadow-2xl backdrop-blur-xl sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
+        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white/98 p-0 shadow-lg sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader className="px-6 pb-2 pt-6">
             <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-800">
               申请请假或豁免
@@ -213,7 +213,7 @@ function ExemptionModal({
                 <button
                   type="button"
                   onClick={handleSelectAllUnsubmitted}
-                  className="group inline-flex items-center gap-1 rounded-md border border-transparent bg-[#F59E0B]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 cursor-pointer shrink-0"
+                  className="group inline-flex items-center gap-1 rounded-md border border-transparent bg-[#F59E0B]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-colors duration-100 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 cursor-pointer shrink-0"
                 >
                   <Zap className="size-3 stroke-[2] text-[#D97757] transition-transform group-hover:scale-110" />
                   一键全选（七日）
@@ -248,7 +248,7 @@ function ExemptionModal({
                       onClick={() => setCategory("leave")}
                       title="病假/事假/外勤（计入考核天数）"
                       className={cn(
-                        "flex h-7 items-center justify-center rounded-md text-xs font-medium transition-all duration-150 ease-out cursor-pointer",
+                        "flex h-7 items-center justify-center rounded-md text-xs font-medium transition-colors duration-100 ease-out cursor-pointer",
                         category === "leave"
                           ? "bg-white text-zinc-950 shadow-sm font-semibold"
                           : "text-zinc-500 hover:text-zinc-900",
@@ -261,7 +261,7 @@ function ExemptionModal({
                       onClick={() => setCategory("waive")}
                       title="账号限流/停用/放假（剔除考核分母）"
                       className={cn(
-                        "flex h-7 items-center justify-center rounded-md text-xs font-medium transition-all duration-150 ease-out cursor-pointer",
+                        "flex h-7 items-center justify-center rounded-md text-xs font-medium transition-colors duration-100 ease-out cursor-pointer",
                         category === "waive"
                           ? "bg-white text-zinc-950 shadow-sm font-semibold"
                           : "text-zinc-500 hover:text-zinc-900",
@@ -329,7 +329,7 @@ function ExemptionModal({
                     <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                   </p>
                   <textarea
-                    className="h-[100px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-700 shadow-2xs transition-all duration-150 ease-out placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5"
+                    className="h-[100px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-700 shadow-2xs transition-colors duration-100 ease-out placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5"
                     maxLength={100}
                     placeholder={
                       category === "leave"
@@ -359,7 +359,7 @@ function ExemptionModal({
                   type="button"
                   onClick={handleSubmit}
                   disabled={isPending}
-                  className="h-11 bg-[#D97757] px-8 font-medium text-white shadow-sm transition-all duration-150 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.97]"
+                  className="h-11 bg-[#D97757] px-8 font-medium text-white shadow-sm transition-colors duration-100 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.97]"
                 >
                   {isPending ? "提交中..." : "提交申请"}
                 </Button>

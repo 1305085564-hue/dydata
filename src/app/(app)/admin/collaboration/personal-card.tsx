@@ -129,7 +129,7 @@ export function PersonalCard({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[94vw] max-h-[85vh] h-auto p-0 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[94vw] max-h-[85vh] h-auto p-0 rounded-2xl border border-zinc-200 bg-white/95 shadow-lg overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
         <DialogHeader className="p-5 pb-3.5 border-b border-zinc-100 flex flex-row items-center justify-between shrink-0 bg-zinc-50/40">
@@ -158,7 +158,7 @@ export function PersonalCard({
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-[12px] text-zinc-500">
                   <span>本月分工：</span>
-                  <span className="rounded bg-zinc-100/80 px-1.5 py-0.5 text-[#4A7FB5] font-medium">
+                  <span className="rounded bg-zinc-100/80 px-1.5 py-0.5 text-[#43718E] font-medium">
                     文案{" "}
                     <strong className="font-semibold">
                       {data.currentMonth.writerCount}
@@ -317,7 +317,7 @@ export function PersonalCard({
                           dataKey="writer"
                           name="文案"
                           stackId="a"
-                          fill="#4A7FB5"
+                          fill="#43718E"
                           barSize={14}
                         />
                         <Bar

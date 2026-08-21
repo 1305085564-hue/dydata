@@ -136,10 +136,10 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
                       setIsOpen(false);
                     }}
                     className={cn(
-                      "flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all duration-150 group/item",
+                      "flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-100 group/item",
                       isSelected
                         ? "bg-[#5F82A8]/10 text-[#5F82A8]"
-                        : "hover:bg-zinc-100/80 text-zinc-700 hover:text-zinc-900"
+                        : "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900"
                     )}
                   >
                     <div className="flex flex-col min-w-0">

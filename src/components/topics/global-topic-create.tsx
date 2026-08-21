@@ -195,7 +195,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                       type="button"
                       onClick={() => setSelectedTopicId(topic.id)}
                       className={cn(
-                        "flex h-9 items-center justify-center rounded-xl border px-2 text-[12px] font-medium transition-all duration-150 cursor-pointer truncate",
+                        "flex h-9 items-center justify-center rounded-xl border px-2 text-[12px] font-medium transition-colors duration-100 cursor-pointer truncate",
                         "active:scale-[0.97]",
                         isSelected
                           ? "border-[#5F82A8]/50 bg-[#5F82A8]/12 text-[#355273] font-semibold ring-2 ring-[#5F82A8]/20 shadow-2xs"

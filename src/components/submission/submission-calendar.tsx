@@ -273,7 +273,7 @@ export function SubmissionCalendar({
               disabled={isFuture}
               onClick={() => onDateSelect?.(cell.key, isSubmitted)}
               className={cn(
-                "relative flex h-10 w-full flex-col items-center justify-center rounded-lg text-[13px] transition-all duration-150 ease-out outline-none",
+                "relative flex h-10 w-full flex-col items-center justify-center rounded-lg text-[13px] transition-colors duration-100 ease-out outline-none",
                 !isFuture &&
                   "cursor-pointer hover:scale-[1.05] active:scale-95",
 
@@ -314,7 +314,7 @@ export function SubmissionCalendar({
                       : isSubmitted
                         ? "bg-[#16A34A]"
                         : isLeave
-                          ? "bg-[#4A7FB5]"
+                          ? "bg-[#43718E]"
                           : isPendingState
                             ? "bg-[#F59E0B] animate-pulse ring-2 ring-[#F59E0B]/40"
                             : "bg-zinc-400",
@@ -336,7 +336,7 @@ export function SubmissionCalendar({
           审批中
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#4A7FB5]" /> 请假
+          <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-zinc-400" /> 未交/漏交

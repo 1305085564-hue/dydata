@@ -168,10 +168,10 @@ export function UserWorkspacePopover({
                         setIsOpen(false);
                       }}
                       className={cn(
-                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left transition-all duration-150 group/item",
+                        "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left transition-colors duration-100 group/item",
                         isSelected
                           ? "bg-[#5F82A8]/10 text-[#5F82A8]"
-                          : "hover:bg-zinc-100/80 text-zinc-700 hover:text-zinc-900",
+                          : "hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900",
                       )}
                     >
                       <div className="flex flex-col min-w-0">
@@ -221,7 +221,7 @@ export function UserWorkspacePopover({
                 setIsOpen(false);
                 onOpenSettings();
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-950 group/btn"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-colors duration-100 hover:bg-zinc-100 hover:text-zinc-950 group/btn"
             >
               <User className="size-4 text-zinc-400 group-hover/btn:text-[#5F82A8] transition-colors" />
               <span>账号与偏好设置</span>
@@ -230,7 +230,7 @@ export function UserWorkspacePopover({
             {canAccessTeamManagement ? (
               <a
                 href="/admin/modules"
-                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-all duration-150 hover:bg-zinc-100 hover:text-zinc-950 group/btn"
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-700 transition-colors duration-100 hover:bg-zinc-100 hover:text-zinc-950 group/btn"
               >
                 <UsersRound className="size-4 text-zinc-400 group-hover/btn:text-[#5F82A8] transition-colors" />
                 <span>成员与团队架构</span>
@@ -250,7 +250,7 @@ export function UserWorkspacePopover({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-600 transition-all duration-150 hover:bg-zinc-100 hover:text-[#DC2626] group/btn"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] font-medium text-zinc-600 transition-colors duration-100 hover:bg-zinc-100 hover:text-[#DC2626] group/btn"
             >
               <LogOut className="size-4 text-zinc-400 group-hover/btn:text-[#DC2626] transition-colors" />
               <span>退出登录</span>

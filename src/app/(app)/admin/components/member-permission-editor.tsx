@@ -98,7 +98,7 @@ export function MemberPermissionEditor({
                 title={option.sublabel}
                 onClick={() => !isDisabled && onChangeDataScope(option.value)}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-center transition-all duration-150 relative",
+                  "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-center transition-colors duration-100 relative",
                   isSelected
                     ? "bg-white text-zinc-950 shadow-xs border border-zinc-200/80 font-medium"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
@@ -178,7 +178,7 @@ export function MemberPermissionEditor({
                         htmlFor={checkboxId}
                         title={desc || undefined}
                         className={cn(
-                          "flex items-center gap-2 p-2 px-2.5 rounded-xl transition-all duration-150 select-none cursor-pointer",
+                          "flex items-center gap-2 p-2 px-2.5 rounded-xl transition-colors duration-100 select-none cursor-pointer",
                           isChecked
                             ? isOwner
                               ? "bg-zinc-100/80 text-zinc-700 cursor-not-allowed"

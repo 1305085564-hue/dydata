@@ -96,19 +96,19 @@ export function TimelineDiff({
                 <button
                   key={rev.id}
                   onClick={() => onSelectRevision(rev.id === latestRevision?.id ? null : rev.id)}
-                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F82A8]/40"
+                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-colors duration-100 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5F82A8]/40"
                 >
                   {/* 外围 2px 选中导轨 (Selected 状态) */}
                   <span
                     className={cn(
-                      'h-4.5 w-4.5 rounded-full flex items-center justify-center border-2 transition-all duration-150 group-hover:scale-105',
+                      'h-4.5 w-4.5 rounded-full flex items-center justify-center border-2 transition-colors duration-100 group-hover:scale-105',
                       isSelected ? 'border-[#5F82A8]' : 'border-transparent'
                     )}
                   >
                     {/* 内围核心圆点 (AI 实心、人手空心；选中统一石青，未选中统一灰阶) */}
                     <span
                       className={cn(
-                        'rounded-full transition-all duration-150',
+                        'rounded-full transition-colors duration-100',
                         isAi
                           ? // AI 版本：实心形态
                             cn(
@@ -129,7 +129,7 @@ export function TimelineDiff({
                   </span>
 
                   {/* 悬浮 CSS Tooltip 浮窗 */}
-                  <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-all duration-150 delay-150 z-50 bg-zinc-900/95 backdrop-blur text-white text-[12px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
+                  <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 opacity-0 pointer-events-none group-hover:opacity-100 transition-colors duration-100 delay-150 z-50 bg-zinc-900/95 backdrop-blur text-white text-[12px] p-2 rounded-lg shadow-xl whitespace-nowrap leading-normal font-sans">
                     <div className="flex items-center gap-1.5 font-medium">
                       <span className={cn('h-1.5 w-1.5 rounded-full', isAi ? 'bg-[#F59E0B]' : 'bg-[#5F82A8]')} />
                       <span>第 {index + 1} 版 {isSelected && '(当前预览)'}</span>

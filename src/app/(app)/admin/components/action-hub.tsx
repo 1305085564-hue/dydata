@@ -121,7 +121,7 @@ export function ActionHub({
                   </div>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-[min(960px,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl">
+                <DialogContent className="max-w-[min(960px,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white p-0 shadow-lg">
                   <div className="space-y-4 p-5 sm:p-6">
                     <DialogHeader>
                       <DialogTitle>

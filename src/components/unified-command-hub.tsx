@@ -361,7 +361,7 @@ export function UnifiedCommandHub({
                   {activeTab === "todos" && (
                     <motion.div
                       layoutId="popoverSegmentedTab"
-                      className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
+                      className="absolute inset-0 rounded-lg bg-white ring-1 ring-black/5 -z-10"
                       transition={{
                         type: "spring",
                         stiffness: 500,
@@ -391,7 +391,7 @@ export function UnifiedCommandHub({
                     {activeTab === "approvals" && (
                       <motion.div
                         layoutId="popoverSegmentedTab"
-                        className="absolute inset-0 rounded-lg bg-white shadow-sm ring-1 ring-black/5 -z-10"
+                        className="absolute inset-0 rounded-lg bg-white ring-1 ring-black/5 -z-10"
                         transition={{
                           type: "spring",
                           stiffness: 500,
@@ -415,7 +415,7 @@ export function UnifiedCommandHub({
                   type="button"
                   onClick={() => onOpenChange(false)}
                   aria-label="关闭"
-                  className="flex size-7 items-center justify-center rounded-lg hover:bg-zinc-200/60 text-zinc-400 hover:text-zinc-800 transition-all duration-150"
+                  className="flex size-7 items-center justify-center rounded-lg hover:bg-zinc-200/60 text-zinc-400 hover:text-zinc-800 transition-colors duration-100"
                 >
                   <X className="size-3.5 stroke-[2]" />
                 </button>
@@ -527,7 +527,7 @@ export function UnifiedCommandHub({
                           <div
                             key={rowKey}
                             className={cn(
-                              "group relative rounded-xl border p-3 transition-all duration-150 space-y-1.5",
+                              "group relative rounded-xl border p-3 transition-colors duration-100 space-y-1.5",
                               isSelected
                                 ? "border-[#D97757]/40 bg-[#D97757]/[0.03] shadow-xs"
                                 : "border-zinc-200/70 bg-zinc-50/50 hover:bg-white hover:border-zinc-300 hover:shadow-xs",

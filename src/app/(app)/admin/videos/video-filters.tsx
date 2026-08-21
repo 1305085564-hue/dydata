@@ -81,7 +81,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         value={filters.profileId}
         onValueChange={(value) => updateFilter("profileId", value || "all")}
       >
-        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
+        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
           <SelectValue>{profileLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -98,7 +98,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         value={filters.accountId}
         onValueChange={(value) => updateFilter("accountId", value || "all")}
       >
-        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
+        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
           <SelectValue>{accountLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -134,7 +134,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         value={filters.status}
         onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}
       >
-        <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
+        <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
           <SelectValue>{statusLabel(filters.status)}</SelectValue>
         </SelectTrigger>
         <SelectContent>

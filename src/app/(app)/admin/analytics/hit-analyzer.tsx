@@ -776,7 +776,7 @@ export function HitAnalyzer({
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
                   className={cn(
-                    "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-all duration-150 cursor-pointer",
+                    "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 cursor-pointer",
                     activeFilter === filter.id
                       ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                       : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
@@ -794,7 +794,7 @@ export function HitAnalyzer({
                     key={preset.id}
                     onClick={() => applyTimePreset(preset.id)}
                     className={cn(
-                      "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-all duration-150 cursor-pointer",
+                      "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 cursor-pointer",
                       activeTimePreset === preset.id
                         ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                         : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",

@@ -1906,7 +1906,7 @@ export function VideoSubmitForm({
                   setHasUserInteracted(true);
                   handleGoToGrowth();
                 }}
-                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white font-medium text-[13px] transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
               >
                 去查看我的成长与大盘数据 🚀{" "}
                 {countdown !== null ? `(${countdown}s)` : ""}
@@ -1991,7 +1991,7 @@ export function VideoSubmitForm({
             open={deleteTargetRole !== null}
             onOpenChange={(open) => !open && setDeleteTargetRole(null)}
           >
-            <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl">
+            <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-lg">
               <DialogHeader className="px-6 pt-6">
                 <DialogTitle>确认删除截图？</DialogTitle>
                 <DialogDescription>
@@ -2163,7 +2163,7 @@ export function VideoSubmitForm({
                             <button
                               type="button"
                               onClick={showAllRoles}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D97757] hover:underline transition-all duration-150 cursor-pointer"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D97757] hover:underline transition-colors duration-100 cursor-pointer"
                             >
                               <Plus className="size-3 stroke-[2.5]" />
                               <span>+ 协同指派</span>
@@ -2284,7 +2284,7 @@ export function VideoSubmitForm({
                                       )
                                     }
                                     className={cn(
-                                      "h-7.5 rounded-lg border transition-all duration-150 text-[11.5px] font-medium cursor-pointer",
+                                      "h-7.5 rounded-lg border transition-colors duration-100 text-[11.5px] font-medium cursor-pointer",
                                       meta.topicTag === tag
                                         ? "border-[#D97757] bg-[#D97757] text-white"
                                         : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60",
@@ -2307,7 +2307,7 @@ export function VideoSubmitForm({
                                     type="button"
                                     onClick={() => updateMeta("videoForm", form)}
                                     className={cn(
-                                      "h-7.5 rounded-lg border transition-all duration-150 text-[11.5px] font-medium cursor-pointer",
+                                      "h-7.5 rounded-lg border transition-colors duration-100 text-[11.5px] font-medium cursor-pointer",
                                       meta.videoForm === form
                                         ? "border-[#D97757] bg-[#D97757] text-white"
                                         : "border-transparent bg-zinc-100/80 text-zinc-700 hover:bg-zinc-200/60",
@@ -2430,7 +2430,7 @@ export function VideoSubmitForm({
                                       publishedAtText: synced.publishedAtText,
                                     }));
                                   }}
-                                  className="h-8.5 rounded-lg bg-zinc-100/70 border-transparent text-[11.5px] text-zinc-700 focus:bg-white focus:border-zinc-200 transition-all duration-150"
+                                  className="h-8.5 rounded-lg bg-zinc-100/70 border-transparent text-[11.5px] text-zinc-700 focus:bg-white focus:border-zinc-200 transition-colors duration-100"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -2497,7 +2497,7 @@ export function VideoSubmitForm({
                             updateMeta("videoTitle", event.target.value)
                           }
                           placeholder="输入视频标题"
-                          className="h-9 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-2xs focus:ring-1 focus:ring-zinc-900/5 transition-all duration-150"
+                          className="h-9 rounded-xl bg-zinc-100/70 border-transparent text-[13px] text-zinc-700 focus:bg-white focus:border-zinc-200 focus:shadow-2xs focus:ring-1 focus:ring-zinc-900/5 transition-colors duration-100"
                           aria-invalid={
                             hasAttemptedSubmit &&
                             meta.anomalyStatus !== "abnormal" &&
@@ -2613,7 +2613,7 @@ export function VideoSubmitForm({
                       type="button"
                       onClick={triggerSubmit}
                       disabled={isSubmitting || !canActuallySubmit}
-                      className="h-9 rounded-xl px-5 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#C96442] text-white disabled:opacity-50 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed transition-all duration-150 flex items-center gap-2 shadow-2xs"
+                      className="h-9 rounded-xl px-5 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#C96442] text-white disabled:opacity-50 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed transition-colors duration-100 flex items-center gap-2 shadow-2xs"
                     >
                       {isSubmitting && (
                         <Loader2 className="size-3.5 animate-spin shrink-0 text-white" />
@@ -2717,10 +2717,10 @@ function VideoStatusSegmented({
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-xs font-medium tracking-tight transition-all duration-150 ease-out cursor-pointer",
+              "inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-xs font-medium tracking-tight transition-colors duration-100 ease-out cursor-pointer",
               isActive
                 ? cn(
-                    "bg-white text-zinc-950 shadow-2xs font-medium",
+                    "bg-white text-zinc-950 font-medium",
                     option.activeTextClass,
                   )
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
@@ -2807,7 +2807,7 @@ function RoleItemSelectorRow({
             </span>
             <ChevronDown
               className={cn(
-                "size-3 text-zinc-400 shrink-0 ml-1 transition-transform duration-150",
+                "size-3.5 text-zinc-400 shrink-0 ml-1 transition-transform duration-150",
                 isOpen && "rotate-180",
               )}
             />

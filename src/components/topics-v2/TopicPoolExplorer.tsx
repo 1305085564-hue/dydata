@@ -133,7 +133,7 @@ export function TopicPoolExplorer({
             onClick={() => onViewChange("all")}
             className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               currentView === "all"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                ? "bg-white text-zinc-950 font-medium"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             }`}
           >
@@ -155,7 +155,7 @@ export function TopicPoolExplorer({
             onClick={() => onViewChange("my_claims")}
             className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               currentView === "my_claims"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                ? "bg-white text-zinc-950 font-medium"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             }`}
           >
@@ -166,7 +166,7 @@ export function TopicPoolExplorer({
             onClick={() => onViewChange("my_created")}
             className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               currentView === "my_created"
-                ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                ? "bg-white text-zinc-950 font-medium"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
             }`}
           >
@@ -208,7 +208,7 @@ export function TopicPoolExplorer({
                   ? `母题 (${selectedTopicIds.length})`
                   : "母题"}
               </span>
-              <ChevronDown className="w-3 h-3 opacity-60" />
+              <ChevronDown className="size-3.5 opacity-60" />
             </button>
 
             {isTopicFilterOpen && (
@@ -278,7 +278,7 @@ export function TopicPoolExplorer({
               <option value="claim_count">热度</option>
               <option value="latest">最新</option>
             </select>
-            <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 pointer-events-none" />
+            <ChevronDown className="size-3.5 text-zinc-400 absolute right-1.5 pointer-events-none" />
             {sortBy === "ai_recommended" && (
               <Badge
                 variant="outline"
@@ -306,7 +306,7 @@ export function TopicPoolExplorer({
               <option value="1w">7天</option>
               <option value="3d">3天</option>
             </select>
-            <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 pointer-events-none" />
+            <ChevronDown className="size-3.5 text-zinc-400 absolute right-1.5 pointer-events-none" />
           </div>
 
           {/* 结构呼吸微竖线 */}

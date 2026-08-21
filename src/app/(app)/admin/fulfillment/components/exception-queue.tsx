@@ -293,7 +293,7 @@ export function ExceptionQueue({
                           <DropdownMenuTrigger
                             render={
                               <Button variant="ghost" size="sm" className="h-7 px-2 text-[12px] text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 rounded-lg">
-                                异常打标 <ChevronDown className="ml-1 size-3 text-zinc-400" />
+                                异常打标 <ChevronDown className="ml-1 size-3.5 text-zinc-400" />
                               </Button>
                             }
                           />

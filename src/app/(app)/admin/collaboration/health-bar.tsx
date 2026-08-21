@@ -54,7 +54,7 @@ export function HealthBar({ summary }: HealthBarProps) {
 
       {/* 极轻明细弹窗 */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md p-5 rounded-2xl border border-zinc-200 bg-white shadow-xl">
+        <DialogContent className="sm:max-w-md p-5 rounded-2xl border border-zinc-200 bg-white shadow-lg">
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-zinc-100">
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 text-[#D97706]" />

@@ -205,7 +205,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("talents")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "talents"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
@@ -217,7 +217,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("operators")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "operators"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
@@ -229,7 +229,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("writers")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "writers"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
@@ -241,7 +241,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("editors")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 cursor-pointer ${
+            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "editors"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"

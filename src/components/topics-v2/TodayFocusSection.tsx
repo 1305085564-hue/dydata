@@ -167,9 +167,9 @@ export function TodayFocusSection({
         >
           <span>动态 ({totalActivityCount})</span>
           {isExpanded ? (
-            <ChevronUp className="w-3 h-3" />
+            <ChevronUp className="size-3.5" />
           ) : (
-            <ChevronDown className="w-3 h-3" />
+            <ChevronDown className="size-3.5" />
           )}
         </button>
       </div>

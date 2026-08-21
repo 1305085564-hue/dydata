@@ -109,7 +109,7 @@ export function RewriteHistoryV3({
                       key={c.id}
                       onClick={() => onSelectConversation(c.id)}
                       className={cn(
-                        'group flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-left transition-all duration-150 active:scale-[0.98]',
+                        'group flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg text-left transition-colors duration-100 active:scale-[0.98]',
                         isActive
                           ? 'bg-[#5F82A8]/15 text-zinc-900 font-medium'
                           : 'text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-900'

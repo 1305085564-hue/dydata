@@ -1100,7 +1100,7 @@ export default function SubTopicDetailPage({
                   key={item.id}
                   onClick={() => setSelectedReturnId(item.id)}
                   className={cn(
-                    "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all duration-150",
+                    "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors duration-100",
                     isSelected
                       ? "border-[#D97757] bg-[#D97757]/5 shadow-xs"
                       : "border-zinc-200 bg-white hover:bg-zinc-50",

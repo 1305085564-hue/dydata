@@ -362,7 +362,7 @@ export function JoinRequestReviewList({ rows }: Props) {
 
       {/* 批量驳回对话框 */}
       <Dialog open={batchRejectOpen} onOpenChange={setBatchRejectOpen}>
-        <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl">
+        <DialogContent className="max-w-md rounded-2xl border border-zinc-200 bg-white p-0 shadow-lg">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>批量驳回申请</DialogTitle>
           </DialogHeader>

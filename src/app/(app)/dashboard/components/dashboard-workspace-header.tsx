@@ -138,7 +138,7 @@ export function DashboardWorkspaceHeader({
                 key={action.key}
                 type="button"
                 onClick={() => onDashboardAction(action.key)}
-                className="group inline-flex items-center gap-1.5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 transition-all duration-150 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 hover:shadow-2xs cursor-pointer"
+                className="group inline-flex items-center gap-1.5 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3 py-1.5 text-[13px] font-medium text-zinc-600 transition-colors duration-100 hover:border-zinc-300 hover:bg-white hover:text-zinc-950 hover:shadow-2xs cursor-pointer"
               >
                 <Icon
                   size={14}

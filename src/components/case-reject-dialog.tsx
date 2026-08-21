@@ -80,7 +80,7 @@ export function CaseRejectDialog({
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setReason(r)}
                 className={cn(
-                  "rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors",
+                  "rounded-md border px-2.5 py-1 text-[12px] font-medium transition-colors",
                   reason === r
                     ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D]"
                     : "border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700",

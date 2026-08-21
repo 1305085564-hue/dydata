@@ -123,7 +123,7 @@ export function FilterBar({
                 key={opt.value}
                 type="button"
                 onClick={() => handlePresetChange(opt.value)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-150 cursor-pointer ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-100 cursor-pointer ${
                   range === opt.value
                     ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"

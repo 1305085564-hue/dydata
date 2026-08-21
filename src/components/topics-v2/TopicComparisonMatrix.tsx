@@ -128,7 +128,7 @@ export function TopicComparisonMatrix({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1 pointer-events-none" />
+                <ChevronDown className="size-3.5 text-zinc-400 absolute right-1 pointer-events-none" />
               </div>
             )
           )}
@@ -145,7 +145,7 @@ export function TopicComparisonMatrix({
               <option value={30}>近 30 天</option>
               <option value={60}>近 60 天</option>
             </select>
-            <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1 pointer-events-none" />
+            <ChevronDown className="size-3.5 text-zinc-400 absolute right-1 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -256,7 +256,7 @@ export function TopicComparisonMatrix({
                     </div>
                     <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#4A7FB5] transition-all duration-300 rounded-full"
+                        className="h-full bg-[#43718E] transition-all duration-300 rounded-full"
                         style={{ width: `${Math.min(qualPercent, 100)}%` }}
                       />
                     </div>

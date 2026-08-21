@@ -87,7 +87,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
               key={skill.id}
               onClick={() => onToggleSkill(skill)}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.98]',
+                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.98]',
                 isActive
                   ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
                   : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'

@@ -19,7 +19,7 @@ export function ChaseBar({ peerName, metricLabel, peerValueText, peerRatio }: Ch
           <span className="tabular-nums text-zinc-700">{peerValueText}</span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
-          <div className="h-full rounded-full bg-[#4A7FB5]" style={{ width }} />
+          <div className="h-full rounded-full bg-[#43718E]" style={{ width }} />
         </div>
         <p className="text-[12px] text-zinc-500">团队最高{metricLabel}</p>
       </div>

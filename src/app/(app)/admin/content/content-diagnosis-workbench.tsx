@@ -1184,7 +1184,7 @@ export function ContentDiagnosisWorkbench({
                   ))}
                 </div>
               ) : attributionError ? (
-                <div className="rounded-xl border border-dashed border-[#C9604D]/30 bg-[#C9604D]/5 p-6 text-center text-[12px] text-[#B84C5C]">
+                <div className="rounded-xl border border-dashed border-[#C9604D]/30 bg-[#C9604D]/5 p-6 text-center text-[12px] text-[#DC2626]">
                   <p className="font-semibold">归因数据加载失败</p>
                   <p className="mt-1 text-[11px]">{attributionError}</p>
                 </div>
@@ -2105,11 +2105,11 @@ function MultiRefMetricCard({
 
           const toneClass =
             tone === "good"
-              ? "text-[#3D8B7A] bg-[#3D8B7A]/8 border-[#3D8B7A]/20"
+              ? "text-[#405740] bg-[#405740]/8 border-[#405740]/20"
               : tone === "warn"
-                ? "text-[#B07228] bg-[#B07228]/8 border-[#B07228]/20"
+                ? "text-[#43718E] bg-[#43718E]/8 border-[#43718E]/20"
                 : tone === "bad"
-                  ? "text-[#B84C5C] bg-[#B84C5C]/8 border-[#B84C5C]/20"
+                  ? "text-[#7B6BA5] bg-[#7B6BA5]/8 border-[#7B6BA5]/20"
                   : "text-zinc-500 bg-zinc-50 border-zinc-200/60";
 
           const toneSymbol =

@@ -409,7 +409,7 @@ export function NavBarClient({
                         prefetch={false}
                         onMouseEnter={() => prefetchOnHover(group.href!)}
                         className={cn(
-                          "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-all duration-150 ease-out group origin-center",
+                          "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive
                             ? "text-[#5F82A8] font-semibold bg-zinc-100/70"
                             : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
@@ -453,7 +453,7 @@ export function NavBarClient({
                         aria-expanded={isDropdownOpen}
                         aria-haspopup="true"
                         className={cn(
-                          "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-all duration-150 ease-out group origin-center",
+                          "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
                             ? "text-[#5F82A8] font-semibold bg-zinc-100/70"
                             : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
@@ -505,10 +505,10 @@ export function NavBarClient({
                                     }
                                     onClick={() => setActiveDropdownGroup(null)}
                                     className={cn(
-                                      "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-all duration-150 group/item",
+                                      "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-100 group/item",
                                       active
                                         ? "bg-zinc-100 text-[#5F82A8] font-semibold"
-                                        : "text-zinc-600 font-medium hover:bg-zinc-100/80 hover:text-zinc-950",
+                                        : "text-zinc-600 font-medium hover:bg-zinc-100 hover:text-zinc-950",
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">

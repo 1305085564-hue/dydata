@@ -355,7 +355,7 @@ export function SettingsDrawer({
                 <span className="text-[12px] font-medium text-zinc-900">
                   携带历史对话轮数
                 </span>
-                <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
+                <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-700">
                   {contextLimit === 99
                     ? "携带全量"
                     : `携带最近 ${contextLimit} 轮`}

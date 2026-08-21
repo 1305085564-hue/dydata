@@ -5,13 +5,14 @@
 @import "../styles/design-tokens.css";
 @import "../styles/tokens.css";
 @import "../styles/animations.css";
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Source Han Sans CN', system-ui, sans-serif;
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-display: var(--font-display), 'PingFang SC', serif;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -76,9 +77,10 @@
   body {
     @apply bg-zinc-50 text-zinc-700;
     font-size: 13px;
-    line-height: 1.7;
+    line-height: 1.6;
     letter-spacing: 0.005em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   /* Toast 居中主控制点 */
   body [data-sonner-toaster] {

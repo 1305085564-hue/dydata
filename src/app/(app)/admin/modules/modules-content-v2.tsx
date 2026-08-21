@@ -1443,7 +1443,7 @@ export function AdminModulesContentV2({
                                       </option>
                                     ))}
                                   </select>
-                                  <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 size-3 text-zinc-500" />
+                                  <ChevronDown className="pointer-events-none absolute right-1.5 top-1.5 size-3.5 text-zinc-500" />
                                 </div>
                               )}
 
@@ -1721,7 +1721,7 @@ export function AdminModulesContentV2({
                           <button
                             type="button"
                             onClick={() => setRoleChangeTarget(activeMember)}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100 active:scale-[0.98]"
                           >
                             <span className="flex items-center gap-2">
                               <Settings className="size-3.5 text-zinc-400" />
@@ -1741,7 +1741,7 @@ export function AdminModulesContentV2({
                             onClick={() =>
                               setPasswordResetTarget(activeMember)
                             }
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100 active:scale-[0.98]"
                           >
                             <span className="flex items-center gap-2">
                               <KeyRound className="size-3.5 text-zinc-400" />
@@ -1759,7 +1759,7 @@ export function AdminModulesContentV2({
                             onClick={() =>
                               setExemptionMemberId(activeMember.id)
                             }
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100 active:scale-[0.98]"
                           >
                             <span className="flex items-center gap-2">
                               <ShieldAlert className="size-3.5 text-zinc-400" />
@@ -1779,7 +1779,7 @@ export function AdminModulesContentV2({
                           <button
                             type="button"
                             onClick={() => setRemoveTarget(activeMember)}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100/80 transition-all duration-150 active:scale-[0.98]"
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-zinc-700 hover:bg-zinc-100 transition-colors duration-100 active:scale-[0.98]"
                           >
                             <span className="flex items-center gap-2">
                               <UsersRound className="size-3.5 text-zinc-400" />
@@ -1798,7 +1798,7 @@ export function AdminModulesContentV2({
                               setArchiveTarget(activeMember);
                               setArchiveReason("");
                             }}
-                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-[#C9604D] hover:bg-[#C9604D]/5 transition-all duration-150 active:scale-[0.98]"
+                            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-[12px] text-[#C9604D] hover:bg-[#C9604D]/5 transition-colors duration-100 active:scale-[0.98]"
                           >
                             <span className="flex items-center gap-2">
                               <Archive className="size-3.5 text-[#C9604D]" />

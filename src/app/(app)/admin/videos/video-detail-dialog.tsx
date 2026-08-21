@@ -767,7 +767,7 @@ export function VideoDetailDialog({
       {/* 永久删除二次确认弹窗 */}
       {showConfirmPurge && video && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg animate-in fade-in zoom-in duration-200">
             <h3 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
               <AlertTriangle className="size-5 text-[#DC2626]" />
               永久物理删除确认

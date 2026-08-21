@@ -36,7 +36,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-all duration-150 active:scale-[0.98] shadow-sm hover:shadow" disabled={pending} type="submit">
+    <Button className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.98] shadow-sm hover:shadow" disabled={pending} type="submit">
       {pending ? (
         <span className="flex items-center justify-center gap-1.5">
           <Loader2 className="size-3.5 animate-spin" />

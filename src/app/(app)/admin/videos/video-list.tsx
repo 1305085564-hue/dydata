@@ -719,7 +719,7 @@ export function VideoList({
               onClick={() => onSwitchView("pending")}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "pending"
-                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                  ? "bg-white text-zinc-950 font-medium"
                   : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
               }`}
             >
@@ -733,7 +733,7 @@ export function VideoList({
               onClick={() => onSwitchView("all")}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "all"
-                  ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                  ? "bg-white text-zinc-950 font-medium"
                   : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
               }`}
             >
@@ -748,7 +748,7 @@ export function VideoList({
                 onClick={() => onSwitchView("trash")}
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   view === "trash"
-                    ? "bg-white text-zinc-950 shadow-2xs font-medium"
+                    ? "bg-white text-zinc-950 font-medium"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
                 }`}
               >
@@ -778,7 +778,7 @@ export function VideoList({
                   }
                 }}
               >
-              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2.5">
+              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2.5">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company"
                     ? "全公司 (全部团队)"
@@ -815,7 +815,7 @@ export function VideoList({
             value={filters.profileId}
             onValueChange={(value) => updateFilter("profileId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -833,7 +833,7 @@ export function VideoList({
             value={filters.accountId}
             onValueChange={(value) => updateFilter("accountId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
               <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -873,7 +873,7 @@ export function VideoList({
               )
             }
           >
-            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100/80 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
+            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
               <SelectValue>{statusLabel(filters.status)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -1286,7 +1286,7 @@ export function VideoList({
       {/* 永久删除确认弹窗 */}
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg animate-in fade-in zoom-in duration-200">
             <h3 className="text-base font-semibold text-zinc-900">
               永久删除确认
             </h3>

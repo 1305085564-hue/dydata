@@ -370,7 +370,7 @@ export function CaseDetailDialog({
         className="max-h-[88vh] max-w-4xl overflow-y-auto p-0 sm:max-w-4xl"
         showCloseButton={false}
       >
-        <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4 backdrop-blur-md">
+        <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4">
           <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-[18px] font-semibold leading-[1.5] text-zinc-900">
@@ -606,7 +606,7 @@ export function CaseDetailDialog({
                           {highlightedSections.map((h, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 border border-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
+                              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 border border-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
                             >
                               <span className="max-w-[150px] truncate">
                                 {h}

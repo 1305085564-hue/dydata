@@ -65,10 +65,10 @@ function getStatusColor(status: FulfillmentStatus | undefined): string {
     case "confirmed_published":
       return "bg-[#6FAA7D] border-[#5d946a]";
     case "leave":
-      return "bg-[#4A7FB5] border-[#5A8FC5]";
+      return "bg-[#43718E] border-[#5283A2]";
     case "waived":
     case "exempted":
-      return "bg-[#4A7FB5]/30 border-[#4A7FB5]/20";
+      return "bg-[#43718E]/30 border-[#43718E]/20";
     case "absent":
       return "bg-[#C9604D] border-[#b5503e]";
     case "unconfirmed":
@@ -328,7 +328,7 @@ export function MonthlyMatrix({
                             onMouseLeave={() => {
                               setHoveredCell(null);
                             }}
-                            className={`mx-auto block size-[16px] rounded-[3px] border transition-all duration-150 hover:scale-110 hover:z-10 cursor-pointer ${getStatusColor(status)} ${
+                            className={`mx-auto block size-[16px] rounded-[3px] border transition-colors duration-100 hover:scale-110 hover:z-10 cursor-pointer ${getStatusColor(status)} ${
                               isToday
                                 ? "ring-1 ring-[#D97757] ring-offset-1 z-10"
                                 : ""
@@ -369,11 +369,11 @@ export function MonthlyMatrix({
               已发布 / 已确认
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#4A7FB5] border border-[#5A8FC5]" />
+              <span className="inline-block size-[10px] rounded-sm bg-[#43718E] border border-[#5283A2]" />
               请假
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#4A7FB5]/30 border border-[#4A7FB5]/20" />
+              <span className="inline-block size-[10px] rounded-sm bg-[#43718E]/30 border border-[#43718E]/20" />
               豁免 / 豁免期
             </span>
             <span className="flex items-center gap-1.5">
@@ -525,7 +525,7 @@ export function MonthlyMatrix({
                   }}
                   className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 text-[12px] transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#4A7FB5]" />
+                  <span className="size-2 rounded-full bg-[#43718E]" />
                   标记请假
                 </button>
                 <button
@@ -537,7 +537,7 @@ export function MonthlyMatrix({
                   }}
                   className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 text-[12px] transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#4A7FB5]/50" />
+                  <span className="size-2 rounded-full bg-[#43718E]/50" />
                   标记豁免
                 </button>
                 <button

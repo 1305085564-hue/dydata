@@ -209,7 +209,7 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "relative flex flex-col justify-center flex-1 min-h-[92px] rounded-xl border p-3 transition-all duration-150",
+                "relative flex flex-col justify-center flex-1 min-h-[92px] rounded-xl border p-3 transition-colors duration-100",
                 slot.status === "empty"
                   ? "border-dashed border-zinc-300/90 bg-white/70 hover:border-[#D97757]/70 hover:bg-[#FDF9F7]/40 cursor-pointer shadow-2xs"
                   : "border-zinc-200 bg-white shadow-xs",

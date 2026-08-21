@@ -92,7 +92,7 @@ export function RemindLogDialog({ date, open, onOpenChange }: RemindLogDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 shadow-xl sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 shadow-lg sm:max-w-3xl">
         <DialogHeader className="px-6 pb-2 pt-6">
           <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-900">
             催交记录

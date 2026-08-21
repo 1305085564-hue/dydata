@@ -399,7 +399,7 @@ export function PremiumSettingsModal({
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className={cn(
-            "relative flex h-[min(620px,calc(100dvh-2rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl sm:h-[520px] sm:flex-row",
+            "relative flex h-[min(620px,calc(100dvh-2rem))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-white shadow-lg sm:h-[520px] sm:flex-row",
             "border-zinc-200",
           )}
         >
@@ -428,7 +428,7 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("profile")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-150 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors duration-100 sm:w-full",
                   activeTab === "profile"
                     ? "bg-zinc-200/80 text-zinc-900 font-semibold"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
@@ -442,7 +442,7 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("accounts")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-150 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors duration-100 sm:w-full",
                   activeTab === "accounts"
                     ? "bg-zinc-200/80 text-zinc-900 font-semibold"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
@@ -456,7 +456,7 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("system")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-all duration-150 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors duration-100 sm:w-full",
                   activeTab === "system"
                     ? "bg-zinc-200/80 text-zinc-900 font-semibold"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
@@ -471,7 +471,7 @@ export function PremiumSettingsModal({
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-zinc-600 hover:text-[#DC2626] hover:bg-zinc-100 transition-all duration-150"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-zinc-600 hover:text-[#DC2626] hover:bg-zinc-100 transition-colors duration-100"
                 >
                   <LogOut className="size-4 text-zinc-400 group-hover:text-[#DC2626]" />
                   退出当前系统
@@ -511,7 +511,7 @@ export function PremiumSettingsModal({
                         onChange={(e) => setEditingName(e.target.value)}
                         placeholder="输入您的姓名"
                         maxLength={20}
-                        className="flex-1 rounded-lg border border-zinc-300 bg-white py-1.5 px-3 text-[12px] tracking-tight text-zinc-900 outline-none transition-all duration-150 focus:border-zinc-400"
+                        className="flex-1 rounded-lg border border-zinc-300 bg-white py-1.5 px-3 text-[12px] tracking-tight text-zinc-900 outline-none transition-colors duration-100 focus:border-zinc-400"
                         required
                         disabled={isPending}
                       />
@@ -519,7 +519,7 @@ export function PremiumSettingsModal({
                         type="submit"
                         disabled={isPending}
                         className={cn(
-                          "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-all duration-150 min-w-[80px]",
+                          "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-colors duration-100 min-w-[80px]",
                           saveSuccess
                             ? "bg-[#16A34A]"
                             : "bg-[#D97757] hover:bg-[#C46A4D]",

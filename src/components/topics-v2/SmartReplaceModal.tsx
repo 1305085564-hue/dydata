@@ -109,7 +109,7 @@ export function SmartReplaceModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="replace-modal-title"
-          className="w-full max-w-lg max-h-[85vh] flex flex-col bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-150"
+          className="w-full max-w-lg max-h-[85vh] flex flex-col bg-white/95 border border-zinc-200 rounded-2xl shadow-lg p-6 animate-in zoom-in-95 duration-150"
         >
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100 shrink-0">
             <div className="flex items-center gap-2">
