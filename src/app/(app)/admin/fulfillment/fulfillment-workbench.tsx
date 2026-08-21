@@ -324,7 +324,7 @@ export function FulfillmentWorkbench({
         url.searchParams.set("range", targetRange);
         window.history.pushState(null, "", url.pathname + url.search);
       } catch {
-        toast.error("加载履约日历失败，请重试");
+        toast.error("加载发布日历失败，请重试");
       } finally {
         setIsLoadingCalendar(false);
       }

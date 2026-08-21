@@ -71,7 +71,7 @@ export function StatsBar({ stats }: StatsBarProps) {
       <div className="rounded-xl border border-zinc-200 bg-white p-5 lg:col-span-1 transition-all duration-200 hover:border-zinc-300">
         <div className="flex flex-col justify-between h-full min-h-[80px]">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-normal tracking-wider text-zinc-500 uppercase">履约周期大盘</span>
+            <span className="text-[12px] font-normal tracking-wider text-zinc-500 uppercase">发布周期大盘</span>
             <span className={`text-[12px] font-medium tabular-nums ${
               stats.periodFulfillmentRate >= 80
                 ? "text-[#6FAA7D]"

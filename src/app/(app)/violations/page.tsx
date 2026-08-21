@@ -17,7 +17,7 @@ import { ViolationsManageDataContainer } from "./violations-manage-data-containe
 import ViolationsLoading from "./loading";
 
 export const metadata: Metadata = {
-  title: "避坑案例",
+  title: "避坑案例 - DYData",
   description: "查看团队沉淀的抖音话术案例、复盘结果与风险提醒。",
 };
 

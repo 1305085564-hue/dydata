@@ -13,7 +13,7 @@ import { AdminModulesContentV3 } from "./modules-content-v3";
 import { TeamV2Skeleton } from "./modules-skeleton-v2";
 
 export const metadata: Metadata = {
-  title: "成员管理",
+  title: "成员管理 - DYData",
   description: "维护团队架构、分组归属、成员权限与入团审批。",
 };
 

@@ -14,7 +14,7 @@ import { QuotaConfigPanel } from "./components/quota-config-panel";
 import { ThresholdsConfigPanel } from "./components/thresholds-config-panel";
 
 export const metadata: Metadata = {
-  title: "系统维护",
+  title: "系统维护 - DYData",
   description: "维护 DYData 成员权限、团队分组与系统配置。",
 };
 

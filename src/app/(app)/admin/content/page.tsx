@@ -9,7 +9,7 @@ import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { ContentDataContainer } from "./content-data-container";
 
 export const metadata: Metadata = {
-  title: "视频复盘",
+  title: "视频复盘 - DYData",
   description: "审核团队视频内容，沉淀复盘反馈与可复用案例。",
 };
 

@@ -13,8 +13,8 @@ import type { TimeRangePreset } from "@/types/fulfillment";
 import { FulfillmentWorkbench } from "./fulfillment-workbench";
 
 export const metadata: Metadata = {
-  title: "发布管理",
-  description: "管理团队发布计划、履约进度与异常申诉。",
+  title: "发布管理 - DYData",
+  description: "管理团队发布计划、发布进度与异常申诉。",
 };
 
 interface FulfillmentPageProps {

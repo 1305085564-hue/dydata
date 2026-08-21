@@ -6,7 +6,7 @@ import { getUserPermissions } from "@/lib/permissions";
 import { AIConfigShell, type AIConfigTabKey } from "./ai-config-shell";
 
 export const metadata: Metadata = {
-  title: "AI 配置",
+  title: "AI 配置 - DYData",
   description: "管理 AI 渠道、模型分组、功能绑定与文案改写路由。",
 };
 

@@ -8,7 +8,7 @@ import { CollaborationDataContainer } from "./collaboration-data-container";
 import CollaborationLoading from "./loading";
 
 export const metadata: Metadata = {
-  title: "协作管理",
+  title: "协作管理 - DYData",
   description: "按岗位查看团队成员产量与运营带人情况。",
 };
 

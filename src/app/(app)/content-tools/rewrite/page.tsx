@@ -7,7 +7,7 @@ import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
 
 export const metadata: Metadata = {
-  title: "AI 文案改写",
+  title: "文案助手 - DYData",
   description: "输入原文，使用团队配置的 AI 模型辅助改写抖音文案。",
 };
 

@@ -6,7 +6,7 @@ import ContentToolsLoading from "./loading";
 import { ContentToolsDataContainer } from "./content-tools-data-container";
 
 export const metadata: Metadata = {
-  title: "文案助手",
+  title: "文案助手 - DYData",
   description: "管理文案素材并使用 AI 辅助改写抖音内容。",
 };
 

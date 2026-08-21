@@ -10,7 +10,7 @@ import { VideosDataContainer } from "./videos-data-container";
 import type { AdminVideosView } from "@/lib/loaders/admin-videos-page";
 
 export const metadata: Metadata = {
-  title: "视频素材",
+  title: "素材库 - DYData",
   description: "管理团队视频素材、审核状态与归档记录。",
 };
 

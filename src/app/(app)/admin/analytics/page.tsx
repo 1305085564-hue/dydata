@@ -11,7 +11,7 @@ import { AnalyticsDataContainer } from "./analytics-data-container";
 import AnalyticsLoading from "./loading";
 
 export const metadata: Metadata = {
-  title: "经营分析",
+  title: "经营分析 - DYData",
   description: "查看团队经营数据、时间趋势与核心指标。",
 };
 

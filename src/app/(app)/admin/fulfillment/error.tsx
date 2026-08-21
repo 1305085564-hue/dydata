@@ -17,7 +17,7 @@ export default function FulfillmentError({ error, reset }: FulfillmentErrorProps
   return (
     <RouteErrorState
       title="发布管理加载失败"
-      description="暂时无法取得履约数据，请检查网络后重试。"
+      description="暂时无法取得发布数据，请检查网络后重试。"
       reset={reset}
     />
   );

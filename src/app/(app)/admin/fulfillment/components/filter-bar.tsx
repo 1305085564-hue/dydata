@@ -201,7 +201,7 @@ export function FilterBar({
             </DialogTitle>
             <DialogDescription className="text-zinc-600">
               {confirmToggleTarget
-                ? "开启后，系统将在每日 18:00 自动检查团队履约进度，并向未提交视频的成员发送飞书应用消息提醒。"
+                ? "开启后，系统将在每日 18:00 自动检查团队发布进度，并向未提交视频的成员发送飞书应用消息提醒。"
                 : "关闭后，系统将停止每日 18:00 的飞书自动催交提醒功能。"}
             </DialogDescription>
           </DialogHeader>

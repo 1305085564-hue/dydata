@@ -665,7 +665,7 @@ export function UnifiedCommandHub({
                         今日待办已全部完成
                       </h3>
                       <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-zinc-500">
-                        团队目前没有未处理的违规审核或履约卡点，状态良好。
+                        团队目前没有未处理的违规审核或发布卡点，状态良好。
                       </p>
                       {isAdmin && (
                         <Link
@@ -673,7 +673,7 @@ export function UnifiedCommandHub({
                           onClick={() => onOpenChange(false)}
                           className="mt-3.5 inline-flex h-7 items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-all active:scale-95 shadow-2xs"
                         >
-                          <span>前往日常发布管理</span>
+                          <span>前往发布管理</span>
                           <ArrowRight className="size-3" />
                         </Link>
                       )}
@@ -772,13 +772,13 @@ export function UnifiedCommandHub({
                   {/* Admin Bottom Quick Channel */}
                   {isAdmin && activeTodos.length > 0 && (
                     <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400 px-1">
-                      <span>团队履约概况</span>
+                      <span>团队发布概况</span>
                       <Link
                         href="/admin/fulfillment"
                         onClick={() => onOpenChange(false)}
                         className="inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900 transition-colors font-medium"
                       >
-                        <span>进入日常发布管理</span>
+                        <span>进入发布管理</span>
                         <ArrowRight className="size-2.5" />
                       </Link>
                     </div>

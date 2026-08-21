@@ -865,7 +865,7 @@ export function AdminModulesContentV3({
       const payload = await res.json();
       setAiSuggestion({
         status: payload.status || "normal",
-        summary: payload.summary || "履约与权限状态良好。",
+        summary: payload.summary || "发布与权限状态良好。",
         suggestions: payload.suggestions || [],
         loading: false,
         error: null,
@@ -950,26 +950,26 @@ export function AdminModulesContentV3({
   return (
     <div className="mt-4 w-full space-y-5 relative">
       <main className="space-y-5">
-        {/* ── 待审批入团申请预警栏 ── */}
+        {/* ── 待审批入团申请预警栏（状态色便签范式：弱底色差 + 左竖线，用完即撕） ── */}
         {pendingRequests.length > 0 && (
-          <section className="bg-amber-50/50 rounded-xl border border-amber-200/60 p-4.5">
-            <div className="flex items-center gap-2.5 mb-3">
+          <section className="bg-amber-50/60 rounded-lg border-l-2 border-amber-400 p-4">
+            <div className="flex items-center gap-2 mb-2.5">
               <span className="text-[13px] font-medium text-amber-950">待审批入团申请</span>
-              <span className="text-[12px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+              <span className="text-[12px] font-medium text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
                 {pendingRequests.length}
               </span>
             </div>
-            <div className="divide-y divide-amber-100/80">
+            <div className="divide-y divide-amber-200/40">
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="flex items-center justify-between gap-4 py-2.5"
+                  className="flex items-center justify-between gap-4 py-2"
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[13px] font-medium text-zinc-900">{req.applicantName}</span>
-                    <span className="mx-2 text-amber-200">·</span>
+                    <span className="mx-2 text-amber-300">·</span>
                     <span className="text-[12px] text-zinc-600">{req.targetTeamName}</span>
-                    <span className="mx-2 text-amber-200">·</span>
+                    <span className="mx-2 text-amber-300">·</span>
                     <span className="text-[12px] text-zinc-500">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
@@ -1000,7 +1000,7 @@ export function AdminModulesContentV3({
         )}
 
         {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
-        <section className="bg-white rounded-xl border border-zinc-200/80 shadow-xs p-5">
+        <section className="bg-white rounded-2xl border border-zinc-200/80 shadow-2xs p-5">
           {/* 工具栏：平铺去框，呼吸线分隔，与下方列表以 1px 细线自然区分 */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-zinc-100">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1512,7 +1512,7 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <SheetContent className="w-full max-w-xl sm:max-w-xl p-0 overflow-y-auto bg-zinc-50">
+        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 overflow-y-auto bg-zinc-50">
           {activeMember && (
             <div className="flex flex-col h-full">
               {/* 抽屉头部 */}
@@ -1629,7 +1629,7 @@ export function AdminModulesContentV3({
                   <div className="space-y-5">
                     <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[13px] font-medium text-zinc-900">本月履约概况</h4>
+                        <h4 className="text-[13px] font-medium text-zinc-900">本月发布概况</h4>
                         <span className="text-[12px] text-zinc-500 tabular-nums">
                           实发天数：{activeMember.monthly_published_days ?? 0} 天
                         </span>
@@ -1660,7 +1660,7 @@ export function AdminModulesContentV3({
                             {activeMember.exempt_type === "permanent" ? "永久豁免" : "区间豁免"}
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">正常履约</Badge>
+                          <Badge variant="secondary">正常发布</Badge>
                         )}
                       </div>
                       {activeMember.exempt_type ? (
