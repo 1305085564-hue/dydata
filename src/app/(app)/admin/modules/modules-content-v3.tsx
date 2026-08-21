@@ -1113,7 +1113,7 @@ export function AdminModulesContentV3({
                         key={member.id}
                         onClick={() => openMemberDrawer(member)}
                         className={cn(
-                          "group flex items-center justify-between gap-3 pl-4 pr-7 py-2.5 transition-colors cursor-pointer select-none",
+                          "group flex items-center justify-between gap-3 pl-6 pr-10 py-2.5 transition-colors cursor-pointer select-none",
                           isRestoredFocus
                             ? "bg-amber-50 animate-pulse"
                             : isChecked
@@ -1286,7 +1286,7 @@ export function AdminModulesContentV3({
                         key={member.id}
                         onClick={() => openMemberDrawer(member)}
                         className={cn(
-                          "group flex items-center justify-between gap-3 pl-4 pr-7 py-2.5 transition-colors cursor-pointer select-none",
+                          "group flex items-center justify-between gap-3 pl-6 pr-10 py-2.5 transition-colors cursor-pointer select-none",
                           isRestoredFocus
                             ? "bg-amber-50 animate-pulse"
                             : isChecked
