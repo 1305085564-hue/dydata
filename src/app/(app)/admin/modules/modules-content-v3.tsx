@@ -1084,7 +1084,7 @@ export function AdminModulesContentV3({
             </div>
           </div>
 
-          {/* 成员双列紧凑网格 (方案 A) */}
+          {/* 成员双列平铺细线列表 */}
           {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <UsersRound className="size-8 text-zinc-300 mb-3" />
@@ -1092,174 +1092,352 @@ export function AdminModulesContentV3({
               <p className="text-[12px] text-zinc-400 mt-1">调整筛选或搜索条件试试</p>
             </div>
           ) : (
-            <div className="p-3.5 grid grid-cols-1 xl:grid-cols-2 gap-2.5">
-              {sortedProfiles.map((member) => {
-                const isArchivedView = memberView === "archived";
-                const isCurrentMemberActive = activeMemberId === member.id;
-                const isRestoredFocus = restoredFocusId === member.id;
-                const isChecked = selectedMemberIds.includes(member.id);
-                const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
+            <div className="grid grid-cols-1 lg:grid-cols-2 divide-y divide-zinc-100 lg:divide-y-0">
+              {/* 左列 */}
+              <div className="divide-y divide-zinc-100">
+                {sortedProfiles
+                  .filter((_, idx) => idx % 2 === 0)
+                  .map((member) => {
+                    const isArchivedView = memberView === "archived";
+                    const isCurrentMemberActive = activeMemberId === member.id;
+                    const isRestoredFocus = restoredFocusId === member.id;
+                    const isChecked = selectedMemberIds.includes(member.id);
+                    const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
 
-                const published = member.monthly_published_count ?? 0;
-                const required = member.monthly_required_count ?? 0;
-                const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
+                    const published = member.monthly_published_count ?? 0;
+                    const required = member.monthly_required_count ?? 0;
+                    const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
 
-                return (
-                  <div
-                    key={member.id}
-                    onClick={() => openMemberDrawer(member)}
-                    className={cn(
-                      "group relative flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl border transition-all cursor-pointer select-none",
-                      isRestoredFocus
-                        ? "bg-amber-50 border-amber-300 animate-pulse"
-                        : isChecked
-                        ? "bg-zinc-50 border-zinc-900/40 shadow-2xs"
-                        : isCurrentMemberActive
-                        ? "bg-zinc-50/80 border-zinc-300 shadow-2xs"
-                        : "bg-white border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50/50 hover:shadow-2xs"
-                    )}
-                  >
-                    {/* 左侧：勾选框 + 姓名 + 身份徽标 + 邮箱（单排紧凑） */}
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      {canManageCompany && !isArchivedView && member.id !== currentUserId && (
-                        <div
-                          className="shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
-                              } else {
-                                setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                              }
-                            }}
-                            className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
-                          />
-                        </div>
-                      )}
-
-                      <div className="min-w-0 flex-1 flex items-center gap-1.5">
-                        <span className="text-[13px] font-medium text-zinc-900 shrink-0">
-                          {member.name}
-                        </span>
-                        {member.id === currentUserId && (
-                          <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded shrink-0">
-                            我
-                          </span>
-                        )}
-                        {isCurrentlyExempt && (
-                          <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
-                            豁免
-                          </span>
-                        )}
-                        {member.email && (
-                          <span className="text-[11px] text-zinc-400 truncate font-normal">
-                            {member.email}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 右侧：角色徽标 + 团队 + 橙色履约进度条 */}
-                    <div className="flex items-center gap-3 shrink-0">
-                      {/* 角色徽标 */}
-                      <div className="text-center shrink-0">
-                        {isArchivedView ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                            <Archive className="size-3" />
-                            已归档
-                          </span>
-                        ) : member.role === "owner" ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
-                            创始人
-                          </span>
-                        ) : member.role === "admin" ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
-                            主管
-                          </span>
-                        ) : (
-                          <span className="text-[11px] text-zinc-400">组员</span>
-                        )}
-                      </div>
-
-                      {/* 团队 */}
+                    return (
                       <div
-                        className="shrink-0 text-[11px] text-zinc-600 max-w-[84px] truncate"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {isArchivedView ? (
-                          <span className="text-zinc-400">
-                            {truncateTeamName(member.archive_snapshot?.team_name as string, 6)}
-                          </span>
-                        ) : !canEditTeamMembers || member.id === currentUserId ? (
-                          <span>{truncateTeamName(member.team_name, 6)}</span>
-                        ) : (
-                          <div className="relative inline-flex items-center">
-                            <select
-                              value={member.team_id ?? ""}
-                              onChange={(e) =>
-                                handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
-                              }
-                              className="h-6 pl-1.5 pr-4 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-100/80 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[84px] truncate"
-                            >
-                              <option value="">未分配</option>
-                              {localTeams.map((t) => (
-                                <option key={t.id} value={t.id}>
-                                  {truncateTeamName(t.name, 6)}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
+                        key={member.id}
+                        onClick={() => openMemberDrawer(member)}
+                        className={cn(
+                          "group flex items-center justify-between gap-3 px-4 py-2.5 transition-colors cursor-pointer select-none",
+                          isRestoredFocus
+                            ? "bg-amber-50 animate-pulse"
+                            : isChecked
+                            ? "bg-zinc-50"
+                            : isCurrentMemberActive
+                            ? "bg-zinc-50/80"
+                            : "hover:bg-zinc-50/60"
                         )}
-                      </div>
-
-                      {/* 本月实发 / 应发进度条 */}
-                      <div className="w-20 text-right shrink-0">
-                        {isArchivedView ? (
-                          <span className="text-[11px] text-zinc-400">
-                            {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
-                          </span>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-600 tabular-nums">
-                              <span className="font-semibold text-zinc-900">{published}</span>
-                              <span className="text-zinc-400">/</span>
-                              <span>{required}条</span>
+                      >
+                        {/* 左侧：勾选框 + 姓名 + 身份徽标 + 邮箱（单排紧凑） */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {canManageCompany && !isArchivedView && member.id !== currentUserId && (
+                            <div
+                              className="shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
+                                  } else {
+                                    setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
+                                  }
+                                }}
+                                className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                              />
                             </div>
-                            {required > 0 && (
-                              <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-[#D97757] rounded-full transition-all duration-300"
-                                  style={{ width: `${fulfillRatio}%` }}
-                                />
+                          )}
+
+                          <div className="min-w-0 flex-1 flex items-center gap-1.5">
+                            <span className="text-[13px] font-medium text-zinc-900 shrink-0">
+                              {member.name}
+                            </span>
+                            {member.id === currentUserId && (
+                              <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded shrink-0">
+                                我
+                              </span>
+                            )}
+                            {isCurrentlyExempt && (
+                              <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
+                                豁免
+                              </span>
+                            )}
+                            {member.email && (
+                              <span className="text-[11px] text-zinc-400 truncate font-normal">
+                                {member.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 右侧：角色徽标 + 团队 + 橙色履约进度条 */}
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          {/* 角色徽标 */}
+                          <div className="text-center shrink-0">
+                            {isArchivedView ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                                <Archive className="size-3" />
+                                已归档
+                              </span>
+                            ) : member.role === "owner" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                                创始人
+                              </span>
+                            ) : member.role === "admin" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
+                                主管
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-zinc-400">组员</span>
+                            )}
+                          </div>
+
+                          {/* 团队 */}
+                          <div
+                            className="shrink-0 text-[11px] text-zinc-600 max-w-[80px] truncate"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {isArchivedView ? (
+                              <span className="text-zinc-400">
+                                {truncateTeamName(member.archive_snapshot?.team_name as string, 6)}
+                              </span>
+                            ) : !canEditTeamMembers || member.id === currentUserId ? (
+                              <span>{truncateTeamName(member.team_name, 6)}</span>
+                            ) : (
+                              <div className="relative inline-flex items-center">
+                                <select
+                                  value={member.team_id ?? ""}
+                                  onChange={(e) =>
+                                    handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
+                                  }
+                                  className="h-6 pl-1.5 pr-4 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-100/80 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[80px] truncate"
+                                >
+                                  <option value="">未分配</option>
+                                  {localTeams.map((t) => (
+                                    <option key={t.id} value={t.id}>
+                                      {truncateTeamName(t.name, 6)}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
 
-                      {/* 归档视图下恢复按钮 */}
-                      {isArchivedView && isCompanyOwner && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setRestoreTarget(member);
-                          }}
-                          disabled={isPending}
-                          className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
-                        >
-                          <RotateCcw className="size-3" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                          {/* 本月实发 / 应发进度条 */}
+                          <div className="w-20 text-right shrink-0">
+                            {isArchivedView ? (
+                              <span className="text-[11px] text-zinc-400">
+                                {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
+                              </span>
+                            ) : (
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-600 tabular-nums">
+                                  <span className="font-semibold text-zinc-900">{published}</span>
+                                  <span className="text-zinc-400">/</span>
+                                  <span>{required}条</span>
+                                </div>
+                                {required > 0 && (
+                                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-[#D97757] rounded-full transition-all duration-300"
+                                      style={{ width: `${fulfillRatio}%` }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 归档视图下恢复按钮 */}
+                          {isArchivedView && isCompanyOwner && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRestoreTarget(member);
+                              }}
+                              disabled={isPending}
+                              className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                            >
+                              <RotateCcw className="size-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* 右列 */}
+              <div className="divide-y divide-zinc-100 lg:border-l lg:border-zinc-100">
+                {sortedProfiles
+                  .filter((_, idx) => idx % 2 === 1)
+                  .map((member) => {
+                    const isArchivedView = memberView === "archived";
+                    const isCurrentMemberActive = activeMemberId === member.id;
+                    const isRestoredFocus = restoredFocusId === member.id;
+                    const isChecked = selectedMemberIds.includes(member.id);
+                    const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
+
+                    const published = member.monthly_published_count ?? 0;
+                    const required = member.monthly_required_count ?? 0;
+                    const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
+
+                    return (
+                      <div
+                        key={member.id}
+                        onClick={() => openMemberDrawer(member)}
+                        className={cn(
+                          "group flex items-center justify-between gap-3 px-4 py-2.5 transition-colors cursor-pointer select-none",
+                          isRestoredFocus
+                            ? "bg-amber-50 animate-pulse"
+                            : isChecked
+                            ? "bg-zinc-50"
+                            : isCurrentMemberActive
+                            ? "bg-zinc-50/80"
+                            : "hover:bg-zinc-50/60"
+                        )}
+                      >
+                        {/* 左侧：勾选框 + 姓名 + 身份徽标 + 邮箱（单排紧凑） */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {canManageCompany && !isArchivedView && member.id !== currentUserId && (
+                            <div
+                              className="shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
+                                  } else {
+                                    setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
+                                  }
+                                }}
+                                className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                              />
+                            </div>
+                          )}
+
+                          <div className="min-w-0 flex-1 flex items-center gap-1.5">
+                            <span className="text-[13px] font-medium text-zinc-900 shrink-0">
+                              {member.name}
+                            </span>
+                            {member.id === currentUserId && (
+                              <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded shrink-0">
+                                我
+                              </span>
+                            )}
+                            {isCurrentlyExempt && (
+                              <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
+                                豁免
+                              </span>
+                            )}
+                            {member.email && (
+                              <span className="text-[11px] text-zinc-400 truncate font-normal">
+                                {member.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 右侧：角色徽标 + 团队 + 橙色履约进度条 */}
+                        <div className="flex items-center gap-2.5 shrink-0">
+                          {/* 角色徽标 */}
+                          <div className="text-center shrink-0">
+                            {isArchivedView ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
+                                <Archive className="size-3" />
+                                已归档
+                              </span>
+                            ) : member.role === "owner" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                                创始人
+                              </span>
+                            ) : member.role === "admin" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
+                                主管
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-zinc-400">组员</span>
+                            )}
+                          </div>
+
+                          {/* 团队 */}
+                          <div
+                            className="shrink-0 text-[11px] text-zinc-600 max-w-[80px] truncate"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {isArchivedView ? (
+                              <span className="text-zinc-400">
+                                {truncateTeamName(member.archive_snapshot?.team_name as string, 6)}
+                              </span>
+                            ) : !canEditTeamMembers || member.id === currentUserId ? (
+                              <span>{truncateTeamName(member.team_name, 6)}</span>
+                            ) : (
+                              <div className="relative inline-flex items-center">
+                                <select
+                                  value={member.team_id ?? ""}
+                                  onChange={(e) =>
+                                    handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
+                                  }
+                                  className="h-6 pl-1.5 pr-4 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-100/80 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[80px] truncate"
+                                >
+                                  <option value="">未分配</option>
+                                  {localTeams.map((t) => (
+                                    <option key={t.id} value={t.id}>
+                                      {truncateTeamName(t.name, 6)}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 本月实发 / 应发进度条 */}
+                          <div className="w-20 text-right shrink-0">
+                            {isArchivedView ? (
+                              <span className="text-[11px] text-zinc-400">
+                                {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
+                              </span>
+                            ) : (
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-600 tabular-nums">
+                                  <span className="font-semibold text-zinc-900">{published}</span>
+                                  <span className="text-zinc-400">/</span>
+                                  <span>{required}条</span>
+                                </div>
+                                {required > 0 && (
+                                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full bg-[#D97757] rounded-full transition-all duration-300"
+                                      style={{ width: `${fulfillRatio}%` }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 归档视图下恢复按钮 */}
+                          {isArchivedView && isCompanyOwner && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRestoreTarget(member);
+                              }}
+                              disabled={isPending}
+                              className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                            >
+                              <RotateCcw className="size-3" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
             </div>
           )}
         </section>
