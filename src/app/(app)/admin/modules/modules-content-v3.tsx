@@ -1074,7 +1074,7 @@ export function AdminModulesContentV3({
                       : "text-zinc-500 hover:text-zinc-700"
                   )}
                 >
-                  已归档 {localArchivedProfiles.length}
+                  归档 {localArchivedProfiles.length}
                 </button>
               </div>
 
@@ -1185,7 +1185,7 @@ export function AdminModulesContentV3({
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-zinc-400 truncate block">
+                      <span className="text-[11px] text-zinc-400 truncate block mt-0.5">
                         {member.email || "—"}
                       </span>
                     </div>
@@ -1196,6 +1196,11 @@ export function AdminModulesContentV3({
                         <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400">
                           <Archive className="size-3" />
                           已归档
+                        </span>
+                      ) : member.role === "owner" ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] text-zinc-900 font-medium">
+                          <span className="size-1.5 rounded-full bg-zinc-900" />
+                          创始人
                         </span>
                       ) : member.role === "admin" ? (
                         <span className="inline-flex items-center gap-1 text-[11px] text-zinc-900 font-medium">
@@ -1236,7 +1241,7 @@ export function AdminModulesContentV3({
                       )}
                     </div>
 
-                    {/* 本月实发 / 应发 (1.5 微进度条) */}
+                    {/* 本月实发 / 应发 (1.5 极细2px微进度条) */}
                     <div className="w-20 text-right shrink-0">
                       {isArchivedView ? (
                         <span className="text-[11px] text-zinc-400">
@@ -1248,9 +1253,9 @@ export function AdminModulesContentV3({
                             {published}/{required}
                           </span>
                           {required > 0 && (
-                            <div className="h-1 w-full bg-zinc-100 rounded-full overflow-hidden">
+                            <div className="h-0.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-zinc-900 rounded-full transition-all duration-300"
+                                className="h-full bg-zinc-800 rounded-full transition-all duration-300"
                                 style={{ width: `${fulfillRatio}%` }}
                               />
                             </div>
