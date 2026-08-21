@@ -81,7 +81,7 @@ export function MemberPermissionEditor({
       {/* 板块一：数据范围 (Data Scope) */}
       <section className="space-y-3">
         <div>
-          <h4 className="text-[13px] font-semibold text-zinc-900 tracking-tight">数据范围</h4>
+          <h4 className="text-[13px] font-medium text-zinc-900">数据范围</h4>
           <p className="text-[12px] text-zinc-500 mt-0.5">决定该成员在数据分析看板与报表中可见的数据边界</p>
         </div>
 
@@ -117,7 +117,7 @@ export function MemberPermissionEditor({
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-[13px] font-semibold text-zinc-900 tracking-tight">功能权限</h4>
+            <h4 className="text-[13px] font-medium text-zinc-900">功能权限</h4>
             <p className="text-[12px] text-zinc-500 mt-0.5">按 4 大核心模块划分子权限，可灵活授予任何成员</p>
           </div>
 
@@ -142,13 +142,13 @@ export function MemberPermissionEditor({
             return (
               <div
                 key={category}
-                className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3 transition-colors"
+                className="space-y-3"
               >
                 {/* 类别标头 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-zinc-900">{categoryLabel}</span>
-                    <span className="text-[11px] font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[13px] font-medium text-zinc-900">{categoryLabel}</span>
+                    <span className="text-[12px] text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
                       {enabledCount} / {keys.length} 已开启
                     </span>
                   </div>

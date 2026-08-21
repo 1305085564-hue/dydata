@@ -199,6 +199,33 @@ function normalizeUserStatus(value: string | null | undefined): UserStatus {
   return value === "exempt" ? "exempt" : "active";
 }
 
+function getProgressColor(ratio: number): string {
+  if (ratio <= 0) return "bg-zinc-300";
+  if (ratio <= 30) return "bg-zinc-400";
+  if (ratio <= 70) return "bg-[#43718E]";
+  if (ratio < 100) return "bg-[#D97757]";
+  return "bg-[#405740]";
+}
+
+function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean }) {
+  return (
+    <div
+      className="hidden lg:flex items-center justify-between gap-3 border-b border-zinc-200 text-[13px] font-normal text-zinc-400 select-none pb-2 mb-1 px-3"
+      aria-hidden="true"
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {showCheckboxSlot ? <span className="size-3.5 shrink-0" /> : null}
+        <span>成员</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-4">
+        <span className="w-14 text-center shrink-0">角色</span>
+        <span className="w-24 text-right shrink-0">发布</span>
+        <span className="w-8 shrink-0" />
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Component ─── */
 
 export function AdminModulesContentV3({
@@ -925,25 +952,25 @@ export function AdminModulesContentV3({
       <main className="space-y-5">
         {/* ── 待审批入团申请预警栏 ── */}
         {pendingRequests.length > 0 && (
-          <section className="rounded-xl border border-zinc-200 bg-zinc-50/60 px-5 py-4">
+          <section className="bg-amber-50/50 rounded-xl border border-amber-200/60 p-4.5">
             <div className="flex items-center gap-2.5 mb-3">
-              <span className="text-[13px] font-medium text-zinc-900">待审批入团申请</span>
-              <span className="text-[11px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+              <span className="text-[13px] font-medium text-amber-950">待审批入团申请</span>
+              <span className="text-[12px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
                 {pendingRequests.length}
               </span>
             </div>
-            <div className="space-y-2">
+            <div className="divide-y divide-amber-100/80">
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white px-4 py-3"
+                  className="flex items-center justify-between gap-4 py-2.5"
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[13px] font-medium text-zinc-900">{req.applicantName}</span>
-                    <span className="mx-2 text-zinc-300">·</span>
-                    <span className="text-[12px] text-zinc-500">{req.targetTeamName}</span>
-                    <span className="mx-2 text-zinc-300">·</span>
-                    <span className="text-[11px] text-zinc-400">
+                    <span className="mx-2 text-amber-200">·</span>
+                    <span className="text-[12px] text-zinc-600">{req.targetTeamName}</span>
+                    <span className="mx-2 text-amber-200">·</span>
+                    <span className="text-[12px] text-zinc-500">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
                   </div>
@@ -972,12 +999,12 @@ export function AdminModulesContentV3({
           </section>
         )}
 
-        {/* ── 主控制台与高密度成员列表 ── */}
-        <section className="rounded-xl border border-zinc-200 bg-white">
-          {/* 一体化工具栏 */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-zinc-100">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* 团队选择器 (带管辖范围隔离) */}
+        {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
+        <section className="bg-white rounded-xl border border-zinc-200/80 shadow-xs p-5">
+          {/* 工具栏：平铺去框，呼吸线分隔，与下方列表以 1px 细线自然区分 */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-zinc-100">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* 团队选择器 */}
               <div className="relative">
                 <select
                   value={selectedTeamId}
@@ -988,7 +1015,7 @@ export function AdminModulesContentV3({
                       setSelectedTeamId(e.target.value);
                     }
                   }}
-                  className="h-8 pl-3 pr-7 text-[12px] font-medium bg-zinc-50 text-zinc-700 border border-zinc-200 rounded-lg outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors"
+                  className="h-8 pl-2.5 pr-6 text-[13px] font-medium bg-transparent text-zinc-800 border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-zinc-100/70 transition-colors"
                 >
                   <option value={ALL_TEAMS_ID}>
                     {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
@@ -1003,38 +1030,47 @@ export function AdminModulesContentV3({
                   })}
                   {canManageCompany && <option value="__manage__">管理架构…</option>}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-zinc-400" />
               </div>
+
+              {/* 16px 呼吸竖线 */}
+              <span className="text-zinc-200 mx-1 select-none" aria-hidden="true">|</span>
 
               {/* 排序 */}
               <div className="relative">
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as "role" | "published")}
-                  className="h-8 pl-3 pr-7 text-[12px] bg-zinc-50 text-zinc-600 border border-zinc-200 rounded-lg outline-none cursor-pointer appearance-none hover:border-zinc-300 transition-colors"
+                  className="h-8 pl-2.5 pr-6 text-[13px] font-normal bg-transparent text-zinc-600 border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-zinc-100/70 transition-colors"
                 >
                   <option value="role">按职位</option>
                   <option value="published">按发布</option>
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-zinc-400" />
               </div>
 
-              {/* 搜索框 */}
+              {/* 16px 呼吸竖线 */}
+              <span className="text-zinc-200 mx-1 select-none" aria-hidden="true">|</span>
+
+              {/* 搜索框：微胶囊 */}
               <div className="relative">
-                <Search className="absolute left-2.5 top-2 size-3.5 text-zinc-400" />
-                <Input
+                <Search className="absolute left-3 top-2.5 size-3.5 text-zinc-400" />
+                <input
+                  type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="搜索…"
-                  className="h-8 pl-8 pr-3 text-[12px] bg-zinc-50 border-zinc-200 rounded-lg w-40 focus:w-56 transition-all"
+                  placeholder="搜索成员姓名或邮箱…"
+                  className="h-8 pl-8 pr-4 text-[13px] bg-zinc-100/70 border-0 rounded-full w-48 sm:w-56 focus:w-64 focus:bg-white focus:ring-1 focus:ring-zinc-200 outline-none transition-all placeholder:text-zinc-400"
                 />
               </div>
 
               {canManageCompany && (
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={() => setTeamManagementDialogOpen(true)}
-                  className="h-8 px-2.5 text-[12px] text-zinc-500 hover:text-zinc-700 rounded-lg"
+                  className="h-8 px-2 text-zinc-400 hover:text-zinc-700 rounded-md ml-1"
+                  title="团队架构设置"
                 >
                   <Settings className="size-3.5" />
                 </Button>
@@ -1042,18 +1078,18 @@ export function AdminModulesContentV3({
             </div>
 
             {/* 状态切换与计数 */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center bg-zinc-100 rounded-lg p-0.5" role="tablist">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 text-[13px]" role="tablist">
                 <button
                   type="button"
                   role="tab"
                   aria-selected={memberView === "active"}
                   onClick={() => setMemberView("active")}
                   className={cn(
-                    "px-2.5 py-1 text-[11px] rounded-md transition-colors",
+                    "transition-colors",
                     memberView === "active"
-                      ? "bg-white text-zinc-900 shadow-sm font-medium"
-                      : "text-zinc-500 hover:text-zinc-700"
+                      ? "text-zinc-950 font-medium"
+                      : "text-zinc-400 hover:text-zinc-700"
                   )}
                 >
                   在职 {localProfiles.length}
@@ -1068,23 +1104,23 @@ export function AdminModulesContentV3({
                     setSelectedMemberIds([]);
                   }}
                   className={cn(
-                    "px-2.5 py-1 text-[11px] rounded-md transition-colors",
+                    "transition-colors",
                     memberView === "archived"
-                      ? "bg-white text-zinc-900 shadow-sm font-medium"
-                      : "text-zinc-500 hover:text-zinc-700"
+                      ? "text-zinc-950 font-medium"
+                      : "text-zinc-400 hover:text-zinc-700"
                   )}
                 >
                   归档 {localArchivedProfiles.length}
                 </button>
               </div>
 
-              <span className="text-[11px] text-zinc-400 tabular-nums">
+              <span className="text-[12px] text-zinc-400 tabular-nums">
                 {filteredProfiles.length}/{profilesForCurrentView.length}
               </span>
             </div>
           </div>
 
-          {/* 成员双列平铺细线列表 */}
+          {/* 成员双列平铺列表 */}
           {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <UsersRound className="size-8 text-zinc-300 mb-3" />
@@ -1092,351 +1128,313 @@ export function AdminModulesContentV3({
               <p className="text-[12px] text-zinc-400 mt-1">调整筛选或搜索条件试试</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 divide-y divide-zinc-100 lg:divide-y-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
               {/* 左列 */}
-              <div className="divide-y divide-zinc-100">
-                {sortedProfiles
-                  .filter((_, idx) => idx % 2 === 0)
-                  .map((member) => {
-                    const isArchivedView = memberView === "archived";
-                    const isCurrentMemberActive = activeMemberId === member.id;
-                    const isRestoredFocus = restoredFocusId === member.id;
-                    const isChecked = selectedMemberIds.includes(member.id);
-                    const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
+              <div>
+                <MemberColumnHeader showCheckboxSlot={canManageCompany && memberView !== "archived"} />
+                <div className="space-y-0.5">
+                  {sortedProfiles
+                    .filter((_, idx) => idx % 2 === 0)
+                    .map((member) => {
+                      const isArchivedView = memberView === "archived";
+                      const isCurrentMemberActive = activeMemberId === member.id;
+                      const isRestoredFocus = restoredFocusId === member.id;
+                      const isChecked = selectedMemberIds.includes(member.id);
+                      const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
 
-                    const published = member.monthly_published_count ?? 0;
-                    const required = member.monthly_required_count ?? 0;
-                    const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
+                      const published = member.monthly_published_count ?? 0;
+                      const required = member.monthly_required_count ?? 0;
+                      const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
 
-                    return (
-                      <div
-                        key={member.id}
-                        onClick={() => openMemberDrawer(member)}
-                        className={cn(
-                          "group flex items-center justify-between gap-3 pl-6 pr-10 py-2.5 transition-colors cursor-pointer select-none",
-                          isRestoredFocus
-                            ? "bg-amber-50 animate-pulse"
-                            : isChecked
-                            ? "bg-zinc-50"
-                            : isCurrentMemberActive
-                            ? "bg-zinc-50/80"
-                            : "hover:bg-zinc-50/60"
-                        )}
-                      >
-                        {/* 左侧：勾选框 + 姓名 + 身份徽标 + 邮箱（单排紧凑） */}
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          {canManageCompany && !isArchivedView && member.id !== currentUserId && (
-                            <div
-                              className="shrink-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Checkbox
-                                checked={isChecked}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
-                                  } else {
-                                    setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                                  }
-                                }}
-                                className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
-                              />
-                            </div>
+                      return (
+                        <div
+                          key={member.id}
+                          onClick={() => openMemberDrawer(member)}
+                          className={cn(
+                            "group flex items-center justify-between gap-3 px-3 py-1.5 rounded-md min-h-[40px] transition-colors duration-150 cursor-pointer select-none",
+                            isRestoredFocus
+                              ? "bg-amber-50 animate-pulse"
+                              : isChecked
+                              ? "bg-zinc-50"
+                              : isCurrentMemberActive
+                              ? "bg-zinc-50"
+                              : "bg-transparent hover:bg-zinc-50"
                           )}
-
-                          <div className="min-w-0 flex-1 flex items-center gap-1.5">
-                            <span className="text-[13px] font-medium text-zinc-900 shrink-0">
-                              {member.name}
-                            </span>
-                            {member.id === currentUserId && (
-                              <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded shrink-0">
-                                我
-                              </span>
-                            )}
-                            {isCurrentlyExempt && (
-                              <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
-                                豁免
-                              </span>
-                            )}
-                            {member.email && (
-                              <span className="text-[11px] text-zinc-400 truncate font-normal">
-                                {member.email}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* 右侧：角色徽标 + 团队 + 橙色履约进度条 */}
-                        <div className="flex items-center gap-2.5 shrink-0">
-                          {/* 角色徽标 */}
-                          <div className="text-center shrink-0">
-                            {isArchivedView ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                                <Archive className="size-3" />
-                                已归档
-                              </span>
-                            ) : member.role === "owner" ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
-                                创始人
-                              </span>
-                            ) : member.role === "admin" ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
-                                主管
-                              </span>
-                            ) : (
-                              <span className="text-[11px] text-zinc-400">组员</span>
-                            )}
-                          </div>
-
-                          {/* 团队 */}
-                          <div
-                            className="shrink-0 text-[11px] text-zinc-600 max-w-[80px] truncate"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {isArchivedView ? (
-                              <span className="text-zinc-400">
-                                {truncateTeamName(member.archive_snapshot?.team_name as string, 6)}
-                              </span>
-                            ) : !canEditTeamMembers || member.id === currentUserId ? (
-                              <span>{truncateTeamName(member.team_name, 6)}</span>
-                            ) : (
-                              <div className="relative inline-flex items-center">
-                                <select
-                                  value={member.team_id ?? ""}
-                                  onChange={(e) =>
-                                    handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
-                                  }
-                                  className="h-6 pl-1.5 pr-4 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-100/80 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[80px] truncate"
-                                >
-                                  <option value="">未分配</option>
-                                  {localTeams.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {truncateTeamName(t.name, 6)}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        >
+                          {/* 左侧：复选框 + 姓名 + 邮箱 */}
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            {canManageCompany && !isArchivedView && member.id !== currentUserId ? (
+                              <div
+                                className={cn(
+                                  "shrink-0 transition-opacity duration-150",
+                                  isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                )}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
+                                    } else {
+                                      setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
+                                    }
+                                  }}
+                                  className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                                />
                               </div>
-                            )}
+                            ) : canManageCompany && !isArchivedView ? (
+                              <span className="size-3.5 shrink-0" />
+                            ) : null}
+
+                            <div className="flex flex-col min-w-0 justify-center">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[14px] font-medium text-zinc-800 truncate">
+                                  {member.name}
+                                </span>
+                                {member.id === currentUserId && (
+                                  <span className="text-[12px] text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded shrink-0">
+                                    我
+                                  </span>
+                                )}
+                              </div>
+                              {member.email && (
+                                <span className="text-[12px] font-normal text-zinc-400 truncate leading-none mt-0.5">
+                                  {member.email}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          {/* 本月实发 / 应发进度条 */}
-                          <div className="w-20 text-right shrink-0">
-                            {isArchivedView ? (
-                              <span className="text-[11px] text-zinc-400">
-                                {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
-                              </span>
-                            ) : (
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-600 tabular-nums">
-                                  <span className="font-semibold text-zinc-900">{published}</span>
-                                  <span className="text-zinc-400">/</span>
-                                  <span>{required}条</span>
-                                </div>
-                                {required > 0 && (
+                          {/* 右侧：角色 + 进度 + 幽灵编辑 */}
+                          <div className="flex items-center gap-4 shrink-0">
+                            {/* 角色 */}
+                            <div className="w-14 text-center shrink-0">
+                              {isArchivedView ? (
+                                <span className="inline-flex items-center gap-1 text-[13px] text-zinc-400 font-normal">
+                                  <Archive className="size-3" />
+                                  已归档
+                                </span>
+                              ) : member.role === "owner" ? (
+                                <span className="text-[13px] font-medium text-zinc-950">创始人</span>
+                              ) : member.role === "admin" ? (
+                                <span className="text-[13px] font-normal text-zinc-800">主管</span>
+                              ) : (
+                                <span className="text-[13px] font-normal text-zinc-600">组员</span>
+                              )}
+                            </div>
+
+                            {/* 发布进度 */}
+                            <div className="w-24 text-right shrink-0">
+                              {isArchivedView ? (
+                                <span className="text-[13px] text-zinc-400">
+                                  {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
+                                </span>
+                              ) : isCurrentlyExempt ? (
+                                <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
+                              ) : required === 0 ? (
+                                <span className="text-[13px] font-normal text-zinc-400">—</span>
+                              ) : (
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-end gap-1 text-[12px] text-zinc-600 tabular-nums">
+                                    <span className="font-medium text-zinc-800">{published}</span>
+                                    <span className="text-zinc-400">/</span>
+                                    <span>{required}条</span>
+                                  </div>
                                   <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                                     <div
-                                      className="h-full bg-[#D97757] rounded-full transition-all duration-300"
+                                      className={cn(
+                                        "h-full rounded-full transition-all duration-300",
+                                        getProgressColor(fulfillRatio)
+                                      )}
                                       style={{ width: `${fulfillRatio}%` }}
                                     />
                                   </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                                </div>
+                              )}
+                            </div>
 
-                          {/* 归档视图下恢复按钮 */}
-                          {isArchivedView && isCompanyOwner && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRestoreTarget(member);
-                              }}
-                              disabled={isPending}
-                              className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
-                            >
-                              <RotateCcw className="size-3" />
-                            </Button>
-                          )}
+                            {/* 幽灵操作区 */}
+                            <div className="w-8 text-right shrink-0">
+                              {isArchivedView && isCompanyOwner ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRestoreTarget(member);
+                                  }}
+                                  disabled={isPending}
+                                  className="h-7 px-1.5 text-[12px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                                  title="恢复账号"
+                                >
+                                  <RotateCcw className="size-3" />
+                                </Button>
+                              ) : (
+                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[13px] font-normal transition-opacity duration-150 hover:underline">
+                                  编辑
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                </div>
               </div>
 
               {/* 右列 */}
-              <div className="divide-y divide-zinc-100 lg:border-l lg:border-zinc-100">
-                {sortedProfiles
-                  .filter((_, idx) => idx % 2 === 1)
-                  .map((member) => {
-                    const isArchivedView = memberView === "archived";
-                    const isCurrentMemberActive = activeMemberId === member.id;
-                    const isRestoredFocus = restoredFocusId === member.id;
-                    const isChecked = selectedMemberIds.includes(member.id);
-                    const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
+              <div>
+                <MemberColumnHeader showCheckboxSlot={canManageCompany && memberView !== "archived"} />
+                <div className="space-y-0.5">
+                  {sortedProfiles
+                    .filter((_, idx) => idx % 2 === 1)
+                    .map((member) => {
+                      const isArchivedView = memberView === "archived";
+                      const isCurrentMemberActive = activeMemberId === member.id;
+                      const isRestoredFocus = restoredFocusId === member.id;
+                      const isChecked = selectedMemberIds.includes(member.id);
+                      const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
 
-                    const published = member.monthly_published_count ?? 0;
-                    const required = member.monthly_required_count ?? 0;
-                    const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
+                      const published = member.monthly_published_count ?? 0;
+                      const required = member.monthly_required_count ?? 0;
+                      const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
 
-                    return (
-                      <div
-                        key={member.id}
-                        onClick={() => openMemberDrawer(member)}
-                        className={cn(
-                          "group flex items-center justify-between gap-3 pl-6 pr-10 py-2.5 transition-colors cursor-pointer select-none",
-                          isRestoredFocus
-                            ? "bg-amber-50 animate-pulse"
-                            : isChecked
-                            ? "bg-zinc-50"
-                            : isCurrentMemberActive
-                            ? "bg-zinc-50/80"
-                            : "hover:bg-zinc-50/60"
-                        )}
-                      >
-                        {/* 左侧：勾选框 + 姓名 + 身份徽标 + 邮箱（单排紧凑） */}
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          {canManageCompany && !isArchivedView && member.id !== currentUserId && (
-                            <div
-                              className="shrink-0"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Checkbox
-                                checked={isChecked}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
-                                  } else {
-                                    setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
-                                  }
-                                }}
-                                className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
-                              />
-                            </div>
+                      return (
+                        <div
+                          key={member.id}
+                          onClick={() => openMemberDrawer(member)}
+                          className={cn(
+                            "group flex items-center justify-between gap-3 px-3 py-1.5 rounded-md min-h-[40px] transition-colors duration-150 cursor-pointer select-none",
+                            isRestoredFocus
+                              ? "bg-amber-50 animate-pulse"
+                              : isChecked
+                              ? "bg-zinc-50"
+                              : isCurrentMemberActive
+                              ? "bg-zinc-50"
+                              : "bg-transparent hover:bg-zinc-50"
                           )}
-
-                          <div className="min-w-0 flex-1 flex items-center gap-1.5">
-                            <span className="text-[13px] font-medium text-zinc-900 shrink-0">
-                              {member.name}
-                            </span>
-                            {member.id === currentUserId && (
-                              <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded shrink-0">
-                                我
-                              </span>
-                            )}
-                            {isCurrentlyExempt && (
-                              <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
-                                豁免
-                              </span>
-                            )}
-                            {member.email && (
-                              <span className="text-[11px] text-zinc-400 truncate font-normal">
-                                {member.email}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* 右侧：角色徽标 + 团队 + 橙色履约进度条 */}
-                        <div className="flex items-center gap-2.5 shrink-0">
-                          {/* 角色徽标 */}
-                          <div className="text-center shrink-0">
-                            {isArchivedView ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-400 font-medium">
-                                <Archive className="size-3" />
-                                已归档
-                              </span>
-                            ) : member.role === "owner" ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
-                                创始人
-                              </span>
-                            ) : member.role === "admin" ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#405740]/10 text-[#405740]">
-                                主管
-                              </span>
-                            ) : (
-                              <span className="text-[11px] text-zinc-400">组员</span>
-                            )}
-                          </div>
-
-                          {/* 团队 */}
-                          <div
-                            className="shrink-0 text-[11px] text-zinc-600 max-w-[80px] truncate"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {isArchivedView ? (
-                              <span className="text-zinc-400">
-                                {truncateTeamName(member.archive_snapshot?.team_name as string, 6)}
-                              </span>
-                            ) : !canEditTeamMembers || member.id === currentUserId ? (
-                              <span>{truncateTeamName(member.team_name, 6)}</span>
-                            ) : (
-                              <div className="relative inline-flex items-center">
-                                <select
-                                  value={member.team_id ?? ""}
-                                  onChange={(e) =>
-                                    handleTransferMemberTeam(member.id, e.target.value ? e.target.value : null)
-                                  }
-                                  className="h-6 pl-1.5 pr-4 text-[11px] bg-transparent text-zinc-600 border border-transparent hover:border-zinc-200 hover:bg-zinc-100/80 rounded outline-none cursor-pointer appearance-none transition-colors max-w-[80px] truncate"
-                                >
-                                  <option value="">未分配</option>
-                                  {localTeams.map((t) => (
-                                    <option key={t.id} value={t.id}>
-                                      {truncateTeamName(t.name, 6)}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown className="pointer-events-none absolute right-0.5 top-1.5 size-2.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        >
+                          {/* 左侧：复选框 + 姓名 + 邮箱 */}
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            {canManageCompany && !isArchivedView && member.id !== currentUserId ? (
+                              <div
+                                className={cn(
+                                  "shrink-0 transition-opacity duration-150",
+                                  isChecked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                )}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Checkbox
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedMemberIds((prev) => Array.from(new Set([...prev, member.id])));
+                                    } else {
+                                      setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
+                                    }
+                                  }}
+                                  className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                                />
                               </div>
-                            )}
+                            ) : canManageCompany && !isArchivedView ? (
+                              <span className="size-3.5 shrink-0" />
+                            ) : null}
+
+                            <div className="flex flex-col min-w-0 justify-center">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[14px] font-medium text-zinc-800 truncate">
+                                  {member.name}
+                                </span>
+                                {member.id === currentUserId && (
+                                  <span className="text-[12px] text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded shrink-0">
+                                    我
+                                  </span>
+                                )}
+                              </div>
+                              {member.email && (
+                                <span className="text-[12px] font-normal text-zinc-400 truncate leading-none mt-0.5">
+                                  {member.email}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          {/* 本月实发 / 应发进度条 */}
-                          <div className="w-20 text-right shrink-0">
-                            {isArchivedView ? (
-                              <span className="text-[11px] text-zinc-400">
-                                {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
-                              </span>
-                            ) : (
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-end gap-1 text-[11px] text-zinc-600 tabular-nums">
-                                  <span className="font-semibold text-zinc-900">{published}</span>
-                                  <span className="text-zinc-400">/</span>
-                                  <span>{required}条</span>
-                                </div>
-                                {required > 0 && (
+                          {/* 右侧：角色 + 进度 + 幽灵编辑 */}
+                          <div className="flex items-center gap-4 shrink-0">
+                            {/* 角色 */}
+                            <div className="w-14 text-center shrink-0">
+                              {isArchivedView ? (
+                                <span className="inline-flex items-center gap-1 text-[13px] text-zinc-400 font-normal">
+                                  <Archive className="size-3" />
+                                  已归档
+                                </span>
+                              ) : member.role === "owner" ? (
+                                <span className="text-[13px] font-medium text-zinc-950">创始人</span>
+                              ) : member.role === "admin" ? (
+                                <span className="text-[13px] font-normal text-zinc-800">主管</span>
+                              ) : (
+                                <span className="text-[13px] font-normal text-zinc-600">组员</span>
+                              )}
+                            </div>
+
+                            {/* 发布进度 */}
+                            <div className="w-24 text-right shrink-0">
+                              {isArchivedView ? (
+                                <span className="text-[13px] text-zinc-400">
+                                  {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
+                                </span>
+                              ) : isCurrentlyExempt ? (
+                                <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
+                              ) : required === 0 ? (
+                                <span className="text-[13px] font-normal text-zinc-400">—</span>
+                              ) : (
+                                <div className="space-y-1">
+                                  <div className="flex items-center justify-end gap-1 text-[12px] text-zinc-600 tabular-nums">
+                                    <span className="font-medium text-zinc-800">{published}</span>
+                                    <span className="text-zinc-400">/</span>
+                                    <span>{required}条</span>
+                                  </div>
                                   <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                                     <div
-                                      className="h-full bg-[#D97757] rounded-full transition-all duration-300"
+                                      className={cn(
+                                        "h-full rounded-full transition-all duration-300",
+                                        getProgressColor(fulfillRatio)
+                                      )}
                                       style={{ width: `${fulfillRatio}%` }}
                                     />
                                   </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                                </div>
+                              )}
+                            </div>
 
-                          {/* 归档视图下恢复按钮 */}
-                          {isArchivedView && isCompanyOwner && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRestoreTarget(member);
-                              }}
-                              disabled={isPending}
-                              className="h-7 px-2 text-[11px] text-zinc-500 hover:text-zinc-700 shrink-0"
-                            >
-                              <RotateCcw className="size-3" />
-                            </Button>
-                          )}
+                            {/* 幽灵操作区 */}
+                            <div className="w-8 text-right shrink-0">
+                              {isArchivedView && isCompanyOwner ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRestoreTarget(member);
+                                  }}
+                                  disabled={isPending}
+                                  className="h-7 px-1.5 text-[12px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                                  title="恢复账号"
+                                >
+                                  <RotateCcw className="size-3" />
+                                </Button>
+                              ) : (
+                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[13px] font-normal transition-opacity duration-150 hover:underline">
+                                  编辑
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                </div>
               </div>
             </div>
           )}
@@ -1447,9 +1445,9 @@ export function AdminModulesContentV3({
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-zinc-200/90 bg-white/95 backdrop-blur-sm px-5 py-2.5 shadow-xl animate-in fade-in zoom-in-95"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/95 backdrop-blur-sm px-5 py-2.5 shadow-md animate-in fade-in"
         >
-          <span className="text-[12px] font-semibold text-zinc-900 pr-3 border-r border-zinc-200">
+          <span className="text-[12px] font-medium text-zinc-900 pr-3 border-r border-zinc-200">
             已选 {selectedMemberIds.length} 位成员
           </span>
 
@@ -1463,7 +1461,7 @@ export function AdminModulesContentV3({
                     e.target.value = "";
                   }
                 }}
-                className="h-7.5 text-[11px] font-medium bg-zinc-50 border border-zinc-200 rounded-xl px-2.5 pr-6 text-zinc-700 outline-none appearance-none cursor-pointer hover:border-zinc-300"
+                className="h-7.5 text-[12px] font-medium bg-zinc-100/70 border-0 rounded-full px-2.5 pr-6 text-zinc-700 outline-none appearance-none cursor-pointer hover:bg-zinc-200/70 transition-colors"
               >
                 <option value="" disabled>
                   调配至团队…
@@ -1486,7 +1484,7 @@ export function AdminModulesContentV3({
                 setBatchArchiveReason("");
                 setBatchArchiveOpen(true);
               }}
-              className="h-7.5 px-3 text-[11px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl font-medium"
+              className="h-7.5 px-3 text-[12px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl font-medium"
             >
               <Archive className="size-3 mr-1" />
               批量归档
@@ -1514,14 +1512,14 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <SheetContent className="w-full max-w-xl sm:max-w-xl p-0 overflow-y-auto">
+        <SheetContent className="w-full max-w-xl sm:max-w-xl p-0 overflow-y-auto bg-zinc-50">
           {activeMember && (
             <div className="flex flex-col h-full">
               {/* 抽屉头部 */}
-              <div className="p-6 border-b border-zinc-200/80 bg-zinc-50/50">
+              <div className="p-6 border-b border-zinc-200/80">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="size-11 rounded-full bg-zinc-200 text-zinc-800 flex items-center justify-center font-bold text-[16px] border border-zinc-300">
+                    <div className="size-11 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[16px]">
                       {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                     </div>
                     <div>
@@ -1570,7 +1568,7 @@ export function AdminModulesContentV3({
                     className={cn(
                       "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
                       drawerTab === "overview"
-                        ? "border-[#D97757] text-[#D97757] font-semibold"
+                        ? "border-[#D97757] text-[#D97757] font-medium"
                         : "border-transparent text-zinc-600 hover:text-zinc-950"
                     )}
                   >
@@ -1585,7 +1583,7 @@ export function AdminModulesContentV3({
                         className={cn(
                           "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
                           drawerTab === "team_role"
-                            ? "border-[#D97757] text-[#D97757] font-semibold"
+                            ? "border-[#D97757] text-[#D97757] font-medium"
                             : "border-transparent text-zinc-600 hover:text-zinc-950"
                         )}
                       >
@@ -1599,7 +1597,7 @@ export function AdminModulesContentV3({
                           className={cn(
                             "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
                             drawerTab === "permissions"
-                              ? "border-[#D97757] text-[#D97757] font-semibold"
+                              ? "border-[#D97757] text-[#D97757] font-medium"
                               : "border-transparent text-zinc-600 hover:text-zinc-950"
                           )}
                         >
@@ -1613,7 +1611,7 @@ export function AdminModulesContentV3({
                         className={cn(
                           "pb-2.5 px-3 text-[13px] font-medium border-b-2 -mb-px transition-colors",
                           drawerTab === "exemption"
-                            ? "border-[#D97757] text-[#D97757] font-semibold"
+                            ? "border-[#D97757] text-[#D97757] font-medium"
                             : "border-transparent text-zinc-600 hover:text-zinc-950"
                         )}
                       >
@@ -1625,27 +1623,27 @@ export function AdminModulesContentV3({
               </div>
 
               {/* 抽屉内容主体 */}
-              <div className="p-6 space-y-6 flex-1">
+              <div className="p-6 space-y-5 flex-1">
                 {/* 1. 概览与 AI 诊断 */}
                 {drawerTab === "overview" && (
-                  <div className="space-y-6">
-                    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                  <div className="space-y-5">
+                    <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[13px] font-semibold text-zinc-900">本月履约概况</h4>
+                        <h4 className="text-[13px] font-medium text-zinc-900">本月履约概况</h4>
                         <span className="text-[12px] text-zinc-500 tabular-nums">
                           实发天数：{activeMember.monthly_published_days ?? 0} 天
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 pt-1">
-                        <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-100">
-                          <p className="text-[11px] text-zinc-500">本月实发作品</p>
+                        <div>
+                          <p className="text-[12px] text-zinc-500">本月实发作品</p>
                           <p className="text-[20px] font-semibold text-zinc-900 mt-0.5 tabular-nums">
                             {activeMember.monthly_published_count ?? 0}
                             <span className="text-[12px] font-normal text-zinc-500 ml-1">条</span>
                           </p>
                         </div>
-                        <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-100">
-                          <p className="text-[11px] text-zinc-500">本月应发作品</p>
+                        <div>
+                          <p className="text-[12px] text-zinc-500">本月应发作品</p>
                           <p className="text-[20px] font-semibold text-zinc-900 mt-0.5 tabular-nums">
                             {activeMember.monthly_required_count ?? 0}
                             <span className="text-[12px] font-normal text-zinc-500 ml-1">条</span>
@@ -1654,9 +1652,9 @@ export function AdminModulesContentV3({
                       </div>
                     </div>
 
-                    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-2">
+                    <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-2">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-[13px] font-semibold text-zinc-900">当前豁免状态</h4>
+                        <h4 className="text-[13px] font-medium text-zinc-900">当前豁免状态</h4>
                         {activeMember.exempt_type ? (
                           <Badge variant="accent">
                             {activeMember.exempt_type === "permanent" ? "永久豁免" : "区间豁免"}
@@ -1666,7 +1664,7 @@ export function AdminModulesContentV3({
                         )}
                       </div>
                       {activeMember.exempt_type ? (
-                        <div className="text-[12px] text-zinc-600 bg-zinc-50 p-3 rounded-xl space-y-1 mt-2">
+                        <div className="text-[12px] text-zinc-600 space-y-1 mt-2">
                           <p>
                             分类：<strong>{activeMember.exemption_category === "leave" ? "请假" : "免交"}</strong>
                           </p>
@@ -1684,11 +1682,11 @@ export function AdminModulesContentV3({
 
                     {/* AI 顾问 (支持 execute_tool 及 409 二次确认) */}
                     {activeMember.membership_status !== "archived" && activeMember.role !== "owner" && (
-                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Sparkles className="size-4 text-[#D97757]" />
-                            <h4 className="text-[13px] font-semibold text-zinc-900">AI 成员管理顾问</h4>
+                            <h4 className="text-[13px] font-medium text-zinc-900">AI 成员管理顾问</h4>
                           </div>
                           <Button
                             variant="outline"
@@ -1710,7 +1708,7 @@ export function AdminModulesContentV3({
                         )}
 
                         {aiSuggestion?.error && (
-                          <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[12px] flex items-center gap-2">
+                          <div className="p-3 bg-red-50 text-red-700 rounded-lg text-[12px] flex items-center gap-2">
                             <AlertCircle className="size-4 shrink-0" />
                             <span>{aiSuggestion.error}</span>
                           </div>
@@ -1721,7 +1719,7 @@ export function AdminModulesContentV3({
                             <div className="flex items-center gap-2">
                               <Badge
                                 variant={
-                                  aiSuggestion.status === "critical"
+                                   aiSuggestion.status === "critical"
                                     ? "destructive"
                                     : aiSuggestion.status === "warning"
                                     ? "warning"
@@ -1738,17 +1736,17 @@ export function AdminModulesContentV3({
                             </div>
 
                             {aiSuggestion.suggestions.length > 0 && (
-                              <div className="space-y-2 mt-2">
+                              <div className="divide-y divide-zinc-100 mt-2">
                                 {aiSuggestion.suggestions.map((s, idx) => {
                                   const key = `${s.label}-${idx}`;
                                   const isBusy = executingAiKey === key;
                                   return (
                                     <div
                                       key={idx}
-                                      className="p-3 rounded-xl bg-zinc-50 border border-zinc-100 flex items-start justify-between gap-2"
+                                      className="py-3 flex items-start justify-between gap-2"
                                     >
                                       <div className="text-[12px] space-y-0.5">
-                                        <p className="font-semibold text-zinc-900">{s.label}</p>
+                                        <p className="font-medium text-zinc-900">{s.label}</p>
                                         <p className="text-zinc-500">{s.description}</p>
                                       </div>
                                       <div className="shrink-0 flex items-center gap-1">
@@ -1759,7 +1757,7 @@ export function AdminModulesContentV3({
                                             onClick={() => {
                                               if ("href" in s.action) router.push(s.action.href);
                                             }}
-                                            className="text-[#D97757] text-[11px]"
+                                            className="text-[#D97757] text-[12px]"
                                           >
                                             前往 <ArrowRight className="size-3 ml-0.5" />
                                           </Button>
@@ -1770,7 +1768,7 @@ export function AdminModulesContentV3({
                                             size="xs"
                                             disabled={isBusy}
                                             onClick={() => handleExecuteAiSuggestion(s, key)}
-                                            className="bg-[#D97757] hover:bg-[#C96442] text-[11px] gap-1"
+                                            className="bg-[#D97757] hover:bg-[#C96442] text-[12px] gap-1"
                                           >
                                             <Play className="size-3 fill-current" />
                                             {isBusy ? "执行中..." : "一键执行"}
@@ -1797,10 +1795,10 @@ export function AdminModulesContentV3({
 
                 {/* 2. 团队与角色管理 (包含 3.2 独立移出团队) */}
                 {drawerTab === "team_role" && (
-                  <div className="space-y-6">
-                    <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                  <div className="space-y-5">
+                    <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
                       <div>
-                        <h4 className="text-[13px] font-semibold text-zinc-900">所属团队调配</h4>
+                        <h4 className="text-[13px] font-medium text-zinc-900">所属团队调配</h4>
                         <p className="text-[12px] text-zinc-500 mt-0.5">调整该成员归属团队或移出当前团队</p>
                       </div>
 
@@ -1845,9 +1843,9 @@ export function AdminModulesContentV3({
                     </div>
 
                     {canManageMembers && activeMember.role !== "owner" && (
-                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-3">
+                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-3">
                         <div>
-                          <h4 className="text-[13px] font-semibold text-zinc-900">系统角色变更</h4>
+                          <h4 className="text-[13px] font-medium text-zinc-900">系统角色变更</h4>
                           <p className="text-[12px] text-zinc-500 mt-0.5">
                             主管可负责本团队日常管理；变更为组员将清空自定义权限
                           </p>
@@ -1859,14 +1857,14 @@ export function AdminModulesContentV3({
                               if (activeMember.role !== "member") handleToggleRole(activeMember);
                             }}
                             className={cn(
-                              "p-3 rounded-xl border text-left transition-colors",
+                              "p-3 rounded-lg border text-left transition-colors",
                               activeMember.role === "member"
                                 ? "border-zinc-900 bg-zinc-50 font-medium"
                                 : "border-zinc-200 bg-white hover:bg-zinc-50"
                             )}
                           >
-                            <p className="text-[13px] font-semibold text-zinc-900">普通组员</p>
-                            <p className="text-[11px] text-zinc-500 mt-0.5">仅查看和提交个人数据</p>
+                            <p className="text-[13px] font-medium text-zinc-900">普通组员</p>
+                            <p className="text-[12px] text-zinc-500 mt-0.5">仅查看和提交个人数据</p>
                           </button>
                           <button
                             type="button"
@@ -1874,23 +1872,23 @@ export function AdminModulesContentV3({
                               if (activeMember.role !== "admin") handleToggleRole(activeMember);
                             }}
                             className={cn(
-                              "p-3 rounded-xl border text-left transition-colors",
+                              "p-3 rounded-lg border text-left transition-colors",
                               activeMember.role === "admin"
                                 ? "border-zinc-900 bg-zinc-50 font-medium"
                                 : "border-zinc-200 bg-white hover:bg-zinc-50"
                             )}
                           >
-                            <p className="text-[13px] font-semibold text-zinc-900">团队主管</p>
-                            <p className="text-[11px] text-zinc-500 mt-0.5">负责本团队日常业务与审批</p>
+                            <p className="text-[13px] font-medium text-zinc-900">团队主管</p>
+                            <p className="text-[12px] text-zinc-500 mt-0.5">负责本团队日常业务与审批</p>
                           </button>
                         </div>
                       </div>
                     )}
 
                     {canManageMembers && (
-                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 flex items-center justify-between">
+                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 flex items-center justify-between">
                         <div>
-                          <h4 className="text-[13px] font-semibold text-zinc-900">重置登录密码</h4>
+                          <h4 className="text-[13px] font-medium text-zinc-900">重置登录密码</h4>
                           <p className="text-[12px] text-zinc-500 mt-0.5">为成员重置一个临时的登录密码</p>
                         </div>
                         <Button
@@ -1911,7 +1909,7 @@ export function AdminModulesContentV3({
 
                 {/* 3. 细粒度权限配置 (标准 MemberPermissionEditor) */}
                 {drawerTab === "permissions" && (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     <MemberPermissionEditor
                       member={{
                         id: activeMember.id,
@@ -1984,11 +1982,11 @@ export function AdminModulesContentV3({
 
                 {/* 4. 豁免与账号生命周期 */}
                 {drawerTab === "exemption" && (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     {canManageFulfillment && (
-                      <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 space-y-4">
+                      <div className="bg-white rounded-lg border border-zinc-200/80 shadow-xs p-4 space-y-4">
                         <div>
-                          <h4 className="text-[13px] font-semibold text-zinc-900">豁免与请假规则配置</h4>
+                          <h4 className="text-[13px] font-medium text-zinc-900">豁免与请假规则配置</h4>
                           <p className="text-[12px] text-zinc-500 mt-0.5">
                             设置成员免发或请假区间，避免系统产生催发与缺发预警
                           </p>
@@ -2001,7 +1999,7 @@ export function AdminModulesContentV3({
                             className={cn(
                               "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
                               exemptionMode === "none"
-                                ? "bg-white text-zinc-950 shadow-2xs font-semibold"
+                                ? "bg-white text-zinc-950 shadow-2xs font-medium"
                                 : "text-zinc-600 hover:text-zinc-950"
                             )}
                           >
@@ -2013,7 +2011,7 @@ export function AdminModulesContentV3({
                             className={cn(
                               "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
                               exemptionMode === "range"
-                                ? "bg-white text-zinc-950 shadow-2xs font-semibold"
+                                ? "bg-white text-zinc-950 shadow-2xs font-medium"
                                 : "text-zinc-600 hover:text-zinc-950"
                             )}
                           >
@@ -2025,7 +2023,7 @@ export function AdminModulesContentV3({
                             className={cn(
                               "py-1.5 rounded-lg text-[12px] font-medium transition-colors",
                               exemptionMode === "permanent"
-                                ? "bg-white text-zinc-950 shadow-2xs font-semibold"
+                                ? "bg-white text-zinc-950 shadow-2xs font-medium"
                                 : "text-zinc-600 hover:text-zinc-950"
                             )}
                           >
@@ -2065,27 +2063,27 @@ export function AdminModulesContentV3({
 
                             {exemptionMode === "range" && (
                               <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="text-[11px] text-zinc-500 block mb-1">开始日期</label>
-                                  <Input
-                                    type="date"
-                                    value={exemptionStartDate}
-                                    onChange={(e) => setExemptionStartDate(e.target.value)}
-                                  />
-                                </div>
-                                <div>
-                                  <label className="text-[11px] text-zinc-500 block mb-1">结束日期</label>
-                                  <Input
-                                    type="date"
-                                    value={exemptionEndDate}
-                                    onChange={(e) => setExemptionEndDate(e.target.value)}
-                                  />
-                                </div>
+                                 <div>
+                                   <label className="text-[12px] text-zinc-500 block mb-1">开始日期</label>
+                                   <Input
+                                     type="date"
+                                     value={exemptionStartDate}
+                                     onChange={(e) => setExemptionStartDate(e.target.value)}
+                                   />
+                                 </div>
+                                 <div>
+                                   <label className="text-[12px] text-zinc-500 block mb-1">结束日期</label>
+                                   <Input
+                                     type="date"
+                                     value={exemptionEndDate}
+                                     onChange={(e) => setExemptionEndDate(e.target.value)}
+                                   />
+                                 </div>
                               </div>
                             )}
 
                             <div>
-                              <label className="text-[11px] text-zinc-500 block mb-1">豁免原因说明</label>
+                              <label className="text-[12px] text-zinc-500 block mb-1">豁免原因说明</label>
                               <Input
                                 type="text"
                                 placeholder="例如：事假、外出培训、设备调试"
@@ -2109,9 +2107,9 @@ export function AdminModulesContentV3({
 
                     {/* 危险区：归档账号 */}
                     {isCompanyOwner && activeMember.role !== "owner" && (
-                      <div className="rounded-2xl border border-red-200 bg-red-50/40 p-4 space-y-3">
+                      <div className="space-y-3 pt-3 border-t border-red-100">
                         <div>
-                          <h4 className="text-[13px] font-semibold text-red-950">危险区域：账号归档</h4>
+                          <h4 className="text-[13px] font-medium text-red-950">危险区域：账号归档</h4>
                           <p className="text-[12px] text-red-700 mt-0.5">
                             归档将立即封禁该账号的 Auth 登录权限并移出团队，历史日报与数据将完整保留供追溯。
                           </p>
@@ -2176,7 +2174,7 @@ export function AdminModulesContentV3({
             )}
 
             <div className="space-y-2 max-h-[260px] overflow-y-auto pt-2">
-              <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[12px] font-medium text-zinc-400 uppercase tracking-wider">
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
@@ -2192,7 +2190,7 @@ export function AdminModulesContentV3({
                       <div className="flex items-center gap-2 min-w-0">
                         <Building2 className="size-3.5 text-zinc-400 shrink-0" />
                         <span className="text-[13px] font-medium text-zinc-800 truncate">{team.name}</span>
-                        <span className="text-[11px] text-zinc-500 bg-white px-2 py-0.5 rounded-full border border-zinc-200/50 tabular-nums">
+                        <span className="text-[12px] text-zinc-500 bg-white px-2 py-0.5 rounded-full border border-zinc-200/50 tabular-nums">
                           {count} 人
                         </span>
                       </div>
@@ -2201,7 +2199,7 @@ export function AdminModulesContentV3({
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleteTeamTarget(team)}
-                          className="h-7 px-2 text-[11px] text-zinc-400 hover:text-red-600 rounded-lg shrink-0"
+                          className="h-7 px-2 text-[12px] text-zinc-400 hover:text-red-600 rounded-lg shrink-0"
                           title="删除空团队"
                         >
                           <Trash2 className="size-3.5" />

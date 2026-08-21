@@ -9,9 +9,7 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
 import type { UserRole } from "@/types";
 
-import { AdminModulesContentRedesign } from "./modules-content-redesign";
 import { AdminModulesContentV3 } from "./modules-content-v3";
-import { AdminModulesContentV2 } from "./modules-content-v2";
 import { TeamV2Skeleton } from "./modules-skeleton-v2";
 
 export const metadata: Metadata = {
@@ -20,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 interface AdminModulesPageProps {
-  searchParams: Promise<{ date?: string; focus?: string; member?: string; view?: string }>;
+  searchParams: Promise<{ date?: string; focus?: string; member?: string }>;
 }
 
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
@@ -56,7 +54,6 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
         <ModulesDataContainer
           searchDate={params.date}
           focusMemberId={params.member}
-          viewVersion={params.view}
         />
       </Suspense>
     </AdminWorkspaceLayout>
@@ -66,11 +63,9 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 async function ModulesDataContainer({
   searchDate,
   focusMemberId,
-  viewVersion,
 }: {
   searchDate?: string;
   focusMemberId?: string;
-  viewVersion?: string;
 }) {
   const supabase = await createClient();
   
@@ -105,14 +100,6 @@ async function ModulesDataContainer({
     defaultDate: data.queryDate,
     focusMemberId: focusMemberId,
   };
-
-  if (viewVersion === "redesign" || viewVersion === "v4" || viewVersion === "4") {
-    return <AdminModulesContentRedesign {...commonProps} />;
-  }
-
-  if (viewVersion === "v2" || viewVersion === "2") {
-    return <AdminModulesContentV2 {...commonProps} />;
-  }
 
   return <AdminModulesContentV3 {...commonProps} />;
 }
