@@ -7,7 +7,10 @@ import { loadAdminModulesData } from "@/lib/loaders/admin-modules";
 import { listPendingRequestsForAdmin } from "@/lib/team-join/service";
 import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getUserPermissions } from "@/lib/permissions";
+import type { UserRole } from "@/types";
 
+import { AdminModulesContentRedesign } from "./modules-content-redesign";
+import { AdminModulesContentV3 } from "./modules-content-v3";
 import { AdminModulesContentV2 } from "./modules-content-v2";
 import { TeamV2Skeleton } from "./modules-skeleton-v2";
 
@@ -17,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 interface AdminModulesPageProps {
-  searchParams: Promise<{ date?: string; focus?: string; member?: string }>;
+  searchParams: Promise<{ date?: string; focus?: string; member?: string; view?: string }>;
 }
 
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
@@ -50,7 +53,11 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
       ]}
     >
       <Suspense fallback={<TeamV2Skeleton />}>
-        <ModulesDataContainer searchDate={params.date} focusMemberId={params.member} />
+        <ModulesDataContainer
+          searchDate={params.date}
+          focusMemberId={params.member}
+          viewVersion={params.view}
+        />
       </Suspense>
     </AdminWorkspaceLayout>
   );
@@ -59,9 +66,11 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
 async function ModulesDataContainer({
   searchDate,
   focusMemberId,
+  viewVersion,
 }: {
   searchDate?: string;
   focusMemberId?: string;
+  viewVersion?: string;
 }) {
   const supabase = await createClient();
   
@@ -80,22 +89,30 @@ async function ModulesDataContainer({
 
   const pendingJoinRequests = pendingJoinRequestsResult.ok ? pendingJoinRequestsResult.data : [];
 
-  return (
-    <AdminModulesContentV2
-      currentUserId={data.currentUserId}
-      currentUserRole={data.perm.role}
-      currentUserBusinessRole={data.perm.companyRole === "company_owner" ? "owner" : data.perm.role}
-      currentUserCompanyRole={data.perm.companyRole}
-      currentUserGroupMode={data.perm.groupMode}
-      currentUserPermissions={data.perm.permissions}
-      permissionManagerCapabilities={data.permissionManagerCapabilities}
-      allProfiles={data.allProfiles}
-      archivedProfiles={data.archivedProfiles ?? []}
-      teams={data.teams}
-      teamManagement={data.teamManagement}
-      pendingRequests={pendingJoinRequests}
-      defaultDate={data.queryDate}
-      focusMemberId={focusMemberId}
-    />
-  );
+  const commonProps = {
+    currentUserId: data.currentUserId,
+    currentUserRole: data.perm.role,
+    currentUserBusinessRole: (data.perm.companyRole === "company_owner" ? "owner" : data.perm.role) as UserRole,
+    currentUserCompanyRole: data.perm.companyRole,
+    currentUserGroupMode: data.perm.groupMode,
+    currentUserPermissions: data.perm.permissions,
+    permissionManagerCapabilities: data.permissionManagerCapabilities,
+    allProfiles: data.allProfiles,
+    archivedProfiles: data.archivedProfiles ?? [],
+    teams: data.teams,
+    teamManagement: data.teamManagement,
+    pendingRequests: pendingJoinRequests,
+    defaultDate: data.queryDate,
+    focusMemberId: focusMemberId,
+  };
+
+  if (viewVersion === "v3" || viewVersion === "3") {
+    return <AdminModulesContentV3 {...commonProps} />;
+  }
+
+  if (viewVersion === "v2" || viewVersion === "2") {
+    return <AdminModulesContentV2 {...commonProps} />;
+  }
+
+  return <AdminModulesContentRedesign {...commonProps} />;
 }
