@@ -259,7 +259,6 @@ export function FulfillmentWorkbench({
       if (!res.ok) {
         throw new Error("更新失败");
       }
-      toast.success(checked ? "已开启飞书自动催交" : "已关闭飞书自动催交");
     } catch {
       toast.error("更新飞书催交配置失败，已回滚");
       setFeishuEnabled(!checked);
@@ -285,7 +284,6 @@ export function FulfillmentWorkbench({
         toast.error(err.error || "操作失败");
         return;
       }
-      toast.success(decision === "approve" ? "已同意申诉并改判" : "已驳回申诉");
 
       // 静默重新加载日历和申诉
       await fetchAppeals();
@@ -471,7 +469,6 @@ export function FulfillmentWorkbench({
         setSelectedDate(today);
       } else {
         setSheetOpen(false);
-        toast.success("当前待处理异常已全部审批完毕！");
       }
     } else {
       setSheetOpen(false);
@@ -495,7 +492,6 @@ export function FulfillmentWorkbench({
           toast.error(err.error || "改判失败");
           return;
         }
-        toast.success("改判成功");
         fetchAppeals();
         const calendarRes = await fetch(
           `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
@@ -585,7 +581,6 @@ export function FulfillmentWorkbench({
           path: "/admin/fulfillment",
           eventType: "mark_fulfillment_status",
         });
-        toast.success("标记成功");
 
         // 后台静默刷新以同步统计大盘
         const refreshRes = await fetch(
@@ -680,7 +675,6 @@ export function FulfillmentWorkbench({
           path: "/admin/fulfillment",
           eventType: "mark_fulfillment_status",
         });
-        toast.success("批量标记成功");
 
         // 后台静默刷新以同步统计大盘
         const refreshRes = await fetch(

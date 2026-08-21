@@ -259,7 +259,6 @@ export function CaseDetailDialog({
           : null,
       );
       setIsEditing(false);
-      feedbackToast.success("已保存修改");
       router.refresh();
     } catch (e) {
       feedbackToast.error(e instanceof Error ? e.message : "保存修改失败");
@@ -268,7 +267,7 @@ export function CaseDetailDialog({
     }
   };
 
-  // 下架删除逻辑与 5s 倒计时撤销机制
+  // 下架删除逻辑与 3s 倒计时撤销机制
   const handleDelete = async () => {
     if (!caseId) return;
     setDeleting(true);
@@ -284,9 +283,9 @@ export function CaseDetailDialog({
       onOpenChange(false);
 
       let undone = false;
-      const UNDO_WINDOW_MS = 5000;
+      const UNDO_WINDOW_MS = 3000;
 
-      // 5s 后若未被撤销，则刷新大盘列表，正式移除该数据项
+      // 3s 后若未被撤销，则刷新大盘列表，正式移除该数据项
       const commitTimer = setTimeout(() => {
         if (!undone) {
           router.refresh();

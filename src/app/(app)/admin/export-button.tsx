@@ -11,13 +11,15 @@ export function ExportButton() {
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
   const [from, setFrom] = useState(weekAgo);
   const [to, setTo] = useState(today);
+  const [dateError, setDateError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleExport() {
     if (from && to && from > to) {
-      feedbackToast.error("开始日期不能晚于结束日期");
+      setDateError("开始日期不能晚于结束日期");
       return;
     }
+    setDateError("");
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -49,34 +51,43 @@ export function ExportButton() {
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-      <div className="space-y-1.5">
-        <Label htmlFor="export-from" className="text-[13px] text-zinc-500">开始日期</Label>
-        <Input
-          id="export-from"
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          className="h-9 w-auto border-zinc-200 bg-white text-zinc-900"
-        />
+    <div className="space-y-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <div className="space-y-1.5">
+          <Label htmlFor="export-from" className="text-[13px] text-zinc-500">开始日期</Label>
+          <Input
+            id="export-from"
+            type="date"
+            value={from}
+            onChange={(e) => {
+              setFrom(e.target.value);
+              if (dateError) setDateError("");
+            }}
+            className={`h-9 w-auto border-zinc-200 bg-white text-zinc-900 ${dateError ? "ring-1 ring-red-300" : ""}`}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="export-to" className="text-[13px] text-zinc-500">结束日期</Label>
+          <Input
+            id="export-to"
+            type="date"
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value);
+              if (dateError) setDateError("");
+            }}
+            className={`h-9 w-auto border-zinc-200 bg-white text-zinc-900 ${dateError ? "ring-1 ring-red-300" : ""}`}
+          />
+        </div>
+        <Button
+          onClick={handleExport}
+          disabled={loading}
+          className="h-9 bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50"
+        >
+          {loading ? "导出中..." : "导出 Excel"}
+        </Button>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="export-to" className="text-[13px] text-zinc-500">结束日期</Label>
-        <Input
-          id="export-to"
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          className="h-9 w-auto border-zinc-200 bg-white text-zinc-900"
-        />
-      </div>
-      <Button
-        onClick={handleExport}
-        disabled={loading}
-        className="h-9 bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50"
-      >
-        {loading ? "导出中..." : "导出 Excel"}
-      </Button>
+      {dateError && <p className="text-red-500 text-xs mt-1">{dateError}</p>}
     </div>
   );
 }

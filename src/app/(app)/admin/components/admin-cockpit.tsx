@@ -201,7 +201,7 @@ function ReviewBatchCard({
   const [handledMap, setHandledMap] = useState<Record<string, "approved" | "rejected">>({});
 
   // 流转与撤销共存：点击瞬间标记(淡出+下一条顶上)，移除延迟到撤销窗口结束。按 id 独立计时，支持批量。
-  const SETTLE_MS = 5000;
+  const SETTLE_MS = 3000;
   const settleTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   useEffect(() => {
     const timers = settleTimers.current;
@@ -243,7 +243,7 @@ function ReviewBatchCard({
       delete settleTimers.current[row.id];
     }, SETTLE_MS);
 
-    toast.success(`${resultLabel} ${row.applicant_name} 的豁免申请`, {
+    toast.success(`${resultLabel} ${row.applicant_name} 的豁免`, {
       duration: SETTLE_MS,
       action: { label: "撤销", onClick: () => unmark(row.id) },
     });
@@ -268,7 +268,7 @@ function ReviewBatchCard({
       delete settleTimers.current[row.id];
     }, SETTLE_MS);
 
-    toast.success(`${resultLabel} ${row.applicantName || "未命名"} 的入团申请`, {
+    toast.success(`${resultLabel} ${row.applicantName || "成员"} 的入团`, {
       duration: SETTLE_MS,
       action: { label: "撤销", onClick: () => unmark(row.id) },
     });

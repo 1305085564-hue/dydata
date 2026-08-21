@@ -283,7 +283,6 @@ export function VideoList({
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "恢复失败");
-      feedbackToast.success("作品已成功恢复");
       onRefresh();
     } catch (e) {
       feedbackToast.error(e instanceof Error ? e.message : "恢复失败");
@@ -302,7 +301,6 @@ export function VideoList({
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "永久删除失败");
-      feedbackToast.success("作品已永久删除");
       setConfirmPurgeVideoId(null);
       onRefresh();
     } catch (e) {
@@ -548,9 +546,6 @@ export function VideoList({
       );
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
-      feedbackToast.success(
-        `已将作品“${trashSingleVideo.video_title?.trim() || "未命名"}”移入回收站`,
-      );
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(trashSingleVideo.id);
@@ -583,17 +578,10 @@ export function VideoList({
             }),
           ),
         );
-        const successCount = results.filter(
-          (r) => r.status === "fulfilled",
-        ).length;
         const failCount = results.filter((r) => r.status === "rejected").length;
         const actionName = action === "trash" ? "移入回收站" : "恢复";
-        if (successCount > 0) {
-          feedbackToast.success(
-            `已成功${actionName} ${successCount} 项视频${failCount > 0 ? `（${failCount} 项处理失败）` : ""}`,
-          );
-        } else {
-          feedbackToast.error(`批量${actionName}失败`);
+        if (failCount > 0) {
+          feedbackToast.warning(`部分视频${actionName}失败 (${failCount} 项)`);
         }
         setSelectedIds(new Set());
         setShowBatchTrashConfirm(false);

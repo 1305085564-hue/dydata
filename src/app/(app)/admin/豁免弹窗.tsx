@@ -144,9 +144,6 @@ export function ExemptionDialog({
         return;
       }
 
-      feedbackToast.success(
-        `${profile.name}已更新为${CATEGORY_LABELS[formValues.category]} ${MODE_LABELS[formValues.mode]}`,
-      );
       onOpenChange(false);
     });
   }
@@ -162,7 +159,6 @@ export function ExemptionDialog({
         return;
       }
 
-      feedbackToast.success(`已恢复${profile.name}为正常状态`);
       onOpenChange(false);
     });
   }

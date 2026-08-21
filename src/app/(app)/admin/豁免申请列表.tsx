@@ -59,11 +59,6 @@ function RequestRow({
 
   function handle(decision: "approved" | "rejected") {
     onHandled?.(request, decision);
-    feedbackToast.success(
-      decision === "approved"
-        ? `已批准 ${request.applicant_name} 的豁免申请`
-        : `已拒绝 ${request.applicant_name} 的豁免申请`,
-    );
 
     startTransition(async () => {
       const result = await reviewExemptionRequest({

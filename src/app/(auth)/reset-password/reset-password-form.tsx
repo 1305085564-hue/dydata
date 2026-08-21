@@ -96,17 +96,17 @@ export function ResetPasswordForm() {
     event.preventDefault();
 
     if (recoveryState !== "ready") {
-      feedbackToast.error("重置链接已失效，请重新发送");
+      setSubmitError("重置链接已失效，请重新发送");
       return;
     }
 
     if (password.length < 6) {
-      feedbackToast.error("密码至少需要 6 位。");
+      setSubmitError("密码至少需要 6 位");
       return;
     }
 
     if (password !== confirmPassword) {
-      feedbackToast.error("两次输入的密码不一致");
+      setSubmitError("两次输入的密码不一致");
       return;
     }
 
@@ -124,7 +124,6 @@ export function ResetPasswordForm() {
         error instanceof Error ? error.message : null,
       );
       setSubmitError(message);
-      feedbackToast.error(message);
     } finally {
       setSubmitting(false);
     }

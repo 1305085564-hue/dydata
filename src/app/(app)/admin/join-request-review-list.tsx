@@ -204,7 +204,6 @@ export function JoinRequestReviewList({ rows }: Props) {
 
     setVisibleRows((current) => current.filter((row) => !selectedIds.has(row.id)));
     setSelectedIds(new Set());
-    feedbackToast.success(`已批量同意 ${idsToApprove.length} 条申请`);
 
     startTransition(async () => {
       const results = await Promise.allSettled(
@@ -244,7 +243,6 @@ export function JoinRequestReviewList({ rows }: Props) {
     setSelectedIds(new Set());
     setBatchRejectOpen(false);
     setBatchRejectNote("");
-    feedbackToast.success(`已批量驳回 ${idsToReject.length} 条申请`);
 
     startTransition(async () => {
       const results = await Promise.allSettled(

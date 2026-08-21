@@ -537,7 +537,6 @@ export function AdminModulesContentV2({
 
     setLocalTeams((prev) => [...prev, { id: tempId, name }]);
     setNewTeamName("");
-    feedbackToast.success(`正在创建团队：${name}`);
 
     startTransition(async () => {
       const res = await createTeam(name);
@@ -549,7 +548,6 @@ export function AdminModulesContentV2({
         setLocalTeams((prev) =>
           prev.map((t) => (t.id === tempId ? res.team! : t)),
         );
-        feedbackToast.success(`团队「${name}」创建成功`);
         router.refresh();
       }
     });
@@ -568,7 +566,6 @@ export function AdminModulesContentV2({
     setSelectedTeamId((current) =>
       resolveSelectedTeamAfterTeamDelete(current, team.id),
     );
-    feedbackToast.success(`正在删除团队：${team.name}`);
 
     startTransition(async () => {
       const res = await deleteTeam(team.id);
@@ -576,7 +573,6 @@ export function AdminModulesContentV2({
         setLocalTeams((prev) => [...prev, team]);
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success("团队删除成功");
         router.refresh();
       }
     });
@@ -590,7 +586,6 @@ export function AdminModulesContentV2({
     if (!targetRequest) return;
 
     setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
-    feedbackToast.success(`已提交审批操作`);
 
     startTransition(async () => {
       const actionFn =
@@ -602,9 +597,6 @@ export function AdminModulesContentV2({
         setPendingRequests((prev) => [...prev, targetRequest]);
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success(
-          action === "approve" ? "申请已批准，成员已加入团队" : "申请已驳回",
-        );
         const response = await fetch("/api/admin/modules/member-emails", {
           cache: "no-store",
         });
@@ -625,9 +617,6 @@ export function AdminModulesContentV2({
     setLocalProfiles((prev) =>
       prev.map((p) => (p.id === member.id ? { ...p, role: newRole } : p)),
     );
-    feedbackToast.success(
-      `正在将 ${member.name} 的角色更新为：${newRole === "admin" ? "管理员" : "普通成员"}`,
-    );
 
     startTransition(async () => {
       const res = await changeRole(member.id, newRole);
@@ -635,9 +624,6 @@ export function AdminModulesContentV2({
         setLocalProfiles(prevProfiles);
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success(
-          `已成功将 ${member.name} 更改为 ${newRole === "admin" ? "管理员" : "普通成员"}`,
-        );
         router.refresh();
       }
     });
@@ -668,7 +654,6 @@ export function AdminModulesContentV2({
         setLocalProfiles(prevProfiles);
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success(`已调配至 ${targetTeam?.name ?? "未分配"}`);
         router.refresh();
       }
     });
@@ -686,7 +671,6 @@ export function AdminModulesContentV2({
           : profile,
       ),
     );
-    feedbackToast.success(`正在将 ${target.name} 移出团队`);
 
     startTransition(async () => {
       const res = await removeMemberFromTeam(target.id);
@@ -695,7 +679,6 @@ export function AdminModulesContentV2({
         setRemoveTarget(target);
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success("已移出团队，账号仍可登录且数据保留");
         router.refresh();
       }
     });
@@ -722,7 +705,6 @@ export function AdminModulesContentV2({
         feedbackToast.error(res.error);
         return;
       }
-      feedbackToast.success("账号已归档，历史数据仍保留");
       router.refresh();
     });
   };
@@ -764,7 +746,6 @@ export function AdminModulesContentV2({
       setTimeout(() => {
         setRestoredFocusId(null);
       }, 3000);
-      feedbackToast.success("账号已恢复，请重新分配团队和权限");
       router.refresh();
     });
   };
@@ -772,7 +753,6 @@ export function AdminModulesContentV2({
   const handleBatchTransferTeam = (teamId: string) => {
     if (selectedMemberIds.length === 0) return;
     const targetTeam = localTeams.find((t) => t.id === teamId);
-    const targetTeamName = targetTeam?.name ?? "未分配团队";
     const ids = [...selectedMemberIds];
 
     const prevProfiles = localProfiles;
@@ -789,9 +769,6 @@ export function AdminModulesContentV2({
     );
     setSelectedMemberIds([]);
 
-    feedbackToast.success(
-      `正在划转 ${ids.length} 名成员至 ${targetTeamName}...`,
-    );
     startTransition(async () => {
       let failCount = 0;
       for (const id of ids) {
@@ -802,9 +779,6 @@ export function AdminModulesContentV2({
         setLocalProfiles(prevProfiles);
         feedbackToast.error(`部分成员划转失败 (${failCount}/${ids.length})`);
       } else {
-        feedbackToast.success(
-          `已成功将 ${ids.length} 名成员划转至 ${targetTeamName}`,
-        );
         router.refresh();
       }
     });
@@ -821,7 +795,6 @@ export function AdminModulesContentV2({
     setLocalProfiles((prev) => prev.filter((p) => !ids.includes(p.id)));
     setSelectedMemberIds([]);
 
-    feedbackToast.success(`正在归档 ${ids.length} 名账号...`);
     startTransition(async () => {
       let failCount = 0;
       for (const id of ids) {
@@ -832,7 +805,6 @@ export function AdminModulesContentV2({
         setLocalProfiles(prevProfiles);
         feedbackToast.error(`部分账号归档失败 (${failCount}/${ids.length})`);
       } else {
-        feedbackToast.success(`已成功归档 ${ids.length} 名账号`);
         router.refresh();
       }
     });
@@ -858,7 +830,6 @@ export function AdminModulesContentV2({
       if (res.error) {
         feedbackToast.error(res.error);
       } else {
-        feedbackToast.success(`成员 ${target.name} 的密码已成功重置`);
         setPasswordResetTarget(null);
         setNewPassword("");
         setConfirmPassword("");
@@ -903,7 +874,6 @@ export function AdminModulesContentV2({
             : p,
         ),
       );
-      feedbackToast.success("正在保存权限与数据范围变更...");
 
       startSavingPermissions(async () => {
         const res = await updatePermissions(
@@ -915,7 +885,6 @@ export function AdminModulesContentV2({
           setLocalProfiles(prevProfiles);
           feedbackToast.error(res.error);
         } else {
-          feedbackToast.success("权限与数据范围保存成功");
           router.refresh();
         }
       });
@@ -987,7 +956,6 @@ export function AdminModulesContentV2({
       if (!res.ok || !payload.success) {
         feedbackToast.error(payload.error || "AI 执行失败");
       } else {
-        feedbackToast.success(`${suggestion.label}：一键执行成功`);
         void handleFetchAiSuggestion();
         router.refresh();
       }

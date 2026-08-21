@@ -34,16 +34,17 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
     onOpenChange?.(value);
   };
   const [teamId, setTeamId] = useState("");
+  const [errorText, setErrorText] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit() {
     if (!teamId) {
-      feedbackToast.error("请选择要申请的团队");
+      setErrorText("请选择团队");
       return;
     }
+    setErrorText("");
 
     const submittedTeamId = teamId;
-    feedbackToast.success("申请已提交，等待管理员审核");
     setOpen(false);
     setTeamId("");
 
@@ -74,9 +75,12 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
           <Label htmlFor="apply-team-id">目标团队</Label>
           <select
             id="apply-team-id"
-            className="flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-900 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5"
+            className={`flex h-8 w-full rounded-lg border border-transparent bg-zinc-50 px-3 text-[13px] text-zinc-900 outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-zinc-200 focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-zinc-950/5 ${errorText ? "ring-1 ring-red-300" : ""}`}
             value={teamId}
-            onChange={(e) => setTeamId(e.target.value)}
+            onChange={(e) => {
+              setTeamId(e.target.value);
+              if (errorText) setErrorText("");
+            }}
             disabled={isPending}
           >
             <option value="" disabled>
@@ -88,6 +92,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
               </option>
             ))}
           </select>
+          {errorText && <p className="text-red-500 text-xs mt-1">{errorText}</p>}
         </div>
 
         <DialogFooter>

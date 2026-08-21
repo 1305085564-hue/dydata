@@ -221,17 +221,21 @@ export function PremiumSettingsModal({
 
   if (!open) return null;
 
+  const [profileError, setProfileError] = useState("");
+  const [addAccountError, setAddAccountError] = useState("");
+
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const submittedName = editingName.trim();
     if (!submittedName) {
-      feedbackToast.error("显示名称不能为空");
+      setProfileError("显示名称不能为空");
       return;
     }
     if (submittedName.length > 20) {
-      feedbackToast.error("显示名称最多 20 个字符");
+      setProfileError("最多 20 个字符");
       return;
     }
+    setProfileError("");
     if (submittedName === profileName) {
       onOpenChange(false);
       return;
@@ -242,7 +246,6 @@ export function PremiumSettingsModal({
       if (result?.error) {
         feedbackToast.error(result.error);
       } else {
-        feedbackToast.success("个人资料已更新");
         setSaveSuccess(true);
         setTimeout(() => {
           setSaveSuccess(false);
@@ -266,7 +269,6 @@ export function PremiumSettingsModal({
         return;
       }
       setIsGroupModeActive(!isGroupModeActive);
-      feedbackToast.success(isGroupModeActive ? "已退出集团模式" : "已进入集团模式");
       router.refresh();
     } catch {
       feedbackToast.error("集团模式切换失败");
@@ -280,17 +282,18 @@ export function PremiumSettingsModal({
     const trimmedRemark = newAccRemark.trim();
     const trimmedDir = newAccDir.trim();
     if (!trimmedName) {
-      feedbackToast.error("请填写抖音账号名称");
+      setAddAccountError("请填写账号名称");
       return;
     }
     if (trimmedName.length > 30) {
-      feedbackToast.error("抖音账号名称最多 30 个字符");
+      setAddAccountError("名称最多 30 个字符");
       return;
     }
     if (trimmedRemark.length > 30) {
-      feedbackToast.error("账号备注名最多 30 个字符");
+      setAddAccountError("备注最多 30 个字符");
       return;
     }
+    setAddAccountError("");
 
     setAccountActionPending("add");
     startTransition(async () => {
@@ -303,7 +306,6 @@ export function PremiumSettingsModal({
       if (result?.error) {
         feedbackToast.error(result.error);
       } else {
-        feedbackToast.success("账号已成功添加");
         setNewAccName("");
         setNewAccRemark("");
         setNewAccDir("");
@@ -334,12 +336,7 @@ export function PremiumSettingsModal({
     if (!editingField) return;
     const trimmed = editValue.trim();
     if (editingField === "name") {
-      if (!trimmed) {
-        feedbackToast.error("账号名称不能为空");
-        return;
-      }
-      if (trimmed.length > 30) {
-        feedbackToast.error("账号名称最多 30 个字符");
+      if (!trimmed || trimmed.length > 30) {
         return;
       }
       setAccountActionPending(accountId + "-name");
@@ -349,14 +346,12 @@ export function PremiumSettingsModal({
         if (result?.error) {
           feedbackToast.error(result.error);
         } else {
-          feedbackToast.success("抖音账号名称已更新");
           setEditingAccountId(null);
           setEditingField(null);
         }
       });
     } else if (editingField === "remark") {
       if (trimmed.length > 30) {
-        feedbackToast.error("账号备注名最多 30 个字符");
         return;
       }
       setAccountActionPending(accountId + "-remark");
@@ -366,7 +361,6 @@ export function PremiumSettingsModal({
         if (result?.error) {
           feedbackToast.error(result.error);
         } else {
-          feedbackToast.success("账号备注已更新");
           setEditingAccountId(null);
           setEditingField(null);
         }
@@ -508,10 +502,16 @@ export function PremiumSettingsModal({
                       <input
                         type="text"
                         value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
+                        onChange={(e) => {
+                          setEditingName(e.target.value);
+                          if (profileError) setProfileError("");
+                        }}
                         placeholder="输入您的姓名"
                         maxLength={20}
-                        className="flex-1 rounded-lg border border-zinc-300 bg-white py-1.5 px-3 text-[12px] tracking-tight text-zinc-900 outline-none transition-colors duration-100 focus:border-zinc-400"
+                        className={cn(
+                          "flex-1 rounded-lg border border-zinc-300 bg-white py-1.5 px-3 text-[12px] tracking-tight text-zinc-900 outline-none transition-colors duration-100 focus:border-zinc-400",
+                          profileError && "border-red-300 ring-1 ring-red-300",
+                        )}
                         required
                         disabled={isPending}
                       />
@@ -534,10 +534,14 @@ export function PremiumSettingsModal({
                         )}
                       </button>
                     </div>
-                    <div className="flex justify-between items-center text-[12px] text-zinc-400">
-                      <span>支持中英文、字数不超过 20 位。</span>
-                      <span>{editingName.length}/20 字符</span>
-                    </div>
+                    {profileError ? (
+                      <p className="text-red-500 text-xs mt-1">{profileError}</p>
+                    ) : (
+                      <div className="flex justify-between items-center text-[12px] text-zinc-400">
+                        <span>支持中英文、字数不超过 20 位。</span>
+                        <span>{editingName.length}/20 字符</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Role indicator */}
@@ -588,7 +592,10 @@ export function PremiumSettingsModal({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setIsAddingAccount(!isAddingAccount)}
+                    onClick={() => {
+                      setIsAddingAccount(!isAddingAccount);
+                      setAddAccountError("");
+                    }}
                     className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors"
                   >
                     <Plus className="size-3.5" />
@@ -610,14 +617,23 @@ export function PremiumSettingsModal({
                           type="text"
                           placeholder="抖音账号名 (如: dydata)"
                           value={newAccName}
-                          onChange={(e) => setNewAccName(e.target.value)}
-                          className="rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300"
+                          onChange={(e) => {
+                            setNewAccName(e.target.value);
+                            if (addAccountError) setAddAccountError("");
+                          }}
+                          className={cn(
+                            "rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300",
+                            addAccountError && "border-red-300 ring-1 ring-red-300",
+                          )}
                         />
                         <input
                           type="text"
                           placeholder="账号备注名 (如: 探店主理人)"
                           value={newAccRemark}
-                          onChange={(e) => setNewAccRemark(e.target.value)}
+                          onChange={(e) => {
+                            setNewAccRemark(e.target.value);
+                            if (addAccountError) setAddAccountError("");
+                          }}
                           className="rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300"
                         />
                         <input
@@ -628,9 +644,13 @@ export function PremiumSettingsModal({
                           className="rounded-lg border border-zinc-200 bg-white py-1.5 px-3 text-[12px] text-zinc-900 outline-none focus:border-zinc-300"
                         />
                       </div>
+                      {addAccountError && <p className="text-red-500 text-xs">{addAccountError}</p>}
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => setIsAddingAccount(false)}
+                          onClick={() => {
+                            setIsAddingAccount(false);
+                            setAddAccountError("");
+                          }}
                           className="px-2.5 py-1 text-[12px] font-medium text-zinc-500 hover:text-zinc-700"
                         >
                           取消

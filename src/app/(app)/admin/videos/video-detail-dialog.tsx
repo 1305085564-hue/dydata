@@ -228,13 +228,6 @@ export function VideoDetailDialog({
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "操作失败");
       }
-      feedbackToast.success(
-        action === "trash"
-          ? "已移入回收站"
-          : action === "restore"
-            ? "已成功恢复"
-            : "已永久删除",
-      );
       setShowConfirmPurge(false);
       onLifecycleChanged();
     } catch (e) {
@@ -283,7 +276,6 @@ export function VideoDetailDialog({
       }
       if (data.asset) {
         onAssetSaved(video.id, data.asset);
-        feedbackToast.success("素材档案已更新");
       }
     } catch (e) {
       feedbackToast.error(e instanceof Error ? e.message : "保存失败");

@@ -301,7 +301,6 @@ export default function SubTopicDetailPage({
 
       if (!res.ok) throw new Error(data.error || "认领失败");
 
-      feedbackToast.success("认领选题成功！");
       await loadAllData();
     } catch (err) {
       feedbackToast.error("认领失败", {
@@ -327,7 +326,6 @@ export default function SubTopicDetailPage({
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "标记脚本中失败");
       }
-      feedbackToast.success("已成功标记为「脚本写作中」！");
       await loadAllData();
     } catch (err) {
       feedbackToast.error("更新状态失败", {
@@ -351,7 +349,6 @@ export default function SubTopicDetailPage({
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "放回选题池失败");
       }
-      feedbackToast.success(request.successMessage);
       await loadAllData();
     } catch (err) {
       feedbackToast.error("放回失败", {
@@ -378,7 +375,6 @@ export default function SubTopicDetailPage({
       });
       if (!replaceRes.ok) throw new Error("替换认领失败");
 
-      feedbackToast.success("已替换旧选题并成功认领！");
       setReplaceDialogOpen(false);
       await loadAllData();
     } catch (err) {
@@ -391,12 +387,14 @@ export default function SubTopicDetailPage({
   };
 
   // 编辑提交
+  const [editTitleError, setEditTitleError] = useState("");
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editTitle.trim()) {
-      feedbackToast.warning("选题标题不能为空");
+      setEditTitleError("标题不能为空");
       return;
     }
+    setEditTitleError("");
     setIsSubmittingEdit(true);
     try {
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}`, {
@@ -411,7 +409,6 @@ export default function SubTopicDetailPage({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "修改失败");
-      feedbackToast.success("选题更新成功");
       setEditDialogOpen(false);
       await loadAllData();
     } catch (err) {
@@ -443,7 +440,6 @@ export default function SubTopicDetailPage({
       }
       if (!res.ok) throw new Error(data.error || "删除失败");
 
-      feedbackToast.success("选题已顺利删除");
       router.push("/topics");
     } catch (err) {
       feedbackToast.error("删除失败", {
@@ -941,10 +937,19 @@ export default function SubTopicDetailPage({
               </label>
               <input
                 value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full h-9 rounded-xl border border-zinc-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                onChange={(e) => {
+                  setEditTitle(e.target.value);
+                  if (editTitleError) setEditTitleError("");
+                }}
+                className={cn(
+                  "w-full h-9 rounded-xl border border-zinc-200 px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors",
+                  editTitleError && "border-red-300 ring-1 ring-red-300",
+                )}
                 required
               />
+              {editTitleError && (
+                <p className="text-red-500 text-xs mt-1">{editTitleError}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="text-[12px] font-medium text-zinc-600">

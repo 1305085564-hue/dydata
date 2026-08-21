@@ -146,7 +146,6 @@ export function UnifiedCommandHub({
         body: JSON.stringify({ request_id: requestId, action }),
       });
       if (res.ok) {
-        toast.success(action === "approved" ? "审批已通过" : "审批已拒绝");
         await fetchApprovals();
       } else {
         const json = await res.json();
@@ -185,12 +184,9 @@ export function UnifiedCommandHub({
           }
         }),
       );
-      toast.success("批量通过完成", {
-        description:
-          failCount > 0
-            ? `成功 ${successCount} 条，失败 ${failCount} 条`
-            : `成功通过 ${successCount} 条申请`,
-      });
+      if (failCount > 0) {
+        toast.warning(`批量通过部分失败: 成功 ${successCount} 条，失败 ${failCount} 条`);
+      }
       await fetchApprovals();
     } catch {
       toast.error("批量操作失败，请重试");

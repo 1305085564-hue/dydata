@@ -81,7 +81,6 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
   useEffect(() => {
     if (state.error) {
       setPassword("");
-      feedbackToast.error(getLoginErrorMessage(state.error));
       passwordInputRef.current?.focus();
     }
   }, [state.error]);

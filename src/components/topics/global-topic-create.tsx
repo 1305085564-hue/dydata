@@ -108,16 +108,25 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
     };
   }, [isOpen, topics.length]);
 
+  const [topicError, setTopicError] = useState("");
+  const [titleError, setTitleError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let hasError = false;
     if (!selectedTopicId) {
-      feedbackToast.warning("请选择一个母题分类");
-      return;
+      setTopicError("请选择母题分类");
+      hasError = true;
+    } else {
+      setTopicError("");
     }
     if (!inputText.trim()) {
-      feedbackToast.warning("请输入选题标题");
-      return;
+      setTitleError("请输入选题标题");
+      hasError = true;
+    } else {
+      setTitleError("");
     }
+    if (hasError) return;
 
     setIsSubmitting(true);
     try {
@@ -139,7 +148,6 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
         throw new Error(data.error || "录入选题失败");
       }
 
-      feedbackToast.success("新选题录入成功");
       // 重置并收起
       setInputText("");
       setHookText("");
@@ -147,6 +155,8 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
       setAudience("");
       setShowMore(false);
       setIsOpen(false);
+      setTopicError("");
+      setTitleError("");
       
       // 触发一个刷新事件，让数据台或选题池页面能监听到刷新
       window.dispatchEvent(new CustomEvent("refresh-topics"));
@@ -209,6 +219,7 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
                 })}
               </div>
             ) : null}
+            {topicError && <p className="text-red-500 text-xs mt-1">{topicError}</p>}
             {!isLoadingTopics && topics.length === 0 && (
               <div className="rounded-lg border border-[#C9604D]/15 bg-[#C9604D]/5 px-3 py-2 text-[12px] text-[#C9604D]">
                 母题加载失败，请刷新后重试
@@ -226,13 +237,18 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               type="text"
               required
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={(e) => {
+                setInputText(e.target.value);
+                if (titleError) setTitleError("");
+              }}
               placeholder="例如：揭秘庄家吸筹的三种常见假象"
               className={cn(
                 "w-full h-9.5 rounded-xl border border-zinc-200 bg-white px-3 text-[13px] text-zinc-900 placeholder-zinc-400 outline-none",
-                "transition-all duration-200 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/15"
+                "transition-all duration-200 focus:border-[#D97757] focus:ring-2 focus:ring-[#D97757]/15",
+                titleError && "border-red-300 ring-1 ring-red-300",
               )}
             />
+            {titleError && <p className="text-red-500 text-xs mt-1">{titleError}</p>}
           </div>
 
           {/* 一句话钩子（选填） */}

@@ -117,7 +117,6 @@ export function HistoryReportEditForm({
         return;
       }
 
-      feedbackToast.success("历史日报已保存");
       onSaved?.();
     });
   }

@@ -50,6 +50,9 @@ function ExemptionModal({
   const [remindCount, setRemindCount] = useState<number | null>(null);
   const [remindCountLoading, setRemindCountLoading] = useState(false);
 
+  const [dateError, setDateError] = useState("");
+  const [reasonError, setReasonError] = useState("");
+
   function handleOpen() {
     if (localHasPending) return;
     setSelectedDates(
@@ -57,6 +60,8 @@ function ExemptionModal({
     );
     setCategory("leave");
     setReason("");
+    setDateError("");
+    setReasonError("");
     setOpen(true);
   }
 
@@ -85,7 +90,7 @@ function ExemptionModal({
       new Set([...selectedDates, ...dates]),
     ).sort();
     setSelectedDates(newSelected);
-    feedbackToast.success(`已一键选中近 7 天未交的 ${dates.length} 个日期`);
+    if (dateError && newSelected.length > 0) setDateError("");
   }
 
   // 弹窗打开时加载催交次数
@@ -114,23 +119,34 @@ function ExemptionModal({
 
   function toggleDate(date: string) {
     setSelectedDates((current) => {
+      let next: string[];
       if (current.includes(date)) {
-        return current.filter((item) => item !== date);
+        next = current.filter((item) => item !== date);
+      } else {
+        next = [...current, date].sort();
       }
-      return [...current, date].sort();
+      if (dateError && next.length > 0) setDateError("");
+      return next;
     });
   }
 
   function handleSubmit() {
+    let hasError = false;
     if (selectedDates.length === 0) {
-      feedbackToast.error("请选择申请日期");
-      return;
+      setDateError("请选择日期");
+      hasError = true;
+    } else {
+      setDateError("");
     }
 
     if (!reason.trim()) {
-      feedbackToast.error("请填写申请原因");
-      return;
+      setReasonError("请填写原因");
+      hasError = true;
+    } else {
+      setReasonError("");
     }
+
+    if (hasError) return;
 
     const submittedDates = [...selectedDates];
     const submittedReason = reason.trim();
@@ -149,7 +165,6 @@ function ExemptionModal({
       } else {
         setLocalHasPending(true);
         setOpen(false);
-        feedbackToast.success("申请已提交，等待管理员审批");
       }
     });
   }
@@ -290,10 +305,11 @@ function ExemptionModal({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex h-16 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-[12.5px] text-zinc-400">
+                    <div className={cn("flex h-16 items-center justify-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50 text-[12.5px] text-zinc-400", dateError && "border-red-300 ring-1 ring-red-300")}>
                       尚未选择任何日期
                     </div>
                   )}
+                  {dateError && <p className="text-red-500 text-xs mt-1">{dateError}</p>}
                 </div>
 
                 {/* 催交记录提示 */}
@@ -329,7 +345,10 @@ function ExemptionModal({
                     <span className="inline-block h-2 w-2 rounded-full bg-[#D97757] ring-1 ring-white" />
                   </p>
                   <textarea
-                    className="h-[100px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-700 shadow-2xs transition-colors duration-100 ease-out placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5"
+                    className={cn(
+                      "h-[100px] w-full resize-none rounded-lg border border-zinc-200 bg-white px-4 py-3 text-[13px] leading-[1.7] text-zinc-700 shadow-2xs transition-colors duration-100 ease-out placeholder:text-zinc-400 focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/5",
+                      reasonError && "ring-1 ring-red-300 border-red-300",
+                    )}
                     maxLength={100}
                     placeholder={
                       category === "leave"
@@ -337,8 +356,12 @@ function ExemptionModal({
                         : "请简述豁免原因，如：账号限流封禁、账号转让、公司统一放假等（最多100字）"
                     }
                     value={reason}
-                    onChange={(event) => setReason(event.target.value)}
+                    onChange={(event) => {
+                      setReason(event.target.value);
+                      if (reasonError) setReasonError("");
+                    }}
                   />
+                  {reasonError && <p className="text-red-500 text-xs mt-1">{reasonError}</p>}
                   <p className="text-right text-[12px] tabular-nums text-zinc-400">
                     {reason.length}/100
                   </p>

@@ -202,7 +202,6 @@ export function SubmitForm({
           ...prev,
           screenshots: [...prev.screenshots, ...uploaded].slice(0, 5),
         }));
-        feedbackToast.success("截图已上传");
       } catch (error) {
         feedbackToast.error(error instanceof Error ? error.message : "截图上传失败");
       } finally {
@@ -247,7 +246,7 @@ export function SubmitForm({
           return;
         }
         if (followsNumber > viewsNumber) {
-          feedbackToast.error("导粉数 × 大于流量");
+          feedbackToast.error("导粉数不能大于流量");
           setIsSubmitting(false);
           return;
         }
@@ -293,12 +292,11 @@ export function SubmitForm({
               }),
             });
           } catch {
-            feedbackToast.warning("初始效果数据未保存，可在详情页用「记录使用效果」补登");
+            feedbackToast.warning("效果未保存，可在详情页补登");
           }
         }
 
         trackUsageEvent({ path: "/violations/submit", eventType: "submit_violation_case" });
-        feedbackToast.success("已提交，待审核通过后才会出现在团队话术库");
         router.push(caseId ? `/violations/${caseId}` : "/violations");
         return;
       }
@@ -316,13 +314,13 @@ export function SubmitForm({
         return;
       }
       if (!formData.platformNotice.trim()) {
-        feedbackToast.error("请粘贴平台通知文本，是判违规的最硬证据");
+        feedbackToast.error("请填写平台通知文本");
         setIsSubmitting(false);
         return;
       }
       const showAppealText = formData.appealStatus !== "未申诉";
       if (showAppealText && !formData.appealText.trim()) {
-        feedbackToast.error("请填写申诉话术（你提交申诉时写的内容）");
+        feedbackToast.error("请填写申诉话术");
         setIsSubmitting(false);
         return;
       }
@@ -346,7 +344,6 @@ export function SubmitForm({
 
       const caseId = getCreatedCaseId(payload);
       trackUsageEvent({ path: "/violations/submit", eventType: "submit_violation_case" });
-      feedbackToast.success("已提交，待审核通过后才会出现在团队话术库");
 
       if (caseId) {
         try {
@@ -368,10 +365,10 @@ export function SubmitForm({
             }),
           });
           if (!eventResponse.ok && eventResponse.status !== 401) {
-            feedbackToast.warning("处罚信息未保存，稍后可在详情页补录");
+            feedbackToast.warning("处罚信息未保存，可在详情页补录");
           }
         } catch {
-          feedbackToast.warning("处罚信息未保存，稍后可在详情页补录");
+          feedbackToast.warning("处罚信息未保存，可在详情页补录");
         }
       }
 

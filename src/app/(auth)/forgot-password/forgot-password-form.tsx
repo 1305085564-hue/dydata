@@ -44,7 +44,6 @@ export function ForgotPasswordForm() {
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
       if (error) throw error;
       setSuccessMessage(FORGOT_PASSWORD_SUCCESS_MESSAGE);
-      feedbackToast.success(FORGOT_PASSWORD_SUCCESS_MESSAGE);
     } catch (error) {
       setSuccessMessage(null);
       feedbackToast.error(getForgotPasswordErrorMessage((error as Error).message));

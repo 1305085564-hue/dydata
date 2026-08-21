@@ -238,7 +238,6 @@ export function DataManager({
     );
     setEditingId(null);
     setEditData({});
-    feedbackToast.success("已更新");
 
     startTransition(async () => {
       const result = await adminUpdateReport(reportId, nextPatch);
@@ -277,7 +276,6 @@ export function DataManager({
 
     setLocalReports((current) => current.filter((report) => report.id !== deleteTarget.id));
     setDeleteTarget(null);
-    feedbackToast.success("已删除");
 
     startTransition(async () => {
       const result = await adminDeleteReport(deleteTarget.id);

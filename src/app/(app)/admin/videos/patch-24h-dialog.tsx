@@ -151,7 +151,6 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
         anomaly_status: video.anomaly_status === "未满24h" ? "正常" : video.anomaly_status,
       };
 
-      feedbackToast.success("24h 数据已补录");
       onOpenChange(false);
       onSaved({ video: savedVideo, snapshot: savedSnapshot });
     });

@@ -188,7 +188,6 @@ export function MemberDrawer({
         path: "/admin/fulfillment",
         eventType: "mark_fulfillment_status",
       });
-      toast.success("标记成功");
       setActiveAction(null);
       setReason("");
       onActionComplete();
@@ -216,7 +215,6 @@ export function MemberDrawer({
         toast.error(err.error || "删除标记失败");
         return;
       }
-      toast.success("删除标记成功");
       setRemoveConfirmOpen(false);
       onActionComplete();
     } catch {
@@ -224,7 +222,7 @@ export function MemberDrawer({
     } finally {
       setIsRemoving(false);
     }
-  }, [member, effectiveDate, onOpenChange, onActionComplete]);
+  }, [member, effectiveDate, onActionComplete]);
 
   const handleHandleAppeal = useCallback(
     async (appealId: string, decision: "approve" | "reject") => {
@@ -240,9 +238,6 @@ export function MemberDrawer({
           toast.error(err.error || "处理申诉失败");
           return;
         }
-        toast.success(
-          decision === "approve" ? "已同意申诉并改判" : "已驳回申诉",
-        );
         onActionComplete();
       } catch {
         toast.error("网络错误，处理申诉失败");

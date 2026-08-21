@@ -33,9 +33,7 @@ export function JoinBannerClient(props: Props) {
     if (!requestId) return;
     startTransition(async () => {
       const result = await cancelJoinRequestAction(requestId);
-      if (result.ok) {
-        feedbackToast.success("已撤销申请");
-      } else {
+      if (!result.ok) {
         feedbackToast.error(result.error);
       }
     });

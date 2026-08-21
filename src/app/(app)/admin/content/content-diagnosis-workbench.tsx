@@ -309,7 +309,6 @@ export function ContentDiagnosisWorkbench({
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "移入回收站失败");
-      feedbackToast.success("作品已成功移入回收站");
       onLifecycleChanged();
     } catch (error) {
       feedbackToast.error(
@@ -645,7 +644,6 @@ export function ContentDiagnosisWorkbench({
       };
       if (!res.ok) throw new Error(data.error ?? "生成分析失败");
       setAnalysisResult(data);
-      feedbackToast.success("AI 辅助分析已就绪");
     } catch (error) {
       feedbackToast.error(
         error instanceof Error ? error.message : "生成辅助分析失败",
@@ -660,7 +658,6 @@ export function ContentDiagnosisWorkbench({
     skipNextSaveRef.current = true;
     setMainIssues(analysisResult.feedback_draft.main_issues);
     setFeedback(analysisResult.feedback_draft.improvement_feedback);
-    feedbackToast.success("已引用 AI 意见至反馈框，请核对后保存");
   }
 
   async function handleMarkExperience(
@@ -682,7 +679,6 @@ export function ContentDiagnosisWorkbench({
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "标记经验失败");
-      feedbackToast.success("已成功沉淀经验入库");
     } catch (error) {
       feedbackToast.error(
         error instanceof Error ? error.message : "标记经验失败",
@@ -711,7 +707,6 @@ export function ContentDiagnosisWorkbench({
           }
           return result;
         });
-        feedbackToast.success("已撤销该句子的引用");
       } else {
         next.add(index);
         setMainIssues((issuesPrev) => {
@@ -720,7 +715,6 @@ export function ContentDiagnosisWorkbench({
           if (current.includes(text)) return current;
           return `${current} / 文案：「${text}」`;
         });
-        feedbackToast.success("已引用该句子至主要问题");
       }
       return next;
     });

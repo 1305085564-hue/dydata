@@ -956,7 +956,6 @@ export function VideoSubmitForm({
     }));
     setScriptText(draft.scriptText);
     setKeywordInput(draft.keywordInput);
-    feedbackToast.success("草稿已恢复");
   }, [restoreDraft, updateSlotsState, userId]);
 
   const handleDiscardDraft = useCallback(() => {
@@ -1272,12 +1271,6 @@ export function VideoSubmitForm({
           },
         }));
 
-        feedbackToast.success("截图已保存，正在识别", {
-          duration: 2000,
-          className:
-            "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
-        });
-
         const ocrRequestStart = performance.now();
         const response = await fetch("/api/ocr-screenshot", {
           method: "POST",
@@ -1425,23 +1418,8 @@ export function VideoSubmitForm({
           };
         });
 
-        if (shouldAutoMoveSlot) {
-          const detectedLabel =
-            detectedType === "data"
-              ? "流量数据图"
-              : detectedType === "retention"
-                ? "留存完播图"
-                : "截图";
-          feedbackToast.success(
-            `已识别为${detectedLabel}，自动归入${SLOT_LABELS[targetRole]}`,
-            {
-              duration: 2000,
-            },
-          );
-        }
-
         if (data.slot_status === "failed") {
-          feedbackToast.error(`${resolvedError || OCR_FAIL_MESSAGE}，截图已保留，可直接手动填写指标`);
+          feedbackToast.error("识别失败，可手动填写指标");
           return;
         }
 
@@ -1497,12 +1475,6 @@ export function VideoSubmitForm({
             },
           }));
         }
-
-        feedbackToast.success("识别完成", {
-          duration: 2200,
-          className:
-            "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
-        });
       } catch (error) {
         const message =
           phase === "upload"
@@ -1555,7 +1527,6 @@ export function VideoSubmitForm({
       const text = await navigator.clipboard.readText();
       if (text) {
         updateMeta("content", text);
-        feedbackToast.success("文案已从剪贴板粘贴");
       } else {
         feedbackToast.error("剪贴板内容为空");
       }
@@ -1570,32 +1541,23 @@ export function VideoSubmitForm({
 
     if (!account) {
       triggerFormShake();
-      feedbackToast.error("请先选择提交账号");
       return;
     }
 
     if (!submitCheck.ok || !issueSummary.canSubmit) {
       triggerFormShake();
-      feedbackToast.error(
-        issueHintText ||
-          issueSummary.reason ||
-          submitCheck.reason ||
-          "当前还不能提交",
-      );
       scrollToIssueAnchor(issueSummary.firstIssueAnchor);
       return;
     }
 
     if (!meta.topicTag) {
       triggerFormShake();
-      feedbackToast.error("请选择话题标签");
       scrollToIssueAnchor("topicTag");
       return;
     }
 
     if (parseMetric(fields.follower_convert.value) > 0 && !scriptText.trim()) {
       triggerFormShake();
-      feedbackToast.error("导粉数 > 0 时，请填写导粉话术文案");
       return;
     }
 
@@ -1704,11 +1666,6 @@ export function VideoSubmitForm({
         router.prefetch("/growth");
       }
       onSubmitted(submittedVideo, aiTags, summaryOverride);
-      feedbackToast.success("数据提交成功", {
-        duration: 2000,
-        className:
-          "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
-      });
       trackUsageEvent({ path: "/dashboard", eventType: "submit_daily_report" });
       clearDraft();
     } catch (error) {
@@ -2026,11 +1983,6 @@ export function VideoSubmitForm({
                       },
                     }));
                     setDeleteTargetRole(null);
-                    feedbackToast.success("删除成功", {
-                      duration: 2000,
-                      className:
-                        "fixed left-1/2 top-1/2 z-[70] -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-xl",
-                    });
                   }}
                 >
                   确认删除

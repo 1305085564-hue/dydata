@@ -68,20 +68,31 @@ export function ProviderDialog({
 }) {
   const [formData, setFormData] = useState<Partial<AiProvider>>(defaultProviderForm);
   const [loading, setLoading] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [urlError, setUrlError] = useState("");
 
   useEffect(() => {
     setFormData(provider ? { ...defaultProviderForm, ...provider } : defaultProviderForm);
+    setNameError("");
+    setUrlError("");
   }, [provider, open]);
 
   const handleSubmit = async () => {
+    let hasError = false;
     if (!formData.name?.trim()) {
-      feedbackToast.error("请输入渠道名称");
-      return;
+      setNameError("请输入渠道名称");
+      hasError = true;
+    } else {
+      setNameError("");
     }
     if (!formData.base_url?.trim()) {
-      feedbackToast.error("请输入 Base URL");
-      return;
+      setUrlError("请输入 Base URL");
+      hasError = true;
+    } else {
+      setUrlError("");
     }
+    if (hasError) return;
+
     setLoading(true);
     try {
       await onSave(formData as Record<string, unknown>);
@@ -102,18 +113,28 @@ export function ProviderDialog({
             <Input
               id="provider-name"
               value={formData.name || ""}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                if (nameError) setNameError("");
+              }}
+              className={nameError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: API中转站A / 官方OpenAI"
             />
+            {nameError && <p className="text-red-500 text-xs mt-1">{nameError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-base-url">Base URL</Label>
             <Input
               id="provider-base-url"
               value={formData.base_url || ""}
-              onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, base_url: e.target.value });
+                if (urlError) setUrlError("");
+              }}
+              className={urlError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: https://api.openai.com/v1"
             />
+            {urlError && <p className="text-red-500 text-xs mt-1">{urlError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="provider-description">描述 (可选)</Label>
@@ -164,22 +185,33 @@ export function KeyDialog({
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [apiKeyValue, setApiKeyValue] = useState("");
+  const [labelError, setLabelError] = useState("");
+  const [keyError, setKeyError] = useState("");
 
   useEffect(() => {
     setFormData(apiKey ? { ...defaultKeyForm, ...apiKey } : defaultKeyForm);
     setSelectedProviderId(providerId || apiKey?.provider_id || bundle?.providers[0]?.id || "");
     setApiKeyValue("");
+    setLabelError("");
+    setKeyError("");
   }, [apiKey, providerId, open, bundle]);
 
   const handleSubmit = async () => {
+    let hasError = false;
     if (!formData.label?.trim()) {
-      feedbackToast.error("请输入 Key / 分组名称");
-      return;
+      setLabelError("请输入名称");
+      hasError = true;
+    } else {
+      setLabelError("");
     }
     if (!apiKey?.id && !apiKeyValue.trim()) {
-      feedbackToast.error("请输入 API Key");
-      return;
+      setKeyError("请输入 API Key");
+      hasError = true;
+    } else {
+      setKeyError("");
     }
+    if (hasError) return;
+
     setLoading(true);
     try {
       const payload: Record<string, unknown> = {
@@ -221,9 +253,14 @@ export function KeyDialog({
             <Input
               id="key-label"
               value={formData.label || ""}
-              onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, label: e.target.value });
+                if (labelError) setLabelError("");
+              }}
+              className={labelError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: 主账号-Key1"
             />
+            {labelError && <p className="text-red-500 text-xs mt-1">{labelError}</p>}
           </div>
 
           <div className="space-y-2">
@@ -232,9 +269,14 @@ export function KeyDialog({
               id="api-key"
               type="password"
               value={apiKeyValue}
-              onChange={(e) => setApiKeyValue(e.target.value)}
+              onChange={(e) => {
+                setApiKeyValue(e.target.value);
+                if (keyError) setKeyError("");
+              }}
+              className={keyError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder={apiKey?.id ? "留空表示不修改" : "sk-..."}
             />
+            {keyError && <p className="text-red-500 text-xs mt-1">{keyError}</p>}
           </div>
 
           <div className="flex items-center justify-between">
@@ -289,6 +331,7 @@ export function ModelDialog({
   const [selectedKeyId, setSelectedKeyId] = useState<string>("");
   const [presetTab, setPresetTab] = useState<"used" | "latest">("used");
   const [loading, setLoading] = useState(false);
+  const [modelIdError, setModelIdError] = useState("");
 
   // 自动搜集全站当前已配置/使用过的模型（去重）
   const usedModels = useMemo(() => {
@@ -309,13 +352,15 @@ export function ModelDialog({
         : { ...defaultModelForm, model_id: initialModelId || "" }
     );
     setSelectedKeyId(keyId || bundle?.keys[0]?.id || "");
+    setModelIdError("");
   }, [model, keyId, initialModelId, open, bundle]);
 
   const handleSubmit = async () => {
     if (!formData.model_id?.trim()) {
-      feedbackToast.error("请输入或点选模型标识");
+      setModelIdError("请输入模型标识");
       return;
     }
+    setModelIdError("");
     setLoading(true);
     try {
       await onSave({
@@ -361,10 +406,15 @@ export function ModelDialog({
             <Input
               id="model-id"
               value={formData.model_id || ""}
-              onChange={(e) => setFormData({ ...formData, model_id: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, model_id: e.target.value });
+                if (modelIdError) setModelIdError("");
+              }}
+              className={modelIdError ? "ring-1 ring-red-300 border-red-300" : ""}
               placeholder="例如: deepseek-v4-pro"
               disabled={!!model?.id}
             />
+            {modelIdError && <p className="text-red-500 text-xs mt-1">{modelIdError}</p>}
           </div>
 
           {/* 快捷点选: 常用已用模型 VS 2026 最新主流模型 */}

@@ -158,7 +158,6 @@ export function useAiConfig() {
         throw new Error(responseData.error || `操作失败: ${action} ${entity}`);
       }
       mutate(responseData as AiConfigBundle);
-      feedbackToast.success("保存成功");
       return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "保存配置失败";
@@ -170,7 +169,6 @@ export function useAiConfig() {
   const mutateFeatureControl = useCallback(async (
     action: "save_feature_control" | "archive_feature" | "restore_feature",
     data: Record<string, unknown>,
-    successMessage: string,
   ) => {
     try {
       const res = await fetchWithTimeout("/api/admin/ai-config", {
@@ -183,7 +181,6 @@ export function useAiConfig() {
         throw new Error(responseData.error || "保存业务功能失败");
       }
       mutate(responseData as AiConfigBundle);
-      feedbackToast.success(successMessage);
       return true;
     } catch (err) {
       feedbackToast.error(err instanceof Error ? err.message : "保存业务功能失败");
@@ -258,7 +255,7 @@ export function useAiConfig() {
       feedbackToast.error("当前暂无可测试的 API Key");
       return { okCount: 0, failCount: 0 };
     }
-    feedbackToast.loading("正在并发检测全池 API 密钥健康状态...");
+    feedbackToast.loading("正在检测 API 密钥...");
     const results = await Promise.all(
       cachedBundle.keys.map(async (key) => {
         const firstModel = cachedBundle?.models.find((m) => m.key_id === key.id);
@@ -270,9 +267,9 @@ export function useAiConfig() {
     const failCount = results.length - okCount;
 
     if (failCount === 0) {
-      feedbackToast.success(`检测完成：全池 ${okCount} 个 API Key 全部健康在线！`);
+      feedbackToast.success(`全池 ${okCount} 个密钥健康在线`);
     } else {
-      feedbackToast.warning(`检测完成：${okCount} 个健康在线，${failCount} 个离线/响应异常`);
+      feedbackToast.warning(`${okCount} 个正常，${failCount} 个异常`);
     }
     return { okCount, failCount };
   }, [testKeyConnection]);
@@ -289,9 +286,9 @@ export function useAiConfig() {
     error,
     mutate,
     mutateEntity,
-    saveFeatureControl: (data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data, "业务功能已保存"),
-    archiveFeature: (featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }, "已停止使用并保留恢复记录"),
-    restoreFeature: (featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }, "业务功能已恢复"),
+    saveFeatureControl: (data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data),
+    archiveFeature: (featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }),
+    restoreFeature: (featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }),
     swapKeyPriority,
     testKeyConnection,
     testAllKeys,
