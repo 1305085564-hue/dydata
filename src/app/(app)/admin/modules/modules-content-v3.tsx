@@ -1130,7 +1130,7 @@ export function AdminModulesContentV3({
                   <div
                     key={member.id}
                     className={cn(
-                      "group flex items-center gap-3 px-5 py-3 transition-colors",
+                      "group flex items-center gap-3 px-5 py-2.5 transition-colors",
                       isRestoredFocus
                         ? "bg-amber-50 animate-pulse"
                         : isChecked
@@ -1157,11 +1157,11 @@ export function AdminModulesContentV3({
                       </div>
                     )}
 
-                    {/* 成员姓名 + 邮箱 (点击打开抽屉) */}
+                    {/* 成员姓名 + 邮箱/号码 (单排紧凑布局) */}
                     <div
                       role="button"
                       tabIndex={0}
-                      className="flex-1 min-w-0 cursor-pointer select-none"
+                      className="flex-1 min-w-0 cursor-pointer select-none flex items-center gap-2"
                       onClick={() => openMemberDrawer(member)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -1170,24 +1170,24 @@ export function AdminModulesContentV3({
                         }
                       }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[13px] font-medium text-zinc-900 truncate">
-                          {member.name}
-                        </span>
-                        {member.id === currentUserId && (
-                          <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded">
-                            我
-                          </span>
-                        )}
-                        {isCurrentlyExempt && (
-                          <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                            豁免
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-zinc-400 truncate block mt-0.5">
-                        {member.email || "—"}
+                      <span className="text-[13px] font-medium text-zinc-900 shrink-0">
+                        {member.name}
                       </span>
+                      {member.id === currentUserId && (
+                        <span className="text-[10px] text-zinc-400 border border-zinc-200 px-1 rounded shrink-0">
+                          我
+                        </span>
+                      )}
+                      {isCurrentlyExempt && (
+                        <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded shrink-0">
+                          豁免
+                        </span>
+                      )}
+                      {member.email && (
+                        <span className="text-[12px] text-zinc-400 truncate font-normal">
+                          {member.email}
+                        </span>
+                      )}
                     </div>
 
                     {/* 角色徽标 (v4 彩色胶囊设计) */}
