@@ -1,25 +1,15 @@
 -- ============================================================
--- 智能告警发送前原子去重（claim 表达式唯一索引）
+-- 智能告警发送前原子去重（专用 claim 表）
 --
--- 背景：smart-alert 原先「读 audit_logs 去重 → 发送 → 写成功记录」，
--- 两个并发请求可能同时读到空记录并都发送飞书。本 migration 对
--- dedupeKey 建（部分表达式）唯一索引，使「发送前插入 claim 行」
--- 成为原子抢占：
---   action ∈ ('smart_alert_claim','smart_alert') 且 detail.dedupeKey
---   非空的行，同一 dedupeKey 只允许一行。
+-- audit_logs.detail 的线上真实类型是 text，不能对它使用 ->> 操作符，
+-- 也不能假设历史审计内容全部是合法 JSON。因此并发锁单独存储，
+-- audit_logs 继续只承担成功/失败审计和历史 dedupe 查询。
 --
 -- 状态机（应用层维护）：
---   发送前   插入 action='smart_alert_claim' 行（抢占）；
---   发送成功 流转为 action='smart_alert'（保留为历史去重依据）；
---   发送失败 删除 claim 行（释放重试资格），另写 smart_alert_failed 记录。
---
--- ⚠️ 执行前置检查（Supabase SQL Editor 先跑这句，无结果才可继续）：
---   select detail->>'dedupeKey' as dedupe_key, count(*)
---   from public.audit_logs
---   where action in ('smart_alert_claim', 'smart_alert')
---     and detail->>'dedupeKey' is not null
---   group by 1 having count(*) > 1;
--- 有历史重复则索引创建失败；先人工归并再执行。
+--   发送前   插入 status='claimed' 行（dedupe_key 原生唯一约束）；
+--   发送成功 流转为 status='sent'，并写 smart_alert 审计记录；
+--   发送失败 删除 claim 行（释放重试资格），另写 smart_alert_failed 记录；
+--   发送成功超过 24 小时由下一次抢占标记 expired，保持原有 24 小时去重口径。
 --
 -- 边界（如实声明）：进程在「已抢占、飞书已投递、尚未流转」时崩溃，
 -- 滞留的 claim 行会阻塞该告警的重发（宁可不发不重复打扰），
@@ -27,7 +17,24 @@
 -- at-most-one active sender + 失败释放，不是 exactly-once。
 -- ============================================================
 
-create unique index if not exists uq_audit_logs_smart_alert_dedupe
-  on public.audit_logs ((detail->>'dedupeKey'))
-  where action in ('smart_alert_claim', 'smart_alert')
-    and detail->>'dedupeKey' is not null;
+create table if not exists public.smart_alert_claims (
+  id uuid primary key default gen_random_uuid(),
+  dedupe_key text not null,
+  user_id uuid references public.profiles (id) on delete set null,
+  target text not null,
+  payload jsonb not null,
+  status text not null default 'claimed'
+    check (status in ('claimed', 'sent', 'expired')),
+  created_at timestamptz not null default timezone('utc'::text, now()),
+  sent_at timestamptz
+);
+
+create unique index if not exists uq_smart_alert_claims_dedupe_key
+  on public.smart_alert_claims (dedupe_key)
+  where status in ('claimed', 'sent');
+
+create index if not exists smart_alert_claims_created_at_idx
+  on public.smart_alert_claims (created_at desc);
+
+alter table public.smart_alert_claims enable row level security;
+grant select, insert, update, delete on public.smart_alert_claims to service_role;

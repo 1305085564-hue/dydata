@@ -10,7 +10,7 @@ import { fetchWithTimeout } from "@/lib/fetch-timeout";
  * - 不做进程内自动重试：超时或网络错误时无法确认飞书是否已收到，
  *   自动重试可能重复发消息。补发幂等由调用方负责：
  *   · 催交（remind）→ 依赖 remind_logs 当日成功记录去重；
- *   · 智能告警（smart-alert）→ audit_logs dedupeKey 仅在发送成功后写入。
+ *   · 智能告警（smart-alert）→ 发送前抢占 smart_alert_claims，成功后写入 audit_logs。
  * - 失败结果只带状态码和截断后的响应预览，绝不包含 webhook URL 或密钥。
  */
 

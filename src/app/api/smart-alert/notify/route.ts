@@ -183,8 +183,8 @@ export async function GET(request: NextRequest) {
 
   // ── 发送前原子抢占（claim-then-send）──
   // 数据库兜底见 supabase/migrations/20260823020000_audit_logs_smart_alert_dedupe.sql；
-  // migration 未执行时插入不会撞唯一索引，并发去重退化为下方 dedupeAlerts 的
-  // 查询守卫（止血级，无法严格防并发双发）。
+  // migration 未执行时专用 claim 表不存在，抢占会失败并明确返回 claimFailedKeys，
+  // 不伪装成已经具备跨实例并发幂等。
   const requestId = resolveRequestId(request);
   const claimOutcome = await claimSmartAlerts(supabase, freshAlerts);
 
@@ -234,19 +234,22 @@ export async function GET(request: NextRequest) {
     );
 
     // 持久化失败记录（action 与 smart_alert 区分，不会被去重解析当成已发告警）
-    const { error: failAuditError } = await supabase.from("audit_logs").insert(
-      claimedAlerts.map((alert) => ({
-        user_id: alert.userId,
-        action: "smart_alert_failed",
-        target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
-        detail: JSON.stringify({
-          dedupeKey: alert.dedupeKey,
-          type: alert.type,
-          failureReason: sendResult.reason,
-          httpStatus: sendResult.status ?? null,
-        }),
-      })),
-    );
+    const failedAuditAlerts = claimedAlerts.filter((alert) => alert.userId !== null);
+    const { error: failAuditError } = failedAuditAlerts.length
+      ? await supabase.from("audit_logs").insert(
+          failedAuditAlerts.map((alert) => ({
+            user_id: alert.userId,
+            action: "smart_alert_failed",
+            target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
+            detail: JSON.stringify({
+              dedupeKey: alert.dedupeKey,
+              type: alert.type,
+              failureReason: sendResult.reason,
+              httpStatus: sendResult.status ?? null,
+            }),
+          })),
+        )
+      : { error: null };
     if (failAuditError) {
       logApiError(
         {
@@ -279,7 +282,7 @@ export async function GET(request: NextRequest) {
         warning: [
           failAuditError ? "发送失败审计记录未落库，失败可能无法追溯" : null,
           !released.ok
-            ? `claim 释放失败：${released.stuckKeysHintCount} 条滞留记录将阻塞对应告警重发，需人工清理 audit_logs 中 action='smart_alert_claim' 的行`
+            ? `claim 释放失败：${released.stuckKeysHintCount} 条滞留记录将阻塞对应告警重发，需人工清理 smart_alert_claims 中 status='claimed' 的行`
             : null,
         ].filter(Boolean).join("；") || undefined,
       },
@@ -319,14 +322,30 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  await supabase.from("audit_logs").insert(
-    claimedAlerts.map((alert) => ({
-      user_id: alert.userId,
-      action: "smart_alert",
-      target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
-      detail: JSON.stringify(alert),
-    }))
-  );
+  const successAuditAlerts = claimedAlerts.filter((alert) => alert.userId !== null);
+  const { error: successAuditError } = successAuditAlerts.length
+    ? await supabase.from("audit_logs").insert(
+        successAuditAlerts.map((alert) => ({
+          user_id: alert.userId,
+          action: "smart_alert",
+          target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
+          detail: JSON.stringify(alert),
+        })),
+      )
+    : { error: null };
+
+  if (successAuditError) {
+    logApiError(
+      {
+        requestId,
+        route: "/api/smart-alert/notify",
+        method: request.method,
+        status: 200,
+        detail: { outcome: "success_audit_write_error", pushed: successAuditAlerts.length },
+      },
+      new Error("smart_alert 成功审计记录写入失败"),
+    );
+  }
 
   // 同步往通知中心推送：当事人可见（admin 在站内可见所有告警的方式由后续 admin 看板承接）
   for (const alert of claimedAlerts) {
@@ -354,8 +373,11 @@ export async function GET(request: NextRequest) {
     alerts: claimedAlerts,
     skippedConcurrentKeys: claimOutcome.skippedConcurrentKeys,
     claimFailedKeys: claimOutcome.claimFailedKeys,
-    warning: !sentTransition.ok
-      ? "告警审计流转失败（claim 行滞留为 smart_alert_claim）：不会重复打扰，但该批告警当日不会再补发，需人工清理"
-      : undefined,
+    warning: [
+      !sentTransition.ok
+        ? "告警 claim 流转失败（仍为 claimed）：不会重复打扰，但该批告警当日不会再补发，需人工清理"
+        : null,
+      successAuditError ? "smart_alert 成功审计记录写入失败，已发送告警仍由 claim 表防重复" : null,
+    ].filter(Boolean).join("；") || undefined,
   });
 }
