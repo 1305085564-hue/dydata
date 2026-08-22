@@ -2,14 +2,41 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import dynamic from "next/dynamic";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { HealthBar } from "./health-bar";
 import { OperatorTab } from "./operator-tab";
 import { StaffTab } from "./staff-tab";
 import { TalentTab } from "./talent-tab";
-import { PersonalCard, prefetchPersonData } from "./personal-card";
+import { prefetchPersonData } from "./person-data";
 import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// 图表弹窗按需加载：recharts 只在首次点开个人档案卡时才下载
+const PersonalCard = dynamic(
+  () => import("./personal-card").then((mod) => mod.PersonalCard),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+        <Loader2 className="size-6 animate-spin text-zinc-500" />
+      </div>
+    ),
+  },
+);
+
+function preloadPersonalCardChunk() {
+  void import("./personal-card");
+}
+
+function prefetchPerson(
+  id: string,
+  year: number,
+  month: number,
+) {
+  preloadPersonalCardChunk();
+  prefetchPersonData(id, year, month);
+}
 
 type TabKey = "talents" | "operators" | "writers" | "editors";
 
@@ -257,13 +284,13 @@ export function CollaborationWorkbench({
         <TalentTab
           talents={talents}
           onSelectPerson={(id) => setSelectedPersonId(id)}
-          onPrefetchPerson={(id) => prefetchPersonData(id, year, month)}
+          onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
         />
       ) : tab === "operators" ? (
         <OperatorTab
           operators={operators}
           onSelectPerson={(id) => setSelectedPersonId(id)}
-          onPrefetchPerson={(id) => prefetchPersonData(id, year, month)}
+          onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
         />
       ) : (
         <StaffTab
@@ -271,7 +298,7 @@ export function CollaborationWorkbench({
           role={tab === "writers" ? "writer" : "editor"}
           isLoading={staffLoading && currentStaffRows.length === 0}
           onSelectPerson={(id) => setSelectedPersonId(id)}
-          onPrefetchPerson={(id) => prefetchPersonData(id, year, month)}
+          onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
         />
       )}
 

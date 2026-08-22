@@ -22,6 +22,7 @@ import {
   type TeamManagementProfile,
 } from "@/lib/team-management";
 import { inferDataScope } from "@/lib/data-access-scope";
+import { measureAsync } from "@/lib/perf";
 import { getTeamOptions } from "@/lib/teams";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
 
@@ -360,19 +361,18 @@ async function loadAdminModuleMemberHydrationMap(
   teams: Array<{ id: string; name: string }>,
   visibleUserIds: string[] | null = null,
 ): Promise<Record<string, AdminModuleMemberHydration>> {
-  const authUsers = visibleUserIds === null
-    ? (await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 })).data?.users ?? []
-    : (await Promise.all(
-        visibleUserIds.map(async (userId) => {
-          const result = await adminSupabase.auth.admin.getUserById(userId);
-          return result.data?.user ?? null;
-        }),
-      )).filter((user): user is NonNullable<typeof user> => Boolean(user));
+  // 统一走 listUsers 一次拉取（与全量分支同源），再按需过滤，
+  // 避免对 Auth Admin API 做 N 次 getUserById 的无上限并发扇出
+  const authUsers = (await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 })).data?.users ?? [];
+  const visibleIdSet = visibleUserIds === null ? null : new Set(visibleUserIds);
+  const relevantUsers = visibleIdSet === null
+    ? authUsers
+    : authUsers.filter((authUser) => visibleIdSet.has(authUser.id));
   const teamIdByName = new Map(teams.map((team) => [team.name, team.id]));
   const teamNameById = new Map(teams.map((team) => [team.id, team.name]));
 
   return Object.fromEntries(
-    authUsers.map((authUser) => {
+    relevantUsers.map((authUser) => {
       const metadata = authUser.user_metadata ?? {};
       const metadataTeamName =
         typeof metadata.team_name === "string" && metadata.team_name.trim()
@@ -504,10 +504,12 @@ export async function loadAdminModulesData({
   if (!context) return null;
 
   const teams = await getTeamOptions();
-  const [profiles, hydrationMap] = await Promise.all([
-    loadAdminModuleProfiles(context.adminSupabase),
-    loadAdminModuleMemberHydrationMap(context.adminSupabase, teams),
-  ]);
+  const [profiles, hydrationMap] = await measureAsync("admin-modules.profilesAndHydration", async () =>
+    Promise.all([
+      loadAdminModuleProfiles(context.adminSupabase),
+      loadAdminModuleMemberHydrationMap(context.adminSupabase, teams),
+    ]),
+  );
   const hydratedProfiles = hydrateAdminModuleMemberEmails(
     buildAdminModuleMemberSummaries(profiles, teams),
     hydrationMap,
@@ -527,10 +529,12 @@ export async function loadAdminModulesData({
   });
   const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
   const visibleActiveProfiles = activeProfiles.filter((profile) => visibleActiveProfileIds.has(profile.id));
-  const monthlyPublishStats = await loadAdminModuleMonthlyPublishStats(
-    supabase,
-    visibleActiveProfiles.map((profile) => profile.id),
-    context.queryDate,
+  const monthlyPublishStats = await measureAsync("admin-modules.monthlyPublishStats", () =>
+    loadAdminModuleMonthlyPublishStats(
+      supabase,
+      visibleActiveProfiles.map((profile) => profile.id),
+      context.queryDate,
+    ),
   );
   const visibleActiveProfilesWithMonthlyStats = applyAdminModuleMonthlyPublishStats(
     visibleActiveProfiles,

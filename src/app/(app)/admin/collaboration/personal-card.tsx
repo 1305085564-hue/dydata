@@ -21,6 +21,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
 import { formatBigNumber, type PersonDetailData } from "./types";
+import {
+  readPersonDataCache,
+  writePersonDataCache,
+} from "./person-data";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 
 interface PersonalCardProps {
@@ -30,30 +34,6 @@ interface PersonalCardProps {
   onClose: () => void;
 }
 
-// Memory cache to enable instant opening on second click or preloaded hover
-const personDataCache = new Map<string, PersonDetailData>();
-
-export function prefetchPersonData(
-  userId: string,
-  year: number,
-  month: number,
-) {
-  const cacheKey = `${userId}-${year}-${month}`;
-  if (personDataCache.has(cacheKey)) return;
-
-  fetch(
-    `/api/admin/collaboration/person?userId=${userId}&year=${year}&month=${month}`,
-  )
-    .then(async (res) => {
-      if (!res.ok) return;
-      const data = (await res.json()) as PersonDetailData;
-      personDataCache.set(cacheKey, data);
-    })
-    .catch(() => {
-      // Ignore background prefetch errors
-    });
-}
-
 export function PersonalCard({
   userId,
   year,
@@ -61,7 +41,7 @@ export function PersonalCard({
   onClose,
 }: PersonalCardProps) {
   const cacheKey = userId ? `${userId}-${year}-${month}` : "";
-  const cachedData = userId ? (personDataCache.get(cacheKey) ?? null) : null;
+  const cachedData = userId ? readPersonDataCache(cacheKey) : null;
 
   const [data, setData] = useState<PersonDetailData | null>(cachedData);
   const [loading, setLoading] = useState(Boolean(userId && !cachedData));
@@ -75,7 +55,7 @@ export function PersonalCard({
     }
 
     const key = `${userId}-${year}-${month}`;
-    const hit = personDataCache.get(key);
+    const hit = readPersonDataCache(key);
     if (hit) {
       setData(hit);
       setLoading(false);
@@ -99,7 +79,7 @@ export function PersonalCard({
       })
       .then((resData) => {
         if (isMounted) {
-          personDataCache.set(key, resData);
+          writePersonDataCache(key, resData);
           setData(resData);
           setLoading(false);
         }

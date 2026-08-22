@@ -1,4 +1,5 @@
 import { callAiJson, extractJsonString } from "./client";
+import { DEFAULT_AI_MODEL } from "./constants";
 
 export { extractJsonString };
 import type { createClient } from "@supabase/supabase-js";
@@ -105,7 +106,7 @@ export async function persistFailedInsightResult(input: {
   await insert({
     input_bundle_id: input.inputBundleId,
     insight_type: input.insightType,
-    model_name: process.env.AI_MODEL || "claude-sonnet-4-6",
+    model_name: process.env.AI_MODEL || DEFAULT_AI_MODEL,
     prompt_version: input.promptVersion,
     result_status: "failed",
     rendered_text: input.errorMessage,
@@ -126,7 +127,7 @@ export async function persistSuccessfulInsightResult(input: {
   await insert({
     input_bundle_id: input.inputBundleId,
     insight_type: input.insightType,
-    model_name: input.modelName ?? process.env.AI_MODEL ?? "claude-sonnet-4-6",
+    model_name: input.modelName ?? process.env.AI_MODEL ?? DEFAULT_AI_MODEL,
     prompt_version: input.promptVersion,
     result_status: "success",
     result_json: input.resultJson,

@@ -4,6 +4,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { DEFAULT_AI_MODEL } from "./constants";
 import {
   bumpProviderKeyFailure,
   getProviderKeyModelConfig,
@@ -149,7 +150,7 @@ type StreamedChatCompletionResult = {
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DEFAULT_MAX_TOKENS = 2000;
-const DEFAULT_MODEL = "claude-sonnet-4-6";
+const DEFAULT_MODEL = DEFAULT_AI_MODEL;
 const CHANNEL_CACHE_TTL_MS = 60_000;
 
 let cachedChannels: { expiresAt: number; channels: ChannelConfig[] } | null = null;
