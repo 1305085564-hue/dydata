@@ -109,6 +109,65 @@ test("轮换后旧明文密钥立即失效", () => {
   }
 });
 
+test("双变量轮换：两个旧值同时拒绝（Bearer 与 query 均如此），新值分别放行", () => {
+  process.env.CRON_SECRET = "rotated-cron-value";
+  process.env.REMIND_SECRET = "rotated-remind-value";
+
+  const oldLeakedValues = ["old-leaked-cron-placeholder", "old-leaked-remind-placeholder"];
+
+  try {
+    for (const old of oldLeakedValues) {
+      assert.equal(
+        isCronAuthorized(createRequest("https://dydata.cc/api/x", { Authorization: `Bearer ${old}` })),
+        false,
+      );
+      assert.equal(isCronAuthorized(createRequest(`https://dydata.cc/api/x?secret=${encodeURIComponent(old)}`)), false);
+    }
+
+    for (const next of ["rotated-cron-value", "rotated-remind-value"]) {
+      assert.equal(
+        isCronAuthorized(createRequest("https://dydata.cc/api/x", { Authorization: `Bearer ${next}` })),
+        true,
+      );
+      assert.equal(isCronAuthorized(createRequest(`https://dydata.cc/api/x?secret=${next}`)), true);
+    }
+  } finally {
+    delete process.env.CRON_SECRET;
+    delete process.env.REMIND_SECRET;
+  }
+});
+
+test("错误 Authorization 格式一律拒绝", () => {
+  process.env.CRON_SECRET = "cron-secret";
+
+  try {
+    assert.equal(
+      isCronAuthorized(createRequest("https://dydata.cc/api/x", { Authorization: "Basic cron-secret" })),
+      false,
+    );
+    // 缺少 token 的 Bearer
+    assert.equal(
+      isCronAuthorized(createRequest("https://dydata.cc/api/x", { Authorization: "Bearer" })),
+      false,
+    );
+    // 空白 token
+    assert.equal(
+      isCronAuthorized(createRequest("https://dydata.cc/api/x", { Authorization: "Bearer    " })),
+      false,
+    );
+  } finally {
+    delete process.env.CRON_SECRET;
+  }
+});
+
+test("没有任何环境变量时 Bearer 和 query 全部拒绝", () => {
+  delete process.env.CRON_SECRET;
+  delete process.env.REMIND_SECRET;
+
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/x", { Authorization: "Bearer anything" })), false);
+  assert.equal(isCronAuthorized(createRequest("https://dydata.cc/api/x?secret=anything")), false);
+});
+
 test("getBearerToken 解析各种格式", () => {
   const request = createRequest("https://dydata.cc/api/x", { Authorization: "Bearer  spaced-token  " });
   assert.equal(getBearerToken(request), "spaced-token");

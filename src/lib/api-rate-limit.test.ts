@@ -52,6 +52,7 @@ test("cron / 外部回调路径豁免限流（它们各自有密钥鉴权）", (
   assert.equal(isApiRateLimitExempt("/api/smart-alert/notify"), true);
   assert.equal(isApiRateLimitExempt("/api/admin/first-screen-monitor"), true);
   assert.equal(isApiRateLimitExempt("/api/feishu/event"), true);
+  assert.equal(isApiRateLimitExempt("/api/health"), true);
   assert.equal(isApiRateLimitExempt("/api/auth/login"), true);
   // AI 成本接口不豁免
   assert.equal(isApiRateLimitExempt("/api/ocr-screenshot"), false);
@@ -153,6 +154,68 @@ test("Upstash 故障时降级内存限流且不放飞（fail-open 到本地计�
 
   try {
     const identifier = "user:44444444-4444-4444-4444-444444444444";
+    for (let i = 0; i < 20; i++) {
+      const result = await checkApiRateLimit({ pathname: "/api/video-submit", identifier });
+      assert.equal(result.allowed, true, `第 ${i + 1} 次应放行`);
+    }
+    const blocked = await checkApiRateLimit({ pathname: "/api/video-submit", identifier });
+    assert.equal(blocked.allowed, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}));
+
+test("Upstash 请求必须带超时信号，避免悬挂拖垮 middleware", withProductionEnv(async () => {
+  process.env.UPSTASH_REDIS_REST_URL = "https://upstash.example.com";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "upstash-token";
+
+  const originalFetch = globalThis.fetch;
+  let seenSignal: AbortSignal | null | undefined;
+  globalThis.fetch = (async (_input, init) => {
+    seenSignal = init?.signal;
+    return new Response(JSON.stringify({ result: [1, 60_000] }), { status: 200 });
+  }) as typeof fetch;
+
+  try {
+    const result = await checkApiRateLimit({ pathname: "/api/export", identifier: "ip:203.0.113.9" });
+    assert.equal(result.allowed, true);
+    assert.ok(seenSignal instanceof AbortSignal, "fetch 必须携带 AbortSignal 超时信号");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}));
+
+test("Upstash 返回非法 JSON 时降级内存限流，不让 middleware 500", withProductionEnv(async () => {
+  process.env.UPSTASH_REDIS_REST_URL = "https://upstash.example.com";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "upstash-token";
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => new Response("<html>Bad Gateway</html>", { status: 200 })) as typeof fetch;
+
+  try {
+    const identifier = "user:55555555-5555-5555-5555-555555555555";
+    for (let i = 0; i < 10; i++) {
+      const result = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
+      assert.equal(result.allowed, true, `第 ${i + 1} 次应放行（降级内存计数）`);
+    }
+    const blocked = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
+    assert.equal(blocked.allowed, false);
+    assert.equal(blocked.limit, 10);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}));
+
+test("Upstash 返回结构异常时降级内存限流且不放飞", withProductionEnv(async () => {
+  process.env.UPSTASH_REDIS_REST_URL = "https://upstash.example.com";
+  process.env.UPSTASH_REDIS_REST_TOKEN = "upstash-token";
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () =>
+    new Response(JSON.stringify({ error: "UPSTASH_REST_ERROR" }), { status: 200 })) as typeof fetch;
+
+  try {
+    const identifier = "user:66666666-6666-6666-6666-666666666666";
     for (let i = 0; i < 20; i++) {
       const result = await checkApiRateLimit({ pathname: "/api/video-submit", identifier });
       assert.equal(result.allowed, true, `第 ${i + 1} 次应放行`);

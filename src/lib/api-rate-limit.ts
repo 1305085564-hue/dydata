@@ -42,6 +42,8 @@ const EXEMPT_PATHS = new Set([
   "/api/smart-alert/notify",
   "/api/admin/first-screen-monitor",
   "/api/feishu/event",
+  // 健康检查：故障时探活频率可能升高，不能被限流挡住
+  "/api/health",
 ]);
 
 export function isApiRateLimitExempt(pathname: string): boolean {
@@ -74,6 +76,9 @@ return {count, redis.call('PTTL', KEYS[1])}
 `;
 
 class UpstashStore implements RateLimitStore {
+  // Upstash 不可用时必须快速降级，不能让限流检查拖垮请求本身
+  static readonly REQUEST_TIMEOUT_MS = 3_000;
+
   constructor(
     private url: string,
     private token: string,
@@ -89,9 +94,10 @@ class UpstashStore implements RateLimitStore {
           "Content-Type": "application/json",
         },
         body: JSON.stringify([INCR_WINDOW_SCRIPT, "1", key, String(windowMs)]),
+        signal: AbortSignal.timeout(UpstashStore.REQUEST_TIMEOUT_MS),
       });
     } catch (error) {
-      console.error("[api-rate-limit] Upstash 请求失败，降级内存限流", error);
+      console.error("[api-rate-limit] Upstash 请求失败或超时，降级内存限流", error);
       return memoryStore.hit(key, limit, windowMs);
     }
 
@@ -100,7 +106,14 @@ class UpstashStore implements RateLimitStore {
       return memoryStore.hit(key, limit, windowMs);
     }
 
-    const payload = (await response.json()) as { result?: [number, number] | null };
+    let payload: { result?: [number, number] | null };
+    try {
+      payload = (await response.json()) as { result?: [number, number] | null };
+    } catch (error) {
+      console.error("[api-rate-limit] Upstash 响应解析失败，降级内存限流", error);
+      return memoryStore.hit(key, limit, windowMs);
+    }
+
     const result = payload.result;
     if (!Array.isArray(result) || result.length < 2) {
       console.error("[api-rate-limit] Upstash 返回格式异常，降级内存限流");
