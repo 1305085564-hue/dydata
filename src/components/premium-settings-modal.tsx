@@ -156,6 +156,8 @@ export function PremiumSettingsModal({
   // Theme or toggle state
   const [pushEnabled, setPushEnabled] = useState(true);
   const [remindHour, setRemindHour] = useState("11:15");
+  const [profileError, setProfileError] = useState("");
+  const [addAccountError, setAddAccountError] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -220,9 +222,6 @@ export function PremiumSettingsModal({
   }, [canEnterGroupMode, open]);
 
   if (!open) return null;
-
-  const [profileError, setProfileError] = useState("");
-  const [addAccountError, setAddAccountError] = useState("");
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
