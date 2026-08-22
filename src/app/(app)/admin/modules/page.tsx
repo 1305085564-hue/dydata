@@ -18,7 +18,11 @@ export const metadata: Metadata = {
 };
 
 interface AdminModulesPageProps {
-  searchParams: Promise<{ date?: string; focus?: string; member?: string }>;
+  searchParams: Promise<{ date?: string; focus?: string; member?: string; profile?: string }>;
+}
+
+export function resolveAdminModulesFocusMemberId(params: { member?: string; profile?: string }) {
+  return params.member ?? params.profile;
 }
 
 export default async function AdminModulesPage({ searchParams }: AdminModulesPageProps) {
@@ -53,7 +57,7 @@ export default async function AdminModulesPage({ searchParams }: AdminModulesPag
       <Suspense fallback={<TeamV2Skeleton />}>
         <ModulesDataContainer
           searchDate={params.date}
-          focusMemberId={params.member}
+          focusMemberId={resolveAdminModulesFocusMemberId(params)}
         />
       </Suspense>
     </AdminWorkspaceLayout>
