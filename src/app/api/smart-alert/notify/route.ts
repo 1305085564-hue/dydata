@@ -6,6 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { buildFeishuAlertCard, dedupeAlerts, generateSmartAlerts, type SmartAlert } from "@/lib/smart-alert";
 import { emit } from "@/lib/notifications/server";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
+import { sendFeishuWebhook } from "@/lib/飞书webhook";
+import { logApiError, logApiRequest, resolveRequestId } from "@/lib/api-logger";
 
 type AlertLogRow = {
   id: string;
@@ -175,18 +177,68 @@ export async function GET(request: NextRequest) {
   }
 
   const payload = buildFeishuAlertCard(freshAlerts);
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const requestId = resolveRequestId(request);
+  const sendResult = await sendFeishuWebhook(payload, { webhookUrl });
 
-  if (!response.ok) {
-    const text = await response.text();
-    return NextResponse.json({ error: `Feishu webhook failed: ${text}` }, { status: 500 });
+  if (!sendResult.ok) {
+    // 持久化失败记录（action 与 smart_alert 区分，不会被去重解析当成已发告警）；
+    // 不写成功 audit 记录 → 下轮运行会按 dedupeKey 自然补发，不会重复打扰
+    const { error: failAuditError } = await supabase.from("audit_logs").insert(
+      freshAlerts.map((alert) => ({
+        user_id: alert.userId,
+        action: "smart_alert_failed",
+        target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
+        detail: JSON.stringify({
+          dedupeKey: alert.dedupeKey,
+          type: alert.type,
+          failureReason: sendResult.reason,
+          httpStatus: sendResult.status ?? null,
+        }),
+      })),
+    );
+    if (failAuditError) {
+      logApiError(
+        {
+          requestId,
+          route: "/api/smart-alert/notify",
+          method: request.method,
+          status: 502,
+          detail: { outcome: "failed_audit_write_error", alerts: freshAlerts.length },
+        },
+        new Error("smart_alert_failed 审计记录写入失败"),
+      );
+    }
+    logApiError(
+      {
+        requestId,
+        route: "/api/smart-alert/notify",
+        method: request.method,
+        status: 502,
+        detail: { reason: sendResult.reason, httpStatus: sendResult.status ?? null },
+      },
+      new Error("飞书告警 webhook 发送失败"),
+    );
+    return NextResponse.json(
+      {
+        error: `飞书告警发送失败：${sendResult.reason}`,
+        warning: failAuditError ? "发送失败审计记录未落库，失败可能无法追溯" : undefined,
+      },
+      { status: 502 },
+    );
   }
 
-  await supabase.from("audit_logs").insert(
+  logApiRequest({
+    requestId,
+    route: "/api/smart-alert/notify",
+    method: request.method,
+    status: 200,
+    outcome: "sent",
+    detail: { pushed: freshAlerts.length },
+  });
+
+  // 成功审计记录是 dedupeKey 去重的依据；落库失败意味着重复触发可能重复推送，
+  // 消息已实际发出，不能伪装成完全成功，必须在响应中显式暴露
+  const { error: successAuditError } = await supabase.from("audit_logs").insert(
     freshAlerts.map((alert) => ({
       user_id: alert.userId,
       action: "smart_alert",
@@ -194,6 +246,18 @@ export async function GET(request: NextRequest) {
       detail: JSON.stringify(alert),
     }))
   );
+  if (successAuditError) {
+    logApiError(
+      {
+        requestId,
+        route: "/api/smart-alert/notify",
+        method: request.method,
+        status: 200,
+        detail: { outcome: "success_audit_write_error", pushed: freshAlerts.length },
+      },
+      new Error("smart_alert 审计记录写入失败，下轮可能按 dedupeKey 重发"),
+    );
+  }
 
   // 同步往通知中心推送：当事人可见（admin 在站内可见所有告警的方式由后续 admin 看板承接）
   for (const alert of freshAlerts) {
@@ -219,5 +283,8 @@ export async function GET(request: NextRequest) {
     ok: true,
     pushed: freshAlerts.length,
     alerts: freshAlerts,
+    warning: successAuditError
+      ? "告警审计记录未落库：重复触发可能重复推送，请检查 audit_logs 写入"
+      : undefined,
   });
 }

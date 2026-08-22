@@ -14,6 +14,7 @@ import {
 import { loadApplicantTeamId } from "@/lib/豁免";
 import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { sendFeishuWebhook } from "@/lib/飞书webhook";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
@@ -350,23 +351,31 @@ export async function updateAccountRemark(accountId: string, newRemark: string) 
 }
 
 async function notifyFeishu(submitter: string, title: string, playCount: number) {
-  const webhookUrl = process.env.FEISHU_WEBHOOK_URL;
-  if (!webhookUrl) return;
-
   const content = `**${submitter}** 提交了日报\n视频：${title}\n播放量：${playCount.toLocaleString("zh-CN")}`;
 
-  await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      msg_type: "interactive",
-      card: {
-        header: {
-          title: { tag: "plain_text", content: "日报提交通知" },
-          template: "green",
-        },
-        elements: [{ tag: "div", text: { tag: "lark_md", content } }],
+  const result = await sendFeishuWebhook({
+    msg_type: "interactive",
+    card: {
+      header: {
+        title: { tag: "plain_text", content: "日报提交通知" },
+        template: "green",
       },
-    }),
+      elements: [{ tag: "div", text: { tag: "lark_md", content } }],
+    },
   });
+
+  // 通知失败不影响日报提交主流程，但必须留下真实失败记录，禁止静默伪装成功
+  if (!result.ok) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        kind: "api",
+        ts: new Date().toISOString(),
+        route: "dashboard/actions.notifyFeishu",
+        outcome: "feishu_notify_failed",
+        reason: result.reason,
+        httpStatus: result.status ?? null,
+      }),
+    );
+  }
 }
