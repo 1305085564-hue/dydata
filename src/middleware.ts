@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { hasSupabaseAuthCookie, listSupabaseAuthCookieNames } from "@/lib/supabase-auth-cookie";
 import { checkRateLimit, isRateLimitExempt } from "@/lib/rate-limit";
+import { checkApiRateLimit, isApiRateLimitExempt, type ApiRateLimitResult } from "@/lib/api-rate-limit";
 import { createServerClient } from "@supabase/ssr";
 import {
   applyAuthCookieLifetime,
@@ -147,6 +148,16 @@ export function isInvalidAuthSessionError(error: unknown) {
 
 
 
+function buildApiRateLimitResponse(result: ApiRateLimitResult) {
+  return NextResponse.json(
+    { error: "请求过于频繁，请稍后再试" },
+    {
+      status: 429,
+      headers: { "Retry-After": String(Math.max(1, result.retryAfter)) },
+    },
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api/");
@@ -170,11 +181,13 @@ export async function middleware(request: NextRequest) {
     return buildClearSiteDataResponse(request);
   }
 
-  // 速率限制（登录注册和静态资源除外）
+  // 页面速率限制（登录注册和静态资源除外；API 走下方按端点/用户限流）
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    "127.0.0.1";
+
   if (!isApiRoute && !isRateLimitExempt(pathname)) {
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-               request.headers.get("x-real-ip") ||
-               "127.0.0.1";
     const { allowed, retryAfter } = checkRateLimit(ip);
     if (!allowed) {
       return new NextResponse("Too Many Requests", {
@@ -190,6 +203,14 @@ export async function middleware(request: NextRequest) {
   );
   const allSupabaseAuthCookieNames = listSupabaseAuthCookieNames(request.cookies.getAll());
   const hasLegacySupabaseAuthCookie = !hasAuthCookie && allSupabaseAuthCookieNames.length > 0;
+
+  // API 限流：无登录态的请求先按 IP 拦截（有登录态的在身份核验通过后按用户拦截）
+  if (isApiRoute && !hasAuthCookie && !isApiRateLimitExempt(pathname)) {
+    const result = await checkApiRateLimit({ pathname, identifier: `ip:${ip}` });
+    if (!result.allowed) {
+      return buildApiRateLimitResponse(result);
+    }
+  }
 
   // AI 配置中心统一由 ai-config 承载
 
@@ -239,6 +260,14 @@ export async function middleware(request: NextRequest) {
       }
       if (membershipStatus === "unavailable") {
         return buildMembershipUnavailableResponse(request, { api: isApiRoute });
+      }
+
+      // API 限流：登录用户按「用户 × 端点」计数
+      if (isApiRoute && !isApiRateLimitExempt(pathname)) {
+        const result = await checkApiRateLimit({ pathname, identifier: `user:${data.user.id}` });
+        if (!result.allowed) {
+          return buildApiRateLimitResponse(result);
+        }
       }
     } catch {
       // 无法核验状态时拒绝本次请求，但保留现有会话，避免短暂故障造成误登出。

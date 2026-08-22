@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isCronAuthorized } from "@/lib/cron-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildMissingStreakMap,
   buildRecentSubmissionMap,
@@ -99,6 +100,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 缺 service role 配置时明确失败，禁止回退 anon key
+  let supabase: SupabaseClient;
+  try {
+    supabase = createAdminClient();
+  } catch (error) {
+    return NextResponse.json(
+      { error: `服务端配置缺失：${error instanceof Error ? error.message : "unknown"}` },
+      { status: 500 },
+    );
+  }
+
   const shanghaiYear = getShanghaiYear();
   if (!hasChinaHolidayPlan(shanghaiYear)) {
     console.warn(
@@ -114,13 +126,6 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const serviceRoleKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey!,
-  );
   const today = getShanghaiDateString();
   const sevenDaysAgo = shiftDateString(today, -7);
 

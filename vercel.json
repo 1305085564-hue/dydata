@@ -2,11 +2,11 @@
   "regions": ["sin1"],
   "crons": [
     {
-      "path": "/api/supabase-keepalive?secret=dydata-remind-2026",
+      "path": "/api/supabase-keepalive",
       "schedule": "30 6 * * *"
     },
     {
-      "path": "/api/notifications/cleanup?secret=dydata-remind-2026",
+      "path": "/api/notifications/cleanup",
       "schedule": "0 18 * * *"
     }
   ]

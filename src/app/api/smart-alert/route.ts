@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isCronAuthorized } from "@/lib/cron-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateSmartAlerts } from "@/lib/smart-alert";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 
@@ -32,9 +33,9 @@ type ReportRow = {
     | null;
 };
 
-function createServiceClient() {
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceRoleKey!);
+// 缺 service role 配置时明确失败，禁止回退 anon key
+function loadServiceClient(): SupabaseClient {
+  return createAdminClient();
 }
 
 function extractAccount(row: ReportRow["accounts"]) {
@@ -50,7 +51,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const supabase = createServiceClient();
+  let supabase: SupabaseClient;
+  try {
+    supabase = loadServiceClient();
+  } catch (error) {
+    return NextResponse.json(
+      { error: `服务端配置缺失：${error instanceof Error ? error.message : "unknown"}` },
+      { status: 500 },
+    );
+  }
   const since = new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0];
 
   const [{ data: reports, error: reportsError }, profilesResult] = await Promise.all([
