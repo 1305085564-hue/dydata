@@ -1517,26 +1517,26 @@ export function AdminModulesContentV3({
           {activeMember && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
-              <div className="p-6 pb-4 border-b border-zinc-100 flex items-start justify-between gap-3 shrink-0">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="size-11 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[15px] shrink-0 mt-0.5">
+              <div className="px-6 py-4 border-b border-zinc-100 flex items-start justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="size-9 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[14px] shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-[16px] font-semibold text-zinc-950 truncate">
+                      <SheetTitle className="text-[18px] font-semibold text-zinc-950 truncate">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
-                      <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-zinc-100 text-zinc-700 shrink-0">
+                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-zinc-100 text-zinc-700 shrink-0">
                         {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "主管" : "组员"}
                       </span>
                       {activeMember.membership_status === "archived" && (
-                        <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-zinc-100 text-zinc-400 shrink-0">
+                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-zinc-100 text-zinc-400 shrink-0">
                           已归档
                         </span>
                       )}
                     </div>
-                    <SheetDescription className="text-[12px] text-zinc-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <SheetDescription className="text-[13px] text-zinc-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       {activeMember.team_name && <span>{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
@@ -1547,7 +1547,7 @@ export function AdminModulesContentV3({
                       {activeMember.last_sign_in_at && (
                         <>
                           <span className="text-zinc-300">|</span>
-                          <span className="text-[11px] text-zinc-400">
+                          <span className="text-[12px] text-zinc-400">
                             上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
                           </span>
                         </>
@@ -1565,7 +1565,7 @@ export function AdminModulesContentV3({
                         setIsAiDialogOpen(true);
                         if (!aiSuggestion) handleFetchAiSuggestion();
                       }}
-                      className="h-7 px-2.5 text-[12px] text-zinc-700 hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
+                      className="h-7 px-2.5 text-[13px] font-medium text-zinc-700 hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
                     >
                       <Sparkles className="size-3.5 text-[#D97757]" />
                       AI 诊断
@@ -1585,7 +1585,7 @@ export function AdminModulesContentV3({
               </div>
 
               {/* 抽屉内容主体（单页直通） */}
-              <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+              <div className="px-6 py-5 space-y-8 flex-1 overflow-y-auto">
                 {/* 1. 细粒度权限配置 (标准 MemberPermissionEditor) */}
                 <MemberPermissionEditor
                   member={{
@@ -1642,16 +1642,16 @@ export function AdminModulesContentV3({
                   isSaving={isPending}
                 />
 
-                {/* 2. 账户与团队管理（高密度统一清单） */}
+                {/* 2. 账户与团队管理（轻量排版，去除大卡片套娃） */}
                 {activeMember.membership_status !== "archived" && (
-                  <div className="pt-4 border-t border-zinc-100 space-y-2">
-                    <h4 className="text-[13px] font-medium text-zinc-500 px-1">账户与团队管理</h4>
-                    <div className="divide-y divide-zinc-100 rounded-xl bg-zinc-50/60 p-1">
+                  <div className="pt-6 border-t border-zinc-100 space-y-4">
+                    <h4 className="text-[14px] font-medium text-zinc-900">账户与团队管理</h4>
+                    <div className="space-y-0.5">
                       {/* 所属团队 */}
-                      <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
-                        <div className="flex items-center gap-2.5">
-                          <Building2 className="size-4 text-zinc-400 shrink-0" />
-                          <span className="text-[13px] text-zinc-800 font-medium">所属团队</span>
+                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="size-3.5 text-zinc-400 shrink-0" />
+                          <span className="text-[13px] text-zinc-800">所属团队</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {canEditTeamMembers ? (
@@ -1664,7 +1664,7 @@ export function AdminModulesContentV3({
                                 }
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[12px] border-transparent bg-transparent hover:bg-zinc-200/50 min-w-[110px] text-right font-normal">
+                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-zinc-100 min-w-[110px] text-right font-normal">
                                 <SelectValue placeholder="未分配团队">
                                   {activeMember.team_name || (activeMember.team_id ? localTeams.find(t => t.id === activeMember.team_id)?.name : "未分配团队")}
                                 </SelectValue>
@@ -1679,7 +1679,7 @@ export function AdminModulesContentV3({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <span className="text-[12px] text-zinc-500">
+                            <span className="text-[13px] text-zinc-500">
                               {activeMember.team_name || "未分配团队"}
                             </span>
                           )}
@@ -1688,10 +1688,10 @@ export function AdminModulesContentV3({
 
                       {/* 系统角色切换 */}
                       {activeMember.role !== "owner" && (
-                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <Settings className="size-4 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800 font-medium">
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <Settings className="size-3.5 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800">
                               {activeMember.role === "admin" ? "降为普通组员" : "提升为管理员"}
                             </span>
                           </div>
@@ -1699,12 +1699,12 @@ export function AdminModulesContentV3({
                             <button
                               type="button"
                               onClick={() => handleToggleRole(activeMember)}
-                              className="text-[12px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                              className="text-[13px] text-zinc-400 hover:text-zinc-900 transition-colors"
                             >
                               切换身份
                             </button>
                           ) : (
-                            <span className="text-[12px] text-zinc-400">
+                            <span className="text-[13px] text-zinc-400">
                               {activeMember.role === "admin" ? "管理员" : "普通组员"}
                             </span>
                           )}
@@ -1713,10 +1713,10 @@ export function AdminModulesContentV3({
 
                       {/* 重置密码 */}
                       {canManageMembers && (
-                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <KeyRound className="size-4 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800 font-medium">重置账户密码</span>
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <KeyRound className="size-3.5 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800">重置账户密码</span>
                           </div>
                           <button
                             type="button"
@@ -1724,7 +1724,7 @@ export function AdminModulesContentV3({
                               setPasswordResetTarget(activeMember);
                               setNewPassword("");
                             }}
-                            className="text-[12px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                            className="text-[13px] text-zinc-400 hover:text-zinc-900 transition-colors"
                           >
                             快捷重置
                           </button>
@@ -1733,15 +1733,15 @@ export function AdminModulesContentV3({
 
                       {/* 日报豁免与请假 */}
                       {canManageFulfillment && (
-                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <Clock className="size-4 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800 font-medium">日报豁免与请假</span>
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <Clock className="size-3.5 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800">日报豁免与请假</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setIsExemptionDialogOpen(true)}
-                            className="text-[12px] text-zinc-400 hover:text-zinc-900 transition-colors flex items-center gap-1"
+                            className="text-[13px] text-zinc-400 hover:text-zinc-900 transition-colors flex items-center gap-1"
                           >
                             <span>
                               {activeMember.exempt_type === "permanent"
@@ -1757,15 +1757,15 @@ export function AdminModulesContentV3({
 
                       {/* 移出团队 */}
                       {canEditTeamMembers && activeMember.team_id && (
-                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-zinc-100/70 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <UserMinus className="size-4 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800 font-medium">移出团队</span>
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <UserMinus className="size-3.5 text-zinc-400 shrink-0" />
+                            <span className="text-[13px] text-zinc-800">移出团队</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleTransferMemberTeam(activeMember.id, null)}
-                            className="text-[12px] text-zinc-400 hover:text-red-600 transition-colors"
+                            className="text-[13px] text-zinc-400 hover:text-red-600 transition-colors"
                           >
                             保留账号
                           </button>
@@ -1774,10 +1774,10 @@ export function AdminModulesContentV3({
 
                       {/* 归档账号 */}
                       {isCompanyOwner && activeMember.role !== "owner" && (
-                        <div className="flex items-center justify-between p-2.5 px-3 rounded-lg hover:bg-red-50/50 transition-colors">
-                          <div className="flex items-center gap-2.5">
-                            <Trash2 className="size-4 text-red-500 shrink-0" />
-                            <span className="text-[13px] text-red-600 font-medium">归档账号</span>
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-red-50/50 transition-colors">
+                          <div className="flex items-center gap-2">
+                            <Trash2 className="size-3.5 text-red-500 shrink-0" />
+                            <span className="text-[13px] text-red-600">归档账号</span>
                           </div>
                           <button
                             type="button"
@@ -1785,7 +1785,7 @@ export function AdminModulesContentV3({
                               setArchiveTarget(activeMember);
                               setArchiveReason("");
                             }}
-                            className="text-[12px] text-red-500 hover:text-red-700 font-medium transition-colors"
+                            className="text-[13px] text-red-500 hover:text-red-700 font-medium transition-colors"
                           >
                             高风险操作
                           </button>
@@ -1798,7 +1798,7 @@ export function AdminModulesContentV3({
 
               {/* 抽屉底部保存栏 */}
               {permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
-                <div className="p-4 border-t border-zinc-200/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
+                <div className="px-6 py-3 border-t border-zinc-200/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
                   <button
                     type="button"
                     onClick={() => {

@@ -70,22 +70,19 @@ export function MemberPermissionEditor({
   const isAllPermissionsChecked = PERMISSION_KEYS.every((k) => draftPermissions[k] === true);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {isOwner && (
-        <div className="flex items-center gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50 px-3.5 py-2.5 text-[12px] text-zinc-500">
+        <div className="flex items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50 px-3 py-2 text-[12px] text-zinc-500">
           <Info className="size-4 shrink-0 text-zinc-400" />
           <span>超管拥有全站最高权限，无需单独配置</span>
         </div>
       )}
 
       {/* 板块一：数据范围 (Data Scope) */}
-      <section className="space-y-3">
-        <div>
-          <h4 className="text-[13px] font-medium text-zinc-900">数据范围</h4>
-          <p className="text-[12px] text-zinc-500 mt-0.5">决定该成员在数据分析看板与报表中可见的数据边界</p>
-        </div>
+      <section className="space-y-4">
+        <h4 className="text-[14px] font-medium text-zinc-900">数据范围</h4>
 
-        <div className="bg-zinc-100/80 p-1 rounded-xl grid grid-cols-3 gap-1 border border-zinc-200/50">
+        <div className="bg-zinc-100/70 p-0.5 rounded-lg grid grid-cols-3 gap-1">
           {DATA_SCOPE_OPTIONS.map((option) => {
             const Icon = option.icon;
             const isSelected = draftDataScope === option.value;
@@ -98,7 +95,7 @@ export function MemberPermissionEditor({
                 title={option.sublabel}
                 onClick={() => !isDisabled && onChangeDataScope(option.value)}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-center transition-colors duration-100 relative",
+                  "flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-md text-center transition-colors duration-100 relative",
                   isSelected
                     ? "bg-white text-zinc-950 shadow-xs border border-zinc-200/80 font-medium"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50",
@@ -116,23 +113,20 @@ export function MemberPermissionEditor({
       {/* 板块二：功能权限 (Functional Permissions) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h4 className="text-[13px] font-medium text-zinc-900">功能权限</h4>
-            <p className="text-[12px] text-zinc-500 mt-0.5">按 4 大核心模块划分子权限，可灵活授予任何成员</p>
-          </div>
+          <h4 className="text-[14px] font-medium text-zinc-900">功能权限</h4>
 
           {!isDisabled && onToggleAllPermissions && (
             <button
               type="button"
               onClick={onToggleAllPermissions}
-              className="text-[12px] font-medium text-[#D97757] hover:text-[#C96442] transition-colors shrink-0"
+              className="text-[12px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors shrink-0"
             >
               {isAllPermissionsChecked ? "取消全选" : "全选所有权限"}
             </button>
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           {categories.map((category) => {
             const categoryLabel = PERMISSION_CATEGORY_LABELS[category];
             const keys = PERMISSION_CATEGORIES[category];
@@ -142,13 +136,13 @@ export function MemberPermissionEditor({
             return (
               <div
                 key={category}
-                className="space-y-3"
+                className="space-y-1.5"
               >
                 {/* 类别标头 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-medium text-zinc-900">{categoryLabel}</span>
-                    <span className="text-[12px] text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
+                    <span className="text-[13px] font-medium text-zinc-500">{categoryLabel}</span>
+                    <span className="text-[12px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded-md">
                       {enabledCount} / {keys.length} 已开启
                     </span>
                   </div>
@@ -157,15 +151,15 @@ export function MemberPermissionEditor({
                     <button
                       type="button"
                       onClick={() => onToggleCategory(category)}
-                      className="text-[12px] font-medium text-[#D97757] hover:text-[#C96442] transition-colors"
+                      className="text-[12px] font-medium text-zinc-400 hover:text-zinc-700 transition-colors"
                     >
                       {allChecked ? "取消全选" : "全选本类"}
                     </button>
                   )}
                 </div>
 
-                {/* 该类别下的权限 Checkbox 列表 */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* 该类别下的权限 Checkbox 列表（轻量矩阵排版） */}
+                <div className="grid grid-cols-3 gap-1.5">
                   {keys.map((key) => {
                     const isChecked = draftPermissions[key] === true;
                     const label = PERMISSION_LABELS[key];
@@ -178,12 +172,12 @@ export function MemberPermissionEditor({
                         htmlFor={checkboxId}
                         title={desc || undefined}
                         className={cn(
-                          "flex items-center gap-2 p-2 px-2.5 rounded-xl transition-colors duration-100 select-none cursor-pointer",
+                          "flex items-center gap-2 h-8 px-2.5 rounded-md transition-colors duration-100 select-none cursor-pointer border",
                           isChecked
                             ? isOwner
-                              ? "bg-zinc-100/80 text-zinc-700 cursor-not-allowed"
-                              : "bg-[#D97757]/10 text-zinc-950 font-medium"
-                            : "bg-white hover:bg-zinc-100/70 text-zinc-700",
+                              ? "bg-zinc-100/80 border-transparent text-zinc-700 cursor-not-allowed"
+                              : "bg-zinc-100 border-zinc-200/60 text-zinc-950 font-medium"
+                            : "bg-transparent border-transparent hover:bg-zinc-50 text-zinc-600",
                           isDisabled && !isOwner && "opacity-60 cursor-not-allowed"
                         )}
                       >
@@ -192,9 +186,9 @@ export function MemberPermissionEditor({
                           checked={isChecked}
                           disabled={isDisabled}
                           onCheckedChange={(checked) => onTogglePermission(key, checked === true)}
-                          className="shrink-0"
+                          className="shrink-0 size-3.5"
                         />
-                        <span className="text-[12px] font-medium text-zinc-900 truncate">{label}</span>
+                        <span className="text-[13px] font-medium text-zinc-900 truncate">{label}</span>
                       </label>
                     );
                   })}
