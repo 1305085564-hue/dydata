@@ -5,6 +5,51 @@ import {
   buildAdminModuleMemberSummaries,
   hydrateAdminModuleMemberEmails,
 } from "@/lib/admin-modules-contract";
+import { listAllAuthUsers } from "@/lib/loaders/admin-modules";
+
+test("Auth Admin 用户水化会读取全部分页，不会只取第一页 1000 人", async () => {
+  const calls: Array<{ page: number; perPage: number }> = [];
+  const users = [
+    { id: "user-1", email: "one@example.com" },
+    { id: "user-2", email: "two@example.com" },
+  ];
+
+  const result = await listAllAuthUsers({
+    auth: {
+      admin: {
+        listUsers: async ({ page, perPage }: { page?: number; perPage?: number }) => {
+          calls.push({ page: page ?? 0, perPage: perPage ?? 0 });
+          if (page === 1) {
+            return {
+              data: {
+                users: [users[0]],
+                nextPage: 2,
+                lastPage: 2,
+                total: 2,
+              },
+              error: null,
+            };
+          }
+          return {
+            data: {
+              users: [users[1]],
+              nextPage: null,
+              lastPage: 2,
+              total: 2,
+            },
+            error: null,
+          };
+        },
+      },
+    },
+  } as never);
+
+  assert.deepEqual(result.map((user) => user.id), ["user-1", "user-2"]);
+  assert.deepEqual(calls, [
+    { page: 1, perPage: 1000 },
+    { page: 2, perPage: 1000 },
+  ]);
+});
 
 test("成员模块首屏摘要只依赖 profiles 与 teams，邮箱允许先为空且保留原始权限", () => {
   const members = buildAdminModuleMemberSummaries(

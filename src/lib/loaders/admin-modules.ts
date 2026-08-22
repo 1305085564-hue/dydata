@@ -30,6 +30,48 @@ import { shiftDateOnly } from "./shared";
 
 type AdminSupabase = Awaited<ReturnType<typeof createClient>>;
 
+const AUTH_USERS_PAGE_SIZE = 1000;
+
+type AuthAdminUser = Awaited<
+  ReturnType<ReturnType<typeof createAdminClient>["auth"]["admin"]["listUsers"]>
+>["data"]["users"][number];
+
+/**
+ * Auth Admin API 是分页接口；不能只取第一页，否则超过 1000 个账号时邮箱和登录时间会静默缺失。
+ * 保留 1000 的单页大小减少请求次数，同时根据 nextPage 继续拉取后续页。
+ */
+export async function listAllAuthUsers(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+): Promise<AuthAdminUser[]> {
+  const users: AuthAdminUser[] = [];
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await adminSupabase.auth.admin.listUsers({
+      page,
+      perPage: AUTH_USERS_PAGE_SIZE,
+    });
+
+    if (error) {
+      throw new Error(error.message || "加载 Auth 用户失败");
+    }
+
+    users.push(...data.users);
+
+    const nextPage =
+      typeof data.nextPage === "number"
+        ? data.nextPage
+        : data.users.length >= AUTH_USERS_PAGE_SIZE
+          ? page + 1
+          : null;
+
+    if (!nextPage || nextPage <= page) break;
+    page = nextPage;
+  }
+
+  return users;
+}
+
 type AdminModuleProfileRow = AdminModuleMemberProfileLike & {
   created_at?: string | null;
   membership_status?: string | null;
@@ -361,9 +403,9 @@ async function loadAdminModuleMemberHydrationMap(
   teams: Array<{ id: string; name: string }>,
   visibleUserIds: string[] | null = null,
 ): Promise<Record<string, AdminModuleMemberHydration>> {
-  // 统一走 listUsers 一次拉取（与全量分支同源），再按需过滤，
+  // 统一走 listUsers 分页拉取（与全量分支同源），再按需过滤，
   // 避免对 Auth Admin API 做 N 次 getUserById 的无上限并发扇出
-  const authUsers = (await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 })).data?.users ?? [];
+  const authUsers = await listAllAuthUsers(adminSupabase);
   const visibleIdSet = visibleUserIds === null ? null : new Set(visibleUserIds);
   const relevantUsers = visibleIdSet === null
     ? authUsers
