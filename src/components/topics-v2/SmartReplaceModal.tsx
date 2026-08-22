@@ -150,7 +150,7 @@ export function SmartReplaceModal({
           </div>
 
           {error && (
-            <div className="mb-3 p-3 bg-zinc-100 border border-zinc-200 rounded-lg text-xs text-zinc-600 font-normal shrink-0">
+            <div className="mb-3 p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-xs text-zinc-700 font-normal shrink-0">
               {error}
             </div>
           )}

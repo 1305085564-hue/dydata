@@ -45,13 +45,13 @@ export function AdminWorkspaceLayout({
   const hasHeader = eyebrow || title || description || actions;
 
   return (
-    <div className={cn("min-w-0 space-y-6", widthMap[width], className)}>
+    <div className={cn("min-w-0 space-y-8", widthMap[width], className)}>
       {hasHeader ? (
-        <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between pb-1">
           <div>
             {eyebrow ? <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">{eyebrow}</p> : null}
-            {title ? <h1 className={cn("text-[24px] font-semibold tracking-tight text-zinc-900", eyebrow && "mt-2")}>{title}</h1> : null}
-            {description ? <p className="mt-1 max-w-3xl text-[13px] leading-[1.7] text-zinc-500">{description}</p> : null}
+            {title ? <h1 className={cn("text-[24px] font-semibold tracking-tight text-zinc-950", eyebrow && "mt-2")}>{title}</h1> : null}
+            {description ? <p className="mt-1.5 max-w-3xl text-[13px] leading-[1.7] text-zinc-600">{description}</p> : null}
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
         </header>

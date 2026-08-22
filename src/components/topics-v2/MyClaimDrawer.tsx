@@ -131,11 +131,11 @@ export function MyClaimDrawer({
               <div>
                 <h4
                   id="claim-drawer-title"
-                  className="text-sm font-semibold text-zinc-900"
+                  className="text-sm font-medium text-zinc-900"
                 >
                   我的选题认领
                 </h4>
-                <p className="text-xs text-zinc-500 mt-0.5 font-normal">
+                <p className="text-xs text-zinc-600 mt-0.5 font-normal">
                   候选最多保留 5 条，及时放回不写的选题
                 </p>
               </div>
@@ -152,9 +152,9 @@ export function MyClaimDrawer({
 
             {/* 槽位进度条 */}
             <div className="mb-4">
-              <div className="flex justify-between text-xs text-zinc-500 mb-1 font-normal">
+              <div className="flex justify-between text-xs text-zinc-600 mb-1 font-normal">
                 <span>候选占用率</span>
-                <span className="tabular-nums text-zinc-700 font-semibold">
+                <span className="tabular-nums text-zinc-800 font-medium">
                   {candidateCount} / 5
                 </span>
               </div>
@@ -182,7 +182,7 @@ export function MyClaimDrawer({
 
             {/* 认领列表 */}
             {error ? (
-              <div className="py-6 text-center text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg">
+              <div className="py-6 text-center text-xs text-zinc-600 bg-red-50/50 rounded-lg">
                 <p className="font-medium">我的认领加载失败</p>
                 <p className="mt-1 text-[#DC2626] font-normal">{error}</p>
                 <button
@@ -201,7 +201,7 @@ export function MyClaimDrawer({
                 <span>加载认领列表中...</span>
               </div>
             ) : activeClaims.length === 0 ? (
-              <div className="py-8 text-center text-xs text-zinc-500 font-normal border border-dashed border-zinc-200 rounded-lg bg-zinc-50/50">
+              <div className="py-8 text-center text-xs text-zinc-500 font-normal rounded-lg bg-zinc-100/50">
                 暂未认领任何选题，浏览大盘点击“认领”
               </div>
             ) : (
@@ -210,7 +210,7 @@ export function MyClaimDrawer({
                 {activeClaims.filter((c) => c.status === "candidate").length >
                   0 && (
                   <div className="space-y-2">
-                    <div className="text-xs font-semibold text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
+                    <div className="text-xs font-medium text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
                       <span>候选池 (占用 {candidateCount}/5 配额)</span>
                     </div>
                     {activeClaims
@@ -278,7 +278,7 @@ export function MyClaimDrawer({
                 {activeClaims.filter((c) => c.status === "scripting").length >
                   0 && (
                   <div className="space-y-2">
-                    <div className="text-xs font-semibold text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
+                    <div className="text-xs font-medium text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
                       <span>撰写中 (已锁定不占候选配额)</span>
                     </div>
                     {activeClaims

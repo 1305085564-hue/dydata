@@ -485,7 +485,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 peerRatio={weakestRule.unit === "%" ? benchmark.peer.dimensionValue / 100 : 1}
               />
             ) : (
-              <p className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 text-center text-[13px] leading-[1.6] text-zinc-500">
+              <p className="rounded-lg bg-zinc-100/60 p-4 text-center text-[13px] leading-[1.6] text-zinc-500">
                 团队还没有可比同伴。数据积累后，这里会出现你的第一个追赶目标。
               </p>
             )}
@@ -514,14 +514,14 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       <div className={cn("grid gap-3", ownScriptSnippet ? "md:grid-cols-2" : "")}>
                         <div className="space-y-1.5">
                           <span className="text-[12px] text-zinc-500">同事的写法 · {benchmark.peer.name}</span>
-                          <blockquote className="relative rounded-lg border border-zinc-200 border-l-4 border-l-[#D97757] bg-zinc-50/50 p-3.5 text-[12px] text-zinc-700 italic leading-[1.6] whitespace-pre-wrap">
+                          <blockquote className="relative rounded-r-lg border-l-2 border-l-[#D97757] bg-amber-50/30 p-3.5 text-[12px] text-zinc-700 italic leading-[1.6] whitespace-pre-wrap">
                             “{benchmark.peer.scriptSnippet}”
                           </blockquote>
                         </div>
                         {ownScriptSnippet ? (
                           <div className="space-y-1.5">
                             <span className="text-[12px] text-zinc-500">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）</span>
-                            <blockquote className="relative rounded-lg border border-zinc-200 border-l-4 border-l-zinc-300 bg-zinc-50/50 p-3.5 text-[12px] text-zinc-700 leading-[1.6] whitespace-pre-wrap">
+                            <blockquote className="relative rounded-r-lg border-l-2 border-l-zinc-300 bg-zinc-100/60 p-3.5 text-[12px] text-zinc-700 leading-[1.6] whitespace-pre-wrap">
                               “{ownScriptSnippet.snippet}”
                             </blockquote>
                           </div>
@@ -533,7 +533,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   )}
                 </div>
               ) : benchmark.state === "fallback_team_avg" ? (
-                <div className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 text-center">
+                <div className="rounded-lg bg-zinc-100/60 p-4 text-center">
                   <p className="text-[13px] text-zinc-700 font-medium">
                     当前暂无可实名展示的同题材稳定对标人。
                   </p>
@@ -545,7 +545,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   </p>
                 </div>
               ) : (
-                <p className="rounded-lg border border-zinc-200 bg-zinc-50/50 p-4 text-center text-[13px] leading-[1.6] text-zinc-500">
+                <p className="rounded-lg bg-zinc-100/60 p-4 text-center text-[13px] leading-[1.6] text-zinc-500">
                   团队还没有可比同伴。数据积累后，这里会出现你的第一个对标同事。
                 </p>
               )}
@@ -559,7 +559,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             </div>
             {/* 榜单只有数字，补上"学他怎么写"的定性内容（旧页功能，避免榜单化后丢失） */}
             {benchmark.state === "ok" && benchmark.peer ? (
-              <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3">
+              <div className="rounded-xl bg-zinc-100/60 px-4 py-3">
                 <p className="text-[12px] font-medium text-zinc-500">该学谁</p>
                 <p className="mt-1 text-[13px] text-zinc-700">
                   <span className="font-medium text-zinc-900">{benchmark.peer.name}</span>

@@ -473,11 +473,11 @@ export default function ModelsClient() {
                 <div className="p-4 px-5 bg-zinc-50/80 space-y-2.5 border-b border-zinc-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-semibold text-[14px] text-zinc-900">
+                      <span className="font-medium text-[14px] text-zinc-900">
                         {fam.familyName}
                       </span>
                       {hasGlobalDefault && (
-                        <span className="text-[11px] font-medium bg-[#D97757]/10 text-[#D97757] px-2 py-0.5 rounded-full">
+                        <span className="text-[12px] font-medium bg-[#D97757]/10 text-[#D97757] px-2 py-0.5 rounded-full">
                           全局默认
                         </span>
                       )}
@@ -499,7 +499,7 @@ export default function ModelsClient() {
 
                   {/* 包含的具体型号 Tags */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] text-zinc-500 flex items-center gap-1">
+                    <span className="text-[12px] text-zinc-500 flex items-center gap-1">
                       <Tag className="size-3" /> 包含 {fam.modelIds.length}{" "}
                       个具体型号：
                     </span>
@@ -507,9 +507,9 @@ export default function ModelsClient() {
                       <span
                         key={mId}
                         className={cn(
-                          "font-mono text-[11px] px-2 py-0.5 rounded-md",
+                          "font-mono text-[12px] px-2 py-0.5 rounded-md",
                           mId === currentDefaultModelId
-                            ? "bg-[#D97757]/10 text-[#D97757] font-semibold border border-[#D97757]/30"
+                            ? "bg-[#D97757]/10 text-[#D97757] font-medium border border-[#D97757]/30"
                             : "bg-white text-zinc-600 border border-zinc-200",
                         )}
                       >

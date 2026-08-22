@@ -300,37 +300,37 @@ export function MemberDrawer({
                 当前统计
               </h3>
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
+                <div className="rounded-xl bg-zinc-100/70 p-3">
                   <p className="text-[12px] text-zinc-500">应发天数</p>
                   <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-900">
                     {member.totalDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
+                <div className="rounded-xl bg-zinc-100/70 p-3">
                   <p className="text-[12px] text-zinc-500">实发天数</p>
                   <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#6FAA7D]">
                     {member.publishedDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
+                <div className="rounded-xl bg-zinc-100/70 p-3">
                   <p className="text-[12px] text-zinc-500">发布率</p>
                   <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-900">
                     {member.fulfillmentRate}%
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
+                <div className="rounded-xl bg-zinc-100/70 p-3">
                   <p className="text-[12px] text-zinc-500">请假</p>
                   <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-500">
                     {member.leaveDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
+                <div className="rounded-xl bg-zinc-100/70 p-3">
                   <p className="text-[12px] text-zinc-500">豁免</p>
                   <p className="mt-1 text-[18px] font-semibold tabular-nums text-zinc-500">
                     {member.waivedDays}
                   </p>
                 </div>
-                <div className="rounded-xl border border-zinc-200 bg-zinc-100/50 p-3">
+                <div className="rounded-xl bg-zinc-100/70 p-3">
                   <p className="text-[12px] text-zinc-500">缺勤</p>
                   <p className="mt-1 text-[18px] font-semibold tabular-nums text-[#C9604D]">
                     {member.absentDays}
@@ -341,7 +341,7 @@ export function MemberDrawer({
 
             {/* 连续未发 */}
             {member.consecutiveMissing > 0 && (
-              <section className="rounded-xl border border-[#C9604D]/15 bg-[#C9604D]/[0.03] p-3">
+              <section className="rounded-xl bg-red-50/60 p-3">
                 <div className="flex items-center gap-2">
                   <span className="size-1.5 rounded-full bg-[#C9604D]" />
                   <span className="text-[13px] font-medium text-zinc-700">
@@ -406,12 +406,12 @@ export function MemberDrawer({
 
             {/* 员工申诉状态 (新集成) */}
             {dateAppeal && (
-              <section className="rounded-xl border border-zinc-200 bg-zinc-950/[0.03] p-4 space-y-3">
+              <section className="rounded-xl bg-amber-50/40 p-4 space-y-3">
                 <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#D99E55]">
                   <span className="size-2 rounded-full bg-[#F59E0B]" />
                   员工发起申诉
                 </h4>
-                <div className="text-[13px] text-zinc-800 bg-white border border-zinc-200 p-2.5 rounded-lg italic">
+                <div className="text-[13px] text-zinc-800 bg-white/90 p-2.5 rounded-lg italic">
                   “{dateAppeal.reason}”
                 </div>
                 <p className="text-[12px] text-zinc-600">
@@ -477,7 +477,7 @@ export function MemberDrawer({
                   ? "当日状态"
                   : `${effectiveDate?.slice(5)} 状态`}
               </h3>
-              <div className="space-y-2 bg-zinc-50/50 border border-zinc-200/50 rounded-xl p-3.5">
+              <div className="space-y-2 bg-zinc-100/60 rounded-xl p-3.5">
                 {dayRecord ? (
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-[13px]">
@@ -487,7 +487,7 @@ export function MemberDrawer({
                       </span>
                     </div>
                     {dayRecord.reason ? (
-                      <div className="rounded-lg border border-zinc-200 bg-white p-2.5">
+                      <div className="rounded-lg bg-white/90 p-2.5">
                         <p className="text-[12px] text-zinc-500">
                           打标备注原因
                         </p>
@@ -526,7 +526,7 @@ export function MemberDrawer({
               </h3>
               {activeAction ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-3">
+                  <div className="rounded-xl bg-zinc-100/60 p-3">
                     <label
                       htmlFor="action-reason"
                       className="mb-1.5 block text-[12px] font-normal text-zinc-500"

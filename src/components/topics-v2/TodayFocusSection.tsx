@@ -45,7 +45,7 @@ export function TodayFocusSection({
   if (loading) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="h-10 bg-zinc-100/80 rounded-xl border border-zinc-200/60 animate-pulse" />
+        <div className="h-10 bg-zinc-100 rounded-xl animate-pulse" />
       </section>
     );
   }
@@ -53,7 +53,7 @@ export function TodayFocusSection({
   if (error) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2 text-xs">
+        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-[#DC2626] bg-red-50/50 px-3.5 py-2 text-xs">
           <div className="flex items-center gap-2 text-zinc-600">
             <AlertCircle className="w-3.5 h-3.5 text-[#DC2626]" />
             <span>团队动态加载失败: {error}</span>
@@ -94,7 +94,7 @@ export function TodayFocusSection({
   return (
     <section className="my-2 sm:my-3.5 transition-all">
       {/* 单行极简状态条 (Ticker) */}
-      <div className="bg-zinc-100/60 hover:bg-zinc-100/80 border border-zinc-200/60 rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors shadow-2xs">
+      <div className="bg-zinc-100/70 hover:bg-zinc-100 rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
         <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
           {/* 最新认领 */}
           {latestClaim ? (

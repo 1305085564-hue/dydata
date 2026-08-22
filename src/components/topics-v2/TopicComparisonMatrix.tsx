@@ -151,7 +151,7 @@ export function TopicComparisonMatrix({
       </div>
 
       {needsTopicSelection ? (
-        <div className="py-12 text-center text-xs text-zinc-500 border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50 font-normal">
+        <div className="py-12 text-center text-xs text-zinc-500 rounded-xl bg-zinc-100/50 font-normal">
           请在上方选择母题后查看账号对比
         </div>
       ) : loading ? (
@@ -160,7 +160,7 @@ export function TopicComparisonMatrix({
           <span>对比矩阵加载中...</span>
         </div>
       ) : error ? (
-        <div className="py-10 text-center text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-xl">
+        <div className="py-10 text-center text-zinc-600 bg-red-50/50 rounded-xl">
           <p className="text-sm font-medium">横向对比加载失败</p>
           <p className="text-xs mt-1 text-[#DC2626] font-normal">{error}</p>
           <button

@@ -145,7 +145,7 @@ export function SixRadarPanel({
 
   if (!radar || radar.length === 0) {
     return (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-zinc-50 border border-zinc-200">
+      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-zinc-100/60">
         <p className="text-[13px] text-zinc-500">暂无雷达数据，请先提交日报</p>
       </div>
     );
@@ -392,9 +392,9 @@ export function SixRadarPanel({
               key={item.dimension}
               className={cn(
                 "flex flex-col items-center justify-center rounded-lg py-1.5 text-center transition-all",
-                isWeak && "bg-[#DC2626]/10 border border-transparent",
-                isStrong && "bg-[#16A34A]/10 border border-transparent",
-                !isWeak && !isStrong && "bg-zinc-50 border border-zinc-200",
+                isWeak && "bg-[#DC2626]/10",
+                isStrong && "bg-[#16A34A]/10",
+                !isWeak && !isStrong && "bg-zinc-100/70",
               )}
             >
               <span className="text-[11px] font-medium text-zinc-500">

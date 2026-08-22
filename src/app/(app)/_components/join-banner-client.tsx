@@ -62,12 +62,12 @@ export function JoinBannerClient(props: Props) {
 
             <div className="min-w-0 space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[13.5px] font-semibold tracking-tight text-zinc-900 sm:text-[14px]">
+                <h2 className="text-[14px] font-medium tracking-tight text-zinc-900">
                   {bannerTitle}
                 </h2>
                 <span
                   className={cn(
-                    "inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-medium tracking-wide",
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[12px] font-medium tracking-wide",
                     isUnassigned
                       ? "bg-[#D97757]/10 text-[#D97757]"
                       : "bg-[#43718E]/10 text-[#43718E]",
@@ -76,7 +76,7 @@ export function JoinBannerClient(props: Props) {
                   {isUnassigned ? "未加入" : "审核中"}
                 </span>
               </div>
-              <p className="text-[12px] leading-relaxed text-zinc-500 sm:text-[12.5px]">
+              <p className="text-[13px] leading-relaxed text-zinc-600">
                 {bannerBody}
               </p>
             </div>
@@ -97,7 +97,7 @@ export function JoinBannerClient(props: Props) {
             >
               {isUnassigned ? "申请加入团队" : "撤销申请"}
             </Button>
-            <span className="hidden text-[11.5px] text-zinc-400 sm:inline-block">
+            <span className="hidden text-[12px] text-zinc-500 sm:inline-block">
               {isUnassigned
                 ? "通过后即可提交日报、豁免和协作内容。"
                 : "审核通过前仍可继续使用当前账号。"}

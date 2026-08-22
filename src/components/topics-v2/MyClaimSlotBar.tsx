@@ -72,15 +72,15 @@ export function MyClaimSlotBar({
             <Layers className="w-3.5 h-3.5" />
           </span>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 tracking-tight flex items-center gap-2">
+            <h2 className="text-sm font-medium text-zinc-900 tracking-tight flex items-center gap-2">
               <span>我的选题槽位</span>
               <span className="text-xs tabular-nums text-zinc-500 font-normal">
                 (
                 <span
                   className={
                     occupiedCount === 5
-                      ? "text-[#F59E0B] font-semibold"
-                      : "text-zinc-700 font-semibold"
+                      ? "text-[#F59E0B] font-medium"
+                      : "text-zinc-700 font-medium"
                   }
                 >
                   {occupiedCount}

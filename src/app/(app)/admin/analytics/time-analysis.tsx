@@ -231,18 +231,18 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
     <div className="space-y-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.72fr)]">
         <div className="space-y-1">
-          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">时间维度分析</h3>
-          <p className="max-w-2xl text-[13px] leading-[1.7] text-zinc-500">
+          <h3 className="text-[16px] font-medium tracking-tight text-zinc-900">时间维度分析</h3>
+          <p className="max-w-2xl text-[13px] leading-[1.7] text-zinc-600">
             保留 7 x 24 热力图结构，用播放中位数观察一周内各发布时间的表现；悬停可预览，点击可锁定右侧详情。
           </p>
         </div>
 
         <div
           className={cn(
-            "relative overflow-hidden rounded-xl border px-4 py-3",
+            "relative overflow-hidden px-4 py-3",
             recommendationMeta.hasRecommendation
-              ? "border-zinc-200 border-l-[2px] border-l-[#D97757] bg-zinc-50"
-              : "border-zinc-200 bg-white",
+              ? "rounded-r-xl border-l-2 border-l-[#D97757] bg-amber-50/40"
+              : "rounded-xl bg-zinc-100/70",
           )}
         >
           <div
@@ -290,13 +290,13 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
           <div className="mb-4 grid gap-2 md:grid-cols-4">
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">有效样本数</p>
-              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{heatmapData.totalEligible}</p>
+              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{heatmapData.totalEligible}</p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">已同时具备播放数据和可解析发布时间</p>
             </div>
 
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">未纳入统计数</p>
-              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{excludedCount}</p>
+              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{excludedCount}</p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">
                 {excludedReasons.length > 0 ? excludedReasons.join("；") : "当前无排除样本"}
               </p>
@@ -304,7 +304,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
 
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">推荐窗口置信度</p>
-              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">
+              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">
                 {recommendationMeta.confidence ? recommendationMeta.confidence : "暂无"}
               </p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">
@@ -316,7 +316,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
 
             <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2">
               <p className="text-[12px] tracking-[0.12em] text-zinc-500">最高播放中位数</p>
-              <p className="mt-1 text-[18px] font-semibold text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
+              <p className="mt-1 text-[18px] font-medium text-zinc-700 tabular-nums tracking-tight">{formatPlayCount(heatmapData.maxMedianPlay || null)}</p>
               <p className="mt-0.5 truncate text-[12px] text-zinc-500">用于定义热力图颜色强弱</p>
             </div>
           </div>
@@ -461,8 +461,8 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
                   className={cn(
                     "inline-flex items-center gap-2 rounded-full px-3 py-1 text-[12px] font-normal",
                     activeIsRecommended
-                      ? "border-zinc-200 bg-white text-zinc-700"
-                      : "border border-zinc-200 bg-zinc-50 text-zinc-700",
+                      ? "bg-emerald-50 text-[#16A34A] font-medium"
+                      : "bg-zinc-100 text-zinc-600",
                   )}
                 >
                   {activeIsRecommended ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
@@ -501,7 +501,7 @@ export function TimeAnalysis({ reports }: TimeAnalysisProps) {
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-700">
+            <div className="rounded-xl bg-zinc-100/60 p-4 text-[13px] text-zinc-600">
               点击任意热力单元格查看该时段表现。
             </div>
           )}

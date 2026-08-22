@@ -197,7 +197,7 @@ export function SubmissionCalendar({
       <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-zinc-400" />
-          <h3 className="text-[13px] font-semibold text-zinc-900 tracking-tight">
+          <h3 className="text-[13px] font-medium text-zinc-900 tracking-tight">
             选择日期
           </h3>
         </div>
@@ -211,7 +211,7 @@ export function SubmissionCalendar({
           >
             <ChevronLeft className="size-3.5 stroke-[2]" />
           </button>
-          <span className="text-[11.5px] font-semibold text-zinc-800 tabular-nums px-1.5">
+          <span className="text-[12px] font-medium text-zinc-800 tabular-nums px-1.5">
             {monthLabel}
           </span>
           <button
@@ -236,7 +236,7 @@ export function SubmissionCalendar({
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="h-6 flex items-center justify-center text-[11.5px] font-medium text-zinc-400"
+            className="h-6 flex items-center justify-center text-[12px] font-medium text-zinc-400"
           >
             {label}
           </div>
@@ -299,7 +299,7 @@ export function SubmissionCalendar({
 
                 // 选中态：黑胶囊高亮浮起
                 isSelected &&
-                  "bg-zinc-900 text-white font-semibold shadow-md scale-[1.05] z-10",
+                  "bg-zinc-900 text-white font-medium shadow-sm scale-[1.05] z-10",
               )}
             >
               <span className="tabular-nums leading-none">{cell.day}</span>

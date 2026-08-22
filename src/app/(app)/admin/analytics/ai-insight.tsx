@@ -55,8 +55,8 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1.5">
-          <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">AI 结构化洞察</h3>
-          <p className="text-[13px] leading-[1.7] text-zinc-500">基于业务数据自动生成的分析结论与建议行动。</p>
+          <h3 className="text-[16px] font-medium tracking-tight text-zinc-900">AI 结构化洞察</h3>
+          <p className="text-[13px] leading-[1.7] text-zinc-600">基于业务数据自动生成的分析结论与建议行动。</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-white p-1">
@@ -137,21 +137,21 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
           >
             {/* 最佳方向 */}
             {insight.best_direction && (
-              <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white p-6">
+              <div className="rounded-r-xl border-l-2 border-l-[#6FAA7D] bg-emerald-50/40 p-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#6FAA7D]">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white text-[#6FAA7D] shadow-2xs">
                     <TrendingUp className="size-6 stroke-[1.5]" />
                   </div>
                   <div className="space-y-4 flex-1">
                     <div>
                       <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#6FAA7D]">最佳验证方向</h4>
                       <div className="flex items-center gap-2">
-                        <span className="text-[18px] font-semibold tracking-tight text-zinc-900">{insight.best_direction.tag}</span>
+                        <span className="text-[18px] font-medium tracking-tight text-zinc-900">{insight.best_direction.tag}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-3">
+                      <div className="rounded-lg bg-white/80 p-3">
                         <p className="mb-1 text-[12px] font-normal tracking-[0.12em] text-zinc-500">数据证据</p>
                         <p className="text-[13px] font-normal leading-[1.7] text-zinc-700">{insight.best_direction.evidence}</p>
                       </div>
@@ -168,21 +168,21 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
 
             {/* 最差方向 */}
             {insight.worst_direction && (
-              <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#C9604D] bg-white p-6">
+              <div className="rounded-r-xl border-l-2 border-l-[#C9604D] bg-red-50/40 p-6">
                 <div className="flex items-start gap-4">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-zinc-50 text-[#C9604D]">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-white text-[#C9604D] shadow-2xs">
                     <TrendingDown className="size-6 stroke-[1.5]" />
                   </div>
                   <div className="space-y-4 flex-1">
                     <div>
                       <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-[#C9604D]">需规避方向</h4>
                       <div className="flex items-center gap-2">
-                        <span className="text-[18px] font-semibold tracking-tight text-zinc-900">{insight.worst_direction.tag}</span>
+                        <span className="text-[18px] font-medium tracking-tight text-zinc-900">{insight.worst_direction.tag}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <div className="rounded-lg bg-zinc-50 border border-zinc-200 p-3">
+                      <div className="rounded-lg bg-white/80 p-3">
                         <p className="mb-1 text-[12px] font-normal tracking-[0.12em] text-zinc-500">数据证据</p>
                         <p className="text-[13px] font-normal leading-[1.7] text-zinc-700">{insight.worst_direction.evidence}</p>
                       </div>
@@ -207,7 +207,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
                     </div>
                     <div>
                       <h4 className="mb-1 text-[12px] font-normal tracking-[0.12em] text-zinc-500">下期核心战役</h4>
-                      <p className="text-[18px] font-semibold leading-[1.7] text-zinc-900">{insight.next_period_focus}</p>
+                      <p className="text-[18px] font-medium leading-[1.7] text-zinc-900">{insight.next_period_focus}</p>
                     </div>
                   </div>
 
@@ -239,7 +239,7 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
               )}
 
               {insight.sample_warning && insight.sample_warning.length > 0 && (
-                <div className="rounded-xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-white p-5">
+                <div className="rounded-r-xl border-l-2 border-l-[#D99E55] bg-amber-50/50 p-5">
                   <div className="flex items-center gap-2 mb-3">
                     <AlertTriangle className="size-4 stroke-[1.5] text-[#D99E55]" />
                     <h4 className="text-[13px] font-medium text-zinc-900">样本不足警告</h4>
@@ -265,8 +265,8 @@ export function AiInsight({ scopeEntityId }: AiInsightProps) {
             <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-zinc-100 mb-4">
               <Sparkles className="size-8 stroke-[1.5] text-zinc-500" />
             </div>
-            <h3 className="mb-2 text-[18px] font-semibold text-zinc-900">准备好挖掘数据价值了吗？</h3>
-            <p className="text-[13px] text-zinc-500 leading-[1.7] max-w-md mx-auto">
+            <h3 className="mb-2 text-[16px] font-medium text-zinc-900">准备好挖掘数据价值了吗？</h3>
+            <p className="text-[13px] text-zinc-600 leading-[1.7] max-w-md mx-auto">
               基于您选择的分析周期，AI 将深度挖掘爆款特征、分析滑铁卢原因，并为您提取下期可执行的焦点策略。
             </p>
           </motion.div>

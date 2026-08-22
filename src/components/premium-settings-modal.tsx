@@ -422,9 +422,9 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("profile")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100 sm:w-full",
                   activeTab === "profile"
-                    ? "bg-zinc-200/80 text-zinc-900 font-semibold"
+                    ? "bg-zinc-200/80 text-zinc-950 font-medium"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
@@ -436,9 +436,9 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("accounts")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100 sm:w-full",
                   activeTab === "accounts"
-                    ? "bg-zinc-200/80 text-zinc-900 font-semibold"
+                    ? "bg-zinc-200/80 text-zinc-950 font-medium"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
@@ -450,9 +450,9 @@ export function PremiumSettingsModal({
                 type="button"
                 onClick={() => setActiveTab("system")}
                 className={cn(
-                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium transition-colors duration-100 sm:w-full",
+                  "flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-100 sm:w-full",
                   activeTab === "system"
-                    ? "bg-zinc-200/80 text-zinc-900 font-semibold"
+                    ? "bg-zinc-200/80 text-zinc-950 font-medium"
                     : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/70",
                 )}
               >
@@ -465,7 +465,7 @@ export function PremiumSettingsModal({
               <form action={signOut} method="POST" className="px-1">
                 <button
                   type="submit"
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] font-medium text-zinc-600 hover:text-[#DC2626] hover:bg-zinc-100 transition-colors duration-100"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium text-zinc-600 hover:text-[#DC2626] hover:bg-zinc-100 transition-colors duration-100"
                 >
                   <LogOut className="size-4 text-zinc-400 group-hover:text-[#DC2626]" />
                   退出当前系统
@@ -484,10 +484,10 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
+                  <h3 className="text-[14px] font-medium text-zinc-900 tracking-tight">
                     个人资料设置
                   </h3>
-                  <p className="text-[12px] text-zinc-500 mt-1">
+                  <p className="text-[13px] text-zinc-600 mt-1">
                     修改您在抖音日报平台中的显示名称。该改动将同步至视频复盘与团队日报底表。
                   </p>
                 </div>
@@ -583,10 +583,10 @@ export function PremiumSettingsModal({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
+                    <h3 className="text-[14px] font-medium text-zinc-900 tracking-tight">
                       账号矩阵配置
                     </h3>
-                    <p className="text-[12px] text-zinc-500 mt-0.5">
+                    <p className="text-[13px] text-zinc-600 mt-0.5">
                       管理绑定在该平台下的抖音企业号。你可以新增、解绑或重命名账号别称。
                     </p>
                   </div>
@@ -806,10 +806,10 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
+                  <h3 className="text-[14px] font-medium text-zinc-900 tracking-tight">
                     系统参数配置
                   </h3>
-                  <p className="text-[12px] text-zinc-500 mt-1">
+                  <p className="text-[13px] text-zinc-600 mt-1">
                     配置日常催交、违规提醒和周月报统计参数。该改动影响所有团队内成员。
                   </p>
                 </div>

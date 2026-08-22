@@ -812,7 +812,7 @@ export function ContentDiagnosisWorkbench({
           </Button>
 
           {/* 流水线前进后退器 */}
-          <div className="flex items-center rounded-lg border border-zinc-200 bg-zinc-50/80 p-0.5 shadow-2xs">
+          <div className="flex items-center rounded-lg bg-zinc-100/70 p-0.5">
             <button
               type="button"
               onClick={handlePrev}
@@ -1109,7 +1109,7 @@ export function ContentDiagnosisWorkbench({
                   一、归因诊断与多参照系对比
                 </h2>
                 {/* 多选 Tag 控制栏 */}
-                <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1">
+                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-zinc-100/70 p-1">
                   {(
                     [
                       { key: "self", label: "比自己近3条" },
@@ -1126,7 +1126,7 @@ export function ContentDiagnosisWorkbench({
                         onClick={() => toggleRef(key)}
                         className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-all cursor-pointer ${
                           active
-                            ? "border border-zinc-200 bg-white text-zinc-950 shadow-2xs"
+                            ? "bg-white text-zinc-950 shadow-2xs"
                             : "text-zinc-500 hover:text-zinc-800"
                         }`}
                       >
@@ -1147,7 +1147,7 @@ export function ContentDiagnosisWorkbench({
               </div>
 
               {selectedRefs.has("user") && profiles.length > 0 && (
-                <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-150 rounded-xl p-2.5 animate-fade-in">
+                <div className="flex items-center gap-2 bg-zinc-100/70 rounded-lg p-2.5 animate-fade-in">
                   <span className="text-[11px] text-zinc-500 font-medium">
                     选择指定对比人:
                   </span>
@@ -1309,7 +1309,7 @@ export function ContentDiagnosisWorkbench({
                 三、流量留存曲线漏斗
               </h2>
               {snapshot ? (
-                <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 h-[200px] relative">
+                <div className="bg-zinc-100/60 rounded-xl p-4 h-[200px] relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={funnelChartData}
@@ -1382,7 +1382,7 @@ export function ContentDiagnosisWorkbench({
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6 text-center text-[12px] text-zinc-400">
+                <div className="rounded-xl bg-zinc-100/50 p-6 text-center text-[12px] text-zinc-500">
                   暂无 24h 快照留存曲线数据
                 </div>
               )}
@@ -1673,7 +1673,7 @@ export function ContentDiagnosisWorkbench({
                 </div>
               </div>
 
-              <div className="space-y-1.5 bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+              <div className="space-y-1.5 bg-zinc-100/70 rounded-lg p-3">
                 <span className="text-[11px] font-semibold text-zinc-500 block">
                   诊断证据 (自动汇总偏离/异常指标)：
                 </span>
@@ -1682,7 +1682,7 @@ export function ContentDiagnosisWorkbench({
                     {feedbackEvidence.map((ev, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-100 text-[#C9604D] border border-zinc-200 text-[11px] font-medium"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white text-[#C9604D] text-[11px] font-medium shadow-2xs"
                       >
                         {ev}
                       </span>
@@ -1772,7 +1772,7 @@ export function ContentDiagnosisWorkbench({
                     复制建议
                   </Button>
                 ) : (
-                  <span className="text-[12px] text-zinc-400 font-medium bg-zinc-50 border border-zinc-200 px-3 py-1.5 rounded-lg">
+                  <span className="text-[12px] text-zinc-500 font-medium bg-zinc-100/70 px-3 py-1.5 rounded-lg">
                     历史站内记录仅查看
                   </span>
                 )}
@@ -1824,7 +1824,7 @@ export function ContentDiagnosisWorkbench({
               </details>
 
               {showPreviousFeedback && previousFeedback?.previous && (
-                <div className="border-l-2 border-[#43718E]/30 pl-4 space-y-3.5 relative animate-fade-in bg-zinc-50 border border-zinc-200 rounded-xl p-3.5">
+                <div className="border-l-2 border-[#43718E] pl-4 space-y-3.5 relative animate-fade-in bg-zinc-100/60 rounded-r-xl p-3.5">
                   <div className="flex items-center justify-between pb-1">
                     <div className="flex items-center gap-1.5 text-[#43718E]">
                       <History className="size-4" />
@@ -1857,7 +1857,7 @@ export function ContentDiagnosisWorkbench({
                         <span className="text-[11px] text-zinc-400 block">
                           上次改进建议：
                         </span>
-                        <p className="leading-relaxed text-zinc-600 bg-white border border-zinc-200/80 p-2.5 rounded-xl shadow-2xs">
+                        <p className="leading-relaxed text-zinc-700 bg-white/90 p-2.5 rounded-lg">
                           {previousFeedback.previous.message_for_member}
                         </p>
                       </div>
@@ -1998,7 +1998,7 @@ function MultiRefMetricCard({
           <button
             type="button"
             onClick={() => onLocate(activeLocateFinding!)}
-            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 border border-zinc-200 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
           >
             <span>
               {activeLocateFinding.locate.segment_hint === "opening"

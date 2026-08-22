@@ -320,7 +320,7 @@ function SegmentedControl({
             className={cn(
               "px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer",
               active
-                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                ? "bg-[#D97757]/10 text-[#D97757] font-medium"
                 : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
             )}
             onClick={() => onChange(option.value)}

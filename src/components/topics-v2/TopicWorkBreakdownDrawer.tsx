@@ -291,7 +291,7 @@ export function TopicWorkBreakdownDrawer({
           </div>
 
           {detailError ? (
-            <div className="py-8 text-center text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-xl">
+            <div className="py-8 text-center text-zinc-600 bg-red-50/50 rounded-xl">
               <AlertTriangle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
               <p className="text-sm font-medium">详情加载失败</p>
               <p className="text-xs text-[#DC2626] mt-1 font-normal">
@@ -332,11 +332,11 @@ export function TopicWorkBreakdownDrawer({
                   )}
                 </div>
                 {claimsError ? (
-                  <div className="text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg p-3 font-normal">
+                  <div className="text-xs text-zinc-600 bg-red-50/50 rounded-lg p-3 font-normal">
                     {claimsError}
                   </div>
                 ) : claimsData?.claims.length === 0 ? (
-                  <div className="text-xs text-zinc-400 py-4 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50 font-normal">
+                  <div className="text-xs text-zinc-400 py-4 text-center rounded-xl bg-zinc-100/50 font-normal">
                     暂无团队成员认领
                   </div>
                 ) : (
@@ -370,7 +370,7 @@ export function TopicWorkBreakdownDrawer({
 
               {/* 作品数据汇总 */}
               {worksError ? (
-                <div className="text-xs text-zinc-600 bg-zinc-100 border border-zinc-200 rounded-lg p-3 font-normal">
+                <div className="text-xs text-zinc-600 bg-red-50/50 rounded-lg p-3 font-normal">
                   作品加载失败：{worksError}
                 </div>
               ) : (

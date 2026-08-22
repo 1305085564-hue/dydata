@@ -182,13 +182,13 @@ export function TopicCreateModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 bg-zinc-100 border border-zinc-200 text-zinc-600 rounded-lg text-xs flex items-center gap-2 font-normal">
+              <div className="p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-zinc-700 text-xs flex items-center gap-2 font-normal">
                 <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
             {topicsError && (
-              <div className="p-3 bg-zinc-100 border border-zinc-200 text-zinc-600 rounded-lg text-xs font-normal">
+              <div className="p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-zinc-700 text-xs font-normal">
                 母题列表加载失败：{topicsError}
               </div>
             )}
@@ -279,7 +279,7 @@ export function TopicCreateModal({
 
             {/* 智能查重建议列表 */}
             {suggestions.length > 0 && (
-              <div className="bg-zinc-100/70 border border-zinc-200/80 rounded-xl p-3 text-xs">
+              <div className="bg-zinc-100/70 rounded-xl p-3 text-xs">
                 <div className="font-semibold text-zinc-600 mb-1.5 flex items-center gap-1.5">
                   <Lightbulb className="w-4 h-4 text-[#F59E0B] shrink-0" />
                   <span>检出相似度较高的已有子题 (请注意避免重复录入)</span>
@@ -288,7 +288,7 @@ export function TopicCreateModal({
                   {suggestions.map((s) => (
                     <div
                       key={s.id}
-                      className="bg-white/90 p-2 rounded-lg border border-zinc-200 text-xs font-normal"
+                      className="bg-white/90 p-2 rounded-lg text-xs font-normal shadow-2xs"
                     >
                       <div className="font-medium text-zinc-800">{s.title}</div>
                       <div className="text-zinc-500 truncate">“{s.hook}”</div>

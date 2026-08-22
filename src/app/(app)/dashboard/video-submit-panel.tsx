@@ -543,11 +543,11 @@ export function VideoSubmitPanel({
             )}
 
             {hasPendingExemption && !dismissedPendingExemption && (
-              <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 p-4 text-[13px] text-zinc-700">
+              <div className="rounded-r-2xl border-l-2 border-l-[#D99E55] bg-amber-50/50 p-4 text-[13px] text-zinc-700">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[12px] font-medium text-[#D99E55]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-[12px] font-medium text-[#D99E55] shadow-2xs">
                         <Clock className="size-3.5 stroke-[1.5]" />
                         申请审批中
                       </span>
@@ -582,7 +582,7 @@ export function VideoSubmitPanel({
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
                   <div className="space-y-4 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/30 bg-[#6FAA7D]/5 px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/10 px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
                         <span className="relative flex h-2 w-2">
                           <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D]/60 motion-safe:animate-ping opacity-75" />
                           <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6FAA7D]" />
@@ -601,7 +601,7 @@ export function VideoSubmitPanel({
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">播放量</div>
                         <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined 
@@ -609,7 +609,7 @@ export function VideoSubmitPanel({
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">互动总量</div>
                         <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {((primarySummary.likes ?? 0) +
@@ -618,7 +618,7 @@ export function VideoSubmitPanel({
                             (primarySummary.favorites ?? 0)).toLocaleString("zh-CN")}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">涨粉</div>
                         <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined 
@@ -626,7 +626,7 @@ export function VideoSubmitPanel({
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-zinc-200/40 bg-zinc-50/50 p-4 transition-all hover:bg-zinc-50/80">
+                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">完播率</div>
                         <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
                           {primarySummary.completionRate ?? "--"}
@@ -662,10 +662,10 @@ export function VideoSubmitPanel({
             {selectedAccount && shouldShowBlockedStateCard ? (
               <div
                 className={cn(
-                  "rounded-2xl border p-4 text-[13px] sm:p-5",
+                  "p-4 text-[13px] sm:p-5",
                   activeDateStatus.state === "waive"
-                    ? "border-zinc-200 border-l-[2px] border-l-[#6FAA7D] bg-white text-zinc-700"
-                    : "border-zinc-200 border-l-[2px] border-l-[#D99E55] bg-zinc-50 text-zinc-700",
+                    ? "border-l-2 border-l-[#6FAA7D] bg-emerald-50/50 text-zinc-700 rounded-r-2xl"
+                    : "border-l-2 border-l-[#D99E55] bg-amber-50/50 text-zinc-700 rounded-r-2xl",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

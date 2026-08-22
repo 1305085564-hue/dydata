@@ -171,11 +171,11 @@ export default function ProvidersClient() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[14px] text-zinc-900">
+                        <span className="font-medium text-[14px] text-zinc-900">
                           {p.name}
                         </span>
                         {!p.is_enabled && (
-                          <span className="text-[11px] font-medium bg-zinc-200/80 text-zinc-600 px-1.5 py-0.2 rounded">
+                          <span className="text-[12px] font-medium bg-zinc-200/80 text-zinc-600 px-1.5 py-0.2 rounded">
                             已停用
                           </span>
                         )}

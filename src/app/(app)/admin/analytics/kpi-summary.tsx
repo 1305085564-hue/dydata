@@ -132,7 +132,7 @@ function KpiCard({ label, value, delta, hasComparison }: KpiCardProps) {
   return (
     <div className="rounded-md bg-white shadow-sm px-3 py-2.5">
       <p className="text-[12px] text-zinc-500">{label}</p>
-      <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums leading-none text-zinc-700">
+      <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums leading-none text-zinc-700">
         {value}
       </p>
       <div className="mt-1.5 h-[16px]">
@@ -171,7 +171,7 @@ export function KpiSummary({ reports, previousPeriodReports }: KpiSummaryProps) 
   return (
     <div className="rounded-md bg-white shadow-sm p-4">
       <div className="mb-3 flex items-center border-l-2 border-[#D97757] pl-3">
-        <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">当前周期 KPI 速览</h3>
+        <h3 className="text-[16px] font-medium tracking-tight text-zinc-900">当前周期 KPI 速览</h3>
         {hasComparison ? (
           <span className="ml-auto text-[12px] text-zinc-500">vs 上周期</span>
         ) : null}

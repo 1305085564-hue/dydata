@@ -199,10 +199,10 @@ export function RewriteWorkbenchV3() {
           <div className="text-[12px] font-medium uppercase tracking-[0.2em] text-[#DC2626]">
             初始化异常
           </div>
-          <h3 className="text-[18px] font-semibold text-zinc-900">
+          <h3 className="text-[16px] font-medium text-zinc-900">
             {state.errorState.title}
           </h3>
-          <p className="text-[13px] text-zinc-500 leading-relaxed">
+          <p className="text-[13px] text-zinc-600 leading-relaxed">
             {state.errorState.message}
           </p>
           <button
@@ -303,7 +303,7 @@ export function RewriteWorkbenchV3() {
               className={cn(
                 "inline-flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
                 state.isHistoryOpen
-                  ? "bg-zinc-100 text-zinc-950 font-semibold"
+                  ? "bg-zinc-100 text-zinc-950 font-medium"
                   : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950",
               )}
               title={state.isHistoryOpen ? "收起历史对话" : "查看历史对话"}
@@ -335,7 +335,7 @@ export function RewriteWorkbenchV3() {
                 className={cn(
                   "inline-flex h-7 max-w-[180px] items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.98]",
                   modelDropdownOpen
-                    ? "bg-zinc-100 text-zinc-950 font-semibold"
+                    ? "bg-zinc-100 text-zinc-950 font-medium"
                     : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950",
                 )}
                 title="选择模型组合"

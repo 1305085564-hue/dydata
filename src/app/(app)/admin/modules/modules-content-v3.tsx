@@ -209,7 +209,7 @@ function getProgressColor(ratio: number): string {
 function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean }) {
   return (
     <div
-      className="hidden lg:flex items-center justify-between gap-3 border-b border-zinc-200 text-[13px] font-normal text-zinc-400 select-none pb-2 mb-1 px-3"
+      className="hidden lg:flex items-center justify-between gap-3 border-b border-zinc-200/80 text-[13px] font-medium text-zinc-500 select-none pb-2 mb-2 px-3"
       aria-hidden="true"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -955,7 +955,7 @@ export function AdminModulesContentV3({
         {pendingRequests.length > 0 && (
           <section className="bg-amber-50/60 rounded-lg border-l-2 border-amber-400 p-4">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[13px] font-medium text-amber-950">待审批入团申请</span>
+              <span className="text-[14px] font-medium text-amber-950">待审批入团申请</span>
               <span className="text-[12px] font-medium text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
                 {pendingRequests.length}
               </span>
@@ -1190,7 +1190,7 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[14px] font-medium text-zinc-800 truncate">
+                                <span className="text-[13px] font-medium text-zinc-900 truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
@@ -1200,7 +1200,7 @@ export function AdminModulesContentV3({
                                 )}
                               </div>
                               {member.email && (
-                                <span className="text-[12px] font-normal text-zinc-400 truncate leading-none mt-0.5">
+                                <span className="text-[12px] font-normal text-zinc-500 truncate leading-none mt-0.5">
                                   {member.email}
                                 </span>
                               )}
@@ -1217,11 +1217,11 @@ export function AdminModulesContentV3({
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] font-medium text-zinc-950">创始人</span>
+                                <span className="text-[13px] text-zinc-600">创始人</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] font-normal text-zinc-800">主管</span>
+                                <span className="text-[13px] text-zinc-600">主管</span>
                               ) : (
-                                <span className="text-[13px] font-normal text-zinc-600">组员</span>
+                                <span className="text-[13px] text-zinc-500">组员</span>
                               )}
                             </div>
 
@@ -1344,7 +1344,7 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[14px] font-medium text-zinc-800 truncate">
+                                <span className="text-[13px] font-medium text-zinc-900 truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
@@ -1354,7 +1354,7 @@ export function AdminModulesContentV3({
                                 )}
                               </div>
                               {member.email && (
-                                <span className="text-[12px] font-normal text-zinc-400 truncate leading-none mt-0.5">
+                                <span className="text-[12px] font-normal text-zinc-500 truncate leading-none mt-0.5">
                                   {member.email}
                                 </span>
                               )}
@@ -1371,11 +1371,11 @@ export function AdminModulesContentV3({
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] font-medium text-zinc-950">创始人</span>
+                                <span className="text-[13px] text-zinc-600">创始人</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] font-normal text-zinc-800">主管</span>
+                                <span className="text-[13px] text-zinc-600">主管</span>
                               ) : (
-                                <span className="text-[13px] font-normal text-zinc-600">组员</span>
+                                <span className="text-[13px] text-zinc-500">组员</span>
                               )}
                             </div>
 
@@ -1517,7 +1517,7 @@ export function AdminModulesContentV3({
           {activeMember && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
-              <div className="px-6 py-4 border-b border-zinc-100 flex items-start justify-between gap-3 shrink-0">
+              <div className="px-6 pt-5 pb-4 border-b border-zinc-100 flex items-start justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-9 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[14px] shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
@@ -1536,7 +1536,7 @@ export function AdminModulesContentV3({
                         </span>
                       )}
                     </div>
-                    <SheetDescription className="text-[13px] text-zinc-500 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <SheetDescription className="text-[13px] text-zinc-600 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       {activeMember.team_name && <span>{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
@@ -1547,7 +1547,7 @@ export function AdminModulesContentV3({
                       {activeMember.last_sign_in_at && (
                         <>
                           <span className="text-zinc-300">|</span>
-                          <span className="text-[12px] text-zinc-400">
+                          <span className="text-[12px] text-zinc-500">
                             上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
                           </span>
                         </>
@@ -1585,7 +1585,7 @@ export function AdminModulesContentV3({
               </div>
 
               {/* 抽屉内容主体（单页直通） */}
-              <div className="px-6 py-5 space-y-8 flex-1 overflow-y-auto">
+              <div className="px-6 pt-6 pb-8 space-y-8 flex-1 overflow-y-auto">
                 {/* 1. 细粒度权限配置 (标准 MemberPermissionEditor) */}
                 <MemberPermissionEditor
                   member={{
@@ -1644,8 +1644,8 @@ export function AdminModulesContentV3({
 
                 {/* 2. 账户与团队管理（轻量排版，去除大卡片套娃） */}
                 {activeMember.membership_status !== "archived" && (
-                  <div className="pt-6 border-t border-zinc-100 space-y-4">
-                    <h4 className="text-[14px] font-medium text-zinc-900">账户与团队管理</h4>
+                  <div className="pt-6 border-t border-zinc-100 space-y-3">
+                    <h4 className="text-[14px] font-medium text-zinc-900 mb-2">账户与团队管理</h4>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
@@ -1845,7 +1845,7 @@ export function AdminModulesContentV3({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="text-[16px] font-semibold text-zinc-950">AI 成员管理诊断</DialogTitle>
+                <DialogTitle className="text-[16px] font-medium text-zinc-900">AI 成员管理诊断</DialogTitle>
               </div>
               <Button
                 variant="ghost"
@@ -1858,21 +1858,21 @@ export function AdminModulesContentV3({
                 刷新分析
               </Button>
             </div>
-            <DialogDescription className="text-[12px] text-zinc-500">
+            <DialogDescription className="text-[13px] text-zinc-600">
               综合分析近期填报周期、异常断流及个人表现
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {aiSuggestion?.loading && (
-              <div className="py-8 text-center text-[12px] text-zinc-500 space-y-2 bg-zinc-50 rounded-xl">
+              <div className="py-8 text-center text-[13px] text-zinc-600 space-y-2 bg-zinc-50 rounded-xl">
                 <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
                 <p>正在结合近期填报、播放量与异常数据生成诊断...</p>
               </div>
             )}
 
             {aiSuggestion?.error && (
-              <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[12px] flex items-center gap-2">
+              <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[13px] flex items-center gap-2">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{aiSuggestion.error}</span>
               </div>
@@ -1906,9 +1906,9 @@ export function AdminModulesContentV3({
                       const isBusy = executingAiKey === key;
                       return (
                         <div key={idx} className="py-2.5 px-2 flex items-start justify-between gap-2">
-                          <div className="text-[12px] space-y-0.5">
+                          <div className="text-[13px] space-y-0.5">
                             <p className="font-medium text-zinc-900">{s.label}</p>
-                            <p className="text-zinc-500 text-[11px]">{s.description}</p>
+                            <p className="text-zinc-500 text-[12px]">{s.description}</p>
                           </div>
                           <div className="shrink-0 flex items-center gap-1">
                             {s.action.type === "navigate" && (
@@ -1950,8 +1950,8 @@ export function AdminModulesContentV3({
       <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
         <DialogContent className="max-w-[440px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-semibold text-zinc-950">设置日报豁免与请假</DialogTitle>
-            <DialogDescription className="text-[12px] text-zinc-500">
+            <DialogTitle className="text-[16px] font-medium text-zinc-900">设置日报豁免与请假</DialogTitle>
+            <DialogDescription className="text-[13px] text-zinc-600">
               设置免交或请假区间，系统将不会产生催发与缺发预警
             </DialogDescription>
           </DialogHeader>
@@ -1999,11 +1999,11 @@ export function AdminModulesContentV3({
             {exemptionMode !== "none" && (
               <div className="space-y-3 pt-1">
                 <div>
-                  <label className="text-[12px] font-medium text-zinc-700 block mb-1.5">
+                  <label className="text-[13px] font-medium text-zinc-800 block mb-1.5">
                     豁免性质
                   </label>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-[13px] text-zinc-700 cursor-pointer">
                       <input
                         type="radio"
                         name="dialogExemptionCategory"
@@ -2013,7 +2013,7 @@ export function AdminModulesContentV3({
                       />
                       <span>请假</span>
                     </label>
-                    <label className="flex items-center gap-1.5 text-[12px] text-zinc-700 cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-[13px] text-zinc-700 cursor-pointer">
                       <input
                         type="radio"
                         name="dialogExemptionCategory"
@@ -2029,7 +2029,7 @@ export function AdminModulesContentV3({
                 {exemptionMode === "range" && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[12px] text-zinc-500 block mb-1">开始日期</label>
+                      <label className="text-[13px] text-zinc-600 block mb-1">开始日期</label>
                       <Input
                         type="date"
                         className="h-8.5 text-[12px]"
@@ -2038,7 +2038,7 @@ export function AdminModulesContentV3({
                       />
                     </div>
                     <div>
-                      <label className="text-[12px] text-zinc-500 block mb-1">结束日期</label>
+                      <label className="text-[13px] text-zinc-600 block mb-1">结束日期</label>
                       <Input
                         type="date"
                         className="h-8.5 text-[12px]"
@@ -2050,7 +2050,7 @@ export function AdminModulesContentV3({
                 )}
 
                 <div>
-                  <label className="text-[12px] text-zinc-500 block mb-1">原因说明</label>
+                  <label className="text-[13px] text-zinc-600 block mb-1">原因说明</label>
                   <Input
                     type="text"
                     placeholder="例如：事假、外出培训、设备调试"
@@ -2092,8 +2092,8 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-semibold text-zinc-950">团队架构管理</DialogTitle>
-            <DialogDescription className="text-[12px] text-zinc-500">
+            <DialogTitle className="text-[16px] font-medium text-zinc-900">团队架构管理</DialogTitle>
+            <DialogDescription className="text-[13px] text-zinc-600">
               新建团队或维护现有团队架构
             </DialogDescription>
           </DialogHeader>
@@ -2101,7 +2101,7 @@ export function AdminModulesContentV3({
           <div className="space-y-4 py-2">
             {canManageCompany && (
               <div className="space-y-1.5">
-                <Label htmlFor="v3-team-name" className="text-[12px] font-medium text-zinc-700">
+                <Label htmlFor="v3-team-name" className="text-[13px] font-medium text-zinc-800">
                   新建团队
                 </Label>
                 <div className="flex gap-2">
@@ -2125,11 +2125,11 @@ export function AdminModulesContentV3({
             )}
 
             <div className="space-y-2 max-h-[260px] overflow-y-auto pt-2">
-              <span className="text-[12px] font-medium text-zinc-400 uppercase tracking-wider">
+              <span className="text-[13px] font-medium text-zinc-500 uppercase tracking-wider">
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <p className="text-[12px] text-zinc-400 py-3 text-center">暂无团队记录</p>
+                <p className="text-[13px] text-zinc-500 py-3 text-center">暂无团队记录</p>
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;
@@ -2210,7 +2210,7 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <div className="py-3 space-y-1.5">
-            <label className="text-[12px] font-medium text-zinc-700 block">
+            <label className="text-[13px] font-medium text-zinc-800 block">
               归档原因说明 <span className="text-red-500">*</span>
             </label>
             <Input
@@ -2260,7 +2260,7 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <div className="py-3 space-y-1.5">
-            <label className="text-[12px] font-medium text-zinc-700 block">
+            <label className="text-[13px] font-medium text-zinc-800 block">
               统一归档原因说明 <span className="text-red-500">*</span>
             </label>
             <Input
@@ -2324,7 +2324,7 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
           <div className="py-3 space-y-1.5">
-            <label className="text-[12px] font-medium text-zinc-700 block">新密码</label>
+            <label className="text-[13px] font-medium text-zinc-800 block">新密码</label>
             <Input
               type="text"
               placeholder="输入至少 6 位的新密码"
@@ -2371,7 +2371,7 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           {toolConfirmationModal?.preview && (
-            <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200/60 text-[12px] space-y-1 text-zinc-700 max-h-48 overflow-y-auto">
+            <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200/60 text-[13px] space-y-1 text-zinc-700 max-h-48 overflow-y-auto">
               <pre className="whitespace-pre-wrap font-sans">
                 {JSON.stringify(toolConfirmationModal.preview, null, 2)}
               </pre>

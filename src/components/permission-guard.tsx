@@ -54,13 +54,13 @@ export function PermissionGuard({
 
         {/* 说明文本 */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-[11.5px] font-semibold text-zinc-600">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600">
             <span>需访问权限</span>
           </div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-900">
+          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-950">
             暂无「{moduleTitle}」权限
           </h2>
-          <p className="text-[13px] leading-relaxed text-zinc-500">
+          <p className="text-[13px] leading-relaxed text-zinc-600">
             {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系管理员开通对应权限。`}
           </p>
         </div>
@@ -71,7 +71,7 @@ export function PermissionGuard({
             type="button"
             onClick={handlePermissionApply}
             disabled={isApplying}
-            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-semibold text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-95 transition-all disabled:opacity-70"
+            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-95 transition-all disabled:opacity-70"
           >
             <Send className="mr-1.5 size-4 stroke-[1.8]" />
             {isApplying ? "正在发送…" : "申请查看权限"}

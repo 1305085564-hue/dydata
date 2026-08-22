@@ -147,14 +147,14 @@ export function SubmissionSlotsSection({
 
       {/* 顶部标题与快速操作栏 */}
       <div className="flex items-center justify-between pb-1 mb-1.5 shrink-0">
-        <span className="text-[13px] font-semibold text-zinc-700 select-none">
+        <span className="text-[13px] font-medium text-zinc-900 select-none">
           截图佐证对照
         </span>
 
         <button
           type="button"
           onClick={() => globalFileInputRef.current?.click()}
-          className="inline-flex items-center gap-1 text-[11.5px] font-medium text-[#D97757] hover:text-[#C96442] hover:underline transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C96442] hover:underline transition-colors cursor-pointer"
         >
           <Plus className="size-3 stroke-[2.5]" />
           <span>选多张</span>
@@ -248,10 +248,10 @@ export function SubmissionSlotsSection({
                       <UploadCloud className="size-4.5 stroke-[1.75]" />
                     </div>
                     <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="text-[12.5px] font-semibold text-zinc-700 leading-tight">
+                      <div className="text-[13px] font-medium text-zinc-800 leading-tight">
                         {item.title}
                       </div>
-                      <div className="text-[11px] text-zinc-400 truncate">
+                      <div className="text-[12px] text-zinc-500 truncate">
                         {item.description}
                       </div>
                     </div>
@@ -263,20 +263,20 @@ export function SubmissionSlotsSection({
                   {/* 顶栏：标题 + 状态徽标 + 操作按钮 */}
                   <div className="flex items-center justify-between gap-1.5 pb-0.5">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11.5px] font-semibold text-zinc-800 truncate">
+                      <span className="text-[12px] font-medium text-zinc-800 truncate">
                         {item.shortTitle}
                       </span>
                       {isProcessing ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.5 text-[10.5px] font-medium text-[#D97757]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.5 text-[12px] font-medium text-[#D97757]">
                           <Loader2 className="size-2.5 animate-spin stroke-[2]" />
                           读取中
                         </span>
                       ) : isSuccess ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.5 text-[10.5px] font-medium text-[#6FAA7D]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.5 text-[12px] font-medium text-[#6FAA7D]">
                           已识别
                         </span>
                       ) : isWarning ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-1.5 py-0.5 text-[10.5px] font-medium text-[#D99E55]">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-1.5 py-0.5 text-[12px] font-medium text-[#D99E55]">
                           待核对
                         </span>
                       ) : (

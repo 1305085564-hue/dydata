@@ -44,7 +44,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
 
   if (!top || !top.play_count) {
     return (
-      <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-zinc-200 bg-white px-5 py-4">
+      <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
         <p className="text-[12px] tracking-[0.12em] text-zinc-500">Hit Spotlight</p>
         <p className="mt-2 text-[13px] text-zinc-500">当前筛选范围暂无可聚焦的视频样本</p>
       </div>
@@ -57,7 +57,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
   const completion = parsePercent(top.completion_rate);
 
   return (
-    <div className="rounded-2xl border border-zinc-200 border-l-[2px] border-l-[#D97757] bg-white px-5 py-4">
+    <div className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export function HitHeroCard({ reports, scopeLabel }: HitHeroCardProps) {
               Hit Spotlight
             </p>
             {scopeLabel ? (
-              <span className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[12px] font-normal text-zinc-500">
+              <span className="rounded-md bg-zinc-100/70 px-2 py-0.5 text-[12px] font-normal text-zinc-600">
                 {scopeLabel}
               </span>
             ) : null}

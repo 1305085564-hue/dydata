@@ -126,7 +126,7 @@ export function MemberPermissionEditor({
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {categories.map((category) => {
             const categoryLabel = PERMISSION_CATEGORY_LABELS[category];
             const keys = PERMISSION_CATEGORIES[category];
@@ -136,7 +136,7 @@ export function MemberPermissionEditor({
             return (
               <div
                 key={category}
-                className="space-y-1.5"
+                className="space-y-2"
               >
                 {/* 类别标头 */}
                 <div className="flex items-center justify-between">

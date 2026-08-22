@@ -9,8 +9,8 @@ export function LockedChartPlaceholder({ title, description }: LockedChartPlaceh
   return (
     <section className="flex h-full flex-col rounded-xl border border-zinc-200 bg-white p-4 sm:p-5">
       <div className="border-b border-zinc-200 pb-3">
-        <h3 className="text-[18px] font-semibold tracking-tight text-zinc-900">{title}</h3>
-        <p className="mt-1 text-[12px] text-zinc-500">数据不足时占位，不画假曲线。</p>
+        <h3 className="text-[16px] font-medium tracking-tight text-zinc-900">{title}</h3>
+        <p className="mt-1 text-[13px] text-zinc-600">数据不足时占位，不画假曲线。</p>
       </div>
       <div className="relative mt-4 flex min-h-[280px] flex-1 items-center justify-center sm:min-h-[320px]">
         <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -29,7 +29,7 @@ export function LockedChartPlaceholder({ title, description }: LockedChartPlaceh
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-400">
             <Lock className="h-4 w-4" />
           </span>
-          <p className="max-w-[220px] text-[13px] leading-[1.6] text-zinc-500">{description}</p>
+          <p className="max-w-[220px] text-[13px] leading-[1.6] text-zinc-600">{description}</p>
         </div>
       </div>
     </section>

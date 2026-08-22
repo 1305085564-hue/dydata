@@ -375,11 +375,11 @@ export function NavBarClient({
                 </div>
                 <div className="hidden sm:block">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-semibold tracking-tight text-zinc-900 leading-none">
+                    <span className="text-[13px] font-medium tracking-tight text-zinc-950 leading-none">
                       DYData
                     </span>
                   </div>
-                  <div className="mt-1 text-[11px] font-normal tracking-wider text-zinc-400 uppercase leading-none transition-colors duration-200 group-hover:text-zinc-500">
+                  <div className="mt-1 text-[12px] font-normal tracking-wider text-zinc-400 uppercase leading-none transition-colors duration-200 group-hover:text-zinc-500">
                     短视频数据工作台
                   </div>
                 </div>
@@ -411,7 +411,7 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive
-                            ? "text-[#43718E] font-semibold bg-zinc-100/70"
+                            ? "text-[#43718E] font-medium bg-zinc-100/70"
                             : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
                         )}
                       >
@@ -455,7 +455,7 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#43718E] font-semibold bg-zinc-100/70"
+                            ? "text-[#43718E] font-medium bg-zinc-100/70"
                             : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
                         )}
                       >
@@ -507,7 +507,7 @@ export function NavBarClient({
                                     className={cn(
                                       "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-100 group/item",
                                       active
-                                        ? "bg-zinc-100 text-[#43718E] font-semibold"
+                                        ? "bg-zinc-100 text-[#43718E] font-medium"
                                         : "text-zinc-600 font-medium hover:bg-zinc-100 hover:text-zinc-950",
                                     )}
                                   >
@@ -552,7 +552,7 @@ export function NavBarClient({
                       ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
                       : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 active:scale-95 border border-transparent",
                     commandHubOpen &&
-                      "bg-zinc-100 text-zinc-950 font-semibold border-zinc-200/80 shadow-sm",
+                      "bg-zinc-100 text-zinc-950 font-medium border-zinc-200/80 shadow-sm",
                   )}
                   title="待办与通知中心"
                   aria-label="待办与通知中心"
@@ -568,7 +568,7 @@ export function NavBarClient({
 
                   {/* Functional Count Label */}
                   {bellBadgeCount > 0 && (
-                    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-semibold text-white tabular-nums shadow-sm">
+                    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1.5 text-[12px] font-medium text-white tabular-nums shadow-sm">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}
@@ -671,7 +671,7 @@ export function NavBarClient({
                     className={cn(
                       "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",
                       active
-                        ? "bg-[#43718E]/10 text-[#43718E] font-semibold border-l-2 border-[#43718E]"
+                        ? "bg-[#43718E]/10 text-[#43718E] font-medium border-l-2 border-[#43718E]"
                         : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
                     )}
                   >
@@ -703,7 +703,7 @@ export function NavBarClient({
                   <div className="px-2 py-1 flex items-center justify-between">
                     <span
                       className={cn(
-                        "text-[11px] font-semibold uppercase tracking-wider",
+                        "text-[12px] font-medium uppercase tracking-wider",
                         isGroupActive ? "text-[#43718E]" : "text-zinc-400",
                       )}
                     >
@@ -725,7 +725,7 @@ export function NavBarClient({
                           className={cn(
                             "flex h-9 items-center justify-between rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200",
                             active
-                              ? "bg-white text-[#43718E] font-semibold shadow-sm border border-zinc-200"
+                              ? "bg-white text-[#43718E] font-medium shadow-sm border border-zinc-200"
                               : "text-zinc-700 hover:bg-white/60 hover:text-zinc-900",
                           )}
                         >

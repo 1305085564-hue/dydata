@@ -426,8 +426,8 @@ export function ModelDialog({
                   <button
                     type="button"
                     className={cn(
-                      "px-2.5 py-1 text-[11px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757] font-semibold" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                      "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
+                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757] font-medium" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                     )}
                     onClick={() => setPresetTab("used")}
                   >
@@ -436,8 +436,8 @@ export function ModelDialog({
                   <button
                     type="button"
                     className={cn(
-                      "px-2.5 py-1 text-[11px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757] font-semibold" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                      "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
+                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757] font-medium" : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
                     )}
                     onClick={() => setPresetTab("latest")}
                   >
@@ -456,10 +456,10 @@ export function ModelDialog({
                         <button
                           key={item.id}
                           type="button"
-                          className="text-[11px] px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all font-medium shadow-2xs"
+                          className="text-[12px] px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all font-medium shadow-2xs"
                           onClick={() => setFormData({ ...formData, model_id: item.id, display_name: item.name })}
                         >
-                          {item.name} <span className="font-mono text-[10px] text-zinc-400">({item.id})</span>
+                          {item.name} <span className="font-mono text-[12px] text-zinc-400">({item.id})</span>
                         </button>
                       ))}
                     </div>
@@ -467,16 +467,16 @@ export function ModelDialog({
                 ) : (
                   LATEST_2026_MODEL_GROUPS.map((group) => (
                     <div key={group.groupName} className="space-y-1">
-                      <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">{group.groupName}</div>
+                      <div className="text-[12px] font-medium text-zinc-400 uppercase tracking-wider">{group.groupName}</div>
                       <div className="flex flex-wrap gap-1.5">
                         {group.items.map((item) => (
                           <button
                             key={item.id}
                             type="button"
-                            className="text-[11px] px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all font-medium shadow-2xs"
+                            className="text-[12px] px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:border-[#D97757] hover:text-[#D97757] active:scale-95 transition-all font-medium shadow-2xs"
                             onClick={() => setFormData({ ...formData, model_id: item.id, display_name: item.name })}
                           >
-                            {item.name} <span className="font-mono text-[10px] text-zinc-400">({item.id})</span>
+                            {item.name} <span className="font-mono text-[12px] text-zinc-400">({item.id})</span>
                           </button>
                         ))}
                       </div>

@@ -58,7 +58,7 @@ export function HealthBar({ summary }: HealthBarProps) {
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-zinc-100">
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 text-[#D97706]" />
-              <DialogTitle className="text-[15px] font-semibold text-zinc-900">
+              <DialogTitle className="text-[16px] font-medium text-zinc-900">
                 归属健康度明细
               </DialogTitle>
             </div>
@@ -74,11 +74,11 @@ export function HealthBar({ summary }: HealthBarProps) {
           <div className="space-y-3 pt-2 text-[13px] text-zinc-700 leading-relaxed">
             <p>
               本月共有{" "}
-              <strong className="font-semibold text-zinc-900">
+              <strong className="font-medium text-zinc-900">
                 {summary.total}
               </strong>{" "}
               条作品。 其中{" "}
-              <strong className="font-semibold text-[#B45309]">
+              <strong className="font-medium text-[#B45309]">
                 {summary.unattributed}
               </strong>{" "}
               条作品缺乏明确的文案、剪辑或运营归属。

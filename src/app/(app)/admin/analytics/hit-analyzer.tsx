@@ -778,7 +778,7 @@ export function HitAnalyzer({
                   className={cn(
                     "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 cursor-pointer",
                     activeFilter === filter.id
-                      ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                      ? "bg-[#D97757]/10 text-[#D97757] font-medium"
                       : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                   )}
                 >
@@ -796,7 +796,7 @@ export function HitAnalyzer({
                     className={cn(
                       "rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors duration-100 cursor-pointer",
                       activeTimePreset === preset.id
-                        ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                        ? "bg-[#D97757]/10 text-[#D97757] font-medium"
                         : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100",
                     )}
                   >
@@ -934,31 +934,31 @@ export function HitAnalyzer({
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5">
             <p className="text-[12px] font-normal text-zinc-500">筛选样本</p>
-            <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-900">{stats.count}</p>
+            <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-900">{stats.count}</p>
             <p className="mt-1 text-[12px] text-zinc-500">其中 {stats.validScatterCount} 条可进入散点图分析</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5">
             <p className="text-[12px] font-normal text-zinc-500">平均播放量</p>
-            <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">{formatPlayCount(stats.avgPlay)}</p>
+            <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">{formatPlayCount(stats.avgPlay)}</p>
             <p className="mt-1 text-[12px] text-zinc-500">爆款率 {formatPercent(stats.hitRate)}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5">
             <p className="text-[12px] font-normal text-zinc-500">平均完播率</p>
-            <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">
+            <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">
               {stats.avgCr !== null ? formatPercent(stats.avgCr) : "--"}
             </p>
             <p className="mt-1 text-[12px] text-zinc-500">高完播样本占比 {formatPercent(stats.highCompletionRate)}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5">
             <p className="text-[12px] font-normal text-zinc-500">平均互动率</p>
-            <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">
+            <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">
               {stats.engagementRate !== null ? formatPercent(stats.engagementRate, 2) : "--"}
             </p>
             <p className="mt-1 text-[12px] text-zinc-500">均值点赞 {stats.avgLikes.toLocaleString("zh-CN")}</p>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-3 py-2.5">
             <p className="text-[12px] font-normal text-zinc-500">平均播放时长</p>
-            <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">
+            <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">
               {stats.avgDur !== null ? `${stats.avgDur.toFixed(1)}秒` : "--"}
             </p>
             <p className="mt-0.5 truncate text-[12px] text-zinc-500">
@@ -972,7 +972,7 @@ export function HitAnalyzer({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
             <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">图表分析</p>
-            <h3 className="text-[18px] font-semibold text-zinc-900">爆款特征散点图</h3>
+            <h3 className="text-[16px] font-medium text-zinc-900">爆款特征散点图</h3>
             <p className="text-[12px] text-zinc-500">
               先完成筛选和结果概览，再通过右上角悬浮散点图观察播放与完播的关系。
             </p>
@@ -999,7 +999,7 @@ export function HitAnalyzer({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">重点样本</p>
-                <h4 className="mt-1 text-[18px] font-semibold text-zinc-900">{leadInsight?.title || "暂无重点样本"}</h4>
+                <h4 className="mt-1 text-[16px] font-medium text-zinc-900">{leadInsight?.title || "暂无重点样本"}</h4>
               </div>
               {leadInsight ? (
                 <span
@@ -1018,19 +1018,19 @@ export function HitAnalyzer({
                 <div className="grid gap-3 sm:grid-cols-4">
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[12px] font-normal text-zinc-500">播放量</p>
-                    <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">{formatPlayCount(leadInsight.play)}</p>
+                    <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">{formatPlayCount(leadInsight.play)}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
                     <p className="text-[12px] font-normal text-zinc-500">完播率</p>
-                    <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">{formatPercent(leadInsight.cr)}</p>
+                    <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">{formatPercent(leadInsight.cr)}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
-                    <p className="text-[12px] font-normal text-zinc-500">总互动</p>
-                    <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">{leadInsight.engagement.toLocaleString("zh-CN")}</p>
+                    <p className="text-[12px] font-normal text-zinc-500">互动量</p>
+                    <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">{leadInsight.engagement.toLocaleString("zh-CN")}</p>
                   </div>
                   <div className="rounded-2xl bg-zinc-50 p-3">
-                    <p className="text-[12px] font-normal text-zinc-500">发布时间</p>
-                    <p className="mt-1 text-[18px] font-semibold tracking-tight tabular-nums text-zinc-700">{formatDate(leadInsight.published_at) ?? leadInsight.report_date}</p>
+                    <p className="text-[12px] font-normal text-zinc-500">发布日期</p>
+                    <p className="mt-1 text-[18px] font-medium tracking-tight tabular-nums text-zinc-700">{formatDate(leadInsight.published_at) ?? leadInsight.report_date}</p>
                   </div>
                 </div>
 
@@ -1109,7 +1109,7 @@ export function HitAnalyzer({
                         <p className="text-[13px] font-medium">{card.label}</p>
                         <p className="mt-1 text-[12px] leading-[1.7] opacity-80">{card.description}</p>
                       </div>
-                      <span className="text-[18px] font-semibold tabular-nums">{card.count}</span>
+                      <span className="text-[18px] font-medium tabular-nums">{card.count}</span>
                     </div>
                   </div>
                 ))}
@@ -1125,7 +1125,7 @@ export function HitAnalyzer({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[12px] font-normal tracking-[0.12em] text-zinc-500">文案分析</p>
-                <h4 className="mt-1 text-[18px] font-semibold text-zinc-900">筛选文案样本</h4>
+                <h4 className="mt-1 text-[16px] font-medium text-zinc-900">筛选文案样本</h4>
               </div>
               <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-[12px] font-normal text-zinc-500">
                 {stats.contents.length} 条

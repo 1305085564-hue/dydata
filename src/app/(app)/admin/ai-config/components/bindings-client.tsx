@@ -492,7 +492,7 @@ export default function BindingsClient() {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-zinc-900 font-semibold text-[14px]">
+          <div className="flex items-center gap-2 text-zinc-900 font-medium text-[14px]">
             <Sparkles className="size-4 text-zinc-500" />
             <span>业务功能</span>
           </div>
@@ -623,7 +623,7 @@ export default function BindingsClient() {
           </Table>
         </div>
 
-        <div className="flex items-start gap-2.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-200 p-3 rounded-xl">
+        <div className="flex items-start gap-2.5 text-[12px] text-zinc-600 bg-zinc-100/70 p-3 rounded-xl">
           <Info className="size-4 text-zinc-400 shrink-0 mt-0.5" />
           <div>
             <span className="font-medium text-zinc-700">历史配置说明：</span>
@@ -636,7 +636,7 @@ export default function BindingsClient() {
       {/* 第二板块：文案改写场景模型路由 (依靠 24px 留白美学切割，无需物理 border-t) */}
       <div className="space-y-3 pt-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-zinc-900 font-semibold text-[14px]">
+          <div className="flex items-center gap-2 text-zinc-900 font-medium text-[14px]">
             <GitFork className="size-4 text-zinc-500" />
             <span>文案改写模型分配规则</span>
           </div>
@@ -687,7 +687,7 @@ export default function BindingsClient() {
                         <Badge
                           variant="outline"
                           className={cn(
-                            "font-mono text-[10px] h-4 px-1 py-0 bg-white shrink-0 border-zinc-200",
+                            "font-mono text-[12px] h-4 px-1 py-0 bg-white shrink-0 border-zinc-200",
                             isViewActive && "text-zinc-900",
                           )}
                         >
@@ -742,17 +742,17 @@ export default function BindingsClient() {
                     <div className="flex justify-between items-center px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[14px] text-zinc-900">
+                          <h3 className="font-medium text-[14px] text-zinc-900">
                             {view.label}
                           </h3>
                           <Badge
                             variant="outline"
-                            className="font-mono text-[11px] bg-zinc-50 border-zinc-200"
+                            className="font-mono text-[12px] bg-zinc-50 border-zinc-200"
                           >
                             {view.key}
                           </Badge>
                           {view.is_default && (
-                            <Badge className="h-4.5 text-[10px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-medium">
+                            <Badge className="h-4.5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] border-0 font-medium">
                               默认规则
                             </Badge>
                           )}

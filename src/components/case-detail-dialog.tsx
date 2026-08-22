@@ -372,10 +372,10 @@ export function CaseDetailDialog({
         <DialogHeader className="sticky top-0 z-10 border-b border-zinc-100 bg-white/95 px-6 pt-6 pb-4">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-[18px] font-semibold leading-[1.5] text-zinc-900">
+              <DialogTitle className="text-[16px] font-medium leading-[1.5] text-zinc-900">
                 话术详情
               </DialogTitle>
-              <p className="mt-1 text-[12px] text-zinc-500">
+              <p className="mt-1 text-[13px] text-zinc-600">
                 {showReviewPanel ? "查看详情 · 底部审核" : "复制即用"}
               </p>
             </div>
@@ -579,7 +579,7 @@ export function CaseDetailDialog({
                           <button
                             type="button"
                             onClick={handleAddHighlight}
-                            className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-[11px] font-semibold text-zinc-600 transition-all hover:bg-zinc-100 active:translate-y-0"
+                            className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-[12px] font-medium text-zinc-600 transition-all hover:bg-zinc-100 active:translate-y-0"
                           >
                             <AlertTriangle className="size-3 text-zinc-500" />
                             标记选中文案为违规段落:
@@ -590,7 +590,7 @@ export function CaseDetailDialog({
                           <button
                             type="button"
                             onClick={() => setSelectedText("")}
-                            className="text-zinc-400 hover:text-zinc-600 text-[11px]"
+                            className="text-zinc-400 hover:text-zinc-600 text-[12px]"
                           >
                             取消
                           </button>
@@ -599,13 +599,13 @@ export function CaseDetailDialog({
 
                       {highlightedSections.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 items-center pt-2 border-t border-zinc-100/50">
-                          <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                          <span className="text-[12px] font-medium text-zinc-500 uppercase tracking-wider">
                             已标记违规段落 ({highlightedSections.length})：
                           </span>
                           {highlightedSections.map((h, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 border border-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600"
+                              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 border border-zinc-100 px-2 py-0.5 text-[12px] font-medium text-zinc-600"
                             >
                               <span className="max-w-[150px] truncate">
                                 {h}
@@ -864,7 +864,7 @@ function StatBlock({
       </p>
       <p
         className={cn(
-          "mt-0.5 text-[18px] font-semibold tabular-nums",
+          "mt-0.5 text-[18px] font-medium tabular-nums",
           accent ? "text-[#D97757]" : "text-zinc-900",
         )}
       >

@@ -355,16 +355,16 @@ export default function RewriteClient() {
                 <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-[14px] text-zinc-900">{view.label}</h3>
+                      <h3 className="font-medium text-[14px] text-zinc-900">{view.label}</h3>
                       <Badge variant="outline" className="font-mono text-[12px] bg-zinc-50">{view.key}</Badge>
-                      {view.is_default && <Badge className="h-5 text-[11px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10 border-0 font-medium">默认规则</Badge>}
+                      {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10 border-0 font-medium">默认规则</Badge>}
                     </div>
                     {view.description && (
                       <div className="text-[12px] text-zinc-500 mt-1">{view.description}</div>
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-md">
+                    <div className="flex items-center gap-1.5 text-[12px] text-zinc-600 bg-zinc-100/70 px-2 py-0.5 rounded-md">
                       <span>{view.is_enabled ? "已启用" : "已禁用"}</span>
                       <Switch
                         aria-label={`启用视图 ${view.label}`}

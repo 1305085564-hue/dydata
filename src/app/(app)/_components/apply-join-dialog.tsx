@@ -63,10 +63,10 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
       {trigger ? <DialogTrigger render={<span>{trigger}</span>} /> : null}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-[18px] font-semibold tracking-tight text-zinc-900">
+          <DialogTitle className="text-[16px] font-medium tracking-tight text-zinc-900">
             申请加入团队
           </DialogTitle>
-          <DialogDescription className="text-[13px] text-zinc-500">
+          <DialogDescription className="text-[13px] text-zinc-600">
             提交后由管理员审核，通过后你将正式归属该团队
           </DialogDescription>
         </DialogHeader>
