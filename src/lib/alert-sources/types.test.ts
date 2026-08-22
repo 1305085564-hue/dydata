@@ -10,7 +10,7 @@ test("告警聚合合同允许空数组、0 统计和 null 团队", () => {
     groupedBySeverity: { critical: [], warning: [], info: [] },
     summary: {
       total: 0, critical: 0, warning: 0, info: 0,
-      bySource: { submission: 0, playback: 0, violation: 0, conversion: 0, upload: 0, task: 0 },
+      bySource: { submission: 0, playback: 0, conversion: 0, upload: 0, task: 0 },
     },
   };
   assert.equal(scope.teamId, null);

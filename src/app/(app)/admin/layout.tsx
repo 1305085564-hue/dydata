@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 };
 
 const MODULE_TITLES: Record<string, string> = {
-  "/admin/analytics": "经营分析",
   "/admin/modules": "成员管理",
   "/admin/settings": "系统维护",
   "/admin/ai-config": "AI 配置",

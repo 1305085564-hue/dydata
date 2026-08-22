@@ -7,7 +7,6 @@ import {
   Sparkles,
   Target,
   Award,
-  BookOpen,
   ArrowRight,
   Users,
 } from "lucide-react";
@@ -270,13 +269,6 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/violations"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.98]"
-          >
-            <BookOpen className="size-3.5 stroke-[1.5] text-zinc-500" />
-            <span>避坑案例</span>
-          </Link>
           <div
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",

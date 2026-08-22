@@ -12,10 +12,6 @@ export const ADMIN_FIRST_SCREEN_BUDGETS = {
     payloadLimit: 30,
     warnTotalMs: 2500,
   },
-  analytics: {
-    maxRangeDays: 90,
-    warnTotalMs: 2500,
-  },
   sidebarBadges: {
     warnTotalMs: 1200,
   },

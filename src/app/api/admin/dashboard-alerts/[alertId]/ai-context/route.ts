@@ -16,8 +16,6 @@ function formatSource(source: Alert["source"]) {
       return "填报系统";
     case "playback":
       return "播放数据";
-    case "violation":
-      return "违规复核";
     case "conversion":
       return "导粉转化";
     case "upload":

@@ -47,7 +47,7 @@ export async function detectConversionAlerts({ supabase, scope, now = new Date()
       detail: `近 7 日导粉 ${currentWeekTotal} ，上周同期 ${previousWeekTotal}`,
       affectedEntities: [],
       suggestedActions: [
-        { label: "打开经营分析", type: "navigate", href: "/admin/analytics" },
+        { label: "查看协作产量", type: "navigate", href: "/admin/collaboration" },
       ],
       createdAt: now.toISOString(),
     });
@@ -84,7 +84,7 @@ export async function detectConversionAlerts({ supabase, scope, now = new Date()
       ],
       suggestedActions: [
         { label: "查看成员", type: "execute_tool", toolName: "getUserInfo", toolArgs: { userId } },
-        { label: "打开经营分析", type: "navigate", href: "/admin/analytics" },
+        { label: "查看协作产量", type: "navigate", href: "/admin/collaboration" },
       ],
       createdAt: now.toISOString(),
     });

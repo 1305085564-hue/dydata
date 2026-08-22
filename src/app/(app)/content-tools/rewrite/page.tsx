@@ -24,7 +24,7 @@ export default async function RewritePage() {
   const permissionInfo = await getUserPermissions();
 
   if (!permissionInfo || !canUseAiCopywriting(permissionInfo.role, permissionInfo.permissions)) {
-    redirect("/content-tools");
+    redirect("/dashboard");
   }
 
   return (

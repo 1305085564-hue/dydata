@@ -12,9 +12,8 @@ import type {
   GroupedBySeverity,
 } from "./types";
 import { detectUploadAlerts } from "./upload";
-import { detectViolationAlerts } from "./violation";
 
-const SOURCE_ORDER: AlertSource[] = ["submission", "playback", "violation", "conversion", "upload", "task"];
+const SOURCE_ORDER: AlertSource[] = ["submission", "playback", "conversion", "upload", "task"];
 const SEVERITY_ORDER: AlertSeverity[] = ["critical", "warning", "info"];
 
 function severityRank(severity: AlertSeverity) {
@@ -36,7 +35,6 @@ function buildSummary(alerts: Alert[]): AlertSummary {
   const bySource = {
     submission: 0,
     playback: 0,
-    violation: 0,
     conversion: 0,
     upload: 0,
     task: 0,
@@ -78,7 +76,6 @@ export async function aggregateDashboardAlerts(context: AlertDetectorContext): P
   const detectorResults = await Promise.all([
     detectSubmissionAlerts(context),
     detectPlaybackAlerts(context),
-    detectViolationAlerts(context),
     detectConversionAlerts(context),
     detectUploadAlerts(context),
     detectTaskAlerts(context),

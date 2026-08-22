@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { UserRole } from "@/types";
 
-export type AlertSource = "submission" | "playback" | "violation" | "conversion" | "upload" | "task";
+export type AlertSource = "submission" | "playback" | "conversion" | "upload" | "task";
 export type AlertSeverity = "critical" | "warning" | "info";
 
 export interface AffectedEntity {

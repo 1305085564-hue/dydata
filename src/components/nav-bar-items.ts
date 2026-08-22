@@ -4,12 +4,10 @@ import {
   Sparkles,
   FileEdit,
   Library,
-  LineChart,
   CalendarDays,
   Lightbulb,
   UsersRound,
   Settings,
-  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Permissions } from "@/types";
@@ -86,12 +84,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       badgeKey: "videos",
       match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
     },
-    {
-      href: "/violations",
-      label: "避坑案例",
-      icon: BookOpen,
-      match: (pathname) => pathname === "/violations" || pathname.startsWith("/violations/"),
-    },
   ];
 
   groups.push({
@@ -108,12 +100,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       label: "数据分析",
       icon: Compass,
       match: (pathname) => pathname === "/growth" || pathname.startsWith("/growth/"),
-    },
-    {
-      href: "/admin/analytics",
-      label: "经营分析",
-      icon: LineChart,
-      match: (pathname) => pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/"),
     },
     {
       href: "/admin/collaboration",

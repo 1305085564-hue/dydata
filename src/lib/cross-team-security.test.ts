@@ -311,7 +311,7 @@ test("buildPermissionRequestApplyResponse: 团队 A 组员申请权限时只通�
 
   const req = new NextRequest("http://localhost/api/permission-requests/apply", {
     method: "POST",
-    body: JSON.stringify({ moduleTitle: "数据分析", currentPath: "/admin/analytics" }),
+    body: JSON.stringify({ moduleTitle: "数据分析", currentPath: "/admin/collaboration" }),
   });
 
   const response = await buildPermissionRequestApplyResponse(req, {

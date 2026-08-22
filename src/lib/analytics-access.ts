@@ -62,9 +62,6 @@ export function canAccessAdminPath(pathname: string, role: UserRole, permissions
   if (pathname === "/admin/modules" || pathname.startsWith("/admin/modules/")) {
     return hasPermission(role, permissions, "manage_members");
   }
-  if (pathname === "/admin/analytics" || pathname.startsWith("/admin/analytics/")) {
-    return hasPermission(role, permissions, "view_analytics");
-  }
   if (pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/")) {
     return hasPermission(role, permissions, "view_analytics");
   }

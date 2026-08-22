@@ -90,7 +90,7 @@ export async function detectPlaybackAlerts({ supabase, scope, now = new Date() }
       ],
       suggestedActions: [
         { label: "查看成员", type: "execute_tool", toolName: "getUserInfo", toolArgs: { userId: candidate.userId } },
-        { label: "打开分析页", type: "navigate", href: "/admin/analytics" },
+        { label: "查看协作产量", type: "navigate", href: "/admin/collaboration" },
       ],
       createdAt: now.toISOString(),
     });
@@ -111,7 +111,7 @@ export async function detectPlaybackAlerts({ supabase, scope, now = new Date() }
       detail: `近 3 天爆款率 ${recentRate}% ，前 7 天 ${previousRate}%`,
       affectedEntities: [],
       suggestedActions: [
-        { label: "打开分析页", type: "navigate", href: "/admin/analytics" },
+        { label: "查看协作产量", type: "navigate", href: "/admin/collaboration" },
       ],
       createdAt: now.toISOString(),
     });
@@ -147,7 +147,7 @@ export async function detectPlaybackAlerts({ supabase, scope, now = new Date() }
         },
       ],
       suggestedActions: [
-        { label: "打开分析页", type: "navigate", href: "/admin/analytics" },
+        { label: "查看协作产量", type: "navigate", href: "/admin/collaboration" },
       ],
       createdAt: now.toISOString(),
     });

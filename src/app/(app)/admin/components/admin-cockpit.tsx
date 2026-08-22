@@ -656,9 +656,8 @@ function AnomalyTimeline({
 function MetricLinks({ metrics }: { metrics: QueueMetricSummary }) {
   const items = [
     { label: "新增视频", value: String(metrics.newVideosToday), hint: "今日入库", href: "/admin/videos" },
-    { label: "提交率", value: `${metrics.weeklySubmissionRate}%`, hint: "本周累计", href: "/admin/analytics" },
+    { label: "提交率", value: `${metrics.weeklySubmissionRate}%`, hint: "本周累计", href: "/admin/fulfillment" },
     { label: "复盘完成", value: String(metrics.weeklyReviewedCount), hint: "本周", href: "/admin/content" },
-    { label: "案例沉淀", value: String(metrics.caseLibraryPendingCount), hint: "待整理", href: "/violations" },
   ];
   return (
     <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">

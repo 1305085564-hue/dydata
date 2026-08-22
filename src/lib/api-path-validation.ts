@@ -5,7 +5,6 @@ const UUID_PATH_RULES = [
   /^\/api\/admin\/content-feedback-cards\/([^/]+)$/,
   /^\/api\/admin\/dashboard-alerts\/([^/]+)\/(?:ai-context|execute)$/,
   /^\/api\/admin\/video-assets\/([^/]+)$/,
-  /^\/api\/case-library\/knowledge-cases\/([^/]+)\/(?:enrich-verify|request-supplement)$/,
   /^\/api\/content-tools\/rewrite\/conversations\/([^/]+)\/messages$/,
   /^\/api\/dashboard\/content-feedback-cards\/([^/]+)$/,
   /^\/api\/notifications\/([^/]+)\/(?:done|read)$/,
@@ -14,8 +13,6 @@ const UUID_PATH_RULES = [
   /^\/api\/rewrite\/paragraphs\/([^/]+)\/undo$/,
   /^\/api\/rewrite\/skills\/([^/]+)$/,
   /^\/api\/topics\/sub-topics\/((?!(?:suggest|from-recommendation)$)[^/]+)(?:\/(?:claim|claims|return|start-scripting|works))?$/,
-  /^\/api\/violations\/((?!(?:batch-review|dashboard-summary|import|review|screenshot|upload|visual-tags)$)[^/]+)(?:\/(?:review|test|visual-tags))?$/,
-  /^\/api\/violations\/visual-tags\/([^/]+)$/,
   /^\/api\/work-submissions\/([^/]+)$/,
 ] as const;
 

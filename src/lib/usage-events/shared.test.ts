@@ -8,7 +8,7 @@ import {
 } from "./shared";
 
 test("normalizeUsagePath trims slashes and folds detail UUID paths", () => {
-  assert.equal(normalizeUsagePath("violations/123e4567-e89b-12d3-a456-426614174000/"), "/violations/[id]");
+  assert.equal(normalizeUsagePath("growth/123e4567-e89b-12d3-a456-426614174000/"), "/growth/[id]");
   assert.equal(normalizeUsagePath("/admin/content/"), "/admin/content");
 });
 

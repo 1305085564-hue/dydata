@@ -75,10 +75,9 @@ test("设置弹窗具备 dialog、Escape、焦点循环和手机端纵向布局"
   assert.doesNotMatch(source, /hidden space-y-3 sm:block[\s\S]*action=\{signOut\}/);
 });
 
-test("月度矩阵和案例行不再嵌套互动控件", () => {
+test("月度矩阵不再嵌套互动控件", () => {
   const paths = [
     "src/app/(app)/admin/fulfillment/components/monthly-matrix.tsx",
-    "src/app/(app)/violations/components/case-row.tsx",
   ];
   for (const path of paths) {
     assert.doesNotMatch(readSource(path), /role="button"/, `${path} 仍使用含子按钮的伪按钮`);
@@ -90,9 +89,7 @@ test("月度矩阵和案例行不再嵌套互动控件", () => {
 });
 
 test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
-  const caseRow = readSource("src/app/(app)/violations/components/case-row.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
-  assert.match(caseRow, /opacity-100 sm:opacity-0[^"]*sm:group-focus-within:opacity-100/);
   assert.match(modules, /aria-label=\{`删除团队 \$\{team\.name\}`\}/);
   assert.match(modules, /title=\{`删除团队 \$\{team\.name\}`\}/);
   assert.match(modules, /onClick=\{\(\) => setDeleteTeamTarget\(team\)\}/);
@@ -136,7 +133,6 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
 
   const motionPaths = [
     "src/app/(app)/dashboard/video-submit-panel.tsx",
-    "src/app/(app)/violations/components/rank-board.tsx",
     "src/app/(app)/admin/fulfillment/components/stats-bar.tsx",
     "src/app/(app)/admin/content/content-diagnosis-workbench.tsx",
     "src/components/workspace-picker.tsx",

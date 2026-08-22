@@ -41,15 +41,15 @@ test("负责人保留真实 team_id，具备成员管理权限时可查看全部
 });
 
 test("成员不能访问任何管理后台页面", () => {
-  assert.equal(canAccessAdminPath("/admin/analytics", "member"), false);
-  assert.equal(canAccessAdminPath("/admin/analytics/details", "member"), false);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "member"), false);
+  assert.equal(canAccessAdminPath("/admin/collaboration/details", "member"), false);
   assert.equal(canAccessAdminPath("/admin", "member"), false);
   assert.equal(canAccessAdminPath("/admin/videos", "member"), false);
 });
 
 test("管理员入口按权限键放行", () => {
   assert.equal(canAccessAdminPath("/admin", "admin", { manage_members: true }), true);
-  assert.equal(canAccessAdminPath("/admin/analytics", "admin", { view_analytics: true }), true);
+  assert.equal(canAccessAdminPath("/admin/collaboration", "admin", { view_analytics: true }), true);
   assert.equal(canAccessAdminPath("/admin/content", "admin", { review_content: true }), true);
   assert.equal(canAccessAdminPath("/admin/fulfillment", "admin", { manage_fulfillment: true }), true);
   assert.equal(canAccessAdminPath("/admin/settings", "admin", { manage_system: true }), true);

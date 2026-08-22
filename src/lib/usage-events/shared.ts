@@ -1,8 +1,6 @@
 const USAGE_EVENT_TYPES = [
   "page_view",
   "submit_daily_report",
-  "submit_violation_case",
-  "review_violation_case",
   "rewrite_generate",
   "mark_fulfillment_status",
 ] as const;
@@ -10,7 +8,6 @@ const USAGE_EVENT_TYPES = [
 const TRACKED_PAGE_PREFIXES = [
   "/dashboard",
   "/growth",
-  "/violations",
   "/content-tools",
   "/admin",
 ] as const;

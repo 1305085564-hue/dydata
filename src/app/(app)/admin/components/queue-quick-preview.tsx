@@ -244,8 +244,8 @@ export function SubmissionPreviewDialog({
           {row.team_name ?? "未分组"} · 今天还没交日报
         </span>
       }
-      fullViewHref={`/admin/analytics?profile=${row.profile_id}`}
-      fullViewLabel="个人分析"
+      fullViewHref={`/admin/modules?profile=${row.profile_id}`}
+      fullViewLabel="查看成员"
       secondaryAction={{
         label: "催交历史",
         onClick: () => {

@@ -8,7 +8,6 @@ import { buildManualTagPayload, dedupeTagPayloads } from "./tag-payload";
 import { resolveSubmissionRoleUserIds, validateVideoSubmitPayload } from "./validation";
 import { buildSubmissionRecordId } from "./stability";
 import { resolveSubmissionVideoWriteMode } from "./submission-video-lifecycle";
-import { syncAbnormalVideoCase } from "./abnormal-case";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
 import { filterActiveMemberships, isMissingMembershipStatusError, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import {
@@ -556,32 +555,6 @@ export async function POST(request: NextRequest) {
       { const rbErr = await rollbackSafely(rollbackActions); if (rbErr) console.error("[video-submit] rollback failed", rbErr); }
       return NextResponse.json({ error: usageRecordResult.message }, { status: usageRecordResult.status });
     }
-  }
-
-  const abnormalCaseResult = await syncAbnormalVideoCase({
-    supabase,
-    input: {
-      videoId: persistedVideo.id,
-      submitterId: user.id,
-      accountId: normalized.account_id,
-      accountName: account.name ?? null,
-      teamId: profile?.team_id ?? null,
-      anomalyStatus: normalized.anomaly_status,
-      punishType: normalized.punish_type,
-      platformNotice: normalized.platform_notice,
-      appeal: normalized.appeal,
-      scriptText: normalized.content,
-      screenshotPaths: screenshotUrls,
-      videoUrl: normalized.video_url,
-      videoTitle: normalized.video_title,
-    },
-  });
-
-  if (abnormalCaseResult.status === "failed") {
-    console.error("[video-submit] abnormal case sync failed", {
-      videoId: persistedVideo.id,
-      error: abnormalCaseResult.error,
-    });
   }
 
   return NextResponse.json({
