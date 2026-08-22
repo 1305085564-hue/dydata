@@ -38,10 +38,31 @@ class FakeAuditTable {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeAuditClient(table: FakeAuditTable, opts: { insertErrorCode?: string; deleteError?: boolean } = {}): any {
-  function makeBuilder(state: any): any {
-    const builder: any = {
+interface AuditQueryResult {
+  data: Array<Record<string, unknown>> | null;
+  error: { code?: string; message?: string } | null;
+}
+
+interface AuditBuilder {
+  insert(payload: Record<string, unknown>): AuditBuilder;
+  update(payload: Record<string, unknown>): AuditBuilder;
+  delete(): AuditBuilder;
+  select(cols?: string): AuditBuilder;
+  eq(col: string, val: unknown): AuditBuilder;
+  in(col: string, values: unknown[]): AuditBuilder;
+  then(resolve: (value: AuditQueryResult) => void, reject?: (reason?: unknown) => void): void;
+}
+
+function makeAuditClient(table: FakeAuditTable, opts: { insertErrorCode?: string; deleteError?: boolean } = {}) {
+  interface AuditState {
+    op: "select" | "insert" | "update" | "delete";
+    payload: Record<string, unknown> | null;
+    updatePayload: Record<string, unknown> | null;
+    eqFilters: Record<string, unknown>;
+    inFilter: { col: string; values: unknown[] } | null;
+  }
+  function makeBuilder(state: AuditState): AuditBuilder {
+    const builder: AuditBuilder = {
       insert(payload: unknown) {
         state.op = "insert";
         state.payload = payload;
@@ -56,7 +77,7 @@ function makeAuditClient(table: FakeAuditTable, opts: { insertErrorCode?: string
         state.op = "delete";
         return builder;
       },
-      select(_cols?: string) {
+      select() {
         return builder;
       },
       eq(col: string, val: unknown) {
@@ -74,7 +95,7 @@ function makeAuditClient(table: FakeAuditTable, opts: { insertErrorCode?: string
     return builder;
   }
 
-  function exec(state: any) {
+  function exec(state: AuditState): AuditQueryResult {
     const matchesState = (row: AuditRow) => {
       for (const [col, val] of Object.entries(state.eqFilters)) {
         if ((row as Record<string, unknown>)[col] !== val) return false;
@@ -128,8 +149,7 @@ function makeAuditClient(table: FakeAuditTable, opts: { insertErrorCode?: string
   return {
     from(name: string) {
       assert.equal(name, "audit_logs");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return makeBuilder({ op: "select", eqFilters: {}, inFilter: null });
+      return makeBuilder({ op: "select", payload: null, updatePayload: null, eqFilters: {}, inFilter: null });
     },
   };
 }
