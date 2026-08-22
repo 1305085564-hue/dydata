@@ -8,6 +8,11 @@ import { emit } from "@/lib/notifications/server";
 import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { logApiError, logApiRequest, resolveRequestId } from "@/lib/api-logger";
+import {
+  claimSmartAlerts,
+  markSmartAlertClaimsSent,
+  releaseSmartAlertClaims,
+} from "@/lib/smart-alert-claim";
 
 type AlertLogRow = {
   id: string;
@@ -176,15 +181,61 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, pushed: 0, alerts: [] });
   }
 
-  const payload = buildFeishuAlertCard(freshAlerts);
+  // ── 发送前原子抢占（claim-then-send）──
+  // 数据库兜底见 supabase/migrations/20260823020000_audit_logs_smart_alert_dedupe.sql；
+  // migration 未执行时插入不会撞唯一索引，并发去重退化为下方 dedupeAlerts 的
+  // 查询守卫（止血级，无法严格防并发双发）。
   const requestId = resolveRequestId(request);
+  const claimOutcome = await claimSmartAlerts(supabase, freshAlerts);
+
+  if (claimOutcome.claimFailedKeys.length > 0) {
+    logApiError(
+      {
+        requestId,
+        route: "/api/smart-alert/notify",
+        method: request.method,
+        detail: { outcome: "claim_failed", keys: claimOutcome.claimFailedKeys },
+      },
+      new Error("部分告警发送锁抢占失败，本轮跳过这些告警"),
+    );
+  }
+
+  const claimedAlerts = claimOutcome.claims.map((claim) => claim.alert);
+
+  if (claimedAlerts.length === 0) {
+    logApiRequest({
+      requestId,
+      route: "/api/smart-alert/notify",
+      method: request.method,
+      status: 200,
+      outcome: "skipped_concurrent_claim",
+      detail: {
+        skippedConcurrent: claimOutcome.skippedConcurrentKeys.length,
+        claimFailed: claimOutcome.claimFailedKeys.length,
+      },
+    });
+    return NextResponse.json({
+      ok: true,
+      pushed: 0,
+      alerts: [],
+      skippedConcurrentKeys: claimOutcome.skippedConcurrentKeys,
+      claimFailedKeys: claimOutcome.claimFailedKeys,
+    });
+  }
+
+  const payload = buildFeishuAlertCard(claimedAlerts);
   const sendResult = await sendFeishuWebhook(payload, { webhookUrl });
 
   if (!sendResult.ok) {
-    // 持久化失败记录（action 与 smart_alert 区分，不会被去重解析当成已发告警）；
-    // 不写成功 audit 记录 → 下轮运行会按 dedupeKey 自然补发，不会重复打扰
+    // 先释放 claim 行（恢复重试资格），释放失败必须暴露（滞留会阻塞后续重发）
+    const released = await releaseSmartAlertClaims(
+      supabase,
+      claimOutcome.claims.map((claim) => claim.id),
+    );
+
+    // 持久化失败记录（action 与 smart_alert 区分，不会被去重解析当成已发告警）
     const { error: failAuditError } = await supabase.from("audit_logs").insert(
-      freshAlerts.map((alert) => ({
+      claimedAlerts.map((alert) => ({
         user_id: alert.userId,
         action: "smart_alert_failed",
         target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
@@ -203,7 +254,7 @@ export async function GET(request: NextRequest) {
           route: "/api/smart-alert/notify",
           method: request.method,
           status: 502,
-          detail: { outcome: "failed_audit_write_error", alerts: freshAlerts.length },
+          detail: { outcome: "failed_audit_write_error", alerts: claimedAlerts.length },
         },
         new Error("smart_alert_failed 审计记录写入失败"),
       );
@@ -214,16 +265,44 @@ export async function GET(request: NextRequest) {
         route: "/api/smart-alert/notify",
         method: request.method,
         status: 502,
-        detail: { reason: sendResult.reason, httpStatus: sendResult.status ?? null },
+        detail: {
+          reason: sendResult.reason,
+          httpStatus: sendResult.status ?? null,
+          claimReleaseFailed: !released.ok,
+        },
       },
       new Error("飞书告警 webhook 发送失败"),
     );
     return NextResponse.json(
       {
         error: `飞书告警发送失败：${sendResult.reason}`,
-        warning: failAuditError ? "发送失败审计记录未落库，失败可能无法追溯" : undefined,
+        warning: [
+          failAuditError ? "发送失败审计记录未落库，失败可能无法追溯" : null,
+          !released.ok
+            ? `claim 释放失败：${released.stuckKeysHintCount} 条滞留记录将阻塞对应告警重发，需人工清理 audit_logs 中 action='smart_alert_claim' 的行`
+            : null,
+        ].filter(Boolean).join("；") || undefined,
       },
       { status: 502 },
+    );
+  }
+
+  // 成功流转是去重依据；流转失败意味着滞留 claim 会阻塞重发，
+  // 消息已实际发出，不能伪装成完全成功，必须显式暴露
+  const sentTransition = await markSmartAlertClaimsSent(
+    supabase,
+    claimOutcome.claims.map((claim) => claim.id),
+  );
+  if (!sentTransition.ok) {
+    logApiError(
+      {
+        requestId,
+        route: "/api/smart-alert/notify",
+        method: request.method,
+        status: 200,
+        detail: { outcome: "sent_transition_error", pushed: claimedAlerts.length },
+      },
+      new Error("smart_alert 审计流转失败，滞留 claim 将阻塞该告警当日重发"),
     );
   }
 
@@ -233,34 +312,24 @@ export async function GET(request: NextRequest) {
     method: request.method,
     status: 200,
     outcome: "sent",
-    detail: { pushed: freshAlerts.length },
+    detail: {
+      pushed: claimedAlerts.length,
+      skippedConcurrent: claimOutcome.skippedConcurrentKeys.length,
+      transitionErrors: sentTransition.ok ? 0 : claimedAlerts.length - sentTransition.transitionedIds.length,
+    },
   });
 
-  // 成功审计记录是 dedupeKey 去重的依据；落库失败意味着重复触发可能重复推送，
-  // 消息已实际发出，不能伪装成完全成功，必须在响应中显式暴露
-  const { error: successAuditError } = await supabase.from("audit_logs").insert(
-    freshAlerts.map((alert) => ({
+  await supabase.from("audit_logs").insert(
+    claimedAlerts.map((alert) => ({
       user_id: alert.userId,
       action: "smart_alert",
       target: alert.accountName ?? alert.userName ?? alert.tag ?? "smart-alert",
       detail: JSON.stringify(alert),
     }))
   );
-  if (successAuditError) {
-    logApiError(
-      {
-        requestId,
-        route: "/api/smart-alert/notify",
-        method: request.method,
-        status: 200,
-        detail: { outcome: "success_audit_write_error", pushed: freshAlerts.length },
-      },
-      new Error("smart_alert 审计记录写入失败，下轮可能按 dedupeKey 重发"),
-    );
-  }
 
   // 同步往通知中心推送：当事人可见（admin 在站内可见所有告警的方式由后续 admin 看板承接）
-  for (const alert of freshAlerts) {
+  for (const alert of claimedAlerts) {
     if (!alert.userId) continue;
     await emit({
       recipients: [alert.userId],
@@ -281,10 +350,12 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    pushed: freshAlerts.length,
-    alerts: freshAlerts,
-    warning: successAuditError
-      ? "告警审计记录未落库：重复触发可能重复推送，请检查 audit_logs 写入"
+    pushed: claimedAlerts.length,
+    alerts: claimedAlerts,
+    skippedConcurrentKeys: claimOutcome.skippedConcurrentKeys,
+    claimFailedKeys: claimOutcome.claimFailedKeys,
+    warning: !sentTransition.ok
+      ? "告警审计流转失败（claim 行滞留为 smart_alert_claim）：不会重复打扰，但该批告警当日不会再补发，需人工清理"
       : undefined,
   });
 }

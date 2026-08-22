@@ -24,10 +24,11 @@ import {
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
 import { logApiError, logApiRequest, resolveRequestId } from "@/lib/api-logger";
 import {
+  CLAIM_STALE_MS,
   claimDailyReminders,
-  transitionRemindClaims,
   type RemindClaimMember,
 } from "@/lib/remind-claim";
+import { dispatchReminders } from "@/lib/remind-dispatch";
 import type {
   ExemptionCategory,
   ExemptionRequestStatus,
@@ -247,11 +248,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "All members have submitted today." });
   }
 
-  // 幂等守卫（快速路径）：当日已有 success 或 sending 记录的成员不再重复处理。
-  // 严格并发防重靠 claimDailyReminders 的数据库抢占，这里只是廉价的第一道闸。
+  // 幂等守卫（快速路径）：success 恒排除；sending 仅在新鲜期内排除，
+  // 过期 sending 视为崩溃残留，放行进入抢占阶段由数据库原子接管。
+  // 严格并发防重靠 claimDailyReminders 的唯一索引兜底，这里只是廉价的第一道闸。
   const { data: sentLogs, error: sentLogsError } = await supabase
     .from("remind_logs")
-    .select("user_id")
+    .select("user_id, status, sent_at")
     .eq("target_date", today)
     .in("status", ["success", "sending"])
     .eq("is_exempted", false);
@@ -264,8 +266,16 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const staleCutoffMs = Date.now() - CLAIM_STALE_MS;
   const alreadyNotifiedUserIds = new Set(
-    ((sentLogs ?? []) as { user_id: string }[]).map((row) => row.user_id),
+    ((sentLogs ?? []) as Array<{ user_id: string; status: string; sent_at: string | null }>)
+      .filter((row) => {
+        if (row.status === "success") return true;
+        const sentAtMs = row.sent_at ? Date.parse(row.sent_at) : Number.NaN;
+        // 新鲜 sending＝并发请求活跃中；过期或时间异常的视为死抢占
+        return Number.isFinite(sentAtMs) && sentAtMs >= staleCutoffMs;
+      })
+      .map((row) => row.user_id),
   );
   const pendingUnsubmitted = unsubmitted.filter(
     (user) => !alreadyNotifiedUserIds.has(user.user_id),
@@ -321,8 +331,9 @@ export async function GET(request: NextRequest) {
   }
 
   // ── 抢占阶段（claim-then-send）：先拿当日发送权，再发消息 ──
-  // 数据库兜底见 supabase/migrations/20260823000000_remind_logs_claim_idempotency.sql；
-  // migration 未执行时 claimDailyReminders 返回 legacy 模式，退回查询守卫旧行为。
+  // 数据库兜底见 supabase/migrations/20260823010000_remind_logs_active_claim_unique.sql
+  // （依赖 20260823000000 放开 sending 状态）；migration 未执行时返回 legacy 模式，
+  // 退回查询守卫旧行为（止血级，无严格并发防重）。
   const claim = await claimDailyReminders(supabase, today, pendingUnsubmitted);
   let recipients: RemindClaimMember[] = pendingUnsubmitted;
 
@@ -348,7 +359,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (claim.claimed.length === 0) {
+    if (claim.claims.length === 0) {
       logApiRequest({
         requestId,
         route: "/api/remind",
@@ -374,7 +385,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    recipients = claim.claimed;
+    recipients = claim.claims.map((active) => active.member);
   }
 
   const streakMap = buildMissingStreakMap({
@@ -394,76 +405,50 @@ export async function GET(request: NextRequest) {
     },
   );
 
-  const sendResult = await sendFeishuWebhook(
-    {
-      msg_type: "interactive",
-      card: {
-        header: {
-          title: { tag: "plain_text", content: "📳 抖音数据日报提交提醒" },
-          template: "red",
-        },
-        elements: [
-          {
-            tag: "div",
-            text: {
-              tag: "lark_md",
-              content,
+  // 发送与状态流转统一交给 dispatch 层：claim 只按 id 流转本请求的记录，
+  // 所有落库/流转失败都会显式带回来，禁止伪装成功
+  const dispatchResult = await dispatchReminders({
+    client: supabase,
+    today,
+    claim,
+    recipients,
+    send: () =>
+      sendFeishuWebhook(
+        {
+          msg_type: "interactive",
+          card: {
+            header: {
+              title: { tag: "plain_text", content: "📳 抖音数据日报提交提醒" },
+              template: "red",
             },
-          },
-          {
-            tag: "action",
-            actions: [
+            elements: [
               {
-                tag: "button",
-                text: { tag: "plain_text", content: "打开 DYData" },
-                type: "primary",
-                url: "https://dydata.cc",
+                tag: "div",
+                text: {
+                  tag: "lark_md",
+                  content,
+                },
+              },
+              {
+                tag: "action",
+                actions: [
+                  {
+                    tag: "button",
+                    text: { tag: "plain_text", content: "打开 DYData" },
+                    type: "primary",
+                    url: "https://dydata.cc",
+                  },
+                ],
               },
             ],
           },
-        ],
-      },
-    },
-    { webhookUrl },
-  );
+        },
+        { webhookUrl },
+      ),
+    describeFailure: describeFailureReason,
+  });
 
-  if (!sendResult.ok) {
-    const response_body = [
-      describeFailureReason(sendResult.reason),
-      sendResult.status ? `HTTP ${sendResult.status}` : null,
-      sendResult.bodyPreview ?? null,
-    ]
-      .filter(Boolean)
-      .join(" | ")
-      .slice(0, 500);
-
-    const recipientIds = recipients.map((member) => member.user_id);
-    let transitioned = false;
-    if (claim.mode === "claimed") {
-      // sending 占位流转回 failed，允许下轮触发重试
-      transitioned = await transitionRemindClaims(supabase, {
-        targetDate: today,
-        userIds: recipientIds,
-        toStatus: "failed",
-        responseBody: response_body,
-      });
-    }
-
-    // 发送失败必须留下失败记录，禁止伪装成成功
-    const failedLogInserts: string[] = [];
-    if (!transitioned) {
-      for (const member of recipients) {
-        const inserted = await insertRemindLog(supabase, {
-          target_date: today,
-          user_id: member.user_id,
-          user_name: member.name,
-          status: "failed",
-          is_exempted: false,
-          response_body,
-        });
-        if (!inserted) failedLogInserts.push(member.name);
-      }
-    }
+  if (!dispatchResult.delivered) {
     logApiError(
       {
         requestId,
@@ -471,60 +456,36 @@ export async function GET(request: NextRequest) {
         method: request.method,
         status: 502,
         detail: {
-          reason: sendResult.reason,
-          httpStatus: sendResult.status ?? null,
+          reason: dispatchResult.failureReason ?? "unknown",
           failedCount: recipients.length,
           failedLoggedFor: recipients.map((user) => user.name),
-          failedLogInserts,
+          unresolvedNames: dispatchResult.unresolvedNames,
           exemptedLogFailures,
         },
       },
-      new Error(describeFailureReason(sendResult.reason)),
+      new Error(describeFailureReason(dispatchResult.failureReason ?? "unknown")),
     );
     return NextResponse.json(
       {
-        error: `飞书催交发送失败：${describeFailureReason(sendResult.reason)}`,
-        reason: sendResult.reason,
+        error: `飞书催交发送失败：${describeFailureReason(dispatchResult.failureReason ?? "unknown")}`,
+        reason: dispatchResult.failureReason,
         failedLoggedFor: recipients.map((user) => user.name),
-        warning: failedLogInserts.length > 0
-          ? `部分失败记录未落库：${failedLogInserts.join("、")}`
+        warning: dispatchResult.unresolvedNames.length > 0
+          ? `部分失败记录未落库：${dispatchResult.unresolvedNames.join("、")}，重复触发可能重复提醒`
           : undefined,
       },
       { status: 502 },
     );
   }
 
-  const recipientIds = recipients.map((member) => member.user_id);
-  let successLogFailures: string[] = [];
-  if (claim.mode === "claimed") {
-    // sending 占位流转为 success；这是幂等去重依据，流转失败必须显式暴露
-    const transitioned = await transitionRemindClaims(supabase, {
-      targetDate: today,
-      userIds: recipientIds,
-      toStatus: "success",
-    });
-    if (!transitioned) {
-      successLogFailures = recipients.map((member) => member.name);
-    }
-  } else {
-    for (const member of recipients) {
-      const inserted = await insertRemindLog(supabase, {
-        target_date: today,
-        user_id: member.user_id,
-        user_name: member.name,
-        status: "success",
-        is_exempted: false,
-      });
-      if (!inserted) successLogFailures.push(member.name);
-    }
-  }
+  const successLogFailures = dispatchResult.unresolvedNames;
 
   logApiRequest({
     requestId,
     route: "/api/remind",
     method: request.method,
     status: 200,
-    outcome: "sent",
+    outcome: successLogFailures.length > 0 ? "sent_with_log_errors" : "sent",
     detail: {
       today,
       notified: recipients.length,
