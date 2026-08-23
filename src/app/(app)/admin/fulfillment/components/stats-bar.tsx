@@ -8,107 +8,122 @@ interface StatsBarProps {
 
 export function StatsBar({ stats }: StatsBarProps) {
   const hasPending = stats.pendingToday > 0;
+  const confirmedCount =
+    stats.publishedToday +
+    stats.leaveToday +
+    stats.waivedToday +
+    stats.absentToday;
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      {/* 核心焦点卡片 */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 transition-colors duration-150 hover:border-zinc-300">
-        <div className="flex h-full min-h-[80px] flex-col justify-between">
+    <div className="border-y border-[#E8E3DA] py-5 sm:py-6 transition-all duration-200">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-[#E8E3DA]">
+        {/* 1. 今日待处理焦点 */}
+        <div className="flex flex-col justify-between pr-0 lg:pr-6">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-normal tracking-wider text-zinc-500">今日待处理</span>
+            <span className="text-[12px] font-medium text-[#78716C]">今日待处理</span>
             {hasPending ? (
-              <span className="relative flex h-2 w-2">
-                <span 
-                  className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D99E55] opacity-75"
+              <span className="relative flex size-2">
+                <span
+                  className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D97757] opacity-75"
                   style={{ animationDuration: "3s" }}
                 />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D99E55]" />
+                <span className="relative inline-flex size-2 rounded-full bg-[#D97757]" />
               </span>
             ) : (
-              <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
             )}
           </div>
-          <div className="mt-4 flex items-baseline justify-between">
+          <div className="mt-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[24px] font-semibold tabular-nums tracking-tight leading-none text-zinc-900">
+              <span className="text-[28px] sm:text-[32px] font-semibold tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.pendingToday}
               </span>
-              <span className="text-[12px] font-normal text-zinc-500">人未处理</span>
+              <span className="text-[12px] font-normal text-[#78716C]">人未处理</span>
             </div>
-            <div className="text-right text-[12px] text-zinc-500 font-normal">
-              已确认 <span className="tabular-nums font-medium text-zinc-800">{stats.publishedToday + stats.leaveToday + stats.waivedToday + stats.absentToday}</span> / {stats.totalMembers} 人
+            <div className="text-right text-[12px] text-[#78716C] font-normal">
+              已确认 <span className="tabular-nums font-medium text-[#292524]">{confirmedCount}</span> / {stats.totalMembers} 人
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 连续未发警示卡片 */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 transition-all duration-200 hover:border-zinc-300">
-        <div className="flex flex-col justify-between h-full min-h-[80px]">
+        {/* 2. 连续未发警示 */}
+        <div className="flex flex-col justify-between px-0 lg:px-6">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-normal tracking-wider text-zinc-500">连续未发人数</span>
+            <span className="text-[12px] font-medium text-[#78716C]">连续未发人数</span>
             {stats.consecutiveMissingMembers > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded border border-[#D99E55]/15 bg-[#D99E55]/[0.04] px-1.5 py-0.5 text-[12px] font-normal text-[#D99E55]">
-                需要关注
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-2 py-0.5 text-[11px] font-medium text-[#D97757]">
+                需跟进
               </span>
-            ) : null}
+            ) : (
+              <span className="text-[11px] text-[#A8A29E] font-normal">状态良好</span>
+            )}
           </div>
-          <div className="mt-4 flex items-baseline justify-between">
+          <div className="mt-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className={`text-[24px] font-semibold tabular-nums tracking-tight leading-none ${
-                stats.consecutiveMissingMembers > 0 ? "text-[#D99E55]" : "text-zinc-900"
-              }`}>
+              <span
+                className={`text-[28px] sm:text-[32px] font-semibold tabular-nums tracking-tight leading-none ${
+                  stats.consecutiveMissingMembers > 0 ? "text-[#D97757]" : "text-[#1C1917]"
+                }`}
+              >
                 {stats.consecutiveMissingMembers}
               </span>
-              <span className="text-[12px] font-normal text-zinc-500">人未发视频</span>
+              <span className="text-[12px] font-normal text-[#78716C]">人连续未发</span>
             </div>
-            <span className="text-[12px] text-zinc-400 font-normal">需重点跟进</span>
+            <span className="text-[12px] text-[#A8A29E] font-normal">
+              {stats.consecutiveMissingMembers > 0 ? "需重点沟通" : "全员保持活跃"}
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* 基础大盘统计卡片 - 高密精细排版 */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 lg:col-span-1 transition-all duration-200 hover:border-zinc-300">
-        <div className="flex flex-col justify-between h-full min-h-[80px]">
+        {/* 3. 周期大盘 */}
+        <div className="flex flex-col justify-between pl-0 lg:pl-6">
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-normal tracking-wider text-zinc-500 uppercase">发布周期大盘</span>
-            <span className={`text-[12px] font-medium tabular-nums ${
-              stats.periodFulfillmentRate >= 80
-                ? "text-[#6FAA7D]"
-                : stats.periodFulfillmentRate >= 60
-                  ? "text-[#D99E55]"
-                  : "text-[#C9604D]"
-            }`}>
+            <span className="text-[12px] font-medium text-[#78716C]">发布周期大盘</span>
+            <span
+              className={`text-[12px] font-medium tabular-nums ${
+                stats.periodFulfillmentRate >= 80
+                  ? "text-[#6FAA7D]"
+                  : stats.periodFulfillmentRate >= 60
+                    ? "text-[#D97757]"
+                    : "text-[#C9604D]"
+              }`}
+            >
               发布率 {stats.periodFulfillmentRate}%
             </span>
           </div>
-          <div className="mt-4 grid grid-cols-4 gap-2 border-t border-zinc-100 pt-3">
-            <div className="flex flex-col items-center">
-              <span className="text-[12px] text-zinc-500 font-normal">总成员</span>
-              <span className="mt-1 text-[13px] font-normal tabular-nums text-zinc-700">{stats.totalMembers}</span>
+          <div className="mt-3 grid grid-cols-4 gap-2 pt-1 border-t border-[#E8E3DA]">
+            <div className="flex flex-col">
+              <span className="text-[11px] text-[#78716C] font-normal">总成员</span>
+              <span className="mt-0.5 text-[13px] font-medium tabular-nums text-[#1C1917]">
+                {stats.totalMembers}
+              </span>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[12px] text-zinc-500 font-normal flex items-center gap-0.5">
-                <span className="size-1 rounded-full bg-[#6FAA7D]" />
+            <div className="flex flex-col">
+              <span className="text-[11px] text-[#78716C] font-normal">
+                <span className="inline-block size-1.5 rounded-full bg-[#6FAA7D] mr-1 align-middle" />
                 已发
               </span>
-              <span className="mt-1 text-[13px] font-normal tabular-nums text-zinc-700">{stats.publishedToday}</span>
+              <span className="mt-0.5 text-[13px] font-medium tabular-nums text-[#1C1917]">
+                {stats.publishedToday}
+              </span>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[12px] text-zinc-500 font-normal flex items-center gap-0.5">
-                <span className="size-1 rounded-full bg-[#43718E]" />
+            <div className="flex flex-col">
+              <span className="text-[11px] text-[#78716C] font-normal">
+                <span className="inline-block size-1.5 rounded-full bg-[#43718E] mr-1 align-middle" />
                 豁免
               </span>
-              <span className="mt-1 text-[13px] font-normal tabular-nums text-zinc-700">
-                {stats.leaveToday + stats.waivedToday}
+              <span className="mt-0.5 text-[13px] font-medium tabular-nums text-[#1C1917]">
+                {stats.waivedToday + stats.leaveToday}
               </span>
             </div>
-            <div className="flex flex-col items-center">
-              <span className="text-[12px] text-zinc-500 font-normal flex items-center gap-0.5">
-                <span className="size-1 rounded-full bg-[#C9604D]" />
+            <div className="flex flex-col">
+              <span className="text-[11px] text-[#78716C] font-normal">
+                <span className="inline-block size-1.5 rounded-full bg-[#C9604D] mr-1 align-middle" />
                 缺勤
               </span>
-              <span className="mt-1 text-[13px] font-normal tabular-nums text-zinc-700">{stats.absentToday}</span>
+              <span className="mt-0.5 text-[13px] font-medium tabular-nums text-[#1C1917]">
+                {stats.absentToday}
+              </span>
             </div>
           </div>
         </div>

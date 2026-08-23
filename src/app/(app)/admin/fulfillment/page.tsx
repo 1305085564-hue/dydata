@@ -59,22 +59,27 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   const range = resolveRange(params.range);
 
   return (
-    <AdminWorkspaceLayout indexItems={[]} width="wide">
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900">发布管理</h1>
+    <div className="w-full min-h-screen bg-[#FBF9F5] text-[#1C1917] -mx-4 -my-6 px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors duration-200">
+      <AdminWorkspaceLayout
+        eyebrow="FULFILLMENT DISPATCH · 履约大盘"
+        title="发布与履约总览"
+        description="实时监控全员视频发布进度、处置异常缺卡、审核改判申诉。"
+        indexItems={[]}
+        width="wide"
+      >
+        <div className="space-y-6">
+          <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
+            <FulfillmentDataContainer
+              year={year}
+              month={month}
+              visibleUserIds={getActiveVisibleUserIds(scope)}
+              currentUserId={permissionInfo.userId}
+              range={range}
+            />
+          </Suspense>
         </div>
-        <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
-          <FulfillmentDataContainer
-            year={year}
-            month={month}
-            visibleUserIds={getActiveVisibleUserIds(scope)}
-            currentUserId={permissionInfo.userId}
-            range={range}
-          />
-        </Suspense>
-      </div>
-    </AdminWorkspaceLayout>
+      </AdminWorkspaceLayout>
+    </div>
   );
 }
 

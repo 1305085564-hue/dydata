@@ -29,7 +29,11 @@ interface FilterBarProps {
   members: FulfillmentMemberSummary[];
   selectedTeam: string | null;
   onTeamChange: (team: string | null) => void;
-  onPresetChange: (preset: TimeRangePreset, targetYear: number, targetMonth: number) => void;
+  onPresetChange: (
+    preset: TimeRangePreset,
+    targetYear: number,
+    targetMonth: number,
+  ) => void;
   feishuEnabled: boolean;
   settingsLoading: boolean;
   settingsError: string | null;
@@ -46,10 +50,17 @@ const PRESET_OPTIONS: { value: TimeRangePreset; label: string }[] = [
   { value: "custom", label: "自定义" },
 ];
 
-function formatRangeLabel(preset: TimeRangePreset, year: number, month: number): string {
+function formatRangeLabel(
+  preset: TimeRangePreset,
+  year: number,
+  month: number,
+): string {
   switch (preset) {
     case "today":
-      return new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric" });
+      return new Date().toLocaleDateString("zh-CN", {
+        month: "long",
+        day: "numeric",
+      });
     case "last7days":
       return "最近7天";
     case "thisMonth":
@@ -78,11 +89,18 @@ export function FilterBar({
   onRetrySettings,
   onFeishuChange,
 }: FilterBarProps) {
-  const [confirmToggleTarget, setConfirmToggleTarget] = useState<boolean | null>(null);
+  const [confirmToggleTarget, setConfirmToggleTarget] = useState<
+    boolean | null
+  >(null);
 
   const teams = Array.from(
-    new Set(members.map((member) => member.teamName).filter((teamName): teamName is string => Boolean(teamName))),
+    new Set(
+      members
+        .map((member) => member.teamName)
+        .filter((teamName): teamName is string => Boolean(teamName)),
+    ),
   ).sort();
+
   const handlePresetChange = (preset: TimeRangePreset) => {
     const now = new Date();
     let targetYear = year;
@@ -112,37 +130,43 @@ export function FilterBar({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* 时间筛选 + 团队筛选 行 */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* 时间预设切换 Tab */}
-          <div className="flex items-center gap-1">
-            {PRESET_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => handlePresetChange(opt.value)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-100 cursor-pointer ${
-                  range === opt.value
-                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+    <div className="flex flex-col gap-2.5">
+      {/* 工具栏主体：时间胶囊 + 团队选择 + 飞书开关 */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* 微气垫时间预设胶囊 */}
+          <div className="inline-flex items-center gap-0.5 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] p-1">
+            {PRESET_OPTIONS.map((opt) => {
+              const isActive = range === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handlePresetChange(opt.value)}
+                  className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all duration-150 cursor-pointer ${
+                    isActive
+                      ? "bg-white text-[#D97757] shadow-2xs font-semibold"
+                      : "text-[#666055] hover:text-[#1C1917] hover:bg-white/60"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* 团队筛选 (白底实体按键) */}
+          {/* 无框微气垫团队筛选 */}
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
-            <SelectTrigger size="sm" className="w-36 bg-white border border-zinc-200 shadow-2xs">
+            <SelectTrigger
+              size="sm"
+              className="h-8.5 w-36 rounded-xl border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#3C3830] shadow-none transition-colors hover:bg-[#EFECE6] focus:ring-1 focus:ring-[#D97757]/30"
+            >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border border-zinc-200/80 bg-white/95 backdrop-blur-md shadow-lg">
               <SelectItem value="">全部团队</SelectItem>
               {teams.map((team) => (
-                <SelectItem key={team} value={team}>
+                <SelectItem key={team} value={team} className="text-[12px]">
                   {team}
                 </SelectItem>
               ))}
@@ -150,13 +174,17 @@ export function FilterBar({
           </Select>
         </div>
 
-        {/* 飞书催交总开关 */}
-        <div 
-          className="flex items-center gap-2 rounded-lg bg-zinc-50/80 px-3 py-1.5 transition-colors duration-200"
+        {/* 飞书催交开关（沉静平铺） */}
+        <div
+          className="flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3 py-1.5 transition-colors"
           title="开启后，系统将在每日 18:00 自动向今日未提交视频的成员发送飞书消息提醒"
         >
-          <span className="text-[12px] font-medium text-zinc-700">飞书自动催交</span>
-          <span className="text-[11px] text-zinc-400 font-normal hidden sm:inline">(18:00 提醒)</span>
+          <span className="text-[12px] font-normal text-zinc-600">
+            飞书自动催交
+          </span>
+          <span className="hidden text-[11px] text-zinc-400 font-normal sm:inline">
+            (18:00 提醒)
+          </span>
           {settingsError ? (
             <button
               type="button"
@@ -164,10 +192,10 @@ export function FilterBar({
               className="text-[12px] font-medium text-[#C9604D] underline-offset-2 hover:underline"
               title={settingsError}
             >
-              设置加载失败 · 重试
+              重试
             </button>
           ) : settingsLoading || isUpdatingSettings ? (
-            <div className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
+            <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : (
             <Switch
               aria-label="飞书自动催交总开关"
@@ -178,39 +206,55 @@ export function FilterBar({
         </div>
       </div>
 
-      {/* 当前范围指示 (仅在特殊范围呈现，默认隐去重复小字) */}
+      {/* 特殊范围说明指示 */}
       {(range === "last7days" || range === "custom") && (
-        <div className="flex items-center gap-2 text-[12px] text-zinc-500">
-          <CalendarDays className="size-3.5 text-[#D99E55]" />
+        <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 pt-0.5">
+          <CalendarDays className="size-3.5 text-[#D97757]" />
           <span>
             当前范围：{formatRangeLabel(range, year, month)}
             {selectedTeam ? ` · ${selectedTeam}` : ""}
           </span>
-          <span className="rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[12px] font-normal text-[#D99E55]">
+          <span className="rounded-md bg-[#D97757]/10 px-1.5 py-0.5 text-[11px] font-normal text-[#D97757]">
             仅显示本月内数据
           </span>
         </div>
       )}
 
-      {/* 飞书催交开关确认弹窗 */}
-      <Dialog open={confirmToggleTarget !== null} onOpenChange={(open) => !open && setConfirmToggleTarget(null)}>
-        <DialogContent className="bg-white max-w-sm">
+      {/* 确认弹窗 */}
+      <Dialog
+        open={confirmToggleTarget !== null}
+        onOpenChange={(open) => !open && setConfirmToggleTarget(null)}
+      >
+        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-xl border-zinc-200">
           <DialogHeader>
-            <DialogTitle>
-              {confirmToggleTarget ? "确认开启飞书自动催交？" : "确认关闭飞书自动催交？"}
-            </DialogTitle>
-            <DialogDescription className="text-zinc-600">
+            <DialogTitle className="text-[16px] font-semibold text-zinc-950">
               {confirmToggleTarget
-                ? "开启后，系统将在每日 18:00 自动检查团队发布进度，并向未提交视频的成员发送飞书应用消息提醒。"
-                : "关闭后，系统将停止每日 18:00 的飞书自动催交提醒功能。"}
+                ? "确认开启飞书自动催交？"
+                : "确认关闭飞书自动催交？"}
+            </DialogTitle>
+            <DialogDescription className="text-[13px] text-zinc-600 mt-2">
+              {confirmToggleTarget
+                ? "开启后，系统将在每日 18:00 自动检查团队发布进度，并向未提交视频的成员发送飞书消息提醒。"
+                : "关闭后，系统将停止每日 18:00 的飞书自动催交提醒。"}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmToggleTarget(null)}>
+          <DialogFooter className="mt-4 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-lg text-zinc-600"
+              onClick={() => setConfirmToggleTarget(null)}
+            >
               取消
             </Button>
             <Button
               variant={confirmToggleTarget ? "default" : "destructive"}
+              size="sm"
+              className={
+                confirmToggleTarget
+                  ? "rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white"
+                  : "rounded-lg"
+              }
               onClick={handleConfirmToggle}
             >
               {confirmToggleTarget ? "确认开启" : "确认关闭"}

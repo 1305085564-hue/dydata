@@ -49,16 +49,25 @@ const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
     label: "标记请假",
     variant: "outline",
     colorClass:
-      "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
+      "border-zinc-200/80 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 rounded-xl text-[13px] font-medium",
   },
   waived: {
     label: "标记豁免",
     variant: "outline",
     colorClass:
-      "border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
+      "border-zinc-200/80 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 rounded-xl text-[13px] font-medium",
   },
-  absent: { label: "确认缺勤", variant: "destructive" },
-  confirmed_published: { label: "确认已发", variant: "default" },
+  absent: {
+    label: "确认缺勤",
+    variant: "destructive",
+    colorClass: "rounded-xl text-[13px] bg-[#C9604D] hover:bg-[#B5503E] font-medium",
+  },
+  confirmed_published: {
+    label: "确认已发",
+    variant: "default",
+    colorClass:
+      "rounded-xl text-[13px] bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium shadow-sm",
+  },
 };
 
 function StatusBadge({ status }: { status: string }) {

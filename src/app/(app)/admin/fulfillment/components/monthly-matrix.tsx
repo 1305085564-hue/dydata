@@ -63,16 +63,16 @@ function getStatusColor(status: FulfillmentStatus | undefined): string {
   switch (status) {
     case "published":
     case "confirmed_published":
-      return "bg-[#6FAA7D] border-[#5d946a]";
+      return "bg-[#6FAA7D]/90 border-[#6FAA7D]/40";
     case "leave":
-      return "bg-[#43718E] border-[#5283A2]";
+      return "bg-[#43718E]/85 border-[#43718E]/30";
     case "waived":
     case "exempted":
-      return "bg-[#43718E]/30 border-[#43718E]/20";
+      return "bg-[#43718E]/25 border-[#43718E]/20";
     case "absent":
-      return "bg-[#C9604D] border-[#b5503e]";
+      return "bg-[#C9604D]/90 border-[#C9604D]/40";
     case "unconfirmed":
-      return "bg-zinc-200 border-zinc-300";
+      return "bg-zinc-100 border-zinc-200/80";
     default:
       return "bg-zinc-50 border-zinc-100";
   }
@@ -175,46 +175,47 @@ export function MonthlyMatrix({
 
   return (
     <div className="space-y-3">
-      {/* 折叠头部 */}
-      <div className="flex w-full items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-left transition-colors duration-150 select-none hover:bg-zinc-50/50">
+      {/* 矩阵标题与月度切换器（去框出版物排版） */}
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-200/50 pb-2.5">
         <button
           type="button"
           aria-expanded={expanded}
           aria-controls="monthly-matrix-panel"
           onClick={() => setExpanded((current) => !current)}
-          className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+          className="flex items-center gap-2.5 text-left rounded-lg transition-colors cursor-pointer group"
         >
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="text-[18px] font-semibold text-zinc-900">
-              月度矩阵
-            </span>
-            <span className="truncate text-[12px] text-zinc-500">
-              {year}年{month}月 · {members.length} 人
-            </span>
+          <span className="text-[16px] font-semibold text-zinc-950 group-hover:text-[#D97757] transition-colors">
+            月度履约热力矩阵
+          </span>
+          <span className="text-[12px] font-normal text-zinc-400">
+            {year}年{month}月 · {members.length} 位成员
           </span>
           {expanded ? (
-            <ChevronUp className="size-4 shrink-0 text-zinc-500" />
+            <ChevronUp className="size-4 text-zinc-400 group-hover:text-zinc-600 transition-transform" />
           ) : (
-            <ChevronDown className="size-4 shrink-0 text-zinc-500" />
+            <ChevronDown className="size-4 text-zinc-400 group-hover:text-zinc-600 transition-transform" />
           )}
         </button>
+
         {expanded && (
           <div className="flex shrink-0 items-center gap-1">
             <Button
               variant="ghost"
               size="icon-xs"
               aria-label="上一月"
+              className="h-7 w-7 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg"
               onClick={handlePrevMonth}
             >
               <ChevronLeft className="size-3.5" />
             </Button>
-            <span className="min-w-[72px] text-center text-[12px] font-medium text-zinc-700">
+            <span className="min-w-[68px] text-center text-[12px] font-medium tabular-nums text-zinc-800">
               {year}年{month}月
             </span>
             <Button
               variant="ghost"
               size="icon-xs"
               aria-label="下一月"
+              className="h-7 w-7 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg"
               onClick={handleNextMonth}
             >
               <ChevronRight className="size-3.5" />
@@ -224,9 +225,9 @@ export function MonthlyMatrix({
                 variant="ghost"
                 size="xs"
                 onClick={handleCurrentMonth}
-                className="ml-1 text-[12px]"
+                className="ml-1 text-[11px] h-6 px-2 text-[#D97757] hover:bg-[#D97757]/10 rounded-md"
               >
-                当月
+                回到当月
               </Button>
             )}
           </div>
@@ -236,180 +237,217 @@ export function MonthlyMatrix({
       {/* 展开内容 */}
       {expanded && (
         <div id="monthly-matrix-panel" className="space-y-3">
-          <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white">
+          <div className="overflow-x-auto rounded-xl border border-[#E5E0D6] bg-white shadow-2xs">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-zinc-200/60 bg-zinc-50/50">
-                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-zinc-200 bg-white px-3 py-1.5 text-left text-[12px] font-normal tracking-[0.12em] text-zinc-500">
+                <tr className="border-b border-[#E5E0D6] bg-[#F5F2EC]">
+                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#E5E0D6] bg-[#F5F2EC] backdrop-blur-sm px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
                     成员
                   </th>
                   {dayNumbers.map((day) => {
                     const dateKey = formatDateKey(year, month, day);
                     const isToday = dateKey === today;
+                    const isColHovered = day === (hoveredCell?.day ?? openMenuCell?.day);
                     return (
                       <th
                         key={day}
-                        className={`min-w-[28px] px-0.5 py-1.5 text-center text-[12px] font-normal tabular-nums ${
-                          isToday
-                            ? "text-[#D97757] font-medium"
-                            : "text-zinc-500"
+                        className={`min-w-[26px] px-0.5 py-2 text-center text-[12px] tabular-nums transition-colors duration-150 ${
+                          isColHovered
+                            ? "text-[#D97757] font-semibold bg-[#EFECE6]"
+                            : isToday
+                              ? "text-[#D97757] font-semibold"
+                              : "text-[#78716C] font-normal"
                         }`}
                       >
-                        {day}
+                        <div className="flex flex-col items-center">
+                          <span>{day}</span>
+                          {isToday && (
+                            <span className="size-1 rounded-full bg-[#D97757] mt-0.5" />
+                          )}
+                        </div>
                       </th>
                     );
                   })}
-                  <th className="sticky right-0 z-10 min-w-[72px] border-l border-zinc-200/60 bg-zinc-50 px-3 py-1.5 text-right text-[12px] font-normal text-zinc-500 shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
-                    实发/应发
+                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#E5E0D6] bg-[#F5F2EC] backdrop-blur-sm px-3 py-2 text-right text-[12px] font-medium tracking-wider text-[#78716C]">
+                    实发 / 应发
                   </th>
                 </tr>
               </thead>
 
               <tbody>
-                {members.map((member) => (
-                  <tr
-                    key={member.userId}
-                    className="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors"
-                  >
-                    <td className="sticky left-0 z-10 border-r border-zinc-200 bg-white px-3 py-1 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">
-                      <div className="flex items-center gap-1.5 whitespace-nowrap">
-                        <span className="text-[13px] font-medium text-zinc-900">
-                          {member.userName}
-                        </span>
-                        {member.teamName && (
-                          <span className="text-[12px] text-zinc-400">
-                            {member.teamName}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    {dayNumbers.map((day) => {
-                      const dateKey = formatDateKey(year, month, day);
-                      const record = member.days[dateKey];
-                      const status = record?.status;
-                      const isToday = dateKey === today;
-                      const appeal = appealMap.get(
-                        `${member.userId}_${dateKey}`,
-                      );
-
-                      return (
-                        <td key={day} className="px-0.5 py-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const rect =
-                                e.currentTarget.getBoundingClientRect();
-                              setOpenMenuCell({
-                                member,
-                                dateKey,
-                                day,
-                                status,
-                                record,
-                                appeal,
-                                rect,
-                              });
-                              setHoveredCell(null);
-                            }}
-                            onMouseEnter={(e) => {
-                              if (openMenuCell) return;
-                              const rect =
-                                e.currentTarget.getBoundingClientRect();
-                              setHoveredCell({
-                                member,
-                                dateKey,
-                                day,
-                                status,
-                                record,
-                                appeal,
-                                rect,
-                              });
-                            }}
-                            onMouseLeave={() => {
-                              setHoveredCell(null);
-                            }}
-                            className={`mx-auto block size-[16px] rounded-[3px] border transition-colors duration-100 hover:scale-110 hover:z-10 cursor-pointer ${getStatusColor(status)} ${
-                              isToday
-                                ? "ring-1 ring-[#D97757] ring-offset-1 z-10"
-                                : ""
-                            } ${appeal ? "ring-1.5 ring-[#F59E0B] ring-offset-0.5" : ""}`}
-                          />
-                        </td>
-                      );
-                    })}
-                    <td className="sticky right-0 z-10 border-l border-zinc-200/60 bg-white px-3 py-2 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
-                      <span
-                        className={`text-[12px] tabular-nums font-medium ${
-                          member.publishedDays >= member.totalDays
-                            ? "text-[#6FAA7D]"
-                            : member.publishedDays / member.totalDays >= 0.6
-                              ? "text-zinc-700"
-                              : "text-[#C9604D]"
+                {members.map((member) => {
+                  const isRowHovered = member.userId === (hoveredCell?.member.userId ?? openMenuCell?.member.userId);
+                  return (
+                    <tr
+                      key={member.userId}
+                      className={`border-b border-[#F0ECE1] last:border-b-0 transition-colors ${
+                        isRowHovered ? "bg-[#FAF8F4]" : "hover:bg-[#FAF8F4]"
+                      }`}
+                    >
+                      <td
+                        className={`sticky left-0 z-10 border-r border-[#E5E0D6] px-3 py-1.5 shadow-[2px_0_5px_rgba(0,0,0,0.01)] transition-colors ${
+                          isRowHovered
+                            ? "bg-[#FAF8F4] text-[#D97757]"
+                            : "bg-white/95 backdrop-blur-sm"
                         }`}
                       >
-                        {member.publishedDays}
-                      </span>
-                      <span className="mx-0.5 text-[12px] text-zinc-500">
-                        /
-                      </span>
-                      <span className="text-[12px] tabular-nums text-zinc-500">
-                        {member.totalDays}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                          <span
+                            className={`text-[13px] font-medium transition-colors ${
+                              isRowHovered ? "text-[#D97757]" : "text-[#1C1917]"
+                            }`}
+                          >
+                            {member.userName}
+                          </span>
+                          {member.teamName && (
+                            <span className="text-[11px] text-[#A8A29E] font-normal">
+                              {member.teamName}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {dayNumbers.map((day) => {
+                        const dateKey = formatDateKey(year, month, day);
+                        const record = member.days[dateKey];
+                        const status = record?.status;
+                        const isToday = dateKey === today;
+                        const isColHovered = day === (hoveredCell?.day ?? openMenuCell?.day);
+                        const appeal = appealMap.get(
+                          `${member.userId}_${dateKey}`,
+                        );
+
+                        return (
+                          <td
+                            key={day}
+                            className={`px-0.5 py-1 transition-colors duration-100 ${
+                              isColHovered || isRowHovered
+                                ? "bg-[#FAF8F4]"
+                                : ""
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const rect =
+                                  e.currentTarget.getBoundingClientRect();
+                                setOpenMenuCell({
+                                  member,
+                                  dateKey,
+                                  day,
+                                  status,
+                                  record,
+                                  appeal,
+                                  rect,
+                                });
+                                setHoveredCell(null);
+                              }}
+                              onMouseEnter={(e) => {
+                                if (openMenuCell) return;
+                                const rect =
+                                  e.currentTarget.getBoundingClientRect();
+                                setHoveredCell({
+                                  member,
+                                  dateKey,
+                                  day,
+                                  status,
+                                  record,
+                                  appeal,
+                                  rect,
+                                });
+                              }}
+                              onMouseLeave={() => {
+                                setHoveredCell(null);
+                              }}
+                              className={`mx-auto block size-[17px] rounded-[4px] border transition-all duration-150 hover:scale-130 hover:z-10 cursor-pointer ${getStatusColor(
+                                status,
+                              )} ${
+                                isToday
+                                  ? "ring-1.5 ring-[#D97757] ring-offset-1 z-10"
+                                  : ""
+                              } ${
+                                appeal
+                                  ? "ring-1.5 ring-[#F59E0B] ring-offset-1"
+                                  : ""
+                              }`}
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className="sticky right-0 z-10 border-l border-[#E5E0D6] bg-white/95 backdrop-blur-sm px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
+                        <span
+                          className={`text-[12px] tabular-nums font-semibold ${
+                            member.publishedDays >= member.totalDays
+                              ? "text-[#6FAA7D]"
+                              : member.publishedDays / member.totalDays >= 0.6
+                                ? "text-[#1C1917]"
+                                : "text-[#C9604D]"
+                          }`}
+                        >
+                          {member.publishedDays}
+                        </span>
+                        <span className="mx-1 text-[11px] text-[#A8A29E] font-normal">
+                          /
+                        </span>
+                        <span className="text-[12px] tabular-nums text-[#78716C] font-normal">
+                          {member.totalDays}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* 图例 */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-zinc-100/50 p-2.5 text-[12px] text-zinc-500">
+          {/* 图例（轻量微气垫条） */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3.5 py-2 text-[12px] text-[#5C564B]">
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#6FAA7D] border border-[#5d946a]" />
-              已发布 / 已确认
+              <span className="inline-block size-2.5 rounded-sm bg-[#6FAA7D]/90 border border-[#6FAA7D]/40" />
+              已发布 / 确认
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#43718E] border border-[#5283A2]" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#43718E]/85 border border-[#43718E]/30" />
               请假
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#43718E]/30 border border-[#43718E]/20" />
-              豁免 / 豁免期
+              <span className="inline-block size-2.5 rounded-sm bg-[#43718E]/25 border border-[#43718E]/20" />
+              豁免期
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-[#C9604D] border border-[#b5503e]" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#C9604D]/90 border border-[#C9604D]/40" />
               缺勤
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm bg-zinc-200 border border-zinc-300" />
+              <span className="inline-block size-2.5 rounded-sm bg-zinc-100 border border-zinc-200/80" />
               待确认
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-[10px] rounded-sm border border-[#F59E0B] bg-white" />
-              有待处理申诉
+              <span className="inline-block size-2.5 rounded-sm border border-[#F59E0B] bg-white ring-1 ring-[#F59E0B]/30" />
+              有申诉
             </span>
           </div>
         </div>
       )}
 
-      {/* 🚀 单例 Tooltip（悬浮提示） */}
+      {/* Claude 便签卡 Tooltip */}
       {hoveredCell && !openMenuCell && (
         <div
-          className="fixed z-50 flex w-60 flex-col items-start gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 p-3 text-[12px] text-white shadow-xl pointer-events-none transition-opacity duration-100"
+          className="fixed z-50 flex w-64 flex-col items-start gap-1.5 rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 backdrop-blur-md p-3.5 text-[12px] text-[#292524] shadow-xl pointer-events-none transition-opacity duration-100"
           style={{
             top: Math.max(10, hoveredCell.rect.top - 8),
             left: Math.min(
-              typeof window !== "undefined" ? window.innerWidth - 130 : 500,
-              Math.max(130, hoveredCell.rect.left + hoveredCell.rect.width / 2),
+              typeof window !== "undefined" ? window.innerWidth - 140 : 500,
+              Math.max(140, hoveredCell.rect.left + hoveredCell.rect.width / 2),
             ),
             transform: "translate(-50%, -100%)",
           }}
         >
-          <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-800 pb-1.5">
-            <span className="font-medium text-zinc-50">
+          <div className="flex w-full items-center justify-between gap-2 border-b border-[#F0ECE1] pb-1.5">
+            <span className="font-semibold text-[#1C1917]">
               {hoveredCell.dateKey}
             </span>
-            <span className="font-medium text-zinc-400">
+            <span className="font-medium text-[#78716C]">
               {hoveredCell.member.userName}
             </span>
           </div>
@@ -417,25 +455,22 @@ export function MonthlyMatrix({
             <span
               className={`size-2 rounded-full ${getStatusColor(hoveredCell.status)}`}
             />
-            <span className="font-normal">
+            <span className="font-medium text-[#1C1917]">
               {getStatusLabel(hoveredCell.status)}
             </span>
             {hoveredCell.record && hoveredCell.record.publishedCount > 0 && (
-              <span className="text-zinc-400 tabular-nums">
+              <span className="text-zinc-500 tabular-nums">
                 ({hoveredCell.record.publishedCount} 条视频)
               </span>
             )}
           </div>
-          <span className="mt-1 text-[11px] text-zinc-400">
-            点击弹出快捷改判菜单 ➔
-          </span>
 
           {hoveredCell.record?.reason && (
-            <div className="w-full rounded border border-zinc-700 bg-zinc-800 p-1.5 text-zinc-300">
-              <span className="block text-[11px] font-normal text-zinc-400">
-                打标原因：
+            <div className="w-full rounded-lg bg-zinc-100/60 p-2 text-zinc-700 mt-1">
+              <span className="block text-[11px] font-medium text-zinc-500">
+                标记原因：
               </span>
-              <p className="mt-0.5 leading-[1.6] text-zinc-100">
+              <p className="mt-0.5 leading-[1.6] text-zinc-800">
                 {hoveredCell.record.reason}
               </p>
               {hoveredCell.record.markedByName && (
@@ -447,31 +482,35 @@ export function MonthlyMatrix({
           )}
 
           {hoveredCell.appeal && (
-            <div className="w-full border border-[#F59E0B]/20 bg-zinc-950/10 p-1.5 rounded text-[#B45309] mt-1">
-              <div className="flex items-center gap-1 font-normal text-[11px]">
-                <span className="size-1 bg-[#F59E0B] rounded-full" />
+            <div className="w-full border border-amber-200 bg-amber-50/70 p-2 rounded-lg text-amber-900 mt-1">
+              <div className="flex items-center gap-1 font-medium text-[11px] text-amber-800">
+                <span className="size-1.5 bg-[#F59E0B] rounded-full" />
                 员工申诉 (
                 {hoveredCell.appeal.status === "pending"
                   ? "待处理"
                   : hoveredCell.appeal.status === "approved"
-                    ? "申诉通过"
-                    : "被驳回"}
+                    ? "通过"
+                    : "驳回"}
                 )
               </div>
-              <p className="mt-1 text-[12px] italic leading-[1.7] text-zinc-100">
+              <p className="mt-1 text-[12px] leading-relaxed text-amber-950">
                 &ldquo;{hoveredCell.appeal.reason}&rdquo;
               </p>
               {hoveredCell.appeal.handler_name && (
-                <span className="mt-1 block text-right text-[11px] text-zinc-400">
+                <span className="mt-1 block text-right text-[11px] text-amber-700">
                   处理人: {hoveredCell.appeal.handler_name}
                 </span>
               )}
             </div>
           )}
+
+          <span className="mt-1 text-[11px] text-zinc-400">
+            点击方格可快捷改判
+          </span>
         </div>
       )}
 
-      {/* 🚀 单例 Popover（快捷操作气泡） */}
+      {/* 快捷操作气泡 Popover */}
       {openMenuCell && (
         <>
           <div
@@ -479,23 +518,23 @@ export function MonthlyMatrix({
             onClick={() => setOpenMenuCell(null)}
           />
           <div
-            className="fixed z-50 w-36 bg-white border border-zinc-200 rounded-xl p-1 shadow-2xl text-[12px] animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 w-40 bg-[#FDFCFB] border border-[#E5E0D6] rounded-2xl p-1.5 shadow-2xl text-[12px] animate-in fade-in zoom-in-95 duration-100"
             style={{
               top: Math.min(
                 typeof window !== "undefined" ? window.innerHeight - 200 : 600,
                 openMenuCell.rect.bottom + 6,
               ),
               left: Math.min(
-                typeof window !== "undefined" ? window.innerWidth - 80 : 500,
+                typeof window !== "undefined" ? window.innerWidth - 90 : 500,
                 Math.max(
-                  80,
+                  90,
                   openMenuCell.rect.left + openMenuCell.rect.width / 2,
                 ),
               ),
               transform: "translateX(-50%)",
             }}
           >
-            <div className="px-2 py-1 text-[11px] font-medium text-zinc-400 border-b border-zinc-100 mb-1">
+            <div className="px-2 py-1 text-[11px] font-medium text-[#78716C] border-b border-[#F0ECE1] mb-1">
               快捷改判 ({openMenuCell.member.userName} · {openMenuCell.day}日)
             </div>
             {onQuickMarkCell && (
@@ -511,7 +550,7 @@ export function MonthlyMatrix({
                       "confirmed_published",
                     );
                   }}
-                  className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 text-[12px] transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EFECE6] text-[#1C1917] flex items-center gap-2 text-[12px] font-medium transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#6FAA7D]" />
                   确认已发
@@ -523,7 +562,7 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "leave");
                   }}
-                  className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 text-[12px] transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EFECE6] text-[#1C1917] flex items-center gap-2 text-[12px] transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#43718E]" />
                   标记请假
@@ -535,9 +574,9 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "waived");
                   }}
-                  className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-800 flex items-center gap-1.5 text-[12px] transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#EFECE6] text-[#1C1917] flex items-center gap-2 text-[12px] transition-colors"
                 >
-                  <span className="size-2 rounded-full bg-[#43718E]/50" />
+                  <span className="size-2 rounded-full bg-[#43718E]/40" />
                   标记豁免
                 </button>
                 <button
@@ -547,7 +586,7 @@ export function MonthlyMatrix({
                     setOpenMenuCell(null);
                     void onQuickMarkCell(member.userId, dateKey, "absent");
                   }}
-                  className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-100 text-[#DC2626] flex items-center gap-1.5 text-[12px] transition-colors"
+                  className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-red-50 text-[#C9604D] flex items-center gap-2 text-[12px] transition-colors"
                 >
                   <span className="size-2 rounded-full bg-[#C9604D]" />
                   确认缺勤
@@ -562,9 +601,9 @@ export function MonthlyMatrix({
                 setOpenMenuCell(null);
                 onCellClick(member, dateKey);
               }}
-              className="w-full text-left rounded-md px-2 py-1.5 cursor-pointer hover:bg-zinc-50 text-zinc-600 font-medium text-[12px] transition-colors"
+              className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-zinc-100 text-zinc-600 font-medium text-[12px] transition-colors"
             >
-              📄 查看完整抽屉
+              📄 打开详情抽屉
             </button>
           </div>
         </>
