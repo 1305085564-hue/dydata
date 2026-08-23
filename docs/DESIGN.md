@@ -1,37 +1,36 @@
-# DYData DESIGN.md (Claude Aesthetic Edition)
+# DYData DESIGN.md (Claude Design System Edition)
 
-> 本文件遵循 getdesign.md / VoltAgent DESIGN.md 规范标准，定义 DYData 全站视觉与交互基因。
+> 权威中文版见：[Claude设计哲学.md](Claude设计哲学.md) 与 [Claude设计规范.md](Claude设计规范.md)。
 
 ## 1. Brand Context & Personality
 - **Role**: 安静把活干完的靠谱搭档 (Quiet, competent partner).
 - **Tone**: 知性出版物感 (Editorial warmth), 沉静专业 (Calm precision), 情绪透明 (Honest & direct).
 - **Keywords**: Restrained, Humanistic, Anti-box, Tabular, Terracotta.
 
-## 2. Color Palette & Tokens
-- **Canvas Base**: `#FAFAFA` (`zinc-50`)
-- **Surface Paper**: `#FFFFFF`
-- **Subtle Cushion (微气垫)**: `rgba(244, 244, 245, 0.7)` (`bg-zinc-100/70`)
+## 2. Color Palette & Tokens (Claude Official)
+- **Canvas Base (页面大底)**: `#FBF9F5` (Warm Ivory Paper)
+- **Surface Paper (纯白纸层)**: `#FFFFFF`
+- **Subtle Cushion (微气垫)**: `#F5F3EE` (Light Sandstone Cushion)
 - **Primary Action (暖陶土橙)**: `#D97757` (Hover: `#C46A4D`, Active: `#B85B3F`)
 - **Location & Active (暴雨灰蓝)**: `#43718E` (Hover: `#365D76`)
-- **Ink Palette**:
-  - `zinc-950` (`#09090B`): Page Hero H1, H2
-  - `zinc-900` (`#18181B`): Section H3, Modal Titles
-  - `zinc-800` (`#27272A`): Body text, Data text, Form inputs
-  - `zinc-600` (`#52525B`): Table header, timestamps, metadata
-  - `zinc-400` (`#A1A1AA`): Placeholder, disabled states
-  - `zinc-200` (`#E4E4E7`): Hairline border (Table only)
+- **Border Hairline (暖砂岩细边)**: `#E5E0D6` / `#ECE7DE`
+- **Ink Palette (暖炭墨度)**:
+  - `Ink 950` (`#1C1917`): Page Hero H1, H2
+  - `Ink 800` (`#292524`): Section H3, Body text, Data text, Form inputs
+  - `Ink 600` (`#78716C`): Table header, timestamps, metadata (Legibility baseline)
+  - `Ink 400` (`#A8A29E`): Placeholder, disabled states, micro-badges
 
 ## 3. Typography Hierarchy
 - **Font Stack**: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif.
-- **Numbers**: Always apply `tabular-nums` for alignment.
+- **Numbers**: Always apply `tabular-nums` for tabular data.
 - **Scale**:
-  - `H1`: 24px / 600 weight / `text-zinc-950`
-  - `H2`: 18px / 600 weight / `text-zinc-950`
-  - `H3`: 16px / 500 weight / `text-zinc-900`
-  - `H4`: 14px / 500 weight / `text-zinc-900`
-  - `Body`: 14px / 400 weight / `text-zinc-800`
-  - `Caption / Th`: 13px / 500 or 400 weight / `text-zinc-600`
-  - `Badge`: 12px / 500 weight / `text-zinc-500`
+  - `H1`: 24px / 600 weight / `#1C1917`
+  - `H2`: 18px / 600 weight / `#1C1917`
+  - `H3`: 16px / 500 weight / `#292524`
+  - `H4`: 14px / 500 weight / `#292524`
+  - `Body`: 14px / 400 weight / `#292524`
+  - `Caption / Th`: 13px / 500 or 400 weight / `#78716C`
+  - `Badge`: 12px / 500 weight / `#78716C`
 
 ## 4. Layout & Spacing
 - **4-Level Spatial Rhythms**:
@@ -45,3 +44,4 @@
 - ❌ Do not use font-semibold (600) on elements smaller than H2.
 - ❌ Do not use decorative gradients or loud background glows.
 - ❌ Do not show congratulatory toasts for standard non-destructive visible actions.
+- ❌ Do not make data tables transparent/yellow without a white paper sheet.
