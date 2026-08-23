@@ -158,7 +158,92 @@
 - **图例触发**：≥3 系列才引入图例
 - **色彩限制**：同一图表最多 3 色系列
 
-### 5.4 控制栏
+### 5.4 控制栏 
 
 - **去框平铺**：`bg-transparent`，功能群之间用 16px 微竖线隔离
 - **按钮高度**：`h-7`（28px），内边距 `px-2.5`
+
+### 5.5 空状态的禅意留白
+
+空状态传递「宁静与完成」而非「缺失焦虑」：一个 16-20px 单线细图标（或省略）+ 一行 13px 克制说明（如「今日暂无待办」而非「暂无数据」）+ 极大垂直留白（py-16~24）撑开从容感。禁止大幅插画、彩色空状态图、感叹号、鼓励式文案。
+
+---
+
+## 6. 深层质感规格（进阶）
+
+### 6.1 区块分隔优先级
+
+| 优先级 | 手段 | 代码 |
+|---|---|---|
+| 1 | 大留白断层 | `gap-10`（40px）/ `gap-12`（48px） |
+| 2 | 单条发丝线 | `border-b border-[#ECE7DE]/80 pb-10` |
+| 3 | 弱底色微气垫 | `bg-[#F5F3EE] rounded-lg p-4`（零边框） |
+| 4 | 边框（最后手段） | `border border-[#E5E0D6]`（仅表格/浮层） |
+
+### 6.2 发丝级表格
+
+| 部位 | 规格 |
+|---|---|
+| 表头 | 无背景色，`text-[11px] font-medium text-[#78716C] tracking-wider uppercase` |
+| 行分隔 | 仅底边 `border-b border-[#ECE7DE]/60`，无竖线 |
+| 行 Hover | `hover:bg-[#F5F3EE]/40` |
+
+**禁止**：表头背景色、竖向网格线、斑马纹。
+
+### 6.3 状态色降饱和
+
+除唯一主 CTA 外，所有状态降级：
+
+| 语义 | 字色 | 底色 |
+|---|---|---|
+| 成功 / 正常 | `text-[#6FAA7D]` | `bg-[#6FAA7D]/10` |
+| 警示 / 待处理 | `text-[#B98A54]` | `bg-[#B98A54]/10` |
+| 异常 / 失败 | `text-[#C0685C]` | `bg-[#C0685C]/10` |
+| 中性 / 已归档 | `text-[#78716C]` | `bg-[#F5F3EE]` |
+
+**禁止**：`bg-green-500` / `bg-red-500` / `bg-blue-500` 饱和实底。
+
+### 6.4 漫反射阴影
+
+```css
+--shadow-claude-float:  0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -4px rgba(28,25,23,0.05);
+--shadow-claude-dialog: 0 1px 3px rgba(0,0,0,0.02), 0 12px 32px -4px rgba(28,25,23,0.06);
+```
+
+下拉/Popover → `--shadow-claude-float`；Dialog/Drawer → `--shadow-claude-dialog`。
+
+**禁止**：`shadow-lg/xl/2xl`。
+
+### 6.5 物理动效
+
+| 场景 | 规格 |
+|---|---|
+| 按钮按压 | `active:scale-[0.985] active:duration-75` |
+| 抽屉/折叠 | `ease-[cubic-bezier(0.16,1,0.3,1)] duration-300` |
+| 聚焦光晕 | `focus-visible:ring-1 ring-[#D97757]/30 ring-offset-2 ring-offset-[#FBF9F5]` |
+
+### 6.6 骨架屏显影
+
+底色 `bg-[#F5F3EE]`，呼吸 `2.5s`，数据返回 `120ms` 淡入 + 微上浮 `2px`。
+
+### 6.7 毛玻璃吸顶
+
+导航栏、Sticky 表头：`bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/80`
+
+### 6.8 衬线标题（局部点睛）
+
+仅用于首页 Hero、AI 洞察/诊断结论、报告总结语：
+
+```
+font-serif text-2xl font-semibold text-[#1C1917] text-balance
+```
+
+字体栈：`Iowan Old Style, Charter, Georgia, "Songti SC", serif`
+
+**严禁**：表格、表单、按钮、导航、数据列使用衬线。
+
+### 6.9 空状态
+
+垂直留白 `py-16`（常规）/ `py-24`（整页），图标 16-20px 单线色 `#A8A29E`（或省略），说明 `text-[13px] text-[#78716C]` 业务化措辞。
+
+**禁止**：插画、彩色图、感叹号、「暂无数据」系统语。
