@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X, Zap } from "lucide-react";
+import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -160,12 +160,8 @@ export function VideoSubmitPanel({
   onActiveBizDateChange,
 }: VideoSubmitPanelProps) {
   const router = useRouter();
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const handleGoToGrowth = useCallback(() => {
-    setIsRedirecting(true);
-    setTimeout(() => {
-      router.push("/growth");
-    }, 800);
+    router.push("/growth");
   }, [router]);
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
@@ -570,23 +566,16 @@ export function VideoSubmitPanel({
 
             {primarySummary && isPrimarySummaryMode && !submittedViewActive ? (
               <motion.div 
-                initial={{ scale: 0.96, opacity: 0, backgroundColor: "#6FAA7D0A" }}
-                animate={{ scale: 1, opacity: 1, backgroundColor: "#FAFAF9" }}
-                transition={{ 
-                  scale: { type: "spring", stiffness: 300, damping: 24 },
-                  opacity: { duration: 0.2 },
-                  backgroundColor: { duration: 1.5, delay: 0.2 }
-                }}
-                className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-gradient-to-br from-white to-zinc-50/50 p-6 text-[13px] text-zinc-700 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] animate-[fadeIn_0.5s_ease-out]"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-6 text-[13px] text-zinc-700 shadow-xs"
               >
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
                   <div className="space-y-4 flex-1">
                     <div className="flex flex-wrap items-center gap-2 text-[13px] font-medium">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/10 px-2.5 py-1 text-[12px] font-medium text-[#6FAA7D]">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#6FAA7D]/60 motion-safe:animate-ping opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6FAA7D]" />
-                        </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#16A34A]/10 px-2.5 py-1 text-[12px] font-medium text-[#16A34A]">
+                        <span className="inline-block size-2 rounded-full bg-[#16A34A]" />
                         今日数据已提交
                       </span>
                     </div>
@@ -603,7 +592,7 @@ export function VideoSubmitPanel({
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">播放量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined 
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN") 
                             : "--"}
@@ -611,7 +600,7 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">互动总量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
                           {((primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
                             (primarySummary.shares ?? 0) +
@@ -620,7 +609,7 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">涨粉</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined 
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN") 
                             : "--"}
@@ -628,7 +617,7 @@ export function VideoSubmitPanel({
                       </div>
                       <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
                         <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">完播率</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800 tabular-nums">
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
                           {primarySummary.completionRate ?? "--"}
                         </div>
                       </div>
@@ -638,15 +627,15 @@ export function VideoSubmitPanel({
                   <div className="flex shrink-0 flex-col gap-3 lg:w-[200px]">
                     <Button
                       type="button"
-                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C96442] text-white text-[13px] font-medium transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-medium transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
                       onClick={handleGoToGrowth}
                     >
-                      去查看我的成长与大盘数据 🚀
+                      查看成长分析
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-10 rounded-xl border-zinc-200 bg-white text-[13px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 transition-colors duration-150"
+                      className="h-10 rounded-xl border-zinc-200 bg-white text-[13px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 transition-colors duration-150 cursor-pointer"
                       onClick={() => setRequestedMode("editToday")}
                     >
                       <PencilLine className="size-4 stroke-[1.5]" />
@@ -776,32 +765,6 @@ export function VideoSubmitPanel({
           ) : null}
         </DialogContent>
       </Dialog>
-
-      <AnimatePresence>
-        {isRedirecting && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/85 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="flex flex-col items-center gap-4 text-center"
-            >
-              <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#D97757] to-[#C9503B] text-white shadow-md shadow-[#D97757]/20 animate-bounce">
-                <Zap className="size-6 stroke-[2] fill-current" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-[14px] font-semibold text-zinc-900">数据同步中</h4>
-                <p className="text-[12px] text-zinc-500">正在前往数据分析...</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

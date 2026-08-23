@@ -126,10 +126,10 @@ export function SubmissionSlotsSection({
         handleGlobalFiles(e.dataTransfer.files);
       }}
       className={cn(
-        "flex flex-col h-full rounded-xl border border-dashed p-3.5 transition-all duration-200",
+        "flex flex-col h-full rounded-xl bg-zinc-100/60 p-3.5 transition-all duration-200",
         isDragOverGlobal
-          ? "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/20 shadow-md"
-          : "border-zinc-200/90 bg-zinc-50/40"
+          ? "border-2 border-dashed border-[#D97757] bg-[#D97757]/[0.03] ring-2 ring-[#D97757]/20 shadow-md"
+          : "border border-transparent"
       )}
     >
       {/* 隐藏的全局多图选择 input */}
@@ -154,7 +154,7 @@ export function SubmissionSlotsSection({
         <button
           type="button"
           onClick={() => globalFileInputRef.current?.click()}
-          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C96442] hover:underline transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline transition-colors cursor-pointer"
         >
           <Plus className="size-3 stroke-[2.5]" />
           <span>选多张</span>
@@ -211,11 +211,11 @@ export function SubmissionSlotsSection({
               className={cn(
                 "relative flex flex-col justify-center flex-1 min-h-[92px] rounded-xl border p-3 transition-colors duration-100",
                 slot.status === "empty"
-                  ? "border-dashed border-zinc-300/90 bg-white/70 hover:border-[#D97757]/70 hover:bg-[#FDF9F7]/40 cursor-pointer shadow-2xs"
-                  : "border-zinc-200 bg-white shadow-xs",
+                  ? "border-zinc-200/70 bg-white/80 hover:border-[#D97757] hover:bg-white cursor-pointer shadow-2xs"
+                  : "border-zinc-200 bg-white shadow-2xs",
                 isSlotDragTarget && "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/30",
                 isFocused && "border-[#D97757]/80 ring-2 ring-[#D97757]/20 bg-[#FDF9F7]/35",
-                isError && "border-[#C9604D]/40 bg-[#FFF9F8]"
+                isError && "border-[#DC2626]/40 bg-[#FFF9F8]"
               )}
               onClick={() => {
                 if (slot.status === "empty") {
