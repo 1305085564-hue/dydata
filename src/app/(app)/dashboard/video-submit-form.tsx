@@ -2359,8 +2359,8 @@ export function VideoSubmitForm({
 
                   {/* ===== 【右栏：核心数据与内容创作 (1fr)】 ===== */}
                   <div className="flex flex-col justify-between space-y-3 min-w-0">
-                    {/* 1. 指标录入区 */}
-                    <div ref={metricsSectionRef} className="space-y-3">
+                    {/* 1. 指标录入区 (顶部 pt-2 与左侧截图卡片内边距光学平齐) */}
+                    <div ref={metricsSectionRef} className="space-y-3 pt-2">
                       <指标分组区
                         fields={fields}
                         onFieldChange={updateField}
@@ -2379,7 +2379,7 @@ export function VideoSubmitForm({
                     {/* 2. 视频内容资料区 (标题 + 文案) */}
                     <div
                       ref={metaSectionRef}
-                      className="space-y-3 pt-3.5 flex-1 flex flex-col justify-between min-w-0"
+                      className="space-y-3 pt-5 flex-1 flex flex-col justify-between min-w-0"
                     >
                       {/* 视频标题 */}
                       <div
