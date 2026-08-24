@@ -353,49 +353,163 @@ export function VideoSubmitPanelV2({
     setEditingReport(report);
   }, []);
 
+  const dismissPendingExemption = useCallback(() => {
+    setDismissedPendingExemption(true);
+    try {
+      window.localStorage.setItem("dydata:dismissed-pending-exemption", JSON.stringify({ date: today }));
+    } catch {}
+  }, [today]);
+
+  const openDatePicker = useCallback(() => {
+    dateInputRef.current?.showPicker();
+  }, []);
+
+  // 加载观察结论
+  useEffect(() => {
+    if (!selectedAccountId) return;
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      setWatchConclusion(null);
+      fetch(`/api/dashboard/watch-overview?account_id=${selectedAccountId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (!cancelled && data && data.conclusion) {
+            setWatchConclusion(data.conclusion);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch watch overview", err));
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [selectedAccountId]);
+
   const isActivityLoading = !activityData && !activityError;
   const historyReports = activityData?.history ?? history;
 
   return (
     <>
       <div className="mx-auto w-full space-y-6 px-4 py-6 lg:px-6">
-        {/* 头部：账号选择 */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#ECE7DE]">
-          <div>
+        {/* 头部：账号选择 + 日期选择 */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between pb-4 border-b border-[#ECE7DE]">
+          <div className="flex-1">
             <h1 className="text-[20px] font-semibold text-[#1C1917] tracking-tight">
               今日提交工作台
             </h1>
             <p className="text-[13px] text-[#78716C] mt-1">
               记录运营数据，提交今日内容
             </p>
+            {watchConclusion && (
+              <p className="text-[12px] text-[#78716C] mt-2 max-w-md">
+                {watchConclusion}
+              </p>
+            )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* 日期选择器 */}
+            {!embeddedChrome && (
+              <div className="space-y-1">
+                <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C]">
+                  {activeBizDate === today ? "今天" : "补交日期"}
+                </div>
+                <button
+                  type="button"
+                  onClick={openDatePicker}
+                  aria-label="选择填报日期或补交历史"
+                  className="group inline-flex items-center gap-2.5 rounded-xl border border-[#E5E0D6]/90 bg-white px-4 py-2.5 text-[13px] font-medium text-[#1C1917] shadow-sm transition-all hover:border-[#78716C]/40 hover:shadow-md focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                >
+                  <CalendarDays className="size-4 text-[#78716C] transition-transform group-hover:scale-105" />
+                  <div className="flex flex-col leading-none space-y-1">
+                    <span className="text-base font-semibold tracking-tight text-[#1C1917]">
+                      {activeBizDate === today ? "提交今日" : "补交历史"}
+                    </span>
+                    <span className="text-[12px] font-normal tabular-nums text-[#78716C] group-hover:text-[#292524] transition-colors">
+                      {activeBizDate} ▾
+                    </span>
+                  </div>
+                </button>
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={activeBizDate}
+                  max={today}
+                  onChange={(event) => selectBizDate(event.target.value)}
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+              </div>
+            )}
+
             {/* 账号选择下拉 */}
-            <select
-              value={selectedAccountId}
-              onChange={(e) => handleAccountChange(e.target.value)}
-              className="h-10 rounded-lg border border-[#E5E0D6] bg-white px-4 text-[13px] font-medium text-[#292524] shadow-sm outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
-            >
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.display_name}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-1">
+              <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C]">
+                账号
+              </div>
+              <select
+                value={selectedAccountId}
+                onChange={(e) => handleAccountChange(e.target.value)}
+                className="h-[42px] w-full sm:w-auto rounded-xl border border-[#E5E0D6] bg-white px-4 text-[13px] font-medium text-[#292524] shadow-sm outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+              >
+                {accounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.display_name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* 历史记录按钮 */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsHistoryOpen(true)}
-              className="h-10 rounded-lg border-[#E5E0D6] bg-white text-[13px] font-medium text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] transition-colors"
-            >
-              <History className="size-4 mr-1.5" />
-              历史记录
-            </Button>
+            <div className="space-y-1">
+              <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C] opacity-0 pointer-events-none">
+                操作
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsHistoryOpen(true)}
+                className="h-[42px] w-full sm:w-auto rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] transition-colors shadow-sm"
+              >
+                <History className="size-4 mr-1.5" />
+                历史记录
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* 待审批豁免提示横幅 */}
+        {hasPendingExemption && !dismissedPendingExemption && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-[#D99E55]/30 bg-[#D99E55]/10 p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Clock className="size-5 shrink-0 text-[#D99E55] mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-[13px] font-semibold text-[#8A6A2F]">
+                    豁免申请审批中
+                  </p>
+                  <p className="text-[12px] leading-[1.7] text-[#78716C]">
+                    你的豁免申请正在等待管理员审批，审批结果将在这里更新。
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={dismissPendingExemption}
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#78716C] transition-colors hover:bg-[#FBF9F5] hover:text-[#292524]"
+              >
+                <X className="size-3.5" />
+                关闭
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* 主内容区 */}
         <Card className="border-[#ECE7DE] shadow-sm">
