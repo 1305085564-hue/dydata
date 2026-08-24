@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: "记录抖音运营数据，查看团队进度与今日待办。",
 };
 
+// 禁用静态生成 - dashboard 页面需要用户会话数据
+export const dynamic = "force-dynamic";
+
 /**
  * 今日提交页面
  *
