@@ -305,7 +305,7 @@ export function ResultTrend({
   );
 
   return (
-    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5">
+    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5 w-full min-w-0 max-w-full">
       <div className="flex flex-col gap-4 border-b border-[#E5E0D6] pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <h3 className="text-base font-medium tracking-tight text-[#1C1917]">结果趋势</h3>
@@ -359,7 +359,7 @@ export function ResultTrend({
         </div>
       </div>
 
-      <div className="mt-4 h-[280px] w-full sm:h-[320px]">
+      <div className="mt-4 h-[280px] w-full min-w-0 max-w-full sm:h-[320px]">
         {isLoading ? (
           <ChartSkeleton />
         ) : sorted.length < 2 ? (

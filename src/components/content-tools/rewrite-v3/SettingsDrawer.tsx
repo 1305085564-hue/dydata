@@ -138,7 +138,7 @@ export function SettingsDrawer({
         <button
           onClick={onClose}
           aria-label="关闭设置"
-          className="p-1 rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917]"
+          className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
@@ -152,7 +152,7 @@ export function SettingsDrawer({
             setEditingSkill(null);
           }}
           className={cn(
-            "px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all",
+            "px-4 py-2 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-[12px] font-medium border-b-2 transition-all cursor-pointer",
             activeTab === "skills"
               ? "border-[#1C1917] text-[#1C1917]"
               : "border-transparent text-[#78716C] hover:text-[#1C1917]",
@@ -166,7 +166,7 @@ export function SettingsDrawer({
             setEditingSkill(null);
           }}
           className={cn(
-            "px-4 py-1.5 text-[12px] font-medium border-b-2 transition-all",
+            "px-4 py-2 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-[12px] font-medium border-b-2 transition-all cursor-pointer",
             activeTab === "params"
               ? "border-[#1C1917] text-[#1C1917]"
               : "border-transparent text-[#78716C] hover:text-[#1C1917]",
@@ -263,7 +263,7 @@ export function SettingsDrawer({
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => setEditingSkill(null)}
-                  className="flex-1 bg-[#F5F3EE] hover:bg-[#E5E0D6] hover:text-[#1C1917] font-medium py-2 rounded-lg text-[12px] transition-all active:scale-[0.985] active:duration-75"
+                  className="flex-1 bg-[#F5F3EE] hover:bg-[#E5E0D6] hover:text-[#1C1917] font-medium h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-lg text-[12px] transition-all active:scale-[0.985] active:duration-75 cursor-pointer"
                 >
                   取消
                 </button>
@@ -272,7 +272,7 @@ export function SettingsDrawer({
                   disabled={
                     isSubmitting || !skillName.trim() || !skillPrompt.trim()
                   }
-                  className="flex-1 bg-[#D97757] text-white hover:bg-[#C96442] disabled:opacity-50 font-medium py-2 rounded-lg text-[12px] shadow-sm shadow-[#D97757]/20 transition-all active:scale-[0.985] active:duration-75"
+                  className="flex-1 bg-[#D97757] text-white hover:bg-[#C96442] disabled:opacity-50 font-medium h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-lg text-[12px] shadow-sm shadow-[#D97757]/20 transition-all active:scale-[0.985] active:duration-75 cursor-pointer"
                 >
                   {isSubmitting ? "保存中..." : "确认保存"}
                 </button>
@@ -287,7 +287,7 @@ export function SettingsDrawer({
                 </span>
                 <button
                   onClick={startCreate}
-                  className="inline-flex items-center gap-1 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 px-2 py-0.5 rounded-lg text-[12px] font-medium transition-all active:scale-[0.985] active:duration-75"
+                  className="inline-flex items-center gap-1 bg-[#D97757]/10 text-[#D97757] hover:bg-[#D97757]/20 px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-[12px] font-medium transition-all active:scale-[0.985] active:duration-75 cursor-pointer"
                 >
                   <Plus className="h-3 w-3" />
                   <span>添加技能</span>
@@ -324,14 +324,14 @@ export function SettingsDrawer({
                       <div className="flex items-center gap-1.5 ml-3 shrink-0">
                         <button
                           onClick={() => startEdit(skill)}
-                          className="p-1 hover:bg-[#F5F3EE] rounded-lg text-[#78716C] hover:text-[#1C1917]"
+                          className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center hover:bg-[#F5F3EE] rounded-lg text-[#78716C] hover:text-[#1C1917] cursor-pointer"
                           title="编辑技能"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteSkill(skill.id)}
-                          className="p-1 hover:bg-[#F5F3EE] rounded-lg text-[#78716C] hover:text-[#DC2626]"
+                          className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center hover:bg-[#F5F3EE] rounded-lg text-[#78716C] hover:text-[#DC2626] cursor-pointer"
                           title="删除技能"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

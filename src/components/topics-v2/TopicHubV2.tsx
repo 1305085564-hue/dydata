@@ -336,7 +336,7 @@ export function TopicHubV2() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#292524] p-4 sm:p-6 lg:p-8 font-sans antialiased">
+    <div className="min-h-screen bg-[#FBF9F5] text-[#292524] px-0 py-1 sm:p-6 lg:p-8 font-sans antialiased">
       {/* Toast 轻提示 (z-[70] 层级高于所有抽屉弹窗) */}
       {toastMsg && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -405,7 +405,7 @@ export function TopicHubV2() {
                 type="button"
                 onClick={refreshAll}
                 disabled={activeLoading || poolLoading || claimsLoading}
-                className="p-2 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all duration-150 disabled:opacity-50 cursor-pointer"
+                className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all duration-150 disabled:opacity-50 cursor-pointer"
                 title="刷新最新数据"
                 aria-label="刷新最新数据"
               >

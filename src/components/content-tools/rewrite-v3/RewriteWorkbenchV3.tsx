@@ -39,6 +39,7 @@ export function RewriteWorkbenchV3() {
   const [presentationMode, setPresentationMode] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
   const [showDiffInLatest, setShowDiffInLatest] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"chat" | "canvas">("chat");
 
   // 紧凑模型组合下拉
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
@@ -284,8 +285,37 @@ export function RewriteWorkbenchV3() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-[#FBF9F5]">
       {/* 极简顶栏 */}
-      <header className="relative z-35 flex h-12 shrink-0 items-center justify-between border-b border-[#E5E0D6] bg-white px-4">
-        <div className="flex items-center gap-6">
+      <header className="relative z-35 flex h-12 shrink-0 items-center justify-between border-b border-[#E5E0D6] bg-white px-2.5 sm:px-4 gap-2">
+        {/* 移动端视图切换 Tabs (< 768px) */}
+        <div className="flex md:hidden items-center gap-1 rounded-lg bg-[#F5F3EE] p-0.5 border border-[#E5E0D6] shrink-0">
+          <button
+            type="button"
+            onClick={() => setMobileTab("chat")}
+            className={cn(
+              "px-3 py-1.5 min-h-[44px] text-[12px] rounded-md font-medium transition-colors cursor-pointer flex items-center justify-center",
+              mobileTab === "chat"
+                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                : "text-[#78716C]"
+            )}
+          >
+            改写对话
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("canvas")}
+            className={cn(
+              "px-3 py-1.5 min-h-[44px] text-[12px] rounded-md font-medium transition-colors cursor-pointer flex items-center justify-center",
+              mobileTab === "canvas"
+                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                : "text-[#78716C]"
+            )}
+          >
+            定稿画布
+          </button>
+        </div>
+
+        {/* 桌面端左侧操作组 (>= 768px) */}
+        <div className="hidden md:flex items-center gap-6">
           <div className="flex items-center gap-3">
             {/* 产品标识 (单色灰阶) */}
             <div className="flex items-center gap-1.5 font-sans select-none mr-1">
@@ -373,7 +403,7 @@ export function RewriteWorkbenchV3() {
                     const disabled =
                       (item as { is_enabled?: boolean; isEnabled?: boolean })
                         .is_enabled === false ||
-                       (item as { is_enabled?: boolean; isEnabled?: boolean })
+                      (item as { is_enabled?: boolean; isEnabled?: boolean })
                         .isEnabled === false;
                     return (
                       <button
@@ -414,9 +444,9 @@ export function RewriteWorkbenchV3() {
         </div>
 
         {/* 右侧：顶栏操作组 */}
-        <div className="flex items-center gap-3">
-          {/* 撤销/重做 (渐进式显影) */}
-          <div className="flex items-center gap-0.5 mr-1 pr-2 border-r border-[#E5E0D6]">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* 撤销/重做 (桌面端展示) */}
+          <div className="hidden sm:flex items-center gap-0.5 mr-1 pr-2 border-r border-[#E5E0D6]">
             <button
               onClick={actions.handleUndo}
               disabled={!state.historyState.canUndo || state.isSending}
@@ -441,7 +471,7 @@ export function RewriteWorkbenchV3() {
           <button
             onClick={() => setShowDiffInLatest(!showDiffInLatest)}
             className={cn(
-              "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.985] active:duration-75",
+              "hidden sm:inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all active:scale-[0.985] active:duration-75",
               showDiffInLatest
                 ? "bg-[#1C1917]/[0.08] text-[#292524] hover:bg-[#1C1917]/[0.12]"
                 : "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917]",
@@ -460,7 +490,7 @@ export function RewriteWorkbenchV3() {
           <button
             onClick={handleCopyAll}
             disabled={!state.polishedText}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#F5F3EE] px-2.5 text-[12px] font-medium text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917] transition-all active:scale-[0.985] active:duration-75 disabled:opacity-40"
+            className="inline-flex min-h-[44px] sm:min-h-0 sm:h-7 items-center gap-1 rounded-md bg-[#F5F3EE] px-2.5 text-[12px] font-medium text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917] transition-all active:scale-[0.985] active:duration-75 disabled:opacity-40 cursor-pointer"
           >
             <Copy className="h-3 w-3 text-[#78716C]" />
             <span>{copiedAll ? "已复制" : "复制"}</span>
@@ -469,11 +499,11 @@ export function RewriteWorkbenchV3() {
           {/* 定稿导出 (唯一主 CTA) */}
           <button
             onClick={() => setPresentationMode(true)}
-            className="inline-flex h-7 items-center gap-1 rounded-md bg-[#D97757] text-white hover:bg-[#C96442] px-3.5 py-0.5 text-[12px] font-medium active:scale-[0.985] active:duration-75 transition-all"
+            className="inline-flex min-h-[44px] sm:min-h-0 sm:h-7 items-center gap-1 rounded-md bg-[#D97757] text-white hover:bg-[#C96442] px-3.5 py-0.5 text-[12px] font-medium active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
             title="进入纯净全屏阅览室并支持导出"
           >
             <FileText className="h-3 w-3 text-white/90" />
-            <span>定稿导出</span>
+            <span>导出</span>
           </button>
         </div>
       </header>
@@ -481,6 +511,9 @@ export function RewriteWorkbenchV3() {
       {/* 主界面布局 */}
       <div
         ref={containerRef}
+        style={{
+          "--workbench-left-width": `${leftWidthPercent}%`,
+        } as React.CSSProperties}
         className={cn(
           "flex-1 flex min-h-0 overflow-hidden relative",
           isResizing && "select-none cursor-col-resize",
@@ -494,10 +527,12 @@ export function RewriteWorkbenchV3() {
           isOpen={state.isHistoryOpen}
         />
 
-        {/* 左侧：操作控制区（宽度可动态拖拽调节，默认 35%） */}
+        {/* 左侧：操作控制区 */}
         <aside
-          style={{ width: `${leftWidthPercent}%` }}
-          className="shrink-0 min-w-[340px] flex flex-col border-r border-[#E5E0D6] bg-[#F5F3EE]/70 relative z-20"
+          className={cn(
+            "shrink-0 flex flex-col border-r border-[#E5E0D6] bg-[#F5F3EE]/70 relative z-20 w-full md:w-[var(--workbench-left-width,35%)] md:min-w-[340px]",
+            mobileTab === "chat" ? "flex flex-1" : "hidden md:flex",
+          )}
         >
           {/* 核心对话控制台 */}
           <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
@@ -531,12 +566,12 @@ export function RewriteWorkbenchV3() {
           </div>
         </aside>
 
-        {/* 工业级可拖动分栏分隔条 */}
+        {/* 工业级可拖动分栏分隔条 (仅桌面端展示) */}
         <div
           onMouseDown={handleMouseDown}
           onDoubleClick={handleDoubleClick}
           className={cn(
-            "w-[6px] cursor-col-resize shrink-0 transition-colors z-35 relative ml-[-3px] mr-[-3px] flex items-center justify-center group/splitter",
+            "hidden md:flex w-[6px] cursor-col-resize shrink-0 transition-colors z-35 relative ml-[-3px] mr-[-3px] items-center justify-center group/splitter",
             isResizing ? "bg-[#E5E0D6]" : "bg-transparent hover:bg-[#F5F3EE]",
           )}
         >
@@ -553,8 +588,10 @@ export function RewriteWorkbenchV3() {
 
         {/* 右侧：主工作画布 */}
         <main
-          style={{ width: `${100 - leftWidthPercent}%` }}
-          className="flex-1 min-w-[450px] flex flex-col min-h-0 bg-white relative z-10"
+          className={cn(
+            "flex-1 flex flex-col min-h-0 bg-white relative z-10 w-full md:w-[calc(100%-var(--workbench-left-width,35%))] md:min-w-[450px]",
+            mobileTab === "canvas" ? "flex" : "hidden md:flex",
+          )}
         >
           {/* 版本时间轴（双模对比） */}
           <TimelineDiff

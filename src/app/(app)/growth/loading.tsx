@@ -5,9 +5,9 @@ export default function GrowthLoading() {
     <div className="mx-auto w-full max-w-7xl space-y-10 pb-16">
       {/* 顶部标题栏与阶段标识 */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#ECE7DE]/80 pb-6">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-48 bg-[#E5E0D6]" />
-          <Skeleton className="h-4 w-96 bg-[#E5E0D6]" />
+        <div className="space-y-2 min-w-0 max-w-full">
+          <Skeleton className="h-8 w-44 sm:w-48 bg-[#E5E0D6]" />
+          <Skeleton className="h-4 w-56 sm:w-96 max-w-full bg-[#E5E0D6]" />
         </div>
         <Skeleton className="h-8 w-44 rounded-full bg-[#E5E0D6]" />
       </div>
@@ -15,9 +15,9 @@ export default function GrowthLoading() {
       {/* 主卡槽位（进度卡 / 诊断卡） */}
       <div className="border-b border-[#ECE7DE]/80 pb-8 space-y-5">
         <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-4">
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0 max-w-full">
             <Skeleton className="h-3.5 w-36 bg-[#E5E0D6]" />
-            <Skeleton className="h-6 w-80 bg-[#E5E0D6]" />
+            <Skeleton className="h-6 w-52 sm:w-80 max-w-full bg-[#E5E0D6]" />
           </div>
           <Skeleton className="h-6 w-20 rounded-full bg-[#E5E0D6]" />
         </div>

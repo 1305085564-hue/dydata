@@ -96,7 +96,7 @@ export function MyClaimDrawer({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label="打开我的选题库槽位"
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent hover:bg-[#F5F3EE] text-[#292524] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
+        className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent hover:bg-[#F5F3EE] text-[#292524] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
       >
         <span className="w-2 h-2 rounded-full bg-[#D97757]" />
         <Layers className="w-3.5 h-3.5 text-[#78716C]" />
@@ -142,7 +142,7 @@ export function MyClaimDrawer({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-[#78716C] hover:text-[#292524] p-1 rounded-lg hover:bg-[#F5F3EE] transition-colors"
+                className="text-[#78716C] hover:text-[#292524] p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg hover:bg-[#F5F3EE] transition-colors cursor-pointer"
                 title="关闭"
                 aria-label="关闭"
               >
@@ -188,7 +188,7 @@ export function MyClaimDrawer({
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE]"
+                  className="mt-3 inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] cursor-pointer"
                   aria-label="重试加载"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -250,7 +250,7 @@ export function MyClaimDrawer({
                                   onClick={(e) =>
                                     handleStartScripting(e, claim.subTopicId)
                                   }
-                                  className="px-2 py-0.5 rounded bg-[#D97757] text-white hover:bg-[#C46A4D] text-xs transition-colors font-medium shadow-2xs"
+                                  className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#D97757] text-white hover:bg-[#C46A4D] text-xs transition-colors font-medium shadow-2xs cursor-pointer"
                                   aria-label="开始写脚本"
                                 >
                                   开始写脚本
@@ -261,7 +261,7 @@ export function MyClaimDrawer({
                                   onClick={(e) =>
                                     handleReturn(e, claim.subTopicId)
                                   }
-                                  className="px-2 py-0.5 rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal"
+                                  className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal cursor-pointer"
                                   aria-label="放回选题"
                                 >
                                   放回
@@ -317,7 +317,7 @@ export function MyClaimDrawer({
                                 onClick={(e) =>
                                   handleReturn(e, claim.subTopicId)
                                 }
-                                className="px-2 py-0.5 rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal"
+                                className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal cursor-pointer"
                                 aria-label="放回选题"
                               >
                                 放回

@@ -87,7 +87,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
               key={skill.id}
               onClick={() => onToggleSkill(skill)}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.985] active:duration-75',
+                'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.985] active:duration-75 cursor-pointer',
                 isActive
                   ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
                   : 'bg-white border-[#E5E0D6] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]'
@@ -107,7 +107,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.985] active:duration-75',
+          'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.985] active:duration-75 cursor-pointer',
           isOpen
             ? 'bg-[#E5E0D6]/80 border-[#E5E0D6] text-[#1C1917]'
             : 'bg-white border-[#E5E0D6] text-[#78716C] hover:border-[#E5E0D6] hover:text-[#1C1917] shadow-sm'
@@ -128,7 +128,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
             <button
               onClick={() => setIsOpen(false)}
               aria-label="关闭技能舱"
-              className="p-1 rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917]"
+              className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -151,7 +151,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                           key={skill.id}
                           onClick={() => handleSelectSkill(skill)}
                           className={cn(
-                            'group flex items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.985] active:duration-75',
+                            'group flex min-h-[44px] sm:min-h-0 items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.985] active:duration-75 cursor-pointer',
                             isActive
                               ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757]'
                               : 'bg-white border-[#E5E0D6] text-[#292524] hover:border-[#E5E0D6] hover:bg-[#FBF9F5]/85'

@@ -150,6 +150,23 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
+  @media (max-width: 640px) {
+    .app-shell-metric-strip[data-columns="3"],
+    .app-shell-metric-strip[data-columns="4"],
+    .app-shell-metric-strip[data-columns="5"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 380px) {
+    .app-shell-metric-strip[data-columns="2"],
+    .app-shell-metric-strip[data-columns="3"],
+    .app-shell-metric-strip[data-columns="4"],
+    .app-shell-metric-strip[data-columns="5"] {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+  }
+
   .app-shell-metric {
     display: flex;
     min-height: 4.5rem;

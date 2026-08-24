@@ -276,7 +276,7 @@ export function InteractionTrend({
   );
 
   return (
-    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5">
+    <section className="rounded-md bg-white shadow-sm p-4 sm:p-5 w-full min-w-0 max-w-full">
       <div className="flex flex-col gap-2 border-b border-[#E5E0D6] pb-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
@@ -313,7 +313,7 @@ export function InteractionTrend({
         </div>
       </div>
 
-      <div className="mt-4 h-[280px] w-full sm:h-[320px]">
+      <div className="mt-4 h-[280px] w-full min-w-0 max-w-full sm:h-[320px]">
         {isLoading ? (
           <ChartSkeleton />
         ) : sorted.length < 2 ? (

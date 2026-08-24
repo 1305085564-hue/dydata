@@ -475,7 +475,7 @@ export default function SubTopicDetailPage({
           无法显示选题信息，该选题可能已被删除。
         </p>
         <Link href="/topics">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0">
             返回选题池
           </Button>
         </Link>
@@ -492,7 +492,7 @@ export default function SubTopicDetailPage({
         <button
           type="button"
           onClick={() => router.back()}
-          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors"
+          className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors py-2 px-1 cursor-pointer"
         >
           <ChevronLeft className="size-4 text-[#78716C]" />
           <span>返回选题池</span>
@@ -504,7 +504,7 @@ export default function SubTopicDetailPage({
               size="xs"
               variant="outline"
               onClick={() => setEditDialogOpen(true)}
-              className="h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] gap-1.5 text-[12px] font-medium transition-all"
+              className="h-auto min-h-[44px] sm:min-h-0 sm:h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] gap-1.5 text-[12px] font-medium transition-all cursor-pointer"
             >
               <Edit2 className="size-3.5 text-[#78716C]" />
               <span>编辑选题</span>
@@ -513,7 +513,7 @@ export default function SubTopicDetailPage({
               size="xs"
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
-              className="h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30 gap-1.5 text-[12px] font-medium transition-all"
+              className="h-auto min-h-[44px] sm:min-h-0 sm:h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30 gap-1.5 text-[12px] font-medium transition-all cursor-pointer"
             >
               <Trash2 className="size-3.5 text-[#C9604D]" />
               <span>删除选题</span>
@@ -533,7 +533,7 @@ export default function SubTopicDetailPage({
             size="xs"
             variant="outline"
             onClick={() => void fetchMyClaims()}
-            className="h-7 text-[12px] border-[#E5E0D6] bg-white hover:bg-[#FBF9F5]"
+            className="h-auto min-h-[44px] sm:min-h-0 sm:h-7 text-[12px] border-[#E5E0D6] bg-white hover:bg-[#FBF9F5] cursor-pointer"
           >
             <RefreshCw className="size-3 mr-1" />
             重新加载
@@ -567,7 +567,7 @@ export default function SubTopicDetailPage({
                         size="sm"
                         disabled={isUpdatingClaim}
                         onClick={() => void handleStartScripting()}
-                        className="h-9.5 px-4 rounded-xl bg-[#F5F3EE] hover:bg-[#F5F3EE] hover:text-[#1C1917] text-[#292524] text-[12.5px] font-medium transition-colors"
+                        className="h-11 sm:h-9.5 min-h-[44px] px-4 rounded-xl bg-[#F5F3EE] hover:bg-[#F5F3EE] hover:text-[#1C1917] text-[#292524] text-[12.5px] font-medium transition-colors cursor-pointer"
                       >
                         {isUpdatingClaim ? (
                           <Loader2 className="size-3.5 animate-spin mr-1.5" />
@@ -582,7 +582,7 @@ export default function SubTopicDetailPage({
                         disabled={isUpdatingClaim}
                         onClick={() => void handleReturnClaim()}
                         title="再次点击放回选题池"
-                        className="h-9.5 px-3.5 rounded-xl border-[#E5E0D6] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12.5px] font-medium transition-colors"
+                        className="h-11 sm:h-9.5 min-h-[44px] px-3.5 rounded-xl border-[#E5E0D6] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12.5px] font-medium transition-colors cursor-pointer"
                       >
                         {isUpdatingClaim ? (
                           <Loader2 className="size-3.5 animate-spin mr-1.5" />
@@ -594,7 +594,7 @@ export default function SubTopicDetailPage({
                     </>
                   ) : (
                     <>
-                      <span className="inline-flex h-9.5 items-center gap-1.5 rounded-xl bg-[#C0685C]/10 px-3.5 text-[12.5px] font-medium text-[#C0685C]">
+                      <span className="inline-flex h-11 sm:h-9.5 min-h-[44px] items-center gap-1.5 rounded-xl bg-[#C0685C]/10 px-3.5 text-[12.5px] font-medium text-[#C0685C]">
                         <FileText className="size-3.5" />
                         ⚠️ 脚本写作中
                       </span>
@@ -603,7 +603,7 @@ export default function SubTopicDetailPage({
                         variant="outline"
                         disabled={isUpdatingClaim}
                         onClick={() => void handleReturnClaim()}
-                        className="h-9.5 px-3.5 rounded-xl border-[#E5E0D6] bg-[#FBF9F5] text-[#292524] hover:bg-[#F5F3EE] text-[12.5px] font-medium transition-colors"
+                        className="h-11 sm:h-9.5 min-h-[44px] px-3.5 rounded-xl border-[#E5E0D6] bg-[#FBF9F5] text-[#292524] hover:bg-[#F5F3EE] text-[12.5px] font-medium transition-colors cursor-pointer"
                       >
                         {isUpdatingClaim ? (
                           <Loader2 className="size-3.5 animate-spin mr-1.5" />
@@ -620,7 +620,7 @@ export default function SubTopicDetailPage({
                   disabled={isClaiming}
                   onClick={() => void handleClaim()}
                   className={cn(
-                    "h-9.5 px-5.5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all active:scale-[0.985] active:duration-75",
+                    "h-11 sm:h-9.5 min-h-[44px] px-5.5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all active:scale-[0.985] active:duration-75 cursor-pointer",
                     isLimitReached
                       ? "bg-[#D97757]/90 hover:bg-[#D97757]"
                       : "bg-[#D97757] hover:bg-[#D97757]/90",
@@ -771,7 +771,7 @@ export default function SubTopicDetailPage({
                 type="button"
                 onClick={() => handleSortChange("best")}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer",
+                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer min-h-[44px] sm:min-h-0 inline-flex items-center justify-center",
                   worksSort === "best"
                     ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                     : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
@@ -783,7 +783,7 @@ export default function SubTopicDetailPage({
                 type="button"
                 onClick={() => handleSortChange("recent")}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer",
+                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer min-h-[44px] sm:min-h-0 inline-flex items-center justify-center",
                   worksSort === "recent"
                     ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                     : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
@@ -862,7 +862,7 @@ export default function SubTopicDetailPage({
                   variant="ghost"
                   disabled={worksPage <= 1 || loadingWorks}
                   onClick={() => handlePageChange(worksPage - 1)}
-                  className="h-7 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
+                  className="h-11 sm:h-7 min-h-[44px] sm:min-h-0 px-2.5 text-[12px] sm:text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
                 >
                   上一页
                 </Button>
@@ -871,7 +871,7 @@ export default function SubTopicDetailPage({
                   variant="ghost"
                   disabled={worksPage >= totalPages || loadingWorks}
                   onClick={() => handlePageChange(worksPage + 1)}
-                  className="h-7 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
+                  className="h-11 sm:h-7 min-h-[44px] sm:min-h-0 px-2.5 text-[12px] sm:text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
                 >
                   下一页
                 </Button>
@@ -989,7 +989,7 @@ export default function SubTopicDetailPage({
                 variant="outline"
                 size="sm"
                 onClick={() => setEditDialogOpen(false)}
-                className="rounded-xl border-[#E5E0D6] text-[#292524]"
+                className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] text-[#292524] cursor-pointer"
               >
                 取消
               </Button>
@@ -997,7 +997,7 @@ export default function SubTopicDetailPage({
                 type="submit"
                 size="sm"
                 disabled={isSubmittingEdit}
-                className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90"
+                className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90 cursor-pointer"
               >
                 {isSubmittingEdit ? (
                   <Loader2 className="size-3.5 animate-spin mr-1" />
@@ -1030,13 +1030,13 @@ export default function SubTopicDetailPage({
                   size="sm"
                   variant="outline"
                   onClick={() => setDeleteDialogOpen(false)}
-                  className="rounded-xl border-[#E5E0D6]"
+                  className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] cursor-pointer"
                 >
                   取消
                 </Button>
                 <a
                   href={`/admin/content?topicId=${subTopicId}`}
-                  className="inline-flex items-center justify-center h-8 px-3 rounded-xl bg-[#43718E] text-white hover:bg-[#43718E]/90 text-[12px] font-medium transition-all"
+                  className="inline-flex items-center justify-center h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 rounded-xl bg-[#43718E] text-white hover:bg-[#43718E]/90 text-[12px] font-medium transition-all cursor-pointer"
                 >
                   前往视频管理解绑
                 </a>
@@ -1054,7 +1054,7 @@ export default function SubTopicDetailPage({
                   variant="outline"
                   disabled={isDeleting}
                   onClick={() => setDeleteDialogOpen(false)}
-                  className="rounded-xl border-[#E5E0D6]"
+                  className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] cursor-pointer"
                 >
                   取消
                 </Button>
@@ -1063,7 +1063,7 @@ export default function SubTopicDetailPage({
                   size="sm"
                   disabled={isDeleting}
                   onClick={() => void handleDeleteSubmit()}
-                  className="rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90"
+                  className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90 cursor-pointer"
                 >
                   {isDeleting ? (
                     <Loader2 className="size-3.5 animate-spin mr-1" />
@@ -1134,7 +1134,7 @@ export default function SubTopicDetailPage({
               size="sm"
               disabled={isReplacing}
               onClick={() => setReplaceDialogOpen(false)}
-              className="rounded-xl border-[#E5E0D6]"
+              className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] cursor-pointer"
             >
               取消
             </Button>
@@ -1143,7 +1143,7 @@ export default function SubTopicDetailPage({
               size="sm"
               disabled={!selectedReturnId || isReplacing}
               onClick={() => void handleConfirmReplace()}
-              className="rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90"
+              className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90 cursor-pointer"
             >
               {isReplacing ? (
                 <Loader2 className="size-3.5 animate-spin mr-1" />

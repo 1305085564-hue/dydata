@@ -145,8 +145,8 @@ export function SubmissionSlotsSection({
         }}
       />
 
-      {/* 两个槽位上下垂直排布，填满上半区 */}
-      <div className="flex flex-col gap-2.5 flex-1 justify-between min-h-0">
+      {/* 两个槽位在移动端横向并排，在桌面端垂直排布 */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:flex lg:flex-col lg:gap-2.5 flex-1 min-h-0">
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
           const isProcessing = slot.status === "uploading" || slot.status === "recognizing";
@@ -193,7 +193,7 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "relative flex flex-col justify-center flex-1 min-h-[105px] rounded-xl border p-3.5 transition-all duration-150",
+                "relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
                 slot.status === "empty"
                   ? "border-[#ECE7DE] bg-white/90 hover:border-[#D97757]/60 hover:bg-white cursor-pointer shadow-2xs hover:shadow-sm"
                   : "border-[#ECE7DE] bg-white shadow-2xs",
@@ -226,17 +226,17 @@ export function SubmissionSlotsSection({
 
               {slot.status === "empty" ? (
                 /* 空槽位态：极简图标与标题排版，高度饱满舒适 */
-                <div className="flex h-full flex-col justify-center select-none py-1">
-                  <div className="flex items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F5F3EE]/90 text-[#78716C] group-hover:text-[#D97757] group-hover:bg-[#D97757]/10 transition-colors">
-                        <UploadCloud className="size-5 stroke-[1.75]" />
+                <div className="flex h-full flex-col justify-center select-none py-0.5 sm:py-1">
+                  <div className="flex items-center justify-between gap-1.5 sm:gap-2.5">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div className="flex size-7.5 sm:size-8.5 lg:size-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#F5F3EE]/90 text-[#78716C] group-hover:text-[#D97757] group-hover:bg-[#D97757]/10 transition-colors">
+                        <UploadCloud className="size-4 sm:size-4.5 lg:size-5 stroke-[1.75]" />
                       </div>
                       <div className="min-w-0 space-y-0.5">
-                        <div className="text-[13px] font-semibold text-[#292524] leading-tight">
-                          {item.title}截图
+                        <div className="text-[12px] sm:text-[13px] font-semibold text-[#292524] leading-tight truncate">
+                          {item.shortTitle}
                         </div>
-                        <div className="text-[11.5px] text-[#78716C] truncate">
+                        <div className="text-[10.5px] sm:text-[11.5px] text-[#78716C] truncate hidden xs:block">
                           {item.description}
                         </div>
                       </div>
@@ -248,7 +248,7 @@ export function SubmissionSlotsSection({
                           e.stopPropagation();
                           globalFileInputRef.current?.click();
                         }}
-                        className="inline-flex items-center gap-0.5 text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer shrink-0"
+                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-0.5 text-[11px] sm:text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
                         title="选择多张截图自动分流"
                       >
                         <Plus className="size-3 stroke-[2.5]" />
@@ -261,33 +261,33 @@ export function SubmissionSlotsSection({
                 /* 已上传/识别中/已识别/失败态 */
                 <div className="flex h-full flex-col justify-between">
                   {/* 顶栏：标题 + 状态徽标 + 操作按钮 */}
-                  <div className="flex items-center justify-between gap-1.5 pb-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[12px] font-medium text-[#292524] truncate">
+                  <div className="flex items-center justify-between gap-1 pb-0.5">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span className="text-[11.5px] sm:text-[12px] font-medium text-[#292524] truncate">
                         {item.shortTitle}
                       </span>
                       {isProcessing ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.5 text-[11px] font-medium text-[#D97757]">
-                          <Loader2 className="size-2.5 animate-spin stroke-[2]" />
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#D97757]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#D97757]">
+                          <Loader2 className="size-2 animate-spin stroke-[2]" />
                           读取中
                         </span>
                       ) : isSuccess ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#16A34A]/10 px-1.5 py-0.5 text-[11px] font-medium text-[#16A34A]">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#16A34A]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#16A34A]">
                           已识别
                         </span>
                       ) : isWarning ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#D99E55]/10 px-1.5 py-0.5 text-[11px] font-medium text-[#D99E55]">
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#D99E55]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#D99E55]">
                           待核对
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#DC2626]/10 px-1.5 py-0.5 text-[11px] font-medium text-[#DC2626]">
-                          识别失败
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#DC2626]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#DC2626]">
+                          失败
                         </span>
                       )}
                     </div>
 
                     {/* 操作按钮 */}
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-0.5 shrink-0">
                       {canRetry && (
                         <button
                           type="button"
@@ -295,7 +295,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onRetry?.(item.role);
                           }}
-                          className="inline-flex size-5.5 items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] border border-[#E5E0D6] transition-colors cursor-pointer"
+                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] border border-[#E5E0D6] transition-colors cursor-pointer"
                           title="重新识别"
                         >
                           <RefreshCw className="size-2.5" />
@@ -308,7 +308,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onManualFill?.(item.role);
                           }}
-                          className="inline-flex h-5.5 items-center justify-center rounded bg-white px-1.5 text-[10.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#E5E0D6] shadow-2xs transition-colors cursor-pointer"
+                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#E5E0D6] shadow-2xs transition-colors cursor-pointer"
                         >
                           手输
                         </button>
@@ -320,7 +320,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onDelete(item.role);
                           }}
-                          className="inline-flex size-5.5 items-center justify-center rounded text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#DC2626] transition-colors cursor-pointer"
+                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#DC2626] transition-colors cursor-pointer"
                           title="删除截图"
                         >
                           <Trash2 className="size-2.5 stroke-[1.6]" />
@@ -330,19 +330,19 @@ export function SubmissionSlotsSection({
                   </div>
 
                   {/* 中间内容：缩略图 + 描述 */}
-                  <div className="flex items-center gap-2.5 my-0.5 min-w-0">
+                  <div className="flex items-center gap-2 my-0.5 min-w-0">
                     {slot.assetUrl ? (
                       <Dialog>
                         <DialogTrigger
                           render={
-                            <div className="group/preview relative size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] shadow-2xs">
+                            <div className="group/preview relative size-8 sm:size-9 lg:size-11 shrink-0 cursor-zoom-in overflow-hidden rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] shadow-2xs">
                               <img
                                 src={slot.assetUrl}
                                 alt={item.title}
                                 className="h-full w-full object-cover transition-transform duration-200 group-hover/preview:scale-105"
                               />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover/preview:opacity-100 transition-opacity">
-                                <Eye className="size-3 text-white stroke-[2]" />
+                                <Eye className="size-2.5 sm:size-3 text-white stroke-[2]" />
                               </div>
                             </div>
                           }
@@ -357,18 +357,18 @@ export function SubmissionSlotsSection({
                         </DialogContent>
                       </Dialog>
                     ) : (
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#78716C]">
-                        <ImageIcon className="size-4.5 stroke-[1.5]" />
+                      <div className="flex size-8 sm:size-9 lg:size-10 shrink-0 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#78716C]">
+                        <ImageIcon className="size-3.5 sm:size-4 lg:size-4.5 stroke-[1.5]" />
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11.5px] font-medium text-[#292524] truncate leading-tight">
+                      <div className="text-[11px] sm:text-[11.5px] font-medium text-[#292524] truncate leading-tight">
                         {isProcessing
-                          ? "AI 正在分析图片指标..."
-                          : slot.fileName || (item.role === "screenshot_1" ? "流量指标图" : "留存完播图")}
+                          ? "AI 分析中..."
+                          : slot.fileName || (item.role === "screenshot_1" ? "流量图" : "留存图")}
                       </div>
-                      <div className="text-[10.5px] text-[#78716C] truncate mt-0.5">
+                      <div className="text-[10px] sm:text-[10.5px] text-[#78716C] truncate mt-0.5 hidden xs:block">
                         {item.description}
                       </div>
                     </div>
@@ -376,8 +376,8 @@ export function SubmissionSlotsSection({
 
                   {/* 底栏：失败提示或确认说明 */}
                   {(isError || slot.ocrFallback) && (
-                    <div className="text-[11px] text-[#C9604D] leading-tight mt-1">
-                      {slot.error || "识别失败，截图已保留，请在右侧直接填写"}
+                    <div className="text-[10.5px] sm:text-[11px] text-[#C9604D] leading-tight mt-0.5 truncate">
+                      {slot.error || "识别失败，请手输"}
                     </div>
                   )}
                   {slot.ocrSummary && slot.ocrSummary.length > 0 && (

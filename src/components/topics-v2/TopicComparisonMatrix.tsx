@@ -83,7 +83,7 @@ export function TopicComparisonMatrix({
             <button
               type="button"
               onClick={() => setDimension("topic")}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg transition-all cursor-pointer inline-flex items-center justify-center ${
                 dimension === "topic"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-medium"
@@ -95,7 +95,7 @@ export function TopicComparisonMatrix({
             <button
               type="button"
               onClick={() => setDimension("account")}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg transition-all cursor-pointer inline-flex items-center justify-center ${
                 dimension === "account"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-medium"
@@ -114,7 +114,7 @@ export function TopicComparisonMatrix({
                 <select
                   value={topicId}
                   onChange={(event) => setTopicId(event.target.value)}
-                  className={`appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors ${
+                  className={`appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors ${
                     !topicId
                       ? "ring-1 ring-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
                       : ""
@@ -138,7 +138,7 @@ export function TopicComparisonMatrix({
             <select
               value={days}
               onChange={(event) => setDays(Number(event.target.value))}
-              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
+              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
               aria-label="时间跨度"
             >
               <option value={14}>近 14 天</option>

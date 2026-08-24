@@ -39,12 +39,21 @@
   --sidebar-ring: rgba(28, 25, 23, 0.1);
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-bottom-nav-height: 3.5rem;
+  --app-bottom-offset: calc(var(--app-bottom-nav-height) + var(--app-safe-bottom));
   --network-bar-offset: 0px;
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top) + var(--network-bar-offset, 0px));
   --radius-card: 6px;
   --radius-dialog: 8px;
   --shadow-claude-float: 0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -4px rgba(28,25,23,0.05);
   --shadow-claude-dialog: 0 1px 3px rgba(0,0,0,0.02), 0 12px 32px -4px rgba(28,25,23,0.06);
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --app-nav-height: 3.25rem;
+  }
 }
 
 .dark {

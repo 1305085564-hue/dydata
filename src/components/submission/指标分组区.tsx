@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import { itemVariants } from "@/lib/animations";
-import { cn } from "@/lib/utils";
 import type { EditableMetricKey, SubmissionFieldState } from "@/components/submission/提交状态机";
 import { 指标输入卡 } from "@/components/submission/指标输入卡";
 
@@ -108,13 +107,13 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
   const showInteractionWarning = playCount > 0 && interactions > playCount;
 
   return (
-    <motion.div variants={itemVariants} className="flex h-full flex-col space-y-2">
-      {/* 直接平铺核心、互动和完播留存数据网格 */}
-      <div className="flex flex-1 flex-col gap-3.5">
+    <motion.div variants={itemVariants} className="flex h-full flex-col">
+      {/* 3-4-4 高密度紧密数据矩阵 (整体收拢，行间亲密) */}
+      <div className="flex flex-1 flex-col gap-1.5 sm:gap-2">
         
         {/* 1. 核心数据网格 (3列等分) */}
         <div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -136,7 +135,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 2. 互动数据网格 (4列紧凑排布) */}
         <div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}
@@ -152,7 +151,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             ))}
           </div>
           {showInteractionWarning && (
-            <div className="mt-1.5 pl-0.5 text-[11.5px] font-medium text-[#B98A54] transition-opacity duration-150">
+            <div className="mt-1 pl-0.5 text-[10.5px] sm:text-[11.5px] font-medium text-[#B98A54] transition-opacity duration-150">
               ⚠️ 互动数据总和已超过播放量，请核对输入
             </div>
           )}
@@ -160,7 +159,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
 
         {/* 3. 完播留存网格 (4列始终平铺展开) */}
         <div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
             {RETENTION_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}

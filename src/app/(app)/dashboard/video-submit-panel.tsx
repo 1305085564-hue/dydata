@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -448,12 +448,7 @@ export function VideoSubmitPanel({
 
   return (
     <>
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="space-y-5"
-      >
+      <div className="space-y-2.5 sm:space-y-5">
         <Card className={cn(
           "mx-auto overflow-hidden",
           embeddedChrome
@@ -514,10 +509,10 @@ export function VideoSubmitPanel({
 
           <CardContent
             className={cn(
-              "min-h-[520px] space-y-6",
+              "min-h-0 space-y-2.5 sm:space-y-6",
               embeddedChrome
                 ? "bg-transparent px-0 pb-0 pt-0"
-                : "bg-white px-5 py-6 sm:px-8 sm:py-8",
+                : "bg-white px-3 py-3 sm:px-8 sm:py-8",
             )}
           >
             <div ref={formAnchorRef} tabIndex={-1} className="outline-none" />
@@ -704,7 +699,7 @@ export function VideoSubmitPanel({
             ) : null}
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
 
 
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>

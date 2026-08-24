@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { getNavGroups } from "@/components/nav-bar-items";
+import { getMobileDirectTabs, isMobileMoreActive } from "@/components/mobile-tab-bar";
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -32,7 +34,6 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
   const rewrite = readSource("src/app/(app)/admin/ai-config/components/rewrite-client.tsx");
   const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
 
-  assert.match(providers, /aria-label={`启用渠道 \$\{p\.name\}`}/);
   assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
   assert.match(rewrite, /aria-current=\{isViewActive \? "true" : undefined\}/);
   assert.match(modules, /aria-selected=\{memberView === "active"\}/);
@@ -45,7 +46,8 @@ test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏",
 
 test("服务商与 Key 开关提供可读标签", () => {
   const source = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
-  assert.match(source, /aria-label={`启用渠道 \$\{p\.name\}`}/);
+  const dialogs = readSource("src/app/(app)/admin/ai-config/components/providers-dialogs.tsx");
+  assert.match(dialogs, /aria-label="是否启用渠道"/);
   assert.match(source, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
 });
 
@@ -98,13 +100,12 @@ test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
 
 test("移动导航与工作账号菜单暴露展开状态并支持 Escape 返回焦点", () => {
   const nav = readSource("src/components/nav-bar-client.tsx");
+  const tabBar = readSource("src/components/mobile-tab-bar.tsx");
   const persona = readSource("src/components/user-workspace-popover.tsx");
   const workspace = readSource("src/components/workspace-picker.tsx");
-  assert.match(nav, /aria-expanded=\{isMobileMenuOpen\}/);
-  assert.match(nav, /aria-controls="mobile-navigation-menu"/);
-  assert.match(nav, /event\.key !== "Escape"[\s\S]*mobileMenuButtonRef\.current\?\.focus\(\)/);
+  assert.match(tabBar, /aria-expanded=\{isMoreOpen\}/);
+  assert.match(tabBar, /aria-controls="mobile-navigation-menu"/);
   assert.match(nav, /aria-label="待办与通知中心"/);
-  assert.match(nav, /aria-label="导航菜单"/);
   assert.equal((nav.match(/aria-current=\{isGroupActive \? "page" : undefined\}/g) ?? []).length, 1);
   assert.match(persona, /aria-expanded=\{isOpen\}/);
   assert.match(persona, /aria-controls=\{menuId\}/);
@@ -141,4 +142,137 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
     const source = readSource(path);
     assert.doesNotMatch(source, /(?<!motion-safe:)animate-ping/, `${path} 仍有不受控的持续 ping 动画`);
   }
+});
+
+test("移动端双模外壳使用 navGroups 唯一数据源并支持 Escape 焦点返回与 a11y 关联", () => {
+  const nav = readSource("src/components/nav-bar-client.tsx");
+  const tabbar = readSource("src/components/mobile-tab-bar.tsx");
+  const drawer = readSource("src/components/mobile-more-drawer.tsx");
+
+  assert.match(nav, /<MobileTabBar[\s\S]*navGroups=\{navGroups\}/);
+  assert.match(nav, /tabBarMoreButtonRef\.current\?\.focus\(\)/);
+  assert.match(drawer, /id="mobile-navigation-menu"/);
+  assert.match(drawer, /<AdaptiveSheetTitle/);
+  assert.match(drawer, /<AdaptiveSheetDescription/);
+  assert.match(tabbar, /aria-controls="mobile-navigation-menu"/);
+  assert.match(tabbar, /aria-expanded=\{isMoreOpen\}/);
+  assert.match(tabbar, /min-h-\[44px\]/);
+});
+
+test("AdaptiveSheet 具备真实 Touch 下拉手势与减少动效支持", () => {
+  const sheet = readSource("src/components/ui/adaptive-sheet.tsx");
+  assert.match(sheet, /onTouchStart=\{handleTouchStart\}/);
+  assert.match(sheet, /onTouchMove=\{handleTouchMove\}/);
+  assert.match(sheet, /onTouchEnd=\{handleTouchEnd\}/);
+  assert.match(sheet, /motion-reduce:duration-0 motion-reduce:transition-none/);
+  assert.match(sheet, /data-slot="adaptive-sheet-content"/);
+});
+
+test("移动端底栏快捷入口与更多高亮逻辑覆盖 4 个核心路由", () => {
+  const navGroups = getNavGroups({
+    showAdmin: true,
+    showAiCopywriting: true,
+    showSystemSettings: true,
+    canAccessTeamManagement: true,
+  });
+
+  const directTabs = getMobileDirectTabs(navGroups);
+
+  // 1. /content-tools/rewrite 激活“文案改写”直接入口，不激活“更多”
+  const rewriteTab = directTabs.find((t) => t.href === "/content-tools/rewrite");
+  assert.ok(rewriteTab, "文案改写应为直接快捷入口");
+  assert.equal(rewriteTab.isActive("/content-tools/rewrite"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/content-tools/rewrite"), false);
+
+  // 2. /admin/content 属于内容创作分组的其它子路由，不能误高亮“文案改写”，必须激活“更多”
+  assert.equal(rewriteTab.isActive("/admin/content"), false);
+  assert.equal(directTabs.some((t) => t.isActive("/admin/content")), false);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/content"), true);
+
+  // 3. /growth 激活“成长分析”直接入口，不激活“更多”
+  const growthTab = directTabs.find((t) => t.href === "/growth");
+  assert.ok(growthTab, "成长分析应为直接快捷入口");
+  assert.equal(growthTab.isActive("/growth"), true);
+  assert.equal(isMobileMoreActive(directTabs, "/growth"), false);
+
+  // 4. /admin/collaboration 属于数据中心的其它子路由，不能误高亮“成长分析”，必须激活“更多”
+  assert.equal(growthTab.isActive("/admin/collaboration"), false);
+  assert.equal(directTabs.some((t) => t.isActive("/admin/collaboration")), false);
+  assert.equal(isMobileMoreActive(directTabs, "/admin/collaboration"), true);
+});
+
+test("成长分析排行榜在移动端提供同信息量无横滑卡片流与 >=44px 触控热区", () => {
+  const source = readSource("src/components/leaderboard/leaderboard.tsx");
+  assert.match(source, /hidden md:block[\s\S]*<Table/);
+  assert.match(source, /block md:hidden/);
+  assert.match(source, /min-h-\[44px\]/);
+  assert.match(source, /RankBadge/);
+  assert.match(source, /TagStack/);
+});
+
+test("NavBarClient 在 >=768px 严格保持原版桌面导航，移动端顶底去重并由底部胶囊TabBar接管", () => {
+  const source = readSource("src/components/nav-bar-client.tsx");
+  // 1. 移动端组件严格包裹在 block md:hidden
+  assert.match(source, /<div className="block md:hidden">\s*<MobileTabBar/);
+  assert.match(source, /<MobileMoreDrawer[\s\S]*open=\{isMobileDrawerOpen\}/);
+
+  // 2. 移动端顶栏完成去重：不再保留冗余的汉堡下拉菜单，由悬浮胶囊底栏与抽屉承载
+  assert.doesNotMatch(source, /mobileMenuButtonRef/);
+  assert.doesNotMatch(source, /setIsMobileMenuOpen/);
+
+  // 3. 桌面/平板数字徽章与高度保持规范
+  assert.match(source, /bellBadgeCount > 99 \? "99\+" : bellBadgeCount/);
+  assert.match(source, /py-2\.5/);
+});
+
+test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区", () => {
+  // 1. Dashboard 关键控件
+  const header = readSource("src/app/(app)/dashboard/components/dashboard-workspace-header.tsx");
+  const exemption = readSource("src/app/(app)/dashboard/components/quick-exemption-button.tsx");
+  const submitForm = readSource("src/app/(app)/dashboard/video-submit-form.tsx");
+  const slots = readSource("src/components/submission/截图槽位区.tsx");
+  assert.match(header, /min-h-\[44px\]/);
+  assert.match(exemption, /min-h-\[44px\]/);
+  assert.match(submitForm, /min-h-\[44px\]/);
+  assert.match(slots, /min-h-\[44px\]/);
+
+  // 2. Topics 关键控件
+  const topicHub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const myClaim = readSource("src/components/topics-v2/MyClaimDrawer.tsx");
+  const pool = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  const comparison = readSource("src/components/topics-v2/TopicComparisonMatrix.tsx");
+  const breakdown = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
+  const topicDetail = readSource("src/app/(app)/topics/[id]/page.tsx");
+  assert.match(topicHub, /min-h-\[44px\]/);
+  assert.match(myClaim, /min-h-\[44px\]/);
+  assert.match(pool, /min-h-\[44px\]/);
+  assert.match(comparison, /min-h-\[44px\]/);
+  assert.match(breakdown, /min-h-\[44px\]/);
+  assert.match(topicDetail, /min-h-\[44px\]/);
+
+  // 3. Rewrite 关键控件
+  const chatInspector = readSource("src/components/content-tools/rewrite-v3/ChatInspector.tsx");
+  const skillCabin = readSource("src/components/content-tools/rewrite-v3/SkillCabin.tsx");
+  const settingsDrawer = readSource("src/components/content-tools/rewrite-v3/SettingsDrawer.tsx");
+  const canvas = readSource("src/components/content-tools/rewrite-v3/CalmStudioCanvas.tsx");
+  assert.match(chatInspector, /min-h-\[44px\]/);
+  assert.match(skillCabin, /min-h-\[44px\]/);
+  assert.match(settingsDrawer, /min-h-\[44px\]/);
+  assert.match(canvas, /min-h-\[44px\]/);
+});
+
+test("growth 骨架屏与图表面板具备 min-w-0 max-w-full 与自适应宽度，防止初始加载横向溢出", () => {
+  const radar = readSource("src/components/growth/六维雷达面板.tsx");
+  const growthClient = readSource("src/app/(app)/growth/growth-client.tsx");
+  const resultTrend = readSource("src/components/charts/result-trend.tsx");
+  const interactionTrend = readSource("src/components/charts/interaction-trend.tsx");
+
+  // 雷达图在 320px 下净宽 288px，必须自适应不超过 280px 且图例可换行
+  assert.match(radar, /max-w-\[280px\] sm:max-w-\[320px\]/);
+  assert.match(radar, /flex-wrap/);
+
+  // 骨架屏与图表包裹层必须带 min-w-0 max-w-full
+  assert.match(growthClient, /w-full min-w-0 max-w-full/);
+  assert.match(resultTrend, /min-w-0 max-w-full/);
+  assert.match(interactionTrend, /min-w-0 max-w-full/);
 });

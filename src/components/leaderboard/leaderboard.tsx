@@ -202,7 +202,7 @@ export function Leaderboard({
           type="button"
           size="sm"
           variant="ghost"
-          className="h-7 rounded-lg bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] hover:text-[#1C1917] px-3 text-xs text-[#292524] font-medium cursor-pointer"
+          className="h-auto min-h-[44px] rounded-lg bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] hover:text-[#1C1917] px-3 text-xs text-[#292524] font-medium cursor-pointer"
           onClick={() => setCompact((prev) => !prev)}
         >
           {compact ? (
@@ -225,7 +225,8 @@ export function Leaderboard({
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
+          {/* 桌面端表格 (≥ 768px)：保持原有大表与吸顶交互 */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl ring-1 ring-foreground/8">
             <Table className={cn("table-fixed", compact ? "min-w-[560px]" : "min-w-[1380px]")}>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -294,6 +295,165 @@ export function Leaderboard({
             </Table>
           </div>
 
+          {/* 移动端卡片流 (< 768px)：零横向溢出，信息量 100% 完整，大触控热区 */}
+          <div className="block md:hidden space-y-3">
+            {/* 移动端排序切换栏 */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <span className="text-[12px] text-[#78716C] shrink-0 font-medium">排序依据:</span>
+              <div className="flex items-center gap-1.5">
+                {METRICS.slice(0, 4).map((metric) => {
+                  const isSelected = sortKey === metric.key;
+                  return (
+                    <button
+                      key={metric.key}
+                      type="button"
+                      onClick={() => handleSortClick(metric.key)}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0",
+                        isSelected
+                          ? "bg-[#D97757]/10 text-[#D97757] font-semibold border border-[#D97757]/30"
+                          : "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] border border-transparent"
+                      )}
+                    >
+                      <span>{metric.label}</span>
+                      {isSelected && (
+                        sortDir === "desc" ? <ChevronDown className="size-3" /> : <ChevronUp className="size-3" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 移动端卡片列表 */}
+            {visibleItems.map((item) => (
+              <div
+                key={item.accountId}
+                className={cn(
+                  "rounded-2xl border border-[#E5E0D6] bg-white p-3.5 shadow-2xs space-y-2.5 transition-colors",
+                  item.isOwn && "bg-[#D97757]/5 border-[#D97757]/30",
+                )}
+              >
+                {/* 卡片头部：名次、账号、主维度高亮、环比 */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <RankBadge rank={item.rank} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate font-semibold text-[14px] text-[#1C1917]">
+                          {item.accountName}
+                        </span>
+                        {item.isOwn && (
+                          <span className="size-2 shrink-0 rounded-full bg-[#D97757]" />
+                        )}
+                      </div>
+                      <p className="text-[12px] text-[#78716C] truncate mt-0.5">
+                        {item.ownerName}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <div className="text-[11px] text-[#78716C]">
+                      {METRICS.find((m) => m.key === sortKey)?.label ?? "播放量"}
+                    </div>
+                    <div className="font-bold text-[14px] text-[#1C1917] tabular-nums">
+                      {formatMetric(item, sortKey)}
+                    </div>
+                    {boardType === "progress" && (
+                      <div className="mt-0.5">
+                        <ProgressValue item={item} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 标签 */}
+                {(item.contentDirection || item.presentationFormat) && (
+                  <div className="pt-0.5">
+                    <TagStack
+                      contentDirection={item.contentDirection}
+                      presentationFormat={item.presentationFormat}
+                    />
+                  </div>
+                )}
+
+                {/* 关键指标气垫网格 */}
+                <div
+                  className={cn(
+                    "grid gap-2 rounded-xl bg-[#FBF9F5] p-2.5 text-center text-[12px]",
+                    compact ? "grid-cols-3" : "grid-cols-3",
+                  )}
+                >
+                  <div>
+                    <span className="text-[#78716C] block text-[11px]">播放量</span>
+                    <span className="text-[#1C1917] font-semibold tabular-nums">
+                      {formatMetric(item, "views")}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#78716C] block text-[11px]">涨粉</span>
+                    <span className="text-[#1C1917] font-semibold tabular-nums">
+                      {formatMetric(item, "followerGain")}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[#78716C] block text-[11px]">导粉</span>
+                    <span className="text-[#1C1917] font-semibold tabular-nums">
+                      {formatMetric(item, "followerConvert")}
+                    </span>
+                  </div>
+
+                  {!compact && (
+                    <>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">点赞</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "likes")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">评论</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "comments")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">分享</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "shares")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">收藏</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "favorites")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">均播时长</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "watchDuration")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">2s跳出</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "bounceRate")}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[#78716C] block text-[11px]">5s完播</span>
+                        <span className="text-[#292524] tabular-nums">
+                          {formatMetric(item, "completionRate5s")}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>
@@ -310,7 +470,7 @@ function SegmentedControl({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 bg-[#F5F3EE]/70 p-0.5 sm:p-1 rounded-xl">
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -318,10 +478,10 @@ function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer",
+              "px-3 py-1.5 min-h-[44px] text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center justify-center",
               active
-                ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
             )}
             onClick={() => onChange(option.value)}
           >

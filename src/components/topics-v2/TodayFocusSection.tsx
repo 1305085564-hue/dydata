@@ -106,7 +106,7 @@ export function TodayFocusSection({
               <button
                 type="button"
                 onClick={() => onSelectTopic(latestClaim.subTopicId)}
-                className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left"
+                className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
                 title={`查看选题《${latestClaim.subTopic?.title || "选题"}》`}
               >
                 <span className="font-semibold text-[#1C1917]">
@@ -139,7 +139,7 @@ export function TodayFocusSection({
                   latestWork.subTopic?.id &&
                   onSelectTopic(latestWork.subTopic.id)
                 }
-                className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left"
+                className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
                 title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
               >
                 <span className="font-semibold text-[#1C1917]">
@@ -162,7 +162,7 @@ export function TodayFocusSection({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md hover:bg-[#E5E0D6]/60 transition-colors shrink-0"
+          className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md hover:bg-[#E5E0D6]/60 transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
           aria-expanded={isExpanded}
         >
           <span>动态 ({totalActivityCount})</span>

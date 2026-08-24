@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Copy, Quote, Check, X, ShieldAlert } from "lucide-react";
+import { Copy, Quote, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { diffWords, type DiffToken } from "./diff-helper";
 import {
@@ -135,7 +135,7 @@ export function CalmStudioCanvas({
         } else {
           setFloatingBar(null);
         }
-      } catch (err) {
+      } catch {
         setFloatingBar(null);
       }
     }, 15);
@@ -419,7 +419,7 @@ export function CalmStudioCanvas({
                   {/* 1. 引用到对话 */}
                   <button
                     onClick={() => handleQuote(index, para.content)}
-                    className="rounded-lg p-1 text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                    className="rounded-lg p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
                     title="引用此段至对话微调"
                   >
                     <Quote className="h-3 w-3 rotate-180" />
@@ -428,7 +428,7 @@ export function CalmStudioCanvas({
                   {/* 2. 复制 */}
                   <button
                     onClick={() => handleCopy(para.id, para.content)}
-                    className="relative rounded-lg p-1 text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                    className="relative rounded-lg p-1 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
                     title="复制此段"
                   >
                     <Copy className="h-3 w-3" />
@@ -480,7 +480,7 @@ export function CalmStudioCanvas({
               }
               setFloatingBar(null);
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#F5F3EE] transition-colors"
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#F5F3EE] transition-colors cursor-pointer"
           >
             <Quote className="h-3 w-3 rotate-180 text-[#78716C]" />
             <span>引用选区改写</span>
@@ -492,7 +492,7 @@ export function CalmStudioCanvas({
               setCopiedSelection(true);
               setTimeout(() => setFloatingBar(null), 1000);
             }}
-            className="inline-flex items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#F5F3EE] transition-colors"
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 hover:bg-[#292524] rounded-lg text-[12px] font-medium text-[#F5F3EE] transition-colors cursor-pointer"
           >
             <Copy className="h-3 w-3 text-[#78716C]" />
             <span>{copiedSelection ? "已复制" : "复制"}</span>

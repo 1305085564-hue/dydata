@@ -282,7 +282,7 @@ export function TopicWorkBreakdownDrawer({
               ref={closeBtnRef}
               type="button"
               onClick={handleClose}
-              className="p-1.5 rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all shrink-0"
+              className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all shrink-0 cursor-pointer"
               title="关闭详情"
               aria-label="关闭详情"
             >
@@ -466,7 +466,7 @@ export function TopicWorkBreakdownDrawer({
         <div className="pt-4 mt-6 border-t border-[#E5E0D6] space-y-2">
           <div className="flex items-center gap-2">
             {!action.canClaim && action.label === "脚本中" ? (
-              <span className="flex-1 py-2 text-center rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] font-medium text-xs">
+              <span className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-center rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] font-medium text-xs">
                 脚本撰写中
               </span>
             ) : action.canStartScripting ? (
@@ -474,7 +474,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
+                className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 开始写脚本
               </button>
@@ -483,7 +483,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
+                className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 认领到候选
               </button>
@@ -493,7 +493,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="px-4 py-2 rounded-lg border border-[#E5E0D6] bg-white hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75 text-[#292524] font-medium text-xs transition-all disabled:opacity-50"
+                className="px-4 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-lg border border-[#E5E0D6] bg-white hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75 text-[#292524] font-medium text-xs transition-all disabled:opacity-50 cursor-pointer"
               >
                 放回
               </button>
@@ -501,7 +501,7 @@ export function TopicWorkBreakdownDrawer({
           </div>
           <a
             href={`/topics/${subTopicId}`}
-            className="inline-flex items-center justify-center gap-1 w-full text-center text-xs text-[#D97757] hover:text-[#C46A4D] font-medium py-1 transition-colors"
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-1 w-full text-center text-xs text-[#D97757] hover:text-[#C46A4D] font-medium py-2 transition-colors cursor-pointer"
           >
             <span>查看完整详情页</span>
             <ExternalLink className="w-3 h-3" />

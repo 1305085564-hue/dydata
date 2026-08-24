@@ -131,7 +131,7 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("all")}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               currentView === "all"
                 ? "bg-white text-[#1C1917] font-medium"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
@@ -153,7 +153,7 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_claims")}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
               currentView === "my_claims"
                 ? "bg-white text-[#1C1917] font-medium"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
@@ -164,7 +164,7 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_created")}
-            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
               currentView === "my_created"
                 ? "bg-white text-[#1C1917] font-medium"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
@@ -183,7 +183,7 @@ export function TopicPoolExplorer({
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              className="text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -194,7 +194,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={() => setIsTopicFilterOpen(!isTopicFilterOpen)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.985] active:duration-75 ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-xs font-medium transition-all active:scale-[0.985] active:duration-75 cursor-pointer ${
                 selectedTopicIds.length > 0
                   ? "bg-[#43718E]/10 text-[#43718E] font-semibold"
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-normal"
@@ -270,7 +270,7 @@ export function TopicPoolExplorer({
             <select
               value={sortBy}
               onChange={(e) => onSortByChange(e.target.value as SortByOption)}
-              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
+              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
               aria-label="排序依据"
             >
               <option value="ai_recommended">推荐</option>
@@ -297,7 +297,7 @@ export function TopicPoolExplorer({
               onChange={(e) =>
                 onTimeRangeChange(e.target.value as TopicTimeRange)
               }
-              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
+              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
               aria-label="时间范围"
             >
               <option value="all">全部</option>
@@ -317,7 +317,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={() => setDisplayMode("grid")}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                 displayMode === "grid"
                   ? "bg-[#F5F3EE] text-[#1C1917] font-medium"
                   : "text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]/60"
@@ -330,7 +330,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={() => setDisplayMode("table")}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                 displayMode === "table"
                   ? "bg-[#F5F3EE] text-[#1C1917] font-medium"
                   : "text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]/60"
@@ -345,11 +345,11 @@ export function TopicPoolExplorer({
           {/* 结构呼吸微竖线 */}
           <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
 
-          {/* 主 CTA：录入 (修复双加号，单加号图标 + 录入) */}
+          {/* 主 CTA：录入 (单加号图标 + 录入) */}
           <button
             type="button"
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
             aria-label="录入选题"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -372,7 +372,7 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={onRetry}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
             aria-label="重试加载选题池"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -395,7 +395,7 @@ export function TopicPoolExplorer({
               <button
                 type="button"
                 onClick={onCreateClick}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>录入第一个选题</span>
@@ -478,14 +478,14 @@ export function TopicPoolExplorer({
                     </span>
                   </div>
 
-                  {/* 右侧常态彻底留白，Hover 优雅浮出 */}
+                  {/* 右侧常态彻底留白，Hover 优雅浮出（移动端常态可见以便触控） */}
                   <div className="shrink-0">
                     {isMyClaimed ? (
                       <button
                         type="button"
                         disabled={operatingId === sub.id}
                         onClick={(e) => handleReturn(e, sub.id)}
-                        className="px-2.5 py-1 rounded-md bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] text-xs font-medium transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-md bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] text-xs font-medium transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer flex items-center justify-center"
                         aria-label="放弃认领"
                       >
                         放弃认领
@@ -495,7 +495,7 @@ export function TopicPoolExplorer({
                         type="button"
                         disabled={operatingId === sub.id}
                         onClick={(e) => handleClaim(e, sub.id)}
-                        className="px-2.5 py-1 rounded-md bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-xs font-medium shadow-2xs transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-md bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-xs font-medium shadow-2xs transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer flex items-center justify-center"
                         aria-label="认领写此题"
                       >
                         认领
@@ -582,7 +582,7 @@ export function TopicPoolExplorer({
                           type="button"
                           disabled={operatingId === sub.id}
                           onClick={(e) => handleReturn(e, sub.id)}
-                          className="px-2 py-1 rounded bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] text-xs font-medium transition-colors"
+                          className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] text-xs font-medium transition-colors cursor-pointer"
                           aria-label="放弃认领"
                         >
                           放弃认领
@@ -592,7 +592,7 @@ export function TopicPoolExplorer({
                           type="button"
                           disabled={operatingId === sub.id}
                           onClick={(e) => handleClaim(e, sub.id)}
-                          className="px-2.5 py-1 rounded-md bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-xs font-medium opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all shadow-2xs"
+                          className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-md bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-xs font-medium opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all shadow-2xs cursor-pointer"
                           aria-label="认领"
                         >
                           认领
@@ -618,7 +618,7 @@ export function TopicPoolExplorer({
               type="button"
               disabled={currentPage <= 1}
               onClick={() => onPageChange(currentPage - 1)}
-              className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
+              className="inline-flex h-11 sm:h-7 min-h-[44px] sm:min-h-0 items-center justify-center gap-0.5 rounded-md px-2.5 text-[12px] sm:text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
               aria-label="上一页"
             >
               上一页
@@ -630,7 +630,7 @@ export function TopicPoolExplorer({
               type="button"
               disabled={currentPage * 50 >= totalCount}
               onClick={() => onPageChange(currentPage + 1)}
-              className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
+              className="inline-flex h-11 sm:h-7 min-h-[44px] sm:min-h-0 items-center justify-center gap-0.5 rounded-md px-2.5 text-[12px] sm:text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
               aria-label="下一页"
             >
               下一页

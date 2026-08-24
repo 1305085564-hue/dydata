@@ -616,11 +616,15 @@ export function VideoSubmitForm({
     useState(false);
   const [operatorMembers, setOperatorMembers] = useState<OperatorMember[]>([]);
 
-  // 岗位外协与下拉相关状态
-  const [activeRoleDropdown, setActiveRoleDropdown] = useState<
-    "script_author" | "video_editor" | "operator" | null
-  >(null);
-  const [roleSearchQuery, setRoleSearchQuery] = useState("");
+  // 岗位选择弹窗状态 (Portal 居中/半屏，绝不飘走)
+  const [selectingRole, setSelectingRole] = useState<{
+    role: "script_author" | "video_editor" | "operator";
+    label: string;
+    selectedUserId: string | null;
+  } | null>(null);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+
+  // 岗位外协隐藏状态
   const [hiddenRoles, setHiddenRoles] = useState<Set<SubmissionAssigneeRole>>(
     new Set(),
   );
@@ -643,15 +647,15 @@ export function VideoSubmitForm({
   const hasAnyVisibleRole =
     isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
 
-  const filteredMembersForRole = useMemo(() => {
-    if (!roleSearchQuery.trim()) return operatorMembers;
-    const q = roleSearchQuery.trim().toLowerCase();
+  const filteredModalMembers = useMemo(() => {
+    if (!memberSearchQuery.trim()) return operatorMembers;
+    const q = memberSearchQuery.trim().toLowerCase();
     return operatorMembers.filter(
       (m) =>
         m.name?.toLowerCase().includes(q) ||
         m.display_name?.toLowerCase().includes(q),
     );
-  }, [operatorMembers, roleSearchQuery]);
+  }, [operatorMembers, memberSearchQuery]);
 
   useEffect(() => {
     slotsRef.current = slots;
@@ -1949,120 +1953,188 @@ export function VideoSubmitForm({
           <motion.form
             id="video-submit-form"
             onSubmit={handleSubmit}
-            initial={{ opacity: 0, y: 8 }}
+            initial={false}
+            animate={shakeForm ? "animate" : "initial"}
             variants={shakeVariants}
-            animate={shakeForm ? "animate" : { opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full"
           >
-            <div className="mx-auto max-w-5xl space-y-3.5 py-0">
+            <div className="mx-auto max-w-5xl space-y-2.5 sm:space-y-4 py-0">
               {/* 草稿恢复 banner */}
               {showDraftBanner && (
-                <div className="flex items-center justify-between rounded-xl border border-transparent bg-[#D99E55]/10 px-4 py-2.5 text-[12px]">
+                <div className="flex items-center justify-between rounded-xl border border-transparent bg-[#D99E55]/10 px-3.5 py-2 text-[11.5px] sm:text-[12px]">
                   <span className="text-[#8A6A2F]">
                     {lastSavedAt
-                      ? `有未提交的草稿，最后保存于 ${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
+                      ? `有未提交草稿 (${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })})`
                       : "有未提交的草稿"}
                   </span>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <button
                       type="button"
                       onClick={handleRestoreDraft}
-                      className="font-medium text-[#8A6A2F] hover:text-[#8A6A2F]"
+                      className="font-medium text-[#8A6A2F] hover:text-[#8A6A2F] min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center cursor-pointer"
                     >
                       恢复草稿
                     </button>
                     <button
                       type="button"
                       onClick={handleDiscardDraft}
-                      className="text-[#D99E55] hover:text-[#8A6A2F]"
+                      className="text-[#D99E55] hover:text-[#8A6A2F] min-h-[36px] min-w-[36px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center cursor-pointer"
                     >
                       丢弃
                     </button>
                   </div>
                 </div>
               )}
-              {/* 统一工作台 (方案一：真·一屏流紧凑工作台) */}
-              <div className="relative space-y-5">
-                {/* 顶部标题与状态选择 */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#ECE7DE]">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[14px] font-semibold text-[#292524] tracking-tight">
-                      {isBackfillMode ? `补交数据录入 (${meta.bizDate})` : "今日数据与内容填报"}
+
+              {/* 统一工作台 */}
+              <div className="relative space-y-2 sm:space-y-3.5">
+                {/* 顶部真正极简单行：今日提交·日期 ⌵ + 正常/异常单选 | 归属/当天填报 */}
+                <div className="flex items-center justify-between pb-1 sm:pb-2 border-b border-[#ECE7DE]">
+                  <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+                    <span className="text-[12.5px] sm:text-[14px] font-semibold text-[#1C1917] tracking-tight shrink-0">
+                      {isBackfillMode ? `补交录入 (${meta.bizDate})` : "今日提交"}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <VideoStatusSegmented
-                        value={meta.anomalyStatus}
-                        onChange={(value) => updateMeta("anomalyStatus", value)}
-                      />
-                      {meta.anomalyStatus === "abnormal" && (
-                        <select
-                          value={meta.punishType || "限流"}
-                          onChange={(e) =>
-                            updateMeta("punishType", e.target.value)
-                          }
-                          className="h-8.5 rounded-full border border-[#E5E0D6] bg-white px-3 text-[12px] font-medium text-[#292524] shadow-2xs outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
-                        >
-                          <option value="限流">限流</option>
-                          <option value="删稿">删稿</option>
-                          <option value="投流">投流</option>
-                          <option value="活动干预">活动干预</option>
-                        </select>
-                      )}
-                    </div>
+                    <VideoStatusSegmented
+                      value={meta.anomalyStatus}
+                      onChange={(value) => updateMeta("anomalyStatus", value)}
+                    />
+                    {meta.anomalyStatus === "abnormal" && (
+                      <select
+                        value={meta.punishType || "限流"}
+                        onChange={(e) =>
+                          updateMeta("punishType", e.target.value)
+                        }
+                        className="h-6.5 sm:h-7.5 min-h-[26px] sm:min-h-0 rounded-full border border-[#E5E0D6] bg-white px-1.5 sm:px-2 text-[10.5px] sm:text-[11.5px] font-medium text-[#292524] shadow-2xs outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                      >
+                        <option value="限流">限流</option>
+                        <option value="删稿">删稿</option>
+                        <option value="投流">投流</option>
+                        <option value="活动干预">活动干预</option>
+                      </select>
+                    )}
                   </div>
 
-                  <div className="text-[12px] text-[#78716C]">
-                    {meta.bizDate !== today ? `归属日期：${meta.bizDate}` : "当天填报"}
+                  <div className="text-[10.5px] sm:text-[12px] text-[#78716C] tabular-nums shrink-0">
+                    {meta.bizDate !== today ? `归属：${meta.bizDate}` : "当天填报"}
                   </div>
                 </div>
 
-                {/* 主网格：左 290px 截图佐证与协作配置 ｜ 右 1fr 指标矩阵与文案创作 */}
-                <div className="grid grid-cols-1 lg:grid-cols-[290px_minmax(0,1fr)] gap-5 items-stretch">
-                  {/* ===== 【左栏：佐证与配置 (290px)】 ===== */}
-                  <div className="flex flex-col justify-between space-y-3">
-                    {/* 1. 截图佐证区 */}
-                    <div ref={slotsSectionRef}>
-                      <截图槽位区
-                        slots={slots}
-                        onSelectFile={handleSlotUpload}
-                        onUploadFiles={handleUnifiedUpload}
-                        onDelete={(role) => setDeleteTargetRole(role)}
-                        onRetry={handleSlotRetry}
-                        onManualFill={(role) => {
-                          updateSlotsState((current) => {
-                            const hasUploadedScreenshot = Boolean(current[role].assetUrl);
-                            return {
-                              ...current,
-                              [role]: {
-                                ...current[role],
-                                status: hasUploadedScreenshot ? "confirmed" : "empty",
-                                confirmed: hasUploadedScreenshot,
-                                requiresManualConfirmation: false,
-                                error: null,
-                                assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
-                                previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
-                                file: hasUploadedScreenshot ? current[role].file : null,
-                                fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
-                                recognizedFields: null,
-                                ocrSummary: undefined,
-                                ocrFallback: hasUploadedScreenshot,
-                              },
-                            };
-                          });
-                          metricsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                        }}
-                        screenshotsRequired={screenshotsRequired}
-                        focusedRole={focusedRole}
-                        highlightedOcrIndex={highlightedOcrIndex}
-                      />
-                    </div>
+                {/* 业务全流程顺畅高密度布局 */}
+                <div className="space-y-2 sm:space-y-3">
+                  {/* ===== 1. 截图佐证区 (横向双槽并列) ===== */}
+                  <div ref={slotsSectionRef}>
+                    <截图槽位区
+                      slots={slots}
+                      onSelectFile={handleSlotUpload}
+                      onUploadFiles={handleUnifiedUpload}
+                      onDelete={(role) => setDeleteTargetRole(role)}
+                      onRetry={handleSlotRetry}
+                      onManualFill={(role) => {
+                        updateSlotsState((current) => {
+                          const hasUploadedScreenshot = Boolean(current[role].assetUrl);
+                          return {
+                            ...current,
+                            [role]: {
+                              ...current[role],
+                              status: hasUploadedScreenshot ? "confirmed" : "empty",
+                              confirmed: hasUploadedScreenshot,
+                              requiresManualConfirmation: false,
+                              error: null,
+                              assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
+                              previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
+                              file: hasUploadedScreenshot ? current[role].file : null,
+                              fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
+                              recognizedFields: null,
+                              ocrSummary: undefined,
+                              ocrFallback: hasUploadedScreenshot,
+                            },
+                          };
+                        });
+                        metricsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                      screenshotsRequired={screenshotsRequired}
+                      focusedRole={focusedRole}
+                      highlightedOcrIndex={highlightedOcrIndex}
+                    />
+                  </div>
 
-                    {/* 2. 团队分工与标签属性区 */}
-                    <div className="w-full shrink-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-3 space-y-2.5 flex flex-col justify-between">
+                  {/* ===== 2. 核心数据填报区 (3-4-4 紧凑矩阵) ===== */}
+                  <div ref={metricsSectionRef} className="space-y-1.5 pt-0.5">
+                    <指标分组区
+                      fields={fields}
+                      onFieldChange={updateField}
+                      onFocusField={handleFieldFocus}
+                      onBlurField={handleFieldBlur}
+                      anomalyStatus={meta.anomalyStatus}
+                    />
+                    <导粉话术采集区
+                      visible={parseMetric(fields.follower_convert.value) > 0}
+                      value={scriptText}
+                      onChange={setScriptText}
+                      hasAttemptedSubmit={hasAttemptedSubmit}
+                    />
+                  </div>
+
+                  {/* ===== 3. 视频标题 (通栏一行，头顶呼吸断层留白 > 脚下留白) ===== */}
+                  <div
+                    ref={metaSectionRef}
+                    className="pt-2 sm:pt-3.5 space-y-0.5 shrink-0 rounded-xl p-0 transition-colors data-[missing=true]:border data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2"
+                    data-missing={
+                      hasAttemptedSubmit &&
+                      meta.anomalyStatus !== "abnormal" &&
+                      issueSummary.missingRequiredMeta.includes("videoTitle")
+                    }
+                  >
+                    <Label
+                      htmlFor="video_title"
+                      className="text-[11.5px] sm:text-[12.5px] font-medium text-[#292524]"
+                    >
+                      视频标题{" "}
+                      {meta.anomalyStatus !== "abnormal" && (
+                        <span className="text-[#DC2626]">*</span>
+                      )}
+                    </Label>
+                    <Input
+                      id="video_title"
+                      value={meta.videoTitle}
+                      onChange={(event) =>
+                        updateMeta("videoTitle", event.target.value)
+                      }
+                      placeholder="输入视频标题"
+                      className="h-7.5 sm:h-8.5 min-h-[30px] sm:min-h-0 rounded-lg bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/50 text-[11.5px] sm:text-[13px] text-[#292524] placeholder:text-[#78716C]/60 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all duration-150"
+                      aria-invalid={
+                        hasAttemptedSubmit &&
+                        meta.anomalyStatus !== "abnormal" &&
+                        issueSummary.missingRequiredMeta.includes(
+                          "videoTitle",
+                        )
+                          ? "true"
+                          : "false"
+                      }
+                    />
+                    {hasAttemptedSubmit &&
+                    meta.anomalyStatus !== "abnormal" &&
+                    issueSummary.missingRequiredMeta.includes(
+                      "videoTitle",
+                    ) ? (
+                      <p
+                        id="video_title_error"
+                        role="alert"
+                        className="text-[10.5px] font-medium text-[#C0685C]"
+                      >
+                        待填写视频标题
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* ===== 4. 标题下方左右两个模块：左边团队分工(50%)，右边文案(50%) ===== */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 items-stretch">
+                    {/* 左栏：团队分工与标签属性区 (50% 空间) */}
+                    <div className="min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-2 sm:p-2.5 space-y-1 sm:space-y-1.5 flex flex-col justify-between h-full">
                       {/* 团队分工 */}
-                      <div className="space-y-1.5 pt-0.5">
+                      <div className="space-y-0.5 sm:space-y-1 pt-0.5">
                         <div className="flex items-center justify-between">
-                          <Label className="text-[12.5px] font-semibold text-[#292524] select-none">
+                          <Label className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#292524] select-none truncate">
                             团队分工
                           </Label>
 
@@ -2070,20 +2142,20 @@ export function VideoSubmitForm({
                             <button
                               type="button"
                               onClick={showAllRoles}
-                              className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:underline transition-colors duration-100 cursor-pointer"
+                              className="inline-flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-0.5 text-[10.5px] sm:text-[12px] font-medium text-[#D97757] hover:underline transition-colors duration-100 cursor-pointer"
                             >
-                              <Plus className="size-3 stroke-[2.5]" />
-                              <span>+ 协同指派</span>
+                              <Plus className="size-2.5 stroke-[2.5]" />
+                              <span>+ 指派</span>
                             </button>
                           ) : null}
                         </div>
 
                         {!hasAnyVisibleRole ? (
-                          <div className="text-[12px] text-[#78716C] py-0.5">
-                            由我独立完成 (文案 · 剪辑 · 运营)
+                          <div className="text-[10.5px] sm:text-[12px] text-[#78716C] py-0.5 truncate">
+                            由我独立完成 (全包)
                           </div>
                         ) : (
-                          <div className="space-y-1.5 pt-0.5">
+                          <div className="space-y-1 pt-0.5">
                             {isScriptAuthorVisible && (
                               <RoleItemSelectorRow
                                 label="文案"
@@ -2092,15 +2164,13 @@ export function VideoSubmitForm({
                                 selectedUserId={meta.scriptAuthorUserId}
                                 operatorMembers={operatorMembers}
                                 userId={userId}
-                                activeRoleDropdown={activeRoleDropdown}
-                                setActiveRoleDropdown={setActiveRoleDropdown}
-                                roleSearchQuery={roleSearchQuery}
-                                setRoleSearchQuery={setRoleSearchQuery}
-                                filteredMembersForRole={filteredMembersForRole}
-                                onSelectUser={(id) => {
-                                  setScriptAuthorUser(id, { isManual: true });
-                                  if (id === userId) hideRole("script_author");
-                                }}
+                                onOpenSelector={() =>
+                                  setSelectingRole({
+                                    role: "script_author",
+                                    label: "文案",
+                                    selectedUserId: meta.scriptAuthorUserId,
+                                  })
+                                }
                                 onResetSelf={() => hideRole("script_author")}
                               />
                             )}
@@ -2113,15 +2183,13 @@ export function VideoSubmitForm({
                                 selectedUserId={meta.videoEditorUserId}
                                 operatorMembers={operatorMembers}
                                 userId={userId}
-                                activeRoleDropdown={activeRoleDropdown}
-                                setActiveRoleDropdown={setActiveRoleDropdown}
-                                roleSearchQuery={roleSearchQuery}
-                                setRoleSearchQuery={setRoleSearchQuery}
-                                filteredMembersForRole={filteredMembersForRole}
-                                onSelectUser={(id) => {
-                                  setRoleUser("video_editor", id, { isManual: true });
-                                  if (id === userId) hideRole("video_editor");
-                                }}
+                                onOpenSelector={() =>
+                                  setSelectingRole({
+                                    role: "video_editor",
+                                    label: "剪辑",
+                                    selectedUserId: meta.videoEditorUserId,
+                                  })
+                                }
                                 onResetSelf={() => hideRole("video_editor")}
                               />
                             )}
@@ -2131,19 +2199,16 @@ export function VideoSubmitForm({
                                 label="运营"
                                 icon={<Rocket className="size-3.5 text-[#78716C] stroke-[1.75]" />}
                                 roleKey="operator"
-                                placement="top"
                                 selectedUserId={meta.operatorUserId}
                                 operatorMembers={operatorMembers}
                                 userId={userId}
-                                activeRoleDropdown={activeRoleDropdown}
-                                setActiveRoleDropdown={setActiveRoleDropdown}
-                                roleSearchQuery={roleSearchQuery}
-                                setRoleSearchQuery={setRoleSearchQuery}
-                                filteredMembersForRole={filteredMembersForRole}
-                                onSelectUser={(id) => {
-                                  setOperatorUser(id, { isManual: true });
-                                  if (id === userId) hideRole("operator");
-                                }}
+                                onOpenSelector={() =>
+                                  setSelectingRole({
+                                    role: "operator",
+                                    label: "运营",
+                                    selectedUserId: meta.operatorUserId,
+                                  })
+                                }
                                 onResetSelf={() => hideRole("operator")}
                               />
                             )}
@@ -2152,36 +2217,36 @@ export function VideoSubmitForm({
                       </div>
 
                       {/* 题材与形式记忆配置 */}
-                      <div className="space-y-1.5 pt-1.5">
+                      <div className="space-y-1 pt-1 border-t border-[#ECE7DE]/60">
                         {!isMemoryExpanded ? (
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[12px] text-[#292524] font-medium">
-                                题材与形式：
+                            <div className="flex items-center gap-1">
+                              <span className="text-[11px] sm:text-[11.5px] text-[#292524] font-medium">
+                                题材形式：
                               </span>
-                              <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded-md px-2 py-0.5 text-[11.5px] font-medium shadow-2xs">
+                              <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded px-1.5 py-0.2 text-[10.5px] sm:text-[11px] font-medium shadow-2xs">
                                 {meta.topicTag || "未选"}
                               </span>
-                              <span className="text-[#E5E0D6] text-[10px]">·</span>
-                              <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded-md px-2 py-0.5 text-[11.5px] font-medium shadow-2xs">
+                              <span className="text-[#E5E0D6] text-[9px]">·</span>
+                              <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded px-1.5 py-0.2 text-[10.5px] sm:text-[11px] font-medium shadow-2xs">
                                 {meta.videoForm || "未选"}
                               </span>
                             </div>
                             <button
                               type="button"
                               onClick={() => setIsMemoryExpanded(true)}
-                              className="text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors cursor-pointer"
+                              className="text-[11px] sm:text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors cursor-pointer min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center"
                             >
                               修改
                             </button>
                           </div>
                         ) : (
-                          <div className="space-y-2.5 rounded-xl bg-[#F5F3EE]/70 p-2.5">
-                            <div className="space-y-1.5">
-                              <Label className="text-[12px] font-medium text-[#292524]">
+                          <div className="space-y-1.5 rounded-lg bg-[#F5F3EE]/70 p-2">
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-[#292524]">
                                 题材标签 *
                               </Label>
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-2 gap-1">
                                 {(["干货", "复盘"] as const).map((tag) => (
                                   <button
                                     key={tag}
@@ -2193,7 +2258,7 @@ export function VideoSubmitForm({
                                       )
                                     }
                                     className={cn(
-                                      "h-7.5 rounded-lg border text-[12px] font-medium transition-colors duration-100 cursor-pointer",
+                                      "h-7 min-h-[28px] sm:min-h-0 rounded border text-[11px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
                                       meta.topicTag === tag
                                         ? "border-[#E5E0D6]/80 bg-white text-[#1C1917] font-medium shadow-2xs"
                                         : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]",
@@ -2205,18 +2270,18 @@ export function VideoSubmitForm({
                               </div>
                             </div>
 
-                            <div className="space-y-1.5">
-                              <Label className="text-[12px] font-medium text-[#292524]">
+                            <div className="space-y-1">
+                              <Label className="text-[11px] font-medium text-[#292524]">
                                 视频形式 *
                               </Label>
-                              <div className="grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-2 gap-1">
                                 {(["出镜", "图文"] as const).map((form) => (
                                   <button
                                     key={form}
                                     type="button"
                                     onClick={() => updateMeta("videoForm", form)}
                                     className={cn(
-                                      "h-7.5 rounded-lg border text-[12px] font-medium transition-colors duration-100 cursor-pointer",
+                                      "h-7 min-h-[28px] sm:min-h-0 rounded border text-[11px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
                                       meta.videoForm === form
                                         ? "border-[#E5E0D6]/80 bg-white text-[#1C1917] font-medium shadow-2xs"
                                         : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]",
@@ -2232,7 +2297,7 @@ export function VideoSubmitForm({
                               <button
                                 type="button"
                                 onClick={() => setIsMemoryExpanded(false)}
-                                className="text-[12px] font-medium text-[#78716C] hover:text-[#292524] cursor-pointer"
+                                className="text-[11px] font-medium text-[#78716C] hover:text-[#292524] cursor-pointer min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center"
                               >
                                 完成
                               </button>
@@ -2243,11 +2308,11 @@ export function VideoSubmitForm({
 
                       {/* 异常状态补充输入 */}
                       {meta.anomalyStatus === "abnormal" && (
-                        <div className="flex flex-col gap-2 rounded-xl bg-amber-50/60 p-2.5 border border-amber-200/50">
-                          <div className="flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 rounded-lg bg-amber-50/60 p-1.5 border border-amber-200/50">
+                          <div className="flex flex-col gap-0.5">
                             <Label
                               htmlFor="platform_notice"
-                              className="text-[12px] font-medium text-amber-950/80"
+                              className="text-[11px] font-medium text-amber-950/80"
                             >
                               平台通知 (选填)
                             </Label>
@@ -2258,13 +2323,13 @@ export function VideoSubmitForm({
                                 updateMeta("platformNotice", e.target.value)
                               }
                               placeholder="如处罚通知文案"
-                              className="h-8 rounded-lg bg-white/90 border-amber-200/60 text-[12px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
+                              className="h-7 rounded bg-white/90 border-amber-200/60 text-[11px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
                             />
                           </div>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-0.5">
                             <Label
                               htmlFor="appeal"
-                              className="text-[12px] font-medium text-amber-950/80"
+                              className="text-[11px] font-medium text-amber-950/80"
                             >
                               申诉进展 (选填)
                             </Label>
@@ -2275,7 +2340,7 @@ export function VideoSubmitForm({
                                 updateMeta("appeal", e.target.value)
                               }
                               placeholder="如申诉处理中"
-                              className="h-8 rounded-lg bg-white/90 border-amber-200/60 text-[12px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
+                              className="h-7 rounded bg-white/90 border-amber-200/60 text-[11px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
                             />
                           </div>
                         </div>
@@ -2288,11 +2353,11 @@ export function VideoSubmitForm({
                           onClick={() =>
                             setIsMoreSettingsExpanded(!isMoreSettingsExpanded)
                           }
-                          className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C] hover:text-[#292524] transition-colors focus-visible:outline-none cursor-pointer"
+                          className="flex min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 items-center gap-1 text-[11px] sm:text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors focus-visible:outline-none cursor-pointer"
                         >
                           <ChevronDown
                             className={cn(
-                              "size-3.5 stroke-[1.5] transition-transform duration-150",
+                              "size-3 stroke-[1.5] transition-transform duration-150",
                               isMoreSettingsExpanded && "rotate-180",
                             )}
                           />
@@ -2308,12 +2373,12 @@ export function VideoSubmitForm({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -4 }}
                               transition={{ duration: 0.15 }}
-                              className="space-y-2.5 pt-2"
+                              className="space-y-1.5 pt-1"
                             >
-                              <div className="space-y-1">
+                              <div className="space-y-0.5">
                                 <Label
                                   htmlFor="published_at"
-                                  className="text-[12px] font-medium text-[#292524]"
+                                  className="text-[11px] font-medium text-[#292524]"
                                 >
                                   发布时间
                                 </Label>
@@ -2339,10 +2404,10 @@ export function VideoSubmitForm({
                                       publishedAtText: synced.publishedAtText,
                                     }));
                                   }}
-                                  className="h-8 rounded-lg bg-white/90 border-[#E5E0D6]/80 text-[12px] text-[#292524] focus:bg-white focus:border-[#E5E0D6] transition-colors duration-100"
+                                  className="h-7 rounded bg-white/90 border-[#E5E0D6]/80 text-[11px] text-[#292524] focus:bg-white focus:border-[#E5E0D6] transition-colors duration-100"
                                 />
                               </div>
-                              <div className="flex items-center justify-between text-[11.5px] text-[#78716C] pt-0.5 px-0.5">
+                              <div className="flex items-center justify-between text-[10.5px] text-[#78716C] pt-0.5 px-0.5">
                                 <span>上传时间戳</span>
                                 <span className="tabular-nums text-[#78716C] font-normal">
                                   {meta.uploadedAt || "--"}
@@ -2353,129 +2418,57 @@ export function VideoSubmitForm({
                         </AnimatePresence>
                       </div>
                     </div>
-                  </div>
 
-                  {/* ===== 【右栏：核心数据与内容创作 (1fr)】 ===== */}
-                  <div className="flex flex-col justify-between space-y-3 min-w-0">
-                    {/* 1. 指标录入区 (顶部 pt-2 与左侧截图卡片内边距光学平齐) */}
-                    <div ref={metricsSectionRef} className="space-y-3 pt-2">
-                      <指标分组区
-                        fields={fields}
-                        onFieldChange={updateField}
-                        onFocusField={handleFieldFocus}
-                        onBlurField={handleFieldBlur}
-                        anomalyStatus={meta.anomalyStatus}
-                      />
-                      <导粉话术采集区
-                        visible={parseMetric(fields.follower_convert.value) > 0}
-                        value={scriptText}
-                        onChange={setScriptText}
-                        hasAttemptedSubmit={hasAttemptedSubmit}
-                      />
-                    </div>
-
-                    {/* 2. 视频内容资料区 (标题 + 文案) */}
+                    {/* 右栏：视频文案创作区 (50% 空间，与左侧卡片完全对称) */}
                     <div
-                      ref={metaSectionRef}
-                      className="space-y-3 pt-5 flex-1 flex flex-col justify-between min-w-0"
+                      className="min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-2 sm:p-2.5 flex flex-col justify-between h-full transition-colors data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40"
+                      data-missing={
+                        hasAttemptedSubmit &&
+                        issueSummary.missingRequiredMeta.includes("content")
+                      }
                     >
-                      {/* 视频标题 */}
-                      <div
-                        className="space-y-1 shrink-0 rounded-xl p-0 transition-colors data-[missing=true]:border data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2.5"
-                        data-missing={
-                          hasAttemptedSubmit &&
-                          meta.anomalyStatus !== "abnormal" &&
-                          issueSummary.missingRequiredMeta.includes("videoTitle")
-                        }
-                      >
+                      {/* 文案头部 (与左侧团队分工头部高度与风格完全一致) */}
+                      <div className="flex items-center justify-between shrink-0 pt-0.5">
                         <Label
-                          htmlFor="video_title"
-                          className="text-[12.5px] font-medium text-[#292524]"
+                          htmlFor="content"
+                          className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#292524] select-none truncate"
                         >
-                          视频标题{" "}
-                          {meta.anomalyStatus !== "abnormal" && (
-                            <span className="text-[#DC2626]">*</span>
-                          )}
+                          视频文案 <span className="text-[#DC2626]">*</span>
                         </Label>
-                        <Input
-                          id="video_title"
-                          value={meta.videoTitle}
-                          onChange={(event) =>
-                            updateMeta("videoTitle", event.target.value)
-                          }
-                          placeholder="输入视频标题"
-                          className="h-10 rounded-xl bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/50 text-[13px] text-[#292524] placeholder:text-[#78716C]/60 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all duration-150"
-                          aria-invalid={
-                            hasAttemptedSubmit &&
-                            meta.anomalyStatus !== "abnormal" &&
-                            issueSummary.missingRequiredMeta.includes(
-                              "videoTitle",
-                            )
-                              ? "true"
-                              : "false"
-                          }
-                        />
-                        {hasAttemptedSubmit &&
-                        meta.anomalyStatus !== "abnormal" &&
-                        issueSummary.missingRequiredMeta.includes(
-                          "videoTitle",
-                        ) ? (
-                          <p
-                            id="video_title_error"
-                            role="alert"
-                            className="text-[11.5px] font-medium text-[#C0685C]"
-                          >
-                            待填写视频标题
-                          </p>
-                        ) : null}
+                        <button
+                          type="button"
+                          onClick={handlePasteContent}
+                          className={cn(
+                            "inline-flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-1 text-[10.5px] sm:text-[12px] font-medium transition-colors duration-150 focus-visible:outline-none cursor-pointer py-0.5 px-1",
+                            isPastedFeedback
+                              ? "text-[#16A34A] font-medium"
+                              : "text-[#78716C] hover:text-[#292524]"
+                          )}
+                        >
+                          {isPastedFeedback ? (
+                            <>
+                              <Check size={11} className="stroke-[2.5] text-[#16A34A]" />
+                              <span>已粘贴</span>
+                            </>
+                          ) : (
+                            <>
+                              <ClipboardPaste size={11} className="stroke-[1.5]" />
+                              <span>一键粘贴</span>
+                            </>
+                          )}
+                        </button>
                       </div>
 
-                      {/* 视频文案 */}
-                      <div
-                        className="flex-1 flex flex-col min-h-0 rounded-xl p-0 transition-colors data-[missing=true]:border data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2.5"
-                        data-missing={
-                          hasAttemptedSubmit &&
-                          issueSummary.missingRequiredMeta.includes("content")
-                        }
-                      >
-                        <div className="flex items-center justify-between shrink-0">
-                          <Label
-                            htmlFor="content"
-                            className="text-[12.5px] font-medium text-[#292524]"
-                          >
-                            文案 <span className="text-[#DC2626]">*</span>
-                          </Label>
-                          <button
-                            type="button"
-                            onClick={handlePasteContent}
-                            className={cn(
-                              "inline-flex items-center gap-1 text-[12px] font-medium transition-colors duration-150 focus-visible:outline-none cursor-pointer",
-                              isPastedFeedback
-                                ? "text-[#16A34A] font-medium"
-                                : "text-[#78716C] hover:text-[#292524]"
-                            )}
-                          >
-                            {isPastedFeedback ? (
-                              <>
-                                <Check size={13} className="stroke-[2.5] text-[#16A34A]" />
-                                <span>已粘贴</span>
-                              </>
-                            ) : (
-                              <>
-                                <ClipboardPaste size={13} className="stroke-[1.5]" />
-                                <span>一键粘贴</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
+                      {/* 文案输入框 (直接作为白底卡片书写纸，无内层灰色框) */}
+                      <div className="mt-1.5 flex-1 flex flex-col min-h-0">
                         <textarea
                           id="content"
                           value={meta.content}
                           onChange={(event) =>
                             updateMeta("content", event.target.value)
                           }
-                          placeholder="粘贴视频文案..."
-                          className="mt-1 flex-1 min-h-[100px] w-full resize-none rounded-xl border border-[#E5E0D6] hover:border-[#78716C]/50 bg-white shadow-2xs px-3.5 py-2.5 text-[13px] leading-[1.65] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all duration-150 overflow-y-auto custom-scrollbar"
+                          placeholder="粘贴或输入视频文案..."
+                          className="flex-1 min-h-[96px] sm:min-h-[120px] w-full resize-none bg-transparent border-0 outline-none text-[11.5px] sm:text-[13px] leading-[1.6] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C]/60 focus:ring-0 focus-visible:ring-0 p-0 overflow-y-auto custom-scrollbar"
                           aria-invalid={
                             hasAttemptedSubmit &&
                             issueSummary.missingRequiredMeta.includes("content")
@@ -2488,7 +2481,7 @@ export function VideoSubmitForm({
                           <p
                             id="content_error"
                             role="alert"
-                            className="mt-1 text-[11.5px] font-medium text-[#C0685C] shrink-0"
+                            className="mt-0.5 text-[10.5px] font-medium text-[#C0685C] shrink-0"
                           >
                             待填写视频文案
                           </p>
@@ -2498,34 +2491,34 @@ export function VideoSubmitForm({
                   </div>
                 </div>
 
-                {/* 底部内嵌操作栏 (收口在大卡片内部) */}
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pt-3.5 border-t border-[#ECE7DE]">
-                  <div className="flex items-center gap-2.5">
+                {/* 底部内嵌操作栏 (单行左右两端对齐，左侧提示与左卡片/截图左对齐，右侧提交按钮与右卡片/截图右对齐) */}
+                <div className="flex items-center justify-between gap-2 pt-3 sm:pt-3.5 border-t border-[#ECE7DE]">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     {!canActuallySubmit ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B98A54]/25 bg-[#B98A54]/10 px-2.5 py-1 text-[11.5px] font-medium text-[#B98A54]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#B98A54]" />
-                        <span>{issueSummary.reason || "待补全必要信息"}</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B98A54]/25 bg-[#B98A54]/10 px-2.5 py-1 text-[11px] sm:text-[11.5px] font-medium text-[#B98A54] truncate">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#B98A54] shrink-0" />
+                        <span className="truncate">{issueSummary.reason || "待补全必要信息"}</span>
                       </span>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-2.5 py-1 text-[11.5px] font-medium text-[#6FAA7D]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-2.5 py-1 text-[11px] sm:text-[11.5px] font-medium text-[#6FAA7D] shrink-0">
                           <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
-                          <span>已就绪，可提交</span>
+                          <span>已就绪</span>
                         </span>
-                        <span className="text-[11.5px] text-[#78716C]">
-                          (支持 ⌘/Ctrl + Enter)
+                        <span className="hidden sm:inline text-[11.5px] text-[#78716C]">
+                          (⌘+Enter)
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2 shrink-0">
                     {isBackfillMode || submittedViewActive ? (
                       <Button
                         type="button"
                         variant="outline"
                         onClick={onCancel}
-                        className="h-9 rounded-lg px-4 text-[12.5px] font-medium"
+                        className="h-8 sm:h-9 rounded-lg px-3 sm:px-4 text-[11.5px] sm:text-[12.5px] font-medium"
                       >
                         取消
                       </Button>
@@ -2534,7 +2527,7 @@ export function VideoSubmitForm({
                       type="button"
                       onClick={triggerSubmit}
                       disabled={isSubmitting || !canActuallySubmit}
-                      className="h-9 rounded-lg px-5 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed active:scale-[0.985] transition-all duration-150 flex items-center gap-2 shadow-sm cursor-pointer"
+                      className="h-8.5 sm:h-9 rounded-lg px-4 sm:px-5 text-[12px] sm:text-[12.5px] font-semibold sm:font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed active:scale-[0.985] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer shrink-0"
                     >
                       {isSubmitting && (
                         <Loader2 className="size-3.5 animate-spin shrink-0 text-white" />
@@ -2545,6 +2538,111 @@ export function VideoSubmitForm({
                 </div>
               </div>
             </div>
+
+            {/* 岗位成员选择受控弹窗 (Portal 居中渲染，100% 不飘走、不遮挡、支持即时搜索) */}
+            <Dialog
+              open={Boolean(selectingRole)}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setSelectingRole(null);
+                  setMemberSearchQuery("");
+                }
+              }}
+            >
+              <DialogContent className="max-w-sm rounded-2xl bg-white p-4 shadow-claude-modal max-sm:w-[92%]">
+                <DialogHeader className="pb-2 border-b border-[#ECE7DE]">
+                  <DialogTitle className="text-[14px] font-semibold text-[#1C1917]">
+                    选择{selectingRole?.label}负责人
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-2.5 pt-2">
+                  {/* 搜索框 */}
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
+                    <Input
+                      value={memberSearchQuery}
+                      onChange={(e) => setMemberSearchQuery(e.target.value)}
+                      placeholder="搜索团队成员..."
+                      className="h-8.5 rounded-lg border-[#E5E0D6] bg-[#FAF8F5] pl-8 text-[12.5px] text-[#292524] placeholder:text-[#78716C]/60 focus:bg-white"
+                    />
+                  </div>
+
+                  {/* 成员列表 */}
+                  <div className="max-h-[220px] overflow-y-auto space-y-1 custom-scrollbar">
+                    {/* 本人快捷置顶项 */}
+                    {!memberSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!selectingRole) return;
+                          if (selectingRole.role === "script_author") {
+                            setScriptAuthorUser(userId, { isManual: true });
+                            hideRole("script_author");
+                          } else if (selectingRole.role === "video_editor") {
+                            setRoleUser("video_editor", userId, { isManual: true });
+                            hideRole("video_editor");
+                          } else if (selectingRole.role === "operator") {
+                            setOperatorUser(userId, { isManual: true });
+                            hideRole("operator");
+                          }
+                          setSelectingRole(null);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-[12.5px] transition-colors cursor-pointer text-left",
+                          selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
+                            ? "bg-[#D97757]/10 text-[#D97757] font-medium"
+                            : "hover:bg-[#FAF8F5] text-[#292524]",
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">阿禅</span>
+                          <span className="rounded bg-[#D97757]/15 px-1.5 py-0.2 text-[10px] text-[#D97757]">
+                            本人
+                          </span>
+                        </div>
+                        {(selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId) && (
+                          <Check className="size-3.5 stroke-[2.5]" />
+                        )}
+                      </button>
+                    )}
+
+                    {/* 过滤成员列表 */}
+                    {filteredModalMembers
+                      .filter((m) => m.id !== userId)
+                      .map((member) => {
+                        const isSelected = selectingRole?.selectedUserId === member.id;
+                        return (
+                          <button
+                            key={member.id}
+                            type="button"
+                            onClick={() => {
+                              if (!selectingRole) return;
+                              if (selectingRole.role === "script_author") {
+                                setScriptAuthorUser(member.id, { isManual: true });
+                              } else if (selectingRole.role === "video_editor") {
+                                setRoleUser("video_editor", member.id, { isManual: true });
+                              } else if (selectingRole.role === "operator") {
+                                setOperatorUser(member.id, { isManual: true });
+                              }
+                              setSelectingRole(null);
+                            }}
+                            className={cn(
+                              "w-full flex items-center justify-between rounded-lg px-2.5 py-2 text-[12.5px] transition-colors cursor-pointer text-left",
+                              isSelected
+                                ? "bg-[#D97757]/10 text-[#D97757] font-medium"
+                                : "hover:bg-[#FAF8F5] text-[#292524]",
+                            )}
+                          >
+                            <span>{member.display_name || member.name}</span>
+                            {isSelected && <Check className="size-3.5 stroke-[2.5]" />}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </motion.form>
         </>
       )}
@@ -2610,7 +2708,7 @@ function VideoStatusSegmented({
             aria-checked={isActive}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-lg px-3 text-xs font-medium tracking-tight transition-colors duration-100 ease-out cursor-pointer",
+              "inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:h-7 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-medium tracking-tight transition-colors duration-100 ease-out cursor-pointer",
               isActive
                 ? cn(
                     "bg-white text-[#1C1917] font-medium",
@@ -2638,159 +2736,59 @@ interface RoleItemSelectorRowProps {
   label: string;
   icon?: React.ReactNode;
   roleKey: "script_author" | "video_editor" | "operator";
-  placement?: "bottom" | "top";
   selectedUserId: string | null;
   operatorMembers: OperatorMember[];
   userId: string;
-  activeRoleDropdown: "script_author" | "video_editor" | "operator" | null;
-  setActiveRoleDropdown: (
-    role: "script_author" | "video_editor" | "operator" | null,
-  ) => void;
-  roleSearchQuery: string;
-  setRoleSearchQuery: (query: string) => void;
-  filteredMembersForRole: OperatorMember[];
-  onSelectUser: (id: string) => void;
+  onOpenSelector: () => void;
   onResetSelf: () => void;
 }
 
 function RoleItemSelectorRow({
   label,
   icon,
-  roleKey,
-  placement = roleKey === "operator" ? "top" : "bottom",
   selectedUserId,
   operatorMembers,
   userId,
-  activeRoleDropdown,
-  setActiveRoleDropdown,
-  roleSearchQuery,
-  setRoleSearchQuery,
-  filteredMembersForRole,
-  onSelectUser,
+  onOpenSelector,
   onResetSelf,
 }: RoleItemSelectorRowProps) {
-  const isOpen = activeRoleDropdown === roleKey;
   const currentMember =
     operatorMembers.find((m) => m.id === selectedUserId) || null;
-  const isUpward = placement === "top";
+  const isExternal = Boolean(selectedUserId && selectedUserId !== userId);
 
   return (
-    <div className="flex items-center justify-between gap-2 py-0.5">
+    <div className="flex items-center justify-between gap-1.5 py-0.5">
       {/* 左侧岗位 */}
-      <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#292524] shrink-0 select-none">
+      <div className="flex items-center gap-1 text-[11px] sm:text-[12px] font-medium text-[#292524] shrink-0 select-none">
         {icon}
         <span>{label}</span>
       </div>
 
-      {/* 右侧人员下拉 + X 按钮 */}
-      <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
-        <div className="relative max-w-[175px] min-w-[115px] flex-1">
-          <button
-            type="button"
-            onClick={() => {
-              setRoleSearchQuery("");
-              setActiveRoleDropdown(isOpen ? null : roleKey);
-            }}
-            className="flex h-8 w-full items-center justify-between rounded-lg bg-white/90 hover:bg-white border border-[#E5E0D6]/80 hover:border-[#E5E0D6] px-2.5 text-[12px] text-[#292524] shadow-2xs focus:outline-none transition-colors"
-          >
-            <span className="truncate font-medium">
-              {currentMember
-                ? `${currentMember.display_name || currentMember.name}${currentMember.id === userId ? " (我)" : ""}`
-                : "选择成员..."}
-            </span>
-            <ChevronDown
-              className={cn(
-                "size-3.5 text-[#78716C] shrink-0 ml-1 transition-transform duration-150",
-                isOpen && "rotate-180",
-              )}
-            />
-          </button>
-
-          <AnimatePresence>
-            {isOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setActiveRoleDropdown(null)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, y: isUpward ? 4 : -4, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: isUpward ? 4 : -4, scale: 0.98 }}
-                  transition={{ duration: 0.12 }}
-                  className={cn(
-                    "absolute right-0 z-50 w-full min-w-[160px] rounded-xl border border-[#E5E0D6]/90 bg-white p-1.5 shadow-claude-float ring-1 ring-black/5 space-y-1",
-                    isUpward ? "bottom-9 mb-0.5" : "top-9",
-                  )}
-                >
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2 size-3 text-[#78716C]" />
-                    <input
-                      type="text"
-                      value={roleSearchQuery}
-                      onChange={(e) => setRoleSearchQuery(e.target.value)}
-                      placeholder="搜索成员..."
-                      className="h-7 w-full rounded-md bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 pl-6.5 pr-2 text-[11.5px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
-                    />
-                  </div>
-
-                  <div className="max-h-[148px] overflow-y-auto space-y-0.5 pt-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-[#E5E0D6] [&::-webkit-scrollbar-thumb]:rounded-full">
-                    {filteredMembersForRole.length === 0 ? (
-                      <div className="py-2.5 text-center text-[11.5px] text-[#78716C]">
-                        {operatorMembers.length === 0 ? "加载成员中..." : "未找到匹配成员"}
-                      </div>
-                    ) : (
-                      filteredMembersForRole.map((member) => {
-                        const isSelected = member.id === selectedUserId;
-                        const isSelf = member.id === userId;
-                        return (
-                          <button
-                            key={member.id}
-                            type="button"
-                            onClick={() => {
-                              onSelectUser(member.id);
-                              setActiveRoleDropdown(null);
-                            }}
-                            className={cn(
-                              "flex h-7 w-full items-center justify-between rounded-md px-2 text-left text-[12px] transition-colors cursor-pointer",
-                              isSelected
-                                ? "bg-[#F5F3EE] text-[#1C1917] font-medium"
-                                : "text-[#292524] hover:bg-[#FBF9F5]",
-                            )}
-                          >
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span className="truncate">
-                                {member.display_name || member.name}
-                              </span>
-                              {isSelf && (
-                                <span className="text-[9.5px] bg-[#F5F3EE] text-[#78716C] px-1 py-0.2 rounded font-normal">
-                                  我
-                                </span>
-                              )}
-                            </div>
-                            {isSelected && (
-                              <Check className="size-3 text-[#D97757] shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* 取消外协按钮 (微型 X，点击恢复为本人负责并隐去) */}
+      {/* 右侧人员触发按钮 (点击呼出 Portal 居中弹窗，100% 杜绝原生 select 错位) */}
+      <div className="flex items-center gap-1 min-w-0 flex-1 justify-end">
         <button
           type="button"
-          onClick={onResetSelf}
-          className="flex size-6.5 items-center justify-center rounded-md text-[#E5E0D6] hover:text-[#292524] hover:bg-[#E5E0D6]/50 transition-colors cursor-pointer shrink-0"
-          title="恢复为本人负责"
+          onClick={onOpenSelector}
+          className="flex h-7 sm:h-7.5 min-h-[28px] sm:min-h-0 w-full max-w-[175px] min-w-[76px] sm:min-w-[110px] items-center justify-between rounded-md bg-[#FBF9F5] hover:bg-white border border-[#E5E0D6]/80 hover:border-[#78716C]/40 px-2 text-[11px] sm:text-[12px] font-medium text-[#292524] shadow-2xs outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 transition-colors cursor-pointer"
         >
-          <X className="size-3.5" />
+          <span className="truncate">
+            {currentMember
+              ? `${currentMember.display_name || currentMember.name}${currentMember.id === userId ? " (我)" : ""}`
+              : "阿禅 (我)"}
+          </span>
+          <ChevronDown className="size-3 text-[#78716C] shrink-0 ml-1" />
         </button>
+
+        {isExternal ? (
+          <button
+            type="button"
+            onClick={onResetSelf}
+            title="恢复由我完成"
+            className="flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:text-[#DC2626] hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
+          >
+            <X className="size-3 stroke-[2]" />
+          </button>
+        ) : null}
       </div>
     </div>
   );

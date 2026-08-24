@@ -6,11 +6,13 @@ import test from "node:test";
 const source = readFileSync(resolve(process.cwd(), "src/components/nav-bar-client.tsx"), "utf8");
 
 test("主导航与顶部按钮暴露清晰的语义标签", () => {
+  const tabBarSource = readFileSync(resolve(process.cwd(), "src/components/mobile-tab-bar.tsx"), "utf8");
   assert.match(source, /aria-label="待办与通知中心"/);
-  assert.match(source, /aria-label="导航菜单"/);
+  assert.match(source, /aria-label="主导航"/);
   assert.match(source, /aria-current=\{isGroupActive \? "page" : undefined\}/);
-  assert.match(source, /aria-expanded=\{isMobileMenuOpen\}/);
-  assert.match(source, /aria-controls="mobile-navigation-menu"/);
+  assert.match(tabBarSource, /aria-label="移动端主导航"/);
+  assert.match(tabBarSource, /aria-expanded=\{isMoreOpen\}/);
+  assert.match(tabBarSource, /aria-controls="mobile-navigation-menu"/);
 });
 
 test("工作账号与通知入口保留键盘可达和无障碍属性", () => {

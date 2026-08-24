@@ -111,7 +111,7 @@ export function ProductionControlSystem({
 
   return (
     <div className="antialiased">
-      <main className="px-4 py-3 lg:px-8 lg:py-5">
+      <main className="px-3 py-2 sm:px-4 sm:py-3 lg:px-8 lg:py-5 pb-20 md:pb-5">
         <DashboardWorkspaceHeader
           today={today}
           activeBizDate={activeBizDate}

@@ -16,6 +16,8 @@ import { getNavGroups } from "@/components/nav-bar-items";
 import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
 import { WorkspacePicker } from "@/components/workspace-picker";
 import { UserWorkspacePopover } from "@/components/user-workspace-popover";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
+import { MobileMoreDrawer } from "@/components/mobile-more-drawer";
 import { cn } from "@/lib/utils";
 import type { Permissions } from "@/types";
 import {
@@ -101,11 +103,11 @@ export function NavBarClient({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [activeDropdownGroup, setActiveDropdownGroup] = useState<string | null>(
     null,
   );
-  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const tabBarMoreButtonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleDropdownOpen = (key: string) => {
@@ -137,7 +139,7 @@ export function NavBarClient({
   useEffect(() => {
     const timer = setTimeout(() => {
       setActiveDropdownGroup(null);
-      setIsMobileMenuOpen(false);
+      setIsMobileDrawerOpen(false);
     }, 0);
     return () => clearTimeout(timer);
   }, [pathname]);
@@ -151,29 +153,6 @@ export function NavBarClient({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileMenuOpen]);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      setIsMobileMenuOpen(false);
-      mobileMenuButtonRef.current?.focus();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isMobileMenuOpen]);
 
   const [centerBadges, setCenterBadges] = useState<{
     cockpit: number;
@@ -343,8 +322,8 @@ export function NavBarClient({
   const getGroupBadgeCount = (group: NavGroup): number => {
     if (!group.children) return 0;
     return group.children.reduce((acc, child) => {
-      if (child.badgeKey && centerBadges?.[child.badgeKey]) {
-        return acc + centerBadges[child.badgeKey];
+      if (child.badgeKey && centerBadges?.[child.badgeKey as keyof typeof centerBadges]) {
+        return acc + (centerBadges[child.badgeKey as keyof typeof centerBadges] ?? 0);
       }
       return acc;
     }, 0);
@@ -368,7 +347,7 @@ export function NavBarClient({
                 href="/dashboard"
                 prefetch={false}
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
-                className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5"
+                className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
               >
                 <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E5E0D6]/80 bg-[#1C1917] text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#1C1917] group-hover:border-[#292524]">
                   <Zap className="size-4 stroke-[2.2] fill-current text-white transition-transform duration-200 group-hover:scale-110" />
@@ -397,6 +376,7 @@ export function NavBarClient({
                     : group.children?.some((child) => child.match(pathname));
 
                   const groupBadgeCount = getGroupBadgeCount(group);
+                  void groupBadgeCount;
                   const isDropdownOpen = activeDropdownGroup === group.key;
 
                   if (isSingle) {
@@ -547,7 +527,7 @@ export function NavBarClient({
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer",
+                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0",
                     bellBadgeCount > 0
                       ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
                       : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 border border-transparent",
@@ -596,160 +576,38 @@ export function NavBarClient({
                 selectedAccountId={selectedAccountId}
                 onOpenSettings={handleSettingsOpen}
               />
-
-              {/* Mobile Hamburger Menu Button */}
-              <button
-                ref={mobileMenuButtonRef}
-                type="button"
-                onClick={() => setIsMobileMenuOpen((current) => !current)}
-                aria-expanded={isMobileMenuOpen}
-                aria-controls="mobile-navigation-menu"
-                className="flex size-8.5 items-center justify-center rounded-xl text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]/70 active:scale-[0.985] active:duration-75 lg:hidden group"
-                title="导航菜单"
-                aria-label="导航菜单"
-              >
-                <div className="relative size-4">
-                  <span
-                    className={cn(
-                      "absolute left-0 top-0.5 h-0.5 w-4 bg-current transition-all duration-150",
-                      isMobileMenuOpen && "top-1.5 rotate-45 text-[#43718E]",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "absolute left-0 top-1.5 h-0.5 w-4 bg-current transition-all duration-150",
-                      isMobileMenuOpen && "opacity-0",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "absolute left-0 top-2.5 h-0.5 w-4 bg-current transition-all duration-150",
-                      isMobileMenuOpen && "top-1.5 -rotate-45 text-[#43718E]",
-                    )}
-                  />
-                </div>
-              </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu Drawer */}
-      {isMobileMenuOpen && (
-        <div
-          id="mobile-navigation-menu"
-          className={cn(
-            "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset,64px)] z-40 border-b bg-[#FAF8F4]/98 px-4 py-4 md:hidden shadow-claude-dialog flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset,64px))] overflow-y-auto duration-200",
-            "border-[#E5E0D6] backdrop-blur-xl",
-          )}
-        >
-          {/* Mobile Workspace Selector */}
-          {accounts.length > 0 && (
-            <div className="border-b border-[#ECE7DE] pb-3 flex items-center justify-between">
-              <span className="text-[12px] font-medium text-[#78716C]">
-                工作账号
-              </span>
-              <WorkspacePicker
-                accounts={accounts}
-                selectedAccountId={selectedAccountId}
-              />
-            </div>
-          )}
-
-          {/* Mobile 5-Group Nav Links */}
-          <div className="flex flex-col gap-3">
-            {navGroups.map((group) => {
-              const isSingle = Boolean(group.href && group.match);
-              if (isSingle) {
-                const active = group.match!(pathname);
-                const Icon = group.icon;
-                return (
-                  <Link
-                    key={group.key}
-                    href={group.href!}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",
-                      active
-                        ? "bg-[#43718E]/10 text-[#43718E] font-medium border-l-2 border-[#43718E]"
-                        : "text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917]",
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      {Icon && (
-                        <Icon
-                          className={cn(
-                            "size-4 stroke-[1.8]",
-                            active ? "text-[#43718E]" : "text-[#78716C]",
-                          )}
-                        />
-                      )}
-                      <span>{group.label}</span>
-                    </div>
-                  </Link>
-                );
-              }
-
-              // Group Header with Children list
-              const isGroupActive = group.children?.some((c) =>
-                c.match(pathname),
-              );
-
-              return (
-                <div
-                  key={group.key}
-                  className="flex flex-col gap-1 rounded-xl bg-[#FBF9F5]/80 p-2 border border-[#ECE7DE]"
-                >
-                  <div className="px-2 py-1 flex items-center justify-between">
-                    <span
-                      className={cn(
-                        "text-[12px] font-medium uppercase tracking-wider",
-                        isGroupActive ? "text-[#43718E]" : "text-[#78716C]",
-                      )}
-                    >
-                      {group.label}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    {group.children?.map((child: NavSubItem) => {
-                      const active = child.match(pathname);
-                      const Icon = child.icon;
-                      const badgeVal = child.badgeKey
-                        ? (centerBadges?.[child.badgeKey] ?? 0)
-                        : 0;
-                      return (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className={cn(
-                            "flex h-9 items-center justify-between rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200",
-                            active
-                              ? "bg-white text-[#43718E] font-medium shadow-sm border border-[#E5E0D6]"
-                              : "text-[#292524] hover:bg-white/60 hover:text-[#1C1917]",
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            {Icon && (
-                              <Icon
-                                className={cn(
-                                  "size-3.5 stroke-[1.8]",
-                                  active ? "text-[#43718E]" : "text-[#78716C]",
-                                )}
-                              />
-                            )}
-                            <span>{child.label}</span>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Mobile Shell (<768px) */}
+      <div className="block md:hidden">
+        <MobileTabBar
+          navGroups={navGroups}
+          onOpenMore={() => setIsMobileDrawerOpen(true)}
+          isMoreOpen={isMobileDrawerOpen}
+          moreButtonRef={tabBarMoreButtonRef}
+          badgeCount={bellBadgeCount}
+        />
+        <MobileMoreDrawer
+          open={isMobileDrawerOpen}
+          onOpenChange={(open) => {
+            setIsMobileDrawerOpen(open);
+            if (!open) {
+              tabBarMoreButtonRef.current?.focus();
+            }
+          }}
+          name={name}
+          role={role}
+          navGroups={navGroups}
+          accounts={accounts}
+          selectedAccountId={selectedAccountId}
+          onOpenSettings={handleSettingsOpen}
+          onOpenCommandHub={handleCommandHubOpen}
+          bellBadgeCount={bellBadgeCount}
+        />
+      </div>
 
       {settingsLoaded && (
         <PremiumSettingsModal
@@ -766,5 +624,3 @@ export function NavBarClient({
     </>
   );
 }
-
-/* [规范对齐] 批次三：顶栏导航指示器改为下划线 */

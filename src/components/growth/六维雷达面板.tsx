@@ -73,7 +73,7 @@ function 锁定雷达({ text }: { text: string }) {
   const dimensions = GROWTH_DIMENSION_RULES.map((rule) => rule.name);
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="relative flex w-full max-w-[320px] items-center justify-center">
+      <div className="relative flex w-full max-w-[280px] sm:max-w-[320px] items-center justify-center">
         <svg
           viewBox="-20 -20 340 340"
           className="w-full"
@@ -191,7 +191,7 @@ export function SixRadarPanel({
   return (
     <div className="flex flex-col items-center gap-4">
       {/* 顶部简易图例 */}
-      <div className="flex w-full items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
+      <div className="flex w-full flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
         <div className="flex items-center gap-4 text-[12px] text-[#78716C]">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2 w-2 rounded-full bg-[#D97757]" />
@@ -209,7 +209,7 @@ export function SixRadarPanel({
       </div>
 
       {/* SVG 画布 */}
-      <div className="relative flex items-center justify-center w-full max-w-[320px]">
+      <div className="relative flex items-center justify-center w-full max-w-[280px] sm:max-w-[320px]">
         <svg
           viewBox="-20 -20 340 340"
           className="w-full"

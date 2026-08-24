@@ -44,7 +44,7 @@
 - 需要产品信息、技术栈、环境变量、权限模型 → `docs/reference/项目事实.md`
 - 待办、任务清单、TODO、技术债 → `docs/待办清单.md`
 - 测试账号、登录凭据 → `docs/reference/测试账号.md`（gitignored，本地存在）
-- 会话结束 / 任务阶段性交接 / 用户要求写交接文档 → `docs/plans/CONTEXT-CHECKPOINT.md`
+- 会话结束 / 任务阶段性交接 / 用户要求写交接文档 → `docs/上下文交接.md`
 
 ------
 
