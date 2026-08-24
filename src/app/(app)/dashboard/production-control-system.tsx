@@ -15,7 +15,7 @@ import {
 } from "@/lib/dashboard-store";
 
 import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
-import { DataReportStage } from "./components/data-report-stage";
+import { VideoSubmitPanelV2 } from "./video-submit-panel-v2";
 
 interface ProductionControlSystemProps {
   today: string;
@@ -124,7 +124,7 @@ export function ProductionControlSystem({
           submittedDates={submittedDates}
         />
 
-        <DataReportStage
+        <VideoSubmitPanelV2
           key={`${selectedAccountId}-${activeBizDate}`}
           accounts={accounts}
           selectedAccountId={selectedAccountId}
