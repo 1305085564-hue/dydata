@@ -1061,7 +1061,7 @@ export function AdminModulesContentV3({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-8 pl-8 pr-4 text-[13px] bg-[#F5F3EE]/70 border-0 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] outline-none transition-all placeholder:text-[#78716C]"
+                  className="h-8 pl-8 pr-4 text-[13px] bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
               </div>
 

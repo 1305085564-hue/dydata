@@ -96,7 +96,7 @@ export function TimelineDiff({
                 <button
                   key={rev.id}
                   onClick={() => onSelectRevision(rev.id === latestRevision?.id ? null : rev.id)}
-                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-colors duration-100 active:scale-[0.985] active:duration-75 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                  className="group relative h-8.5 w-8.5 shrink-0 rounded-full flex items-center justify-center transition-colors duration-100 active:scale-[0.985] active:duration-75 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                 >
                   {/* 外围 2px 选中导轨 (Selected 状态) */}
                   <span

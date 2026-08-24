@@ -1709,7 +1709,7 @@ export function ContentDiagnosisWorkbench({
                     onChange={(e) => setMainIssues(e.target.value)}
                     disabled={!isEditable}
                     placeholder="例如：开头前5s钩子不够吸引人，完播偏低..."
-                    className="w-full h-9 rounded-lg border border-[#E5E0D6] px-3 text-[12px] text-[#292524] placeholder:text-[#78716C] focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-all"
+                    className="w-full h-9 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -1723,7 +1723,7 @@ export function ContentDiagnosisWorkbench({
                     onChange={(e) => setFeedback(e.target.value)}
                     disabled={!isEditable}
                     placeholder="输入具体优化台词的话术改写方向或操作建议..."
-                    className="w-full rounded-lg border border-[#E5E0D6] p-3 text-[12px] leading-relaxed text-[#292524] placeholder:text-[#78716C] focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-all"
+                    className="w-full rounded-xl border border-[#E5E0D6] bg-white shadow-2xs p-3 text-[12px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
               </div>

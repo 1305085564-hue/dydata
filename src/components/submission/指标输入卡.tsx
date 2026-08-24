@@ -156,7 +156,7 @@ export function MetricInputCard({
             times: [0, 0.5, 1],
             delay: animationDelay / 1000,
           }}
-          className="rounded-xl"
+          className="rounded-lg"
         >
           <Input
             ref={inputEl as React.RefObject<HTMLInputElement>}
@@ -173,12 +173,12 @@ export function MetricInputCard({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              "rounded-xl pr-8 tabular-nums text-[#1C1917] transition-[background-color,border-color,box-shadow,color] duration-150",
-              "bg-[#F5F3EE]/70 border-transparent text-[13px]",
-              "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]",
-              "h-10",
+              "rounded-lg pr-8 tabular-nums text-[#1C1917] transition-all duration-150",
+              "bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/50 text-[13px]",
+              "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
+              "h-9.5",
               field.source === "ocr"
-                ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#D97757]"
+                ? "border-b-2 border-b-[#D97757]/70 shadow-[0_1px_2px_rgba(217,119,87,0.06)]"
                 : "",
             )}
           />

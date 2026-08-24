@@ -2000,7 +2000,7 @@ export function VideoSubmitForm({
                           onChange={(e) =>
                             updateMeta("punishType", e.target.value)
                           }
-                          className="h-8.5 rounded-full border border-[#E5E0D6] bg-white px-3 text-[12px] font-medium text-[#292524] shadow-2xs outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                          className="h-8.5 rounded-full border border-[#E5E0D6] bg-white px-3 text-[12px] font-medium text-[#292524] shadow-2xs outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                         >
                           <option value="限流">限流</option>
                           <option value="删稿">删稿</option>
@@ -2058,7 +2058,7 @@ export function VideoSubmitForm({
                     </div>
 
                     {/* 2. 团队分工与标签属性区 */}
-                    <div className="w-full shrink-0 rounded-xl bg-[#F5F3EE]/60 p-3 space-y-2.5 flex flex-col justify-between">
+                    <div className="w-full shrink-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-3 space-y-2.5 flex flex-col justify-between">
                       {/* 团队分工 */}
                       <div className="space-y-1.5 pt-0.5">
                         <div className="flex items-center justify-between">
@@ -2381,7 +2381,7 @@ export function VideoSubmitForm({
                     >
                       {/* 视频标题 */}
                       <div
-                        className="space-y-1 shrink-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2.5"
+                        className="space-y-1 shrink-0 rounded-xl p-0 transition-colors data-[missing=true]:border data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2.5"
                         data-missing={
                           hasAttemptedSubmit &&
                           meta.anomalyStatus !== "abnormal" &&
@@ -2404,7 +2404,7 @@ export function VideoSubmitForm({
                             updateMeta("videoTitle", event.target.value)
                           }
                           placeholder="输入视频标题"
-                          className="h-9 rounded-xl bg-[#F5F3EE]/70 border-transparent text-[13px] text-[#292524] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-colors duration-100"
+                          className="h-10 rounded-xl bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/50 text-[13px] text-[#292524] placeholder:text-[#78716C]/60 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all duration-150"
                           aria-invalid={
                             hasAttemptedSubmit &&
                             meta.anomalyStatus !== "abnormal" &&
@@ -2423,16 +2423,16 @@ export function VideoSubmitForm({
                           <p
                             id="video_title_error"
                             role="alert"
-                            className="text-[11.5px] font-medium text-[#DC2626]"
+                            className="text-[11.5px] font-medium text-[#C0685C]"
                           >
-                            必填，仍未填写视频标题
+                            待填写视频标题
                           </p>
                         ) : null}
                       </div>
 
                       {/* 视频文案 */}
                       <div
-                        className="flex-1 flex flex-col min-h-0 rounded-xl border border-transparent p-0 transition-colors data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2.5"
+                        className="flex-1 flex flex-col min-h-0 rounded-xl p-0 transition-colors data-[missing=true]:border data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40 data-[missing=true]:p-2.5"
                         data-missing={
                           hasAttemptedSubmit &&
                           issueSummary.missingRequiredMeta.includes("content")
@@ -2475,7 +2475,7 @@ export function VideoSubmitForm({
                             updateMeta("content", event.target.value)
                           }
                           placeholder="粘贴视频文案..."
-                          className="mt-1 flex-1 min-h-[90px] w-full resize-none rounded-xl border border-transparent bg-[#F5F3EE]/70 px-3.5 py-2.5 text-[13px] leading-[1.65] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C] outline-none focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-all duration-200 overflow-y-auto custom-scrollbar"
+                          className="mt-1 flex-1 min-h-[100px] w-full resize-none rounded-xl border border-[#E5E0D6] hover:border-[#78716C]/50 bg-white shadow-2xs px-3.5 py-2.5 text-[13px] leading-[1.65] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all duration-150 overflow-y-auto custom-scrollbar"
                           aria-invalid={
                             hasAttemptedSubmit &&
                             issueSummary.missingRequiredMeta.includes("content")
@@ -2488,9 +2488,9 @@ export function VideoSubmitForm({
                           <p
                             id="content_error"
                             role="alert"
-                            className="mt-1 text-[11.5px] font-medium text-[#DC2626] shrink-0"
+                            className="mt-1 text-[11.5px] font-medium text-[#C0685C] shrink-0"
                           >
-                            必填，仍未填写文案
+                            待填写视频文案
                           </p>
                         ) : null}
                       </div>
@@ -2502,15 +2502,15 @@ export function VideoSubmitForm({
                 <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pt-3.5 border-t border-[#ECE7DE]">
                   <div className="flex items-center gap-2.5">
                     {!canActuallySubmit ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D99E55] bg-white px-2.5 py-1 text-[11.5px] font-medium text-[#D99E55]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#D99E55]" />
-                        <span>{issueSummary.reason || "请补全必要信息"}</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B98A54]/25 bg-[#B98A54]/10 px-2.5 py-1 text-[11.5px] font-medium text-[#B98A54]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#B98A54]" />
+                        <span>{issueSummary.reason || "待补全必要信息"}</span>
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#16A34A] bg-white px-2.5 py-1 text-[11.5px] font-medium text-[#16A34A]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
-                          <span>已就绪,可提交</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#6FAA7D]/25 bg-[#6FAA7D]/10 px-2.5 py-1 text-[11.5px] font-medium text-[#6FAA7D]">
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
+                          <span>已就绪，可提交</span>
                         </span>
                         <span className="text-[11.5px] text-[#78716C]">
                           (支持 ⌘/Ctrl + Enter)
@@ -2525,7 +2525,7 @@ export function VideoSubmitForm({
                         type="button"
                         variant="outline"
                         onClick={onCancel}
-                        className="h-9 rounded-xl px-4 text-[12.5px] font-medium"
+                        className="h-9 rounded-lg px-4 text-[12.5px] font-medium"
                       >
                         取消
                       </Button>
@@ -2534,7 +2534,7 @@ export function VideoSubmitForm({
                       type="button"
                       onClick={triggerSubmit}
                       disabled={isSubmitting || !canActuallySubmit}
-                      className="h-9 rounded-xl px-5 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-50 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed transition-colors duration-100 flex items-center gap-2 shadow-2xs cursor-pointer"
+                      className="h-9 rounded-lg px-5 text-[12.5px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed active:scale-[0.985] transition-all duration-150 flex items-center gap-2 shadow-sm cursor-pointer"
                     >
                       {isSubmitting && (
                         <Loader2 className="size-3.5 animate-spin shrink-0 text-white" />
@@ -2730,7 +2730,7 @@ function RoleItemSelectorRow({
                       value={roleSearchQuery}
                       onChange={(e) => setRoleSearchQuery(e.target.value)}
                       placeholder="搜索成员..."
-                      className="h-7 w-full rounded-md bg-[#F5F3EE]/70 pl-6.5 pr-2 text-[11.5px] text-[#292524] placeholder:text-[#78716C] outline-none focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                      className="h-7 w-full rounded-md bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 pl-6.5 pr-2 text-[11.5px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                     />
                   </div>
 

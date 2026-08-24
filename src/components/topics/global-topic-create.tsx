@@ -243,8 +243,8 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               }}
               placeholder="例如：揭秘庄家吸筹的三种常见假象"
               className={cn(
-                "w-full h-9.5 rounded-xl border border-[#E5E0D6] bg-white px-3 text-[13px] text-[#1C1917] placeholder-[#78716C] outline-none",
-                "transition-all duration-150 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]",
+                "w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 outline-none hover:border-[#78716C]/40",
+                "transition-all duration-150 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
                 titleError && "border-[#C0685C]/40 ring-1 ring-[#C0685C]/40",
               )}
             />
@@ -263,8 +263,8 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
               onChange={(e) => setHookText(e.target.value)}
               placeholder="选填，例如：为什么散户总在底部割肉？因为主力用了这招..."
               className={cn(
-                "w-full rounded-xl border border-[#E5E0D6] bg-white p-2.5 text-[13px] text-[#1C1917] placeholder-[#78716C] outline-none leading-relaxed",
-                "transition-all duration-150 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                "w-full rounded-xl border border-[#E5E0D6] bg-white shadow-2xs p-2.5 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 outline-none leading-relaxed hover:border-[#78716C]/40",
+                "transition-all duration-150 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
               )}
             />
           </div>

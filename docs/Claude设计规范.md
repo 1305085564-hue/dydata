@@ -28,7 +28,10 @@
 **视觉杠杆不叠加原则**：
 - 单个元素禁止同时叠加：超大字号 + 重字重 + 鲜艳色 + 有色背景
 - 大尺寸指标 (24-36px) 必须用中性灰阶，不可配彩色渐变
-- 用对比、微气垫（`bg-zinc-100`）、状态点突出内容，不用放大字号
+- 用对比、微气垫（`bg-[#F5F3EE]`）、状态点突出内容，不用放大字号
+
+**输入框纸层**：
+- 输入框与文本域采用纯白纸底（`bg-white`）+ 暖砂发丝边（`border-[#E5E0D6]`）+ 微投影（`shadow-2xs`），在象牙暖底上建立清晰可交互的纸面层级。
 
 ---
 
@@ -84,9 +87,9 @@
 
 | 级别 | Tailwind 类 | 像素 | 场景 |
 |---|---|---|---|
-| 行级 | `rounded-md` | 6px | 按钮、输入框、选择器 |
-| 小容器 | `rounded-lg` | 8px | 小卡片、Badge、弹层 |
-| 大容器 | `rounded-2xl` | 16px | 模态框、主卡片 |
+| 行级 / 紧凑输入 | `rounded-md` / `rounded-lg` | 6px / 8px | 按钮、紧凑数据输入格（高 ≤40px）、选择器 |
+| 文本域 / 小容器 | `rounded-xl` / `rounded-lg` | 12px / 8px | 多行长文案文本域（高 ≥80px）、小卡片、Badge、弹层 |
+| 大容器 / 主输入舱 | `rounded-2xl` | 16px | 模态框、主卡片、全屏主输入舱 |
 | 胶囊 | `rounded-full` | — | 状态标签、头像 |
 
 ### 3.2 留白精确数值
@@ -220,7 +223,7 @@
 |---|---|
 | 按钮按压 | `active:scale-[0.985] active:duration-75` |
 | 抽屉/折叠 | `ease-[cubic-bezier(0.16,1,0.3,1)] duration-300` |
-| 聚焦光晕 | `focus-visible:ring-1 ring-[#D97757]/30 ring-offset-2 ring-offset-[#FBF9F5]` |
+| 聚焦光晕 | `focus-visible:border-[#78716C] focus-visible:ring-1 ring-[#D97757]/25 focus-visible:ring-offset-0` |
 
 ### 6.6 骨架屏显影
 

@@ -548,7 +548,7 @@ export function MemberDrawer({
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder="输入原因..."
-                      className="w-full rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3 py-2 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-[#78716C] focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                      className="w-full rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 py-2 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                       disabled={isSubmitting}
                     />
                   </div>

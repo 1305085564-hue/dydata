@@ -183,7 +183,7 @@ export function TopicPoolExplorer({
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] focus-visible:bg-white border-0 rounded-lg pl-7 pr-2.5 py-1.5 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] text-[#292524] placeholder:text-[#78716C] font-normal transition-all"
+              className="text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -245,7 +245,7 @@ export function TopicPoolExplorer({
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => toggleTopicId(t.id)}
-                            className="rounded text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                            className="rounded text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                           />
                           <span
                             className={

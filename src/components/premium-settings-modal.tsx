@@ -718,7 +718,7 @@ export function PremiumSettingsModal({
                                     ? "如: dydata"
                                     : "如: 探店主理人"
                                 }
-                                className="flex-1 rounded-lg border border-[#E5E0D6] bg-white px-3 py-1.5 text-[12px] text-[#1C1917] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                                className="flex-1 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs hover:border-[#78716C]/40 px-3 py-1.5 text-[12px] text-[#1C1917] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                               />
                               <button
                                 type="button"

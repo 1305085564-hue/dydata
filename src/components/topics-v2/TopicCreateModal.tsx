@@ -201,7 +201,7 @@ export function TopicCreateModal({
               <select
                 value={topicId}
                 onChange={(e) => setTopicId(e.target.value)}
-                className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
+                className="w-full text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-lg px-3 py-2 text-[#292524] focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-normal"
                 required
                 aria-label="选择所属母题"
               >
@@ -224,7 +224,7 @@ export function TopicCreateModal({
                 placeholder="例如：打破洗盘迷局的三大核心信号"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
+                className="w-full text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-lg px-3 py-2 text-[#292524] placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-normal"
                 required
                 aria-label="子题标题"
               />
@@ -241,7 +241,7 @@ export function TopicCreateModal({
                 placeholder="例如：为什么大部分散户买在起涨点却拿不住？3个洗盘细节揭密"
                 value={hook}
                 onChange={(e) => setHook(e.target.value)}
-                className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
+                className="w-full text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-xl px-3 py-2 text-[#292524] placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-normal"
                 required
                 aria-label="一句话选题 Hook"
               />
@@ -258,7 +258,7 @@ export function TopicCreateModal({
                   placeholder="例如：避坑 / 警醒"
                   value={emotionTag}
                   onChange={(e) => setEmotionTag(e.target.value)}
-                  className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
+                  className="w-full text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-lg px-3 py-2 text-[#292524] placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-normal"
                   aria-label="情绪标签"
                 />
               </div>
@@ -271,7 +271,7 @@ export function TopicCreateModal({
                   placeholder="例如：进阶交易者"
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
-                  className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
+                  className="w-full text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-lg px-3 py-2 text-[#292524] placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-normal"
                   aria-label="目标受众"
                 />
               </div>

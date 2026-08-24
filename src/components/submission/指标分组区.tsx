@@ -112,9 +112,8 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
       {/* 直接平铺核心、互动和完播留存数据网格 */}
       <div className="flex flex-1 flex-col gap-3.5">
         
-        {/* 1. 核心数据网格 (3列等分，彻底消除第4列空白) */}
-        <div className="relative pl-3">
-          <div className="absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full bg-[#D97757]/80" />
+        {/* 1. 核心数据网格 (3列等分) */}
+        <div>
           <div className="grid grid-cols-3 gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
@@ -136,8 +135,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
         </div>
 
         {/* 2. 互动数据网格 (4列紧凑排布) */}
-        <div className="relative pl-3">
-          <div className="absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full bg-[#D99E55]/80" />
+        <div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {INTERACTION_ITEMS.map((item, index) => (
               <指标输入卡
@@ -154,21 +152,14 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             ))}
           </div>
           {showInteractionWarning && (
-            <div className="mt-1 pl-1 text-[11.5px] font-medium text-[#D99E55] transition-opacity duration-150">
+            <div className="mt-1.5 pl-0.5 text-[11.5px] font-medium text-[#B98A54] transition-opacity duration-150">
               ⚠️ 互动数据总和已超过播放量，请核对输入
             </div>
           )}
         </div>
 
         {/* 3. 完播留存网格 (4列始终平铺展开) */}
-        <div className="relative pl-3">
-          <div
-            className={cn(
-              "absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full transition-colors duration-150",
-              retentionOptional ? "bg-[#E5E0D6]" : "bg-[#6FAA7D]/80"
-            )}
-          />
-          
+        <div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {RETENTION_ITEMS.map((item, index) => (
               <指标输入卡

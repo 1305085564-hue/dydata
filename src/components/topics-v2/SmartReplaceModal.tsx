@@ -189,7 +189,7 @@ export function SmartReplaceModal({
                         name="replaceClaim"
                         checked={isSelected}
                         onChange={() => setSelectedReturnId(claim.subTopicId)}
-                        className="mt-0.5 text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                        className="mt-0.5 text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                       />
                       <div>
                         <div className="text-xs font-normal text-[#292524]">

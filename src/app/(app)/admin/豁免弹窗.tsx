@@ -283,7 +283,7 @@ export function ExemptionDialog({
               onChange={(e) => updateField("reason", e.target.value)}
               disabled={isPending}
               rows={3}
-              className="flex min-h-20 w-full rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3 py-2 text-[13px] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-[#78716C] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] disabled:cursor-not-allowed disabled:bg-[#FBF9F5] disabled:opacity-50"
+              className="flex min-h-20 w-full rounded-xl border border-[#E5E0D6] bg-white shadow-2xs px-3.5 py-2.5 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:bg-[#FBF9F5] disabled:opacity-50"
               placeholder="可选，建议写明原因"
             />
           </div>

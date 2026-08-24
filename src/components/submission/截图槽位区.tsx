@@ -126,10 +126,10 @@ export function SubmissionSlotsSection({
         handleGlobalFiles(e.dataTransfer.files);
       }}
       className={cn(
-        "flex flex-col h-full rounded-xl bg-[#F5F3EE]/60 p-2 transition-all duration-200",
+        "flex flex-col h-full rounded-xl transition-all duration-200",
         isDragOverGlobal
-          ? "border-2 border-dashed border-[#D97757] bg-[#D97757]/[0.03] ring-2 ring-[#D97757]/20 shadow-md"
-          : "border border-transparent"
+          ? "border-2 border-dashed border-[#D97757] bg-[#D97757]/[0.03] ring-2 ring-[#D97757]/20 shadow-sm p-1.5"
+          : ""
       )}
     >
       {/* 隐藏的全局多图选择 input */}
@@ -193,10 +193,10 @@ export function SubmissionSlotsSection({
                 }
               }}
               className={cn(
-                "relative flex flex-col justify-center flex-1 min-h-[105px] rounded-xl border p-3.5 transition-colors duration-100",
+                "relative flex flex-col justify-center flex-1 min-h-[105px] rounded-xl border p-3.5 transition-all duration-150",
                 slot.status === "empty"
-                  ? "border-[#E5E0D6]/70 bg-white/80 hover:border-[#D97757] hover:bg-white cursor-pointer shadow-2xs"
-                  : "border-[#E5E0D6] bg-white shadow-2xs",
+                  ? "border-[#ECE7DE] bg-white/90 hover:border-[#D97757]/60 hover:bg-white cursor-pointer shadow-2xs hover:shadow-sm"
+                  : "border-[#ECE7DE] bg-white shadow-2xs",
                 isSlotDragTarget && "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/30",
                 isFocused && "border-[#D97757]/80 ring-2 ring-[#D97757]/20 bg-[#FDF9F7]/35",
                 isError && "border-[#DC2626]/40 bg-[#FFF9F8]"

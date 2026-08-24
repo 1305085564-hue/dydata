@@ -158,7 +158,7 @@ export function QuotaConfigPanel({
                     type="date"
                     value={effectiveDate}
                     onChange={(e) => setEffectiveDate(e.target.value)}
-                    className="w-full h-10 rounded-xl border-0 bg-[#F5F3EE]/70 px-4 text-[13px] text-[#1C1917] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-[background-color,box-shadow]"
+                    className="w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3.5 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -174,7 +174,7 @@ export function QuotaConfigPanel({
                     max="50"
                     value={dailyTarget}
                     onChange={(e) => setDailyTarget(e.target.value)}
-                    className="w-full h-10 rounded-xl border-0 bg-[#F5F3EE]/70 px-4 text-[13px] text-[#1C1917] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-[background-color,box-shadow]"
+                    className="w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3.5 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -189,7 +189,7 @@ export function QuotaConfigPanel({
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="如：夏季发片量调整..."
-                    className="w-full h-10 rounded-xl border-0 bg-[#F5F3EE]/70 px-4 text-[13px] text-[#1C1917] placeholder:text-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-[background-color,box-shadow]"
+                    className="w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3.5 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 

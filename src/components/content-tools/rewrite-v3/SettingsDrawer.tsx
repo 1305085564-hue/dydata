@@ -194,7 +194,7 @@ export function SettingsDrawer({
                   type="text"
                   value={skillName}
                   onChange={(e) => setSkillName(e.target.value)}
-                  className="w-full bg-[#F5F3EE]/50 border border-transparent focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                  className="w-full bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   placeholder="如：小红书爆款润色"
                 />
               </label>
@@ -207,7 +207,7 @@ export function SettingsDrawer({
                   value={skillPrompt}
                   onChange={(e) => setSkillPrompt(e.target.value)}
                   rows={6}
-                  className="w-full bg-[#F5F3EE]/50 border border-transparent focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2.5 text-[12px] leading-relaxed outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                  className="w-full bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-xl p-2.5 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 leading-relaxed outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   placeholder="输入此技能对文案的具体改写指令要求..."
                 />
               </label>
@@ -220,7 +220,7 @@ export function SettingsDrawer({
                   type="text"
                   value={skillDesc}
                   onChange={(e) => setSkillDesc(e.target.value)}
-                  className="w-full bg-[#F5F3EE]/50 border border-transparent focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                  className="w-full bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   placeholder="简述使用场景或作用"
                 />
               </label>
@@ -234,7 +234,7 @@ export function SettingsDrawer({
                   <select
                     value={skillModel}
                     onChange={(e) => setSkillModel(e.target.value)}
-                    className="w-full bg-[#F5F3EE]/50 border border-transparent focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
+                    className="w-full bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg p-2 text-[12px] text-[#292524] outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   >
                     <option value="">跟随全局配置</option>
                     {bootstrap.modelViews.map((item) => {
