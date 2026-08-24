@@ -9,13 +9,16 @@ import { cn } from "@/lib/utils";
 function HomeIcon({ className }: { className?: string }) {
   return (
     <svg
+      width={20}
+      height={20}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.6}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("size-[20px]", className)}
+      className={cn("size-[20px] shrink-0", className)}
+      style={{ width: 20, height: 20 }}
       aria-hidden="true"
     >
       <path d="M3 10.6 12 3l9 7.6" />
@@ -27,13 +30,16 @@ function HomeIcon({ className }: { className?: string }) {
 function TopicsIcon({ className }: { className?: string }) {
   return (
     <svg
+      width={20}
+      height={20}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.6}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("size-[20px]", className)}
+      className={cn("size-[20px] shrink-0", className)}
+      style={{ width: 20, height: 20 }}
       aria-hidden="true"
     >
       <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
@@ -47,13 +53,16 @@ function TopicsIcon({ className }: { className?: string }) {
 function DataIcon({ className }: { className?: string }) {
   return (
     <svg
+      width={20}
+      height={20}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.6}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("size-[20px]", className)}
+      className={cn("size-[20px] shrink-0", className)}
+      style={{ width: 20, height: 20 }}
       aria-hidden="true"
     >
       <path d="M4 20V12.5M9.3 20V6M14.7 20V14M20 20V9.5" />
@@ -64,13 +73,16 @@ function DataIcon({ className }: { className?: string }) {
 function MeIcon({ className }: { className?: string }) {
   return (
     <svg
+      width={20}
+      height={20}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.6}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={cn("size-[20px]", className)}
+      className={cn("size-[20px] shrink-0", className)}
+      style={{ width: 20, height: 20 }}
       aria-hidden="true"
     >
       <circle cx="12" cy="8" r="4" />

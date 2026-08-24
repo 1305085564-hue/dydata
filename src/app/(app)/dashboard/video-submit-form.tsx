@@ -2130,13 +2130,14 @@ export function VideoSubmitForm({
                   </div>
 
                   {/* ===== 4. 标题下方左右两个模块：左边团队分工(50%)，右边文案(50%) ===== */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 items-stretch">
-                    {/* 左栏：团队分工与标签属性区 (50% 空间) */}
-                    <div className="min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-2 sm:p-2.5 space-y-1 sm:space-y-1.5 flex flex-col justify-between h-full">
+                  {/* 桌面端 (lg:) 呈现左 290px 佐证分工 + 右 1fr 数据文案双栏大盘；移动端 (<lg:) 呈现单屏紧凑流 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-[290px_minmax(0,1fr)] gap-4 lg:gap-5 items-start">
+                    {/* ===== 【左栏 (桌面端 lg: 独占 290px，移动端隐藏分工卡片)】 ===== */}
+                    <div className="hidden lg:flex min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-3 space-y-2 flex-col justify-between">
                       {/* 团队分工 */}
-                      <div className="space-y-0.5 sm:space-y-1 pt-0.5">
+                      <div className="space-y-1.5 pt-0.5">
                         <div className="flex items-center justify-between">
-                          <Label className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#292524] select-none truncate">
+                          <Label className="text-[12.5px] font-semibold text-[#292524] select-none">
                             团队分工
                           </Label>
 
@@ -2144,20 +2145,20 @@ export function VideoSubmitForm({
                             <button
                               type="button"
                               onClick={showAllRoles}
-                              className="inline-flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-0.5 text-[10.5px] sm:text-[12px] font-medium text-[#D97757] hover:underline transition-colors duration-100 cursor-pointer"
+                              className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:underline transition-colors duration-100 cursor-pointer"
                             >
-                              <Plus className="size-2.5 stroke-[2.5]" />
-                              <span>+ 指派</span>
+                              <Plus className="size-3 stroke-[2.5]" />
+                              <span>+ 协同指派</span>
                             </button>
                           ) : null}
                         </div>
 
                         {!hasAnyVisibleRole ? (
-                          <div className="text-[10.5px] sm:text-[12px] text-[#78716C] py-0.5 truncate">
+                          <div className="text-[12px] text-[#78716C] py-0.5">
                             由我独立完成 (全包)
                           </div>
                         ) : (
-                          <div className="space-y-1 pt-0.5">
+                          <div className="space-y-1.5 pt-0.5">
                             {isScriptAuthorVisible && (
                               <RoleItemSelectorRow
                                 label="文案"
@@ -2219,36 +2220,36 @@ export function VideoSubmitForm({
                       </div>
 
                       {/* 题材与形式记忆配置 */}
-                      <div className="space-y-1 pt-1 border-t border-[#ECE7DE]/60">
+                      <div className="space-y-1.5 pt-1.5 border-t border-[#ECE7DE]">
                         {!isMemoryExpanded ? (
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
-                              <span className="text-[11px] sm:text-[11.5px] text-[#292524] font-medium">
-                                题材形式：
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[12px] text-[#292524] font-medium">
+                                题材与形式：
                               </span>
-                              <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded px-1.5 py-0.2 text-[10.5px] sm:text-[11px] font-medium shadow-2xs">
+                              <span className="bg-white/90 border border-[#E5E0D6] text-[#292524] rounded-md px-2 py-0.5 text-[11.5px] font-medium shadow-2xs">
                                 {meta.topicTag || "未选"}
                               </span>
-                              <span className="text-[#E5E0D6] text-[9px]">·</span>
-                              <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded px-1.5 py-0.2 text-[10.5px] sm:text-[11px] font-medium shadow-2xs">
+                              <span className="text-[#78716C] text-[10px]">·</span>
+                              <span className="bg-white/90 border border-[#E5E0D6] text-[#292524] rounded-md px-2 py-0.5 text-[11.5px] font-medium shadow-2xs">
                                 {meta.videoForm || "未选"}
                               </span>
                             </div>
                             <button
                               type="button"
                               onClick={() => setIsMemoryExpanded(true)}
-                              className="text-[11px] sm:text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors cursor-pointer min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center"
+                              className="text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors cursor-pointer"
                             >
                               修改
                             </button>
                           </div>
                         ) : (
-                          <div className="space-y-1.5 rounded-lg bg-[#F5F3EE]/70 p-2">
+                          <div className="space-y-2 rounded-lg bg-[#F5F3EE]/70 p-2.5">
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-medium text-[#292524]">
+                              <Label className="text-[12px] font-medium text-[#292524]">
                                 题材标签 *
                               </Label>
-                              <div className="grid grid-cols-2 gap-1">
+                              <div className="grid grid-cols-2 gap-1.5">
                                 {(["干货", "复盘"] as const).map((tag) => (
                                   <button
                                     key={tag}
@@ -2260,9 +2261,9 @@ export function VideoSubmitForm({
                                       )
                                     }
                                     className={cn(
-                                      "h-7 min-h-[28px] sm:min-h-0 rounded border text-[11px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
+                                      "h-7.5 rounded-lg border text-[12px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
                                       meta.topicTag === tag
-                                        ? "border-[#E5E0D6]/80 bg-white text-[#1C1917] font-medium shadow-2xs"
+                                        ? "border-[#E5E0D6] bg-white text-[#1C1917] font-medium shadow-2xs"
                                         : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]",
                                     )}
                                   >
@@ -2273,19 +2274,19 @@ export function VideoSubmitForm({
                             </div>
 
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-medium text-[#292524]">
+                              <Label className="text-[12px] font-medium text-[#292524]">
                                 视频形式 *
                               </Label>
-                              <div className="grid grid-cols-2 gap-1">
+                              <div className="grid grid-cols-2 gap-1.5">
                                 {(["出镜", "图文"] as const).map((form) => (
                                   <button
                                     key={form}
                                     type="button"
                                     onClick={() => updateMeta("videoForm", form)}
                                     className={cn(
-                                      "h-7 min-h-[28px] sm:min-h-0 rounded border text-[11px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
+                                      "h-7.5 rounded-lg border text-[12px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
                                       meta.videoForm === form
-                                        ? "border-[#E5E0D6]/80 bg-white text-[#1C1917] font-medium shadow-2xs"
+                                        ? "border-[#E5E0D6] bg-white text-[#1C1917] font-medium shadow-2xs"
                                         : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]",
                                     )}
                                   >
@@ -2299,7 +2300,7 @@ export function VideoSubmitForm({
                               <button
                                 type="button"
                                 onClick={() => setIsMemoryExpanded(false)}
-                                className="text-[11px] font-medium text-[#78716C] hover:text-[#292524] cursor-pointer min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center"
+                                className="text-[12px] font-medium text-[#78716C] hover:text-[#292524] cursor-pointer"
                               >
                                 完成
                               </button>
@@ -2310,39 +2311,39 @@ export function VideoSubmitForm({
 
                       {/* 异常状态补充输入 */}
                       {meta.anomalyStatus === "abnormal" && (
-                        <div className="flex flex-col gap-1 rounded-lg bg-amber-50/60 p-1.5 border border-amber-200/50">
+                        <div className="flex flex-col gap-1.5 rounded-lg bg-amber-50/60 p-2 border border-amber-200/50">
                           <div className="flex flex-col gap-0.5">
                             <Label
-                              htmlFor="platform_notice"
-                              className="text-[11px] font-medium text-amber-950/80"
+                              htmlFor="platform_notice_desktop"
+                              className="text-[11.5px] font-medium text-amber-950/80"
                             >
                               平台通知 (选填)
                             </Label>
                             <Input
-                              id="platform_notice"
+                              id="platform_notice_desktop"
                               value={meta.platformNotice || ""}
                               onChange={(e) =>
                                 updateMeta("platformNotice", e.target.value)
                               }
                               placeholder="如处罚通知文案"
-                              className="h-7 rounded bg-white/90 border-amber-200/60 text-[11px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
+                              className="h-7.5 rounded bg-white/90 border-amber-200/60 text-[11.5px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
                             />
                           </div>
                           <div className="flex flex-col gap-0.5">
                             <Label
-                              htmlFor="appeal"
-                              className="text-[11px] font-medium text-amber-950/80"
+                              htmlFor="appeal_desktop"
+                              className="text-[11.5px] font-medium text-amber-950/80"
                             >
                               申诉进展 (选填)
                             </Label>
                             <Input
-                              id="appeal"
+                              id="appeal_desktop"
                               value={meta.appeal || ""}
                               onChange={(e) =>
                                 updateMeta("appeal", e.target.value)
                               }
                               placeholder="如申诉处理中"
-                              className="h-7 rounded bg-white/90 border-amber-200/60 text-[11px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
+                              className="h-7.5 rounded bg-white/90 border-amber-200/60 text-[11.5px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
                             />
                           </div>
                         </div>
@@ -2355,7 +2356,7 @@ export function VideoSubmitForm({
                           onClick={() =>
                             setIsMoreSettingsExpanded(!isMoreSettingsExpanded)
                           }
-                          className="flex min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 items-center gap-1 text-[11px] sm:text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors focus-visible:outline-none cursor-pointer"
+                          className="flex items-center gap-1 text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors focus-visible:outline-none cursor-pointer"
                         >
                           <ChevronDown
                             className={cn(
@@ -2375,17 +2376,17 @@ export function VideoSubmitForm({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -4 }}
                               transition={{ duration: 0.15 }}
-                              className="space-y-1.5 pt-1"
+                              className="space-y-1.5 pt-1.5"
                             >
                               <div className="space-y-0.5">
                                 <Label
-                                  htmlFor="published_at"
-                                  className="text-[11px] font-medium text-[#292524]"
+                                  htmlFor="published_at_desktop"
+                                  className="text-[11.5px] font-medium text-[#292524]"
                                 >
                                   发布时间
                                 </Label>
                                 <Input
-                                  id="published_at"
+                                  id="published_at_desktop"
                                   type="datetime-local"
                                   step={3600}
                                   value={meta.publishedAt}
@@ -2406,10 +2407,10 @@ export function VideoSubmitForm({
                                       publishedAtText: synced.publishedAtText,
                                     }));
                                   }}
-                                  className="h-7 rounded bg-white/90 border-[#E5E0D6]/80 text-[11px] text-[#292524] focus:bg-white focus:border-[#E5E0D6] transition-colors duration-100"
+                                  className="h-7.5 rounded bg-white/90 border-[#E5E0D6] text-[11.5px] text-[#292524] focus:bg-white focus:border-[#E5E0D6] transition-colors duration-100"
                                 />
                               </div>
-                              <div className="flex items-center justify-between text-[10.5px] text-[#78716C] pt-0.5 px-0.5">
+                              <div className="flex items-center justify-between text-[11px] text-[#78716C] pt-0.5 px-0.5">
                                 <span>上传时间戳</span>
                                 <span className="tabular-nums text-[#78716C] font-normal">
                                   {meta.uploadedAt || "--"}
@@ -2421,73 +2422,437 @@ export function VideoSubmitForm({
                       </div>
                     </div>
 
-                    {/* 右栏：视频文案创作区 (50% 空间，与左侧卡片完全对称) */}
-                    <div
-                      className="min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-2 sm:p-2.5 flex flex-col justify-between h-full transition-colors data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40"
-                      data-missing={
-                        hasAttemptedSubmit &&
-                        issueSummary.missingRequiredMeta.includes("content")
-                      }
-                    >
-                      {/* 文案头部 (与左侧团队分工头部高度与风格完全一致) */}
-                      <div className="flex items-center justify-between shrink-0 pt-0.5">
-                        <Label
-                          htmlFor="content"
-                          className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#292524] select-none truncate"
-                        >
-                          视频文案 <span className="text-[#DC2626]">*</span>
-                        </Label>
-                        <button
-                          type="button"
-                          onClick={handlePasteContent}
-                          className={cn(
-                            "inline-flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-1 text-[10.5px] sm:text-[12px] font-medium transition-colors duration-150 focus-visible:outline-none cursor-pointer py-0.5 px-1",
-                            isPastedFeedback
-                              ? "text-[#16A34A] font-medium"
-                              : "text-[#78716C] hover:text-[#292524]"
-                          )}
-                        >
-                          {isPastedFeedback ? (
-                            <>
-                              <Check size={11} className="stroke-[2.5] text-[#16A34A]" />
-                              <span>已粘贴</span>
-                            </>
-                          ) : (
-                            <>
-                              <ClipboardPaste size={11} className="stroke-[1.5]" />
-                              <span>一键粘贴</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                    {/* ===== 【右栏 (桌面端 lg: 独占 1fr 视频文案卡片，移动端展示 50/50 双卡片)】 ===== */}
+                    <div className="min-w-0 flex-1">
+                      {/* 移动端专用的 50/50 紧凑双卡片 (lg:hidden) */}
+                      <div className="grid grid-cols-2 gap-2 sm:gap-3 items-stretch lg:hidden">
+                        {/* 左栏：团队分工与标签属性区 (50% 空间) */}
+                        <div className="min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-2 sm:p-2.5 space-y-1 sm:space-y-1.5 flex flex-col justify-between h-full">
+                          {/* 团队分工 */}
+                          <div className="space-y-0.5 sm:space-y-1 pt-0.5">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#292524] select-none truncate">
+                                团队分工
+                              </Label>
 
-                      {/* 文案输入框 (直接作为白底卡片书写纸，无内层灰色框) */}
-                      <div className="mt-1.5 flex-1 flex flex-col min-h-0">
-                        <textarea
-                          id="content"
-                          value={meta.content}
-                          onChange={(event) =>
-                            updateMeta("content", event.target.value)
-                          }
-                          placeholder="粘贴或输入视频文案..."
-                          className="flex-1 min-h-[96px] sm:min-h-[120px] w-full resize-none bg-transparent border-0 outline-none text-[11.5px] sm:text-[13px] leading-[1.6] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C]/60 focus:ring-0 focus-visible:ring-0 p-0 overflow-y-auto custom-scrollbar"
-                          aria-invalid={
+                              {!hasAnyVisibleRole ? (
+                                <button
+                                  type="button"
+                                  onClick={showAllRoles}
+                                  className="inline-flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-0.5 text-[10.5px] sm:text-[12px] font-medium text-[#D97757] hover:underline transition-colors duration-100 cursor-pointer"
+                                >
+                                  <Plus className="size-2.5 stroke-[2.5]" />
+                                  <span>+ 指派</span>
+                                </button>
+                              ) : null}
+                            </div>
+
+                            {!hasAnyVisibleRole ? (
+                              <div className="text-[10.5px] sm:text-[12px] text-[#78716C] py-0.5 truncate">
+                                由我独立完成 (全包)
+                              </div>
+                            ) : (
+                              <div className="space-y-1 pt-0.5">
+                                {isScriptAuthorVisible && (
+                                  <RoleItemSelectorRow
+                                    label="文案"
+                                    icon={<FileText className="size-3.5 text-[#78716C] stroke-[1.75]" />}
+                                    roleKey="script_author"
+                                    selectedUserId={meta.scriptAuthorUserId}
+                                    operatorMembers={operatorMembers}
+                                    userId={userId}
+                                    onOpenSelector={() =>
+                                      setSelectingRole({
+                                        role: "script_author",
+                                        label: "文案",
+                                        selectedUserId: meta.scriptAuthorUserId,
+                                      })
+                                    }
+                                    onResetSelf={() => hideRole("script_author")}
+                                  />
+                                )}
+
+                                {isVideoEditorVisible && (
+                                  <RoleItemSelectorRow
+                                    label="剪辑"
+                                    icon={<Scissors className="size-3.5 text-[#78716C] stroke-[1.75]" />}
+                                    roleKey="video_editor"
+                                    selectedUserId={meta.videoEditorUserId}
+                                    operatorMembers={operatorMembers}
+                                    userId={userId}
+                                    onOpenSelector={() =>
+                                      setSelectingRole({
+                                        role: "video_editor",
+                                        label: "剪辑",
+                                        selectedUserId: meta.videoEditorUserId,
+                                      })
+                                    }
+                                    onResetSelf={() => hideRole("video_editor")}
+                                  />
+                                )}
+
+                                {isOperatorVisible && (
+                                  <RoleItemSelectorRow
+                                    label="运营"
+                                    icon={<Rocket className="size-3.5 text-[#78716C] stroke-[1.75]" />}
+                                    roleKey="operator"
+                                    selectedUserId={meta.operatorUserId}
+                                    operatorMembers={operatorMembers}
+                                    userId={userId}
+                                    onOpenSelector={() =>
+                                      setSelectingRole({
+                                        role: "operator",
+                                        label: "运营",
+                                        selectedUserId: meta.operatorUserId,
+                                      })
+                                    }
+                                    onResetSelf={() => hideRole("operator")}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 题材与形式记忆配置 */}
+                          <div className="space-y-1 pt-1 border-t border-[#ECE7DE]/60">
+                            {!isMemoryExpanded ? (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[11px] sm:text-[11.5px] text-[#292524] font-medium">
+                                    题材形式：
+                                  </span>
+                                  <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded px-1.5 py-0.2 text-[10.5px] sm:text-[11px] font-medium shadow-2xs">
+                                    {meta.topicTag || "未选"}
+                                  </span>
+                                  <span className="text-[#E5E0D6] text-[9px]">·</span>
+                                  <span className="bg-white/90 border border-[#E5E0D6]/80 text-[#292524] rounded px-1.5 py-0.2 text-[10.5px] sm:text-[11px] font-medium shadow-2xs">
+                                    {meta.videoForm || "未选"}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setIsMemoryExpanded(true)}
+                                  className="text-[11px] sm:text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors cursor-pointer min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center"
+                                >
+                                  修改
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5 rounded-lg bg-[#F5F3EE]/70 p-2">
+                                <div className="space-y-1">
+                                  <Label className="text-[11px] font-medium text-[#292524]">
+                                    题材标签 *
+                                  </Label>
+                                  <div className="grid grid-cols-2 gap-1">
+                                    {(["干货", "复盘"] as const).map((tag) => (
+                                      <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() =>
+                                          updateMeta(
+                                            "topicTag",
+                                            meta.topicTag === tag ? "" : tag,
+                                          )
+                                        }
+                                        className={cn(
+                                          "h-7 min-h-[28px] sm:min-h-0 rounded border text-[11px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
+                                          meta.topicTag === tag
+                                            ? "border-[#E5E0D6]/80 bg-white text-[#1C1917] font-medium shadow-2xs"
+                                            : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]",
+                                        )}
+                                      >
+                                        {tag}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <Label className="text-[11px] font-medium text-[#292524]">
+                                    视频形式 *
+                                  </Label>
+                                  <div className="grid grid-cols-2 gap-1">
+                                    {(["出镜", "图文"] as const).map((form) => (
+                                      <button
+                                        key={form}
+                                        type="button"
+                                        onClick={() => updateMeta("videoForm", form)}
+                                        className={cn(
+                                          "h-7 min-h-[28px] sm:min-h-0 rounded border text-[11px] font-medium transition-colors duration-100 cursor-pointer inline-flex items-center justify-center",
+                                          meta.videoForm === form
+                                            ? "border-[#E5E0D6]/80 bg-white text-[#1C1917] font-medium shadow-2xs"
+                                            : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50 hover:text-[#1C1917]",
+                                        )}
+                                      >
+                                        {form}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-end pt-0.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsMemoryExpanded(false)}
+                                    className="text-[11px] font-medium text-[#78716C] hover:text-[#292524] cursor-pointer min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center"
+                                  >
+                                    完成
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 异常状态补充输入 */}
+                          {meta.anomalyStatus === "abnormal" && (
+                            <div className="flex flex-col gap-1 rounded-lg bg-amber-50/60 p-1.5 border border-amber-200/50">
+                              <div className="flex flex-col gap-0.5">
+                                <Label
+                                  htmlFor="platform_notice"
+                                  className="text-[11px] font-medium text-amber-950/80"
+                                >
+                                  平台通知 (选填)
+                                </Label>
+                                <Input
+                                  id="platform_notice"
+                                  value={meta.platformNotice || ""}
+                                  onChange={(e) =>
+                                    updateMeta("platformNotice", e.target.value)
+                                  }
+                                  placeholder="如处罚通知文案"
+                                  className="h-7 rounded bg-white/90 border-amber-200/60 text-[11px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-0.5">
+                                <Label
+                                  htmlFor="appeal"
+                                  className="text-[11px] font-medium text-amber-950/80"
+                                >
+                                  申诉进展 (选填)
+                                </Label>
+                                <Input
+                                  id="appeal"
+                                  value={meta.appeal || ""}
+                                  onChange={(e) =>
+                                    updateMeta("appeal", e.target.value)
+                                  }
+                                  placeholder="如申诉处理中"
+                                  className="h-7 rounded bg-white/90 border-amber-200/60 text-[11px] text-[#292524] placeholder:text-[#78716C] focus:bg-white focus:border-amber-400"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 展开更多设置 (Accordion) */}
+                          <div className="pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setIsMoreSettingsExpanded(!isMoreSettingsExpanded)
+                              }
+                              className="flex min-h-[30px] min-w-[30px] sm:min-h-0 sm:min-w-0 items-center gap-1 text-[11px] sm:text-[11.5px] font-medium text-[#78716C] hover:text-[#292524] transition-colors focus-visible:outline-none cursor-pointer"
+                            >
+                              <ChevronDown
+                                className={cn(
+                                  "size-3 stroke-[1.5] transition-transform duration-150",
+                                  isMoreSettingsExpanded && "rotate-180",
+                                )}
+                              />
+                              {isMoreSettingsExpanded
+                                ? "收起更多设置"
+                                : "展开更多设置"}
+                            </button>
+
+                            <AnimatePresence initial={false}>
+                              {isMoreSettingsExpanded && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -4 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -4 }}
+                                  transition={{ duration: 0.15 }}
+                                  className="space-y-1.5 pt-1"
+                                >
+                                  <div className="space-y-0.5">
+                                    <Label
+                                      htmlFor="published_at"
+                                      className="text-[11px] font-medium text-[#292524]"
+                                    >
+                                      发布时间
+                                    </Label>
+                                    <Input
+                                      id="published_at"
+                                      type="datetime-local"
+                                      step={3600}
+                                      value={meta.publishedAt}
+                                      onChange={(event) => {
+                                        const nextPublishedAt = event.target.value;
+                                        const synced = syncPublishedAtAndText({
+                                          nextPublishedAt,
+                                          nextPublishedAtText: meta.publishedAtText,
+                                          changedField: "published_at",
+                                        });
+                                        setMeta((current) => ({
+                                          ...current,
+                                          bizDate:
+                                            preserveBizDateWhenPublishedAtChanges(
+                                              current.bizDate,
+                                            ),
+                                          publishedAt: synced.publishedAt,
+                                          publishedAtText: synced.publishedAtText,
+                                        }));
+                                      }}
+                                      className="h-7 rounded bg-white/90 border-[#E5E0D6]/80 text-[11px] text-[#292524] focus:bg-white focus:border-[#E5E0D6] transition-colors duration-100"
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10.5px] text-[#78716C] pt-0.5 px-0.5">
+                                    <span>上传时间戳</span>
+                                    <span className="tabular-nums text-[#78716C] font-normal">
+                                      {meta.uploadedAt || "--"}
+                                    </span>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </div>
+
+                        {/* 右栏：视频文案创作区 (50% 空间，与左侧卡片完全对称) */}
+                        <div
+                          className="min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-2 sm:p-2.5 flex flex-col justify-between h-full transition-colors data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40"
+                          data-missing={
                             hasAttemptedSubmit &&
                             issueSummary.missingRequiredMeta.includes("content")
-                              ? "true"
-                              : "false"
                           }
-                        />
-                        {hasAttemptedSubmit &&
-                        issueSummary.missingRequiredMeta.includes("content") ? (
-                          <p
-                            id="content_error"
-                            role="alert"
-                            className="mt-0.5 text-[10.5px] font-medium text-[#C0685C] shrink-0"
+                        >
+                          {/* 文案头部 (与左侧团队分工头部高度与风格完全一致) */}
+                          <div className="flex items-center justify-between shrink-0 pt-0.5">
+                            <Label
+                              htmlFor="content"
+                              className="text-[11.5px] sm:text-[12.5px] font-semibold text-[#292524] select-none truncate"
+                            >
+                              视频文案 <span className="text-[#DC2626]">*</span>
+                            </Label>
+                            <button
+                              type="button"
+                              onClick={handlePasteContent}
+                              className={cn(
+                                "inline-flex min-h-[26px] min-w-[26px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-1 text-[10.5px] sm:text-[12px] font-medium transition-colors duration-150 focus-visible:outline-none cursor-pointer py-0.5 px-1",
+                                isPastedFeedback
+                                  ? "text-[#16A34A] font-medium"
+                                  : "text-[#78716C] hover:text-[#292524]"
+                              )}
+                            >
+                              {isPastedFeedback ? (
+                                <>
+                                  <Check size={11} className="stroke-[2.5] text-[#16A34A]" />
+                                  <span>已粘贴</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ClipboardPaste size={11} className="stroke-[1.5]" />
+                                  <span>一键粘贴</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {/* 文案输入框 (直接作为白底卡片书写纸，无内层灰色框) */}
+                          <div className="mt-1.5 flex-1 flex flex-col min-h-0">
+                            <textarea
+                              id="content"
+                              value={meta.content}
+                              onChange={(event) =>
+                                updateMeta("content", event.target.value)
+                              }
+                              placeholder="粘贴或输入视频文案..."
+                              className="flex-1 min-h-[96px] sm:min-h-[120px] w-full resize-none bg-transparent border-0 outline-none text-[11.5px] sm:text-[13px] leading-[1.6] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C]/60 focus:ring-0 focus-visible:ring-0 p-0 overflow-y-auto custom-scrollbar"
+                              aria-invalid={
+                                hasAttemptedSubmit &&
+                                issueSummary.missingRequiredMeta.includes("content")
+                                  ? "true"
+                                  : "false"
+                              }
+                            />
+                            {hasAttemptedSubmit &&
+                            issueSummary.missingRequiredMeta.includes("content") ? (
+                              <p
+                                id="content_error"
+                                role="alert"
+                                className="mt-0.5 text-[10.5px] font-medium text-[#C0685C] shrink-0"
+                              >
+                                待填写视频文案
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 桌面端专用的视频文案卡片 (hidden lg:flex) */}
+                      <div
+                        className="hidden lg:flex min-w-0 rounded-xl border border-[#ECE7DE] bg-white/90 shadow-2xs p-3 flex-col justify-between h-full transition-colors data-[missing=true]:border-[#DC2626]/40 data-[missing=true]:bg-rose-50/40"
+                        data-missing={
+                          hasAttemptedSubmit &&
+                          issueSummary.missingRequiredMeta.includes("content")
+                        }
+                      >
+                        <div className="flex items-center justify-between shrink-0 pt-0.5">
+                          <Label
+                            htmlFor="content_desktop"
+                            className="text-[12.5px] font-semibold text-[#292524] select-none"
                           >
-                            待填写视频文案
-                          </p>
-                        ) : null}
+                            视频文案 <span className="text-[#DC2626]">*</span>
+                          </Label>
+                          <button
+                            type="button"
+                            onClick={handlePasteContent}
+                            className={cn(
+                              "inline-flex items-center gap-1 text-[12px] font-medium transition-colors duration-150 focus-visible:outline-none cursor-pointer py-0.5 px-1",
+                              isPastedFeedback
+                                ? "text-[#16A34A] font-medium"
+                                : "text-[#78716C] hover:text-[#292524]"
+                            )}
+                          >
+                            {isPastedFeedback ? (
+                              <>
+                                <Check size={12} className="stroke-[2.5] text-[#16A34A]" />
+                                <span>已粘贴</span>
+                              </>
+                            ) : (
+                              <>
+                                <ClipboardPaste size={12} className="stroke-[1.5]" />
+                                <span>一键粘贴</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="mt-2 flex-1 flex flex-col min-h-0">
+                          <textarea
+                            id="content_desktop"
+                            value={meta.content}
+                            onChange={(event) =>
+                              updateMeta("content", event.target.value)
+                            }
+                            placeholder="粘贴或输入视频文案..."
+                            className="w-full min-h-[140px] resize-none bg-transparent border-0 outline-none text-[13px] leading-[1.6] tracking-[0.005em] text-[#292524] placeholder:text-[#78716C]/60 focus:ring-0 focus-visible:ring-0 p-0 overflow-y-auto custom-scrollbar"
+                            aria-invalid={
+                              hasAttemptedSubmit &&
+                              issueSummary.missingRequiredMeta.includes("content")
+                                ? "true"
+                                : "false"
+                            }
+                          />
+                          {hasAttemptedSubmit &&
+                          issueSummary.missingRequiredMeta.includes("content") ? (
+                            <p
+                              id="content_desktop_error"
+                              role="alert"
+                              className="mt-0.5 text-[11px] font-medium text-[#C0685C] shrink-0"
+                            >
+                              待填写视频文案
+                            </p>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </div>
