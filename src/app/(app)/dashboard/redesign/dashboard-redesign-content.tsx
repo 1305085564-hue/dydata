@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { Activity, History, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SubmissionCalendar } from "./submission-calendar";
 
 interface Account {
   id: string;
@@ -54,6 +55,7 @@ export function DashboardRedesignContent({
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [activeBizDate, setActiveBizDate] = useState(today);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   // 表单状态
   const [videoUrl, setVideoUrl] = useState("");
@@ -78,6 +80,30 @@ export function DashboardRedesignContent({
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
 
+  // 点击外部关闭日历
+  useEffect(() => {
+    if (!isCalendarOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCalendarOpen]);
+
   return (
     <div className="min-h-screen bg-[#FBF9F5] antialiased">
       {/* L1 背景层：象牙暖底 */}
@@ -95,6 +121,7 @@ export function DashboardRedesignContent({
               </div>
 
               {/* 交互式大标题：H1 24px semibold */}
+              <div className="relative" ref={calendarRef}>
               <button
                 type="button"
                 onClick={() => setIsCalendarOpen(!isCalendarOpen)}
@@ -128,7 +155,28 @@ export function DashboardRedesignContent({
                 />
               </button>
 
-              {/* TODO: 日历 Popover - 后续实现 */}
+              {/* 日历 Popover：毛玻璃 + 漫反射阴影 */}
+              {isCalendarOpen && (
+                <div className="absolute left-0 top-full z-50 mt-2 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+                  <div
+                    className="w-[calc(100vw-2.5rem)] max-w-[330px] rounded-2xl border border-[#E5E0D6] bg-white/98 p-4 backdrop-blur-md"
+                    style={{
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -4px rgba(28,25,23,0.05)"
+                    }}
+                  >
+                    <SubmissionCalendar
+                      today={today}
+                      submittedDates={monthSubmittedDates}
+                      selectedDate={activeBizDate}
+                      onDateSelect={(date) => {
+                        setActiveBizDate(date);
+                        setIsCalendarOpen(false);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              </div>
             </div>
 
             {/* 右侧：幽灵态快捷按钮 */}
