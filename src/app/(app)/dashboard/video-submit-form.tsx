@@ -169,7 +169,9 @@ type OcrApiPayload = {
     error_code?: string;
   };
   error?: string;
-  screenshot_type_source?: "explicit" | "classification" | "asset_role_fallback";
+  error_code?: string;
+  retry_after?: number;
+  screenshot_type_source?: "explicit" | "asset_role" | "classification" | "asset_role_fallback";
   timings?: {
     download_ms?: number;
     classify_ms?: number;
@@ -1261,7 +1263,7 @@ export function VideoSubmitForm({
         });
 
         if (!response.ok || !payload.data) {
-          throw new Error(toOcrErrorMessage(payload.error));
+          throw new Error(toOcrErrorMessage(payload.error_code ?? payload.error));
         }
 
         const { data } = payload;

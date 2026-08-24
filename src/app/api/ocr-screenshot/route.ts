@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { callAi } from "@/lib/ai/client";
-import type { AiMessage } from "@/lib/ai/client";
+import { AiChannelError, callAi } from "@/lib/ai/client";
+import type { AiMessage, AiResponse } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
+import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
 
 type ConfidenceLevel = "high" | "medium" | "low";
 type ScreenshotType = "data" | "curve" | "retention";
-type ScreenshotTypeSource = "explicit" | "classification" | "asset_role_fallback";
+type ScreenshotTypeSource = "explicit" | "asset_role" | "classification" | "asset_role_fallback";
+export type OcrErrorCode =
+  | "RATE_LIMITED"
+  | "AI_TIMEOUT"
+  | "AI_CHANNEL_UNAVAILABLE"
+  | "AI_EMPTY_RESPONSE"
+  | "AI_PARSE_FAILED"
+  | "LOW_CONFIDENCE"
+  | "STORAGE_READ_FAILED";
 type ScreenshotTypeInput =
   | ScreenshotType
   | "overview"
@@ -117,6 +126,8 @@ type ResolvedScreenshotType = {
 
 type ImagePayloadError = {
   error: string;
+  errorCode?: OcrErrorCode;
+  status?: number;
 };
 
 export type ParsedScreenshotResponse = {
@@ -126,6 +137,7 @@ export type ParsedScreenshotResponse = {
   requires_manual_confirmation: boolean;
   recognized_fields: JsonObject | null;
   confidence?: Record<OcrFieldKey, ConfidenceLevel>;
+  error_code?: OcrErrorCode;
   error?: string;
 };
 
@@ -151,24 +163,118 @@ const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "curve", "retention"];
 const CURVE_PATTERNS: CurvePattern[] = ["前高后低", "平稳增长", "二次起量", "低开高走", "断崖式"];
 const QUALITATIVE_LEVELS: Array<"high" | "medium" | "low"> = ["high", "medium", "low"];
 
-function buildOcrParseErrorMessage(content: string) {
-  const preview = content.replace(/\s+/g, " ").trim().slice(0, 120);
-  return preview ? `AI 返回格式无法识别：${preview}` : "AI 返回格式无法识别";
+function getOcrErrorMessage(errorCode: OcrErrorCode) {
+  switch (errorCode) {
+    case "RATE_LIMITED":
+      return "请求过于频繁，请稍后再试";
+    case "AI_TIMEOUT":
+      return "识别超时，请稍后重试";
+    case "AI_CHANNEL_UNAVAILABLE":
+      return "截图识别通道暂不可用，请手动填写或稍后重试";
+    case "AI_EMPTY_RESPONSE":
+      return "当前模型没有返回识别结果，请手动填写或联系管理员检查视觉模型";
+    case "AI_PARSE_FAILED":
+      return "AI 返回格式无法识别，请手动填写或稍后重试";
+    case "LOW_CONFIDENCE":
+      return "图片不清晰或识别置信度低，请手动核对";
+    case "STORAGE_READ_FAILED":
+      return "已上传截图读取失败，请重新上传";
+  }
+}
+
+function getAiErrorCode(error: unknown): OcrErrorCode {
+  if (error instanceof AiChannelError) {
+    if (error.errorType === "timeout") return "AI_TIMEOUT";
+    if (error.errorType === "empty_response") return "AI_EMPTY_RESPONSE";
+    return "AI_CHANNEL_UNAVAILABLE";
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  if (/超时|timeout/i.test(message)) return "AI_TIMEOUT";
+  if (/空正文|未返回有效内容|empty/i.test(message)) return "AI_EMPTY_RESPONSE";
+  return "AI_CHANNEL_UNAVAILABLE";
+}
+
+async function runOcrAttempt(
+  dataUrl: string,
+  screenshotType: ScreenshotType,
+  timings: Partial<OcrTimings>,
+): Promise<{ parsed: ParsedScreenshotResponse | null; aiResult: AiResponse }> {
+  const messages: AiMessage[] = [{
+    role: "user",
+    content: [
+      { type: "text", text: buildPromptByType(screenshotType) },
+      { type: "image_url", image_url: { url: dataUrl } },
+    ],
+  }];
+
+  const ocrStart = Date.now();
+  const aiResult = await callAi({
+    messages,
+    maxTokens: 1000,
+    jsonMode: true,
+    timeoutMs: 25000,
+    featureKey: "ocr_screenshot",
+    databaseOnly: true,
+  });
+  timings.ocr_ms = (timings.ocr_ms ?? 0) + Date.now() - ocrStart;
+
+  const parseStart = Date.now();
+  const parsed = parseOcrResponse(aiResult.content, screenshotType);
+  timings.parse_ms = (timings.parse_ms ?? 0) + Date.now() - parseStart;
+
+  return { parsed, aiResult };
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = resolveRequestId(request);
   const startTime = Date.now();
   const supabase = await createClient();
+  const timings: Partial<OcrTimings> = {};
+  let logContext: {
+    assetRole?: ScreenshotAssetRole | null;
+    screenshotType?: ScreenshotType | null;
+    screenshotTypeSource?: ScreenshotTypeSource | null;
+    aiChannel?: string | null;
+    aiModel?: string | null;
+  } = {};
+
+  const finish = (
+    body: Record<string, unknown>,
+    status: number,
+    outcome: string,
+    userId?: string | null,
+    errorCode?: OcrErrorCode,
+  ) => {
+    timings.total_ms = Date.now() - startTime;
+    logApiRequest({
+      requestId,
+      route: "/api/ocr-screenshot",
+      method: "POST",
+      status,
+      durationMs: timings.total_ms,
+      userId: userId ?? null,
+      outcome,
+      detail: {
+        asset_role: logContext.assetRole ?? null,
+        screenshot_type: logContext.screenshotType ?? null,
+        screenshot_type_source: logContext.screenshotTypeSource ?? null,
+        error_code: errorCode ?? null,
+        timings,
+        ai_channel: logContext.aiChannel ?? null,
+        ai_model: logContext.aiModel ?? null,
+      },
+    });
+    return NextResponse.json({ request_id: requestId, ...body }, { status });
+  };
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "未登录" }, { status: 401 });
+    return finish({ error: "未登录" }, 401, "unauthorized", null);
   }
-
-  const timings: Partial<OcrTimings> = {};
 
   try {
     const contentType = request.headers.get("content-type") || "";
@@ -177,91 +283,124 @@ export async function POST(request: NextRequest) {
       : await parseJsonPayload(request, user.id);
 
     if ("error" in imagePayload) {
-      return NextResponse.json({ error: imagePayload.error }, { status: 400 });
+      return finish(
+        { error: imagePayload.error, error_code: imagePayload.errorCode },
+        imagePayload.status ?? 400,
+        imagePayload.errorCode ? "input_error" : "bad_request",
+        user.id,
+        imagePayload.errorCode,
+      );
     }
 
+    logContext = {
+      ...logContext,
+      assetRole: imagePayload.assetRole,
+    };
+
     if (!imagePayload.dataUrl) {
-      return NextResponse.json({ error: "图片为空、损坏或请求格式不正确" }, { status: 400 });
+      return finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
     }
 
     timings.download_ms = imagePayload.downloadMs ?? 0;
     const dataUrl = imagePayload.dataUrl;
-    const resolvedScreenshotType = await resolveScreenshotType(imagePayload, dataUrl, timings);
-    const screenshotType = resolvedScreenshotType.type;
-    const prompt = buildPromptByType(screenshotType);
+    let resolvedScreenshotType = await resolveScreenshotType(imagePayload, dataUrl, timings);
+    let screenshotType = resolvedScreenshotType.type;
+    logContext = {
+      ...logContext,
+      screenshotType,
+      screenshotTypeSource: resolvedScreenshotType.source,
+    };
 
     try {
-      const messages: AiMessage[] = [{
-        role: "user",
-        content: [
-          { type: "text", text: prompt },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      }];
+      let attempt = await runOcrAttempt(dataUrl, screenshotType, timings);
+      let parsed = attempt.parsed;
+      logContext = {
+        ...logContext,
+        aiChannel: attempt.aiResult.channelName,
+        aiModel: attempt.aiResult.model,
+      };
 
-      const ocrStart = Date.now();
-      const aiResult = await callAi({
-        messages,
-        maxTokens: 1000,
-        jsonMode: true,
-        timeoutMs: 25000,
-        featureKey: "ocr_screenshot",
-        databaseOnly: true,
-      });
-      timings.ocr_ms = Date.now() - ocrStart;
-
-      const content = aiResult.content;
-      const parseStart = Date.now();
-
-      if (screenshotType === "curve") {
-        const parsed = parseOcrResponse(content, "curve");
-        timings.parse_ms = Date.now() - parseStart;
-        timings.total_ms = Date.now() - startTime;
-        if (!parsed) {
-          return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
+      if (
+        (!parsed || parsed.slot_status === "failed") &&
+        resolvedScreenshotType.source === "asset_role"
+      ) {
+        const classified = await detectScreenshotType(dataUrl, timings);
+        if (classified && classified !== screenshotType) {
+          resolvedScreenshotType = { type: classified, source: "classification" };
+          screenshotType = classified;
+          logContext = {
+            ...logContext,
+            screenshotType,
+            screenshotTypeSource: resolvedScreenshotType.source,
+          };
+          attempt = await runOcrAttempt(dataUrl, screenshotType, timings);
+          parsed = attempt.parsed;
+          logContext = {
+            ...logContext,
+            aiChannel: attempt.aiResult.channelName,
+            aiModel: attempt.aiResult.model,
+          };
         }
-        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, screenshot_type_source: resolvedScreenshotType.source, timings });
       }
-
-      if (screenshotType === "retention") {
-        const parsed = parseOcrResponse(content, "retention");
-        timings.parse_ms = Date.now() - parseStart;
-        timings.total_ms = Date.now() - startTime;
-        if (!parsed) {
-          return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
-        }
-        return NextResponse.json({ data: parsed, screenshot_type: parsed.screenshot_type, screenshot_type_source: resolvedScreenshotType.source, timings });
-      }
-
-      const parsed = parseOcrResponse(content, "data");
-      timings.parse_ms = Date.now() - parseStart;
-      timings.total_ms = Date.now() - startTime;
 
       if (!parsed) {
-        return NextResponse.json({ error: buildOcrParseErrorMessage(content), timings }, { status: 500 });
+        const errorCode: OcrErrorCode = "AI_PARSE_FAILED";
+        return finish(
+          {
+            error: getOcrErrorMessage(errorCode),
+            error_code: errorCode,
+            timings,
+          },
+          500,
+          "parse_error",
+          user.id,
+          errorCode,
+        );
       }
 
       if (parsed.slot_status === "failed") {
-        return NextResponse.json({ data: parsed, screenshot_type: screenshotType, screenshot_type_source: resolvedScreenshotType.source, timings }, { status: 200 });
+        const errorCode = parsed.error_code ?? "LOW_CONFIDENCE";
+        return finish(
+          {
+            data: parsed,
+            screenshot_type: screenshotType,
+            screenshot_type_source: resolvedScreenshotType.source,
+            timings,
+          },
+          200,
+          "recognized_failed",
+          user.id,
+          errorCode,
+        );
       }
 
-      return NextResponse.json({ data: parsed, screenshot_type: screenshotType, screenshot_type_source: resolvedScreenshotType.source, timings });
-    } catch (error) {
-      timings.total_ms = Date.now() - startTime;
-      const message = error instanceof Error ? error.message : "截图识别出错，请稍后重试或手动输入";
-      return NextResponse.json(
+      return finish(
         {
-          error:
-            message === "该 AI 功能已禁用"
-              ? "截图识别功能已禁用，请先在后台启用"
-              : message,
+          data: parsed,
+          screenshot_type: screenshotType,
+          screenshot_type_source: resolvedScreenshotType.source,
           timings,
         },
-        { status: 500 }
+        200,
+        parsed.slot_status === "pending_confirm" ? "pending_confirm" : "success",
+        user.id,
+      );
+    } catch (error) {
+      const errorCode = getAiErrorCode(error);
+      return finish(
+        {
+          error: getOcrErrorMessage(errorCode),
+          error_code: errorCode,
+          timings,
+        },
+        500,
+        "ai_error",
+        user.id,
+        errorCode,
       );
     }
   } catch {
-    return NextResponse.json({ error: "图片为空、损坏或请求格式不正确" }, { status: 400 });
+    return finish({ error: "图片为空、损坏或请求格式不正确" }, 400, "bad_request", user.id);
   }
 }
 
@@ -301,7 +440,7 @@ async function parseJsonPayload(
     const downloaded = await downloadImageFromStorage(reference.bucket, reference.path);
     const downloadMs = Date.now() - downloadStart;
     if ("error" in downloaded) {
-      return downloaded;
+      return { ...downloaded, errorCode: "STORAGE_READ_FAILED", status: 502 };
     }
     return {
       ...downloaded,
@@ -416,8 +555,12 @@ async function resolveScreenshotType(
   dataUrl: string,
   timings?: Partial<OcrTimings>
 ): Promise<ResolvedScreenshotType> {
-  if (imagePayload.screenshotType) {
-    return { type: imagePayload.screenshotType, source: "explicit" };
+  const known = resolveKnownScreenshotType({
+    screenshotType: imagePayload.screenshotType,
+    assetRole: imagePayload.assetRole,
+  });
+  if (known) {
+    return known;
   }
 
   const classified = await detectScreenshotType(dataUrl, timings);
@@ -429,6 +572,24 @@ async function resolveScreenshotType(
     type: getScreenshotTypeFallbackByAssetRole(imagePayload.assetRole),
     source: "asset_role_fallback",
   };
+}
+
+export function resolveKnownScreenshotType(input: {
+  screenshotType: ScreenshotType | null;
+  assetRole: ScreenshotAssetRole | null;
+}): ResolvedScreenshotType | null {
+  if (input.screenshotType) {
+    return { type: input.screenshotType, source: "explicit" };
+  }
+
+  if (input.assetRole) {
+    return {
+      type: getScreenshotTypeFallbackByAssetRole(input.assetRole),
+      source: "asset_role",
+    };
+  }
+
+  return null;
 }
 
 async function detectScreenshotType(
@@ -639,6 +800,7 @@ export function parseOcrResponse(
         screenshot_type: normalizedType,
         confidence_score: 0,
         requires_manual_confirmation: true,
+        error_code: "LOW_CONFIDENCE",
         error: parsed.reason,
         recognized_fields: null,
       };
@@ -667,6 +829,7 @@ export function parseOcrResponse(
         screenshot_type: normalizedType,
         confidence_score: 0,
         requires_manual_confirmation: true,
+        error_code: "LOW_CONFIDENCE",
         error: parsed.reason,
         recognized_fields: null,
       };
@@ -708,6 +871,7 @@ export function parseOcrResponse(
       screenshot_type: normalizedType,
       confidence_score: 0,
       requires_manual_confirmation: true,
+      error_code: "LOW_CONFIDENCE",
       error: "图片不清晰或未识别到数据",
       recognized_fields: null,
     };

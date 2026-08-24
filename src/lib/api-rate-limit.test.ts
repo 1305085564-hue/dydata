@@ -35,7 +35,7 @@ function withProductionEnv(fn: () => Promise<void> | void) {
 }
 
 test("AI 成本接口按端点收紧限制", () => {
-  assert.deepEqual(resolveApiRateLimitRule("/api/ocr-screenshot").rule, { limit: 10, windowMs: 60_000 });
+  assert.deepEqual(resolveApiRateLimitRule("/api/ocr-screenshot").rule, { limit: 20, windowMs: 60_000 });
   assert.deepEqual(resolveApiRateLimitRule("/api/rewrite/generate").rule, { limit: 10, windowMs: 60_000 });
   assert.deepEqual(resolveApiRateLimitRule("/api/video-submit").rule, { limit: 20, windowMs: 60_000 });
   // 批量复盘
@@ -64,14 +64,14 @@ test(
   withProductionEnv(async () => {
     const identifier = "user:11111111-1111-1111-1111-111111111111";
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       const result = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
       assert.equal(result.allowed, true, `第 ${i + 1} 次应放行`);
     }
 
     const blocked = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
     assert.equal(blocked.allowed, false);
-    assert.equal(blocked.limit, 10);
+    assert.equal(blocked.limit, 20);
     assert.ok(blocked.retryAfter >= 1 && blocked.retryAfter <= 60);
 
     // 其他用户独立计数
@@ -194,13 +194,13 @@ test("Upstash 返回非法 JSON 时降级内存限流，不让 middleware 500", 
 
   try {
     const identifier = "user:55555555-5555-5555-5555-555555555555";
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       const result = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
       assert.equal(result.allowed, true, `第 ${i + 1} 次应放行（降级内存计数）`);
     }
     const blocked = await checkApiRateLimit({ pathname: "/api/ocr-screenshot", identifier });
     assert.equal(blocked.allowed, false);
-    assert.equal(blocked.limit, 10);
+    assert.equal(blocked.limit, 20);
   } finally {
     globalThis.fetch = originalFetch;
   }

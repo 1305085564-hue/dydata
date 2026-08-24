@@ -26,6 +26,13 @@ test("未知 OCR 提供商和超时细节映射为统一失败文案", () => {
   assert.equal(toOcrErrorMessage(error), OCR_FAIL_MESSAGE);
 });
 
+test("OCR 结构化错误码映射为明确文案", () => {
+  assert.equal(toOcrErrorMessage("RATE_LIMITED"), "请求过于频繁，请稍后再试");
+  assert.equal(toOcrErrorMessage("AI_TIMEOUT"), "识别超时，请稍后重试");
+  assert.equal(toOcrErrorMessage("AI_EMPTY_RESPONSE"), "当前模型没有返回识别结果，请联系管理员检查视觉模型");
+  assert.equal(toOcrErrorMessage("STORAGE_READ_FAILED"), "已上传截图读取失败，请重新上传");
+});
+
 test("上传阶段只放行固定白名单错误", () => {
   assert.equal(
     toScreenshotUploadErrorMessage(new Error("仅支持 jpg、png、webp 图片")),

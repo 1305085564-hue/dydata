@@ -55,6 +55,11 @@ export function BindingDialog({
         </DialogHeader>
         <div className="space-y-5 py-3">
           <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
+          {control?.key === "ocr_screenshot" && (
+            <div className="rounded-lg border border-[#D99E55]/35 bg-[#FFF8ED] px-3 py-2.5 text-[12px] leading-5 text-[#8A5A22]">
+              截图识别必须绑定已通过 OCR 图片测试的视觉模型；如果模型只支持文本，首页上传会返回空结果或识别失败。
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="binding-model">模型策略</Label>
             <select

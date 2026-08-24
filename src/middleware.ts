@@ -150,7 +150,11 @@ export function isInvalidAuthSessionError(error: unknown) {
 
 function buildApiRateLimitResponse(result: ApiRateLimitResult) {
   return NextResponse.json(
-    { error: "请求过于频繁，请稍后再试" },
+    {
+      error: "请求过于频繁，请稍后再试",
+      error_code: "RATE_LIMITED",
+      retry_after: Math.max(1, result.retryAfter),
+    },
     {
       status: 429,
       headers: { "Retry-After": String(Math.max(1, result.retryAfter)) },

@@ -8,6 +8,7 @@ import {
   parseCurveContent,
   parseOcrResponse,
   parseRetentionContent,
+  resolveKnownScreenshotType,
 } from "./route";
 
 test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映射为 OCR 类型", () => {
@@ -25,6 +26,22 @@ test("AI 分类失败时按槽位做兜底，避免完播截图误跑互动 OCR"
   assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_1"), "data");
   assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_2"), "retention");
   assert.equal(getScreenshotTypeFallbackByAssetRole("unknown"), "data");
+});
+
+test("有截图槽位时先按槽位识别，避免每张图都额外跑 AI 分类", () => {
+  assert.deepEqual(
+    resolveKnownScreenshotType({ screenshotType: null, assetRole: "screenshot_1" }),
+    { type: "data", source: "asset_role" },
+  );
+  assert.deepEqual(
+    resolveKnownScreenshotType({ screenshotType: null, assetRole: "screenshot_2" }),
+    { type: "retention", source: "asset_role" },
+  );
+  assert.deepEqual(
+    resolveKnownScreenshotType({ screenshotType: "curve", assetRole: "screenshot_1" }),
+    { type: "curve", source: "explicit" },
+  );
+  assert.equal(resolveKnownScreenshotType({ screenshotType: null, assetRole: null }), null);
 });
 
 test("自动分类识别截图类型", () => {
@@ -228,6 +245,7 @@ test("识别失败时返回 failed 槽位状态", () => {
     screenshot_type: "retention",
     confidence_score: 0,
     requires_manual_confirmation: true,
+    error_code: "LOW_CONFIDENCE",
     error: "图片不清晰",
     recognized_fields: null,
   });
@@ -263,4 +281,3 @@ test("retention 识别：AI 没返回 segment_summary 也能成功", () => {
     confidence: 0.8,
   });
 });
-

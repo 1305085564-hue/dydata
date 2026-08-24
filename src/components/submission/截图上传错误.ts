@@ -4,6 +4,12 @@ export const SCREENSHOT_UPLOAD_FAIL_MESSAGE = "截图上传失败，请稍后重
 export const LOGIN_EXPIRED_MESSAGE = "登录状态已失效，请刷新页面后重试";
 
 export const OCR_ERROR_MESSAGES: Record<string, string> = {
+  RATE_LIMITED: "请求过于频繁，请稍后再试",
+  AI_TIMEOUT: "识别超时，请稍后重试",
+  AI_CHANNEL_UNAVAILABLE: "截图识别通道暂不可用，请手动填写或稍后重试",
+  AI_EMPTY_RESPONSE: "当前模型没有返回识别结果，请联系管理员检查视觉模型",
+  AI_PARSE_FAILED: "AI 返回格式无法识别，请手动填写或稍后重试",
+  STORAGE_READ_FAILED: "已上传截图读取失败，请重新上传",
   BLURRY: "图片模糊，请重新截图确保文字清晰",
   NO_TEXT: "未识别到文字内容，请检查截图是否包含数据",
   LOW_CONFIDENCE: "识别置信度低，请手动核对或重新截图",
@@ -52,6 +58,7 @@ export function toOcrErrorMessage(error: unknown): string {
   if (!message) return OCR_FAIL_MESSAGE;
   if (message === "未登录" || message.includes("登录状态已失效")) return LOGIN_EXPIRED_MESSAGE;
   if (message === NETWORK_RETRY_MESSAGE || isNetworkErrorMessage(message)) return NETWORK_RETRY_MESSAGE;
+  if (OCR_ERROR_MESSAGES[message]) return OCR_ERROR_MESSAGES[message];
   if (Object.values(OCR_ERROR_MESSAGES).includes(message)) return message;
   return OCR_FAIL_MESSAGE;
 }
