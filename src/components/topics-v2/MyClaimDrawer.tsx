@@ -96,18 +96,18 @@ export function MyClaimDrawer({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label="打开我的选题库槽位"
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 active:scale-[0.97] transition-all cursor-pointer"
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent hover:bg-[#F5F3EE] text-[#292524] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
       >
         <span className="w-2 h-2 rounded-full bg-[#D97757]" />
-        <Layers className="w-3.5 h-3.5 text-zinc-500" />
-        <span className="text-xs font-medium text-zinc-800">我的选题槽位</span>
-        <div className="flex items-center gap-1 text-xs tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 font-normal">
+        <Layers className="w-3.5 h-3.5 text-[#78716C]" />
+        <span className="text-xs font-medium text-[#292524]">我的选题槽位</span>
+        <div className="flex items-center gap-1 text-xs tabular-nums px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[#292524] font-normal">
           <span>{candidateCount}</span>
-          <span className="text-zinc-400">/</span>
+          <span className="text-[#78716C]">/</span>
           <span>5</span>
         </div>
         {scriptingCount > 0 && (
-          <span className="text-xs bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded-full font-medium">
+          <span className="text-xs bg-[#F5F3EE] text-[#292524] px-1.5 py-0.5 rounded-full font-medium">
             {scriptingCount} 脚本中
           </span>
         )}
@@ -125,24 +125,24 @@ export function MyClaimDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="claim-drawer-title"
-            className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-xl shadow-xl z-[62] p-4 animate-in fade-in duration-150"
+            className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] bg-[#FAF8F4]/98 backdrop-blur-xl border border-[#E5E0D6] rounded-xl shadow-claude-float z-[62] p-4 animate-in fade-in duration-150"
           >
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECE7DE]">
               <div>
                 <h4
                   id="claim-drawer-title"
-                  className="text-sm font-medium text-zinc-900"
+                  className="text-sm font-medium text-[#1C1917]"
                 >
                   我的选题认领
                 </h4>
-                <p className="text-xs text-zinc-600 mt-0.5 font-normal">
+                <p className="text-xs text-[#292524] mt-0.5 font-normal">
                   候选最多保留 5 条，及时放回不写的选题
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-zinc-400 hover:text-zinc-700 p-1 rounded-lg hover:bg-zinc-100 transition-colors"
+                className="text-[#78716C] hover:text-[#292524] p-1 rounded-lg hover:bg-[#F5F3EE] transition-colors"
                 title="关闭"
                 aria-label="关闭"
               >
@@ -152,13 +152,13 @@ export function MyClaimDrawer({
 
             {/* 槽位进度条 */}
             <div className="mb-4">
-              <div className="flex justify-between text-xs text-zinc-600 mb-1 font-normal">
+              <div className="flex justify-between text-xs text-[#292524] mb-1 font-normal">
                 <span>候选占用率</span>
-                <span className="tabular-nums text-zinc-800 font-medium">
+                <span className="tabular-nums text-[#292524] font-medium">
                   {candidateCount} / 5
                 </span>
               </div>
-              <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden flex">
+              <div className="h-1.5 bg-[#F5F3EE] rounded-full overflow-hidden flex">
                 {Array.from({ length: 5 }).map((_, idx) => (
                   <div
                     key={idx}
@@ -167,7 +167,7 @@ export function MyClaimDrawer({
                         ? candidateCount === 5
                           ? "bg-[#DC2626]"
                           : "bg-[#D97757]"
-                        : "bg-zinc-200"
+                        : "bg-[#E5E0D6]"
                     }`}
                   />
                 ))}
@@ -182,13 +182,13 @@ export function MyClaimDrawer({
 
             {/* 认领列表 */}
             {error ? (
-              <div className="py-6 text-center text-xs text-zinc-600 bg-red-50/50 rounded-lg">
+              <div className="py-6 text-center text-xs text-[#292524] bg-red-50/50 rounded-lg">
                 <p className="font-medium">我的认领加载失败</p>
                 <p className="mt-1 text-[#DC2626] font-normal">{error}</p>
                 <button
                   type="button"
                   onClick={onRetry}
-                  className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-100"
+                  className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE]"
                   aria-label="重试加载"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -196,12 +196,12 @@ export function MyClaimDrawer({
                 </button>
               </div>
             ) : loading ? (
-              <div className="py-6 text-center text-xs text-zinc-500 font-normal">
-                <RefreshCw className="w-4 h-4 text-zinc-400 animate-spin mx-auto mb-1" />
+              <div className="py-6 text-center text-xs text-[#78716C] font-normal">
+                <RefreshCw className="w-4 h-4 text-[#78716C] animate-spin mx-auto mb-1" />
                 <span>加载认领列表中...</span>
               </div>
             ) : activeClaims.length === 0 ? (
-              <div className="py-8 text-center text-xs text-zinc-500 font-normal rounded-lg bg-zinc-100/50">
+              <div className="py-8 text-center text-xs text-[#78716C] font-normal rounded-lg bg-[#F5F3EE]/50">
                 暂未认领任何选题，浏览大盘点击“认领”
               </div>
             ) : (
@@ -210,7 +210,7 @@ export function MyClaimDrawer({
                 {activeClaims.filter((c) => c.status === "candidate").length >
                   0 && (
                   <div className="space-y-2">
-                    <div className="text-xs font-medium text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
+                    <div className="text-xs font-medium text-[#292524] flex items-center justify-between pb-1 border-b border-[#ECE7DE]">
                       <span>候选池 (占用 {candidateCount}/5 配额)</span>
                     </div>
                     {activeClaims
@@ -221,22 +221,22 @@ export function MyClaimDrawer({
                           <div
                             key={claim.id}
                             onClick={() => sub?.id && onSelectTopic(sub.id)}
-                            className="group p-3 rounded-lg border border-zinc-200 bg-zinc-50/50 hover:bg-white hover:border-zinc-300 transition-all cursor-pointer"
+                            className="group p-3 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5]/50 hover:bg-white hover:border-[#E5E0D6] transition-all cursor-pointer"
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
+                              <span className="text-xs font-medium text-[#292524] group-hover:text-[#D97757] line-clamp-1">
                                 {sub?.title || "选题名"}
                               </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600">
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-[#F5F3EE] text-[#292524]">
                                 候选准备
                               </span>
                             </div>
-                            <p className="text-xs text-zinc-500 line-clamp-1 mb-2 font-normal">
+                            <p className="text-xs text-[#78716C] line-clamp-1 mb-2 font-normal">
                               “{sub?.hook || "暂无 Hook"}”
                             </p>
 
-                            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
-                              <span className="text-zinc-500 font-normal tabular-nums">
+                            <div className="flex items-center justify-between pt-2 border-t border-[#ECE7DE] text-xs">
+                              <span className="text-[#78716C] font-normal tabular-nums">
                                 {claim.claimedAt
                                   ? new Date(
                                       claim.claimedAt,
@@ -261,7 +261,7 @@ export function MyClaimDrawer({
                                   onClick={(e) =>
                                     handleReturn(e, claim.subTopicId)
                                   }
-                                  className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs transition-colors font-normal"
+                                  className="px-2 py-0.5 rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal"
                                   aria-label="放回选题"
                                 >
                                   放回
@@ -278,7 +278,7 @@ export function MyClaimDrawer({
                 {activeClaims.filter((c) => c.status === "scripting").length >
                   0 && (
                   <div className="space-y-2">
-                    <div className="text-xs font-medium text-zinc-700 flex items-center justify-between pb-1 border-b border-zinc-100">
+                    <div className="text-xs font-medium text-[#292524] flex items-center justify-between pb-1 border-b border-[#ECE7DE]">
                       <span>撰写中 (已锁定不占候选配额)</span>
                     </div>
                     {activeClaims
@@ -289,22 +289,22 @@ export function MyClaimDrawer({
                           <div
                             key={claim.id}
                             onClick={() => sub?.id && onSelectTopic(sub.id)}
-                            className="group p-3 rounded-lg border border-zinc-200 bg-zinc-100/30 hover:bg-white hover:border-zinc-200 transition-all cursor-pointer"
+                            className="group p-3 rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/30 hover:bg-white hover:border-[#E5E0D6] transition-all cursor-pointer"
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <span className="text-xs font-medium text-zinc-800 group-hover:text-[#D97757] line-clamp-1">
+                              <span className="text-xs font-medium text-[#292524] group-hover:text-[#D97757] line-clamp-1">
                                 {sub?.title || "选题名"}
                               </span>
-                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-zinc-100 text-zinc-600">
+                              <span className="text-xs px-1.5 py-0.5 rounded font-normal shrink-0 bg-[#F5F3EE] text-[#292524]">
                                 脚本中
                               </span>
                             </div>
-                            <p className="text-xs text-zinc-500 line-clamp-1 mb-2 font-normal">
+                            <p className="text-xs text-[#78716C] line-clamp-1 mb-2 font-normal">
                               “{sub?.hook || "暂无 Hook"}”
                             </p>
 
-                            <div className="flex items-center justify-between pt-2 border-t border-zinc-100 text-xs">
-                              <span className="text-zinc-500 font-normal tabular-nums">
+                            <div className="flex items-center justify-between pt-2 border-t border-[#ECE7DE] text-xs">
+                              <span className="text-[#78716C] font-normal tabular-nums">
                                 {claim.claimedAt
                                   ? new Date(
                                       claim.claimedAt,
@@ -317,7 +317,7 @@ export function MyClaimDrawer({
                                 onClick={(e) =>
                                   handleReturn(e, claim.subTopicId)
                                 }
-                                className="px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs transition-colors font-normal"
+                                className="px-2 py-0.5 rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal"
                                 aria-label="放回选题"
                               >
                                 放回

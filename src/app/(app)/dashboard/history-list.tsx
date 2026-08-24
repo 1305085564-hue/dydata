@@ -103,10 +103,10 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
     <div className="space-y-3">
       {/* 历史记录公共筛选头部 */}
       {(accountOptions.length > 1 || monthOptions.length > 1) && (
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-zinc-100 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#ECE7DE] text-xs">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-zinc-500 font-normal">
-              <Filter className="size-3.5 text-zinc-400" />
+            <span className="inline-flex items-center gap-1 text-[#78716C] font-normal">
+              <Filter className="size-3.5 text-[#78716C]" />
               <span>筛选</span>
             </span>
 
@@ -115,7 +115,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               <select
                 value={selectedAccountId}
                 onChange={(e) => handleAccountChange(e.target.value)}
-                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 font-normal outline-none focus:border-[#D97757] focus:bg-white"
+                className="rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-2.5 py-1 text-xs text-[#292524] font-normal outline-none focus:border-[#D97757] focus:bg-white"
                 aria-label="按账号过滤历史记录"
               >
                 <option value="all">全部账号 ({history.length})</option>
@@ -132,7 +132,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               <select
                 value={selectedMonth}
                 onChange={(e) => handleMonthChange(e.target.value)}
-                className="rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 font-normal outline-none focus:border-[#D97757] focus:bg-white"
+                className="rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-2.5 py-1 text-xs text-[#292524] font-normal outline-none focus:border-[#D97757] focus:bg-white"
                 aria-label="按月份过滤历史记录"
               >
                 <option value="all">全部月份</option>
@@ -155,7 +155,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
             )}
           </div>
 
-          <span className="text-zinc-400 text-xs tabular-nums font-normal">
+          <span className="text-[#78716C] text-xs tabular-nums font-normal">
             共 {filteredHistory.length} 条
           </span>
         </div>
@@ -163,9 +163,9 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
 
       {/* 过滤后空状态 */}
       {filteredHistory.length === 0 ? (
-        <div className="py-12 text-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 p-6">
-          <p className="text-xs font-medium text-zinc-700">没有符合该账号/月份的日报记录</p>
-          <p className="text-xs text-zinc-400 mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
+        <div className="py-12 text-center rounded-xl border border-dashed border-[#E5E0D6] bg-[#FBF9F5]/50 p-6">
+          <p className="text-xs font-medium text-[#292524]">没有符合该账号/月份的日报记录</p>
+          <p className="text-xs text-[#78716C] mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
           {isFiltered && (
             <Button
               type="button"
@@ -211,17 +211,17 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                       onReportOpen(report);
                     } : undefined}
                   >
-                    <TableCell className="whitespace-nowrap text-zinc-500 tabular-nums">
+                    <TableCell className="whitespace-nowrap text-[#78716C] tabular-nums">
                       {report.report_date?.slice(5)}
                     </TableCell>
-                    <TableCell className="max-w-[120px] truncate text-zinc-500">
-                      {accountDisplayNameMap[report.account_id] ?? "-"}
+                    <TableCell className="max-w-[120px] truncate text-[#78716C]">
+                      {accountDisplayNameMap[report.account_id] ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[160px] truncate text-zinc-700">
+                    <TableCell className="max-w-[160px] truncate text-[#292524]">
                       {onReportOpen ? (
                         <button
                           type="button"
-                          className="max-w-full truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                          className="max-w-full truncate rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
                           onClick={(event) => {
                             event.stopPropagation();
                             onReportOpen(report);
@@ -231,17 +231,17 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                         </button>
                       ) : report.title}
                     </TableCell>
-                    <TableCell className="text-right font-medium tabular-nums text-zinc-700">
-                      {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
+                    <TableCell className="text-right font-medium tabular-nums text-[#292524]">
+                      {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-700">{report.completion_rate ?? "-"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-700">{report.avg_play_duration ?? "-"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.bounce_rate_2s ?? "-"}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.completion_rate_5s ?? "-"}</TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-700">{report.likes}</TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-700">{report.comments}</TableCell>
-                    <TableCell className="text-right tabular-nums text-zinc-700">{report.shares}</TableCell>
-                    <TableCell className="hidden text-right tabular-nums text-zinc-700 lg:table-cell">{report.favorites}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#292524]">{report.completion_rate ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#292524]">{report.avg_play_duration ?? "—"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-[#292524] lg:table-cell">{report.bounce_rate_2s ?? "—"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-[#292524] lg:table-cell">{report.completion_rate_5s ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#292524]">{report.likes ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#292524]">{report.comments ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums text-[#292524]">{report.shares ?? "—"}</TableCell>
+                    <TableCell className="hidden text-right tabular-nums text-[#292524] lg:table-cell">{report.favorites ?? "—"}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -269,8 +269,8 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 key={report.id}
                 className={
                   onReportOpen
-                    ? "cursor-pointer space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
-                    : "space-y-2 rounded-xl border border-zinc-200 bg-white p-4"
+                    ? "cursor-pointer space-y-2 rounded-xl border border-[#E5E0D6] bg-white p-4"
+                    : "space-y-2 rounded-xl border border-[#E5E0D6] bg-white p-4"
                 }
                 onClick={onReportOpen ? (event) => {
                   // 同上：阻止冒泡，避免新弹窗被同一次点击误判为"点外部"而关闭
@@ -280,14 +280,14 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[12px] text-zinc-500 tabular-nums">{report.report_date?.slice(5)}</p>
-                    <p className="mt-1 text-[12px] text-zinc-500">
-                      {accountDisplayNameMap[report.account_id] ?? "-"}
+                    <p className="text-[12px] text-[#78716C] tabular-nums">{report.report_date?.slice(5)}</p>
+                    <p className="mt-1 text-[12px] text-[#78716C]">
+                      {accountDisplayNameMap[report.account_id] ?? "—"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-medium tabular-nums text-zinc-700">
-                      {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "-"}
+                    <p className="text-[13px] font-medium tabular-nums text-[#292524]">
+                      {report.play_count != null ? report.play_count.toLocaleString("zh-CN") : "—"}
                     </p>
                     <Button
                       variant="ghost"
@@ -306,7 +306,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                 {onReportOpen ? (
                   <button
                     type="button"
-                    className="max-w-full truncate rounded text-left text-[13px] text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B4532F]/40"
+                    className="max-w-full truncate rounded text-left text-[13px] text-[#292524] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/40"
                     onClick={(event) => {
                       event.stopPropagation();
                       onReportOpen(report);
@@ -315,24 +315,24 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
                     {report.title}
                   </button>
                 ) : (
-                  <p className="truncate text-[13px] text-zinc-700">{report.title}</p>
+                  <p className="truncate text-[13px] text-[#292524]">{report.title}</p>
                 )}
                 <div className="grid grid-cols-4 gap-2 text-[12px]">
                   <div>
-                    <p className="text-zinc-500">完播率</p>
-                    <p className="tabular-nums text-zinc-700">{report.completion_rate ?? "-"}</p>
+                    <p className="text-[#78716C]">完播率</p>
+                    <p className="tabular-nums text-[#292524]">{report.completion_rate ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-zinc-500">点赞</p>
-                    <p className="tabular-nums text-zinc-700">{report.likes}</p>
+                    <p className="text-[#78716C]">点赞</p>
+                    <p className="tabular-nums text-[#292524]">{report.likes ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-zinc-500">评论</p>
-                    <p className="tabular-nums text-zinc-700">{report.comments}</p>
+                    <p className="text-[#78716C]">评论</p>
+                    <p className="tabular-nums text-[#292524]">{report.comments ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-zinc-500">分享</p>
-                    <p className="tabular-nums text-zinc-700">{report.shares}</p>
+                    <p className="text-[#78716C]">分享</p>
+                    <p className="tabular-nums text-[#292524]">{report.shares ?? "—"}</p>
                   </div>
                 </div>
               </div>

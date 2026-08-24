@@ -54,7 +54,7 @@ export function ExportButton() {
     <div className="space-y-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="space-y-1.5">
-          <Label htmlFor="export-from" className="text-[13px] text-zinc-500">开始日期</Label>
+          <Label htmlFor="export-from" className="text-[13px] text-[#78716C]">开始日期</Label>
           <Input
             id="export-from"
             type="date"
@@ -63,11 +63,11 @@ export function ExportButton() {
               setFrom(e.target.value);
               if (dateError) setDateError("");
             }}
-            className={`h-9 w-auto border-zinc-200 bg-white text-zinc-900 ${dateError ? "ring-1 ring-red-300" : ""}`}
+            className={`h-9 w-auto border-[#E5E0D6] bg-white text-[#1C1917] ${dateError ? "ring-1 ring-red-300" : ""}`}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="export-to" className="text-[13px] text-zinc-500">结束日期</Label>
+          <Label htmlFor="export-to" className="text-[13px] text-[#78716C]">结束日期</Label>
           <Input
             id="export-to"
             type="date"
@@ -76,18 +76,18 @@ export function ExportButton() {
               setTo(e.target.value);
               if (dateError) setDateError("");
             }}
-            className={`h-9 w-auto border-zinc-200 bg-white text-zinc-900 ${dateError ? "ring-1 ring-red-300" : ""}`}
+            className={`h-9 w-auto border-[#E5E0D6] bg-white text-[#1C1917] ${dateError ? "ring-1 ring-[#C0685C]/40" : ""}`}
           />
         </div>
         <Button
           onClick={handleExport}
           disabled={loading}
-          className="h-9 bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50"
+          className="h-9 bg-white border border-[#E5E0D6] text-[#1C1917] hover:bg-[#FBF9F5]"
         >
           {loading ? "导出中..." : "导出 Excel"}
         </Button>
       </div>
-      {dateError && <p className="text-red-500 text-xs mt-1">{dateError}</p>}
+      {dateError && <p className="text-[#C0685C] text-xs mt-1">{dateError}</p>}
     </div>
   );
 }

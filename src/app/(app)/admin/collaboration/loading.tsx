@@ -13,14 +13,14 @@ export default function CollaborationLoading() {
       <Skeleton className="h-12 w-full rounded-xl" />
 
       {/* Tabs skeleton */}
-      <div className="flex gap-2 border-b border-zinc-200 pb-2">
+      <div className="flex gap-2 border-b border-[#E5E0D6] pb-2">
         <Skeleton className="h-9 w-24 rounded-lg" />
         <Skeleton className="h-9 w-24 rounded-lg" />
         <Skeleton className="h-9 w-24 rounded-lg" />
       </div>
 
       {/* Table Skeleton */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-3">
+      <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3">
         <Skeleton className="h-10 w-full rounded-lg" />
         {Array.from({ length: 6 }).map((_, index) => (
           <Skeleton key={index} className="h-12 w-full rounded-lg" />

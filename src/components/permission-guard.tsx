@@ -35,7 +35,7 @@ export function PermissionGuard({
       if (payload.warning) {
         feedbackToast.error(payload.warning);
       } else {
-        feedbackToast.success("已通知管理员，请等待处理。");
+        feedbackToast.success("已通知管理员，等待处理中。");
       }
     } catch {
       feedbackToast.error("申请发送失败，请联系管理员。");
@@ -46,21 +46,21 @@ export function PermissionGuard({
 
   return (
     <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-zinc-200 bg-white/90 p-8 shadow-xl shadow-zinc-900/5 backdrop-blur-xl">
+      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-[#E5E0D6] bg-white/90 p-8 shadow-claude-dialog backdrop-blur-xl">
         {/* 顶部微图标舱 */}
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-zinc-100/80 text-zinc-700 ring-1 ring-black/5">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F5F3EE]/80 text-[#292524] ring-1 ring-black/5">
           <ShieldAlert className="size-7 stroke-[1.5]" />
         </div>
 
         {/* 说明文本 */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-[12px] font-medium text-zinc-600">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3EE] px-3 py-1 text-[12px] font-medium text-[#292524]">
             <span>需访问权限</span>
           </div>
-          <h2 className="text-[20px] font-semibold tracking-tight text-zinc-950">
+          <h2 className="text-lg font-semibold tracking-tight text-[#1C1917]">
             暂无「{moduleTitle}」权限
           </h2>
-          <p className="text-[13px] leading-relaxed text-zinc-600">
+          <p className="text-[13px] leading-relaxed text-[#292524]">
             {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系管理员开通对应权限。`}
           </p>
         </div>
@@ -71,7 +71,7 @@ export function PermissionGuard({
             type="button"
             onClick={handlePermissionApply}
             disabled={isApplying}
-            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-95 transition-all disabled:opacity-70"
+            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-[0.985] active:duration-75 transition-all disabled:opacity-70"
           >
             <Send className="mr-1.5 size-4 stroke-[1.8]" />
             {isApplying ? "正在发送…" : "申请查看权限"}
@@ -81,7 +81,7 @@ export function PermissionGuard({
             <Button
               type="button"
               variant="outline"
-              className="h-10 rounded-xl border-zinc-200 bg-white px-4 text-[13px] font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-all"
+              className="h-10 rounded-xl border-[#E5E0D6] bg-white px-4 text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-all"
             >
               <ArrowLeft className="mr-1.5 size-4 stroke-[1.8]" />
               返回工作台

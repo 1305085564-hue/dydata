@@ -36,7 +36,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.98] shadow-sm hover:shadow" disabled={pending} type="submit">
+    <Button className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.985] active:duration-75 shadow-sm hover:shadow" disabled={pending} type="submit">
       {pending ? (
         <span className="flex items-center justify-center gap-1.5">
           <Loader2 className="size-3.5 animate-spin" />
@@ -93,14 +93,14 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
     <AuthShell title="回到工作台">
       <form action={formAction} className="space-y-5">
         {showArchivedAlert && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#B86B5C]/30 bg-[#B86B5C]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
-            <span className="text-[12px] font-medium text-[#8F3F32] dark:text-[#D98A7B]">
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#DC2626]/30 bg-[#DC2626]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
+            <span className="text-[12px] font-medium text-[#DC2626] dark:text-[#DC2626]">
               账号已归档，请联系 owner 恢复
             </span>
             <button
               type="button"
               onClick={() => setShowArchivedAlert(false)}
-              className="shrink-0 text-[#8F3F32] transition-colors hover:text-[#6F2F25] dark:text-[#D98A7B] dark:hover:text-[#E6A69A] p-0.5"
+              className="shrink-0 text-[#DC2626] transition-colors hover:opacity-80 p-0.5"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
@@ -109,7 +109,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
         )}
         {showExpiredAlert && (
           <div className="flex items-center justify-between gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
-            <span className="text-[12px] font-medium text-[#8F641B] dark:text-[#D99E55]">
+            <span className="text-[12px] font-medium text-[#8A6A2F] dark:text-[#D99E55]">
               登录会话已过期，请重新登录
             </span>
             <button
@@ -142,7 +142,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
           <div className="flex items-center justify-between">
             <Label htmlFor="password">密码</Label>
             <Link
-              className="text-[12px] text-zinc-500 hover:text-[#D97757] transition-colors"
+              className="text-[12px] text-[#78716C] hover:text-[#D97757] transition-colors"
               href={forgotPasswordHref}
             >
               忘记密码
@@ -165,7 +165,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 focus:outline-none transition-colors p-0.5 rounded"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#292524] focus:outline-none transition-colors p-0.5 rounded"
               aria-label={showPassword ? "隐藏密码" : "显示密码"}
               tabIndex={-1}
             >
@@ -180,7 +180,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
         </div>
 
         <label
-          className="flex items-center gap-2 text-[13px] text-zinc-500 cursor-pointer select-none"
+          className="flex items-center gap-2 text-[13px] text-[#78716C] cursor-pointer select-none"
           htmlFor="keep-logged-in"
         >
           <Checkbox
@@ -194,9 +194,9 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
 
         <SubmitButton />
 
-        <p className="text-center text-[13px] text-zinc-500">
+        <p className="text-center text-[13px] text-[#78716C]">
           还没有账号？
-          <Link className="ml-1 text-zinc-700 hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
+          <Link className="ml-1 text-[#292524] hover:text-[#D97757] underline underline-offset-4 transition-colors" href={registerHref}>
             去注册
           </Link>
         </p>

@@ -64,11 +64,11 @@ function StatusBadge({ status }: { status: FulfillmentStatus }) {
     waived: { label: "豁免", dot: "bg-[#43718E]" },
     exempted: { label: "豁免期", dot: "bg-[#43718E]/60" },
     absent: { label: "缺勤", dot: "bg-[#C9604D]" },
-    unconfirmed: { label: "待确认", dot: "bg-zinc-300" },
+    unconfirmed: { label: "待确认", dot: "bg-[#E5E0D6]" },
   };
   const c = config[status] ?? config.unconfirmed;
   return (
-    <span className="inline-flex items-center gap-1.5 text-[12px] font-normal text-zinc-700">
+    <span className="inline-flex items-center gap-1.5 text-[12px] font-normal text-[#292524]">
       <span className={`size-1.5 rounded-full ${c.dot}`} />
       {c.label}
     </span>
@@ -183,10 +183,10 @@ export function ExceptionQueue({
         <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D] mb-3">
           <span className="text-base">✓</span>
         </div>
-        <h3 className="text-[14px] font-semibold text-zinc-950">
+        <h3 className="text-[14px] font-semibold text-[#1C1917]">
           全员今日已完成履约 · 团队节奏平稳
         </h3>
-        <p className="mt-1 text-[12px] text-zinc-500 max-w-sm mx-auto leading-relaxed">
+        <p className="mt-1 text-[12px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
           当前范围内所有成员的发布状态均已确认或完成登记，暂无待处置的异常。
         </p>
       </div>
@@ -197,7 +197,7 @@ export function ExceptionQueue({
     <div className="space-y-3">
       {/* 批量操作工具栏（浮动胶囊） */}
       {hasSelected && (
-        <div className="flex items-center justify-between rounded-xl bg-zinc-900 px-4 py-2.5 text-white shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="flex items-center justify-between rounded-xl bg-[#1C1917] px-4 py-2.5 text-white shadow-claude-float animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="flex items-center gap-2 text-[12px] font-medium">
             <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[11px] font-semibold text-white">
               {selectedIds.size}
@@ -208,7 +208,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-zinc-300 hover:text-white hover:bg-zinc-800 text-[12px]"
+              className="text-[#E5E0D6] hover:text-white hover:bg-[#292524] text-[12px]"
               onClick={() => openBatchConfirm("confirmed_published")}
             >
               批量确认已发
@@ -216,7 +216,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-zinc-300 hover:text-white hover:bg-zinc-800 text-[12px]"
+              className="text-[#E5E0D6] hover:text-white hover:bg-[#292524] text-[12px]"
               onClick={() => openBatchConfirm("leave")}
             >
               批量请假
@@ -224,7 +224,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-zinc-300 hover:text-white hover:bg-zinc-800 text-[12px]"
+              className="text-[#E5E0D6] hover:text-white hover:bg-[#292524] text-[12px]"
               onClick={() => openBatchConfirm("waived")}
             >
               批量豁免
@@ -240,7 +240,7 @@ export function ExceptionQueue({
             <button
               type="button"
               onClick={() => onSelectAll(false)}
-              className="ml-2 text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer"
+              className="ml-2 text-[11px] text-[#78716C] hover:text-[#ECE7DE] cursor-pointer"
             >
               取消
             </button>
@@ -253,7 +253,7 @@ export function ExceptionQueue({
         <div className="overflow-x-auto">
           <table className="w-full text-[13px]">
             <thead>
-              <tr className="border-b border-[#E5E0D6] bg-[#F5F2EC]">
+              <tr className="border-b border-[#E5E0D6] bg-[#F5F3EE]">
                 <th className="w-10 px-3 py-2 text-left">
                   <Checkbox
                     aria-label="全选当前可见成员"
@@ -268,13 +268,13 @@ export function ExceptionQueue({
                 <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
                   今日状态
                 </th>
-                <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                <th className="px-3 py-2 text-right text-[12px] font-medium tracking-wider text-[#78716C]">
                   连续未发
                 </th>
-                <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                <th className="px-3 py-2 text-center text-[12px] font-medium tracking-wider text-[#78716C]">
                   上次发布
                 </th>
-                <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                <th className="px-3 py-2 text-right text-[12px] font-medium tracking-wider text-[#78716C]">
                   发布率
                 </th>
                 <th className="min-w-[200px] px-3 py-2 text-right text-[12px] font-medium tracking-wider text-[#78716C]">
@@ -292,7 +292,7 @@ export function ExceptionQueue({
                 return (
                   <tr
                     key={member.userId}
-                    className="group border-b border-[#F0ECE1] last:border-b-0 transition-colors duration-100 bg-white hover:bg-[#FAF8F4]"
+                    className="group border-b border-[#ECE7DE] last:border-b-0 transition-colors duration-100 bg-white hover:bg-[#FAF8F4]"
                   >
                     <td className="px-3 py-2.5">
                       <Checkbox
@@ -311,7 +311,7 @@ export function ExceptionQueue({
                           {member.userName}
                         </span>
                         {member.teamName && (
-                          <span className="text-[11px] text-[#A8A29E] font-normal">
+                          <span className="text-[11px] text-[#78716C] font-normal">
                             {member.teamName}
                           </span>
                         )}
@@ -321,28 +321,28 @@ export function ExceptionQueue({
                       {todayRecord ? (
                         <StatusBadge status={todayRecord.status} />
                       ) : (
-                        <span className="text-[12px] text-[#A8A29E]">—</span>
+                        <span className="text-[12px] text-[#78716C]">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-3 py-2 text-right">
                       {member.consecutiveMissing > 0 ? (
                         <span className="font-medium tabular-nums text-[#D97757]">
                           {member.consecutiveMissing} 天
                         </span>
                       ) : (
-                        <span className="text-[12px] text-[#A8A29E] tabular-nums">
+                        <span className="text-[12px] text-[#78716C] tabular-nums">
                           0 天
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#78716C]">
+                    <td className="px-3 py-2 text-center text-[12px] tabular-nums text-[#78716C]">
                       {lastPublished ?? "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-[12px] font-medium tabular-nums text-[#292524]">
+                    <td className="px-3 py-2 text-right text-[12px] font-medium tabular-nums text-[#292524]">
                       {member.fulfillmentRate}%
                     </td>
                     <td className="px-3 py-2.5 text-right">
-                      <div className="inline-flex items-center justify-end gap-1 sm:opacity-50 group-hover:opacity-100 transition-opacity duration-150">
+                      <div className="inline-flex items-center justify-end gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-auto sm:pointer-events-none sm:group-hover:pointer-events-auto sm:focus-within:pointer-events-auto">
                         <Button
                           variant="ghost"
                           size="xs"
@@ -362,7 +362,7 @@ export function ExceptionQueue({
                           variant="ghost"
                           size="xs"
                           disabled={isMarking}
-                          className="h-7 px-2 text-[12px] text-[#44403C] hover:text-[#1C1917] hover:bg-[#EFECE6]"
+                          className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                           onClick={() =>
                             requestQuickMark(
                               member.userId,
@@ -377,7 +377,7 @@ export function ExceptionQueue({
                           variant="ghost"
                           size="xs"
                           disabled={isMarking}
-                          className="h-7 px-2 text-[12px] text-[#44403C] hover:text-[#1C1917] hover:bg-[#EFECE6]"
+                          className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                           onClick={() =>
                             requestQuickMark(
                               member.userId,
@@ -390,14 +390,14 @@ export function ExceptionQueue({
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            className="flex size-7 items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+                            className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
                             title="更多操作"
                           >
                             ···
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="rounded-xl border border-zinc-200/80 bg-white/95 backdrop-blur-md shadow-lg"
+                            className="rounded-xl border border-[#E5E0D6]/80 bg-white/95 backdrop-blur-md shadow-claude-float"
                           >
                             <DropdownMenuItem
                               className="text-[12px] text-[#C9604D] focus:text-[#C9604D] focus:bg-[#C9604D]/10"
@@ -424,7 +424,7 @@ export function ExceptionQueue({
 
         {/* 展开/折叠更多 */}
         {hasMore && (
-          <div className="border-t border-[#F0ECE1] bg-[#FAF8F4]/60 py-2.5 text-center">
+          <div className="border-t border-[#ECE7DE] bg-[#FAF8F4]/60 py-2.5 text-center">
             <button
               type="button"
               onClick={() => setIsExpanded((prev) => !prev)}
@@ -450,12 +450,12 @@ export function ExceptionQueue({
         open={quickConfirm !== null}
         onOpenChange={(open) => !open && setQuickConfirm(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-xl border-zinc-200">
+        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-semibold text-zinc-950">
-              确认标记 {quickConfirm?.userName} 缺勤？
+            <DialogTitle className="text-base font-medium text-[#1C1917]">
+              确认标记 {quickConfirm?.userName} 缺勤
             </DialogTitle>
-            <DialogDescription className="text-[13px] text-zinc-600 mt-2">
+            <DialogDescription className="text-[13px] text-[#292524] mt-2">
               标记缺勤将记录为今日未履约，此操作可在抽屉中随时撤销或重新改判。
             </DialogDescription>
           </DialogHeader>
@@ -463,7 +463,7 @@ export function ExceptionQueue({
             <Button
               variant="outline"
               size="sm"
-              className="rounded-lg text-zinc-600"
+              className="rounded-lg text-[#292524]"
               onClick={() => setQuickConfirm(null)}
             >
               取消
@@ -485,32 +485,32 @@ export function ExceptionQueue({
         open={batchConfirmOpen}
         onOpenChange={(open) => !open && setBatchConfirmOpen(false)}
       >
-        <DialogContent className="max-w-md rounded-2xl bg-white p-6 shadow-xl border-zinc-200">
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-semibold text-zinc-950">
-              批量{batchAction ? ACTION_LABELS[batchAction] : ""}
+            <DialogTitle className="text-base font-medium text-[#1C1917]">
+              标记选中项为{batchAction ? ACTION_LABELS[batchAction] : ""}
             </DialogTitle>
-            <DialogDescription className="text-[13px] text-zinc-600 mt-2">
+            <DialogDescription className="text-[13px] text-[#292524] mt-2">
               已选 {selectedIds.size} 位成员，操作将作用于今日（{today}）。
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 space-y-2">
-            <label className="text-[12px] font-medium text-zinc-700">
+            <label className="text-[12px] font-medium text-[#292524]">
               备注原因 (选填)
             </label>
             <input
               type="text"
               value={batchReason}
               onChange={(e) => setBatchReason(e.target.value)}
-              placeholder="请输入批量操作原因..."
-              className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] outline-none focus:border-[#D97757] focus:ring-1 focus:ring-[#D97757]/30"
+              placeholder="输入操作原因..."
+              className="w-full rounded-lg border border-[#E5E0D6] px-3 py-2 text-[13px] outline-none focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
             />
           </div>
           <DialogFooter className="mt-6 gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="rounded-lg text-zinc-600"
+              className="rounded-lg text-[#292524]"
               onClick={() => setBatchConfirmOpen(false)}
             >
               取消

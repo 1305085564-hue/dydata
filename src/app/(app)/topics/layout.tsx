@@ -34,7 +34,7 @@ export default function TopicsLayout({ children }: { children: React.ReactNode }
         onMouseEnter={() => setShowFloatingText(true)}
         onMouseLeave={() => setShowFloatingText(false)}
         className={cn(
-          "fixed bottom-6 right-6 z-40 flex h-12 items-center justify-center rounded-full bg-[#D97757] text-white shadow-lg transition-colors hover:bg-[#C96442] cursor-pointer",
+          "fixed bottom-6 right-6 z-40 flex h-12 items-center justify-center rounded-full bg-[#D97757] text-white shadow-claude-float active:scale-[0.985] active:duration-75 transition-colors hover:bg-[#C96442] cursor-pointer",
           showFloatingText ? "px-4 gap-1.5" : "w-12"
         )}
         initial={{ scale: 0.8, opacity: 0 }}

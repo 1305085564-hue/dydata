@@ -54,12 +54,12 @@ export function BindingDialog({
           <DialogTitle>设置{control?.label ?? "业务功能"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-5 py-3">
-          <p className="text-[13px] leading-5 text-zinc-500">{control?.description}</p>
+          <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
           <div className="space-y-2">
             <Label htmlFor="binding-model">模型策略</Label>
             <select
               id="binding-model"
-              className="h-9 w-full rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
+              className="h-9 w-full rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
               value={providerKeyModelId ?? ""}
               onChange={(event) => setProviderKeyModelId(event.target.value || null)}
             >
@@ -76,10 +76,10 @@ export function BindingDialog({
               })}
             </select>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-lg border border-[#E5E0D6] px-3 py-2.5">
             <div>
               <Label>允许使用</Label>
-              <p className="mt-0.5 text-[12px] text-zinc-500">关闭后，该功能不会再向 AI 发起请求。</p>
+              <p className="mt-0.5 text-[12px] text-[#78716C]">关闭后，该功能不会再向 AI 发起请求。</p>
             </div>
             <Switch aria-label={`启用${control?.label ?? "业务功能"}`} checked={isEnabled} onCheckedChange={setIsEnabled} />
           </div>

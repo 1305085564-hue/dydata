@@ -13,7 +13,7 @@ export default function OpenGraphImage() {
       <div
         style={{
           alignItems: "center",
-          background: "#fafaf9",
+          background: "#FBF9F5",
           color: "#1c1917",
           display: "flex",
           height: "100%",

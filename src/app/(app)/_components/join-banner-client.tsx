@@ -42,7 +42,7 @@ export function JoinBannerClient(props: Props) {
   return (
     <>
       <div className="mx-auto mb-3.5 w-full max-w-7xl sm:mb-4">
-        <div className="flex flex-col gap-3 rounded-xl border border-zinc-200/90 bg-white p-3 shadow-2xs transition-all sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
+        <div className="flex flex-col gap-3 rounded-xl border border-[#E5E0D6]/90 bg-white p-3 shadow-2xs transition-all sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
           {/* 左侧：图标、标题与说明 */}
           <div className="flex min-w-0 items-start gap-3 sm:items-center">
             <div
@@ -62,7 +62,7 @@ export function JoinBannerClient(props: Props) {
 
             <div className="min-w-0 space-y-0.5">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-[14px] font-medium tracking-tight text-zinc-900">
+                <h2 className="text-[14px] font-medium tracking-tight text-[#1C1917]">
                   {bannerTitle}
                 </h2>
                 <span
@@ -76,7 +76,7 @@ export function JoinBannerClient(props: Props) {
                   {isUnassigned ? "未加入" : "审核中"}
                 </span>
               </div>
-              <p className="text-[13px] leading-relaxed text-zinc-600">
+              <p className="text-[13px] leading-relaxed text-[#292524]">
                 {bannerBody}
               </p>
             </div>
@@ -92,12 +92,12 @@ export function JoinBannerClient(props: Props) {
               className={
                 isUnassigned
                   ? "px-3.5 text-xs sm:text-[13px]"
-                  : "border-zinc-200 px-3.5 text-xs text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 sm:text-[13px]"
+                  : "border-[#E5E0D6] px-3.5 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] sm:text-[13px]"
               }
             >
               {isUnassigned ? "申请加入团队" : "撤销申请"}
             </Button>
-            <span className="hidden text-[12px] text-zinc-500 sm:inline-block">
+            <span className="hidden text-[12px] text-[#78716C] sm:inline-block">
               {isUnassigned
                 ? "通过后即可提交日报、豁免和协作内容。"
                 : "审核通过前仍可继续使用当前账号。"}

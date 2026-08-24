@@ -106,12 +106,12 @@ function getStatusDot(video: VideoRow) {
   }
   if (status === "pending" || status === "未满24h") {
     return {
-      color: "bg-zinc-300",
+      color: "bg-[#E5E0D6]",
       label: "未满24h",
     };
   }
   return {
-    color: "bg-zinc-300",
+    color: "bg-[#E5E0D6]",
     label: status || "未满24h",
   };
 }
@@ -299,10 +299,10 @@ export function ContentList({
 
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
-      return <span className="text-[10px] text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
+      return <span className="text-[10px] text-[#E5E0D6] opacity-0 group-hover:opacity-100 transition-opacity">↕</span>;
     }
     return (
-      <span className="text-[10.5px] font-semibold text-zinc-900">
+      <span className="text-[10.5px] font-semibold text-[#1C1917]">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -323,7 +323,7 @@ export function ContentList({
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               viewMode === "interaction"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
             }`}
           >
             互动数据
@@ -334,7 +334,7 @@ export function ContentList({
             className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
               viewMode === "completion"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
             }`}
           >
             完播数据
@@ -345,11 +345,11 @@ export function ContentList({
       {/* 对比表格容器 */}
       <div
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-100"
+        className="flex-1 w-full overflow-x-auto rounded-xl border border-[#ECE7DE]"
       >
         <table className="w-full text-left border-collapse table-fixed min-w-[960px] xl:min-w-full">
           {/* 吸顶表头 */}
-          <thead className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur border-b border-zinc-200 text-[12px] font-medium text-zinc-600 select-none">
+          <thead className="sticky top-0 z-10 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
             <tr>
               <th className="py-2 px-1 text-center w-7 shrink-0 whitespace-nowrap">状态</th>
               <th className="py-2 px-2.5 text-left w-auto min-w-0">视频标题 / 账号</th>
@@ -357,7 +357,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("published_at")}
-                  className="group inline-flex items-center gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>发布时间</span>
                   {renderSortIndicator("published_at")}
@@ -367,7 +367,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("play_count")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>播放量</span>
                   {renderSortIndicator("play_count")}
@@ -377,7 +377,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("follower_gain")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>涨粉</span>
                   {renderSortIndicator("follower_gain")}
@@ -389,7 +389,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("likes")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>点赞</span>
                   {renderSortIndicator("likes")}
@@ -399,7 +399,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("comments")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>评论</span>
                   {renderSortIndicator("comments")}
@@ -409,7 +409,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("shares")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>分享</span>
                   {renderSortIndicator("shares")}
@@ -419,7 +419,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("favorites")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>收藏</span>
                   {renderSortIndicator("favorites")}
@@ -429,7 +429,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("interaction_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>互动率</span>
                   {renderSortIndicator("interaction_rate")}
@@ -441,7 +441,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("bounce_rate_2s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>2s跳出</span>
                   {renderSortIndicator("bounce_rate_2s")}
@@ -451,7 +451,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate_5s")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>5s完播</span>
                   {renderSortIndicator("completion_rate_5s")}
@@ -461,7 +461,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("avg_play_duration")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>均播</span>
                   {renderSortIndicator("avg_play_duration")}
@@ -471,7 +471,7 @@ export function ContentList({
                 <button
                   type="button"
                   onClick={() => handleSort("completion_rate")}
-                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>完播</span>
                   {renderSortIndicator("completion_rate")}
@@ -483,18 +483,18 @@ export function ContentList({
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-zinc-100 text-[12px] text-zinc-800">
+          <tbody className="divide-y divide-[#ECE7DE] text-[12px] text-[#292524]">
             {visibleRows.length === 0 && !isDeferredDataLoading ? (
               <tr>
                 <td
                   colSpan={15}
-                  className="py-12 text-center text-zinc-600"
+                  className="py-12 text-center text-[#292524]"
                 >
-                  <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-zinc-100 text-zinc-600 mb-2">
+                  <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F5F3EE] text-[#292524] mb-2">
                     <Check className="size-4 text-[#6FAA7D]" />
                   </div>
-                  <p className="text-[13px] font-semibold text-zinc-800">今日待复盘已清完</p>
-                  <p className="mt-0.5 text-[11.5px] text-zinc-400">当前没有需要紧急复盘的异常视频</p>
+                  <p className="text-[13px] font-semibold text-[#292524]">今日待复盘已清完</p>
+                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">当前没有需要紧急复盘的异常视频</p>
                 </td>
               </tr>
             ) : (
@@ -506,7 +506,7 @@ export function ContentList({
                   <tr
                     key={video.id}
                     onClick={() => onSelectVideoId(video.id)}
-                    className="group hover:bg-zinc-50/80 transition-colors cursor-pointer"
+                    className="group hover:bg-[#FBF9F5]/80 transition-colors cursor-pointer"
                   >
                     {/* 状态灯 */}
                     <td className="py-2 px-1 text-center shrink-0">
@@ -522,11 +522,11 @@ export function ContentList({
                         className="flex items-center gap-1.5 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <span className="truncate font-normal text-zinc-800 group-hover:text-zinc-950 transition-colors">
+                        <span className="truncate font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
                           {video.video_title || video.content?.slice(0, 50) || "未命名视频"}
                         </span>
                         {video.accounts?.name ? (
-                          <span className="shrink-0 text-[11px] text-zinc-400 font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
+                          <span className="shrink-0 text-[11px] text-[#78716C] font-normal truncate max-w-[75px] 2xl:max-w-[100px]">
                             · {video.accounts.name}
                           </span>
                         ) : null}
@@ -534,48 +534,48 @@ export function ContentList({
                     </td>
 
                     {/* 发布时间 */}
-                    <td className="py-2 px-2 text-left tabular-nums text-zinc-600 text-[11.5px] whitespace-nowrap">
+                    <td className="py-2 px-2 text-left tabular-nums text-[#292524] text-[11.5px] whitespace-nowrap">
                       {formatCompactTime(video.published_at ?? video.uploaded_at ?? video.created_at)}
                     </td>
 
                     {/* 播放量 */}
-                    <td className="py-2 px-2 text-right tabular-nums font-normal text-zinc-800 whitespace-nowrap">
+                    <td className="py-2 px-2 text-right tabular-nums font-normal text-[#292524] whitespace-nowrap">
                       {formatCount(item.playCount)}
                     </td>
 
                     {/* 涨粉 */}
-                    <td className="py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap">
+                    <td className="py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap">
                       {formatCount(item.followerGain)}
                     </td>
 
                     {/* 互动明细与互动率 */}
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.likes)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.comments)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.shares)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
                       {formatCount(item.favorites)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums font-normal text-zinc-800 whitespace-nowrap ${interactiveColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums font-normal text-[#292524] whitespace-nowrap ${interactiveColClass}`}>
                       {formatPercent(item.interactionRate)}
                     </td>
 
                     {/* 完播指标 */}
-                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
                       {formatPercent(item.bounceRate2s)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
                       {formatPercent(item.completionRate5s)}
                     </td>
-                    <td className={`py-2 px-1.5 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-1.5 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
                       {formatDuration(item.avgPlayDuration)}
                     </td>
-                    <td className={`py-2 px-2 text-right tabular-nums text-zinc-600 whitespace-nowrap ${completionColClass}`}>
+                    <td className={`py-2 px-2 text-right tabular-nums text-[#292524] whitespace-nowrap ${completionColClass}`}>
                       {formatPercent(item.completionRate)}
                     </td>
 
@@ -587,7 +587,7 @@ export function ContentList({
                           e.stopPropagation();
                           onSelectVideoId(video.id);
                         }}
-                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-zinc-800 hover:text-white hover:bg-[#D97757] transition-all active:scale-95 shadow-2xs cursor-pointer"
+                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.985] active:duration-75 shadow-2xs cursor-pointer"
                       >
                         复盘 →
                       </button>
@@ -600,7 +600,7 @@ export function ContentList({
             {/* 仅在首屏无数据且加载中时展示骨架屏 */}
             {visibleRows.length === 0 && isDeferredDataLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i} className="border-b border-zinc-100 animate-pulse">
+                <tr key={i} className="border-b border-[#ECE7DE] animate-pulse">
                   <td className="py-2 px-2 text-center">
                     <Skeleton className="size-2 rounded-full mx-auto" />
                   </td>

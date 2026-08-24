@@ -723,7 +723,7 @@ export function FulfillmentWorkbench({
             <TabsList variant="line" className="gap-4">
               <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
                 待处理异常
-                <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#EFECE6] text-[#44403C] tabular-nums">
+                <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
                   {exceptionMembers.length}
                 </span>
               </TabsTrigger>
@@ -739,7 +739,7 @@ export function FulfillmentWorkbench({
                     {pendingAppeals.length}
                   </span>
                 ) : (
-                  <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#EFECE6] text-[#44403C] tabular-nums">
+                  <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
                     0
                   </span>
                 )}
@@ -771,7 +771,7 @@ export function FulfillmentWorkbench({
 
           <TabsContent value="appeals" className="mt-3">
             {appealsError ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#F6F4EE] px-6 py-10 text-center">
+              <div className="flex flex-col items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#FBF9F5] px-6 py-10 text-center">
                 <p className="text-[13px] font-medium text-[#1C1917]">
                   申诉数据加载失败
                 </p>
@@ -780,7 +780,7 @@ export function FulfillmentWorkbench({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="mt-4 rounded-lg text-[#44403C] border-[#E5E0D6] hover:bg-[#EFECE6]"
+                  className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE]"
                   onClick={() => void fetchAppeals()}
                 >
                   重新加载
@@ -790,13 +790,13 @@ export function FulfillmentWorkbench({
               <div className="flex items-center justify-center py-12 rounded-xl border border-[#E5E0D6] bg-white">
                 <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
                 <span className="text-[13px] text-[#78716C] font-normal">
-                  {isSubmittingAppeal ? "正在处理申诉..." : "正在加载申诉..."}
+                  正在加载申诉...
                 </span>
               </div>
             ) : pendingAppeals.length === 0 ? (
-              <div className="py-12 text-center">
+              <div className="rounded-xl border border-[#E5E0D6] bg-white py-12">
                 <EmptyState
-                  title="当前无待处理申诉"
+                  title="暂无待审核申诉"
                   description="所有成员的申诉请求已处理完毕"
                 />
               </div>
@@ -805,7 +805,7 @@ export function FulfillmentWorkbench({
                 <div className="overflow-x-auto">
                   <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="border-b border-[#E5E0D6] bg-[#F5F2EC]">
+                      <tr className="border-b border-[#E5E0D6] bg-[#F5F3EE]">
                         <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
                           成员
                         </th>
@@ -827,16 +827,16 @@ export function FulfillmentWorkbench({
                       {pendingAppeals.map((appeal) => (
                         <tr
                           key={appeal.id}
-                          className="border-b border-[#F0ECE1] last:border-b-0 hover:bg-[#FAF8F4] bg-white transition-colors"
+                          className="border-b border-[#ECE7DE] last:border-b-0 hover:bg-[#FAF8F4] bg-white transition-colors"
                         >
                           <td className="px-3 py-2.5 font-medium text-[#1C1917]">
                             {appeal.user_name || "未知成员"}
                           </td>
-                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#44403C]">
+                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#292524]">
                             {appeal.record_date}
                           </td>
                           <td
-                            className="max-w-[240px] truncate px-3 py-2.5 text-[#44403C]"
+                            className="max-w-[240px] truncate px-3 py-2.5 text-[#292524]"
                             title={appeal.reason}
                           >
                             {appeal.reason}
@@ -882,7 +882,7 @@ export function FulfillmentWorkbench({
       </section>
 
       {/* P2 — 月度矩阵（可折叠 · 48px 宏观呼吸断层） */}
-      <section className="pt-8 border-t border-[#E8E3DA]">
+      <section className="pt-8 border-t border-[#E5E0D6]">
         {isLoadingCalendar ? (
           <div className="flex flex-col gap-3">
             <button

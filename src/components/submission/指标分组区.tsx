@@ -165,7 +165,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           <div
             className={cn(
               "absolute left-0 top-[6%] bottom-[6%] w-[1.5px] rounded-full transition-colors duration-150",
-              retentionOptional ? "bg-zinc-200" : "bg-[#6FAA7D]/80"
+              retentionOptional ? "bg-[#E5E0D6]" : "bg-[#6FAA7D]/80"
             )}
           />
           

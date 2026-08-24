@@ -37,17 +37,17 @@ interface DataReportStageProps {
 
 function DataReportStageSkeleton() {
   return (
-    <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      <div className="border-b border-zinc-200 bg-[var(--color-bg)] px-6 py-7 sm:px-8 sm:py-8">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="border-b border-[#ECE7DE]/80 pb-6">
         <div className="space-y-4">
-          <div className="h-5 w-24 animate-pulse rounded-full bg-zinc-200" />
-          <div className="h-9 w-48 animate-pulse rounded-xl bg-zinc-200" />
-          <div className="h-24 animate-pulse rounded-2xl bg-zinc-100" />
+          <div className="h-5 w-24 animate-pulse-claude rounded-full bg-[#E5E0D6]" />
+          <div className="h-9 w-48 animate-pulse-claude rounded-xl bg-[#E5E0D6]" />
+          <div className="h-24 animate-pulse-claude rounded-2xl bg-[#F5F3EE]" />
         </div>
       </div>
-      <div className="space-y-5 px-5 py-6 sm:px-8 sm:py-8">
-        <div className="h-12 w-40 animate-pulse rounded-xl bg-zinc-100" />
-        <div className="h-[420px] animate-pulse rounded-2xl bg-zinc-100" />
+      <div className="space-y-5">
+        <div className="h-12 w-40 animate-pulse-claude rounded-xl bg-[#F5F3EE]" />
+        <div className="h-[420px] animate-pulse-claude rounded-2xl bg-[#F5F3EE]" />
       </div>
     </div>
   );

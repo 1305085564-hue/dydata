@@ -5,7 +5,8 @@ export default function VideosLoading() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <Skeleton className="h-8 w-40" />
-      <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-4">
+      <div className="space-y-4 pt-4">
+        <div className="flex h-10 w-full animate-pulse rounded-lg bg-[#F5F3EE]" />
         <div className="flex flex-wrap items-center gap-4">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-8 w-40" />

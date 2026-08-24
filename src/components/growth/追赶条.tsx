@@ -15,22 +15,22 @@ export function ChaseBar({ peerName, metricLabel, peerValueText, peerRatio }: Ch
     <div className="space-y-5">
       <div className="space-y-2">
         <div className="flex items-baseline justify-between text-[13px]">
-          <span className="font-medium text-zinc-900">{peerName}</span>
-          <span className="tabular-nums text-zinc-700">{peerValueText}</span>
+          <span className="font-medium text-[#1C1917]">{peerName}</span>
+          <span className="tabular-nums text-[#292524]">{peerValueText}</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
+        <div className="h-2 overflow-hidden rounded-full bg-[#F5F3EE]">
           <div className="h-full rounded-full bg-[#43718E]" style={{ width }} />
         </div>
-        <p className="text-[12px] text-zinc-500">团队最高{metricLabel}</p>
+        <p className="text-[12px] text-[#78716C]">团队最高{metricLabel}</p>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-baseline justify-between text-[13px]">
-          <span className="font-medium text-zinc-500">你</span>
-          <span className="text-[12px] text-zinc-400">未解锁</span>
+          <span className="font-medium text-[#78716C]">你</span>
+          <span className="text-[12px] text-[#78716C]">未解锁</span>
         </div>
-        <div className="h-2 rounded-full border border-dashed border-zinc-300 bg-zinc-50" />
-        <p className="text-[12px] leading-[1.6] text-zinc-500">
+        <div className="h-2 rounded-full border border-dashed border-[#E5E0D6] bg-[#FBF9F5]" />
+        <p className="text-[12px] leading-[1.6] text-[#78716C]">
           随日报积累自动解锁。解锁后目标只有一个：先追平他。
         </p>
       </div>

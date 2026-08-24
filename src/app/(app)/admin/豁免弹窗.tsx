@@ -178,7 +178,7 @@ export function ExemptionDialog({
   return (
     <Dialog open={open} onOpenChange={closeDialog}>
       <DialogContent
-        className="sm:max-w-md rounded-2xl border border-zinc-200 bg-white"
+        className="sm:max-w-md rounded-2xl border border-[#E5E0D6] bg-white"
         showCloseButton={!isPending}
       >
         <DialogHeader>
@@ -192,7 +192,7 @@ export function ExemptionDialog({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label id="exemption-category-label" className="text-[13px] font-medium text-zinc-900">申请语义</label>
+            <label id="exemption-category-label" className="text-[13px] font-medium text-[#1C1917]">申请语义</label>
             <Select
               value={formValues.category}
               onValueChange={(value) =>
@@ -203,7 +203,7 @@ export function ExemptionDialog({
               }
               disabled={isPending}
             >
-              <SelectTrigger aria-labelledby="exemption-category-label" className="w-full rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <SelectTrigger aria-labelledby="exemption-category-label" className="w-full rounded-lg border border-[#E5E0D6] bg-[#FBF9F5]">
                 <SelectValue>
                   {CATEGORY_LABELS[formValues.category]}
                 </SelectValue>
@@ -216,13 +216,13 @@ export function ExemptionDialog({
           </div>
 
           <div className="space-y-2">
-            <label id="exemption-mode-label" className="text-[13px] font-medium text-zinc-900">日期模式</label>
+            <label id="exemption-mode-label" className="text-[13px] font-medium text-[#1C1917]">日期模式</label>
             <Select
               value={formValues.mode}
               onValueChange={handleModeChange}
               disabled={isPending}
             >
-              <SelectTrigger aria-labelledby="exemption-mode-label" className="w-full rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]">
+              <SelectTrigger aria-labelledby="exemption-mode-label" className="w-full rounded-lg border border-[#E5E0D6] bg-[#FBF9F5]">
                 <SelectValue>{MODE_LABELS[formValues.mode]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -236,14 +236,14 @@ export function ExemptionDialog({
 
           {formValues.mode === "yesterday" && (
             <div className="space-y-2">
-              <label htmlFor="exemption-date" className="text-[13px] font-medium text-zinc-900">豁免日期</label>
+              <label htmlFor="exemption-date" className="text-[13px] font-medium text-[#1C1917]">豁免日期</label>
               <Input
                 id="exemption-date"
                 type="date"
                 value={formValues.date ?? fallbackYesterday}
                 onChange={(e) => updateField("date", e.target.value)}
                 disabled={isPending}
-                className="rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rounded-lg bg-[#FBF9F5]"
               />
             </div>
           )}
@@ -251,39 +251,39 @@ export function ExemptionDialog({
           {formValues.mode === "range" && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="exemption-start-date" className="text-[13px] font-medium text-zinc-900">开始日期</label>
+                <label htmlFor="exemption-start-date" className="text-[13px] font-medium text-[#1C1917]">开始日期</label>
                 <Input
                   id="exemption-start-date"
                   type="date"
                   value={formValues.startDate ?? ""}
                   onChange={(e) => updateField("startDate", e.target.value)}
                   disabled={isPending}
-                  className="rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-lg bg-[#FBF9F5]"
                 />
               </div>
               <div className="space-y-2">
-                <label htmlFor="exemption-end-date" className="text-[13px] font-medium text-zinc-900">结束日期</label>
+                <label htmlFor="exemption-end-date" className="text-[13px] font-medium text-[#1C1917]">结束日期</label>
                 <Input
                   id="exemption-end-date"
                   type="date"
                   value={formValues.endDate ?? ""}
                   onChange={(e) => updateField("endDate", e.target.value)}
                   disabled={isPending}
-                  className="rounded-lg border-transparent bg-zinc-50 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  className="rounded-lg bg-[#FBF9F5]"
                 />
               </div>
             </div>
           )}
 
           <div className="space-y-2">
-            <label htmlFor="exemption-reason" className="text-[13px] font-medium text-zinc-900">原因</label>
+            <label htmlFor="exemption-reason" className="text-[13px] font-medium text-[#1C1917]">原因</label>
             <textarea
               id="exemption-reason"
               value={formValues.reason ?? ""}
               onChange={(e) => updateField("reason", e.target.value)}
               disabled={isPending}
               rows={3}
-              className="flex min-h-20 w-full rounded-lg border border-transparent bg-zinc-50 px-3 py-2 text-[13px] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-zinc-500 focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:opacity-50"
+              className="flex min-h-20 w-full rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3 py-2 text-[13px] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] placeholder:text-[#78716C] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] disabled:cursor-not-allowed disabled:bg-[#FBF9F5] disabled:opacity-50"
               placeholder="可选，建议写明原因"
             />
           </div>
@@ -295,7 +295,7 @@ export function ExemptionDialog({
               <Button
                 onClick={handleClearClick}
                 disabled={isPending}
-                className="text-zinc-700 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950"
+                className="text-[#292524] bg-[#F5F3EE] hover:bg-[#E5E0D6] hover:text-[#1C1917]"
               >
                 清除豁免
               </Button>
@@ -305,7 +305,7 @@ export function ExemptionDialog({
             <Button
               onClick={() => onOpenChange(false)}
               disabled={isPending}
-              className="text-zinc-700 bg-zinc-100 hover:bg-zinc-200 hover:text-zinc-950"
+              className="text-[#292524] bg-[#F5F3EE] hover:bg-[#E5E0D6] hover:text-[#1C1917]"
             >
               取消
             </Button>

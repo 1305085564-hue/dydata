@@ -10,9 +10,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4 stroke-[1.5] text-[#16A34A]" />,
-        info: <InfoIcon className="size-4 stroke-[1.5] text-zinc-500" />,
+        info: <InfoIcon className="size-4 stroke-[1.5] text-[#78716C]" />,
         warning: <TriangleAlertIcon className="size-4 stroke-[1.5] text-[#D99E55]" />,
-        error: <OctagonXIcon className="size-4 stroke-[1.5] text-[#C9604D]" />,
+        error: <OctagonXIcon className="size-4 stroke-[1.5] text-[#DC2626]" />,
         loading: (
           <span className="relative flex size-2 items-center justify-center">
             <span className="inline-flex size-2 rounded-full bg-[#D99E55]" />
@@ -23,8 +23,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       style={
         {
           "--normal-bg": "#FFFFFF",
-          "--normal-text": "#44403C",
-          "--normal-border": "#E7E5E4",
+          "--normal-text": "#292524",
+          "--normal-border": "#E5E0D6",
           "--border-radius": "12px",
         } as React.CSSProperties
       }

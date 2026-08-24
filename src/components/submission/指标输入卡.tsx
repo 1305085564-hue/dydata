@@ -31,7 +31,7 @@ function getConfidenceDotProps(score: number | null | undefined) {
   }
   if (s >= 0.8) {
     return {
-      color: "bg-[#F59E0B]",
+      color: "bg-[#D99E55]",
       tooltip: "AI 识别，建议核对",
     };
   }
@@ -48,20 +48,20 @@ function getStatusBadge(field: SubmissionFieldState) {
   if (score >= 0.95) {
     return {
       label: "AI 已识别",
-      className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
+      className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
       dotClass: "bg-[#16A34A]",
     };
   }
   if (score >= 0.8) {
     return {
       label: "待确认",
-      className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
-      dotClass: "bg-[#F59E0B]",
+      className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
+      dotClass: "bg-[#D99E55]",
     };
   }
   return {
     label: "请核对",
-    className: "bg-zinc-50 text-zinc-700 border border-zinc-200",
+    className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
     dotClass: "bg-[#DC2626]/100",
   };
 }
@@ -129,7 +129,7 @@ export function MetricInputCard({
   return (
     <div className="space-y-1 transition-colors">
       <div className="flex items-center justify-between gap-1">
-        <Label className={cn("font-medium text-zinc-500 text-[13px]")}>
+        <Label className={cn("font-medium text-[#78716C] text-[13px]")}>
           {label}
           {optional && (
             <span className="ml-1 font-normal opacity-60">可选</span>
@@ -173,9 +173,9 @@ export function MetricInputCard({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              "rounded-xl pr-8 tabular-nums text-zinc-900 transition-[background-color,border-color,box-shadow,color] duration-300",
-              "bg-zinc-100/70 border-transparent text-[13px]",
-              "focus:bg-white focus:border-zinc-200 focus:shadow-sm focus:ring-1 focus:ring-zinc-950/5 focus:border-b-2 focus:border-b-[#D97757]",
+              "rounded-xl pr-8 tabular-nums text-[#1C1917] transition-[background-color,border-color,box-shadow,color] duration-150",
+              "bg-[#F5F3EE]/70 border-transparent text-[13px]",
+              "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]",
               "h-10",
               field.source === "ocr"
                 ? "border-b-2 border-b-[#D97757]/60 shadow-[0_1px_0_0_rgba(217,119,87,0.1)] bg-[#D97757]/[0.03] text-[#D97757]"
@@ -197,13 +197,13 @@ export function MetricInputCard({
               )}
             />
             {showTooltip ? (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#1C1917] text-white text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
                 {confidenceProps.tooltip}
               </span>
             ) : null}
           </span>
         ) : suffix ? (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-zinc-500">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C]">
             {suffix}
           </span>
         ) : null}

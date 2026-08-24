@@ -66,13 +66,13 @@ export function TopicComparisonMatrix({
   }, [loadComparison, retryToken]);
 
   return (
-    <section className="space-y-4 mb-8 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs">
+    <section className="space-y-4 mb-10 border-b border-[#ECE7DE]/80 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-1">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#D97757]/10 text-[#D97757]">
             <BarChart2 className="w-3 h-3" />
           </span>
-          <h2 className="text-base font-semibold text-zinc-900 tracking-tight">
+          <h2 className="text-base font-semibold text-[#1C1917] tracking-tight">
             选题效果横向对比
           </h2>
         </div>
@@ -86,7 +86,7 @@ export function TopicComparisonMatrix({
               className={`px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
                 dimension === "topic"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-medium"
               }`}
               aria-label="按母题对比"
             >
@@ -98,7 +98,7 @@ export function TopicComparisonMatrix({
               className={`px-3 py-1.5 text-xs rounded-lg transition-all cursor-pointer ${
                 dimension === "account"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 font-medium"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-medium"
               }`}
               aria-label="按账号对比"
             >
@@ -107,14 +107,14 @@ export function TopicComparisonMatrix({
           </div>
 
           {dimension === "account" && topicsError ? (
-            <span className="text-xs text-zinc-500">母题加载失败</span>
+            <span className="text-xs text-[#78716C]">母题加载失败</span>
           ) : (
             dimension === "account" && (
               <div className="relative inline-flex items-center">
                 <select
                   value={topicId}
                   onChange={(event) => setTopicId(event.target.value)}
-                  className={`appearance-none text-xs bg-transparent hover:bg-zinc-100 rounded-lg pl-2 pr-5.5 py-1 text-zinc-700 hover:text-zinc-950 font-normal focus:outline-none cursor-pointer transition-colors ${
+                  className={`appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors ${
                     !topicId
                       ? "ring-1 ring-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
                       : ""
@@ -128,7 +128,7 @@ export function TopicComparisonMatrix({
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="size-3.5 text-zinc-400 absolute right-1 pointer-events-none" />
+                <ChevronDown className="size-3.5 text-[#78716C] absolute right-1 pointer-events-none" />
               </div>
             )
           )}
@@ -138,35 +138,35 @@ export function TopicComparisonMatrix({
             <select
               value={days}
               onChange={(event) => setDays(Number(event.target.value))}
-              className="appearance-none text-xs bg-transparent hover:bg-zinc-100 rounded-lg pl-2 pr-5.5 py-1 text-zinc-600 hover:text-zinc-950 font-normal focus:outline-none cursor-pointer transition-colors"
+              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
               aria-label="时间跨度"
             >
               <option value={14}>近 14 天</option>
               <option value={30}>近 30 天</option>
               <option value={60}>近 60 天</option>
             </select>
-            <ChevronDown className="size-3.5 text-zinc-400 absolute right-1 pointer-events-none" />
+            <ChevronDown className="size-3.5 text-[#78716C] absolute right-1 pointer-events-none" />
           </div>
         </div>
       </div>
 
       {needsTopicSelection ? (
-        <div className="py-12 text-center text-xs text-zinc-500 rounded-xl bg-zinc-100/50 font-normal">
-          请在上方选择母题后查看账号对比
+        <div className="py-12 text-center text-xs text-[#78716C] rounded-xl bg-[#F5F3EE]/50 font-normal">
+          在上方选择母题后查看账号对比
         </div>
       ) : loading ? (
-        <div className="py-12 text-center text-xs text-zinc-500 font-normal">
-          <RefreshCw className="w-4 h-4 text-zinc-400 animate-spin mx-auto mb-2" />
+        <div className="py-12 text-center text-xs text-[#78716C] font-normal">
+          <RefreshCw className="w-4 h-4 text-[#78716C] animate-spin mx-auto mb-2" />
           <span>对比矩阵加载中...</span>
         </div>
       ) : error ? (
-        <div className="py-10 text-center text-zinc-600 bg-red-50/50 rounded-xl">
+        <div className="py-10 text-center text-[#292524] bg-red-50/50 rounded-xl">
           <p className="text-sm font-medium">横向对比加载失败</p>
           <p className="text-xs mt-1 text-[#DC2626] font-normal">{error}</p>
           <button
             type="button"
             onClick={() => setRetryToken((value) => value + 1)}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-zinc-200 text-xs font-medium text-zinc-600 hover:bg-zinc-100 active:scale-[0.97] transition-all"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all"
             aria-label="重试加载对比矩阵"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -174,25 +174,25 @@ export function TopicComparisonMatrix({
           </button>
         </div>
       ) : data.length === 0 ? (
-        <div className="py-12 px-4 text-center border border-dashed border-zinc-200 rounded-2xl bg-white shadow-xs">
-          <div className="w-10 h-10 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
-            <BarChart2 className="w-5 h-5" />
+        <div className="py-16 px-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-transparent">
+          <div className="w-8 h-8 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto mb-3">
+            <BarChart2 className="w-4 h-4" />
           </div>
-          <h3 className="text-sm font-semibold text-zinc-800 mb-1">
+          <h3 className="text-sm font-semibold text-[#292524] mb-1">
             暂无对比数据
           </h3>
-          <p className="text-xs text-zinc-500 max-w-sm mx-auto font-normal leading-relaxed">
+          <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
             需要至少 2 个账号有作品后才能对比
           </p>
         </div>
       ) : (
         <div className="space-y-1">
-          <div className="text-xs text-zinc-400 font-normal tabular-nums pb-2">
+          <div className="text-xs text-[#78716C] font-normal tabular-nums pb-2">
             样本作品 {sampleTotal} 条
           </div>
 
           {/* 去盒子化：通透列表流，消除嵌套卡片 */}
-          <div className="divide-y divide-zinc-100">
+          <div className="divide-y divide-[#ECE7DE]">
             {data.map((item) => {
               const labelName =
                 dimension === "topic"
@@ -215,8 +215,8 @@ export function TopicComparisonMatrix({
                   }
                   className={`py-3 px-2 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
                     canLinkTopic
-                      ? "cursor-pointer hover:bg-zinc-50/80 group"
-                      : "hover:bg-zinc-50/50"
+                      ? "cursor-pointer hover:bg-[#FBF9F5]/80 group"
+                      : "hover:bg-[#FBF9F5]/50"
                   }`}
                   title={
                     canLinkTopic
@@ -229,34 +229,34 @@ export function TopicComparisonMatrix({
                       <span
                         className={`text-xs truncate min-w-0 font-medium ${
                           canLinkTopic
-                            ? "text-zinc-800 group-hover:text-[#D97757] transition-colors"
-                            : "text-zinc-800"
+                            ? "text-[#292524] group-hover:text-[#D97757] transition-colors"
+                            : "text-[#292524]"
                         }`}
                       >
                         {labelName}
                       </span>
                       {item.lowConfidence && (
-                        <span className="text-[11px] bg-zinc-100 text-zinc-500 px-1.5 py-0.2 rounded font-normal inline-flex items-center gap-1 shrink-0">
-                          <AlertTriangle className="w-3 h-3 text-[#F59E0B]" />
+                        <span className="text-[11px] bg-[#F5F3EE] text-[#78716C] px-1.5 py-0.2 rounded font-normal inline-flex items-center gap-1 shrink-0">
+                          <AlertTriangle className="w-3 h-3 text-[#D99E55]" />
                           <span>样本少</span>
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5 font-normal tabular-nums">
+                    <div className="text-[11px] text-[#78716C] mt-0.5 font-normal tabular-nums">
                       作品 {item.workCount} 条 · 达标 {item.qualifiedCount} 条
                     </div>
                   </div>
 
                   <div className="flex-1 min-w-[140px]">
-                    <div className="flex justify-between text-xs text-zinc-500 mb-1 font-normal">
+                    <div className="flex justify-between text-xs text-[#78716C] mb-1 font-normal">
                       <span>达标率</span>
-                      <span className="font-semibold text-zinc-800 tabular-nums">
+                      <span className="font-semibold text-[#292524] tabular-nums">
                         {qualPercent}%
                       </span>
                     </div>
-                    <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-[#F5F3EE] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#43718E] transition-all duration-300 rounded-full"
+                        className="h-full bg-[#43718E] transition-all duration-150 rounded-full"
                         style={{ width: `${Math.min(qualPercent, 100)}%` }}
                       />
                     </div>
@@ -264,15 +264,15 @@ export function TopicComparisonMatrix({
 
                   <div className="flex items-center gap-6 text-xs text-right shrink-0 tabular-nums">
                     <div>
-                      <div className="text-[11px] text-zinc-400 font-normal">
+                      <div className="text-[11px] text-[#78716C] font-normal">
                         平均播放
                       </div>
-                      <div className="font-medium text-zinc-700 text-xs mt-0.5">
+                      <div className="font-medium text-[#292524] text-xs mt-0.5">
                         {format(item.avgPlayCount)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[11px] text-zinc-400 font-normal">
+                      <div className="text-[11px] text-[#78716C] font-normal">
                         最高播放
                       </div>
                       <div className="font-semibold text-[#16A34A] text-xs mt-0.5">

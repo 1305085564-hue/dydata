@@ -27,7 +27,7 @@ function CollapsibleContent({
     <CollapsiblePrimitive.Panel
       data-slot="collapsible-content"
       className={cn(
-        "overflow-hidden data-[ending-style]:animate-out data-[starting-style]:animate-in",
+        "overflow-hidden data-[ending-style]:animate-out data-[starting-style]:animate-in transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
         className
       )}
       {...props}

@@ -93,7 +93,7 @@ async function handleMessageEvent(event: Record<string, unknown>) {
       await client.im.message.reply({
         path: { message_id: messageId },
         data: {
-          content: JSON.stringify({ text: "收到！如有需要请联系管理员。" }),
+          content: JSON.stringify({ text: "收到。如有需要请联系管理员。" }),
           msg_type: "text",
         },
       });

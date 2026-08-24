@@ -151,7 +151,7 @@ function getVideoStatusInfo(
     return {
       dotColor: "bg-[#DC2626]",
       textColor: "text-[#DC2626]",
-      bgColor: "bg-zinc-100",
+      bgColor: "bg-[#F5F3EE]",
       label: "删稿",
     };
   }
@@ -164,54 +164,54 @@ function getVideoStatusInfo(
     return {
       dotColor: "bg-[#DC2626]",
       textColor: "text-[#DC2626]",
-      bgColor: "bg-zinc-100",
+      bgColor: "bg-[#F5F3EE]",
       label: status === "limited" || status === "限流" ? "限流" : "异常",
     };
   }
   if (isHalve || status === "halve" || status === "腰斩") {
     return {
-      dotColor: "bg-[#F59E0B]",
-      textColor: "text-[#F59E0B]",
-      bgColor: "bg-zinc-100",
+      dotColor: "bg-[#D99E55]",
+      textColor: "text-[#8A6A2F]",
+      bgColor: "bg-[#F5F3EE]",
       label: "腰斩",
     };
   }
   if (status === "traffic_boost" || status === "投流") {
     return {
-      dotColor: "bg-[#F59E0B]",
-      textColor: "text-[#F59E0B]",
-      bgColor: "bg-zinc-100",
+      dotColor: "bg-[#D99E55]",
+      textColor: "text-[#8A6A2F]",
+      bgColor: "bg-[#F5F3EE]",
       label: "投流",
     };
   }
   if (status === "activity_boost" || status === "活动干预") {
     return {
-      dotColor: "bg-[#F59E0B]",
-      textColor: "text-[#F59E0B]",
-      bgColor: "bg-zinc-100",
+      dotColor: "bg-[#D99E55]",
+      textColor: "text-[#8A6A2F]",
+      bgColor: "bg-[#F5F3EE]",
       label: "活动干预",
     };
   }
   if (status === "normal" || status === "正常") {
     return {
       dotColor: "bg-[#16A34A]/100",
-      textColor: "text-zinc-600",
+      textColor: "text-[#292524]",
       bgColor: "bg-[#16A34A]/10",
       label: "正常",
     };
   }
   if (status === "pending" || status === "未满24h") {
     return {
-      dotColor: "bg-zinc-400",
-      textColor: "text-zinc-600",
-      bgColor: "bg-zinc-100",
+      dotColor: "bg-[#78716C]",
+      textColor: "text-[#292524]",
+      bgColor: "bg-[#F5F3EE]",
       label: "未满24h",
     };
   }
   return {
-    dotColor: "bg-zinc-300",
-    textColor: "text-zinc-500",
-    bgColor: "bg-zinc-100",
+    dotColor: "bg-[#E5E0D6]",
+    textColor: "text-[#78716C]",
+    bgColor: "bg-[#F5F3EE]",
     label: status || "未满24h",
   };
 }
@@ -625,13 +625,13 @@ export function VideoList({
   const renderSortIndicator = (field: SortField) => {
     if (sortField !== field) {
       return (
-        <span className="text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[10px] text-[#78716C] opacity-0 group-hover:opacity-100 transition-opacity">
           ↕
         </span>
       );
     }
     return (
-      <span className="text-[10.5px] font-medium text-zinc-950">
+      <span className="text-[10.5px] font-medium text-[#1C1917]">
         {sortDir === "desc" ? "▼" : "▲"}
       </span>
     );
@@ -701,18 +701,18 @@ export function VideoList({
         {/* 左侧：视图切换群 + 范围与条件筛选群 */}
         <div className="flex flex-wrap items-center gap-3">
           {/* 1. 待处理 / 全部 / 回收站 视角切片（独立微底气垫，消除硬边框） */}
-          <div className="inline-flex items-center gap-1 bg-zinc-100/70 p-1 rounded-xl select-none">
+          <div className="inline-flex items-center gap-1 bg-[#F5F3EE]/70 p-1 rounded-xl select-none">
             <button
               type="button"
               onClick={() => onSwitchView("pending")}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "pending"
-                  ? "bg-white text-zinc-950 font-medium"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                  ? "bg-white text-[#1C1917] font-medium"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
               }`}
             >
               <span>待处理</span>
-              <span className={`text-[11px] tabular-nums ${view === "pending" ? "font-medium text-[#D97757]" : "text-zinc-400"}`}>
+              <span className={`text-[11px] tabular-nums ${view === "pending" ? "font-medium text-[#D97757]" : "text-[#78716C]"}`}>
                 {summary?.pendingCount ?? 0}
               </span>
             </button>
@@ -721,12 +721,12 @@ export function VideoList({
               onClick={() => onSwitchView("all")}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 view === "all"
-                  ? "bg-white text-zinc-950 font-medium"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                  ? "bg-white text-[#1C1917] font-medium"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
               }`}
             >
               <span>全部</span>
-              <span className={`text-[11px] tabular-nums ${view === "all" ? "font-medium text-[#D97757]" : "text-zinc-400"}`}>
+              <span className={`text-[11px] tabular-nums ${view === "all" ? "font-medium text-[#D97757]" : "text-[#78716C]"}`}>
                 {summary?.totalVideos ?? videoRows.length}
               </span>
             </button>
@@ -736,8 +736,8 @@ export function VideoList({
                 onClick={() => onSwitchView("trash")}
                 className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   view === "trash"
-                    ? "bg-white text-zinc-950 font-medium"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200/50"
+                    ? "bg-white text-[#1C1917] font-medium"
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
                 }`}
               >
                 回收站
@@ -746,7 +746,7 @@ export function VideoList({
           </div>
 
           {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-1" />
+          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-1" />
 
           {/* 2. 筛选器群（通透平铺，靠微留白与微背景形成秩序） */}
           <div className="flex flex-wrap items-center gap-1.5">
@@ -766,7 +766,7 @@ export function VideoList({
                   }
                 }}
               >
-              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2.5">
+              <SelectTrigger className="h-8 min-w-32 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2.5">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company"
                     ? "全公司 (全部团队)"
@@ -777,7 +777,7 @@ export function VideoList({
                 {canSwitchPerspective && (
                   <SelectItem
                     value="all_company"
-                    className="text-[12px] font-medium text-zinc-900"
+                    className="text-[12px] font-medium text-[#1C1917]"
                   >
                     全公司 (全部团队)
                   </SelectItem>
@@ -796,14 +796,14 @@ export function VideoList({
           )}
 
           {/* 细分割线 */}
-          <div className="h-4 w-px bg-zinc-200 hidden md:block" />
+          <div className="h-4 w-px bg-[#E5E0D6] hidden md:block" />
 
           {/* 负责人筛选 (平铺无框) */}
           <Select
             value={filters.profileId}
             onValueChange={(value) => updateFilter("profileId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
               <SelectValue>{profileLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -821,7 +821,7 @@ export function VideoList({
             value={filters.accountId}
             onValueChange={(value) => updateFilter("accountId", value || "all")}
           >
-            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
+            <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
               <SelectValue>{accountLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -840,14 +840,14 @@ export function VideoList({
               type="date"
               value={filters.startDate}
               onChange={(e) => updateFilter("startDate", e.target.value)}
-              className="h-8 w-28 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[11.5px] text-zinc-700 px-2 focus:bg-white focus:ring-1 focus:ring-zinc-300"
+              className="h-8 w-28 rounded-lg border-0 bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] text-[11.5px] text-[#292524] px-2"
             />
-            <span className="text-zinc-400 text-[11px]">—</span>
+            <span className="text-[#78716C] text-[11px]">—</span>
             <Input
               type="date"
               value={filters.endDate}
               onChange={(e) => updateFilter("endDate", e.target.value)}
-              className="h-8 w-28 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[11.5px] text-zinc-700 px-2 focus:bg-white focus:ring-1 focus:ring-zinc-300"
+              className="h-8 w-28 rounded-lg border-0 bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] text-[11.5px] text-[#292524] px-2"
             />
           </div>
 
@@ -861,7 +861,7 @@ export function VideoList({
               )
             }
           >
-            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] font-medium text-zinc-700 hover:text-zinc-950 focus:ring-0 shadow-none px-2">
+            <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none px-2">
               <SelectValue>{statusLabel(filters.status)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -877,7 +877,7 @@ export function VideoList({
           <Button
             variant="ghost"
             size="xs"
-            className="h-8 rounded-lg text-[12px] text-zinc-600 hover:text-zinc-950"
+            className="h-8 rounded-lg text-[12px] text-[#292524] hover:text-[#1C1917]"
             onClick={handleReset}
           >
             重置
@@ -886,24 +886,24 @@ export function VideoList({
       </div>
 
         {/* 右侧：资产统计 */}
-        <div className="ml-auto hidden xl:flex items-center gap-3 text-[11.5px] text-zinc-600 shrink-0">
+        <div className="ml-auto hidden xl:flex items-center gap-3 text-[11.5px] text-[#292524] shrink-0">
           <span>
             已入库{" "}
             <span className="tabular-nums font-medium text-[#6FAA7D]">
               {assetSummary?.readyCount ?? 0}
             </span>
           </span>
-          <span className="text-zinc-300">·</span>
+          <span className="text-[#E5E0D6]">·</span>
           <span>
             待整理{" "}
             <span className="tabular-nums font-medium text-[#D99E55]">
               {assetSummary?.pendingLibraryCount ?? 0}
             </span>
           </span>
-          <span className="text-zinc-300">·</span>
+          <span className="text-[#E5E0D6]">·</span>
           <span>
             已评级{" "}
-            <span className="tabular-nums font-medium text-zinc-800">
+            <span className="tabular-nums font-medium text-[#292524]">
               {assetSummary?.gradedCount ?? 0}
             </span>
           </span>
@@ -913,11 +913,11 @@ export function VideoList({
       {/* 表格容器（平铺极简微边框，消除额外卡片阴影） */}
       <div
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl border border-zinc-100"
+        className="flex-1 w-full overflow-x-auto rounded-xl border border-[#ECE7DE]"
         style={{ maxHeight: "calc(100vh - 260px)" }}
       >
         <table className="w-full text-left border-collapse table-auto min-w-full">
-          <thead className="sticky top-0 z-10 bg-zinc-50/95 backdrop-blur border-b border-zinc-200 text-[12px] font-medium text-zinc-600 select-none">
+          <thead className="sticky top-0 z-10 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">
             <tr>
               {canManageLifecycle && (
                 <th className="py-2 pl-3.5 pr-0 text-center w-10 shrink-0">
@@ -942,7 +942,7 @@ export function VideoList({
                 <button
                   type="button"
                   onClick={() => handleSort("published_at")}
-                  className="group inline-flex items-center gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                  className="group inline-flex items-center gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                 >
                   <span>{view === "trash" ? "回收时间" : "发布时间"}</span>
                   {renderSortIndicator("published_at")}
@@ -954,7 +954,7 @@ export function VideoList({
                     <button
                       type="button"
                       onClick={() => handleSort("play_count")}
-                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                     >
                       <span>24h播放</span>
                       {renderSortIndicator("play_count")}
@@ -964,7 +964,7 @@ export function VideoList({
                     <button
                       type="button"
                       onClick={() => handleSort("interaction_rate")}
-                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                     >
                       <span>互动率</span>
                       {renderSortIndicator("interaction_rate")}
@@ -974,7 +974,7 @@ export function VideoList({
                     <button
                       type="button"
                       onClick={() => handleSort("follower_gain")}
-                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-zinc-950 transition-colors cursor-pointer"
+                      className="group inline-flex items-center justify-end w-full gap-1 hover:text-[#1C1917] transition-colors cursor-pointer"
                     >
                       <span>涨粉</span>
                       {renderSortIndicator("follower_gain")}
@@ -987,7 +987,7 @@ export function VideoList({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 text-[12px] text-zinc-700">
+          <tbody className="divide-y divide-[#ECE7DE] text-[12px] text-[#292524]">
             {pagedVideos.length ? (
               pagedVideos.map((video) => {
                 const snapshot = snapshotMap.get(video.id) ?? null;
@@ -1004,7 +1004,7 @@ export function VideoList({
                   <tr
                     key={video.id}
                     data-video-id={video.id}
-                    className="group hover:bg-zinc-50/80 transition-colors border-b border-zinc-100"
+                    className="group hover:bg-[#FBF9F5]/80 transition-colors border-b border-[#ECE7DE]"
                   >
                     {/* 复选框 */}
                     {canManageLifecycle && (
@@ -1030,7 +1030,7 @@ export function VideoList({
                     {/* 状态徽章（中文语义 + 状态微圆点） */}
                     <td className="py-2 px-2 text-center w-20 shrink-0">
                       {view === "trash" ? (
-                        <span className="text-[11.5px] text-zinc-600 truncate block max-w-[80px]">
+                        <span className="text-[11.5px] text-[#292524] truncate block max-w-[80px]">
                           {video.trashed_by_name || "—"}
                         </span>
                       ) : (
@@ -1051,13 +1051,13 @@ export function VideoList({
                         className="flex items-center gap-1.5 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <span className="truncate font-normal text-zinc-800 group-hover:text-zinc-950 transition-colors">
+                        <span className="truncate font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
                           {video.video_title?.trim() ||
                             video.content?.slice(0, 50) ||
                             "未命名视频"}
                         </span>
                         {video.accounts?.name && (
-                          <span className="shrink-0 text-[11px] text-zinc-400 font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
+                          <span className="shrink-0 text-[11px] text-[#78716C] font-normal truncate max-w-[80px] 2xl:max-w-[110px]">
                             · {video.accounts.name}
                           </span>
                         )}
@@ -1065,12 +1065,12 @@ export function VideoList({
                     </td>
 
                     {/* 负责人 */}
-                    <td className="py-2 px-2.5 text-[12px] text-zinc-600 truncate w-20 2xl:w-24">
+                    <td className="py-2 px-2.5 text-[12px] text-[#292524] truncate w-20 2xl:w-24">
                       {video.profiles?.name || "—"}
                     </td>
 
                     {/* 发布时间 / 回收时间 */}
-                    <td className="py-2 px-2.5 text-[11.5px] text-zinc-600 tabular-nums whitespace-nowrap w-24 2xl:w-28">
+                    <td className="py-2 px-2.5 text-[11.5px] text-[#292524] tabular-nums whitespace-nowrap w-24 2xl:w-28">
                       {view === "trash"
                         ? formatDateTime(video.trashed_at ?? null)
                         : formatDateTime(video.published_at ?? null)}
@@ -1079,15 +1079,15 @@ export function VideoList({
                     {/* 24h播放量 */}
                     {view !== "trash" && (
                       <>
-                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums font-normal whitespace-nowrap w-20 2xl:w-26">
+                        <td className="py-2 px-2.5 text-right text-[12px] text-[#292524] tabular-nums font-normal whitespace-nowrap w-20 2xl:w-26">
                           {formatCount(snapshot?.play_count)}
                         </td>
-                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums font-normal whitespace-nowrap w-18 2xl:w-24">
+                        <td className="py-2 px-2.5 text-right text-[12px] text-[#292524] tabular-nums font-normal whitespace-nowrap w-18 2xl:w-24">
                           {formatPercent(
                             snapshot ? interactionRate(snapshot) : null,
                           )}
                         </td>
-                        <td className="py-2 px-2.5 text-right text-[12px] text-zinc-700 tabular-nums font-normal whitespace-nowrap w-16 2xl:w-22">
+                        <td className="py-2 px-2.5 text-right text-[12px] text-[#292524] tabular-nums font-normal whitespace-nowrap w-16 2xl:w-22">
                           {formatCount(snapshot?.follower_gain)}
                         </td>
                       </>
@@ -1121,7 +1121,7 @@ export function VideoList({
                                   }
                                   disabled={!eligible || isOperating !== null}
                                   title={tooltip || undefined}
-                                  className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-zinc-400 disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
+                                  className="text-[12px] text-[#C9604D] underline-offset-4 hover:underline disabled:text-[#78716C] disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
                                 >
                                   永久删除
                                 </button>
@@ -1149,7 +1149,7 @@ export function VideoList({
                           {canManageLifecycle && (
                             <DropdownMenu>
                               <DropdownMenuTrigger
-                                className="flex size-6 items-center justify-center rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors cursor-pointer"
+                                className="flex size-6 items-center justify-center rounded-md text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
                                 title="更多操作"
                               >
                                 <MoreHorizontal className="size-3.5" />
@@ -1187,7 +1187,7 @@ export function VideoList({
                         ? 9
                         : 8
                   }
-                  className="px-4 py-16 text-center text-[13px] text-zinc-500"
+                  className="px-4 py-16 text-center text-[13px] text-[#78716C]"
                 >
                   <div className="flex flex-col items-center justify-center gap-2.5">
                     <span>当前筛选条件下暂无视频数据。</span>
@@ -1195,7 +1195,7 @@ export function VideoList({
                       variant="outline"
                       size="sm"
                       onClick={handleReset}
-                      className="h-7 text-[12px] text-zinc-700 hover:text-zinc-900 border-zinc-200"
+                      className="h-7 text-[12px] text-[#292524] hover:text-[#1C1917] border-[#E5E0D6]"
                     >
                       重置所有筛选
                     </Button>
@@ -1273,18 +1273,18 @@ export function VideoList({
 
       {/* 永久删除确认弹窗 */}
       {confirmPurgeVideoId && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-lg animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-zinc-900">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1C1917]/40 backdrop-blur-[2px]">
+          <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
+            <h3 className="text-base font-semibold text-[#1C1917]">
               永久删除确认
             </h3>
-            <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
+            <p className="mt-2 text-sm text-[#78716C] leading-relaxed">
               将永久隐藏该作品，并清理可确认归属的存储截图；指标、复盘结论和操作历史仍会保留。此操作无法撤销。
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
-                className="h-9 rounded-xl border border-zinc-200 px-4 text-zinc-700 hover:bg-zinc-50 text-[12px] font-medium transition-colors cursor-pointer"
+                className="h-9 rounded-xl border border-[#E5E0D6] px-4 text-[#292524] hover:bg-[#FBF9F5] text-[12px] font-medium transition-colors cursor-pointer"
                 onClick={() => setConfirmPurgeVideoId(null)}
                 disabled={isOperating !== null}
               >
@@ -1305,19 +1305,19 @@ export function VideoList({
 
       {/* 悬浮批量操作工具栏 */}
       {canManageLifecycle && selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2 rounded-2xl border border-zinc-200 bg-white/95 backdrop-blur-md shadow-xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
-          <span className="text-[12.5px] font-medium text-zinc-700">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3.5 px-4 py-2 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5]/85 backdrop-blur-md shadow-claude-float transition-all duration-200 animate-in fade-in slide-in-from-bottom-2">
+          <span className="text-[12.5px] font-medium text-[#292524]">
             已选择{" "}
             <span className="font-semibold text-[#D97757]">
               {selectedIds.size}
             </span>{" "}
             项视频
           </span>
-          <div className="h-4 w-px bg-zinc-200" />
+          <div className="h-4 w-px bg-[#E5E0D6]" />
           <Button
             size="xs"
             variant="ghost"
-            className="rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px]"
+            className="rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524] text-[12px]"
             onClick={() => setSelectedIds(new Set())}
           >
             取消选择

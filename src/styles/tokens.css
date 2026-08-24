@@ -1,44 +1,50 @@
-/* shadcn token 映射 · 美学规范 V2 · zinc 冷灰体系 */
+/* shadcn token 映射 · Claude 设计规范 · 暖墨陶土体系 */
 :root {
-  --background: #FAFAFA;                 /* L0 zinc-50 */
-  --foreground: #3F3F46;                 /* zinc-700 正文 */
-  --card: #FFFFFF;                       /* L1 白卡 */
-  --card-foreground: #3F3F46;            /* zinc-700 */
-  --popover: #FFFFFF;                    /* L2 white */
-  --popover-foreground: #3F3F46;
-  --primary: #D97757;                    /* 暖橙 主 CTA */
+  /* 旧值: --background: #FAFAFA; */
+  --background: #FBF9F5;                 /* L0 Canvas 象牙暖纸底 */
+  /* 旧值: --foreground: #3F3F46; */
+  --foreground: #292524;                 /* Ink 800 正文暖墨（全站默认前景色）；H1/H2 大标题单独走 ink.950 #1C1917 */
+  --card: #FFFFFF;                       /* L1 Surface 纯白纸层 */
+  --card-foreground: #292524;            /* Ink 800 正文暖墨 */
+  --popover: #FAF8F4;                    /* L2 Surface 暖象牙纸层浮层 */
+  --popover-foreground: #292524;
+  --primary: #D97757;                    /* Action 暖陶土橙 主 CTA */
   --primary-foreground: #FFFFFF;
-  --secondary: #F4F4F5;
-  --secondary-foreground: #3F3F46;
-  --muted: #F4F4F5;
-  --muted-foreground: #71717A;           /* zinc-500 辅助 */
-  --accent: #F4F4F5;
-  --accent-foreground: #3F3F46;
+  --secondary: #F5F3EE;                  /* Surface 极浅砂岩微气垫 */
+  --secondary-foreground: #292524;
+  /* 旧值: --muted: #F4F4F5; */
+  --muted: #F5F3EE;                      /* 微气垫底色 */
+  --muted-foreground: #78716C;           /* Ink 600 辅助墨 */
+  --accent: #F5F3EE;                     /* 微气垫 Hover */
+  --accent-foreground: #1C1917;
   --destructive: #DC2626;                /* 异常色 */
-  --border: #E4E4E7;                     /* zinc-200 */
-  --input: #E4E4E7;
-  --ring: rgba(24, 24, 27, 0.1);
+  /* 旧值: --border: #E4E4E7; */
+  --border: #E5E0D6;                     /* 暖砂岩细边 */
+  --input: #E5E0D6;
+  --ring: rgba(28, 25, 23, 0.1);
   /* 数据可视化色板 */
-  --chart-1: #D97757;
-  --chart-2: #7E5C99;
-  --chart-3: #A85A6B;
+  --chart-1: #D97757;                    /* 暖陶土橙 */
+  --chart-2: #43718E;                    /* 暴雨灰蓝 */
+  --chart-3: #7E5C99;
   --chart-4: #3E8479;
-  --chart-5: #7A7A3E;
+  --chart-5: #D99E55;
   --radius: 4px;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #3F3F46;
+  --sidebar: #FBF9F5;
+  --sidebar-foreground: #292524;
   --sidebar-primary: #D97757;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F4F4F5;
-  --sidebar-accent-foreground: #3F3F46;
-  --sidebar-border: #E4E4E7;
-  --sidebar-ring: rgba(24, 24, 27, 0.1);
+  --sidebar-accent: #F5F3EE;
+  --sidebar-accent-foreground: #1C1917;
+  --sidebar-border: #E5E0D6;
+  --sidebar-ring: rgba(28, 25, 23, 0.1);
   --app-nav-height: 4rem;
   --app-safe-top: env(safe-area-inset-top, 0px);
   --network-bar-offset: 0px;
   --app-top-offset: calc(var(--app-nav-height) + var(--app-safe-top) + var(--network-bar-offset, 0px));
   --radius-card: 6px;
   --radius-dialog: 8px;
+  --shadow-claude-float: 0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -4px rgba(28,25,23,0.05);
+  --shadow-claude-dialog: 0 1px 3px rgba(0,0,0,0.02), 0 12px 32px -4px rgba(28,25,23,0.06);
 }
 
 .dark {
@@ -57,9 +63,9 @@
   --accent: #27272A;
   --accent-foreground: #E4E4E7;
   --destructive: #C9604D;
-  --border: rgba(228, 228, 231, 0.12);
-  --input: rgba(228, 228, 231, 0.15);
-  --ring: rgba(228, 228, 231, 0.12);
+  --border: rgba(229, 224, 214, 0.12);
+  --input: rgba(229, 224, 214, 0.15);
+  --ring: rgba(229, 224, 214, 0.12);
   --chart-1: #D97757;
   --chart-2: #7E5C99;
   --chart-3: #A85A6B;
@@ -71,8 +77,8 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #27272A;
   --sidebar-accent-foreground: #E4E4E7;
-  --sidebar-border: rgba(228, 228, 231, 0.12);
-  --sidebar-ring: rgba(228, 228, 231, 0.12);
+  --sidebar-border: rgba(229, 224, 214, 0.12);
+  --sidebar-ring: rgba(229, 224, 214, 0.12);
 }
 /* [规范对齐] 涨红跌绿已统一 */
 /* [规范对齐] 圆角已调整：--radius=4px、卡片/弹层 token 已对齐 */

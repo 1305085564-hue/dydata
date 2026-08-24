@@ -19,9 +19,9 @@ export const CHART_COLORS = {
   success: "#6FAA7D",    // 森林绿
   warning: "#D99E55",    // 晚霞琥珀
   danger: "#C9604D",     // 晚霞红
-  muted: "#78716C",      // zinc-500（次线 / 基准线）
-  grid: "#E7E5E4",       // zinc-200（网格虚线）
-  axis: "#78716C",       // zinc-500（坐标轴文字）
+  muted: "#78716C",      // Ink 600（次线 / 基准线）
+  grid: "#E5E0D6",       // 暖砂岩（网格虚线）
+  axis: "#78716C",       // Ink 600（坐标轴文字）
 } as const;
 
 /**
@@ -43,7 +43,7 @@ export const CHART_AXIS_TICK = {
 
 /**
  * 网格统一样式（CartesianGrid 的 prop）
- * 规范：0.5px zinc-200 虚线 50% 透明
+ * 规范：0.5px #E5E0D6 虚线 50% 透明
  */
 export const CHART_GRID_PROPS = {
   strokeDasharray: "3 3",

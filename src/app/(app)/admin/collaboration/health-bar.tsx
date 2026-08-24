@@ -36,14 +36,14 @@ export function HealthBar({ summary }: HealthBarProps) {
         onClick={() => setIsOpen(true)}
         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium transition-all ${
           isHealthy
-            ? "bg-zinc-100/80 text-zinc-600 hover:bg-zinc-200/60"
-            : "bg-[#F59E0B]/10 text-[#B45309] hover:bg-[#F59E0B]/15"
+            ? "bg-[#F5F3EE]/80 text-[#292524] hover:bg-[#E5E0D6]/60"
+            : "bg-[#D99E55]/10 text-[#8A6A2F] hover:bg-[#D99E55]/15"
         }`}
       >
         {isHealthy ? (
           <CheckCircle2 className="size-3.5 text-[#16A34A] shrink-0 opacity-80" />
         ) : (
-          <AlertCircle className="size-3.5 text-[#D97706] shrink-0 opacity-90" />
+          <AlertCircle className="size-3.5 text-[#D99E55] shrink-0 opacity-90" />
         )}
         <span>
           {isHealthy
@@ -54,41 +54,41 @@ export function HealthBar({ summary }: HealthBarProps) {
 
       {/* 极轻明细弹窗 */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent showCloseButton={false} className="sm:max-w-md p-5 rounded-2xl border border-zinc-200 bg-white shadow-lg">
-          <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-zinc-100">
+        <DialogContent showCloseButton={false} className="sm:max-w-md p-5 rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog">
+          <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#ECE7DE]">
             <div className="flex items-center gap-2">
-              <AlertCircle className="size-4 text-[#D97706]" />
-              <DialogTitle className="text-[16px] font-medium text-zinc-900">
+              <AlertCircle className="size-4 text-[#D99E55]" />
+              <DialogTitle className="text-base font-medium text-[#1C1917]">
                 归属健康度明细
               </DialogTitle>
             </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="size-6 rounded-md flex items-center justify-center text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+              className="size-6 rounded-md flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]"
             >
               <X className="size-3.5" />
             </button>
           </DialogHeader>
 
-          <div className="space-y-3 pt-2 text-[13px] text-zinc-700 leading-relaxed">
+          <div className="space-y-3 pt-2 text-[13px] text-[#292524] leading-relaxed">
             <p>
               本月共有{" "}
-              <strong className="font-medium text-zinc-900">
+              <strong className="font-medium text-[#1C1917]">
                 {summary.total}
               </strong>{" "}
               条作品。 其中{" "}
-              <strong className="font-medium text-[#B45309]">
+              <strong className="font-medium text-[#8A6A2F]">
                 {summary.unattributed}
               </strong>{" "}
               条作品缺乏明确的文案、剪辑或运营归属。
             </p>
             {neverFillCount > 0 && (
-              <div className="rounded-xl border border-transparent bg-[#F59E0B]/[0.08] p-3 space-y-1">
-                <div className="font-medium text-[#B45309] text-[12px]">
+              <div className="rounded-xl border border-transparent bg-[#D99E55]/[0.08] p-3 space-y-1">
+                <div className="font-medium text-[#8A6A2F] text-[12px]">
                   仅标注自运营的成员：
                 </div>
-                <div className="text-[12px] text-[#B45309]">
+                <div className="text-[12px] text-[#8A6A2F]">
                   {displayedMembers.join("、")}（共 {neverFillCount} 人）
                 </div>
               </div>

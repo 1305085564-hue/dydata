@@ -71,7 +71,7 @@ export function OperatorTab({
 
   const renderSortIcon = (field: SortField) => {
     if (sortField !== field) {
-      return <ArrowUpDown className="size-3 text-zinc-400 opacity-60" />;
+      return <ArrowUpDown className="size-3 text-[#78716C] opacity-60" />;
     }
     return sortOrder === "desc" ? (
       <ArrowDown className="size-3 text-[#D97757]" />
@@ -93,7 +93,7 @@ export function OperatorTab({
 
   if (operators.length === 0) {
     return (
-      <div className="py-12 bg-white rounded-xl border border-zinc-200">
+      <div className="py-16 text-center">
         <EmptyState
           title="本月暂无运营归属记录"
           description="2026-07-27 起开始统计团队运营分工"
@@ -103,20 +103,20 @@ export function OperatorTab({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-2xs">
+    <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-zinc-50/70 hover:bg-zinc-50/70 text-[12px]">
+          <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
             <TableHead className="w-10" />
-            <TableHead className="text-left font-medium text-zinc-600">
+            <TableHead className="text-left font-medium text-[#292524]">
               运营姓名
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
                     带达人数
-                    <HelpCircle className="size-3 text-zinc-400" />
+                    <HelpCircle className="size-3 text-[#78716C]" />
                   </TooltipTrigger>
                   <TooltipContent className="text-[12px]">
                     按本月经手作品反推，非固定配置
@@ -124,66 +124,66 @@ export function OperatorTab({
                 </Tooltip>
               </TooltipProvider>
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               <button
                 type="button"
                 onClick={() => handleSort("reportCount")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
                   sortField === "reportCount"
-                    ? "text-zinc-950 font-semibold"
-                    : "hover:text-zinc-900"
+                    ? "text-[#1C1917] font-semibold"
+                    : "hover:text-[#1C1917]"
                 }`}
               >
                 本月条数
                 {renderSortIcon("reportCount")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               <button
                 type="button"
                 onClick={() => handleSort("totalPlay")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
                   sortField === "totalPlay"
-                    ? "text-zinc-950 font-semibold"
-                    : "hover:text-zinc-900"
+                    ? "text-[#1C1917] font-semibold"
+                    : "hover:text-[#1C1917]"
                 }`}
               >
                 总播放
                 {renderSortIcon("totalPlay")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               <button
                 type="button"
                 onClick={() => handleSort("avgPlay")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
                   sortField === "avgPlay"
-                    ? "text-zinc-950 font-semibold"
-                    : "hover:text-zinc-900"
+                    ? "text-[#1C1917] font-semibold"
+                    : "hover:text-[#1C1917]"
                 }`}
               >
                 人均播放
                 {renderSortIcon("avgPlay")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               <button
                 type="button"
                 onClick={() => handleSort("totalFollowerConvert")}
                 className={`inline-flex items-center gap-1 transition-colors ml-auto ${
                   sortField === "totalFollowerConvert"
-                    ? "text-zinc-950 font-semibold"
-                    : "hover:text-zinc-900"
+                    ? "text-[#1C1917] font-semibold"
+                    : "hover:text-[#1C1917]"
                 }`}
               >
                 导粉
                 {renderSortIcon("totalFollowerConvert")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               爆款数
             </TableHead>
-            <TableHead className="text-right font-medium text-zinc-600">
+            <TableHead className="text-right font-medium text-[#292524]">
               环比
             </TableHead>
           </TableRow>
@@ -205,8 +205,8 @@ export function OperatorTab({
                   <div
                     className={`flex items-center px-4 py-3 transition-colors ${
                       isExpanded
-                        ? "bg-zinc-50/90 font-medium"
-                        : "border-b border-zinc-100 hover:bg-zinc-50/40"
+                        ? "bg-[#FBF9F5]/90 font-medium"
+                        : "border-b border-[#ECE7DE] hover:bg-[#FBF9F5]/40"
                     }`}
                   >
                     {canExpand ? (
@@ -216,7 +216,7 @@ export function OperatorTab({
                         className={`w-8 flex items-center justify-center transition-colors ${
                           isExpanded
                             ? "text-[#D97757]"
-                            : "text-zinc-400 hover:text-zinc-700"
+                            : "text-[#78716C] hover:text-[#292524]"
                         }`}
                       >
                         {isExpanded ? (
@@ -235,34 +235,34 @@ export function OperatorTab({
                           onClick={() => onSelectPerson(op.userId)}
                           onMouseEnter={() => onPrefetchPerson?.(op.userId)}
                           onFocus={() => onPrefetchPerson?.(op.userId)}
-                          className="text-zinc-900 hover:text-[#D97757] hover:underline transition-colors font-medium"
+                          className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium"
                         >
                           {op.name}
                         </button>
                         {isSelfAccountOnly && (
-                          <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-normal text-zinc-500 border border-zinc-200">
+                          <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5 text-[11px] font-normal text-[#78716C] border border-[#E5E0D6]">
                             自运营
                           </span>
                         )}
                       </div>
-                      <div className="text-right tabular-nums text-zinc-700">
+                      <div className="text-right tabular-nums text-[#292524]">
                         {op.operatedProfileCount} 人
                       </div>
-                      <div className="text-right tabular-nums font-semibold text-zinc-900">
+                      <div className="text-right tabular-nums font-semibold text-[#1C1917]">
                         {op.reportCount}
                       </div>
-                      <div className="text-right tabular-nums text-zinc-700">
+                      <div className="text-right tabular-nums text-[#292524]">
                         {formatBigNumber(op.totalPlay)}
                       </div>
-                      <div className="text-right tabular-nums text-zinc-700">
+                      <div className="text-right tabular-nums text-[#292524]">
                         {formatBigNumber(op.avgPlay)}
                       </div>
-                      <div className="text-right tabular-nums text-zinc-700">
+                      <div className="text-right tabular-nums text-[#292524]">
                         {op.totalFollowerConvert.toLocaleString("zh-CN")}
                       </div>
-                      <div className="text-right tabular-nums text-zinc-700">
+                      <div className="text-right tabular-nums text-[#292524]">
                         {op.hitCount > 0 ? (
-                          <span className="font-semibold text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded text-[12px] border border-zinc-200/60">
+                          <span className="font-semibold text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
                             {op.hitCount}
                           </span>
                         ) : (
@@ -271,7 +271,7 @@ export function OperatorTab({
                       </div>
                       <div className="text-right tabular-nums font-medium text-[12px]">
                         {mom == null ? (
-                          <span className="text-zinc-400">—</span>
+                          <span className="text-[#78716C]">—</span>
                         ) : mom > 0 ? (
                           <span className="inline-flex items-center justify-end gap-0.5 text-[#DC2626]">
                             <TrendingUp className="size-3" />+
@@ -283,7 +283,7 @@ export function OperatorTab({
                             {(mom * 100).toFixed(1)}%
                           </span>
                         ) : (
-                          <span className="text-zinc-500">→ 0%</span>
+                          <span className="text-[#78716C]">→ 0%</span>
                         )}
                       </div>
                     </div>
@@ -291,11 +291,11 @@ export function OperatorTab({
 
                   {/* 展开子区域：与父行亲密融合，底部与下一行拉开留白隔断 */}
                   {isExpanded && (
-                    <div className="bg-zinc-50/90 px-12 pt-1 pb-5 border-b border-zinc-200/80 transition-all duration-200">
-                      <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-2xs">
+                    <div className="bg-[#FBF9F5]/90 px-12 pt-1 pb-5 border-b border-[#E5E0D6]/80 transition-all duration-200">
+                      <div className="rounded-xl border border-[#E5E0D6] bg-white overflow-hidden shadow-2xs">
                         <table className="w-full text-[12px]">
                           <thead>
-                            <tr className="border-b border-zinc-100 bg-zinc-50/80 text-zinc-500 text-left">
+                            <tr className="border-b border-[#ECE7DE] bg-[#FBF9F5]/80 text-[#78716C] text-left">
                               <th className="py-2.5 px-3.5 font-medium">
                                 达人姓名
                               </th>
@@ -313,25 +313,25 @@ export function OperatorTab({
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-zinc-100">
+                          <tbody className="divide-y divide-[#ECE7DE]">
                             {op.accounts.map((acc) => (
                               <tr
                                 key={acc.accountId}
-                                className="hover:bg-zinc-50/50 transition-colors"
+                                className="hover:bg-[#FBF9F5]/50 transition-colors"
                               >
-                                <td className="py-2.5 px-3.5 font-medium text-zinc-800">
+                                <td className="py-2.5 px-3.5 font-medium text-[#292524]">
                                   {acc.ownerName}
                                 </td>
-                                <td className="py-2.5 px-3.5 text-zinc-600">
+                                <td className="py-2.5 px-3.5 text-[#292524]">
                                   {acc.accountName}
                                 </td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-900 font-semibold">
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1C1917] font-semibold">
                                   {acc.reportCount}
                                 </td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700">
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524]">
                                   {formatBigNumber(acc.totalPlay)}
                                 </td>
-                                <td className="py-2.5 px-3.5 text-right tabular-nums text-zinc-700 pr-4">
+                                <td className="py-2.5 px-3.5 text-right tabular-nums text-[#292524] pr-4">
                                   {acc.totalFollowerConvert.toLocaleString(
                                     "zh-CN",
                                   )}

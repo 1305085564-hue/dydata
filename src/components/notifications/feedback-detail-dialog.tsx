@@ -115,7 +115,7 @@ export function FeedbackDetailDialog({
         throw new Error("确认失败");
       }
       onConfirmed(cardId);
-      feedbackToast.success("已确认");
+      // UI 已就地关闭并同步状态，省略多余的成功 Toast
     } catch {
       feedbackToast.error("确认失败，请重试");
     } finally {
@@ -136,14 +136,14 @@ export function FeedbackDetailDialog({
         <SheetHeader className="gap-3">
           <SheetTitle>复盘反馈</SheetTitle>
           <div className="space-y-1.5">
-            <div className="text-[13px] font-medium leading-[1.5] text-zinc-900">
+            <div className="text-[13px] font-medium leading-[1.5] text-[#1C1917]">
               {current.video?.video_title || "（无标题）"}
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-zinc-500">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#78716C]">
               {current.account?.name && <span>{current.account.name}</span>}
               {current.video?.video_url && (
                 <>
-                  <span className="text-zinc-500">·</span>
+                  <span className="text-[#78716C]">·</span>
                   <a
                     href={current.video.video_url}
                     target="_blank"
@@ -162,8 +162,8 @@ export function FeedbackDetailDialog({
         <SheetBody className="space-y-5">
           {/* 视频上下文小数据 */}
           {(snapshot || enriching) && (
-            <div className="rounded-xl bg-zinc-100/50 p-3">
-              <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+            <div className="rounded-xl bg-[#F5F3EE]/50 p-3">
+              <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#78716C]">
                 视频数据
               </div>
               {enriching && !snapshot ? (
@@ -173,16 +173,16 @@ export function FeedbackDetailDialog({
                   <Skeleton className="h-3 w-20" />
                 </div>
               ) : snapshot ? (
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums text-zinc-700">
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] tabular-nums text-[#292524]">
                   <span>
-                    播放 <span className="font-medium text-zinc-900">{formatNumber(snapshot.play_count)}</span>
+                    播放 <span className="font-medium text-[#1C1917]">{formatNumber(snapshot.play_count)}</span>
                   </span>
                   {snapshot.completion_rate_5s != null && (
                     <>
-                      <span className="text-zinc-500">·</span>
+                      <span className="text-[#78716C]">·</span>
                       <span>
                         5s完播{" "}
-                        <span className="font-medium text-zinc-900">
+                        <span className="font-medium text-[#1C1917]">
                           {formatRate(snapshot.completion_rate_5s)}
                         </span>
                       </span>
@@ -190,10 +190,10 @@ export function FeedbackDetailDialog({
                   )}
                   {snapshot.bounce_rate_2s != null && (
                     <>
-                      <span className="text-zinc-500">·</span>
+                      <span className="text-[#78716C]">·</span>
                       <span>
                         2s跳出{" "}
-                        <span className="font-medium text-zinc-900">
+                        <span className="font-medium text-[#1C1917]">
                           {formatRate(snapshot.bounce_rate_2s)}
                         </span>
                       </span>
@@ -206,26 +206,26 @@ export function FeedbackDetailDialog({
 
           {mainProblem && (
             <div className="space-y-1.5">
-              <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+              <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#78716C]">
                 主要问题
               </div>
-              <p className="text-[13px] leading-[1.7] text-zinc-700">{mainProblem}</p>
+              <p className="text-[13px] leading-[1.7] text-[#292524]">{mainProblem}</p>
             </div>
           )}
 
           {improvement && (
             <div className="border-l-2 border-[#D97757] pl-3">
-              <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+              <div className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#78716C]">
                 建议下次
               </div>
-              <p className="mt-1 whitespace-pre-wrap text-[13px] font-medium leading-[1.7] text-zinc-900">
+              <p className="mt-1 whitespace-pre-wrap text-[13px] font-medium leading-[1.7] text-[#1C1917]">
                 {improvement}
               </p>
             </div>
           )}
         </SheetBody>
 
-        <SheetFooter className="border-t border-zinc-200">
+        <SheetFooter className="border-t border-[#E5E0D6]">
           <Button
             className="h-10 w-full rounded-lg bg-[#D97757] text-[13px] text-white hover:bg-[#C96442]"
             onClick={handleConfirm}

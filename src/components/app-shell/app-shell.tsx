@@ -84,8 +84,8 @@ export function AppShell({ children, className, width = "wide" }: AppShellProps)
 
 export function AppShellHero({ children, className, bodyClassName, ...props }: AppShellHeroProps) {
   return (
-    <section className={cn("app-shell-hero overflow-hidden rounded-2xl border border-zinc-200 bg-white", className)}>
-      <div className={cn("space-y-4 p-5 sm:p-6 lg:p-7", bodyClassName)}>
+    <section className={cn("app-shell-hero border-b border-[#ECE7DE]/80 pb-8", className)}>
+      <div className={cn("space-y-4", bodyClassName)}>
         <ShellHeader {...props} />
         {children ? <div className="space-y-4">{children}</div> : null}
       </div>
@@ -95,8 +95,8 @@ export function AppShellHero({ children, className, bodyClassName, ...props }: A
 
 export function AppShellSection({ children, className, bodyClassName, divider = false, ...props }: AppShellSectionProps) {
   return (
-    <section className={cn("app-shell-section overflow-hidden rounded-2xl border border-zinc-200 bg-white", className)}>
-      <div className={cn("space-y-4 p-5 sm:p-6", bodyClassName)}>
+    <section className={cn("app-shell-section border-b border-[#ECE7DE]/80 pb-8", className)}>
+      <div className={cn("space-y-4", bodyClassName)}>
         <ShellHeader {...props} />
         {divider ? <div className="app-shell-section-divider" aria-hidden /> : null}
         {children ? <div className="space-y-4">{children}</div> : null}

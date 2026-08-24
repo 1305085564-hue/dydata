@@ -87,19 +87,19 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
               key={skill.id}
               onClick={() => onToggleSkill(skill)}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.98]',
+                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.985] active:duration-75',
                 isActive
                   ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
-                  : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+                  : 'bg-white border-[#E5E0D6] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]'
               )}
             >
-              <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#D97757]' : 'text-zinc-500')} />
+              <Sparkles className={cn('h-2.5 w-2.5', isActive ? 'text-[#D97757]' : 'text-[#78716C]')} />
               <span>{skill.name}</span>
             </button>
           );
         })}
         {availableSkills.length === 0 && (
-          <span className="text-[12px] text-zinc-500 italic">暂无可用技能</span>
+          <span className="text-[12px] text-[#78716C] italic">暂无可用技能</span>
         )}
       </div>
 
@@ -107,10 +107,10 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.98]',
+          'inline-flex shrink-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.985] active:duration-75',
           isOpen
-            ? 'bg-zinc-200/80 border-zinc-300 text-zinc-900'
-            : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300 hover:text-zinc-900 shadow-sm'
+            ? 'bg-[#E5E0D6]/80 border-[#E5E0D6] text-[#1C1917]'
+            : 'bg-white border-[#E5E0D6] text-[#78716C] hover:border-[#E5E0D6] hover:text-[#1C1917] shadow-sm'
         )}
       >
         <Grid className="h-3 w-3" />
@@ -121,14 +121,14 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute top-full right-4 mt-1.5 w-[320px] rounded-lg border border-zinc-200 bg-white/95 backdrop-blur-xl shadow-xl p-4 z-50 animate-in fade-in slide-in-from-top-1.5 duration-200"
+          className="absolute top-full right-4 mt-1.5 w-[320px] rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/98 backdrop-blur-xl shadow-claude-float p-4 z-50 animate-in fade-in slide-in-from-top-1.5 duration-200"
         >
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-100">
-            <span className="text-[12px] font-medium text-zinc-900">全部技能舱</span>
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ECE7DE]">
+            <span className="text-[12px] font-medium text-[#1C1917]">全部技能舱</span>
             <button
               onClick={() => setIsOpen(false)}
               aria-label="关闭技能舱"
-              className="p-1 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-950"
+              className="p-1 rounded-full hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917]"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -140,7 +140,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
               if (items.length === 0) return null;
               return (
                 <div key={group.key} className="space-y-1">
-                  <div className="text-[12px] font-medium uppercase tracking-[0.18em] text-zinc-500 pl-1.5">
+                  <div className="text-[12px] font-medium uppercase tracking-[0.18em] text-[#78716C] pl-1.5">
                     {group.label}
                   </div>
                   <div className="grid grid-cols-1 gap-1">
@@ -151,21 +151,21 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                           key={skill.id}
                           onClick={() => handleSelectSkill(skill)}
                           className={cn(
-                            'group flex items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.98]',
+                            'group flex items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.985] active:duration-75',
                             isActive
                               ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757]'
-                              : 'bg-white border-zinc-200 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50/85'
+                              : 'bg-white border-[#E5E0D6] text-[#292524] hover:border-[#E5E0D6] hover:bg-[#FBF9F5]/85'
                           )}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 text-[12px] font-medium">
-                              <Sparkles className={cn('h-3 w-3 shrink-0', isActive ? 'text-[#D97757]' : 'text-zinc-500')} />
+                              <Sparkles className={cn('h-3 w-3 shrink-0', isActive ? 'text-[#D97757]' : 'text-[#78716C]')} />
                               <span className="truncate">{skill.name}</span>
                             </div>
                             {skill.description && (
                               <p className={cn(
                                 'text-[12px] line-clamp-2 mt-0.5 leading-relaxed',
-                                isActive ? 'text-[#D97757]/80' : 'text-zinc-500'
+                                isActive ? 'text-[#D97757]/80' : 'text-[#78716C]'
                               )}>
                                 {skill.description}
                               </p>

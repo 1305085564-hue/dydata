@@ -243,7 +243,7 @@ export function TopicHubV2() {
     const subObj = foundItem;
 
     if (candidateClaims.length >= 5) {
-      // 唤起智能替换弹窗！
+      // 唤起智能替换弹窗
       setReplaceTargetTopic({
         id: subTopicId,
         title: subObj?.title || "所选选题",
@@ -269,7 +269,7 @@ export function TopicHubV2() {
         throw error;
       }
 
-      showToast("已成功认领到您的个人候选", "success");
+      showToast("已认领到候选", "success");
       refreshAll();
     } catch (err) {
       showToast(getErrorMessage(err, "认领请求失败"), "error");
@@ -291,7 +291,7 @@ export function TopicHubV2() {
         }),
       });
 
-      showToast("已成功自动替换并完成新选题认领！", "success");
+      showToast("已完成新选题替换与认领", "success");
       refreshAll();
       return true;
     } catch (err) {
@@ -336,21 +336,21 @@ export function TopicHubV2() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-800 p-4 sm:p-6 lg:p-8 font-sans antialiased">
+    <div className="min-h-screen bg-[#FBF9F5] text-[#292524] p-4 sm:p-6 lg:p-8 font-sans antialiased">
       {/* Toast 轻提示 (z-[70] 层级高于所有抽屉弹窗) */}
       {toastMsg && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div
-            className={`px-4 py-2.5 rounded-xl shadow-xl backdrop-blur-xl text-xs font-medium flex items-center gap-2 ${
+            className={`px-4 py-2.5 rounded-xl shadow-claude-float backdrop-blur-xl text-xs font-medium flex items-center gap-2 ${
               toastMsg.type === "error"
-                ? "bg-[#DC2626]/10 text-[#DC2626] border border-zinc-200"
-                : "bg-zinc-900/90 text-white border border-zinc-700/50"
+                ? "bg-[#DC2626]/10 text-[#DC2626] border border-[#E5E0D6]"
+                : "bg-[#1C1917]/90 text-white border border-[#292524]/50"
             }`}
           >
             {toastMsg.type === "error" ? (
               <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-zinc-600 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-[#292524] shrink-0" />
             )}
             <span>{toastMsg.text}</span>
           </div>
@@ -360,36 +360,36 @@ export function TopicHubV2() {
       {/* 未登录整页阻断拦截 */}
       {authError ? (
         <div className="min-h-[60vh] flex items-center justify-center p-4">
-          <div className="bg-white border border-zinc-200 rounded-2xl p-8 max-w-md w-full text-center shadow-lg animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-zinc-100/80 border border-zinc-200/60 text-[#D97757] flex items-center justify-center mx-auto mb-4 shadow-2xs">
+          <div className="bg-white border border-[#E5E0D6] rounded-2xl p-8 max-w-md w-full text-center shadow-claude-dialog animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-[#F5F3EE]/80 border border-[#E5E0D6]/60 text-[#D97757] flex items-center justify-center mx-auto mb-4 shadow-2xs">
               <Lock className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-1.5 tracking-tight">
+            <h3 className="text-base font-medium text-[#292524] mb-1.5 tracking-tight">
               需要登录后再体验选题指挥舱
             </h3>
-            <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-6 leading-relaxed">
+            <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-6 leading-relaxed">
               为了确保选题防撞车、认领权限与数据隔离，请先登录系统账号后再访问选题指挥舱。
             </p>
             <a
               href="/login"
-              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all"
+              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold shadow-xs transition-all"
             >
               <span>前往登录账号</span>
             </a>
           </div>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-10">
           {/* 全局顶栏：黄金大标题 Header (纯留白自然分隔) */}
-          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 sm:pb-3 mb-1">
+          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 sm:pb-3 mb-6">
             <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-semibold text-zinc-900 tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-semibold text-[#1C1917] tracking-tight flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-[#D97757] stroke-[1.8]" />
                 <span>选题库</span>
               </h1>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {/* 我的认领位抽屉 */}
               <MyClaimDrawer
                 claims={myClaims}
@@ -405,7 +405,7 @@ export function TopicHubV2() {
                 type="button"
                 onClick={refreshAll}
                 disabled={activeLoading || poolLoading || claimsLoading}
-                className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 active:scale-[0.97] transition-colors disabled:opacity-50 cursor-pointer"
+                className="p-2 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all duration-150 disabled:opacity-50 cursor-pointer"
                 title="刷新最新数据"
                 aria-label="刷新最新数据"
               >

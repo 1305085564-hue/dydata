@@ -72,8 +72,8 @@ function DashboardActivityError({ message, onRetry }: { message: string; onRetry
   return (
     <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
       <ShieldAlert className="size-5 text-[#C9604D]" aria-hidden="true" />
-      <p className="text-[13px] font-medium text-zinc-700">记录加载失败</p>
-      <p className="max-w-sm text-[12px] text-zinc-500">{message}</p>
+      <p className="text-[13px] font-medium text-[#292524]">记录加载失败</p>
+      <p className="max-w-sm text-[12px] text-[#78716C]">{message}</p>
       <Button type="button" variant="outline" size="sm" onClick={onRetry}>
         重新加载
       </Button>
@@ -438,8 +438,8 @@ export function VideoSubmitPanel({
 
   if (!accounts.length) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-        <div className="px-6 py-5 text-[13px] text-zinc-500">
+      <div className="overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white">
+        <div className="px-6 py-5 text-[13px] text-[#78716C]">
           当前没有可提交的数据账号，请联系管理员分配账号后再继续操作。
         </div>
       </div>
@@ -458,55 +458,53 @@ export function VideoSubmitPanel({
           "mx-auto overflow-hidden",
           embeddedChrome
             ? "max-w-5xl rounded-none border-none bg-transparent shadow-none"
-            : "max-w-5xl rounded-2xl border border-zinc-200 bg-white",
+            : "max-w-5xl rounded-2xl border border-[#E5E0D6] bg-white",
         )}>
           {!embeddedChrome ? (
-          <CardHeader className="space-y-0 border-b border-zinc-200 bg-[var(--color-bg)] p-0">
-            <div className="space-y-4 px-6 py-6 sm:px-8 sm:py-6">
+          <CardHeader className="border-b border-[#E5E0D6] bg-[var(--color-bg)] p-0">
+            <div className="px-6 py-6 sm:px-8 sm:py-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-[24px] font-semibold tracking-tight text-zinc-900">今日提交</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-[#1C1917]">今日提交</h2>
                 {watchConclusion && (
-                  <div className="text-[13px] text-zinc-500 max-w-sm text-right">
+                  <div className="text-[13px] text-[#78716C] max-w-sm text-right">
                     {watchConclusion}
                   </div>
                 )}
               </div>
 
-              <div className="rounded-2xl border border-zinc-200 bg-[var(--color-bg)] px-4 py-4">
-                <div className={cn("mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
-                  <div className="space-y-1">
-                    <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-zinc-500">今天</div>
-                    <button
-                      type="button"
-                      onClick={openDatePicker}
-                      className="group inline-flex items-center gap-2.5 rounded-xl border border-zinc-200/90 bg-zinc-50/80 px-3.5 py-2 text-left transition-colors duration-100 ease-out hover:border-[#D97757] hover:bg-white active:scale-[0.98] shadow-2xs cursor-pointer"
-                      aria-label="选择填报日期或补交历史"
-                    >
-                      <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
-                      <div className="flex flex-col leading-none space-y-1">
-                        <span className="text-[16px] font-semibold tracking-tight text-zinc-900">
-                          提交历史
-                        </span>
-                        <span className="text-[12px] font-normal tabular-nums text-zinc-400 group-hover:text-zinc-600 transition-colors">
-                          {activeBizDate} ▾
-                        </span>
-                      </div>
-                    </button>
-                    <input
-                      ref={dateInputRef}
-                      type="date"
-                      value={activeBizDate}
-                      max={today}
-                      onChange={(event) => selectBizDate(event.target.value)}
-                      className="sr-only"
-                      tabIndex={-1}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    <div className="text-[12px] font-medium text-zinc-500">
-                      {activeBizDate === today ? "今日填报" : "历史补填"}
+              <div className={cn("flex flex-col gap-3 pt-2 sm:flex-row sm:items-end sm:justify-between", embeddedChrome && "hidden")}>
+                <div className="space-y-1">
+                  <div className="text-[12px] font-medium uppercase tracking-[0.22em] text-[#78716C]">今天</div>
+                  <button
+                    type="button"
+                    onClick={openDatePicker}
+                    className="group inline-flex items-center gap-2.5 rounded-xl border border-[#E5E0D6]/90 bg-[#FBF9F5]/80 px-3.5 py-2 text-left transition-colors duration-100 ease-out hover:border-[#D97757] hover:bg-white active:scale-[0.985] active:duration-75 shadow-2xs cursor-pointer"
+                    aria-label="选择填报日期或补交历史"
+                  >
+                    <CalendarDays className="size-5 stroke-[1.8] text-[#D97757] shrink-0 transition-transform group-hover:scale-105" />
+                    <div className="flex flex-col leading-none space-y-1">
+                      <span className="text-base font-semibold tracking-tight text-[#1C1917]">
+                        提交历史
+                      </span>
+                      <span className="text-[12px] font-normal tabular-nums text-[#78716C] group-hover:text-[#292524] transition-colors">
+                        {activeBizDate} ▾
+                      </span>
                     </div>
+                  </button>
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={activeBizDate}
+                    max={today}
+                    onChange={(event) => selectBizDate(event.target.value)}
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:items-end">
+                  <div className="text-[12px] font-medium text-[#78716C]">
+                    {activeBizDate === today ? "今日填报" : "历史补填"}
                   </div>
                 </div>
               </div>
@@ -539,7 +537,7 @@ export function VideoSubmitPanel({
             )}
 
             {hasPendingExemption && !dismissedPendingExemption && (
-              <div className="rounded-r-2xl border-l-2 border-l-[#D99E55] bg-amber-50/50 p-4 text-[13px] text-zinc-700">
+              <div className="rounded-r-2xl border-l-2 border-l-[#D99E55] bg-amber-50/50 p-4 text-[13px] text-[#292524]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -548,14 +546,14 @@ export function VideoSubmitPanel({
                         申请审批中
                       </span>
                     </div>
-                    <p className="text-[12px] leading-[1.7] text-zinc-500">
+                    <p className="text-[12px] leading-[1.7] text-[#78716C]">
                       你的豁免申请正在等待管理员审批，审批结果将在这里更新。
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={dismissPendingExemption}
-                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-500 transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-700 active:translate-y-0 focus-visible:ring-1 focus-visible:ring-zinc-900/5"
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#78716C] transition-[background-color,color,border-color,transform] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-[#E5E0D6] hover:bg-[#FBF9F5] hover:text-[#292524] active:translate-y-0 focus-visible:ring-1 focus-visible:ring-[#1C1917]/5"
                   >
                     <X className="size-3.5 stroke-[1.5]" />
                     关闭
@@ -569,7 +567,7 @@ export function VideoSubmitPanel({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-6 text-[13px] text-zinc-700 shadow-xs"
+                className="relative overflow-hidden rounded-2xl border border-[#E5E0D6]/80 bg-white p-6 text-[13px] text-[#292524] shadow-xs"
               >
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between relative z-10">
                   <div className="space-y-4 flex-1">
@@ -580,44 +578,44 @@ export function VideoSubmitPanel({
                       </span>
                     </div>
                     <div className="space-y-1.5">
-                      <div className="text-[14px] font-semibold text-zinc-800">
+                      <div className="text-[14px] font-semibold text-[#292524]">
                         {primarySummary.title?.trim() || "未填写视频标题"}
                       </div>
-                      <div className="text-[12px] leading-[1.7] text-zinc-400" suppressHydrationWarning>
+                      <div className="text-[12px] leading-[1.7] text-[#78716C]" suppressHydrationWarning>
                         提交时间：{formatDateTime(primarySummary.uploadedAt)}
-                        <span className="mx-2 text-zinc-300">·</span>
+                        <span className="mx-2 text-[#E5E0D6]">·</span>
                         发布时间：{formatDateTime(primarySummary.publishedAt)}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">播放量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
+                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4 transition-all hover:bg-[#F5F3EE]">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">播放量</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined 
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN") 
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">互动总量</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
+                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4 transition-all hover:bg-[#F5F3EE]">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">互动总量</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
                           {((primarySummary.likes ?? 0) +
                             (primarySummary.comments ?? 0) +
                             (primarySummary.shares ?? 0) +
                             (primarySummary.favorites ?? 0)).toLocaleString("zh-CN")}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">涨粉</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
+                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4 transition-all hover:bg-[#F5F3EE]">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">涨粉</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined 
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN") 
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-zinc-100/70 p-4 transition-all hover:bg-zinc-100">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-zinc-400">完播率</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-zinc-800">
+                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4 transition-all hover:bg-[#F5F3EE]">
+                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">完播率</div>
+                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
                           {primarySummary.completionRate ?? "--"}
                         </div>
                       </div>
@@ -627,7 +625,7 @@ export function VideoSubmitPanel({
                   <div className="flex shrink-0 flex-col gap-3 lg:w-[200px]">
                     <Button
                       type="button"
-                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-medium transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-2xs active:scale-95 cursor-pointer"
+                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-medium transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.985] active:duration-75 cursor-pointer"
                       onClick={handleGoToGrowth}
                     >
                       查看成长分析
@@ -635,7 +633,7 @@ export function VideoSubmitPanel({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-10 rounded-xl border-zinc-200 bg-white text-[13px] font-medium text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700 transition-colors duration-150 cursor-pointer"
+                      className="h-10 rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium text-[#78716C] hover:bg-[#FBF9F5] hover:text-[#292524] transition-colors duration-150 cursor-pointer"
                       onClick={() => setRequestedMode("editToday")}
                     >
                       <PencilLine className="size-4 stroke-[1.5]" />
@@ -651,10 +649,10 @@ export function VideoSubmitPanel({
             {selectedAccount && shouldShowBlockedStateCard ? (
               <div
                 className={cn(
-                  "p-4 text-[13px] sm:p-5",
+                  "p-4 text-[13px] sm:p-5 border border-[#E5E0D6] rounded-2xl",
                   activeDateStatus.state === "waive"
-                    ? "border-l-2 border-l-[#6FAA7D] bg-emerald-50/50 text-zinc-700 rounded-r-2xl"
-                    : "border-l-2 border-l-[#D99E55] bg-amber-50/50 text-zinc-700 rounded-r-2xl",
+                    ? "border-l-4 border-l-[#6FAA7D] bg-[#6FAA7D]/10 text-[#292524]"
+                    : "border-l-4 border-l-[#D99E55] bg-[#D99E55]/10 text-[#292524]",
                 )}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -664,15 +662,15 @@ export function VideoSubmitPanel({
                       {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                     </span>
                     <div className="space-y-1">
-                      <div className="text-[18px] font-semibold text-zinc-700">
+                      <div className="text-lg font-semibold text-[#1C1917]">
                         {activeBizDate} 已标记为{activeDateStatus.label}
                       </div>
-                      <p className="text-[13px] leading-[1.7] text-zinc-500">
+                      <p className="text-[13px] leading-[1.7] text-[#78716C]">
                         {activeDateStatus.description}
                       </p>
                     </div>
                     {activeExemptionState.reason ? (
-                      <p className="text-[13px] leading-[1.7] text-zinc-500">
+                      <p className="text-[13px] leading-[1.7] text-[#78716C]">
                         原因：{activeExemptionState.reason}
                       </p>
                     ) : null}
@@ -717,7 +715,7 @@ export function VideoSubmitPanel({
           {activityError ? (
             <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
           ) : isActivityLoading ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-zinc-500">
+            <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
               加载历史记录...
             </div>
           ) : !historyReports || historyReports.length === 0 ? (

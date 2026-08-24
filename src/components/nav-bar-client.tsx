@@ -354,10 +354,10 @@ export function NavBarClient({
     <>
       <nav
         className={cn(
-          "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-300 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
+          "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-150 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "border-zinc-200/80 bg-white/90 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)]"
-            : "border-zinc-200/40 bg-zinc-50/70 py-3 backdrop-blur-md",
+            ? "border-[#E5E0D6]/80 bg-white/90 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)]"
+            : "border-[#E5E0D6]/40 bg-[#FBF9F5]/70 py-3 backdrop-blur-md",
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -370,16 +370,16 @@ export function NavBarClient({
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5"
               >
-                <div className="flex size-8.5 items-center justify-center rounded-xl border border-zinc-200/80 bg-zinc-900 text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-zinc-950 group-hover:border-zinc-800">
+                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E5E0D6]/80 bg-[#1C1917] text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#1C1917] group-hover:border-[#292524]">
                   <Zap className="size-4 stroke-[2.2] fill-current text-white transition-transform duration-200 group-hover:scale-110" />
                 </div>
                 <div className="hidden sm:block">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-medium tracking-tight text-zinc-950 leading-none">
+                    <span className="text-[13px] font-medium tracking-tight text-[#1C1917] leading-none">
                       DYData
                     </span>
                   </div>
-                  <div className="mt-1 text-[12px] font-normal tracking-wider text-zinc-400 uppercase leading-none transition-colors duration-200 group-hover:text-zinc-500">
+                  <div className="mt-1 text-[12px] font-normal tracking-wider text-[#78716C] uppercase leading-none transition-colors duration-200 group-hover:text-[#78716C]">
                     短视频数据工作台
                   </div>
                 </div>
@@ -411,8 +411,8 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive
-                            ? "text-[#43718E] font-medium bg-zinc-100/70"
-                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
+                            ? "text-[#43718E] font-medium bg-[#F5F3EE]/70"
+                            : "text-[#292524] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.985] active:duration-75",
                         )}
                       >
                         {isGroupActive && (
@@ -424,7 +424,7 @@ export function NavBarClient({
                               "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive
                                 ? "text-[#43718E]"
-                                : "text-zinc-400 group-hover:text-zinc-700",
+                                : "text-[#78716C] group-hover:text-[#292524]",
                             )}
                           />
                         )}
@@ -455,12 +455,12 @@ export function NavBarClient({
                         className={cn(
                           "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#43718E] font-medium bg-zinc-100/70"
-                            : "text-zinc-600 font-medium hover:text-zinc-950 hover:bg-zinc-100/70 active:scale-95",
+                            ? "text-[#43718E] font-medium bg-[#F5F3EE]"
+                            : "text-[#292524] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75",
                         )}
                       >
                         {isGroupActive && (
-                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#43718E] transition-all duration-200" />
+                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#43718E] transition-all duration-150" />
                         )}
                         {GroupIcon && (
                           <GroupIcon
@@ -468,7 +468,7 @@ export function NavBarClient({
                               "size-3.5 stroke-[1.8] shrink-0 mr-0.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive || isDropdownOpen
                                 ? "text-[#43718E]"
-                                : "text-zinc-400 group-hover:text-zinc-700",
+                                : "text-[#78716C] group-hover:text-[#292524]",
                             )}
                           />
                         )}
@@ -490,7 +490,7 @@ export function NavBarClient({
                           onMouseEnter={() => handleDropdownOpen(group.key)}
                           onMouseLeave={handleDropdownCloseLater}
                         >
-                          <div className="w-56 rounded-xl border border-zinc-200/80 bg-white/95 p-1.5 shadow-xl shadow-zinc-900/8 backdrop-blur-2xl ring-1 ring-black/5">
+                          <div className="w-56 rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
                             <div className="space-y-0.5">
                               {group.children.map((child: NavSubItem) => {
                                 const active = child.match(pathname);
@@ -505,10 +505,10 @@ export function NavBarClient({
                                     }
                                     onClick={() => setActiveDropdownGroup(null)}
                                     className={cn(
-                                      "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-100 group/item",
+                                      "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
                                       active
-                                        ? "bg-zinc-100 text-[#43718E] font-medium"
-                                        : "text-zinc-600 font-medium hover:bg-zinc-100 hover:text-zinc-950",
+                                        ? "bg-[#F5F3EE] text-[#43718E] font-medium"
+                                        : "text-[#292524] font-medium hover:bg-[#F5F3EE] hover:text-[#1C1917]",
                                     )}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0">
@@ -518,7 +518,7 @@ export function NavBarClient({
                                             "size-4 stroke-[1.8] shrink-0 transition-transform duration-150 group-hover/item:scale-105",
                                             active
                                               ? "text-[#43718E]"
-                                              : "text-zinc-400 group-hover/item:text-zinc-700",
+                                              : "text-[#78716C] group-hover/item:text-[#1C1917]",
                                           )}
                                         />
                                       )}
@@ -547,12 +547,12 @@ export function NavBarClient({
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-200 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20",
+                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer",
                     bellBadgeCount > 0
                       ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
-                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100/80 active:scale-95 border border-transparent",
+                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 border border-transparent",
                     commandHubOpen &&
-                      "bg-zinc-100 text-zinc-950 font-medium border-zinc-200/80 shadow-sm",
+                      "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6] shadow-sm",
                   )}
                   title="待办与通知中心"
                   aria-label="待办与通知中心"
@@ -562,7 +562,7 @@ export function NavBarClient({
                       "size-4 stroke-[1.9] transition-transform duration-200 ease-out group-hover:rotate-6 group-hover:scale-105",
                       bellBadgeCount > 0
                         ? "text-[#D97757] fill-[#D97757]/20"
-                        : "text-zinc-400 group-hover:text-zinc-700",
+                        : "text-[#78716C] group-hover:text-[#292524]",
                     )}
                   />
 
@@ -604,26 +604,26 @@ export function NavBarClient({
                 onClick={() => setIsMobileMenuOpen((current) => !current)}
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-navigation-menu"
-                className="flex size-8.5 items-center justify-center rounded-xl text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/70 active:scale-95 lg:hidden group"
+                className="flex size-8.5 items-center justify-center rounded-xl text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]/70 active:scale-[0.985] active:duration-75 lg:hidden group"
                 title="导航菜单"
                 aria-label="导航菜单"
               >
                 <div className="relative size-4">
                   <span
                     className={cn(
-                      "absolute left-0 top-0.5 h-0.5 w-4 bg-current transition-all duration-300",
+                      "absolute left-0 top-0.5 h-0.5 w-4 bg-current transition-all duration-150",
                       isMobileMenuOpen && "top-1.5 rotate-45 text-[#43718E]",
                     )}
                   />
                   <span
                     className={cn(
-                      "absolute left-0 top-1.5 h-0.5 w-4 bg-current transition-all duration-300",
+                      "absolute left-0 top-1.5 h-0.5 w-4 bg-current transition-all duration-150",
                       isMobileMenuOpen && "opacity-0",
                     )}
                   />
                   <span
                     className={cn(
-                      "absolute left-0 top-2.5 h-0.5 w-4 bg-current transition-all duration-300",
+                      "absolute left-0 top-2.5 h-0.5 w-4 bg-current transition-all duration-150",
                       isMobileMenuOpen && "top-1.5 -rotate-45 text-[#43718E]",
                     )}
                   />
@@ -639,14 +639,14 @@ export function NavBarClient({
         <div
           id="mobile-navigation-menu"
           className={cn(
-            "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset,64px)] z-40 border-b bg-white/98 px-4 py-4 md:hidden shadow-xl flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset,64px))] overflow-y-auto duration-200",
-            "border-zinc-200 backdrop-blur-xl",
+            "animate-in fade-in slide-in-from-top-4 fixed inset-x-0 top-[var(--app-top-offset,64px)] z-40 border-b bg-[#FAF8F4]/98 px-4 py-4 md:hidden shadow-claude-dialog flex flex-col gap-4 max-h-[calc(100vh-var(--app-top-offset,64px))] overflow-y-auto duration-200",
+            "border-[#E5E0D6] backdrop-blur-xl",
           )}
         >
           {/* Mobile Workspace Selector */}
           {accounts.length > 0 && (
-            <div className="border-b border-zinc-100 pb-3 flex items-center justify-between">
-              <span className="text-[12px] font-medium text-zinc-500">
+            <div className="border-b border-[#ECE7DE] pb-3 flex items-center justify-between">
+              <span className="text-[12px] font-medium text-[#78716C]">
                 工作账号
               </span>
               <WorkspacePicker
@@ -672,7 +672,7 @@ export function NavBarClient({
                       "flex h-10 items-center justify-between rounded-xl px-3 text-[13px] font-medium transition-all duration-200",
                       active
                         ? "bg-[#43718E]/10 text-[#43718E] font-medium border-l-2 border-[#43718E]"
-                        : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900",
+                        : "text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917]",
                     )}
                   >
                     <div className="flex items-center gap-2.5">
@@ -680,7 +680,7 @@ export function NavBarClient({
                         <Icon
                           className={cn(
                             "size-4 stroke-[1.8]",
-                            active ? "text-[#43718E]" : "text-zinc-400",
+                            active ? "text-[#43718E]" : "text-[#78716C]",
                           )}
                         />
                       )}
@@ -698,13 +698,13 @@ export function NavBarClient({
               return (
                 <div
                   key={group.key}
-                  className="flex flex-col gap-1 rounded-xl bg-zinc-50/80 p-2 border border-zinc-100"
+                  className="flex flex-col gap-1 rounded-xl bg-[#FBF9F5]/80 p-2 border border-[#ECE7DE]"
                 >
                   <div className="px-2 py-1 flex items-center justify-between">
                     <span
                       className={cn(
                         "text-[12px] font-medium uppercase tracking-wider",
-                        isGroupActive ? "text-[#43718E]" : "text-zinc-400",
+                        isGroupActive ? "text-[#43718E]" : "text-[#78716C]",
                       )}
                     >
                       {group.label}
@@ -725,8 +725,8 @@ export function NavBarClient({
                           className={cn(
                             "flex h-9 items-center justify-between rounded-lg px-2.5 text-[13px] font-medium transition-all duration-200",
                             active
-                              ? "bg-white text-[#43718E] font-medium shadow-sm border border-zinc-200"
-                              : "text-zinc-700 hover:bg-white/60 hover:text-zinc-900",
+                              ? "bg-white text-[#43718E] font-medium shadow-sm border border-[#E5E0D6]"
+                              : "text-[#292524] hover:bg-white/60 hover:text-[#1C1917]",
                           )}
                         >
                           <div className="flex items-center gap-2">
@@ -734,7 +734,7 @@ export function NavBarClient({
                               <Icon
                                 className={cn(
                                   "size-3.5 stroke-[1.8]",
-                                  active ? "text-[#43718E]" : "text-zinc-400",
+                                  active ? "text-[#43718E]" : "text-[#78716C]",
                                 )}
                               />
                             )}

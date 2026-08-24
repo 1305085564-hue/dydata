@@ -120,7 +120,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 
   return (
     <p
-      className={cn("text-[12px] text-zinc-500", className)}
+      className={cn("text-[12px] text-[#78716C]", className)}
       id={formDescriptionId}
       {...props}
     />

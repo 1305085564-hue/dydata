@@ -35,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           fallback={
             <div
               aria-hidden="true"
-              className="fixed inset-x-0 top-0 z-50 h-[var(--app-top-offset)] border-b border-zinc-200 bg-zinc-50/80 backdrop-blur-md"
+              className="fixed inset-x-0 top-0 z-50 h-[var(--app-top-offset)] border-b border-[#E5E0D6] bg-[#FBF9F5]/80 backdrop-blur-md"
             />
           }
         >

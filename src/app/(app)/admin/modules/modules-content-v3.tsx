@@ -199,17 +199,17 @@ function normalizeUserStatus(value: string | null | undefined): UserStatus {
 }
 
 function getProgressColor(ratio: number): string {
-  if (ratio <= 0) return "bg-zinc-300";
-  if (ratio <= 30) return "bg-zinc-400";
+  if (ratio <= 0) return "bg-[#E5E0D6]";
+  if (ratio <= 30) return "bg-[#78716C]";
   if (ratio <= 70) return "bg-[#43718E]";
   if (ratio < 100) return "bg-[#D97757]";
-  return "bg-[#405740]";
+  return "bg-[#16A34A]";
 }
 
 function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean }) {
   return (
     <div
-      className="hidden lg:flex items-center justify-between gap-3 border-b border-zinc-200/80 text-[13px] font-medium text-zinc-500 select-none pb-2 mb-2 px-3"
+      className="hidden lg:flex items-center justify-between gap-3 border-b border-[#E5E0D6]/80 text-[13px] font-medium text-[#78716C] select-none pb-2 mb-2 px-3"
       aria-hidden="true"
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -953,25 +953,25 @@ export function AdminModulesContentV3({
       <main className="space-y-5">
         {/* ── 待审批入团申请预警栏（状态色便签范式：弱底色差 + 左竖线，用完即撕） ── */}
         {pendingRequests.length > 0 && (
-          <section className="bg-amber-50/60 rounded-lg border-l-2 border-amber-400 p-4">
+          <section className="bg-[#B98A54]/10 rounded-lg border-l-2 border-[#B98A54] p-4">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[14px] font-medium text-amber-950">待审批入团申请</span>
-              <span className="text-[12px] font-medium text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-full">
+              <span className="text-[14px] font-medium text-[#1C1917]">待审批入团申请</span>
+              <span className="text-[12px] font-medium text-[#B98A54] bg-[#B98A54]/15 px-2 py-0.5 rounded-full">
                 {pendingRequests.length}
               </span>
             </div>
-            <div className="divide-y divide-amber-200/40">
+            <div className="divide-y divide-[#B98A54]/20">
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
                   className="flex items-center justify-between gap-4 py-2"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-[13px] font-medium text-zinc-900">{req.applicantName}</span>
-                    <span className="mx-2 text-amber-300">·</span>
-                    <span className="text-[12px] text-zinc-600">{req.targetTeamName}</span>
-                    <span className="mx-2 text-amber-300">·</span>
-                    <span className="text-[12px] text-zinc-500">
+                    <span className="text-[13px] font-medium text-[#1C1917]">{req.applicantName}</span>
+                    <span className="mx-2 text-[#B98A54]/60">·</span>
+                    <span className="text-[12px] text-[#292524]">{req.targetTeamName}</span>
+                    <span className="mx-2 text-[#B98A54]/60">·</span>
+                    <span className="text-[12px] text-[#78716C]">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
                   </div>
@@ -981,14 +981,14 @@ export function AdminModulesContentV3({
                         variant="ghost"
                         onClick={() => handleReviewJoinRequest(req.id, "reject")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-md"
+                        className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md"
                       >
                         拒绝
                       </Button>
                       <Button
                         onClick={() => handleReviewJoinRequest(req.id, "approve")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] bg-zinc-900 text-white hover:bg-zinc-800 rounded-md"
+                        className="h-7 px-2.5 text-[12px] bg-[#1C1917] text-white hover:bg-[#292524] rounded-md"
                       >
                         同意
                       </Button>
@@ -1001,9 +1001,9 @@ export function AdminModulesContentV3({
         )}
 
         {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
-        <section className="bg-white rounded-2xl border border-zinc-200/80 shadow-2xs p-5">
+        <section className="bg-white rounded-2xl border border-[#E5E0D6]/80 shadow-2xs p-5">
           {/* 工具栏：平铺去框，呼吸线分隔，与下方列表以 1px 细线自然区分 */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-zinc-100">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#ECE7DE]">
             <div className="flex flex-wrap items-center gap-1.5">
               {/* 团队选择器 */}
               <div className="relative">
@@ -1016,7 +1016,7 @@ export function AdminModulesContentV3({
                       setSelectedTeamId(e.target.value);
                     }
                   }}
-                  className="h-8 pl-2.5 pr-6 text-[13px] font-medium bg-transparent text-zinc-800 border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-zinc-100/70 transition-colors"
+                  className="h-8 pl-2.5 pr-6 text-[13px] font-medium bg-transparent text-[#292524] border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-[#F5F3EE]/70 transition-colors"
                 >
                   <option value={ALL_TEAMS_ID}>
                     {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
@@ -1031,37 +1031,37 @@ export function AdminModulesContentV3({
                   })}
                   {canManageCompany && <option value="__manage__">管理架构…</option>}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-[#78716C]" />
               </div>
 
               {/* 16px 呼吸竖线 */}
-              <span className="text-zinc-200 mx-1 select-none" aria-hidden="true">|</span>
+              <span className="text-[#ECE7DE] mx-1 select-none" aria-hidden="true">|</span>
 
               {/* 排序 */}
               <div className="relative">
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value as "role" | "published")}
-                  className="h-8 pl-2.5 pr-6 text-[13px] font-normal bg-transparent text-zinc-600 border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-zinc-100/70 transition-colors"
+                  className="h-8 pl-2.5 pr-6 text-[13px] font-normal bg-transparent text-[#292524] border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-[#F5F3EE]/70 transition-colors"
                 >
                   <option value="role">按职位</option>
                   <option value="published">按发布</option>
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-[#78716C]" />
               </div>
 
               {/* 16px 呼吸竖线 */}
-              <span className="text-zinc-200 mx-1 select-none" aria-hidden="true">|</span>
+              <span className="text-[#ECE7DE] mx-1 select-none" aria-hidden="true">|</span>
 
               {/* 搜索框：微胶囊 */}
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 size-3.5 text-zinc-400" />
+                <Search className="absolute left-3 top-2.5 size-3.5 text-[#78716C]" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-8 pl-8 pr-4 text-[13px] bg-zinc-100/70 border-0 rounded-full w-48 sm:w-56 focus:w-64 focus:bg-white focus:ring-1 focus:ring-zinc-200 outline-none transition-all placeholder:text-zinc-400"
+                  className="h-8 pl-8 pr-4 text-[13px] bg-[#F5F3EE]/70 border-0 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] outline-none transition-all placeholder:text-[#78716C]"
                 />
               </div>
 
@@ -1070,7 +1070,7 @@ export function AdminModulesContentV3({
                   variant="ghost"
                   size="sm"
                   onClick={() => setTeamManagementDialogOpen(true)}
-                  className="h-8 px-2 text-zinc-400 hover:text-zinc-700 rounded-md ml-1"
+                  className="h-8 px-2 text-[#78716C] hover:text-[#292524] rounded-md ml-1"
                   title="团队架构设置"
                 >
                   <Settings className="size-3.5" />
@@ -1089,8 +1089,8 @@ export function AdminModulesContentV3({
                   className={cn(
                     "transition-colors",
                     memberView === "active"
-                      ? "text-zinc-950 font-medium"
-                      : "text-zinc-400 hover:text-zinc-700"
+                      ? "text-[#1C1917] font-medium"
+                      : "text-[#78716C] hover:text-[#292524]"
                   )}
                 >
                   在职 {localProfiles.length}
@@ -1107,15 +1107,15 @@ export function AdminModulesContentV3({
                   className={cn(
                     "transition-colors",
                     memberView === "archived"
-                      ? "text-zinc-950 font-medium"
-                      : "text-zinc-400 hover:text-zinc-700"
+                      ? "text-[#1C1917] font-medium"
+                      : "text-[#78716C] hover:text-[#292524]"
                   )}
                 >
                   归档 {localArchivedProfiles.length}
                 </button>
               </div>
 
-              <span className="text-[12px] text-zinc-400 tabular-nums">
+              <span className="text-[12px] text-[#78716C] tabular-nums">
                 {filteredProfiles.length}/{profilesForCurrentView.length}
               </span>
             </div>
@@ -1124,9 +1124,9 @@ export function AdminModulesContentV3({
           {/* 成员双列平铺列表 */}
           {sortedProfiles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <UsersRound className="size-8 text-zinc-300 mb-3" />
-              <p className="text-[13px] text-zinc-500">没有找到成员</p>
-              <p className="text-[12px] text-zinc-400 mt-1">调整筛选或搜索条件试试</p>
+              <UsersRound className="size-8 text-[#E5E0D6] mb-3" />
+              <p className="text-[13px] text-[#78716C]">没有找到成员</p>
+              <p className="text-[12px] text-[#78716C] mt-1">调整筛选或搜索条件试试</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -1156,10 +1156,10 @@ export function AdminModulesContentV3({
                             isRestoredFocus
                               ? "bg-amber-50 animate-pulse"
                               : isChecked
-                              ? "bg-zinc-50"
+                              ? "bg-[#FBF9F5]"
                               : isCurrentMemberActive
-                              ? "bg-zinc-50"
-                              : "bg-transparent hover:bg-zinc-50"
+                              ? "bg-[#FBF9F5]"
+                              : "bg-transparent hover:bg-[#FBF9F5]"
                           )}
                         >
                           {/* 左侧：复选框 + 姓名 + 邮箱 */}
@@ -1181,7 +1181,7 @@ export function AdminModulesContentV3({
                                       setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                                     }
                                   }}
-                                  className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                                  className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
                                 />
                               </div>
                             ) : canManageCompany && !isArchivedView ? (
@@ -1190,17 +1190,17 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-zinc-900 truncate">
+                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
-                                  <span className="text-[12px] text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded shrink-0">
+                                  <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded shrink-0">
                                     我
                                   </span>
                                 )}
                               </div>
                               {member.email && (
-                                <span className="text-[12px] font-normal text-zinc-500 truncate leading-none mt-0.5">
+                                <span className="text-[12px] font-normal text-[#78716C] truncate leading-none mt-0.5">
                                   {member.email}
                                 </span>
                               )}
@@ -1212,40 +1212,40 @@ export function AdminModulesContentV3({
                             {/* 角色 */}
                             <div className="w-14 text-center shrink-0">
                               {isArchivedView ? (
-                                <span className="inline-flex items-center gap-1 text-[13px] text-zinc-400 font-normal">
+                                <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
                                   <Archive className="size-3" />
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-zinc-600">创始人</span>
+                                <span className="text-[13px] text-[#292524]">创始人</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-zinc-600">主管</span>
+                                <span className="text-[13px] text-[#292524]">主管</span>
                               ) : (
-                                <span className="text-[13px] text-zinc-500">组员</span>
+                                <span className="text-[13px] text-[#78716C]">组员</span>
                               )}
                             </div>
 
                             {/* 发布进度 */}
                             <div className="w-24 text-right shrink-0">
                               {isArchivedView ? (
-                                <span className="text-[13px] text-zinc-400">
+                                <span className="text-[13px] text-[#78716C]">
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
                               ) : isCurrentlyExempt ? (
                                 <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
                               ) : required === 0 ? (
-                                <span className="text-[13px] font-normal text-zinc-400">—</span>
+                                <span className="text-[13px] font-normal text-[#78716C]">—</span>
                               ) : (
                                 <div className="space-y-1">
-                                  <div className="flex items-center justify-end gap-1 text-[12px] text-zinc-600 tabular-nums">
-                                    <span className="font-medium text-zinc-800">{published}</span>
-                                    <span className="text-zinc-400">/</span>
+                                  <div className="flex items-center justify-end gap-1 text-[12px] text-[#292524] tabular-nums">
+                                    <span className="font-medium text-[#292524]">{published}</span>
+                                    <span className="text-[#78716C]">/</span>
                                     <span>{required}条</span>
                                   </div>
-                                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                  <div className="h-1.5 w-full bg-[#F5F3EE] rounded-full overflow-hidden">
                                     <div
                                       className={cn(
-                                        "h-full rounded-full transition-all duration-300",
+                                        "h-full rounded-full transition-all duration-150",
                                         getProgressColor(fulfillRatio)
                                       )}
                                       style={{ width: `${fulfillRatio}%` }}
@@ -1266,7 +1266,7 @@ export function AdminModulesContentV3({
                                     setRestoreTarget(member);
                                   }}
                                   disabled={isPending}
-                                  className="h-7 px-1.5 text-[12px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                                  className="h-7 px-1.5 text-[12px] text-[#78716C] hover:text-[#292524] shrink-0"
                                   title="恢复账号"
                                 >
                                   <RotateCcw className="size-3" />
@@ -1310,10 +1310,10 @@ export function AdminModulesContentV3({
                             isRestoredFocus
                               ? "bg-amber-50 animate-pulse"
                               : isChecked
-                              ? "bg-zinc-50"
+                              ? "bg-[#FBF9F5]"
                               : isCurrentMemberActive
-                              ? "bg-zinc-50"
-                              : "bg-transparent hover:bg-zinc-50"
+                              ? "bg-[#FBF9F5]"
+                              : "bg-transparent hover:bg-[#FBF9F5]"
                           )}
                         >
                           {/* 左侧：复选框 + 姓名 + 邮箱 */}
@@ -1335,7 +1335,7 @@ export function AdminModulesContentV3({
                                       setSelectedMemberIds((prev) => prev.filter((id) => id !== member.id));
                                     }
                                   }}
-                                  className="size-3.5 rounded border-zinc-300 data-[state=checked]:bg-zinc-900 data-[state=checked]:border-zinc-900"
+                                  className="size-3.5 rounded border-[#E5E0D6] data-[state=checked]:bg-[#1C1917] data-[state=checked]:border-[#1C1917]"
                                 />
                               </div>
                             ) : canManageCompany && !isArchivedView ? (
@@ -1344,17 +1344,17 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-zinc-900 truncate">
+                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
-                                  <span className="text-[12px] text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded shrink-0">
+                                  <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded shrink-0">
                                     我
                                   </span>
                                 )}
                               </div>
                               {member.email && (
-                                <span className="text-[12px] font-normal text-zinc-500 truncate leading-none mt-0.5">
+                                <span className="text-[12px] font-normal text-[#78716C] truncate leading-none mt-0.5">
                                   {member.email}
                                 </span>
                               )}
@@ -1366,40 +1366,40 @@ export function AdminModulesContentV3({
                             {/* 角色 */}
                             <div className="w-14 text-center shrink-0">
                               {isArchivedView ? (
-                                <span className="inline-flex items-center gap-1 text-[13px] text-zinc-400 font-normal">
+                                <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
                                   <Archive className="size-3" />
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-zinc-600">创始人</span>
+                                <span className="text-[13px] text-[#292524]">创始人</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-zinc-600">主管</span>
+                                <span className="text-[13px] text-[#292524]">主管</span>
                               ) : (
-                                <span className="text-[13px] text-zinc-500">组员</span>
+                                <span className="text-[13px] text-[#78716C]">组员</span>
                               )}
                             </div>
 
                             {/* 发布进度 */}
                             <div className="w-24 text-right shrink-0">
                               {isArchivedView ? (
-                                <span className="text-[13px] text-zinc-400">
+                                <span className="text-[13px] text-[#78716C]">
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
                               ) : isCurrentlyExempt ? (
                                 <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
                               ) : required === 0 ? (
-                                <span className="text-[13px] font-normal text-zinc-400">—</span>
+                                <span className="text-[13px] font-normal text-[#78716C]">—</span>
                               ) : (
                                 <div className="space-y-1">
-                                  <div className="flex items-center justify-end gap-1 text-[12px] text-zinc-600 tabular-nums">
-                                    <span className="font-medium text-zinc-800">{published}</span>
-                                    <span className="text-zinc-400">/</span>
+                                  <div className="flex items-center justify-end gap-1 text-[12px] text-[#292524] tabular-nums">
+                                    <span className="font-medium text-[#292524]">{published}</span>
+                                    <span className="text-[#78716C]">/</span>
                                     <span>{required}条</span>
                                   </div>
-                                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                  <div className="h-1.5 w-full bg-[#F5F3EE] rounded-full overflow-hidden">
                                     <div
                                       className={cn(
-                                        "h-full rounded-full transition-all duration-300",
+                                        "h-full rounded-full transition-all duration-150",
                                         getProgressColor(fulfillRatio)
                                       )}
                                       style={{ width: `${fulfillRatio}%` }}
@@ -1420,7 +1420,7 @@ export function AdminModulesContentV3({
                                     setRestoreTarget(member);
                                   }}
                                   disabled={isPending}
-                                  className="h-7 px-1.5 text-[12px] text-zinc-500 hover:text-zinc-700 shrink-0"
+                                  className="h-7 px-1.5 text-[12px] text-[#78716C] hover:text-[#292524] shrink-0"
                                   title="恢复账号"
                                 >
                                   <RotateCcw className="size-3" />
@@ -1446,9 +1446,9 @@ export function AdminModulesContentV3({
       {selectedMemberIds.length > 0 && (
         <aside
           aria-label="批量操作"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-xl border border-zinc-200/80 bg-white/95 backdrop-blur-sm px-5 py-2.5 shadow-md animate-in fade-in"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/85 backdrop-blur-md px-5 py-2.5 shadow-claude-float animate-in fade-in"
         >
-          <span className="text-[12px] font-medium text-zinc-900 pr-3 border-r border-zinc-200">
+          <span className="text-[12px] font-medium text-[#1C1917] pr-3 border-r border-[#E5E0D6]">
             已选 {selectedMemberIds.length} 位成员
           </span>
 
@@ -1462,7 +1462,7 @@ export function AdminModulesContentV3({
                     e.target.value = "";
                   }
                 }}
-                className="h-7.5 text-[12px] font-medium bg-zinc-100/70 border-0 rounded-full px-2.5 pr-6 text-zinc-700 outline-none appearance-none cursor-pointer hover:bg-zinc-200/70 transition-colors"
+                className="h-7.5 text-[12px] font-medium bg-[#F5F3EE]/70 border-0 rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#E5E0D6]/70 transition-colors"
               >
                 <option value="" disabled>
                   调配至团队…
@@ -1473,7 +1473,7 @@ export function AdminModulesContentV3({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-2.5 size-3 text-zinc-400" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-2.5 size-3 text-[#78716C]" />
             </div>
           )}
 
@@ -1485,7 +1485,7 @@ export function AdminModulesContentV3({
                 setBatchArchiveReason("");
                 setBatchArchiveOpen(true);
               }}
-              className="h-7.5 px-3 text-[12px] text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl font-medium"
+              className="h-7.5 px-3 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-xl font-medium"
             >
               <Archive className="size-3 mr-1" />
               批量归档
@@ -1495,7 +1495,7 @@ export function AdminModulesContentV3({
           <button
             type="button"
             onClick={() => setSelectedMemberIds([])}
-            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
+            className="rounded-lg p-1 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524] transition-colors"
             title="取消选择"
           >
             <X className="size-3.5" />
@@ -1513,41 +1513,41 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-zinc-200 shadow-xl">
+        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-[#E5E0D6] shadow-claude-dialog">
           {activeMember && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
-              <div className="px-6 pt-5 pb-4 border-b border-zinc-100 flex items-start justify-between gap-3 shrink-0">
+              <div className="px-6 pt-5 pb-4 border-b border-[#ECE7DE] flex items-start justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center font-bold text-[14px] shrink-0">
+                  <div className="size-9 rounded-full bg-[#F5F3EE] text-[#292524] flex items-center justify-center font-semibold text-sm shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-[18px] font-semibold text-zinc-950 truncate">
+                      <SheetTitle className="text-lg font-semibold text-[#1C1917] truncate">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
-                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-zinc-100 text-zinc-700 shrink-0">
+                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
                         {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "主管" : "组员"}
                       </span>
                       {activeMember.membership_status === "archived" && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-zinc-100 text-zinc-400 shrink-0">
+                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#78716C] shrink-0">
                           已归档
                         </span>
                       )}
                     </div>
-                    <SheetDescription className="text-[13px] text-zinc-600 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <SheetDescription className="text-[13px] text-[#292524] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       {activeMember.team_name && <span>{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
-                          {activeMember.team_name && <span className="text-zinc-300">·</span>}
+                          {activeMember.team_name && <span className="text-[#E5E0D6]">·</span>}
                           <span className="truncate">{activeMember.email}</span>
                         </>
                       )}
                       {activeMember.last_sign_in_at && (
                         <>
-                          <span className="text-zinc-300">|</span>
-                          <span className="text-[12px] text-zinc-500">
+                          <span className="text-[#E5E0D6]">|</span>
+                          <span className="text-[12px] text-[#78716C]">
                             上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
                           </span>
                         </>
@@ -1565,7 +1565,7 @@ export function AdminModulesContentV3({
                         setIsAiDialogOpen(true);
                         if (!aiSuggestion) handleFetchAiSuggestion();
                       }}
-                      className="h-7 px-2.5 text-[13px] font-medium text-zinc-700 hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
+                      className="h-7 px-2.5 text-[13px] font-medium text-[#292524] hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
                     >
                       <Sparkles className="size-3.5 text-[#D97757]" />
                       AI 诊断
@@ -1577,7 +1577,7 @@ export function AdminModulesContentV3({
                       setActiveMemberId(null);
                       setAiSuggestion(null);
                     }}
-                    className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                    className="p-1.5 text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] rounded-lg transition-colors"
                   >
                     <X className="size-4" />
                   </button>
@@ -1644,14 +1644,14 @@ export function AdminModulesContentV3({
 
                 {/* 2. 账户与团队管理（轻量排版，去除大卡片套娃） */}
                 {activeMember.membership_status !== "archived" && (
-                  <div className="pt-6 border-t border-zinc-100 space-y-3">
-                    <h4 className="text-[14px] font-medium text-zinc-900 mb-2">账户与团队管理</h4>
+                  <div className="pt-6 border-t border-[#ECE7DE] space-y-3">
+                    <h4 className="text-[14px] font-medium text-[#1C1917] mb-2">账户与团队管理</h4>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
-                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                      <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                         <div className="flex items-center gap-2">
-                          <Building2 className="size-3.5 text-zinc-400 shrink-0" />
-                          <span className="text-[13px] text-zinc-800">所属团队</span>
+                          <Building2 className="size-3.5 text-[#78716C] shrink-0" />
+                          <span className="text-[13px] text-[#292524]">所属团队</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           {canEditTeamMembers ? (
@@ -1664,7 +1664,7 @@ export function AdminModulesContentV3({
                                 }
                               }}
                             >
-                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-zinc-100 min-w-[110px] text-right font-normal">
+                              <SelectTrigger className="h-7 text-[13px] border-transparent bg-transparent hover:bg-[#F5F3EE] min-w-[110px] text-right font-normal">
                                 <SelectValue placeholder="未分配团队">
                                   {activeMember.team_name || (activeMember.team_id ? localTeams.find(t => t.id === activeMember.team_id)?.name : "未分配团队")}
                                 </SelectValue>
@@ -1679,7 +1679,7 @@ export function AdminModulesContentV3({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <span className="text-[13px] text-zinc-500">
+                            <span className="text-[13px] text-[#78716C]">
                               {activeMember.team_name || "未分配团队"}
                             </span>
                           )}
@@ -1688,10 +1688,10 @@ export function AdminModulesContentV3({
 
                       {/* 系统角色切换 */}
                       {activeMember.role !== "owner" && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                           <div className="flex items-center gap-2">
-                            <Settings className="size-3.5 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800">
+                            <Settings className="size-3.5 text-[#78716C] shrink-0" />
+                            <span className="text-[13px] text-[#292524]">
                               {activeMember.role === "admin" ? "降为普通组员" : "提升为管理员"}
                             </span>
                           </div>
@@ -1699,12 +1699,12 @@ export function AdminModulesContentV3({
                             <button
                               type="button"
                               onClick={() => handleToggleRole(activeMember)}
-                              className="text-[13px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                              className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors"
                             >
                               切换身份
                             </button>
                           ) : (
-                            <span className="text-[13px] text-zinc-400">
+                            <span className="text-[13px] text-[#78716C]">
                               {activeMember.role === "admin" ? "管理员" : "普通组员"}
                             </span>
                           )}
@@ -1713,10 +1713,10 @@ export function AdminModulesContentV3({
 
                       {/* 重置密码 */}
                       {canManageMembers && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                           <div className="flex items-center gap-2">
-                            <KeyRound className="size-3.5 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800">重置账户密码</span>
+                            <KeyRound className="size-3.5 text-[#78716C] shrink-0" />
+                            <span className="text-[13px] text-[#292524]">重置账户密码</span>
                           </div>
                           <button
                             type="button"
@@ -1724,7 +1724,7 @@ export function AdminModulesContentV3({
                               setPasswordResetTarget(activeMember);
                               setNewPassword("");
                             }}
-                            className="text-[13px] text-zinc-400 hover:text-zinc-900 transition-colors"
+                            className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors"
                           >
                             快捷重置
                           </button>
@@ -1733,15 +1733,15 @@ export function AdminModulesContentV3({
 
                       {/* 日报豁免与请假 */}
                       {canManageFulfillment && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                           <div className="flex items-center gap-2">
-                            <Clock className="size-3.5 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800">日报豁免与请假</span>
+                            <Clock className="size-3.5 text-[#78716C] shrink-0" />
+                            <span className="text-[13px] text-[#292524]">日报豁免与请假</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => setIsExemptionDialogOpen(true)}
-                            className="text-[13px] text-zinc-400 hover:text-zinc-900 transition-colors flex items-center gap-1"
+                            className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors flex items-center gap-1"
                           >
                             <span>
                               {activeMember.exempt_type === "permanent"
@@ -1750,22 +1750,22 @@ export function AdminModulesContentV3({
                                 ? `${activeMember.exemption_category === "leave" ? "请假中" : "免交中"}`
                                 : "未生效"}
                             </span>
-                            <span className="text-zinc-300">›</span>
+                            <span className="text-[#E5E0D6]">›</span>
                           </button>
                         </div>
                       )}
 
                       {/* 移出团队 */}
                       {canEditTeamMembers && activeMember.team_id && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-zinc-50 transition-colors">
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
                           <div className="flex items-center gap-2">
-                            <UserMinus className="size-3.5 text-zinc-400 shrink-0" />
-                            <span className="text-[13px] text-zinc-800">移出团队</span>
+                            <UserMinus className="size-3.5 text-[#78716C] shrink-0" />
+                            <span className="text-[13px] text-[#292524]">移出团队</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleTransferMemberTeam(activeMember.id, null)}
-                            className="text-[13px] text-zinc-400 hover:text-red-600 transition-colors"
+                            className="text-[13px] text-[#78716C] hover:text-[#C0685C] transition-colors"
                           >
                             保留账号
                           </button>
@@ -1774,10 +1774,10 @@ export function AdminModulesContentV3({
 
                       {/* 归档账号 */}
                       {isCompanyOwner && activeMember.role !== "owner" && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-red-50/50 transition-colors">
+                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#C0685C]/5 transition-colors">
                           <div className="flex items-center gap-2">
-                            <Trash2 className="size-3.5 text-red-500 shrink-0" />
-                            <span className="text-[13px] text-red-600">归档账号</span>
+                            <Trash2 className="size-3.5 text-[#C0685C] shrink-0" />
+                            <span className="text-[13px] text-[#C0685C]">归档账号</span>
                           </div>
                           <button
                             type="button"
@@ -1785,7 +1785,7 @@ export function AdminModulesContentV3({
                               setArchiveTarget(activeMember);
                               setArchiveReason("");
                             }}
-                            className="text-[13px] text-red-500 hover:text-red-700 font-medium transition-colors"
+                            className="text-[13px] text-[#C0685C] hover:text-[#C0685C]/80 font-medium transition-colors"
                           >
                             高风险操作
                           </button>
@@ -1798,7 +1798,7 @@ export function AdminModulesContentV3({
 
               {/* 抽屉底部保存栏 */}
               {permissionManagerCapabilities.canEditPermissions && activeMember.role !== "owner" && activeMember.membership_status !== "archived" && (
-                <div className="px-6 py-3 border-t border-zinc-200/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
+                <div className="px-6 py-3 border-t border-[#E5E0D6]/80 bg-white/95 backdrop-blur flex items-center justify-between shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -1809,7 +1809,7 @@ export function AdminModulesContentV3({
                     disabled={!isPermissionsDirty || isPending}
                     className={cn(
                       "text-[12px] font-medium transition-colors",
-                      isPermissionsDirty ? "text-zinc-600 hover:text-zinc-950" : "text-zinc-300 cursor-not-allowed"
+                      isPermissionsDirty ? "text-[#292524] hover:text-[#1C1917]" : "text-[#E5E0D6] cursor-not-allowed"
                     )}
                   >
                     取消修改
@@ -1824,7 +1824,7 @@ export function AdminModulesContentV3({
                       "text-[12px] h-8 px-4",
                       isPermissionsDirty
                         ? "bg-[#D97757] hover:bg-[#C96442]"
-                        : "bg-zinc-100 text-zinc-400 hover:bg-zinc-100 cursor-not-allowed shadow-none"
+                        : "bg-[#F5F3EE] text-[#78716C] hover:bg-[#F5F3EE] cursor-not-allowed shadow-none"
                     )}
                   >
                     {isPending ? "保存中..." : isPermissionsDirty ? "保存权限设置" : "已是最新"}
@@ -1845,7 +1845,7 @@ export function AdminModulesContentV3({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="text-[16px] font-medium text-zinc-900">AI 成员管理诊断</DialogTitle>
+                <DialogTitle className="text-base font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
               </div>
               <Button
                 variant="ghost"
@@ -1858,21 +1858,21 @@ export function AdminModulesContentV3({
                 刷新分析
               </Button>
             </div>
-            <DialogDescription className="text-[13px] text-zinc-600">
+            <DialogDescription className="text-[13px] text-[#292524]">
               综合分析近期填报周期、异常断流及个人表现
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             {aiSuggestion?.loading && (
-              <div className="py-8 text-center text-[13px] text-zinc-600 space-y-2 bg-zinc-50 rounded-xl">
+              <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FBF9F5] rounded-xl">
                 <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
                 <p>正在结合近期填报、播放量与异常数据生成诊断...</p>
               </div>
             )}
 
             {aiSuggestion?.error && (
-              <div className="p-3 bg-red-50 text-red-700 rounded-xl text-[13px] flex items-center gap-2">
+              <div className="p-3 bg-[#C0685C]/10 text-[#C0685C] rounded-xl text-[13px] flex items-center gap-2">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{aiSuggestion.error}</span>
               </div>
@@ -1880,7 +1880,7 @@ export function AdminModulesContentV3({
 
             {aiSuggestion?.suggestions && !aiSuggestion.loading && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 p-3 bg-zinc-50 rounded-xl">
+                <div className="flex items-center gap-2 p-3 bg-[#FBF9F5] rounded-xl">
                   <Badge
                     variant={
                       aiSuggestion.status === "critical"
@@ -1896,19 +1896,19 @@ export function AdminModulesContentV3({
                       ? "建议关注"
                       : "状态正常"}
                   </Badge>
-                  <p className="text-[13px] font-medium text-zinc-800">{aiSuggestion.summary}</p>
+                  <p className="font-serif text-sm font-normal text-[#292524] text-pretty leading-relaxed">{aiSuggestion.summary}</p>
                 </div>
 
                 {aiSuggestion.suggestions.length > 0 && (
-                  <div className="divide-y divide-zinc-100 rounded-xl border border-zinc-100 bg-white p-2">
+                  <div className="divide-y divide-[#ECE7DE] rounded-xl border border-[#ECE7DE] bg-white p-2">
                     {aiSuggestion.suggestions.map((s, idx) => {
                       const key = `${s.label}-${idx}`;
                       const isBusy = executingAiKey === key;
                       return (
                         <div key={idx} className="py-2.5 px-2 flex items-start justify-between gap-2">
                           <div className="text-[13px] space-y-0.5">
-                            <p className="font-medium text-zinc-900">{s.label}</p>
-                            <p className="text-zinc-500 text-[12px]">{s.description}</p>
+                            <p className="font-medium text-[#1C1917]">{s.label}</p>
+                            <p className="text-[#78716C] text-[12px]">{s.description}</p>
                           </div>
                           <div className="shrink-0 flex items-center gap-1">
                             {s.action.type === "navigate" && (
@@ -1950,22 +1950,22 @@ export function AdminModulesContentV3({
       <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
         <DialogContent className="max-w-[440px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-medium text-zinc-900">设置日报豁免与请假</DialogTitle>
-            <DialogDescription className="text-[13px] text-zinc-600">
+            <DialogTitle className="text-base font-medium text-[#1C1917]">设置日报豁免与请假</DialogTitle>
+            <DialogDescription className="text-[13px] text-[#292524]">
               设置免交或请假区间，系统将不会产生催发与缺发预警
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-3 gap-1 bg-zinc-100 p-1 rounded-xl">
+            <div className="grid grid-cols-3 gap-1 bg-[#F5F3EE] p-1 rounded-xl">
               <button
                 type="button"
                 onClick={() => setExemptionMode("none")}
                 className={cn(
-                  "py-1.5 text-[12px] font-medium rounded-lg transition-colors",
+                  "py-1.5 text-[12px] font-medium rounded-xl transition-colors",
                   exemptionMode === "none"
-                    ? "bg-white text-zinc-950 shadow-xs"
-                    : "text-zinc-600 hover:text-zinc-950"
+                    ? "bg-white text-[#1C1917] shadow-xs"
+                    : "text-[#292524] hover:text-[#1C1917]"
                 )}
               >
                 正常发布
@@ -1974,10 +1974,10 @@ export function AdminModulesContentV3({
                 type="button"
                 onClick={() => setExemptionMode("range")}
                 className={cn(
-                  "py-1.5 text-[12px] font-medium rounded-lg transition-colors",
+                  "py-1.5 text-[12px] font-medium rounded-xl transition-colors",
                   exemptionMode === "range"
-                    ? "bg-white text-zinc-950 shadow-xs"
-                    : "text-zinc-600 hover:text-zinc-950"
+                    ? "bg-white text-[#1C1917] shadow-xs"
+                    : "text-[#292524] hover:text-[#1C1917]"
                 )}
               >
                 区间请假
@@ -1986,10 +1986,10 @@ export function AdminModulesContentV3({
                 type="button"
                 onClick={() => setExemptionMode("permanent")}
                 className={cn(
-                  "py-1.5 text-[12px] font-medium rounded-lg transition-colors",
+                  "py-1.5 text-[12px] font-medium rounded-xl transition-colors",
                   exemptionMode === "permanent"
-                    ? "bg-white text-zinc-950 shadow-xs"
-                    : "text-zinc-600 hover:text-zinc-950"
+                    ? "bg-white text-[#1C1917] shadow-xs"
+                    : "text-[#292524] hover:text-[#1C1917]"
                 )}
               >
                 永久豁免
@@ -1999,11 +1999,11 @@ export function AdminModulesContentV3({
             {exemptionMode !== "none" && (
               <div className="space-y-3 pt-1">
                 <div>
-                  <label className="text-[13px] font-medium text-zinc-800 block mb-1.5">
+                  <label className="text-[13px] font-medium text-[#292524] block mb-1.5">
                     豁免性质
                   </label>
                   <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 text-[13px] text-zinc-700 cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-[13px] text-[#292524] cursor-pointer">
                       <input
                         type="radio"
                         name="dialogExemptionCategory"
@@ -2013,7 +2013,7 @@ export function AdminModulesContentV3({
                       />
                       <span>请假</span>
                     </label>
-                    <label className="flex items-center gap-1.5 text-[13px] text-zinc-700 cursor-pointer">
+                    <label className="flex items-center gap-1.5 text-[13px] text-[#292524] cursor-pointer">
                       <input
                         type="radio"
                         name="dialogExemptionCategory"
@@ -2029,7 +2029,7 @@ export function AdminModulesContentV3({
                 {exemptionMode === "range" && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[13px] text-zinc-600 block mb-1">开始日期</label>
+                      <label className="text-[13px] text-[#292524] block mb-1">开始日期</label>
                       <Input
                         type="date"
                         className="h-8.5 text-[12px]"
@@ -2038,7 +2038,7 @@ export function AdminModulesContentV3({
                       />
                     </div>
                     <div>
-                      <label className="text-[13px] text-zinc-600 block mb-1">结束日期</label>
+                      <label className="text-[13px] text-[#292524] block mb-1">结束日期</label>
                       <Input
                         type="date"
                         className="h-8.5 text-[12px]"
@@ -2050,7 +2050,7 @@ export function AdminModulesContentV3({
                 )}
 
                 <div>
-                  <label className="text-[13px] text-zinc-600 block mb-1">原因说明</label>
+                  <label className="text-[13px] text-[#292524] block mb-1">原因说明</label>
                   <Input
                     type="text"
                     placeholder="例如：事假、外出培训、设备调试"
@@ -2092,8 +2092,8 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-medium text-zinc-900">团队架构管理</DialogTitle>
-            <DialogDescription className="text-[13px] text-zinc-600">
+            <DialogTitle className="text-base font-medium text-[#1C1917]">团队架构管理</DialogTitle>
+            <DialogDescription className="text-[13px] text-[#292524]">
               新建团队或维护现有团队架构
             </DialogDescription>
           </DialogHeader>
@@ -2101,7 +2101,7 @@ export function AdminModulesContentV3({
           <div className="space-y-4 py-2">
             {canManageCompany && (
               <div className="space-y-1.5">
-                <Label htmlFor="v3-team-name" className="text-[13px] font-medium text-zinc-800">
+                <Label htmlFor="v3-team-name" className="text-[13px] font-medium text-[#292524]">
                   新建团队
                 </Label>
                 <div className="flex gap-2">
@@ -2115,7 +2115,7 @@ export function AdminModulesContentV3({
                   <Button
                     onClick={handleCreateTeam}
                     disabled={isPending || !newTeamName.trim()}
-                    className="h-8.5 px-3.5 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl text-[12px] shrink-0"
+                    className="h-8.5 px-3.5 bg-[#1C1917] text-white hover:bg-[#292524] rounded-xl text-[12px] shrink-0"
                   >
                     <Plus className="size-3.5 mr-1" />
                     创建
@@ -2125,23 +2125,23 @@ export function AdminModulesContentV3({
             )}
 
             <div className="space-y-2 max-h-[260px] overflow-y-auto pt-2">
-              <span className="text-[13px] font-medium text-zinc-500 uppercase tracking-wider">
+              <span className="text-[13px] font-medium text-[#78716C] uppercase tracking-wider">
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <p className="text-[13px] text-zinc-500 py-3 text-center">暂无团队记录</p>
+                <p className="text-[13px] text-[#78716C] py-3 text-center">暂无团队记录</p>
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;
                   return (
                     <div
                       key={team.id}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-zinc-200/70 bg-zinc-50/50"
+                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <Building2 className="size-3.5 text-zinc-400 shrink-0" />
-                        <span className="text-[13px] font-medium text-zinc-800 truncate">{team.name}</span>
-                        <span className="text-[12px] text-zinc-500 bg-white px-2 py-0.5 rounded-full border border-zinc-200/50 tabular-nums">
+                        <Building2 className="size-3.5 text-[#78716C] shrink-0" />
+                        <span className="text-[13px] font-medium text-[#292524] truncate">{team.name}</span>
+                        <span className="text-[12px] text-[#78716C] bg-white px-2 py-0.5 rounded-full border border-[#E5E0D6]/50 tabular-nums">
                           {count} 人
                         </span>
                       </div>
@@ -2150,7 +2150,7 @@ export function AdminModulesContentV3({
                           variant="ghost"
                           size="sm"
                           onClick={() => setDeleteTeamTarget(team)}
-                          className="h-7 px-2 text-[12px] text-zinc-400 hover:text-red-600 rounded-lg shrink-0"
+                          className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] rounded-lg shrink-0"
                           title="删除空团队"
                         >
                           <Trash2 className="size-3.5" />
@@ -2210,8 +2210,8 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <div className="py-3 space-y-1.5">
-            <label className="text-[13px] font-medium text-zinc-800 block">
-              归档原因说明 <span className="text-red-500">*</span>
+            <label className="text-[13px] font-medium text-[#292524] block">
+              归档原因说明 <span className="text-[#C0685C]">*</span>
             </label>
             <Input
               placeholder="必填，例如：离职、转岗、实习结束"
@@ -2260,8 +2260,8 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           <div className="py-3 space-y-1.5">
-            <label className="text-[13px] font-medium text-zinc-800 block">
-              统一归档原因说明 <span className="text-red-500">*</span>
+            <label className="text-[13px] font-medium text-[#292524] block">
+              统一归档原因说明 <span className="text-[#C0685C]">*</span>
             </label>
             <Input
               placeholder="必填，例如：业务调整批量归档、实习期满离职"
@@ -2324,7 +2324,7 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
           <div className="py-3 space-y-1.5">
-            <label className="text-[13px] font-medium text-zinc-800 block">新密码</label>
+            <label className="text-[13px] font-medium text-[#292524] block">新密码</label>
             <Input
               type="text"
               placeholder="输入至少 6 位的新密码"
@@ -2371,7 +2371,7 @@ export function AdminModulesContentV3({
           </DialogHeader>
 
           {toolConfirmationModal?.preview && (
-            <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200/60 text-[13px] space-y-1 text-zinc-700 max-h-48 overflow-y-auto">
+            <div className="bg-[#FBF9F5] p-3 rounded-xl border border-[#E5E0D6]/60 text-[13px] space-y-1 text-[#292524] max-h-48 overflow-y-auto">
               <pre className="whitespace-pre-wrap font-sans">
                 {JSON.stringify(toolConfirmationModal.preview, null, 2)}
               </pre>

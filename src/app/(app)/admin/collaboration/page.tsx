@@ -42,24 +42,24 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
     : "talents";
 
   return (
-    <AdminWorkspaceLayout indexItems={[]} width="wide">
-      <div className="space-y-4">
-        <div>
-          <p className="text-[12px] tracking-[0.12em] text-zinc-500">协作管理</p>
-          <h1 className="mt-1 text-[24px] font-semibold tracking-tight text-zinc-900">协作管理</h1>
-        </div>
-        <Suspense
-          key={`${year}-${month}-${tab}`}
-          fallback={<CollaborationLoading />}
-        >
-          <CollaborationDataContainer
-            year={year}
-            month={month}
-            tab={tab}
-            isOwnerOrTeamAdmin={permissionInfo.permissions.view_analytics === true}
-          />
-        </Suspense>
-      </div>
+    <AdminWorkspaceLayout
+      eyebrow="协作管理"
+      title="协作管理"
+      description="跨角色协同效率与创作者协作复盘"
+      indexItems={[]}
+      width="wide"
+    >
+      <Suspense
+        key={`${year}-${month}-${tab}`}
+        fallback={<CollaborationLoading />}
+      >
+        <CollaborationDataContainer
+          year={year}
+          month={month}
+          tab={tab}
+          isOwnerOrTeamAdmin={permissionInfo.permissions.view_analytics === true}
+        />
+      </Suspense>
     </AdminWorkspaceLayout>
   );
 }

@@ -175,7 +175,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
           <div className="grid gap-4 md:grid-cols-2">
             {METRIC_FIELDS.map((field) => (
               <div key={field.key} className="space-y-2">
-                <Label htmlFor={`patch-${field.key}`} className="text-[12px] text-zinc-500">{field.label}</Label>
+                <Label htmlFor={`patch-${field.key}`} className="text-[12px] text-[#78716C]">{field.label}</Label>
                 <Input
                   id={`patch-${field.key}`}
                   type="number"
@@ -184,7 +184,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
                   value={form[field.key]}
                   onChange={(event) => updateField(field.key, event.target.value)}
                   disabled={isPending}
-                  className="h-9 rounded-xl border-zinc-200 bg-zinc-50 text-[13px] text-zinc-700 focus:border-zinc-500 focus:shadow-sm focus:ring-1 focus:ring-zinc-900/5"
+                  className="h-9 rounded-xl bg-[#FBF9F5]"
                 />
               </div>
             ))}

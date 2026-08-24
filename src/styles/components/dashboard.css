@@ -469,7 +469,7 @@
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
     background: #FFFFFF;
-    border-color: #E7E5E4;
+    border-color: #E5E0D6;
     box-shadow: none;
     transition:
       transform var(--duration-fast) var(--ease-out),
@@ -487,7 +487,7 @@
     border-radius: var(--radius-card);
     border: 1px solid color-mix(in srgb, var(--color-border) 65%, white);
     background: #FFFFFF;
-    border-color: #E7E5E4;
+    border-color: #E5E0D6;
     box-shadow: none;
   }
 

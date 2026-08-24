@@ -110,14 +110,14 @@ type ExperienceType =
   | "conversion_issue";
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
-  normal: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  normal: "border-[#E5E0D6] bg-[#FBF9F5] text-[#6FAA7D]",
   abnormal: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
-  正常: "border-zinc-200 bg-zinc-50 text-[#6FAA7D]",
+  正常: "border-[#E5E0D6] bg-[#FBF9F5] text-[#6FAA7D]",
   删稿: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   限流: "border-[#C9604D]/30 bg-[#C9604D]/5 text-[#C9604D]",
   投流: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#C47A2B]",
   活动干预: "border-[#D99E55]/30 bg-[#D99E55]/5 text-[#C47A2B]",
-  未满24h: "border-zinc-200 bg-zinc-100 text-zinc-500",
+  未满24h: "border-[#E5E0D6] bg-[#F5F3EE] text-[#78716C]",
 };
 
 export function ContentDiagnosisWorkbench({
@@ -775,21 +775,21 @@ export function ContentDiagnosisWorkbench({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex flex-col h-full bg-zinc-50/70 rounded-2xl border border-zinc-200 overflow-hidden"
+      className="flex flex-col h-full bg-[#FBF9F5]/70 rounded-2xl border border-[#E5E0D6] overflow-hidden"
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E0D6] bg-white px-4 py-3 sm:px-6">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="group active:scale-[0.96] rounded-xl hover:bg-zinc-100 gap-1 transition-transform text-[12px] text-zinc-600 font-medium"
+            className="group active:scale-[0.985] active:duration-75 rounded-xl hover:bg-[#F5F3EE] gap-1 transition-transform text-[12px] text-[#292524] font-medium"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
             <span className="hidden sm:inline">返回列表</span>
           </Button>
 
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
+          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block" />
 
           {/* 队列展开/收起开关 */}
           <Button
@@ -798,38 +798,38 @@ export function ContentDiagnosisWorkbench({
             aria-pressed={isQueueOpen}
             className={`h-8 rounded-lg text-[12px] font-medium transition-all gap-1.5 ${
               isQueueOpen
-                ? "bg-zinc-900 text-white hover:bg-zinc-800 shadow-2xs"
-                : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-950"
+                ? "bg-[#1C1917] text-white hover:bg-[#292524] shadow-2xs"
+                : "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917]"
             }`}
           >
             <Layers className="size-3.5" />
             <span>{isQueueOpen ? "收起队列" : "展开队列"}</span>
             <span
-              className={`text-[11px] tabular-nums font-normal ${isQueueOpen ? "text-zinc-300" : "text-zinc-400"}`}
+              className={`text-[11px] tabular-nums font-normal ${isQueueOpen ? "text-[#E5E0D6]" : "text-[#78716C]"}`}
             >
               ({reviewQueue.length})
             </span>
           </Button>
 
           {/* 流水线前进后退器 */}
-          <div className="flex items-center rounded-lg bg-zinc-100/70 p-0.5">
+          <div className="flex items-center rounded-lg bg-[#F5F3EE]/70 p-0.5">
             <button
               type="button"
               onClick={handlePrev}
               disabled={!hasPrev}
               title="上一条 (K 或 ↑)"
-              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-white hover:text-zinc-950 hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-700 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-[#292524] transition-colors hover:bg-white hover:text-[#1C1917] hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#292524] disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
             >
               <ChevronLeft className="size-3.5 mr-0.5" />
               <span>上一条</span>
             </button>
 
-            <div className="flex items-center px-2 text-[11.5px] font-medium text-zinc-500 select-none">
-              <span className="tabular-nums font-semibold text-zinc-900">
-                {currentIndex >= 0 ? currentIndex + 1 : "-"}
+            <div className="flex items-center px-2 text-[11.5px] font-medium text-[#78716C] select-none">
+              <span className="tabular-nums font-semibold text-[#1C1917]">
+                {currentIndex >= 0 ? currentIndex + 1 : "—"}
               </span>
-              <span className="mx-1 text-zinc-300">/</span>
-              <span className="tabular-nums font-medium text-zinc-600">
+              <span className="mx-1 text-[#E5E0D6]">/</span>
+              <span className="tabular-nums font-medium text-[#292524]">
                 {reviewQueue.length}
               </span>
             </div>
@@ -844,7 +844,7 @@ export function ContentDiagnosisWorkbench({
                   ? "已到队尾"
                   : "下一条 (J 或 ↓)"
               }
-              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-zinc-700 transition-colors hover:bg-white hover:text-zinc-950 hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-700 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+              className="inline-flex h-7 items-center justify-center rounded-md px-2 text-[12px] font-medium text-[#292524] transition-colors hover:bg-white hover:text-[#1C1917] hover:shadow-2xs disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#292524] disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
             >
               <span>
                 {currentIndex === reviewQueue.length - 1 &&
@@ -861,12 +861,12 @@ export function ContentDiagnosisWorkbench({
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <div className="text-right hidden md:block">
             <p
-              className="max-w-xs lg:max-w-md truncate text-[13px] font-semibold text-zinc-900 leading-tight"
+              className="max-w-xs lg:max-w-md truncate text-[13px] font-semibold text-[#1C1917] leading-tight"
               title={video?.video_title || "未命名视频"}
             >
               {video?.video_title || "视频复盘归因舱"}
             </p>
-            <p className="mt-0.5 text-[11px] text-zinc-500">
+            <p className="mt-0.5 text-[11px] text-[#78716C]">
               {video?.profiles?.name || "未知"} ·{" "}
               {video?.accounts?.name || "未知"}
             </p>
@@ -907,7 +907,7 @@ export function ContentDiagnosisWorkbench({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setIsQueueOpen(false)}
-                className="fixed inset-0 z-40 bg-zinc-950/20 backdrop-blur-[1px] 2xl:hidden"
+                className="fixed inset-0 z-40 bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
               />
 
               <motion.aside
@@ -915,26 +915,26 @@ export function ContentDiagnosisWorkbench({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 280 }}
-                className="fixed inset-y-0 left-0 z-50 flex w-84 max-w-[85vw] flex-col border-r border-zinc-200 bg-white shadow-2xl 2xl:hidden"
+                className="fixed inset-y-0 left-0 z-50 flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
               >
-                <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 bg-zinc-50/80">
+                <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-semibold text-zinc-900">
+                    <span className="text-[13px] font-semibold text-[#1C1917]">
                       今日待盘队列
                     </span>
-                    <span className="rounded-md bg-zinc-200/70 px-1.5 py-0.5 text-[11px] font-medium text-zinc-700 tabular-nums">
+                    <span className="rounded-md bg-[#E5E0D6]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
                       {reviewQueue.length}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setIsQueueOpen(false)}
-                    className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-700 transition-colors"
+                    className="rounded-lg p-1 text-[#78716C] hover:bg-[#E5E0D6] hover:text-[#292524] transition-colors"
                   >
                     <X className="size-4" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 p-1.5">
+                <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-1.5">
                   {reviewQueue.map((item, idx) => {
                     const isSelected = item.id === video?.id;
                     const snap = snapshotMap.get(item.id);
@@ -954,22 +954,22 @@ export function ContentDiagnosisWorkbench({
                         }}
                         className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
                           isSelected
-                            ? "bg-zinc-100 text-zinc-950 font-medium border-l-2 border-zinc-900 shadow-2xs"
-                            : "hover:bg-zinc-50 text-zinc-700 border-l-2 border-transparent"
+                            ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
+                            : "hover:bg-[#FBF9F5] text-[#292524] border-l-2 border-transparent"
                         }`}
                       >
                         <span
                           className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
                             isSelected
-                              ? "bg-zinc-900 text-white"
-                              : "bg-zinc-100 text-zinc-600"
+                              ? "bg-[#1C1917] text-white"
+                              : "bg-[#F5F3EE] text-[#292524]"
                           }`}
                         >
                           {idx + 1}
                         </span>
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex items-center justify-between gap-1">
-                            <span className="truncate text-[12px] font-medium text-zinc-900">
+                            <span className="truncate text-[12px] font-medium text-[#1C1917]">
                               {item.profiles?.name || "未知"} ·{" "}
                               {item.accounts?.name || "未知"}
                             </span>
@@ -995,7 +995,7 @@ export function ContentDiagnosisWorkbench({
                             {warnings.map((w, wIdx) => (
                               <span
                                 key={wIdx}
-                                className="rounded bg-zinc-100 px-1 py-0.2 text-[10px] text-zinc-500"
+                                className="rounded bg-[#F5F3EE] px-1 py-0.2 text-[10px] text-[#78716C]"
                               >
                                 {w}
                               </span>
@@ -1013,21 +1013,21 @@ export function ContentDiagnosisWorkbench({
 
         {/* 视口 ≥ 1536px: 停靠侧边栏 (push layout) */}
         {isQueueOpen && (
-          <aside className="hidden 2xl:flex w-80 shrink-0 flex-col border-r border-zinc-200 bg-white h-full overflow-hidden shadow-2xs">
-            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 bg-zinc-50/80">
+          <aside className="hidden 2xl:flex w-80 shrink-0 flex-col border-r border-[#E5E0D6] bg-white h-full overflow-hidden shadow-2xs">
+            <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-semibold text-zinc-900">
+                <span className="text-[13px] font-semibold text-[#1C1917]">
                   今日待盘队列
                 </span>
-                <span className="rounded-md bg-zinc-200/70 px-1.5 py-0.5 text-[11px] font-medium text-zinc-700 tabular-nums">
+                <span className="rounded-md bg-[#E5E0D6]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
                   {reviewQueue.length}
                 </span>
               </div>
-              <span className="text-[11px] text-zinc-400 font-medium">
+              <span className="text-[11px] text-[#78716C] font-medium">
                 最差优先
               </span>
             </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 p-2">
+            <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-2">
               {reviewQueue.map((item, idx) => {
                 const isSelected = item.id === video?.id;
                 const snap = snapshotMap.get(item.id);
@@ -1044,22 +1044,22 @@ export function ContentDiagnosisWorkbench({
                     onClick={() => onVideoSelect?.(item.id)}
                     className={`group flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all min-h-[58px] ${
                       isSelected
-                        ? "bg-zinc-100 text-zinc-950 font-medium border-l-2 border-zinc-900 shadow-2xs"
-                        : "hover:bg-zinc-50 text-zinc-700 border-l-2 border-transparent"
+                        ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-l-2 border-[#1C1917] shadow-2xs"
+                        : "hover:bg-[#FBF9F5] text-[#292524] border-l-2 border-transparent"
                     }`}
                   >
                     <span
                       className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded text-[11px] tabular-nums font-semibold ${
                         isSelected
-                          ? "bg-zinc-900 text-white"
-                          : "bg-zinc-100 text-zinc-600"
+                          ? "bg-[#1C1917] text-white"
+                          : "bg-[#F5F3EE] text-[#292524]"
                       }`}
                     >
                       {idx + 1}
                     </span>
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center justify-between gap-1">
-                        <span className="truncate text-[12px] font-medium text-zinc-900">
+                        <span className="truncate text-[12px] font-medium text-[#1C1917]">
                           {item.profiles?.name || "未知"} ·{" "}
                           {item.accounts?.name || "未知"}
                         </span>
@@ -1085,7 +1085,7 @@ export function ContentDiagnosisWorkbench({
                         {warnings.map((w, wIdx) => (
                           <span
                             key={wIdx}
-                            className="rounded bg-zinc-100 px-1 py-0.2 text-[10px] text-zinc-500"
+                            className="rounded bg-[#F5F3EE] px-1 py-0.2 text-[10px] text-[#78716C]"
                           >
                             {w}
                           </span>
@@ -1100,16 +1100,16 @@ export function ContentDiagnosisWorkbench({
         )}
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-10 overflow-hidden min-h-0 min-w-0">
-          <div className="lg:col-span-6 flex flex-col border-r border-zinc-200 bg-white overflow-y-auto p-6 space-y-6">
+          <div className="lg:col-span-6 flex flex-col border-r border-[#E5E0D6] bg-white overflow-y-auto p-6 space-y-6">
             {/* 一、归因诊断与多参照系对比 */}
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
-                <h2 className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.08em] text-zinc-900">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
+                <h2 className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.08em] text-[#1C1917]">
                   <span className="size-2 rounded-full bg-[#43718E]" />
                   一、归因诊断与多参照系对比
                 </h2>
                 {/* 多选 Tag 控制栏 */}
-                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-zinc-100/70 p-1">
+                <div className="flex flex-wrap items-center gap-1 rounded-lg bg-[#F5F3EE]/70 p-1">
                   {(
                     [
                       { key: "self", label: "比自己近3条" },
@@ -1126,15 +1126,15 @@ export function ContentDiagnosisWorkbench({
                         onClick={() => toggleRef(key)}
                         className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium transition-all cursor-pointer ${
                           active
-                            ? "bg-white text-zinc-950 shadow-2xs"
-                            : "text-zinc-500 hover:text-zinc-800"
+                            ? "bg-white text-[#1C1917] shadow-2xs"
+                            : "text-[#78716C] hover:text-[#292524]"
                         }`}
                       >
                         <span
                           className={`size-3 rounded border flex items-center justify-center transition-colors ${
                             active
-                              ? "border-zinc-900 bg-zinc-900 text-white"
-                              : "border-zinc-300 bg-white"
+                              ? "border-[#1C1917] bg-[#1C1917] text-white"
+                              : "border-[#E5E0D6] bg-white"
                           }`}
                         >
                           {active && <Check className="size-2.5 stroke-[3]" />}
@@ -1147,15 +1147,15 @@ export function ContentDiagnosisWorkbench({
               </div>
 
               {selectedRefs.has("user") && profiles.length > 0 && (
-                <div className="flex items-center gap-2 bg-zinc-100/70 rounded-lg p-2.5 animate-fade-in">
-                  <span className="text-[11px] text-zinc-500 font-medium">
+                <div className="flex items-center gap-2 bg-[#F5F3EE]/70 rounded-lg p-2.5 animate-fade-in">
+                  <span className="text-[11px] text-[#78716C] font-medium">
                     选择指定对比人:
                   </span>
                   <Select
                     value={selectedRefUserId || undefined}
                     onValueChange={(val) => setSelectedRefUserId(val)}
                   >
-                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-white border-zinc-200 rounded-md">
+                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-white border-[#E5E0D6] rounded-md">
                       <SelectValue placeholder="请选择成员" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1183,9 +1183,9 @@ export function ContentDiagnosisWorkbench({
                   <p className="mt-1 text-[11px]">{attributionError}</p>
                 </div>
               ) : !multiAttribution || !multiAttribution.snapshot_ready ? (
-                <div className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 p-6 text-center text-[12px] text-zinc-500">
-                  <p className="font-semibold text-zinc-800">归因待数据齐</p>
-                  <p className="mt-1 text-[11px] text-zinc-400">
+                <div className="rounded-xl border border-dashed border-[#E5E0D6] bg-[#FBF9F5]/60 p-6 text-center text-[12px] text-[#78716C]">
+                  <p className="font-semibold text-[#292524]">归因待数据齐</p>
+                  <p className="mt-1 text-[11px] text-[#78716C]">
                     {multiAttribution
                       ? "这条视频暂无 24h 快照数据，请人工核对下方曲线与素材"
                       : "正在加载归因数据..."}
@@ -1246,11 +1246,11 @@ export function ContentDiagnosisWorkbench({
                   </div>
 
                   {/* 更多归因指标 (4项) */}
-                  <div className="border-t border-zinc-100 pt-2">
+                  <div className="border-t border-[#ECE7DE] pt-2">
                     <button
                       type="button"
                       onClick={() => setShowMoreMetrics(!showMoreMetrics)}
-                      className="text-[11.5px] font-medium text-zinc-500 hover:text-zinc-900 transition-colors inline-flex items-center gap-1 cursor-pointer select-none"
+                      className="text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors inline-flex items-center gap-1 cursor-pointer select-none"
                     >
                       <span>
                         {showMoreMetrics
@@ -1304,12 +1304,12 @@ export function ContentDiagnosisWorkbench({
             </div>
 
             <div className="space-y-3">
-              <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
+              <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
                 <span className="size-1.5 rounded-full bg-[#43718E]" />
                 三、流量留存曲线漏斗
               </h2>
               {snapshot ? (
-                <div className="bg-zinc-100/60 rounded-xl p-4 h-[200px] relative">
+                <div className="bg-[#F5F3EE]/60 rounded-xl p-4 h-[200px] relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={funnelChartData}
@@ -1338,7 +1338,7 @@ export function ContentDiagnosisWorkbench({
                       <CartesianGrid
                         strokeDasharray="3 3"
                         vertical={false}
-                        stroke="#E7E5E4"
+                        stroke="#E5E0D6"
                       />
                       <XAxis
                         dataKey="name"
@@ -1354,11 +1354,14 @@ export function ContentDiagnosisWorkbench({
                       />
                       <ChartTooltip
                         contentStyle={{
+                          backgroundColor: "#FFFFFF",
                           borderRadius: "12px",
-                          border: "1px solid #E7E5E4",
+                          border: "1px solid #E5E0D6",
                           boxShadow: "0 4px 12px rgba(28,25,23,0.08)",
+                          color: "#1C1917",
                           fontSize: "11px",
                         }}
+                        itemStyle={{ color: "#292524" }}
                         formatter={(val) => {
                           const numericVal =
                             typeof val === "number"
@@ -1382,7 +1385,7 @@ export function ContentDiagnosisWorkbench({
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="rounded-xl bg-zinc-100/50 p-6 text-center text-[12px] text-zinc-500">
+                <div className="rounded-xl bg-[#F5F3EE]/50 p-6 text-center text-[12px] text-[#78716C]">
                   暂无 24h 快照留存曲线数据
                 </div>
               )}
@@ -1390,8 +1393,8 @@ export function ContentDiagnosisWorkbench({
 
             {screenshotItems.length > 0 && (
               <div className="space-y-3">
-                <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
-                  <span className="size-1.5 rounded-full bg-zinc-400" />
+                <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
+                  <span className="size-1.5 rounded-full bg-[#78716C]" />
                   四、曲线及留存截图
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
@@ -1400,7 +1403,7 @@ export function ContentDiagnosisWorkbench({
                       key={`${item.label}-${item.url}`}
                       type="button"
                       onClick={() => setPreviewIndex(index)}
-                      className="group border border-zinc-200 rounded-xl overflow-hidden bg-zinc-50 relative hover:border-zinc-300 transition-colors text-left"
+                      className="group border border-[#E5E0D6] rounded-xl overflow-hidden bg-[#FBF9F5] relative hover:border-[#E5E0D6] transition-colors text-left"
                     >
                       <div className="aspect-[16/9] w-full relative">
                         <Image
@@ -1411,9 +1414,9 @@ export function ContentDiagnosisWorkbench({
                           className="object-cover group-hover:scale-[1.01] transition-transform duration-200"
                         />
                       </div>
-                      <div className="px-3 py-1.5 text-[11px] text-zinc-500 bg-white border-t border-zinc-100 flex items-center justify-between">
+                      <div className="px-3 py-1.5 text-[11px] text-[#78716C] bg-white border-t border-[#ECE7DE] flex items-center justify-between">
                         <span>{item.label}</span>
-                        <span className="text-zinc-600 font-medium group-hover:text-zinc-950 transition-colors">
+                        <span className="text-[#292524] font-medium group-hover:text-[#1C1917] transition-colors">
                           放大
                         </span>
                       </div>
@@ -1423,7 +1426,7 @@ export function ContentDiagnosisWorkbench({
               </div>
             )}
             {screenshotItems.length > 0 && (
-              <div className="h-px bg-zinc-200/60 pt-0.5" />
+              <div className="h-px bg-[#E5E0D6]/60 pt-0.5" />
             )}
           </div>
 
@@ -1432,7 +1435,7 @@ export function ContentDiagnosisWorkbench({
             {scriptSections.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
+                  <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
                     <span className="size-1.5 rounded-full bg-[#43718E]" />
                     台词黄金三段式 (点击句子直接引用)
                   </h3>
@@ -1458,27 +1461,27 @@ export function ContentDiagnosisWorkbench({
                         className={`rounded-xl border transition-all ${
                           isSectionHighlighted
                             ? "border-[#43718E] bg-[#43718E]/[0.02] ring-1 ring-[#43718E]/30 shadow-2xs"
-                            : "border-zinc-200 bg-white"
+                            : "border-[#E5E0D6] bg-white"
                         } overflow-hidden`}
                       >
-                        <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/80 px-3.5 py-1.5 text-[11px] font-medium text-zinc-600">
+                        <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-[#FBF9F5]/80 px-3.5 py-1.5 text-[11px] font-medium text-[#292524]">
                           <span className="flex items-center gap-1.5">
                             <span
                               className={`size-1.5 rounded-full ${
                                 sec.hint === "opening"
                                   ? "bg-[#43718E]"
                                   : sec.hint === "middle"
-                                    ? "bg-zinc-400"
+                                    ? "bg-[#78716C]"
                                     : "bg-[#6FAA7D]"
                               }`}
                             />
                             {sec.title}
                           </span>
-                          <span className="text-[10px] text-zinc-400 font-normal">
+                          <span className="text-[10px] text-[#78716C] font-normal">
                             {sec.items.length} 句
                           </span>
                         </div>
-                        <div className="divide-y divide-zinc-100">
+                        <div className="divide-y divide-[#ECE7DE]">
                           {
                             /* scriptSegments.map */ sec.items.map(
                               ({ text: seg, idx }) => {
@@ -1496,15 +1499,15 @@ export function ContentDiagnosisWorkbench({
                                       isQuoted
                                         ? "bg-[#6FAA7D]/[0.04] border-[#6FAA7D]"
                                         : isHighlighted
-                                          ? "bg-zinc-100/90 border-[#43718E]"
-                                          : "hover:bg-zinc-50/70 border-transparent"
+                                          ? "bg-[#F5F3EE]/90 border-[#43718E]"
+                                          : "hover:bg-[#FBF9F5]/70 border-transparent"
                                     }`}
                                   >
                                     <span
                                       className={`mt-0.5 w-4 shrink-0 text-[11px] tabular-nums ${
                                         isQuoted
                                           ? "text-[#6FAA7D] font-medium"
-                                          : "text-zinc-400"
+                                          : "text-[#78716C]"
                                       }`}
                                     >
                                       {idx + 1}
@@ -1512,10 +1515,10 @@ export function ContentDiagnosisWorkbench({
                                     <span
                                       className={`text-[12px] leading-relaxed flex-1 min-w-0 break-words whitespace-pre-wrap ${
                                         isQuoted
-                                          ? "text-zinc-400 line-through decoration-zinc-300/60"
+                                          ? "text-[#78716C] line-through decoration-[#E5E0D6]/60"
                                           : isHighlighted
-                                            ? "text-zinc-950 font-semibold"
-                                            : "text-zinc-700 font-normal"
+                                            ? "text-[#1C1917] font-semibold"
+                                            : "text-[#292524] font-normal"
                                       }`}
                                     >
                                       {seg}
@@ -1528,7 +1531,7 @@ export function ContentDiagnosisWorkbench({
                                         className={`rounded-md p-1 ${
                                           isQuoted
                                             ? "text-[#6FAA7D]"
-                                            : "text-zinc-400 hover:text-zinc-700"
+                                            : "text-[#78716C] hover:text-[#292524]"
                                         }`}
                                       >
                                         {isQuoted ? (
@@ -1552,21 +1555,21 @@ export function ContentDiagnosisWorkbench({
             )}
 
             {scriptSections.length > 0 && (
-              <div className="h-px bg-zinc-200/60 pt-0.5" />
+              <div className="h-px bg-[#E5E0D6]/60 pt-0.5" />
             )}
 
             {/* AI 辅助分析（默认折叠为 AI 参考入口） */}
             {analysisResult && (
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-3.5 shadow-2xs">
+              <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-zinc-700 font-medium text-[12px]">
-                    <Sparkles className="size-3.5 text-zinc-500" />
+                  <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12px]">
+                    <Sparkles className="size-3.5 text-[#78716C]" />
                     <span>AI 辅助诊断思路（仅供参考）</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setAnalysisResult(null)}
-                    className="text-zinc-400 hover:text-zinc-600 text-[11px] font-medium transition-colors"
+                    className="text-[#78716C] hover:text-[#292524] text-[11px] font-medium transition-colors"
                   >
                     清除
                   </button>
@@ -1583,7 +1586,7 @@ export function ContentDiagnosisWorkbench({
                       },
                     },
                   }}
-                  className="space-y-3 text-[12px] text-zinc-700 leading-relaxed"
+                  className="space-y-3 text-[12px] text-[#292524] leading-relaxed"
                 >
                   <motion.div
                     variants={{
@@ -1591,10 +1594,10 @@ export function ContentDiagnosisWorkbench({
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="font-semibold text-zinc-900 block">
+                    <span className="font-semibold text-[#1C1917] block">
                       数据特征总结：
                     </span>
-                    <p className="mt-0.5 text-zinc-600">
+                    <p className="mt-0.5 text-[#292524]">
                       {analysisResult.data_summary}
                     </p>
                   </motion.div>
@@ -1604,10 +1607,10 @@ export function ContentDiagnosisWorkbench({
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="font-semibold text-zinc-900 block">
+                    <span className="font-semibold text-[#1C1917] block">
                       改进方向与思路：
                     </span>
-                    <p className="mt-0.5 text-zinc-600">
+                    <p className="mt-0.5 text-[#292524]">
                       {analysisResult.copywriting_reason}
                     </p>
                   </motion.div>
@@ -1619,10 +1622,10 @@ export function ContentDiagnosisWorkbench({
                           visible: { opacity: 1, y: 0 },
                         }}
                       >
-                        <span className="font-semibold text-zinc-900 block">
+                        <span className="font-semibold text-[#1C1917] block">
                           异常提示点：
                         </span>
-                        <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-zinc-600">
+                        <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[#292524]">
                           {analysisResult.abnormal_points.map((pt, i) => (
                             <li key={i}>{pt}</li>
                           ))}
@@ -1630,22 +1633,22 @@ export function ContentDiagnosisWorkbench({
                       </motion.div>
                     )}
                 </motion.div>
-                <div className="flex justify-end gap-2 pt-2.5 border-t border-zinc-100">
+                <div className="flex justify-end gap-2 pt-2.5 border-t border-[#ECE7DE]">
                   <Button
                     size="sm"
                     onClick={() => handleMarkExperience("analysis", "hot_case")}
                     disabled={isMarkingExperience}
-                    className="h-7 rounded-lg bg-zinc-100 text-[11px] font-medium text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950 gap-1"
+                    className="h-7 rounded-lg bg-[#F5F3EE] text-[11px] font-medium text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917] gap-1"
                   >
                     {isMarkingExperience && (
-                      <Loader2 className="size-3 animate-spin text-zinc-400" />
+                      <Loader2 className="size-3 animate-spin text-[#78716C]" />
                     )}
                     {isMarkingExperience ? "正在保存..." : "沉淀优秀经验"}
                   </Button>
                   <Button
                     size="sm"
                     onClick={handleQuoteAnalysisToFeedback}
-                    className="h-7 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-[11px] font-medium transition-colors"
+                    className="h-7 rounded-lg bg-[#1C1917] hover:bg-[#292524] text-white text-[11px] font-medium transition-colors"
                   >
                     一键引用至反馈框
                   </Button>
@@ -1654,11 +1657,11 @@ export function ContentDiagnosisWorkbench({
             )}
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-zinc-500">
+                <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
                   <span className="size-1.5 rounded-full bg-[#D97757]" />
                   四、诊断建议与下发
                 </h3>
-                <div className="text-[11px] text-zinc-400 min-h-5 flex items-center gap-1">
+                <div className="text-[11px] text-[#78716C] min-h-5 flex items-center gap-1">
                   {isSavingDraft ? (
                     <>
                       <Loader2 className="size-3 animate-spin text-[#D99E55]" />
@@ -1673,8 +1676,8 @@ export function ContentDiagnosisWorkbench({
                 </div>
               </div>
 
-              <div className="space-y-1.5 bg-zinc-100/70 rounded-lg p-3">
-                <span className="text-[11px] font-semibold text-zinc-500 block">
+              <div className="space-y-1.5 bg-[#F5F3EE]/70 rounded-lg p-3">
+                <span className="text-[11px] font-semibold text-[#78716C] block">
                   诊断证据 (自动汇总偏离/异常指标)：
                 </span>
                 {feedbackEvidence.length > 0 ? (
@@ -1689,7 +1692,7 @@ export function ContentDiagnosisWorkbench({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-[11px] text-zinc-400 italic">
+                  <span className="text-[11px] text-[#78716C] italic">
                     暂无指标偏离证据，该视频表现良好。
                   </span>
                 )}
@@ -1697,7 +1700,7 @@ export function ContentDiagnosisWorkbench({
 
               <div className="space-y-3">
                 <div className="space-y-1 text-left">
-                  <label className="text-[11.5px] font-medium text-zinc-700">
+                  <label className="text-[11.5px] font-medium text-[#292524]">
                     主要问题一句话总结：
                   </label>
                   <input
@@ -1706,12 +1709,12 @@ export function ContentDiagnosisWorkbench({
                     onChange={(e) => setMainIssues(e.target.value)}
                     disabled={!isEditable}
                     placeholder="例如：开头前5s钩子不够吸引人，完播偏低..."
-                    className="w-full h-9 rounded-lg border border-zinc-200 px-3 text-[12px] text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/10 transition-all"
+                    className="w-full h-9 rounded-lg border border-[#E5E0D6] px-3 text-[12px] text-[#292524] placeholder:text-[#78716C] focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-all"
                   />
                 </div>
 
                 <div className="space-y-1 text-left">
-                  <label className="text-[11.5px] font-medium text-zinc-700">
+                  <label className="text-[11.5px] font-medium text-[#292524]">
                     改进具体建议 (关于台词改写、情绪、节奏的具体方向)：
                   </label>
                   <textarea
@@ -1720,20 +1723,20 @@ export function ContentDiagnosisWorkbench({
                     onChange={(e) => setFeedback(e.target.value)}
                     disabled={!isEditable}
                     placeholder="输入具体优化台词的话术改写方向或操作建议..."
-                    className="w-full rounded-lg border border-zinc-200 p-3 text-[12px] leading-relaxed text-zinc-700 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500/10 transition-all"
+                    className="w-full rounded-lg border border-[#E5E0D6] p-3 text-[12px] leading-relaxed text-[#292524] placeholder:text-[#78716C] focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] transition-all"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t border-zinc-200/60 pt-3.5">
+              <div className="flex items-center justify-between border-t border-[#E5E0D6]/60 pt-3.5">
                 <div className="flex items-center gap-2">
                   <Button
                     size="sm"
                     onClick={handleGenerateAnalysis}
                     disabled={isGeneratingAnalysis || !isEditable}
-                    className="h-8 rounded-lg bg-zinc-100 font-medium text-[12px] gap-1.5 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
+                    className="h-8 rounded-lg bg-[#F5F3EE] font-medium text-[12px] gap-1.5 text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917]"
                   >
-                    <Sparkles className="size-3.5 text-zinc-500" />
+                    <Sparkles className="size-3.5 text-[#78716C]" />
                     {isGeneratingAnalysis ? "分析中..." : "获取 AI 诊断思路"}
                   </Button>
 
@@ -1742,7 +1745,7 @@ export function ContentDiagnosisWorkbench({
                       variant="outline"
                       size="sm"
                       disabled
-                      className="h-8 rounded-lg border-zinc-200 text-[12px] font-medium text-zinc-400 gap-1.5"
+                      className="h-8 rounded-lg border-[#E5E0D6] text-[12px] font-medium text-[#78716C] gap-1.5"
                     >
                       <Loader2 className="size-3.5 animate-spin" />
                       正在获取上次反馈...
@@ -1751,7 +1754,7 @@ export function ContentDiagnosisWorkbench({
                     <Button
                       size="sm"
                       onClick={() => setShowPreviousFeedback((prev) => !prev)}
-                      className="h-8 rounded-lg bg-zinc-100 text-[12px] font-medium text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950 gap-1.5"
+                      className="h-8 rounded-lg bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917] gap-1.5"
                     >
                       <History className="size-3.5 text-[#43718E]" />
                       {showPreviousFeedback
@@ -1766,41 +1769,41 @@ export function ContentDiagnosisWorkbench({
                     size="sm"
                     onClick={handleCopyFeedbackText}
                     disabled={isSavingDraft}
-                    className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-4 gap-1.5 shadow-2xs transition-all active:scale-[0.97]"
+                    className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-4 gap-1.5 shadow-2xs transition-all active:scale-[0.985] active:duration-75"
                   >
                     <Copy className="size-3.5" />
                     复制建议
                   </Button>
                 ) : (
-                  <span className="text-[12px] text-zinc-500 font-medium bg-zinc-100/70 px-3 py-1.5 rounded-lg">
+                  <span className="text-[12px] text-[#78716C] font-medium bg-[#F5F3EE]/70 px-3 py-1.5 rounded-lg">
                     历史站内记录仅查看
                   </span>
                 )}
               </div>
 
-              <p className="text-[11px] text-zinc-400 text-left">
+              <p className="text-[11px] text-[#78716C] text-left">
                 * 提示：AI
                 辅助诊断思路仅供思路参考，复盘的最终判断与改进意见审定权 100%
                 在您手中。
               </p>
 
               {/* 如需网站内留档可展开（折叠降级） */}
-              <details className="group rounded-xl border border-zinc-200 bg-white p-3 text-[12px] transition-all">
-                <summary className="flex cursor-pointer items-center justify-between font-medium text-zinc-500 hover:text-zinc-800 select-none">
+              <details className="group rounded-xl border border-[#E5E0D6] bg-white p-3 text-[12px] transition-all">
+                <summary className="flex cursor-pointer items-center justify-between font-medium text-[#78716C] hover:text-[#292524] select-none">
                   <span className="flex items-center gap-1.5 text-[11.5px]">
-                    <span className="size-1.5 rounded-full bg-zinc-400" />
+                    <span className="size-1.5 rounded-full bg-[#78716C]" />
                     如需网站内留档可展开
                   </span>
-                  <ChevronDown className="size-3.5 text-zinc-400 transition-transform group-open:rotate-180" />
+                  <ChevronDown className="size-3.5 text-[#78716C] transition-transform group-open:rotate-180" />
                 </summary>
-                <div className="mt-3 pt-3 border-t border-zinc-100 space-y-2 text-[11px] text-zinc-500">
-                  <p className="text-zinc-400">
+                <div className="mt-3 pt-3 border-t border-[#ECE7DE] space-y-2 text-[11px] text-[#78716C]">
+                  <p className="text-[#78716C]">
                     草稿已随输入自动保存。如需在后台标记工作流确认状态，历史记录将自动保留。
                   </p>
                   <div className="flex items-center justify-between pt-1">
                     <span>
                       当前状态：
-                      <span className="font-medium text-zinc-700">
+                      <span className="font-medium text-[#292524]">
                         {cardDetail?.workflow_status === "confirmed"
                           ? "已确认"
                           : cardDetail?.workflow_status === "sent"
@@ -1811,7 +1814,7 @@ export function ContentDiagnosisWorkbench({
                       </span>
                     </span>
                     {draftSavedAt && (
-                      <span className="text-zinc-400">
+                      <span className="text-[#78716C]">
                         最近保存：
                         {draftSavedAt.toLocaleTimeString("zh-CN", {
                           hour: "2-digit",
@@ -1824,7 +1827,7 @@ export function ContentDiagnosisWorkbench({
               </details>
 
               {showPreviousFeedback && previousFeedback?.previous && (
-                <div className="border-l-2 border-[#43718E] pl-4 space-y-3.5 relative animate-fade-in bg-zinc-100/60 rounded-r-xl p-3.5">
+                <div className="border-l-2 border-[#43718E] pl-4 space-y-3.5 relative animate-fade-in bg-[#F5F3EE]/60 rounded-r-xl p-3.5">
                   <div className="flex items-center justify-between pb-1">
                     <div className="flex items-center gap-1.5 text-[#43718E]">
                       <History className="size-4" />
@@ -1838,33 +1841,33 @@ export function ContentDiagnosisWorkbench({
                     <button
                       type="button"
                       onClick={() => setShowPreviousFeedback(false)}
-                      className="text-zinc-400 hover:text-zinc-600 text-[11px] font-medium transition-colors cursor-pointer"
+                      className="text-[#78716C] hover:text-[#292524] text-[11px] font-medium transition-colors cursor-pointer"
                     >
                       收起
                     </button>
                   </div>
-                  <div className="space-y-2.5 text-[12px] text-zinc-700">
+                  <div className="space-y-2.5 text-[12px] text-[#292524]">
                     <div>
-                      <span className="text-[11px] text-zinc-400 block">
+                      <span className="text-[11px] text-[#78716C] block">
                         上次核心问题：
                       </span>
-                      <p className="font-medium text-zinc-900 text-[12.5px]">
+                      <p className="font-medium text-[#1C1917] text-[12.5px]">
                         {previousFeedback.previous.one_line}
                       </p>
                     </div>
                     {previousFeedback.previous.message_for_member && (
                       <div>
-                        <span className="text-[11px] text-zinc-400 block">
+                        <span className="text-[11px] text-[#78716C] block">
                           上次改进建议：
                         </span>
-                        <p className="leading-relaxed text-zinc-700 bg-white/90 p-2.5 rounded-lg">
+                        <p className="leading-relaxed text-[#292524] bg-white/90 p-2.5 rounded-lg">
                           {previousFeedback.previous.message_for_member}
                         </p>
                       </div>
                     )}
                     {previousFeedback.previous.metrics && (
                       <div>
-                        <span className="text-[11px] text-zinc-400 block mb-1.5">
+                        <span className="text-[11px] text-[#78716C] block mb-1.5">
                           上次核心指标快照：
                         </span>
                         <div className="grid grid-cols-2 gap-2">
@@ -1886,12 +1889,12 @@ export function ContentDiagnosisWorkbench({
                             return (
                               <div
                                 key={key}
-                                className="flex justify-between border-b border-zinc-200/50 py-1 text-[11px] leading-normal"
+                                className="flex justify-between border-b border-[#E5E0D6]/50 py-1 text-[11px] leading-normal"
                               >
-                                <span className="text-zinc-400">
+                                <span className="text-[#78716C]">
                                   {entry.label}
                                 </span>
-                                <span className="font-semibold text-zinc-700 tabular-nums">
+                                <span className="font-semibold text-[#292524] tabular-nums">
                                   {formatted}
                                 </span>
                               </div>
@@ -1989,16 +1992,16 @@ function MultiRefMetricCard({
           : new Intl.NumberFormat("zh-CN").format(Math.round(currentVal));
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-zinc-300 hover:shadow-xs">
+    <div className="rounded-xl border border-[#E5E0D6] bg-white p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-[#E5E0D6] hover:shadow-xs">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-semibold text-zinc-900 tracking-tight">
+        <span className="text-[12px] font-semibold text-[#1C1917] tracking-tight">
           {label}
         </span>
         {activeLocateFinding && onLocate && (
           <button
             type="button"
             onClick={() => onLocate(activeLocateFinding!)}
-            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200/80 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-[#292524] bg-[#F5F3EE] hover:bg-[#E5E0D6]/80 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
           >
             <span>
               {activeLocateFinding.locate.segment_hint === "opening"
@@ -2007,14 +2010,14 @@ function MultiRefMetricCard({
                   ? "中段承接"
                   : "尾部号召"}
             </span>
-            <ChevronRight className="size-3 text-zinc-400" />
+            <ChevronRight className="size-3 text-[#78716C]" />
           </button>
         )}
       </div>
 
-      <div className="flex items-baseline justify-between border-b border-zinc-100 pb-2">
-        <span className="text-[11px] text-zinc-400 font-medium">当前实测</span>
-        <span className="text-[18px] font-semibold tabular-nums tracking-tight text-zinc-900">
+      <div className="flex items-baseline justify-between border-b border-[#ECE7DE] pb-2">
+        <span className="text-[11px] text-[#78716C] font-medium">当前实测</span>
+        <span className="text-lg font-semibold tabular-nums tracking-tight text-[#1C1917]">
           {formattedCurrent}
         </span>
       </div>
@@ -2049,12 +2052,12 @@ function MultiRefMetricCard({
                 className="flex items-center justify-between text-[11px] py-0.5"
               >
                 <span
-                  className="text-zinc-500 truncate max-w-[125px]"
+                  className="text-[#78716C] truncate max-w-[125px]"
                   title={refLabel}
                 >
                   {refLabel}
                 </span>
-                <span className="text-zinc-400 font-normal">—</span>
+                <span className="text-[#78716C] font-normal">—</span>
               </div>
             );
           }
@@ -2066,12 +2069,12 @@ function MultiRefMetricCard({
                 className="flex items-center justify-between text-[11px] py-0.5"
               >
                 <span
-                  className="text-zinc-500 truncate max-w-[125px]"
+                  className="text-[#78716C] truncate max-w-[125px]"
                   title={refLabel}
                 >
                   {refLabel}
                 </span>
-                <span className="text-zinc-400 font-medium">
+                <span className="text-[#78716C] font-medium">
                   样本不足 ({block?.sample_count ?? 0}/
                   {block?.sample_required ?? 3})
                 </span>
@@ -2099,12 +2102,12 @@ function MultiRefMetricCard({
 
           const toneClass =
             tone === "good"
-              ? "text-[#405740] bg-[#405740]/8 border-[#405740]/20"
+              ? "text-[#16A34A] bg-[#16A34A]/8 border-[#16A34A]/20"
               : tone === "warn"
-                ? "text-[#43718E] bg-[#43718E]/8 border-[#43718E]/20"
+                ? "text-[#D99E55] bg-[#D99E55]/8 border-[#D99E55]/20"
                 : tone === "bad"
-                  ? "text-[#7B6BA5] bg-[#7B6BA5]/8 border-[#7B6BA5]/20"
-                  : "text-zinc-500 bg-zinc-50 border-zinc-200/60";
+                  ? "text-[#DC2626] bg-[#DC2626]/8 border-[#DC2626]/20"
+                  : "text-[#78716C] bg-[#FBF9F5] border-[#E5E0D6]/60";
 
           const toneSymbol =
             tone === "good"
@@ -2119,13 +2122,13 @@ function MultiRefMetricCard({
               className="flex items-center justify-between text-[11px] py-0.5"
             >
               <span
-                className="text-zinc-500 truncate max-w-[125px]"
+                className="text-[#78716C] truncate max-w-[125px]"
                 title={refLabel}
               >
                 {refLabel}
               </span>
               <div className="flex items-center gap-1.5">
-                <span className="font-semibold tabular-nums text-zinc-700">
+                <span className="font-semibold tabular-nums text-[#292524]">
                   {deltaStr}
                 </span>
                 <span
@@ -2175,7 +2178,7 @@ function ScreenshotPreview({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/60 backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#1C1917]/60 backdrop-blur-md"
         onClick={onClose}
       >
         <button

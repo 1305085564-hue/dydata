@@ -149,7 +149,7 @@ export function TopicCreateModal({
   return (
     <>
       <div
-        className="fixed inset-0 bg-zinc-950/25 backdrop-blur-xs z-[60] transition-opacity"
+        className="fixed inset-0 bg-[#1C1917]/25 backdrop-blur-xs z-[60] transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -159,12 +159,12 @@ export function TopicCreateModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="create-modal-title"
-          className="w-full max-w-lg bg-white/95 border border-zinc-200 rounded-2xl shadow-lg p-6 animate-in zoom-in-95 duration-150"
+          className="w-full max-w-lg bg-white/95 border border-[#E5E0D6] rounded-2xl shadow-claude-dialog p-6 animate-in zoom-in-95 duration-150"
         >
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-100">
+          <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#ECE7DE]">
             <h3
               id="create-modal-title"
-              className="text-base font-semibold text-zinc-900"
+              className="text-base font-semibold text-[#1C1917]"
             >
               新增子题
             </h3>
@@ -172,7 +172,7 @@ export function TopicCreateModal({
               ref={closeBtnRef}
               type="button"
               onClick={onClose}
-              className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="p-1 rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors"
               title="关闭弹窗"
               aria-label="关闭弹窗"
             >
@@ -182,30 +182,30 @@ export function TopicCreateModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-zinc-700 text-xs flex items-center gap-2 font-normal">
+              <div className="p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-[#292524] text-xs flex items-center gap-2 font-normal">
                 <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
             {topicsError && (
-              <div className="p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-zinc-700 text-xs font-normal">
+              <div className="p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-[#292524] text-xs font-normal">
                 母题列表加载失败：{topicsError}
               </div>
             )}
 
             {/* 母题选择 */}
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">
+              <label className="block text-xs font-medium text-[#292524] mb-1">
                 选择所属母题 <span className="text-[#DC2626]">*</span>
               </label>
               <select
                 value={topicId}
                 onChange={(e) => setTopicId(e.target.value)}
-                className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 font-normal"
+                className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
                 required
                 aria-label="选择所属母题"
               >
-                <option value="">请选择母题...</option>
+                <option value="">选择母题...</option>
                 {topics.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name}
@@ -216,7 +216,7 @@ export function TopicCreateModal({
 
             {/* 子题标题 */}
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">
+              <label className="block text-xs font-medium text-[#292524] mb-1">
                 子题标题 <span className="text-[#DC2626]">*</span>
               </label>
               <input
@@ -224,7 +224,7 @@ export function TopicCreateModal({
                 placeholder="例如：打破洗盘迷局的三大核心信号"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 font-normal"
+                className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
                 required
                 aria-label="子题标题"
               />
@@ -232,7 +232,7 @@ export function TopicCreateModal({
 
             {/* Hook */}
             <div>
-              <label className="block text-xs font-medium text-zinc-700 mb-1">
+              <label className="block text-xs font-medium text-[#292524] mb-1">
                 一句话选题 Hook / 痛点口号{" "}
                 <span className="text-[#DC2626]">*</span>
               </label>
@@ -241,7 +241,7 @@ export function TopicCreateModal({
                 placeholder="例如：为什么大部分散户买在起涨点却拿不住？3个洗盘细节揭密"
                 value={hook}
                 onChange={(e) => setHook(e.target.value)}
-                className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 font-normal"
+                className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
                 required
                 aria-label="一句话选题 Hook"
               />
@@ -250,7 +250,7 @@ export function TopicCreateModal({
             {/* 标签 */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                <label className="block text-xs font-medium text-[#292524] mb-1">
                   情绪标签 (可选)
                 </label>
                 <input
@@ -258,12 +258,12 @@ export function TopicCreateModal({
                   placeholder="例如：避坑 / 警醒"
                   value={emotionTag}
                   onChange={(e) => setEmotionTag(e.target.value)}
-                  className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 font-normal"
+                  className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
                   aria-label="情绪标签"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-zinc-700 mb-1">
+                <label className="block text-xs font-medium text-[#292524] mb-1">
                   目标受众 (可选)
                 </label>
                 <input
@@ -271,7 +271,7 @@ export function TopicCreateModal({
                   placeholder="例如：进阶交易者"
                   value={audience}
                   onChange={(e) => setAudience(e.target.value)}
-                  className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-[#D97757]/20 font-normal"
+                  className="w-full text-xs bg-[#FBF9F5] border border-[#E5E0D6] rounded-lg px-3 py-2 text-[#292524] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5] font-normal"
                   aria-label="目标受众"
                 />
               </div>
@@ -279,10 +279,10 @@ export function TopicCreateModal({
 
             {/* 智能查重建议列表 */}
             {suggestions.length > 0 && (
-              <div className="bg-zinc-100/70 rounded-xl p-3 text-xs">
-                <div className="font-semibold text-zinc-600 mb-1.5 flex items-center gap-1.5">
-                  <Lightbulb className="w-4 h-4 text-[#F59E0B] shrink-0" />
-                  <span>检出相似度较高的已有子题 (请注意避免重复录入)</span>
+              <div className="bg-[#F5F3EE]/70 rounded-xl p-3 text-xs">
+                <div className="font-semibold text-[#292524] mb-1.5 flex items-center gap-1.5">
+                  <Lightbulb className="w-4 h-4 text-[#D99E55] shrink-0" />
+                  <span>发现相似的已有子题，避免重复录入</span>
                 </div>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                   {suggestions.map((s) => (
@@ -290,8 +290,8 @@ export function TopicCreateModal({
                       key={s.id}
                       className="bg-white/90 p-2 rounded-lg text-xs font-normal shadow-2xs"
                     >
-                      <div className="font-medium text-zinc-800">{s.title}</div>
-                      <div className="text-zinc-500 truncate">“{s.hook}”</div>
+                      <div className="font-medium text-[#292524]">{s.title}</div>
+                      <div className="text-[#78716C] truncate">“{s.hook}”</div>
                     </div>
                   ))}
                 </div>
@@ -299,11 +299,11 @@ export function TopicCreateModal({
             )}
 
             {/* 提交控制 */}
-            <div className="pt-3 border-t border-zinc-100 flex justify-end gap-2">
+            <div className="pt-3 border-t border-[#ECE7DE] flex justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 active:scale-[0.97] text-xs font-medium transition-all"
+                className="px-4 py-1.5 rounded-lg border border-[#E5E0D6] text-[#292524] hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75 text-xs font-medium transition-all"
                 aria-label="取消录入"
               >
                 取消
@@ -311,7 +311,7 @@ export function TopicCreateModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium transition-all shadow-2xs disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs disabled:opacity-50"
                 aria-label="保存子题"
               >
                 {loading ? (

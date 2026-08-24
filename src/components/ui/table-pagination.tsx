@@ -70,18 +70,18 @@ export function TablePagination({
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-3 py-2 px-1 select-none text-[12px] text-zinc-600 ${className}`}
+      className={`flex flex-wrap items-center justify-between gap-3 py-2 px-1 select-none text-[12px] text-[#292524] ${className}`}
     >
       {/* 左侧：数据范围统计 */}
-      <div className="flex items-center gap-1.5 text-zinc-600">
+      <div className="flex items-center gap-1.5 text-[#292524]">
         <span>共</span>
-        <span className="tabular-nums font-normal text-zinc-800">{totalCount}</span>
+        <span className="tabular-nums font-normal text-[#292524]">{totalCount}</span>
         <span>条</span>
         {totalCount > 0 && (
           <>
-            <span className="text-zinc-300">·</span>
+            <span className="text-[#E5E0D6]">·</span>
             <span>显示</span>
-            <span className="tabular-nums font-normal text-zinc-800">
+            <span className="tabular-nums font-normal text-[#292524]">
               {startItem}-{endItem}
             </span>
             <span>条</span>
@@ -93,7 +93,7 @@ export function TablePagination({
       <div className="flex items-center gap-3">
         {/* 容量切换器 (平铺无框) */}
         {onPageSizeChange && (
-          <div className="flex items-center gap-1.5 text-zinc-600">
+          <div className="flex items-center gap-1.5 text-[#292524]">
             <Select
               value={String(pageSize)}
               onValueChange={(val) => {
@@ -102,7 +102,7 @@ export function TablePagination({
                 }
               }}
             >
-              <SelectTrigger className="h-7 w-24 rounded-md border-0 bg-transparent px-2 py-0 text-[11.5px] text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 focus:ring-0 shadow-none transition-colors">
+              <SelectTrigger className="h-7 w-24 rounded-md border-0 bg-transparent px-2 py-0 text-[11.5px] text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] focus-visible:ring-0 outline-none shadow-none transition-colors">
                 <SelectValue placeholder={`${pageSize} 条/页`} />
               </SelectTrigger>
               <SelectContent align="end" className="text-[12px]">
@@ -123,7 +123,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage <= 1}
             onClick={() => onPageChange(safeCurrentPage - 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-600 transition-all cursor-pointer active:scale-95"
+            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
             aria-label="上一页"
           >
             <ChevronLeft className="size-3.5" />
@@ -137,7 +137,7 @@ export function TablePagination({
                 return (
                   <span
                     key={`ellipsis-${idx}`}
-                    className="inline-flex h-7 w-5 items-center justify-center text-[11px] text-zinc-400 select-none"
+                    className="inline-flex h-7 w-5 items-center justify-center text-[11px] text-[#78716C] select-none"
                   >
                     …
                   </span>
@@ -153,7 +153,7 @@ export function TablePagination({
                   className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[11.5px] tabular-nums font-medium transition-all cursor-pointer ${
                     isCurrent
                       ? "bg-[#D97757]/10 text-[#D97757] font-medium pointer-events-none"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 active:scale-95"
+                      : "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.985] active:duration-75"
                   }`}
                   aria-current={isCurrent ? "page" : undefined}
                 >
@@ -168,7 +168,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => onPageChange(safeCurrentPage + 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-600 transition-all cursor-pointer active:scale-95"
+            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
             aria-label="下一页"
           >
             <span>下一页</span>

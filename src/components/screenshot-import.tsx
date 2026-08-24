@@ -82,9 +82,9 @@ function getBadgeVariant(level: ConfidenceLevel): "default" | "secondary" | "des
 }
 
 function getBadgeClassName(level: ConfidenceLevel): string {
-  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
-  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
-  return "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700";
+  if (level === "high") return "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]";
+  if (level === "medium") return "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]";
+  return "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]";
 }
 
 interface ScreenshotImportProps {
@@ -207,7 +207,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         }
         return merged;
       });
-      feedbackToast.success("截图识别完成，可继续上传其他截图或手动校对");
+      // 识别结果直接在下方网格就地渲染呈现，省略多余成功 Toast
     } catch (error) {
       feedbackToast.error((error as Error).message || "识别失败，请稍后重试");
     } finally {
@@ -237,7 +237,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-[13px] text-zinc-500">
+      <div className="space-y-2 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5] p-4 text-[13px] text-[#78716C]">
         <p>建议上传包含播放量、点赞、评论、分享、收藏、涨粉的抖音后台截图。</p>
         <p>系统会先识别，再由你确认与修正后写回日报表单。</p>
       </div>
@@ -267,29 +267,27 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           "flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors",
           isDragging
             ? "border-[#D97757] bg-[#D97757]/10"
-            : "border-zinc-200 bg-zinc-50 hover:border-[#D97757]/60 hover:bg-zinc-100"
+            : "border-[#E5E0D6] bg-[#FBF9F5] hover:border-[#D97757]/60 hover:bg-[#F5F3EE]"
         )}
       >
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#D97757]/[0.08] text-[#D97757]">
           <Upload className="size-6" />
         </div>
         <div className="space-y-2">
-          <p className="text-[13px] font-medium text-zinc-900">拖拽截图到这里，或点击选择图片</p>
-          <p className="text-[13px] text-zinc-500">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
-          {fileName ? <p className="text-[13px] text-zinc-700">当前文件：{fileName}</p> : null}
+          <p className="text-[13px] font-medium text-[#1C1917]">拖拽截图到这里，或点击选择图片</p>
+          <p className="text-[13px] text-[#78716C]">支持 jpg、png、webp，单张最大 {formatSizeLimit(UPLOAD_LIMITS.ocr)}</p>
+          {fileName ? <p className="text-[13px] text-[#292524]">当前文件：{fileName}</p> : null}
         </div>
       </div>
 
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {FIELD_META.map((field) => (
-            <Card key={field.key} className="animate-pulse border border-zinc-200 bg-white">
-              <CardContent className="space-y-4 pt-5 pb-5">
-                <div className="h-4 w-20 rounded bg-zinc-200/60" />
-                <div className="h-8 w-full rounded bg-zinc-200/60" />
-                <div className="h-3 w-16 rounded bg-zinc-200/60" />
-              </CardContent>
-            </Card>
+            <div key={field.key} className="animate-pulse rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-4">
+              <div className="h-4 w-20 rounded bg-[#E5E0D6]/60" />
+              <div className="h-8 w-full rounded bg-[#E5E0D6]/60" />
+              <div className="h-3 w-16 rounded bg-[#E5E0D6]/60" />
+            </div>
           ))}
         </div>
       ) : null}
@@ -298,43 +296,41 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FIELD_META.map((field) => (
-              <Card key={field.key} className="border border-zinc-200 bg-white">
-                <CardContent className="space-y-3 pt-5 pb-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-[13px] font-medium text-zinc-900">{field.label}</div>
-                    <Badge
-                      variant={getBadgeVariant(confidence[field.key])}
-                      className={getBadgeClassName(confidence[field.key])}
-                    >
-                      {confidence[field.key]}
-                    </Badge>
+              <div key={field.key} className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[13px] font-medium text-[#1C1917]">{field.label}</div>
+                  <Badge
+                    variant={getBadgeVariant(confidence[field.key])}
+                    className={getBadgeClassName(confidence[field.key])}
+                  >
+                    {confidence[field.key]}
+                  </Badge>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor={`ocr-${field.key}`}>识别结果</Label>
+                  <div className="relative">
+                    <Input
+                      id={`ocr-${field.key}`}
+                      type="number"
+                      min={0}
+                      step={field.step}
+                      placeholder={field.placeholder}
+                      value={editableValues[field.key]}
+                      onChange={(event) => handleValueChange(field.key, event.target.value)}
+                      className={field.suffix ? "pr-10 h-10" : "h-10"}
+                    />
+                    {field.suffix ? (
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-[#78716C]">
+                        {field.suffix}
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor={`ocr-${field.key}`}>识别结果</Label>
-                    <div className="relative">
-                      <Input
-                        id={`ocr-${field.key}`}
-                        type="number"
-                        min={0}
-                        step={field.step}
-                        placeholder={field.placeholder}
-                        value={editableValues[field.key]}
-                        onChange={(event) => handleValueChange(field.key, event.target.value)}
-                        className={field.suffix ? "pr-10 h-10" : "h-10"}
-                      />
-                      {field.suffix ? (
-                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-[13px] text-zinc-500">
-                          {field.suffix}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-[#E5E0D6] pt-4 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" variant="outline" onClick={resetAndPickAgain}>
               <RefreshCcw className="size-4" />
               继续识别下一张

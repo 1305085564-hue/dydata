@@ -10,7 +10,7 @@ export function ChartSkeleton({ className }: ChartSkeletonProps) {
   return (
     <div
       className={cn(
-        "chart-skeleton relative flex h-full w-full overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-50 p-4 sm:p-5",
+        "chart-skeleton relative flex h-full w-full overflow-hidden rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5] p-4 sm:p-5",
         className
       )}
     >
@@ -28,7 +28,7 @@ export function ChartSkeleton({ className }: ChartSkeletonProps) {
         <div className="absolute inset-y-5 left-4 w-px bg-border/80" />
         <div className="absolute inset-x-4 bottom-5 h-px bg-border/80" />
 
-        <svg aria-hidden="true" viewBox="0 0 320 180" className="h-full w-full text-slate-300">
+        <svg aria-hidden="true" viewBox="0 0 320 180" className="h-full w-full text-[#E5E0D6]">
           <defs>
             <linearGradient id="chart-skeleton-wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="currentColor" stopOpacity="0.14" />

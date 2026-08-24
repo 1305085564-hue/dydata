@@ -99,7 +99,7 @@ export function SmartReplaceModal({
     <>
       {/* 遮罩：z-[60] */}
       <div
-        className="fixed inset-0 bg-zinc-950/25 backdrop-blur-xs z-[60] transition-opacity"
+        className="fixed inset-0 bg-[#1C1917]/25 backdrop-blur-xs z-[60] transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -109,25 +109,25 @@ export function SmartReplaceModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="replace-modal-title"
-          className="w-full max-w-lg max-h-[85vh] flex flex-col bg-white/95 border border-zinc-200 rounded-2xl shadow-lg p-6 animate-in zoom-in-95 duration-150"
+          className="w-full max-w-lg max-h-[85vh] flex flex-col bg-white/95 border border-[#E5E0D6] rounded-2xl shadow-claude-dialog p-6 animate-in zoom-in-95 duration-150"
         >
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-100 shrink-0">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECE7DE] shrink-0">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-100 text-zinc-600 font-semibold text-xs">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F3EE] text-[#292524] font-semibold text-xs">
                 <AlertTriangle className="w-3.5 h-3.5" />
               </span>
               <h3
                 id="replace-modal-title"
-                className="text-base font-semibold text-zinc-900"
+                className="text-base font-semibold text-[#1C1917]"
               >
-                候选槽位已满 (5/5)，请选择替换
+                候选槽位已满 (5/5)，选择要替换的选题
               </h3>
             </div>
             <button
               ref={closeBtnRef}
               type="button"
               onClick={onClose}
-              className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="p-1 rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors"
               title="关闭弹窗"
               aria-label="关闭弹窗"
             >
@@ -136,13 +136,13 @@ export function SmartReplaceModal({
           </div>
 
           <div className="mb-4 shrink-0">
-            <p className="text-xs text-zinc-500 mb-2 font-normal">
+            <p className="text-xs text-[#78716C] mb-2 font-normal">
               即将认领新选题：
-              <span className="font-semibold text-zinc-900">
+              <span className="font-semibold text-[#1C1917]">
                 《{targetTopic.title}》
               </span>
             </p>
-            <div className="bg-zinc-50 rounded-xl p-3 text-xs text-zinc-600 font-normal">
+            <div className="bg-[#FBF9F5] rounded-xl p-3 text-xs text-[#292524] font-normal">
               系统已为您自动推荐放回
               <span className="font-medium">挂机时间最长</span>
               的候选选题。脚本中的选题不会出现在替换列表。
@@ -150,7 +150,7 @@ export function SmartReplaceModal({
           </div>
 
           {error && (
-            <div className="mb-3 p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-xs text-zinc-700 font-normal shrink-0">
+            <div className="mb-3 p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-xs text-[#292524] font-normal shrink-0">
               {error}
             </div>
           )}
@@ -159,7 +159,7 @@ export function SmartReplaceModal({
             onSubmit={handleSubmit}
             className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden"
           >
-            <div className="text-xs font-normal text-zinc-600 shrink-0">
+            <div className="text-xs font-normal text-[#292524] shrink-0">
               请选择要被替换放回的选题：
             </div>
 
@@ -180,7 +180,7 @@ export function SmartReplaceModal({
                     className={`flex items-start justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                       isSelected
                         ? "bg-[#D97757]/5 border-[#D97757] shadow-2xs"
-                        : "bg-zinc-50/70 border-zinc-200 hover:bg-white"
+                        : "bg-[#FBF9F5]/70 border-[#E5E0D6] hover:bg-white"
                     }`}
                   >
                     <div className="flex items-start gap-2.5">
@@ -189,20 +189,20 @@ export function SmartReplaceModal({
                         name="replaceClaim"
                         checked={isSelected}
                         onChange={() => setSelectedReturnId(claim.subTopicId)}
-                        className="mt-0.5 text-[#D97757] focus:ring-[#D97757]"
+                        className="mt-0.5 text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
                       />
                       <div>
-                        <div className="text-xs font-normal text-zinc-600">
+                        <div className="text-xs font-normal text-[#292524]">
                           {sub?.title || "已认领子题"}
                         </div>
-                        <div className="text-xs text-zinc-500 line-clamp-1 mt-0.5 font-normal">
+                        <div className="text-xs text-[#78716C] line-clamp-1 mt-0.5 font-normal">
                           “{sub?.hook || "暂无 Hook"}”
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-normal tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
+                      <span className="text-xs font-normal tabular-nums px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[#292524]">
                         {daysIdle === 0 ? "今天认领" : `已挂机 ${daysIdle} 天`}
                       </span>
                     </div>
@@ -211,11 +211,11 @@ export function SmartReplaceModal({
               })}
             </div>
 
-            <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-2">
+            <div className="pt-4 border-t border-[#ECE7DE] flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 active:scale-[0.97] text-xs font-medium transition-all"
+                className="px-4 py-1.5 rounded-lg border border-[#E5E0D6] text-[#292524] hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75 text-xs font-medium transition-all"
                 aria-label="取消替换"
               >
                 取消
@@ -223,7 +223,7 @@ export function SmartReplaceModal({
               <button
                 type="submit"
                 disabled={loading || !selectedReturnId}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white text-xs font-medium shadow-2xs transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium shadow-2xs transition-all disabled:opacity-50"
                 aria-label="确认替换并认领新选题"
               >
                 {loading ? (

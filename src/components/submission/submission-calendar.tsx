@@ -189,29 +189,29 @@ export function SubmissionCalendar({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm space-y-3 select-none",
+        "rounded-2xl border border-[#E5E0D6] bg-white p-4 shadow-sm space-y-3 select-none",
         className,
       )}
     >
       {/* 头部 Month 动态切换选择器 */}
-      <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+      <div className="flex items-center justify-between pb-2 border-b border-[#ECE7DE]">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-zinc-400" />
-          <h3 className="text-[13px] font-medium text-zinc-900 tracking-tight">
+          <span className="h-2 w-2 rounded-full bg-[#78716C]" />
+          <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
             选择日期
           </h3>
         </div>
 
-        <div className="flex items-center gap-0.5 rounded-full bg-zinc-100 p-0.5 border border-zinc-200">
+        <div className="flex items-center gap-0.5 rounded-full bg-[#F5F3EE] p-0.5 border border-[#E5E0D6]">
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="flex size-6 items-center justify-center rounded-full text-zinc-600 hover:bg-white hover:text-zinc-950 active:scale-95 transition-all"
+            className="flex size-6 items-center justify-center rounded-full text-[#292524] hover:bg-white hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all"
             title="上一个月"
           >
             <ChevronLeft className="size-3.5 stroke-[2]" />
           </button>
-          <span className="text-[12px] font-medium text-zinc-800 tabular-nums px-1.5">
+          <span className="text-[12px] font-medium text-[#292524] tabular-nums px-1.5">
             {monthLabel}
           </span>
           <button
@@ -221,8 +221,8 @@ export function SubmissionCalendar({
             className={cn(
               "flex size-6 items-center justify-center rounded-full transition-all",
               canGoNext
-                ? "text-zinc-600 hover:bg-white hover:text-zinc-950 active:scale-95 cursor-pointer"
-                : "text-zinc-300 opacity-40 cursor-not-allowed",
+                ? "text-[#292524] hover:bg-white hover:text-[#1C1917] active:scale-[0.985] active:duration-75 cursor-pointer"
+                : "text-[#E5E0D6] opacity-40 cursor-not-allowed",
             )}
             title="下一个月"
           >
@@ -236,7 +236,7 @@ export function SubmissionCalendar({
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="h-6 flex items-center justify-center text-[12px] font-medium text-zinc-400"
+            className="h-6 flex items-center justify-center text-[12px] font-medium text-[#78716C]"
           >
             {label}
           </div>
@@ -275,31 +275,31 @@ export function SubmissionCalendar({
               className={cn(
                 "relative flex h-10 w-full flex-col items-center justify-center rounded-lg text-[13px] transition-colors duration-100 ease-out outline-none",
                 !isFuture &&
-                  "cursor-pointer hover:scale-[1.05] active:scale-95",
+                  "cursor-pointer active:scale-[0.985] active:duration-75",
 
                 // 默认/未选中态
                 !isSelected &&
                   !isFuture &&
-                  "hover:bg-zinc-100 hover:text-zinc-950",
+                  "hover:bg-[#F5F3EE] hover:text-[#1C1917]",
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#16A34A]/10/40 text-zinc-600 font-medium",
+                  "bg-[#16A34A]/10/40 text-[#292524] font-medium",
                 !isSelected &&
                   isLeave &&
-                  "bg-zinc-100/40 text-zinc-600 font-medium",
+                  "bg-[#F5F3EE]/40 text-[#292524] font-medium",
                 !isSelected &&
                   isPendingState &&
-                  "bg-zinc-100/60 text-zinc-600 font-medium border border-zinc-200/60",
+                  "bg-[#F5F3EE]/60 text-[#292524] font-medium border border-[#E5E0D6]/60",
                 !isSelected &&
                   isMissing &&
-                  "bg-zinc-100/30 text-zinc-600 font-medium",
+                  "bg-[#F5F3EE]/30 text-[#292524] font-medium",
                 !isSelected &&
                   isFuture &&
-                  "text-zinc-300 opacity-60 cursor-not-allowed",
+                  "text-[#E5E0D6] opacity-60 cursor-not-allowed",
 
                 // 选中态：黑胶囊高亮浮起
                 isSelected &&
-                  "bg-zinc-900 text-white font-medium shadow-sm scale-[1.05] z-10",
+                  "bg-[#1C1917] text-white font-medium shadow-sm scale-[1.05] z-10",
               )}
             >
               <span className="tabular-nums leading-none">{cell.day}</span>
@@ -316,8 +316,8 @@ export function SubmissionCalendar({
                         : isLeave
                           ? "bg-[#43718E]"
                           : isPendingState
-                            ? "bg-[#F59E0B] animate-pulse ring-2 ring-[#F59E0B]/40"
-                            : "bg-zinc-400",
+                            ? "bg-[#D99E55] animate-pulse ring-2 ring-[#D99E55]/40"
+                            : "bg-[#78716C]",
                   )}
                 />
               )}
@@ -327,19 +327,19 @@ export function SubmissionCalendar({
       </div>
 
       {/* 底部微型极简图例说明 (Minimal Footer Legend) */}
-      <div className="pt-2 border-t border-zinc-100 flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-zinc-600">
+      <div className="pt-2 border-t border-[#ECE7DE] flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-[#292524]">
         <span className="inline-flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-[#16A34A]" /> 已交/免交
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#F59E0B] animate-pulse ring-1 ring-[#F59E0B]/50" />{" "}
+          <span className="size-1.5 rounded-full bg-[#D99E55] animate-pulse ring-1 ring-[#D99E55]/50" />{" "}
           审批中
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-zinc-400" /> 未交/漏交
+          <span className="size-1.5 rounded-full bg-[#78716C]" /> 未交/漏交
         </span>
       </div>
     </section>

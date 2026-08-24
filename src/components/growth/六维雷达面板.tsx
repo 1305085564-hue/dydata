@@ -90,7 +90,7 @@ function 锁定雷达({ text }: { text: string }) {
                 key={level}
                 points={points}
                 fill="none"
-                stroke="#E7E5E4"
+                stroke="#E5E0D6"
                 strokeWidth="1"
                 strokeDasharray="4,3"
               />
@@ -117,12 +117,12 @@ function 锁定雷达({ text }: { text: string }) {
           })}
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-400 shadow-sm">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E5E0D6] bg-white text-[#78716C] shadow-sm">
             <Lock className="h-4.5 w-4.5" />
           </span>
         </div>
       </div>
-      <p className="max-w-[260px] text-center text-[12px] leading-[1.6] text-zinc-500">
+      <p className="max-w-[260px] text-center text-[12px] leading-[1.6] text-[#78716C]">
         {text}
       </p>
     </div>
@@ -145,8 +145,8 @@ export function SixRadarPanel({
 
   if (!radar || radar.length === 0) {
     return (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-zinc-100/60">
-        <p className="text-[13px] text-zinc-500">暂无雷达数据，请先提交日报</p>
+      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-[#F5F3EE]/60">
+        <p className="text-[13px] text-[#78716C]">暂无雷达数据，请先提交日报</p>
       </div>
     );
   }
@@ -156,14 +156,14 @@ export function SixRadarPanel({
   if (!hasTeamBaseline) {
     return (
       <div className="space-y-4">
-        <p className="text-[13px] leading-[1.7] text-zinc-500">
+        <p className="text-[13px] leading-[1.7] text-[#78716C]">
           团队暂无可比样本，以下只列你的真实指标，不生成虚拟基准。
         </p>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           {radar.map((item) => (
-            <div key={item.dimension} className="border-t border-zinc-200 pt-3">
-              <dt className="text-[12px] text-zinc-500">{item.dimension}</dt>
-              <dd className="mt-1 text-[13px] font-medium tabular-nums text-zinc-900">
+            <div key={item.dimension} className="border-t border-[#E5E0D6] pt-3">
+              <dt className="text-[12px] text-[#78716C]">{item.dimension}</dt>
+              <dd className="mt-1 text-[13px] font-medium tabular-nums text-[#1C1917]">
                 {formatMetricValue(item.dimension, item.self)}
               </dd>
             </div>
@@ -191,18 +191,18 @@ export function SixRadarPanel({
   return (
     <div className="flex flex-col items-center gap-4">
       {/* 顶部简易图例 */}
-      <div className="flex w-full items-center justify-between gap-2 border-b border-zinc-100 pb-3">
-        <div className="flex items-center gap-4 text-[12px] text-zinc-500">
+      <div className="flex w-full items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
+        <div className="flex items-center gap-4 text-[12px] text-[#78716C]">
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2 w-2 rounded-full bg-[#D97757]" />
             我
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 border border-dashed border-zinc-400 bg-zinc-100/50" />
+            <span className="inline-block h-2.5 w-2.5 border border-dashed border-[#78716C] bg-[#F5F3EE]/50" />
             团队均值基准
           </span>
         </div>
-        <span className="text-[12px] text-zinc-500">
+        <span className="text-[12px] text-[#78716C]">
           最弱项：
           <span className="font-medium text-[#DC2626]">{weakestDimension}</span>
         </span>
@@ -228,7 +228,7 @@ export function SixRadarPanel({
                 key={level}
                 points={points}
                 fill="none"
-                stroke="#E7E5E4"
+                stroke="#E5E0D6"
                 strokeWidth="1"
               />
             );
@@ -244,7 +244,7 @@ export function SixRadarPanel({
                 y1={CENTER}
                 x2={x}
                 y2={y}
-                stroke="#E7E5E4"
+                stroke="#E5E0D6"
                 strokeWidth="1"
               />
             );
@@ -343,11 +343,11 @@ export function SixRadarPanel({
 
         {/* 悬浮浮窗，显示详细指标对比 */}
         {hoveredIndex !== null && (
-          <div className="absolute top-[35%] left-1/2 z-10 -translate-x-1/2 rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[12px] shadow-md backdrop-blur-sm pointer-events-none">
-            <p className="font-medium text-zinc-900 border-b border-zinc-100 pb-1 mb-1">
+          <div className="absolute top-[35%] left-1/2 z-10 -translate-x-1/2 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/98 px-3 py-2 text-[12px] shadow-md shadow-[#1C1917]/8 backdrop-blur-sm pointer-events-none">
+            <p className="font-medium text-[#1C1917] border-b border-[#ECE7DE] pb-1 mb-1">
               {radar[hoveredIndex].dimension}
             </p>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-zinc-500">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[#78716C]">
               <span>我：</span>
               <span className="font-medium text-[#D97757] text-right">
                 {formatMetricValue(
@@ -356,7 +356,7 @@ export function SixRadarPanel({
                 )}
               </span>
               <span>团队均值：</span>
-              <span className="font-medium text-zinc-900 text-right">
+              <span className="font-medium text-[#1C1917] text-right">
                 {formatMetricValue(
                   radar[hoveredIndex].dimension,
                   radar[hoveredIndex].teamAvg,
@@ -368,7 +368,7 @@ export function SixRadarPanel({
                   "font-medium text-right",
                   radar[hoveredIndex].rating === "strong" && "text-[#16A34A]",
                   radar[hoveredIndex].rating === "weak" && "text-[#DC2626]",
-                  radar[hoveredIndex].rating === "mid" && "text-[#D97706]",
+                  radar[hoveredIndex].rating === "mid" && "text-[#D99E55]",
                 )}
               >
                 {radar[hoveredIndex].rating === "strong"
@@ -383,7 +383,7 @@ export function SixRadarPanel({
       </div>
 
       {/* 底部雷达卡片能力对照表 */}
-      <div className="grid w-full grid-cols-3 gap-2 border-t border-zinc-100 pt-3">
+      <div className="grid w-full grid-cols-3 gap-2 border-t border-[#ECE7DE] pt-3">
         {radar.map((item) => {
           const isWeak = item.rating === "weak";
           const isStrong = item.rating === "strong";
@@ -394,10 +394,10 @@ export function SixRadarPanel({
                 "flex flex-col items-center justify-center rounded-lg py-1.5 text-center transition-all",
                 isWeak && "bg-[#DC2626]/10",
                 isStrong && "bg-[#16A34A]/10",
-                !isWeak && !isStrong && "bg-zinc-100/70",
+                !isWeak && !isStrong && "bg-[#F5F3EE]/70",
               )}
             >
-              <span className="text-[11px] font-medium text-zinc-500">
+              <span className="text-[11px] font-medium text-[#78716C]">
                 {item.dimension}
               </span>
               <span
@@ -405,7 +405,7 @@ export function SixRadarPanel({
                   "text-[12px] font-medium mt-0.5",
                   isWeak && "text-[#DC2626]",
                   isStrong && "text-[#16A34A]",
-                  !isWeak && !isStrong && "text-zinc-900",
+                  !isWeak && !isStrong && "text-[#1C1917]",
                 )}
               >
                 {formatMetricValue(item.dimension, item.self)}

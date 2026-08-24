@@ -6,7 +6,6 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { submitReport } from "./actions";
 import { getDashboardMetricGridClass, getDashboardSurfaceClass } from "./dashboard-visuals";
 import { getDefaultPublishedAtValue, normalizePublishedAtInputValue } from "@/lib/日报";
@@ -126,83 +125,82 @@ export function HistoryReportEditForm({
       <input type="hidden" name="account_id" value={report.account_id} />
       <input type="hidden" name="report_date" value={report.report_date} />
 
-      <Card className={`${getDashboardSurfaceClass("panel")} rounded-2xl border border-zinc-200 bg-white`}>
-        <CardContent className="space-y-5 p-4 sm:p-5">
-          <section className="space-y-3">
-            <div className="flex items-center gap-2 text-[13px] font-semibold text-zinc-800">
-              <CheckCircle2 className="size-4 text-[#6FAA7D]" />
-              历史日报基础信息
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="history-report-date">归属日期</Label>
-                <Input id="history-report-date" value={report.report_date} disabled className="h-10" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="history-published-at">发布时间</Label>
-                <Input
-                  id="history-published-at"
-                  name="published_at"
-                  type="datetime-local"
-                  className="h-10"
-                  value={publishedAt}
-                  onChange={(event) => setPublishedAt(event.target.value)}
-                />
-              </div>
+      <div className="space-y-5">
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 text-[13px] font-semibold text-[#292524]">
+            <CheckCircle2 className="size-4 text-[#6FAA7D]" />
+            历史日报基础信息
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="history-report-date">归属日期</Label>
+              <Input id="history-report-date" value={report.report_date} disabled className="h-10" />
             </div>
             <div className="space-y-1.5">
+              <Label htmlFor="history-published-at">发布时间</Label>
+              <Input
+                id="history-published-at"
+                name="published_at"
+                type="datetime-local"
+                value={publishedAt}
+                onChange={(event) => setPublishedAt(event.target.value)}
+                required
+                className="h-10"
+              />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="history-title">视频标题</Label>
               <Input
                 id="history-title"
                 name="title"
-                required
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 className="h-10"
+                placeholder="补充或修正视频标题"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="history-content">视频文案</Label>
               <textarea
                 id="history-content"
                 name="content"
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                className="min-h-[150px] w-full resize-y rounded-xl border border-zinc-200 bg-white px-3.5 py-3 text-[13px] leading-[1.7] text-zinc-700 outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/5"
+                className="min-h-[120px] w-full resize-y rounded-xl border border-[#E5E0D6] bg-white px-3.5 py-3 text-[13px] leading-[1.7] text-[#292524] outline-none transition focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
                 placeholder="补充或修正历史文案"
               />
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="space-y-3">
-            <div className="text-[13px] font-semibold text-zinc-800">历史指标</div>
-            <div className={getDashboardMetricGridClass("secondary")}>
-              {NUMBER_FIELDS.map((field) => (
-                <div key={field.key} className="dashboard-metric-card space-y-1.5">
-                  <Label htmlFor={`history-${field.key}`}>
-                    {field.label}{field.suffix ? `（${field.suffix}）` : ""}
-                  </Label>
-                  <Input
-                    id={`history-${field.key}`}
-                    name={field.key}
-                    type="number"
-                    min={0}
-                    step="any"
-                    required={field.required}
-                    value={metrics[field.key]}
-                    onChange={(event) => updateMetric(field.key, event.target.value)}
-                    className="h-10"
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        </CardContent>
-      </Card>
+        <section className="space-y-3">
+          <div className="text-[13px] font-semibold text-[#292524]">历史指标</div>
+          <div className={getDashboardMetricGridClass("secondary")}>
+            {NUMBER_FIELDS.map((field) => (
+              <div key={field.key} className="dashboard-metric-card space-y-1.5">
+                <Label htmlFor={`history-${field.key}`}>
+                  {field.label}{field.suffix ? `（${field.suffix}）` : ""}
+                </Label>
+                <Input
+                  id={`history-${field.key}`}
+                  name={field.key}
+                  type="number"
+                  min={0}
+                  step="any"
+                  required={field.required}
+                  value={metrics[field.key]}
+                  onChange={(event) => updateMetric(field.key, event.target.value)}
+                  className="h-10"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5">
+      <div className="rounded-xl border border-[#E5E0D6] bg-white px-4 py-2.5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-[12px] leading-[1.7] text-zinc-500">
+          <div className="text-[12px] leading-[1.7] text-[#78716C]">
             这里只修正历史日报本身，不会重新生成截图识别和视频素材记录。
           </div>
           <Button type="submit" disabled={isPending} className="h-11 px-6 text-[13px] sm:min-w-[148px]">

@@ -25,13 +25,13 @@ export function QuickExemptionButton({
   variant = "card",
 }: QuickExemptionButtonProps) {
   const subtlePending =
-    "!h-auto !min-h-0 !border-0 !bg-zinc-100/60 !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-zinc-600 transition-colors duration-100 ease-out hover:!bg-zinc-100/80 [&>svg]:size-[14px] [&>svg]:text-[#F59E0B] [&>svg]:animate-pulse";
+    "!h-auto !min-h-0 !border-0 !bg-[#F5F3EE]/60 !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:!bg-[#F5F3EE]/80 [&>svg]:size-[14px] [&>svg]:text-[#D99E55] [&>svg]:animate-pulse";
   const subtle =
-    "!h-auto !min-h-0 !border-0 !bg-transparent !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-zinc-500 transition-colors duration-100 ease-out hover:!bg-zinc-100 hover:!border-0 hover:text-zinc-950 focus-visible:bg-zinc-100 focus-visible:text-zinc-950 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-900/5 [&>svg]:size-[14px] [&>svg]:text-zinc-500 [&>svg]:transition-colors hover:[&>svg]:text-zinc-700";
+    "!h-auto !min-h-0 !border-0 !bg-transparent !px-2.5 !py-1.5 !shadow-none gap-2 rounded-lg text-[13px] font-medium text-[#78716C] transition-colors duration-100 ease-out hover:!bg-[#F5F3EE] hover:!border-0 hover:text-[#1C1917] focus-visible:bg-[#F5F3EE] focus-visible:text-[#1C1917] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#1C1917]/5 [&>svg]:size-[14px] [&>svg]:text-[#78716C] [&>svg]:transition-colors hover:[&>svg]:text-[#292524]";
   const cardPending =
-    "!h-8 !min-h-0 rounded-lg border border-zinc-200/80 bg-zinc-100/70 px-2.5 text-[12px] font-medium text-zinc-600 transition-colors duration-100 ease-out hover:bg-zinc-100 hover:text-zinc-950 active:scale-95 [&>svg]:text-[#F59E0B] [&>svg]:animate-pulse";
+    "!h-8 !min-h-0 rounded-lg border border-[#E5E0D6]/80 bg-[#F5F3EE]/70 px-2.5 text-[12px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 [&>svg]:text-[#D99E55] [&>svg]:animate-pulse";
   const card =
-    "!h-8 !min-h-0 rounded-lg border border-zinc-200 bg-white px-2.5 text-[12px] font-medium text-zinc-600 transition-colors duration-100 ease-out hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-950 active:scale-95 focus-visible:ring-1 focus-visible:ring-zinc-900/5";
+    "!h-8 !min-h-0 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#292524] transition-colors duration-100 ease-out hover:border-[#E5E0D6] hover:bg-[#FBF9F5] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 focus-visible:ring-1 focus-visible:ring-[#1C1917]/5";
 
   const resolvedPendingDates =
     pendingDates.length > 0 ? pendingDates : hasPending ? [today] : [];

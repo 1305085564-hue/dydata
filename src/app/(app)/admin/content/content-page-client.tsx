@@ -17,7 +17,7 @@ const ContentDiagnosisWorkbench = dynamic(
   {
     ssr: false,
     loading: () => (
-      <section className="flex min-h-[360px] items-center justify-center rounded-2xl border border-zinc-200 bg-white text-sm text-zinc-500">
+      <section className="flex min-h-[360px] flex-col items-center justify-center py-16 text-center text-[13px] text-[#78716C]">
         正在加载诊断工作台…
       </section>
     ),
@@ -212,7 +212,7 @@ export function ContentPageClient({
     if (fallbackVideo) {
       setSelectedVideoId(fallbackVideo.id);
     } else {
-      toast.info("今日待复盘视频已全部完成！");
+      toast.info("今日待复盘视频已全部完成");
     }
   }, [data.videos, data.feedbackCards]);
 
@@ -247,10 +247,10 @@ export function ContentPageClient({
   return (
     <section
       id="content-review-list"
-      className="flex flex-1 flex-col scroll-mt-8 space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs"
+      className="flex flex-1 flex-col scroll-mt-8 space-y-6"
     >
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
-      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/95 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
+      <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
           {/* 视角切换 Tab：待复盘 VS 全部 */}
           <div className="flex items-center gap-1">
@@ -260,7 +260,7 @@ export function ContentPageClient({
               className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
                 view === "pending"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
               }`}
             >
               待复盘 ({data.summary.pendingReviewCount})
@@ -271,7 +271,7 @@ export function ContentPageClient({
               className={`px-3 py-1 text-[12px] font-medium rounded-lg transition-all cursor-pointer ${
                 view === "all"
                   ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                  : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
               }`}
             >
               全部 ({data.summary.totalVideos})
@@ -290,14 +290,14 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-7.5 min-w-36 rounded-lg border border-zinc-200 bg-white text-[12px] font-medium text-zinc-700 hover:border-zinc-300 shadow-2xs cursor-pointer">
+              <SelectTrigger className="h-7.5 min-w-36 rounded-lg border border-[#E5E0D6] bg-white text-[12px] font-medium text-[#292524] hover:border-[#E5E0D6] shadow-2xs cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {canSwitchPerspective && (
-                  <SelectItem value="all_company" className="text-[12px] font-medium text-zinc-900">
+                  <SelectItem value="all_company" className="text-[12px] font-medium text-[#1C1917]">
                     全公司 (全部团队)
                   </SelectItem>
                 )}
@@ -312,19 +312,19 @@ export function ContentPageClient({
 
           {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] bg-zinc-50/80 text-zinc-600 border border-zinc-200 rounded-lg shadow-2xs">
+            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FBF9F5]/80 text-[#292524] border border-[#E5E0D6] rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
-              <span className="font-semibold text-zinc-900">
+              <span className="font-semibold text-[#1C1917]">
                 今日异常 ({anomalyVideos.length})
               </span>
-              <span className="text-zinc-300">·</span>
+              <span className="text-[#E5E0D6]">·</span>
               <span className="flex items-center gap-1.5 shrink-0">
                 {deletedCount > 0 && <span className="text-[#C9604D] font-medium">{deletedCount} 删稿</span>}
                 {limitedCount > 0 && <span className="text-[#C9604D] font-medium">{limitedCount} 限流</span>}
                 {halvedCount > 0 && <span className="text-[#D99E55] font-medium">{halvedCount} 腰斩</span>}
               </span>
-              <span className="text-zinc-300 hidden lg:inline">|</span>
-              <span className="text-zinc-500 truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
+              <span className="text-[#E5E0D6] hidden lg:inline">|</span>
+              <span className="text-[#78716C] truncate max-w-[200px] hidden lg:inline" title={anomalyVideos.map(v => `${v.profiles?.name || '未知'}(${v.anomaly_status === '正常' && v.play_change_signal === 'halve' ? '腰斩' : (v.anomaly_status || '未知')})`).join(', ')}>
                 最需关注: {anomalyVideos.slice(0, 2).map((v, i) => (
                   <span key={v.id}>
                     {i > 0 && "、"}
@@ -341,7 +341,7 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-95 transition-all cursor-pointer"
+                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
               >
                 直接去盘 →
               </button>

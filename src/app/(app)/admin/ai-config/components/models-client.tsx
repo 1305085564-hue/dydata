@@ -255,7 +255,7 @@ export default function ModelsClient() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="h-32 rounded-2xl bg-zinc-50 animate-pulse border border-zinc-200"
+            className="h-32 rounded-2xl bg-[#FBF9F5] animate-pulse border border-[#E5E0D6]"
           />
         ))}
       </div>
@@ -375,14 +375,14 @@ export default function ModelsClient() {
   return (
     <div className="space-y-5">
       {/* 规范 2.2：自然色差 Header Bar (微气垫平铺) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-zinc-100/70 p-2 px-3 rounded-xl select-none">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F5F3EE]/70 p-2 px-3 rounded-xl select-none">
         <div className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-[#D97757]" />
-          <span className="text-[13px] font-medium text-zinc-950">
+          <span className="text-[13px] font-medium text-[#1C1917]">
             全局默认主模型：
           </span>
           <select
-            className="h-7 px-2.5 text-[12px] rounded-lg border-0 bg-white font-medium text-zinc-800 shadow-2xs hover:bg-zinc-50 focus:outline-none cursor-pointer"
+            className="h-7 px-2.5 text-[12px] rounded-lg border-0 bg-white font-medium text-[#292524] shadow-2xs hover:bg-[#FBF9F5] focus:outline-none cursor-pointer"
             value={currentDefaultModelId || ""}
             onChange={(e) => handleSetGlobalDefault(e.target.value)}
           >
@@ -394,7 +394,7 @@ export default function ModelsClient() {
                 key={opt.id}
                 value={opt.model_id}
                 disabled={!opt.isEnabled}
-                className={!opt.isEnabled ? "text-zinc-400" : ""}
+                className={!opt.isEnabled ? "text-[#78716C]" : ""}
               >
                 {opt.label}
               </option>
@@ -408,7 +408,7 @@ export default function ModelsClient() {
             size="sm"
             disabled={isTestingAll}
             onClick={handleTestAll}
-            className="h-7 text-[12px] gap-1 bg-white border-zinc-200 hover:bg-zinc-100 text-zinc-700"
+            className="h-7 text-[12px] gap-1 bg-white border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
           >
             {isTestingAll ? (
               <Loader2 className="size-3 animate-spin text-[#D97757]" />
@@ -442,9 +442,9 @@ export default function ModelsClient() {
 
       {/* 模型系列卡片列表 */}
       {familyGroups.length === 0 ? (
-        <div className="rounded-2xl bg-zinc-50/70 p-12 text-center space-y-3 border border-zinc-200/80">
-          <p className="text-[13px] text-zinc-500">
-            暂无配置。请添加你的 API Key 和对应的模型系列。
+        <div className="rounded-2xl bg-[#FBF9F5]/70 p-12 text-center space-y-3 border border-[#E5E0D6]/80">
+          <p className="text-[13px] text-[#78716C]">
+            暂无配置。添加 API Key 和对应的模型系列后生效。
           </p>
           <Button
             size="sm"
@@ -465,15 +465,15 @@ export default function ModelsClient() {
               <div
                 key={fam.familyId}
                 className={cn(
-                  "rounded-2xl bg-white overflow-hidden transition-all border border-zinc-200 shadow-sm",
+                  "rounded-2xl bg-white overflow-hidden transition-all border border-[#E5E0D6] shadow-sm",
                   hasGlobalDefault && "ring-1 ring-[#D97757]/30",
                 )}
               >
                 {/* 系列 Card Header */}
-                <div className="p-4 px-5 bg-zinc-50/80 space-y-2.5 border-b border-zinc-200/50">
+                <div className="p-4 px-5 bg-[#FBF9F5]/80 space-y-2.5 border-b border-[#E5E0D6]/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-medium text-[14px] text-zinc-900">
+                      <span className="font-medium text-[14px] text-[#1C1917]">
                         {fam.familyName}
                       </span>
                       {hasGlobalDefault && (
@@ -486,7 +486,7 @@ export default function ModelsClient() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-7 text-[12px] gap-1 bg-white border-zinc-200 hover:bg-zinc-100"
+                      className="h-7 text-[12px] gap-1 bg-white border-[#E5E0D6] hover:bg-[#F5F3EE]"
                       onClick={() => {
                         const firstKeyId =
                           fam.keys[0]?.keyId || bundle.keys[0]?.id || null;
@@ -499,7 +499,7 @@ export default function ModelsClient() {
 
                   {/* 包含的具体型号 Tags */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[12px] text-zinc-500 flex items-center gap-1">
+                    <span className="text-[12px] text-[#78716C] flex items-center gap-1">
                       <Tag className="size-3" /> 包含 {fam.modelIds.length}{" "}
                       个具体型号：
                     </span>
@@ -510,7 +510,7 @@ export default function ModelsClient() {
                           "font-mono text-[12px] px-2 py-0.5 rounded-md",
                           mId === currentDefaultModelId
                             ? "bg-[#D97757]/10 text-[#D97757] font-medium border border-[#D97757]/30"
-                            : "bg-white text-zinc-600 border border-zinc-200",
+                            : "bg-white text-[#292524] border border-[#E5E0D6]",
                         )}
                       >
                         {mId}
@@ -521,8 +521,8 @@ export default function ModelsClient() {
 
                 {/* 顺位列表表格 */}
                 <Table>
-                  <TableHeader className="bg-zinc-50/30">
-                    <TableRow className="hover:bg-transparent border-b border-zinc-200/60">
+                  <TableHeader className="bg-[#FBF9F5]/30">
+                    <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
                       <TableHead className="w-[40px] px-2 text-center text-[12px]"></TableHead>
                       <TableHead className="w-[60px] text-[12px] pl-2">
                         顺位
@@ -607,9 +607,9 @@ export default function ModelsClient() {
                             setDropTargetKeyId(null);
                           }}
                           className={cn(
-                            "text-[13px] border-b border-zinc-200/60 last:border-b-0 transition-colors select-none group",
+                            "text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0 transition-colors select-none group",
                             isDragging &&
-                              "opacity-40 bg-zinc-100/70 border-dashed border-zinc-300",
+                              "opacity-40 bg-[#F5F3EE]/70 border-dashed border-[#E5E0D6]",
                             !isDragging &&
                               isDropTarget &&
                               dropPosition === "above" &&
@@ -625,12 +625,12 @@ export default function ModelsClient() {
                             !isDragging &&
                               !isDropTarget &&
                               !isRecentlyMoved &&
-                              "hover:bg-zinc-50/70",
+                              "hover:bg-[#FBF9F5]/70",
                           )}
                         >
                           {/* 拖拽手柄列 */}
                           <TableCell className="w-[40px] px-2 text-center">
-                            <div className="inline-flex items-center justify-center p-1 rounded hover:bg-zinc-200/60 cursor-grab active:cursor-grabbing text-zinc-400 group-hover:text-zinc-600 transition-colors">
+                            <div className="inline-flex items-center justify-center p-1 rounded hover:bg-[#E5E0D6]/60 cursor-grab active:cursor-grabbing text-[#78716C] group-hover:text-[#292524] transition-colors">
                               <GripVertical className="size-4" />
                             </div>
                           </TableCell>
@@ -642,7 +642,7 @@ export default function ModelsClient() {
                                 "inline-flex items-center justify-center size-5.5 rounded-md text-[11px] font-medium transition-transform duration-200",
                                 isFirst
                                   ? "bg-[#D97757] text-white shadow-sm scale-105"
-                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200",
+                                  : "bg-[#F5F3EE] text-[#292524] border border-[#E5E0D6]",
                               )}
                             >
                               {idx + 1}
@@ -650,39 +650,39 @@ export default function ModelsClient() {
                           </TableCell>
 
                           <TableCell>
-                            <div className="font-medium text-zinc-900">
+                            <div className="font-medium text-[#1C1917]">
                               {keyItem.keyLabel}
                             </div>
-                            <div className="text-[11px] text-zinc-500">
+                            <div className="text-[11px] text-[#78716C]">
                               {keyItem.providerName}
                             </div>
                           </TableCell>
 
-                          <TableCell className="font-mono text-[12px] text-zinc-500 max-w-[180px] truncate">
+                          <TableCell className="font-mono text-[12px] text-[#78716C] max-w-[180px] truncate">
                             {keyItem.baseUrl}
                           </TableCell>
 
-                          <TableCell className="font-mono text-[12px] text-zinc-500">
+                          <TableCell className="font-mono text-[12px] text-[#78716C]">
                             {keyItem.apiKeyMasked || "***"}
                           </TableCell>
 
                           <TableCell>
                             {healthStatus === "healthy" ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-[#16A34A]/10 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#16A34A]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
                                 <CheckCircle2 className="size-3 text-[#16A34A]" />{" "}
                                 正常
                               </span>
                             ) : healthStatus === "untested" ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full font-medium">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#F5F3EE] border border-[#E5E0D6] px-2 py-0.5 rounded-full font-medium">
                                 未测试
                               </span>
                             ) : healthStatus === "disabled" ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-zinc-500 bg-zinc-100 border border-zinc-200 px-2 py-0.5 rounded-full font-medium">
+                              <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C] bg-[#F5F3EE] border border-[#E5E0D6] px-2 py-0.5 rounded-full font-medium">
                                 已停用
                               </span>
                             ) : (
                               <span
-                                className="inline-flex items-center gap-1 text-[11px] text-red-700 bg-zinc-100 border border-zinc-200/60 px-2 py-0.5 rounded-full font-medium"
+                                className="inline-flex items-center gap-1 text-[11px] text-[#C0685C] bg-[#C0685C]/10 border border-[#C0685C]/20 px-2 py-0.5 rounded-full font-medium"
                                 title={keyItem.lastErrorMessage || undefined}
                               >
                                 <AlertTriangle className="size-3 text-[#DC2626]" />{" "}
@@ -696,7 +696,7 @@ export default function ModelsClient() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 text-[12px] gap-1 text-zinc-600 hover:text-[#D97757] hover:bg-[#D97757]/10 active:scale-95"
+                                className="h-7 text-[12px] gap-1 text-[#292524] hover:text-[#D97757] hover:bg-[#D97757]/10 active:scale-[0.985] active:duration-75"
                                 disabled={testingKeyId === keyItem.keyId}
                                 onClick={() =>
                                   handleTest(

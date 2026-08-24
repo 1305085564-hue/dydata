@@ -202,7 +202,7 @@ export function useAiConfig() {
       const { testResult, ...newBundle } = data;
       mutate(newBundle as AiConfigBundle);
       if (testResult?.ok) {
-        feedbackToast.success(`连接正常！响应耗时: ${testResult.latencyMs}ms`);
+        feedbackToast.success(`连接正常 · 响应耗时 ${testResult.latencyMs}ms`);
       } else {
         feedbackToast.error(`测试未通过: ${testResult?.message || "无响应"}`);
       }

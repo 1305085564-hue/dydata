@@ -159,11 +159,11 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-8.5 w-36 rounded-xl border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#3C3830] shadow-none transition-colors hover:bg-[#EFECE6] focus:ring-1 focus:ring-[#D97757]/30"
+              className="h-8.5 w-36 rounded-xl border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#3C3830] shadow-none transition-colors hover:bg-[#EFECE6] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FBF9F5]"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-zinc-200/80 bg-white/95 backdrop-blur-md shadow-lg">
+            <SelectContent className="rounded-xl border border-[#E5E0D6]/80 bg-white/95 backdrop-blur-md shadow-claude-float">
               <SelectItem value="">全部团队</SelectItem>
               {teams.map((team) => (
                 <SelectItem key={team} value={team} className="text-[12px]">
@@ -179,10 +179,10 @@ export function FilterBar({
           className="flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3 py-1.5 transition-colors"
           title="开启后，系统将在每日 18:00 自动向今日未提交视频的成员发送飞书消息提醒"
         >
-          <span className="text-[12px] font-normal text-zinc-600">
+          <span className="text-[12px] font-normal text-[#292524]">
             飞书自动催交
           </span>
-          <span className="hidden text-[11px] text-zinc-400 font-normal sm:inline">
+          <span className="hidden text-[11px] text-[#78716C] font-normal sm:inline">
             (18:00 提醒)
           </span>
           {settingsError ? (
@@ -208,7 +208,7 @@ export function FilterBar({
 
       {/* 特殊范围说明指示 */}
       {(range === "last7days" || range === "custom") && (
-        <div className="flex items-center gap-1.5 text-[12px] text-zinc-500 pt-0.5">
+        <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] pt-0.5">
           <CalendarDays className="size-3.5 text-[#D97757]" />
           <span>
             当前范围：{formatRangeLabel(range, year, month)}
@@ -225,14 +225,14 @@ export function FilterBar({
         open={confirmToggleTarget !== null}
         onOpenChange={(open) => !open && setConfirmToggleTarget(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-xl border-zinc-200">
+        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
-            <DialogTitle className="text-[16px] font-semibold text-zinc-950">
+            <DialogTitle className="text-base font-medium text-[#1C1917]">
               {confirmToggleTarget
-                ? "确认开启飞书自动催交？"
-                : "确认关闭飞书自动催交？"}
+                ? "确认开启飞书自动催交"
+                : "确认关闭飞书自动催交"}
             </DialogTitle>
-            <DialogDescription className="text-[13px] text-zinc-600 mt-2">
+            <DialogDescription className="text-[13px] text-[#292524] mt-2">
               {confirmToggleTarget
                 ? "开启后，系统将在每日 18:00 自动检查团队发布进度，并向未提交视频的成员发送飞书消息提醒。"
                 : "关闭后，系统将停止每日 18:00 的飞书自动催交提醒。"}
@@ -242,7 +242,7 @@ export function FilterBar({
             <Button
               variant="outline"
               size="sm"
-              className="rounded-lg text-zinc-600"
+              className="rounded-lg text-[#292524]"
               onClick={() => setConfirmToggleTarget(null)}
             >
               取消

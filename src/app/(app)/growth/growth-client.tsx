@@ -32,20 +32,20 @@ import type { AccountLeaderboardRow } from "@/types";
 
 const ResultTrend = dynamic(
   () => import("@/components/charts/result-trend").then((module) => module.ResultTrend),
-  { ssr: false, loading: () => <div className="h-[320px] w-full animate-pulse rounded-2xl bg-zinc-100" /> }
+  { ssr: false, loading: () => <div className="h-[320px] w-full animate-pulse-claude rounded-2xl bg-[#F5F3EE]" /> }
 );
 
 const InteractionTrend = dynamic(
   () => import("@/components/charts/interaction-trend").then((module) => module.InteractionTrend),
-  { ssr: false, loading: () => <div className="h-[320px] w-full animate-pulse rounded-2xl bg-zinc-100" /> }
+  { ssr: false, loading: () => <div className="h-[320px] w-full animate-pulse-claude rounded-2xl bg-[#F5F3EE]" /> }
 );
 
 const Leaderboard = dynamic(
   () => import("@/components/leaderboard/leaderboard").then((module) => module.Leaderboard),
   { ssr: false, loading: () => (
     <div className="space-y-3">
-      <div className="h-10 w-56 animate-pulse rounded-xl bg-zinc-100" />
-      <div className="h-[420px] w-full animate-pulse rounded-2xl bg-zinc-100" />
+      <div className="h-10 w-56 animate-pulse-claude rounded-xl bg-[#F5F3EE]" />
+      <div className="h-[420px] w-full animate-pulse-claude rounded-2xl bg-[#F5F3EE]" />
     </div>
   ) }
 );
@@ -160,19 +160,19 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   if (contract.emptyState?.isEmpty) {
     return (
       <AppShell width="wide" className="pb-12">
-        <div className="mx-auto flex max-w-md flex-col items-center justify-center rounded-2xl border border-zinc-200 bg-white p-8 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-50 border border-zinc-200 text-zinc-500 mb-5">
+        <div className="mx-auto flex max-w-md flex-col items-center justify-center py-12 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F5F3EE] text-[#78716C] mb-5">
             <Sparkles className="h-8 w-8 text-[#D97757]" />
           </div>
-          <h2 className="text-[18px] font-semibold text-zinc-900 leading-[1.4]">
+          <h2 className="text-lg font-semibold text-[#1C1917] leading-[1.4]">
             开启内容成长体检
           </h2>
-          <p className="mt-3 text-[13px] text-zinc-500 leading-[1.6]">
+          <p className="mt-3 text-[13px] text-[#78716C] leading-[1.6]">
             {contract.emptyState.reason || "还没有你的数据。去提交今天的日报，就能解锁你的内容能力雷达与深度改法建议。"}
           </p>
           <Link
             href="/dashboard"
-            className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#c56545] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#C46A4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             去提交日报
             <ArrowRight className="h-4 w-4" />
@@ -254,26 +254,22 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   ];
 
   return (
-    <AppShell width="wide" className="pb-16 space-y-6">
-      {/* 顶部身份栏与阶段标识 */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 pb-5">
+    <AppShell width="wide" className="pb-16 space-y-10">
+      {/* 头部标题与阶段指示 */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-[#ECE7DE]/80 pb-6">
         <div>
-          <h1 className="text-[24px] font-semibold tracking-tight text-zinc-900 leading-none">
-            数据分析
-          </h1>
-          <p className="mt-2 text-[13px] text-zinc-500">
-            内容成长体检 · 分析主体：<span className="font-medium text-zinc-900">{identity.profileName}</span> ·
-            关联账号 {identity.accountCount} 个 ·
-            累计提交 {stage.lifetimeReportCount} 份日报
+          <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">数据分析</h1>
+          <p className="mt-1 text-[13px] text-[#78716C]">
+            内容成长体检 · 分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计提交 {stage.lifetimeReportCount} 份日报
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",
               phase === "accumulation" && "border-[#D99E55]/25 bg-[#D99E55]/10 text-[#8A6A2F]",
-              phase === "observation" && "border-zinc-200 bg-zinc-50 text-zinc-700",
+              phase === "observation" && "border-[#ECE7DE] bg-[#FBF9F5] text-[#292524]",
               phase === "mature" && "border-[#6FAA7D]/25 bg-[#6FAA7D]/10 text-[#3F7050]"
             )}
           >
@@ -281,7 +277,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               className={cn(
                 "h-2 w-2 rounded-full",
                 phase === "accumulation" && "bg-[#D99E55]",
-                phase === "observation" && "bg-zinc-500",
+                phase === "observation" && "bg-[#78716C]",
                 phase === "mature" && "bg-[#6FAA7D]"
               )}
             />
@@ -301,17 +297,17 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       {phase === "accumulation" ? (
         <成长进度卡 lifetimeReportCount={stage.lifetimeReportCount} staleText={staleText} />
       ) : verdict ? (
-        <section className="overflow-hidden rounded-2xl border border-[#D97757]/30 bg-white p-6">
-          <div className="flex items-start justify-between gap-4 border-b border-zinc-100 pb-4">
+        <section className="border-b border-[#ECE7DE]/80 pb-8 space-y-5">
+          <div className="flex items-start justify-between gap-4 border-b border-[#ECE7DE] pb-4">
             <div className="space-y-1">
-              <span className="text-[12px] font-medium text-zinc-500 uppercase tracking-widest">
+              <span className="text-[12px] font-medium text-[#78716C] uppercase tracking-widest">
                 VERDICT · 首屏体检焦点
               </span>
-              <h2 className="text-[24px] font-semibold text-zinc-900 leading-[1.4]">
+              <h2 className="font-serif text-lg sm:text-xl font-semibold text-[#1C1917] leading-[1.4] text-balance">
                 你现在最该补的是「<span className="text-[#D97757]">{verdict.weakestDimension}</span>」
               </h2>
               {phase === "observation" ? (
-                <p className="text-[12px] text-zinc-500">
+                <p className="text-[12px] text-[#78716C]">
                   基于近 30 天 {stage.windowReportCount} 份日报 · 样本累积中，结论会随数据变化。
                 </p>
               ) : null}
@@ -320,8 +316,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <span className={cn(
               "rounded-full border px-2.5 py-1 text-[12px] font-medium select-none",
               verdict.source === "ai"
-                ? "bg-zinc-50 text-zinc-700 border-zinc-200"
-                : "bg-zinc-100 text-zinc-700 border-zinc-200"
+                ? "bg-[#FBF9F5] text-[#292524] border-[#E5E0D6]"
+                : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]"
             )}>
               {verdict.source === "ai" ? "AI 深度诊断" : "规则分析"}
             </span>
@@ -329,21 +325,21 @@ export function GrowthClient({ contract }: GrowthClientProps) {
 
           <div className="mt-5 grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-500">
+              <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C]">
                 <Target className="h-4 w-4 text-[#D97757]" />
                 诊断依据
               </div>
-              <p className="text-[13px] font-medium text-zinc-700 leading-[1.6]">
+              <p className="font-serif text-[13px] sm:text-sm font-normal text-[#292524] text-pretty leading-relaxed">
                 {verdict.diagnosis}
               </p>
             </div>
 
-            <div className="space-y-2 border-t border-zinc-100 pt-4 md:border-t-0 md:pt-0 md:border-l md:border-zinc-200 md:pl-6">
-              <div className="flex items-center gap-1.5 text-[12px] font-medium text-zinc-500">
+            <div className="space-y-2 border-t border-[#ECE7DE] pt-4 md:border-t-0 md:pt-0 md:border-l md:border-[#ECE7DE] md:pl-6">
+              <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C]">
                 <Award className="h-4 w-4 text-[#6FAA7D]" />
                 下一条视频改法（药方）
               </div>
-              <p className="text-[13px] font-medium text-zinc-900 leading-[1.6] bg-zinc-50/70 p-2.5 rounded-lg border border-zinc-100">
+              <p className="text-[13px] font-medium text-[#1C1917] leading-[1.6] bg-[#F5F3EE] p-3 rounded-lg">
                 {verdict.prescription}
               </p>
             </div>
@@ -351,19 +347,19 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         </section>
       ) : (
         /* 重度断流：窗口内无数据，主卡冻结而不是误报"还没有数据" */
-        <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6">
-          <span className="text-[12px] font-medium uppercase tracking-widest text-zinc-500">
+        <section className="border-b border-[#ECE7DE]/80 pb-8 space-y-3">
+          <span className="text-[12px] font-medium uppercase tracking-widest text-[#78716C]">
             体检暂停
           </span>
-          <h2 className="mt-2 text-[24px] font-semibold text-zinc-900 leading-[1.4]">
+          <h2 className="mt-2 text-lg font-semibold text-[#1C1917] leading-[1.4]">
             数据停在 {stage.lastReportDate ? 格式化为月日(stage.lastReportDate) : "很久以前"}，近 30 天没有新日报
           </h2>
-          <p className="mt-2 text-[13px] text-zinc-500 leading-[1.6]">
+          <p className="mt-2 text-[13px] text-[#78716C] leading-[1.6]">
             你历史累计 {stage.lifetimeReportCount} 份日报还在。恢复同步后，体检会基于新数据重新生成。
           </p>
           <Link
             href="/dashboard"
-            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#c56545] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#C46A4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             去同步今日数据
             <ArrowRight className="h-4 w-4" />
@@ -394,8 +390,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <section className="grid gap-6 lg:grid-cols-2">
         {loadingTrend ? (
           <>
-            <div className="h-[320px] w-full animate-pulse rounded-2xl bg-zinc-100" />
-            <div className="h-[320px] w-full animate-pulse rounded-2xl bg-zinc-100" />
+            <div className="h-[320px] w-full animate-pulse-claude rounded-2xl bg-[#F5F3EE]" />
+            <div className="h-[320px] w-full animate-pulse-claude rounded-2xl bg-[#F5F3EE]" />
           </>
         ) : trendError ? (
           <div className="lg:col-span-2">
@@ -412,7 +408,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 teamSize={stage.teamActiveCount}
               />
             ) : (
-              <div className="flex h-40 items-center justify-center rounded-xl border border-zinc-200 bg-white text-[13px] text-zinc-500">
+              <div className="flex h-40 items-center justify-center rounded-xl border border-[#E5E0D6] bg-white text-[13px] text-[#78716C]">
                 暂无趋势数据
               </div>
             )}
@@ -426,7 +422,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   teamSize={stage.teamActiveCount}
                 />
               ) : (
-                <div className="flex h-40 items-center justify-center rounded-xl border border-zinc-200 bg-white text-[13px] text-zinc-500">
+                <div className="flex h-40 items-center justify-center rounded-xl border border-[#E5E0D6] bg-white text-[13px] text-[#78716C]">
                   暂无趋势数据
                 </div>
               )
@@ -441,11 +437,11 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       </section>
 
       {/* 能力画像 + 同伴：同一排随阶段点亮 */}
-      <section className="grid gap-6 lg:grid-cols-[340px_1fr]">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-          <div className="mb-4">
-            <h3 className="text-[18px] font-semibold text-zinc-900 leading-tight">能力画像</h3>
-            <p className="mt-1 text-[12px] text-zinc-500">
+      <section className="grid gap-10 lg:grid-cols-[340px_1fr] border-b border-[#ECE7DE]/80 pb-10">
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-medium text-[#292524] leading-tight">能力画像</h3>
+            <p className="mt-1.5 text-[12px] text-[#78716C]">
               {phase === "accumulation" ? "六维能力轮廓，随日报积累点亮。" : "看清六维能力相较于团队的相对表现。"}
             </p>
           </div>
@@ -461,12 +457,12 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         </div>
 
         {phase === "accumulation" ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-            <div className="flex items-center gap-2.5 mb-4">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 stroke-[1.5] text-[#43718E]" />
               <div>
-                <h4 className="text-[18px] font-semibold text-zinc-900 leading-tight">同伴 · 追赶视角</h4>
-                <p className="text-[12px] text-zinc-500 mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
+                <h4 className="text-sm font-medium text-[#292524] leading-tight">同伴 · 追赶视角</h4>
+                <p className="text-[12px] text-[#78716C] mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
               </div>
             </div>
             {benchmark.state === "ok" && benchmark.peer && weakestRule ? (
@@ -477,43 +473,43 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 peerRatio={weakestRule.unit === "%" ? benchmark.peer.dimensionValue / 100 : 1}
               />
             ) : (
-              <p className="rounded-lg bg-zinc-100/60 p-4 text-center text-[13px] leading-[1.6] text-zinc-500">
+              <p className="rounded-lg bg-[#F5F3EE] p-4 text-center text-[13px] leading-[1.6] text-[#78716C]">
                 团队还没有可比同伴。数据积累后，这里会出现你的第一个追赶目标。
               </p>
             )}
           </div>
         ) : phase === "observation" ? (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5">
-            <div className="flex items-center gap-2.5 mb-4">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 text-[#43718E]" />
               <div>
-                <h4 className="text-[18px] font-semibold text-zinc-900 leading-tight">该学谁 · 双人对比</h4>
-                <p className="text-[12px] text-zinc-500 mt-1">对比同题材高表现同事，吸收实操经验。</p>
+                <h4 className="text-sm font-medium text-[#292524] leading-tight">该学谁 · 双人对比</h4>
+                <p className="text-[12px] text-[#78716C] mt-1">对比同题材高表现同事，吸收实操经验。</p>
               </div>
             </div>
 
-            <div className="border-t border-zinc-100 pt-4 space-y-4">
+            <div className="border-t border-[#ECE7DE] pt-6 space-y-4">
               {benchmark.state === "ok" && benchmark.peer ? (
                 <div className="space-y-4">
-                  <div className="flex flex-col gap-1 text-[13px] text-zinc-700">
-                    <div>对标同事：<span className="font-semibold text-zinc-900">{benchmark.peer.name}</span></div>
-                    <div>指标数据：<span className="font-semibold text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
+                  <div className="flex flex-col gap-1 text-[13px] text-[#292524]">
+                    <div>对标同事：<span className="font-medium text-[#1C1917]">{benchmark.peer.name}</span></div>
+                    <div>指标数据：<span className="font-medium text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
                   </div>
 
                   {benchmark.peer.scriptSnippet ? (
                     <div className="space-y-2">
-                      <span className="text-[12px] font-medium text-zinc-500">文案对照（看差距在哪）：</span>
-                      <div className={cn("grid gap-3", ownScriptSnippet ? "md:grid-cols-2" : "")}>
+                      <span className="text-[12px] font-medium text-[#78716C]">文案对照（看差距在哪）：</span>
+                      <div className={cn("grid gap-4", ownScriptSnippet ? "md:grid-cols-2" : "")}>
                         <div className="space-y-1.5">
-                          <span className="text-[12px] text-zinc-500">同事的写法 · {benchmark.peer.name}</span>
-                          <blockquote className="relative rounded-r-lg border-l-2 border-l-[#D97757] bg-amber-50/30 p-3.5 text-[12px] text-zinc-700 italic leading-[1.6] whitespace-pre-wrap">
+                          <span className="text-[12px] text-[#78716C]">同事的写法 · {benchmark.peer.name}</span>
+                          <blockquote className="relative rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[12px] text-[#292524] italic leading-[1.6] whitespace-pre-wrap">
                             “{benchmark.peer.scriptSnippet}”
                           </blockquote>
                         </div>
                         {ownScriptSnippet ? (
                           <div className="space-y-1.5">
-                            <span className="text-[12px] text-zinc-500">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）</span>
-                            <blockquote className="relative rounded-r-lg border-l-2 border-l-zinc-300 bg-zinc-100/60 p-3.5 text-[12px] text-zinc-700 leading-[1.6] whitespace-pre-wrap">
+                            <span className="text-[12px] text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）</span>
+                            <blockquote className="relative rounded-r-lg border-l-2 border-l-[#E5E0D6] bg-[#F5F3EE] p-3.5 text-[12px] text-[#292524] leading-[1.6] whitespace-pre-wrap">
                               “{ownScriptSnippet.snippet}”
                             </blockquote>
                           </div>
@@ -521,40 +517,40 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[12px] text-zinc-500 italic">暂无对标文案片段，先参考该同事近期内容。</p>
+                    <p className="text-[12px] text-[#78716C] italic">暂无对标文案片段，先参考该同事近期内容。</p>
                   )}
                 </div>
               ) : benchmark.state === "fallback_team_avg" ? (
-                <div className="rounded-lg bg-zinc-100/60 p-4 text-center">
-                  <p className="text-[13px] text-zinc-700 font-medium">
+                <div className="rounded-lg bg-[#F5F3EE] p-4 text-center">
+                  <p className="text-[13px] text-[#292524] font-medium">
                     当前暂无可实名展示的同题材稳定对标人。
                   </p>
-                  <p className="mt-1.5 text-[12px] text-zinc-500">
+                  <p className="mt-1.5 text-[12px] text-[#78716C]">
                     已为您兜底拉取团队在此维度上的均值基准：
-                    <span className="font-semibold text-zinc-900">
+                    <span className="font-semibold text-[#1C1917]">
                       {verdict && benchmark.teamAvg !== undefined ? formatMetricValue(verdict.weakestDimension, benchmark.teamAvg) : benchmark.teamAvg}
                     </span>，建议先围绕自己历史最好内容进行优化。
                   </p>
                 </div>
               ) : (
-                <p className="rounded-lg bg-zinc-100/60 p-4 text-center text-[13px] leading-[1.6] text-zinc-500">
+                <p className="rounded-lg bg-[#F5F3EE] p-4 text-center text-[13px] leading-[1.6] text-[#78716C]">
                   团队还没有可比同伴。数据积累后，这里会出现你的第一个对标同事。
                 </p>
               )}
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-5 space-y-4">
+          <div className="space-y-6">
             <div>
-              <h3 className="text-[18px] font-semibold text-zinc-900 leading-tight">排行榜 · 全局排行</h3>
-              <p className="mt-1 text-[12px] text-zinc-500">团队已满 5 人，启用榜单形态。对比高表现同事，检验相对位置。</p>
+              <h3 className="text-base font-medium text-[#292524] leading-tight">排行榜 · 全局排行</h3>
+              <p className="mt-1.5 text-[12px] text-[#78716C]">团队已满 5 人，启用榜单形态。对比高表现同事，检验相对位置。</p>
             </div>
             {/* 榜单只有数字，补上"学他怎么写"的定性内容（旧页功能，避免榜单化后丢失） */}
             {benchmark.state === "ok" && benchmark.peer ? (
-              <div className="rounded-xl bg-zinc-100/60 px-4 py-3">
-                <p className="text-[12px] font-medium text-zinc-500">该学谁</p>
-                <p className="mt-1 text-[13px] text-zinc-700">
-                  <span className="font-medium text-zinc-900">{benchmark.peer.name}</span>
+              <div className="rounded-xl bg-[#F5F3EE] px-4 py-3">
+                <p className="text-[12px] font-medium text-[#78716C]">该学谁</p>
+                <p className="mt-1 text-[13px] text-[#292524]">
+                  <span className="font-medium text-[#1C1917]">{benchmark.peer.name}</span>
                   {verdict ? (
                     <span>
                       {" "}· <span className="font-medium text-[#D97757]">{formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue)}</span>
@@ -562,13 +558,13 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   ) : null}
                 </p>
                 {benchmark.peer.scriptSnippet ? (
-                  <blockquote className="mt-2 whitespace-pre-wrap border-l-2 border-[#D97757] pl-3 text-[12px] italic leading-[1.6] text-zinc-600">
+                  <blockquote className="mt-2 whitespace-pre-wrap border-l-2 border-[#D97757] pl-3 text-[12px] italic leading-[1.6] text-[#292524]">
                     “{benchmark.peer.scriptSnippet}”
                   </blockquote>
                 ) : null}
                 {ownScriptSnippet ? (
-                  <p className="mt-2 whitespace-pre-wrap border-l-2 border-zinc-300 pl-3 text-[12px] leading-[1.6] text-zinc-600">
-                    <span className="font-medium text-zinc-500">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）：</span>
+                  <p className="mt-2 whitespace-pre-wrap border-l-2 border-[#E5E0D6] pl-3 text-[12px] leading-[1.6] text-[#292524]">
+                    <span className="font-medium text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）：</span>
                     “{ownScriptSnippet.snippet}”
                   </p>
                 ) : null}
@@ -576,8 +572,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             ) : null}
             {loadingLeaderboard ? (
               <div className="space-y-3">
-                <div className="h-10 w-56 animate-pulse rounded-xl bg-zinc-50" />
-                <div className="h-[400px] w-full animate-pulse rounded-2xl bg-zinc-50" />
+                <div className="h-10 w-56 animate-pulse-claude rounded-xl bg-[#F5F3EE]" />
+                <div className="h-[400px] w-full animate-pulse-claude rounded-2xl bg-[#F5F3EE]" />
               </div>
             ) : leaderboardError ? (
               <ErrorState
@@ -595,7 +591,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 defaultCompact
               />
             ) : (
-              <div className="h-40 flex items-center justify-center text-zinc-500 text-[13px]">
+              <div className="h-40 flex items-center justify-center text-[#78716C] text-[13px]">
                 暂无排行榜数据
               </div>
             )}

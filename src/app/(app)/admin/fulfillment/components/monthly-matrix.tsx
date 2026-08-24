@@ -59,7 +59,7 @@ function formatDateKey(year: number, month: number, day: number) {
 }
 
 function getStatusColor(status: FulfillmentStatus | undefined): string {
-  if (!status) return "bg-zinc-50 border-zinc-100";
+  if (!status) return "bg-[#FBF9F5] border-[#ECE7DE]";
   switch (status) {
     case "published":
     case "confirmed_published":
@@ -72,9 +72,9 @@ function getStatusColor(status: FulfillmentStatus | undefined): string {
     case "absent":
       return "bg-[#C9604D]/90 border-[#C9604D]/40";
     case "unconfirmed":
-      return "bg-zinc-100 border-zinc-200/80";
+      return "bg-[#F5F3EE] border-[#E5E0D6]/80";
     default:
-      return "bg-zinc-50 border-zinc-100";
+      return "bg-[#FBF9F5] border-[#ECE7DE]";
   }
 }
 
@@ -176,7 +176,7 @@ export function MonthlyMatrix({
   return (
     <div className="space-y-3">
       {/* 矩阵标题与月度切换器（去框出版物排版） */}
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-200/50 pb-2.5">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E5E0D6]/50 pb-2.5">
         <button
           type="button"
           aria-expanded={expanded}
@@ -184,16 +184,16 @@ export function MonthlyMatrix({
           onClick={() => setExpanded((current) => !current)}
           className="flex items-center gap-2.5 text-left rounded-lg transition-colors cursor-pointer group"
         >
-          <span className="text-[16px] font-semibold text-zinc-950 group-hover:text-[#D97757] transition-colors">
+          <span className="text-base font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors">
             月度履约热力矩阵
           </span>
-          <span className="text-[12px] font-normal text-zinc-400">
+          <span className="text-[12px] font-normal text-[#78716C]">
             {year}年{month}月 · {members.length} 位成员
           </span>
           {expanded ? (
-            <ChevronUp className="size-4 text-zinc-400 group-hover:text-zinc-600 transition-transform" />
+            <ChevronUp className="size-4 text-[#78716C] group-hover:text-[#292524] transition-transform" />
           ) : (
-            <ChevronDown className="size-4 text-zinc-400 group-hover:text-zinc-600 transition-transform" />
+            <ChevronDown className="size-4 text-[#78716C] group-hover:text-[#292524] transition-transform" />
           )}
         </button>
 
@@ -203,19 +203,19 @@ export function MonthlyMatrix({
               variant="ghost"
               size="icon-xs"
               aria-label="上一月"
-              className="h-7 w-7 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg"
+              className="h-7 w-7 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] rounded-lg"
               onClick={handlePrevMonth}
             >
               <ChevronLeft className="size-3.5" />
             </Button>
-            <span className="min-w-[68px] text-center text-[12px] font-medium tabular-nums text-zinc-800">
+            <span className="min-w-[68px] text-center text-[12px] font-medium tabular-nums text-[#292524]">
               {year}年{month}月
             </span>
             <Button
               variant="ghost"
               size="icon-xs"
               aria-label="下一月"
-              className="h-7 w-7 text-zinc-500 hover:text-zinc-950 hover:bg-zinc-100 rounded-lg"
+              className="h-7 w-7 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] rounded-lg"
               onClick={handleNextMonth}
             >
               <ChevronRight className="size-3.5" />
@@ -237,11 +237,11 @@ export function MonthlyMatrix({
       {/* 展开内容 */}
       {expanded && (
         <div id="monthly-matrix-panel" className="space-y-3">
-          <div className="overflow-x-auto rounded-xl border border-[#E5E0D6] bg-white shadow-2xs">
+          <div className="overflow-x-auto rounded-xl border border-[#ECE7DE] bg-white">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#E5E0D6] bg-[#F5F2EC]">
-                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#E5E0D6] bg-[#F5F2EC] backdrop-blur-sm px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                <tr className="border-b border-[#ECE7DE]/60 bg-transparent">
+                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#ECE7DE]/60 bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                     成员
                   </th>
                   {dayNumbers.map((day) => {
@@ -253,7 +253,7 @@ export function MonthlyMatrix({
                         key={day}
                         className={`min-w-[26px] px-0.5 py-2 text-center text-[12px] tabular-nums transition-colors duration-150 ${
                           isColHovered
-                            ? "text-[#D97757] font-semibold bg-[#EFECE6]"
+                            ? "text-[#D97757] font-semibold bg-[#F5F3EE]"
                             : isToday
                               ? "text-[#D97757] font-semibold"
                               : "text-[#78716C] font-normal"
@@ -268,7 +268,7 @@ export function MonthlyMatrix({
                       </th>
                     );
                   })}
-                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#E5E0D6] bg-[#F5F2EC] backdrop-blur-sm px-3 py-2 text-right text-[12px] font-medium tracking-wider text-[#78716C]">
+                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#ECE7DE]/60 bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-2 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                     实发 / 应发
                   </th>
                 </tr>
@@ -280,7 +280,7 @@ export function MonthlyMatrix({
                   return (
                     <tr
                       key={member.userId}
-                      className={`border-b border-[#F0ECE1] last:border-b-0 transition-colors ${
+                      className={`border-b border-[#ECE7DE] last:border-b-0 transition-colors ${
                         isRowHovered ? "bg-[#FAF8F4]" : "hover:bg-[#FAF8F4]"
                       }`}
                     >
@@ -367,14 +367,14 @@ export function MonthlyMatrix({
                                   : ""
                               } ${
                                 appeal
-                                  ? "ring-1.5 ring-[#F59E0B] ring-offset-1"
+                                  ? "ring-1.5 ring-[#D99E55] ring-offset-1"
                                   : ""
                               }`}
                             />
                           </td>
                         );
                       })}
-                      <td className="sticky right-0 z-10 border-l border-[#E5E0D6] bg-white/95 backdrop-blur-sm px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
+                      <td className="sticky right-0 z-10 border-l border-[#E5E0D6] bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
                         <span
                           className={`text-[12px] tabular-nums font-semibold ${
                             member.publishedDays >= member.totalDays
@@ -419,11 +419,11 @@ export function MonthlyMatrix({
               缺勤
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm bg-zinc-100 border border-zinc-200/80" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#F5F3EE] border border-[#E5E0D6]/80" />
               待确认
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm border border-[#F59E0B] bg-white ring-1 ring-[#F59E0B]/30" />
+              <span className="inline-block size-2.5 rounded-sm border border-[#D99E55] bg-white ring-1 ring-[#D99E55]/30" />
               有申诉
             </span>
           </div>
@@ -433,7 +433,7 @@ export function MonthlyMatrix({
       {/* Claude 便签卡 Tooltip */}
       {hoveredCell && !openMenuCell && (
         <div
-          className="fixed z-50 flex w-64 flex-col items-start gap-1.5 rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 backdrop-blur-md p-3.5 text-[12px] text-[#292524] shadow-xl pointer-events-none transition-opacity duration-100"
+          className="fixed z-50 flex w-64 flex-col items-start gap-1.5 rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 backdrop-blur-md p-3.5 text-[12px] text-[#292524] shadow-claude-float pointer-events-none transition-opacity duration-100"
           style={{
             top: Math.max(10, hoveredCell.rect.top - 8),
             left: Math.min(
@@ -443,7 +443,7 @@ export function MonthlyMatrix({
             transform: "translate(-50%, -100%)",
           }}
         >
-          <div className="flex w-full items-center justify-between gap-2 border-b border-[#F0ECE1] pb-1.5">
+          <div className="flex w-full items-center justify-between gap-2 border-b border-[#ECE7DE] pb-1.5">
             <span className="font-semibold text-[#1C1917]">
               {hoveredCell.dateKey}
             </span>
@@ -459,22 +459,22 @@ export function MonthlyMatrix({
               {getStatusLabel(hoveredCell.status)}
             </span>
             {hoveredCell.record && hoveredCell.record.publishedCount > 0 && (
-              <span className="text-zinc-500 tabular-nums">
+              <span className="text-[#78716C] tabular-nums">
                 ({hoveredCell.record.publishedCount} 条视频)
               </span>
             )}
           </div>
 
           {hoveredCell.record?.reason && (
-            <div className="w-full rounded-lg bg-zinc-100/60 p-2 text-zinc-700 mt-1">
-              <span className="block text-[11px] font-medium text-zinc-500">
+            <div className="w-full rounded-lg bg-[#F5F3EE]/60 p-2 text-[#292524] mt-1">
+              <span className="block text-[11px] font-medium text-[#78716C]">
                 标记原因：
               </span>
-              <p className="mt-0.5 leading-[1.6] text-zinc-800">
+              <p className="mt-0.5 leading-[1.6] text-[#292524]">
                 {hoveredCell.record.reason}
               </p>
               {hoveredCell.record.markedByName && (
-                <span className="mt-1 block text-right text-[11px] text-zinc-400">
+                <span className="mt-1 block text-right text-[11px] text-[#78716C]">
                   — 标记人: {hoveredCell.record.markedByName}
                 </span>
               )}
@@ -482,9 +482,9 @@ export function MonthlyMatrix({
           )}
 
           {hoveredCell.appeal && (
-            <div className="w-full border border-amber-200 bg-amber-50/70 p-2 rounded-lg text-amber-900 mt-1">
-              <div className="flex items-center gap-1 font-medium text-[11px] text-amber-800">
-                <span className="size-1.5 bg-[#F59E0B] rounded-full" />
+            <div className="w-full border border-[#B98A54]/20 bg-[#B98A54]/10 p-2 rounded-lg text-[#1C1917] mt-1">
+              <div className="flex items-center gap-1 font-medium text-[11px] text-[#B98A54]">
+                <span className="size-1.5 bg-[#D99E55] rounded-full" />
                 员工申诉 (
                 {hoveredCell.appeal.status === "pending"
                   ? "待处理"
@@ -493,18 +493,18 @@ export function MonthlyMatrix({
                     : "驳回"}
                 )
               </div>
-              <p className="mt-1 text-[12px] leading-relaxed text-amber-950">
+              <p className="mt-1 text-[12px] leading-relaxed text-[#1C1917]">
                 &ldquo;{hoveredCell.appeal.reason}&rdquo;
               </p>
               {hoveredCell.appeal.handler_name && (
-                <span className="mt-1 block text-right text-[11px] text-amber-700">
+                <span className="mt-1 block text-right text-[11px] text-[#B98A54]">
                   处理人: {hoveredCell.appeal.handler_name}
                 </span>
               )}
             </div>
           )}
 
-          <span className="mt-1 text-[11px] text-zinc-400">
+          <span className="mt-1 text-[11px] text-[#78716C]">
             点击方格可快捷改判
           </span>
         </div>
@@ -518,7 +518,7 @@ export function MonthlyMatrix({
             onClick={() => setOpenMenuCell(null)}
           />
           <div
-            className="fixed z-50 w-40 bg-[#FDFCFB] border border-[#E5E0D6] rounded-2xl p-1.5 shadow-2xl text-[12px] animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 w-40 bg-[#FDFCFB] border border-[#E5E0D6] rounded-2xl p-1.5 shadow-claude-float text-[12px] animate-in fade-in zoom-in-95 duration-100"
             style={{
               top: Math.min(
                 typeof window !== "undefined" ? window.innerHeight - 200 : 600,
@@ -534,7 +534,7 @@ export function MonthlyMatrix({
               transform: "translateX(-50%)",
             }}
           >
-            <div className="px-2 py-1 text-[11px] font-medium text-[#78716C] border-b border-[#F0ECE1] mb-1">
+            <div className="px-2 py-1 text-[11px] font-medium text-[#78716C] border-b border-[#ECE7DE] mb-1">
               快捷改判 ({openMenuCell.member.userName} · {openMenuCell.day}日)
             </div>
             {onQuickMarkCell && (
@@ -591,7 +591,7 @@ export function MonthlyMatrix({
                   <span className="size-2 rounded-full bg-[#C9604D]" />
                   确认缺勤
                 </button>
-                <div className="border-t border-zinc-100 my-1" />
+                <div className="border-t border-[#ECE7DE] my-1" />
               </>
             )}
             <button
@@ -601,7 +601,7 @@ export function MonthlyMatrix({
                 setOpenMenuCell(null);
                 onCellClick(member, dateKey);
               }}
-              className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-zinc-100 text-zinc-600 font-medium text-[12px] transition-colors"
+              className="w-full text-left rounded-lg px-2.5 py-1.5 cursor-pointer hover:bg-[#F5F3EE] text-[#292524] font-medium text-[12px] transition-colors"
             >
               📄 打开详情抽屉
             </button>

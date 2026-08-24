@@ -81,7 +81,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         value={filters.profileId}
         onValueChange={(value) => updateFilter("profileId", value || "all")}
       >
-        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
+        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 shadow-none px-2 cursor-pointer">
           <SelectValue>{profileLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -98,7 +98,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         value={filters.accountId}
         onValueChange={(value) => updateFilter("accountId", value || "all")}
       >
-        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
+        <SelectTrigger className="h-8 w-28 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 shadow-none px-2 cursor-pointer">
           <SelectValue>{accountLabel}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -116,25 +116,25 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
           type="date"
           value={filters.startDate}
           onChange={(event) => updateFilter("startDate", event.target.value)}
-          className="h-8 w-32 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[12px] text-zinc-800 focus:bg-white focus:ring-1 focus:ring-zinc-300"
+          className="h-8 w-32 rounded-lg border-0 bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] text-[12px] text-[#292524]"
         />
-        <span className="text-zinc-400 text-xs">—</span>
+        <span className="text-[#78716C] text-xs">—</span>
         <Input
           type="date"
           value={filters.endDate}
           onChange={(event) => updateFilter("endDate", event.target.value)}
-          className="h-8 w-32 rounded-lg border-0 bg-zinc-100/70 hover:bg-zinc-100 text-[12px] text-zinc-800 focus:bg-white focus:ring-1 focus:ring-zinc-300"
+          className="h-8 w-32 rounded-lg border-0 bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] text-[12px] text-[#292524]"
         />
       </div>
 
       {/* 结构呼吸微竖线 */}
-      <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+      <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
 
       <Select
         value={filters.status}
         onValueChange={(value) => updateFilter("status", (value || "all") as VideoFilterValue["status"])}
       >
-        <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-zinc-100 text-[12px] text-zinc-800 hover:text-zinc-950 focus:ring-0 shadow-none px-2 cursor-pointer">
+        <SelectTrigger className="h-8 w-24 rounded-lg border-0 bg-transparent hover:bg-[#F5F3EE] text-[12px] text-[#292524] hover:text-[#1C1917] focus-visible:ring-0 shadow-none px-2 cursor-pointer">
           <SelectValue>{statusLabel(filters.status)}</SelectValue>
         </SelectTrigger>
         <SelectContent>
@@ -149,7 +149,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
       <Button
         variant="ghost"
         size="sm"
-        className="h-8 rounded-lg text-[12px] text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 cursor-pointer"
+        className="h-8 rounded-lg text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] cursor-pointer"
         onClick={handleReset}
       >
         重置

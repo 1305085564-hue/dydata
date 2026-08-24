@@ -145,7 +145,7 @@ function RewriteViewDialog({
               />
             </div>
             <div className="flex items-end">
-              <div className="flex w-full items-center justify-between rounded-md border border-zinc-200 px-3 py-2">
+              <div className="flex w-full items-center justify-between rounded-md border border-[#E5E0D6] px-3 py-2">
                 <Label>启用</Label>
                 <Switch
                   aria-label="启用模型视图"
@@ -227,7 +227,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
               id="route-model-view"
-              className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
+              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
               value={formData.model_view_id || ""}
               onChange={(e) =>
                 setFormData({ ...formData, model_view_id: e.target.value })
@@ -239,7 +239,7 @@ function RewriteRouteDialog({
                   key={option.id}
                   value={option.id}
                   disabled={!option.isEnabled}
-                  className={!option.isEnabled ? "text-zinc-400" : ""}
+                  className={!option.isEnabled ? "text-[#78716C]" : ""}
                 >
                   {option.label}
                 </option>
@@ -252,7 +252,7 @@ function RewriteRouteDialog({
             </Label>
             <select
               id="route-provider-key-model"
-              className="w-full h-9 rounded-md border border-zinc-200 bg-white px-3 text-[13px]"
+              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
               value={formData.provider_key_model_id || ""}
               onChange={(e) =>
                 setFormData({
@@ -267,7 +267,7 @@ function RewriteRouteDialog({
                   key={option.id}
                   value={option.id}
                   disabled={!option.isEnabled}
-                  className={!option.isEnabled ? "text-zinc-400" : ""}
+                  className={!option.isEnabled ? "text-[#78716C]" : ""}
                 >
                   {option.label}
                 </option>
@@ -434,7 +434,7 @@ export default function BindingsClient() {
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
-        <div className="h-40 rounded-2xl bg-zinc-50 animate-pulse border border-zinc-200" />
+        <div className="h-40 rounded-2xl bg-[#FBF9F5] animate-pulse border border-[#E5E0D6]" />
       </div>
     );
   }
@@ -483,7 +483,7 @@ export default function BindingsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-[12px] text-zinc-600 bg-zinc-100/70 p-2.5 px-3.5 rounded-xl">
+      <div className="flex items-center gap-2 text-[12px] text-[#292524] bg-[#F5F3EE]/70 p-2.5 px-3.5 rounded-xl">
         <Info className="size-4 text-[#43718E] shrink-0" />
         <span>
           只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
@@ -492,15 +492,15 @@ export default function BindingsClient() {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-zinc-900 font-medium text-[14px]">
-            <Sparkles className="size-4 text-zinc-500" />
+          <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+            <Sparkles className="size-4 text-[#78716C]" />
             <span>业务功能</span>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white overflow-hidden border border-zinc-200 w-full overflow-x-auto">
+        <div className="rounded-2xl bg-white overflow-hidden border border-[#E5E0D6] w-full overflow-x-auto">
           <Table>
-            <TableHeader className="bg-zinc-50/80">
+            <TableHeader className="bg-[#FBF9F5]/80">
               <TableRow className="hover:bg-transparent border-0">
                 <TableHead className="text-[12px] pl-5">功能</TableHead>
                 <TableHead className="text-[12px]">模型策略</TableHead>
@@ -515,7 +515,7 @@ export default function BindingsClient() {
                 <TableRow>
                   <TableCell
                     colSpan={4}
-                    className="h-24 text-center text-zinc-400 text-[13px]"
+                    className="h-24 text-center text-[#78716C] text-[13px]"
                   >
                     暂无可管理的业务功能。
                   </TableCell>
@@ -524,28 +524,28 @@ export default function BindingsClient() {
                 businessControls.map((control) => (
                   <TableRow
                     key={control.key}
-                    className="hover:bg-zinc-50/50 text-[13px] border-b border-zinc-200/60 last:border-b-0"
+                    className="hover:bg-[#FBF9F5]/50 text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0"
                   >
                     <TableCell className="pl-5">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-zinc-900">
+                        <span className="font-medium text-[#1C1917]">
                           {control.label}
                         </span>
                         {control.key === "ocr_screenshot" && (
                           <Badge
                             variant="secondary"
-                            className="bg-zinc-100 text-zinc-600 text-[10px] h-4.5 px-1.5 font-normal"
+                            className="bg-[#F5F3EE] text-[#292524] text-[10px] h-4.5 px-1.5 font-normal"
                           >
                             首页核心
                           </Badge>
                         )}
                       </div>
-                      <div className="mt-0.5 text-[12px] text-zinc-500">
+                      <div className="mt-0.5 text-[12px] text-[#78716C]">
                         {control.description}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center gap-1 text-[12px] text-zinc-700 bg-zinc-100/80 px-2 py-0.5 rounded-md">
+                      <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#F5F3EE]/80 px-2 py-0.5 rounded-md">
                         <Sparkles className="size-3 text-[#D97757]" />
                         {getModelName(control.providerKeyModelId)}
                       </span>
@@ -554,19 +554,19 @@ export default function BindingsClient() {
                       {control.lifecycleState === "archived" ? (
                         <Badge
                           variant="outline"
-                          className="bg-zinc-100 text-zinc-600 border-zinc-200 text-[11px] font-normal"
+                          className="bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] text-[11px] font-normal"
                         >
                           已停止
                         </Badge>
                       ) : control.isEnabled ? (
-                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600">
+                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#292524]">
                           <span className="size-1.5 rounded-full bg-[#16A34A]/100" />
                           使用中
                         </span>
                       ) : (
                         <Badge
                           variant="outline"
-                          className="bg-zinc-100 text-zinc-600 border-zinc-200/80 text-[11px] font-normal"
+                          className="bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/80 text-[11px] font-normal"
                         >
                           已关闭
                         </Badge>
@@ -580,10 +580,10 @@ export default function BindingsClient() {
                             size="sm"
                             title={`恢复${control.label}`}
                             aria-label={`恢复${control.label}`}
-                            className="h-7 px-2 text-[12px] text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                            className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                             onClick={() => restoreFeature(control.key)}
                           >
-                            <ArchiveRestore className="size-3.5 mr-1 text-zinc-500" />
+                            <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
                             恢复
                           </Button>
                         ) : (
@@ -593,12 +593,12 @@ export default function BindingsClient() {
                               size="sm"
                               title={`设置${control.label}`}
                               aria-label={`设置${control.label}`}
-                              className="h-7 px-2 text-[12px] text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
+                              className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                               onClick={() =>
                                 setBindingModal({ open: true, data: control })
                               }
                             >
-                              <Pencil className="size-3.5 mr-1 text-zinc-400" />
+                              <Pencil className="size-3.5 mr-1 text-[#78716C]" />
                               设置
                             </Button>
                             <Button
@@ -606,7 +606,7 @@ export default function BindingsClient() {
                               size="sm"
                               title={`停止使用${control.label}`}
                               aria-label={`停止使用${control.label}`}
-                              className="h-7 px-2 text-[12px] text-zinc-500 hover:text-[#C9604D] hover:bg-zinc-100/50"
+                              className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#F5F3EE]/50"
                               onClick={() => setArchiveControl(control)}
                             >
                               <Archive className="size-3.5 mr-1 opacity-70" />
@@ -623,10 +623,10 @@ export default function BindingsClient() {
           </Table>
         </div>
 
-        <div className="flex items-start gap-2.5 text-[12px] text-zinc-600 bg-zinc-100/70 p-3 rounded-xl">
-          <Info className="size-4 text-zinc-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2.5 text-[12px] text-[#292524] bg-[#F5F3EE]/70 p-3 rounded-xl">
+          <Info className="size-4 text-[#78716C] shrink-0 mt-0.5" />
           <div>
-            <span className="font-medium text-zinc-700">历史配置说明：</span>
+            <span className="font-medium text-[#292524]">历史配置说明：</span>
             旧版智能预警、成长建议旧配置、视频诊断旧配置等 5
             项历史废弃配置已于系统重构升级中安全下线清理。当前展示的功能均为活跃或主线业务功能。
           </div>
@@ -636,23 +636,23 @@ export default function BindingsClient() {
       {/* 第二板块：文案改写场景模型路由 (依靠 24px 留白美学切割，无需物理 border-t) */}
       <div className="space-y-3 pt-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-zinc-900 font-medium text-[14px]">
-            <GitFork className="size-4 text-zinc-500" />
+          <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+            <GitFork className="size-4 text-[#78716C]" />
             <span>文案改写模型分配规则</span>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 items-start min-h-[460px]">
-          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-zinc-200 rounded-2xl">
+          <div className="w-full md:w-[250px] bg-white p-3 space-y-2 shrink-0 border border-[#E5E0D6] rounded-2xl">
             <div className="flex justify-between items-center px-2 py-1">
-              <h2 className="text-[12px] font-normal text-zinc-500 tracking-wider">
+              <h2 className="text-[12px] font-normal text-[#78716C] tracking-wider">
                 改写视图
               </h2>
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="新建视图"
-                className="size-5 text-zinc-500 hover:text-zinc-700 bg-zinc-100/70 rounded shrink-0"
+                className="size-5 text-[#78716C] hover:text-[#292524] bg-[#F5F3EE]/70 rounded shrink-0"
                 onClick={() => setViewModal({ open: true, data: null })}
               >
                 <Plus strokeWidth={2} className="size-3" />
@@ -661,7 +661,7 @@ export default function BindingsClient() {
 
             <div className="space-y-0.5 max-h-[500px] overflow-y-auto">
               {views.length === 0 ? (
-                <div className="text-[12px] text-zinc-500 py-6 text-center">
+                <div className="text-[12px] text-[#78716C] py-6 text-center">
                   暂无视图
                 </div>
               ) : (
@@ -673,8 +673,8 @@ export default function BindingsClient() {
                       className={cn(
                         "group flex items-center justify-between px-2 py-1.5 rounded-lg transition-all text-[13px]",
                         isViewActive
-                          ? "bg-zinc-100/80 text-zinc-900 font-medium"
-                          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950",
+                          ? "bg-[#F5F3EE]/80 text-[#1C1917] font-medium"
+                          : "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
                       )}
                     >
                       <button
@@ -687,8 +687,8 @@ export default function BindingsClient() {
                         <Badge
                           variant="outline"
                           className={cn(
-                            "font-mono text-[12px] h-4 px-1 py-0 bg-white shrink-0 border-zinc-200",
-                            isViewActive && "text-zinc-900",
+                            "font-mono text-[12px] h-4 px-1 py-0 bg-white shrink-0 border-[#E5E0D6]",
+                            isViewActive && "text-[#1C1917]",
                           )}
                         >
                           {v.key}
@@ -705,7 +705,7 @@ export default function BindingsClient() {
                           variant="ghost"
                           size="icon"
                           aria-label={`编辑视图 ${v.label}`}
-                          className="size-5 text-zinc-500 hover:text-zinc-700"
+                          className="size-5 text-[#78716C] hover:text-[#292524]"
                           onClick={(e) => {
                             e.stopPropagation();
                             setViewModal({ open: true, data: v });
@@ -721,7 +721,7 @@ export default function BindingsClient() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 border border-zinc-200 rounded-2xl">
+          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 border border-[#E5E0D6] rounded-2xl">
             {activeViewId &&
               (() => {
                 const view = bundle.rewriteModelViews.find(
@@ -729,7 +729,7 @@ export default function BindingsClient() {
                 );
                 if (!view)
                   return (
-                    <div className="text-zinc-500 text-[12px] py-10 text-center">
+                    <div className="text-[#78716C] text-[12px] py-10 text-center">
                       模型视图已不存在
                     </div>
                   );
@@ -742,12 +742,12 @@ export default function BindingsClient() {
                     <div className="flex justify-between items-center px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-[14px] text-zinc-900">
+                          <h3 className="font-medium text-[14px] text-[#1C1917]">
                             {view.label}
                           </h3>
                           <Badge
                             variant="outline"
-                            className="font-mono text-[12px] bg-zinc-50 border-zinc-200"
+                            className="font-mono text-[12px] bg-[#FBF9F5] border-[#E5E0D6]"
                           >
                             {view.key}
                           </Badge>
@@ -758,7 +758,7 @@ export default function BindingsClient() {
                           )}
                         </div>
                         {view.description && (
-                          <div className="text-[12px] text-zinc-500 mt-0.5">
+                          <div className="text-[12px] text-[#78716C] mt-0.5">
                             {view.description}
                           </div>
                         )}
@@ -792,23 +792,23 @@ export default function BindingsClient() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden bg-white border border-zinc-200 w-full overflow-x-auto">
+                    <div className="rounded-xl overflow-hidden bg-white border border-[#E5E0D6] w-full overflow-x-auto">
                       <Table>
-                        <TableHeader className="bg-zinc-50/80">
+                        <TableHeader className="bg-[#FBF9F5]/80">
                           <TableRow className="hover:bg-transparent border-0">
-                            <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-zinc-500">
+                            <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-[#78716C]">
                               优先级
                             </TableHead>
-                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">
+                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">
                               实际 Model ID
                             </TableHead>
-                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-zinc-500">
+                            <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">
                               映射物理渠道
                             </TableHead>
-                            <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-zinc-500">
+                            <TableHead className="h-8 w-[85px] py-1.5 text-left text-[12px] font-normal text-[#78716C]">
                               启用
                             </TableHead>
-                            <TableHead className="h-8 w-[100px] py-1.5 pr-4 text-right text-[12px] font-normal text-zinc-500">
+                            <TableHead className="h-8 w-[100px] py-1.5 pr-4 text-right text-[12px] font-normal text-[#78716C]">
                               操作
                             </TableHead>
                           </TableRow>
@@ -818,9 +818,9 @@ export default function BindingsClient() {
                             <TableRow>
                               <TableCell
                                 colSpan={5}
-                                className="py-8 text-center text-[13px] text-zinc-400"
+                                className="py-8 text-center text-[13px] text-[#78716C]"
                               >
-                                暂无路由规则，请点击右上角添加
+                                暂无路由规则，点击右上角添加
                               </TableCell>
                             </TableRow>
                           ) : (
@@ -840,17 +840,17 @@ export default function BindingsClient() {
                                 <TableRow
                                   key={route.id}
                                   className={cn(
-                                    "group hover:bg-zinc-50/50 h-9 transition-colors text-[13px] border-b border-zinc-200/60 last:border-b-0",
+                                    "group hover:bg-[#FBF9F5]/50 h-9 transition-colors text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0",
                                     !route.is_enabled && "opacity-60",
                                   )}
                                 >
-                                  <TableCell className="py-1 text-[12px] font-mono text-zinc-500 font-normal pl-4 text-left">
+                                  <TableCell className="py-1 text-[12px] font-mono text-[#78716C] font-normal pl-4 text-left">
                                     P{route.priority}
                                   </TableCell>
-                                  <TableCell className="py-1 font-mono text-[12px] font-medium text-zinc-900 text-left">
+                                  <TableCell className="py-1 font-mono text-[12px] font-medium text-[#1C1917] text-left">
                                     {route.actual_model}
                                   </TableCell>
-                                  <TableCell className="py-1 text-[12px] text-zinc-500 text-left truncate max-w-[200px]">
+                                  <TableCell className="py-1 text-[12px] text-[#78716C] text-left truncate max-w-[200px]">
                                     {provider
                                       ? `${provider.name} / ${key?.label}`
                                       : "自动分配"}
@@ -875,7 +875,7 @@ export default function BindingsClient() {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`编辑路由 ${route.actual_model}`}
-                                        className="size-7 text-zinc-500 hover:text-zinc-700"
+                                        className="size-7 text-[#78716C] hover:text-[#292524]"
                                         onClick={() =>
                                           setRouteModal({
                                             open: true,
@@ -893,7 +893,7 @@ export default function BindingsClient() {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`删除路由 ${route.actual_model}`}
-                                        className="size-7 text-zinc-500 hover:text-[#C9604D]"
+                                        className="size-7 text-[#78716C] hover:text-[#C9604D]"
                                         onClick={() =>
                                           setDeleteConfirm({
                                             open: true,
@@ -922,7 +922,7 @@ export default function BindingsClient() {
               })()}
 
             {!activeViewId && (
-              <div className="text-center py-20 text-[12px] text-zinc-500">
+              <div className="text-center py-20 text-[12px] text-[#78716C]">
                 请在左侧选择模型视图
               </div>
             )}
@@ -969,7 +969,7 @@ export default function BindingsClient() {
         }
         description={
           archiveControl?.key === "ocr_screenshot"
-            ? "警告：截图识别是首页日报填报的核心依赖！停止使用后，用户在首页将无法自动解析上传的截图图片。确认要停止该功能吗？"
+            ? "警告：截图识别是首页日报填报的核心依赖。停止使用后，用户在首页将无法自动解析上传的截图图片。确认要停止该功能吗？"
             : "系统会保存当前模型映射和历史设置，并阻止前台发起该 AI 功能请求。恢复前不会删除任何配置。"
         }
         confirmText="停止使用"

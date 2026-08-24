@@ -246,7 +246,7 @@ export function TopicWorkBreakdownDrawer({
     <>
       {/* 遮罩：z-[75] 脱离局部 context 提升到最高 body */}
       <div
-        className="fixed inset-0 bg-zinc-950/20 backdrop-blur-xs z-[75] transition-opacity"
+        className="fixed inset-0 bg-[#1C1917]/20 backdrop-blur-xs z-[75] transition-opacity"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -255,25 +255,25 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] w-full max-w-xl bg-white/95 backdrop-blur-xl border-l border-zinc-200 shadow-2xl p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] w-full max-w-xl bg-[#FBF9F5]/95 backdrop-blur-xl border-l border-[#E5E0D6] shadow-claude-dialog p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
       >
         <div>
-          <div className="flex items-start justify-between pb-4 border-b border-zinc-100 mb-4 pt-1">
+          <div className="flex items-start justify-between pb-4 border-b border-[#ECE7DE] mb-4 pt-1">
             <div className="min-w-0 pr-3">
-              <div className="flex items-center gap-2 text-xs font-normal text-zinc-500 mb-1 truncate">
+              <div className="flex items-center gap-2 text-xs font-normal text-[#78716C] mb-1 truncate">
                 <span>{subTopicInfo?.topics?.name || "常规母题"}</span>
                 {subTopicInfo?.topic_groups?.name && (
                   <span>· {subTopicInfo.topic_groups.name}</span>
                 )}
                 {subTopicInfo?.emotion_tag && (
-                  <span className="bg-zinc-100 px-1.5 py-0.5 rounded text-xs text-zinc-600 font-normal">
+                  <span className="bg-[#F5F3EE] px-1.5 py-0.5 rounded text-xs text-[#292524] font-normal">
                     #{subTopicInfo.emotion_tag}
                   </span>
                 )}
               </div>
               <h3
                 id="drawer-title"
-                className="text-lg font-semibold text-zinc-900 leading-snug"
+                className="text-lg font-semibold text-[#1C1917] leading-snug"
               >
                 {subTopicInfo?.title || "子题详情"}
               </h3>
@@ -282,7 +282,7 @@ export function TopicWorkBreakdownDrawer({
               ref={closeBtnRef}
               type="button"
               onClick={handleClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 active:scale-[0.97] transition-all shrink-0"
+              className="p-1.5 rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all shrink-0"
               title="关闭详情"
               aria-label="关闭详情"
             >
@@ -291,7 +291,7 @@ export function TopicWorkBreakdownDrawer({
           </div>
 
           {detailError ? (
-            <div className="py-8 text-center text-zinc-600 bg-red-50/50 rounded-xl">
+            <div className="py-8 text-center text-[#292524] bg-red-50/50 rounded-xl">
               <AlertTriangle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
               <p className="text-sm font-medium">详情加载失败</p>
               <p className="text-xs text-[#DC2626] mt-1 font-normal">
@@ -299,20 +299,20 @@ export function TopicWorkBreakdownDrawer({
               </p>
             </div>
           ) : (
-            <div className="bg-zinc-50/80 rounded-2xl p-4 mb-6 border-0">
-              <div className="text-xs font-medium text-zinc-500 mb-1 flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-zinc-400" />
+            <div className="bg-[#FBF9F5]/80 rounded-2xl p-4 mb-6 border-0">
+              <div className="text-xs font-medium text-[#78716C] mb-1 flex items-center gap-1">
+                <FileText className="w-3.5 h-3.5 text-[#78716C]" />
                 <span>一句话选题 Hook</span>
               </div>
-              <p className="text-sm font-normal text-zinc-900 leading-relaxed">
+              <p className="text-sm font-normal text-[#1C1917] leading-relaxed">
                 “{subTopicInfo?.hook || "暂无 Hook"}”
               </p>
             </div>
           )}
 
           {loading && !subTopicInfo ? (
-            <div className="py-12 text-center text-xs text-zinc-500 font-normal">
-              <RefreshCw className="w-4 h-4 text-zinc-400 animate-spin mx-auto mb-2" />
+            <div className="py-12 text-center text-xs text-[#78716C] font-normal">
+              <RefreshCw className="w-4 h-4 text-[#78716C] animate-spin mx-auto mb-2" />
               <span>详情加载中...</span>
             </div>
           ) : (
@@ -320,23 +320,23 @@ export function TopicWorkBreakdownDrawer({
               {/* 撞车动态 */}
               <section>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-medium text-zinc-700 flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-zinc-500" />
+                  <h4 className="text-xs font-medium text-[#292524] flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-[#78716C]" />
                     <span>撞车动态</span>
                   </h4>
                   {claimsData && (
-                    <span className="text-xs text-zinc-400 font-normal tabular-nums">
+                    <span className="text-xs text-[#78716C] font-normal tabular-nums">
                       候选 {claimsData.candidateCount} · 脚本中{" "}
                       {claimsData.scriptingCount}
                     </span>
                   )}
                 </div>
                 {claimsError ? (
-                  <div className="text-xs text-zinc-600 bg-red-50/50 rounded-lg p-3 font-normal">
+                  <div className="text-xs text-[#292524] bg-red-50/50 rounded-lg p-3 font-normal">
                     {claimsError}
                   </div>
                 ) : claimsData?.claims.length === 0 ? (
-                  <div className="text-xs text-zinc-400 py-4 text-center rounded-xl bg-zinc-100/50 font-normal">
+                  <div className="text-xs text-[#78716C] py-4 text-center rounded-xl bg-[#F5F3EE]/50 font-normal">
                     暂无团队成员认领
                   </div>
                 ) : (
@@ -345,16 +345,16 @@ export function TopicWorkBreakdownDrawer({
                       {claimsData.claims.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between bg-zinc-50/80 px-3 py-2 rounded-xl border-0 text-xs"
+                          className="flex items-center justify-between bg-[#FBF9F5]/80 px-3 py-2 rounded-xl border-0 text-xs"
                         >
-                          <span className="font-medium text-zinc-800">
+                          <span className="font-medium text-[#292524]">
                             {item.displayName}
                           </span>
                           <span
                             className={
                               item.status === "scripting"
-                                ? "bg-zinc-200/70 text-zinc-800 font-medium px-2 py-0.5 rounded-md text-xs"
-                                : "bg-zinc-200/50 text-zinc-600 font-normal px-2 py-0.5 rounded-md text-xs"
+                                ? "bg-[#E5E0D6]/70 text-[#292524] font-medium px-2 py-0.5 rounded-md text-xs"
+                                : "bg-[#E5E0D6]/50 text-[#292524] font-normal px-2 py-0.5 rounded-md text-xs"
                             }
                           >
                             {item.status === "scripting"
@@ -370,17 +370,17 @@ export function TopicWorkBreakdownDrawer({
 
               {/* 作品数据汇总 */}
               {worksError ? (
-                <div className="text-xs text-zinc-600 bg-red-50/50 rounded-lg p-3 font-normal">
+                <div className="text-xs text-[#292524] bg-red-50/50 rounded-lg p-3 font-normal">
                   作品加载失败：{worksError}
                 </div>
               ) : (
                 worksData?.summary && (
                   <section>
-                    <h4 className="text-xs font-medium text-zinc-700 mb-2 flex items-center gap-1.5">
-                      <Video className="w-3.5 h-3.5 text-zinc-500" />
+                    <h4 className="text-xs font-medium text-[#292524] mb-2 flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-[#78716C]" />
                       <span>合格作品数据汇总</span>
                     </h4>
-                    <div className="grid grid-cols-3 gap-3 bg-zinc-50/80 rounded-2xl p-4 border-0 text-center text-xs">
+                    <div className="grid grid-cols-3 gap-3 bg-[#FBF9F5]/80 rounded-2xl p-4 border-0 text-center text-xs">
                       <Metric
                         label="合格作品数"
                         value={String(worksData.summary.qualifiedWorkCount)}
@@ -403,11 +403,11 @@ export function TopicWorkBreakdownDrawer({
 
               {/* 最高播放文案摘录 */}
               {worksData?.summary?.bestCopy && (
-                <section className="bg-zinc-50/80 rounded-2xl p-4 text-xs border-0">
-                  <div className="text-xs font-medium text-zinc-500 mb-1.5">
+                <section className="bg-[#FBF9F5]/80 rounded-2xl p-4 text-xs border-0">
+                  <div className="text-xs font-medium text-[#78716C] mb-1.5">
                     最高播放作品文案摘录
                   </div>
-                  <p className="text-zinc-800 line-clamp-4 leading-relaxed bg-white p-3 rounded-xl border border-zinc-100 font-normal shadow-2xs">
+                  <p className="text-[#292524] line-clamp-4 leading-relaxed bg-white p-3 rounded-xl border border-[#ECE7DE] font-normal shadow-2xs">
                     {worksData.summary.bestCopy}
                   </p>
                 </section>
@@ -416,15 +416,15 @@ export function TopicWorkBreakdownDrawer({
               {/* 历史关联作品 */}
               <section>
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-medium text-zinc-700">
+                  <h4 className="text-xs font-medium text-[#292524]">
                     历史关联作品
                   </h4>
-                  <span className="text-xs text-zinc-400 font-normal tabular-nums">
+                  <span className="text-xs text-[#78716C] font-normal tabular-nums">
                     {worksData?.pagination.totalItems ?? 0} 条
                   </span>
                 </div>
                 {worksData?.items.length === 0 ? (
-                  <div className="text-xs text-zinc-400 py-4 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50 font-normal">
+                  <div className="text-xs text-[#78716C] py-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-[#FBF9F5]/50 font-normal">
                     暂无已上线的成片作品
                   </div>
                 ) : (
@@ -432,24 +432,24 @@ export function TopicWorkBreakdownDrawer({
                     {(worksData?.items ?? []).map((item: TopicWorkItem) => (
                       <div
                         key={item.id}
-                        className="p-3 bg-zinc-50/70 hover:bg-zinc-100/60 rounded-xl text-xs flex justify-between items-start gap-2 border-0 transition-colors"
+                        className="p-3 bg-[#FBF9F5]/70 hover:bg-[#F5F3EE]/60 rounded-xl text-xs flex justify-between items-start gap-2 border-0 transition-colors"
                       >
                         <div>
-                          <div className="font-semibold text-zinc-900 line-clamp-1">
+                          <div className="font-semibold text-[#1C1917] line-clamp-1">
                             《{item.videoTitle}》
                           </div>
                           {item.uploadedAt && (
-                            <div className="text-[11px] text-zinc-400 mt-0.5 font-normal tabular-nums">
+                            <div className="text-[11px] text-[#78716C] mt-0.5 font-normal tabular-nums">
                               发布时间:{" "}
                               {new Date(item.uploadedAt).toLocaleDateString()}
                             </div>
                           )}
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="font-semibold text-zinc-900 tabular-nums text-sm">
+                          <div className="font-semibold text-[#1C1917] tabular-nums text-sm">
                             {formatPlayCount(item.playCount)}
                           </div>
-                          <div className="text-[11px] text-zinc-400 font-normal">
+                          <div className="text-[11px] text-[#78716C] font-normal">
                             播放量
                           </div>
                         </div>
@@ -463,10 +463,10 @@ export function TopicWorkBreakdownDrawer({
         </div>
 
         {/* 底部按钮栏 */}
-        <div className="pt-4 mt-6 border-t border-zinc-200 space-y-2">
+        <div className="pt-4 mt-6 border-t border-[#E5E0D6] space-y-2">
           <div className="flex items-center gap-2">
             {!action.canClaim && action.label === "脚本中" ? (
-              <span className="flex-1 py-2 text-center rounded-lg border border-zinc-200 bg-zinc-100 text-zinc-700 font-medium text-xs">
+              <span className="flex-1 py-2 text-center rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] font-medium text-xs">
                 脚本撰写中
               </span>
             ) : action.canStartScripting ? (
@@ -474,7 +474,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
+                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
               >
                 开始写脚本
               </button>
@@ -483,7 +483,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.97] text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
+                className="flex-1 py-2 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-medium text-xs transition-all shadow-xs disabled:opacity-50"
               >
                 认领到候选
               </button>
@@ -493,7 +493,7 @@ export function TopicWorkBreakdownDrawer({
                 type="button"
                 onClick={() => void handleAction()}
                 disabled={submitting}
-                className="px-4 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 active:scale-[0.97] text-zinc-700 font-medium text-xs transition-all disabled:opacity-50"
+                className="px-4 py-2 rounded-lg border border-[#E5E0D6] bg-white hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75 text-[#292524] font-medium text-xs transition-all disabled:opacity-50"
               >
                 放回
               </button>
@@ -524,9 +524,9 @@ function Metric({
 }) {
   return (
     <div>
-      <div className="text-[11px] text-zinc-500 font-normal">{label}</div>
+      <div className="text-[11px] text-[#78716C] font-normal">{label}</div>
       <div
-        className={`font-semibold text-base sm:text-lg mt-0.5 tabular-nums ${accent ? "text-[#D97757]" : "text-zinc-900"}`}
+        className={`font-semibold text-base sm:text-lg mt-0.5 tabular-nums ${accent ? "text-[#D97757]" : "text-[#1C1917]"}`}
       >
         {value}
       </div>

@@ -16,33 +16,33 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
     "恢复日报同步后，这里会给出针对你数据的具体建议。通用第一原则：下一条开头 3 秒先抛结果，别先讲背景。";
 
   return (
-    <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5">
+    <section className="space-y-4 border-b border-[#ECE7DE]/80 pb-8">
       <div className="flex items-center gap-2.5">
         <Lightbulb className="h-5 w-5 stroke-[1.5] text-[#D99E55]" />
         <div>
-          <h3 className="text-[16px] font-medium leading-tight text-zinc-900">下一条视频 · 一个建议</h3>
-          <p className="mt-1 text-[13px] text-zinc-600">样本攒够之前不给诊断，只给团队验证过的写法。</p>
+          <h3 className="text-base font-medium leading-tight text-[#1C1917]">下一条视频 · 一个建议</h3>
+          <p className="mt-1 text-[13px] text-[#292524]">样本攒够之前不给诊断，只给团队验证过的写法。</p>
         </div>
       </div>
 
-      <p className="rounded-lg bg-zinc-100/70 p-3 text-[13px] font-medium leading-[1.7] text-zinc-900">
+      <p className="rounded-lg bg-[#F5F3EE] p-3.5 text-[13px] font-medium leading-[1.7] text-[#1C1917]">
         {advice}
       </p>
 
       {peer?.scriptSnippet ? (
         own ? (
           <div className="space-y-2">
-            <span className="text-[13px] font-medium text-zinc-600">写法对照 · 团队验证过 vs 你最近一篇：</span>
+            <span className="text-[13px] font-medium text-[#292524]">写法对照 · 团队验证过 vs 你最近一篇：</span>
             <div className="grid gap-2 md:grid-cols-2">
               <div className="space-y-1.5">
-                <span className="text-[13px] text-zinc-600">同事的写法 · {peer.name}</span>
-                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-amber-50/30 p-3.5 text-[13px] italic leading-[1.6] text-zinc-700">
+                <span className="text-[13px] text-[#292524]">同事的写法 · {peer.name}</span>
+                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] italic leading-[1.6] text-[#292524]">
                   “{peer.scriptSnippet}”
                 </blockquote>
               </div>
               <div className="space-y-1.5">
-                <span className="text-[13px] text-zinc-600">你的写法 · 最近一篇（{格式化为月日(own.reportDate)}）</span>
-                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-zinc-300 bg-zinc-100/60 p-3.5 text-[13px] leading-[1.6] text-zinc-700">
+                <span className="text-[13px] text-[#292524]">你的写法 · 最近一篇（{格式化为月日(own.reportDate)}）</span>
+                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#E5E0D6] bg-[#F5F3EE] p-3.5 text-[13px] leading-[1.6] text-[#292524]">
                   “{own.snippet}”
                 </blockquote>
               </div>
@@ -50,10 +50,10 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
           </div>
         ) : (
           <div className="space-y-2">
-            <span className="text-[13px] font-medium text-zinc-600">
+            <span className="text-[13px] font-medium text-[#292524]">
               示例 · 来自{peer.name}，团队验证过的写法：
             </span>
-            <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-amber-50/30 p-3.5 text-[13px] italic leading-[1.6] text-zinc-700">
+            <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] italic leading-[1.6] text-[#292524]">
               “{peer.scriptSnippet}”
             </blockquote>
           </div>

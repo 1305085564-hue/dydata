@@ -28,7 +28,7 @@ export async function CollaborationDataContainer({
   });
   if ("error" in actorResult) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-[13px] text-[#DC2626]">
+      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#DC2626]">
         无权访问：{actorResult.error}
       </div>
     );
@@ -37,7 +37,7 @@ export async function CollaborationDataContainer({
   const context = await buildPermissionContextForActor(actorResult.actor);
   if (!context) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-[13px] text-[#DC2626]">
+      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#DC2626]">
         用户权限范围加载失败
       </div>
     );
@@ -46,7 +46,7 @@ export async function CollaborationDataContainer({
   const range = getMonthRange(year, month);
   if (!range) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-zinc-100 px-4 py-3 text-[13px] text-[#DC2626]">
+      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#DC2626]">
         日期范围无效
       </div>
     );

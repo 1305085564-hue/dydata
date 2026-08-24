@@ -191,7 +191,7 @@ export function Leaderboard({
             onChange={(value) => setBoardType(value as LeaderboardType)}
           />
           {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-zinc-200 hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
           <SegmentedControl
             options={RANGE_OPTIONS}
             value={range}
@@ -202,7 +202,7 @@ export function Leaderboard({
           type="button"
           size="sm"
           variant="ghost"
-          className="h-7 rounded-lg bg-zinc-100/70 hover:bg-zinc-100 hover:text-zinc-950 px-3 text-xs text-zinc-600 font-medium cursor-pointer"
+          className="h-7 rounded-lg bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] hover:text-[#1C1917] px-3 text-xs text-[#292524] font-medium cursor-pointer"
           onClick={() => setCompact((prev) => !prev)}
         >
           {compact ? (
@@ -229,8 +229,8 @@ export function Leaderboard({
             <Table className={cn("table-fixed", compact ? "min-w-[560px]" : "min-w-[1380px]")}>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="sticky left-0 z-20 w-14 bg-background/95 backdrop-blur">排名</TableHead>
-                  <TableHead className="sticky left-14 z-20 w-[96px] bg-background/95 backdrop-blur">账号</TableHead>
+                  <TableHead className="sticky left-0 z-20 w-14 bg-[#FBF9F5]/85 backdrop-blur-md">排名</TableHead>
+                  <TableHead className="sticky left-14 z-20 w-[96px] bg-[#FBF9F5]/85 backdrop-blur-md">账号</TableHead>
                   {boardType === "progress" ? (
                     <TableHead className="min-w-[120px] text-right">近7天环比</TableHead>
                   ) : null}
@@ -256,14 +256,14 @@ export function Leaderboard({
                   <TableRow
                     key={item.accountId}
                     className={cn(
-                      "border-b border-zinc-200 bg-white transition-colors hover:bg-zinc-100",
-                      item.isOwn && "bg-[#D97757]/5 hover:bg-zinc-100"
+                      "border-b border-[#E5E0D6] bg-white transition-colors hover:bg-[#F5F3EE]",
+                      item.isOwn && "bg-[#D97757]/5 hover:bg-[#F5F3EE]"
                     )}
                   >
-                    <TableCell className="sticky left-0 z-10 bg-background/95 backdrop-blur">
+                    <TableCell className="sticky left-0 z-10 bg-[#FBF9F5]/90 backdrop-blur-md">
                       <RankBadge rank={item.rank} />
                     </TableCell>
-                    <TableCell className="sticky left-14 z-10 bg-background/95 backdrop-blur">
+                    <TableCell className="sticky left-14 z-10 bg-[#FBF9F5]/90 backdrop-blur-md">
                       <div className="w-[96px]">
                         <div className="flex items-center gap-1">
                           <span className="truncate font-medium text-foreground">{item.accountName}</span>
@@ -321,7 +321,7 @@ function SegmentedControl({
               "px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer",
               active
                 ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
             )}
             onClick={() => onChange(option.value)}
           >
@@ -363,11 +363,11 @@ function TagStack({
 function RankBadge({ rank }: { rank: number }) {
   const badgeClass =
     rank === 1
-      ? "bg-zinc-100 text-[#D99E55] ring-[#F59E0B]/30"
+      ? "bg-[#F5F3EE] text-[#D99E55] ring-[#D99E55]/30"
       : rank === 2
-        ? "bg-slate-100 text-slate-700 ring-slate-200"
+        ? "bg-[#F5F3EE] text-[#292524] ring-[#E5E0D6]"
         : rank === 3
-          ? "bg-zinc-100 text-[#C9604D] ring-orange-200"
+          ? "bg-[#F5F3EE] text-[#C9604D] ring-[#C9604D]/30"
           : "bg-muted text-muted-foreground ring-border";
 
   return (
@@ -392,8 +392,8 @@ function ProgressValue({ item }: { item: AccountLeaderboardItem }) {
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium tabular-nums",
         item.progressRate === null || item.progressRate >= 0
-          ? "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
-          : "inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700"
+          ? "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]"
+          : "inline-flex items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2 text-[#292524]"
       )}
     >
       <TrendingUp className="size-3.5" />
@@ -599,16 +599,16 @@ function formatMetric(item: AccountLeaderboardItem, key: MetricKey) {
     case "favorites":
       return formatLargeNumber(item.favorites);
     case "watchDuration":
-      return item.watchDuration === null ? "-" : `${item.watchDuration.toFixed(1)}秒`;
+      return item.watchDuration === null ? "—" : `${item.watchDuration.toFixed(1)}秒`;
     case "bounceRate":
-      return item.bounceRate === null ? "-" : `${item.bounceRate.toFixed(1)}%`;
+      return item.bounceRate === null ? "—" : `${item.bounceRate.toFixed(1)}%`;
     case "completionRate5s":
-      return item.completionRate5s === null ? "-" : `${item.completionRate5s.toFixed(1)}%`;
+      return item.completionRate5s === null ? "—" : `${item.completionRate5s.toFixed(1)}%`;
   }
 }
 
 function formatLargeNumber(value: number) {
-  if (!Number.isFinite(value)) return "-";
+  if (!Number.isFinite(value)) return "—";
   if (Math.abs(value) >= 10000) {
     return `${(value / 10000).toFixed(2)}万`;
   }
