@@ -8,7 +8,7 @@ import { AccountTabs } from "./account-tabs";
 import { SubmissionOverviewCard } from "./submission-overview-card";
 import { VideoSubmitForm } from "./video-submit-form";
 import { HistoryDrawer } from "./history-drawer";
-import { ExemptionDialog } from "./exemption-dialog";
+import { ExemptionDialogV2 } from "./exemption-dialog-v2";
 import type { VideoSubmitFormData, SubmitPanelMode } from "./types";
 
 interface Account {
@@ -124,13 +124,18 @@ export function DashboardRedesignContent({
   };
 
   // 豁免申请处理
-  const handleExemptionSubmit = async (dates: string[], reason: string) => {
+  const handleExemptionSubmit = async (
+    dates: string[],
+    type: "waive" | "leave",
+    reason: string
+  ) => {
     const response = await fetch("/api/dashboard/exemption", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: userId,
         dates,
+        type,
         reason,
       }),
     });
@@ -278,12 +283,16 @@ export function DashboardRedesignContent({
           }}
         />
 
-        {/* ========== 豁免申请弹窗 ========== */}
-        <ExemptionDialog
+        {/* ========== 豁免申请弹窗 v2 ========== */}
+        <ExemptionDialogV2
           isOpen={isExemptionOpen}
           onClose={() => setIsExemptionOpen(false)}
           today={today}
           submittedDates={monthSubmittedDates}
+          waiveDates={exemptionGrants
+            .filter((g) => g.status === "approved")
+            .map((g) => g.exempt_date)}
+          leaveDates={[]}
           onSubmit={handleExemptionSubmit}
         />
       </main>

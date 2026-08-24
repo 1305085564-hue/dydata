@@ -1,6 +1,8 @@
 // 今日提交工作台 - 类型定义
 // 基于原页面完整功能的类型系统
 
+export type SubmissionSlotRole = "screenshot_1" | "screenshot_2";
+
 export interface Account {
   id: string;
   name: string;

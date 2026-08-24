@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { Loader2, Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ScreenshotUpload } from "./screenshot-upload";
-import type { VideoSubmitFormData, ScreenshotSlot, SubmitPanelMode } from "./types";
+import { ScreenshotUploadV2 } from "./screenshot-upload-v2";
+import type { VideoSubmitFormData, ScreenshotSlot, SubmitPanelMode, SubmissionSlotRole } from "./types";
 
 interface VideoSubmitFormProps {
   accountId: string;
@@ -296,16 +296,15 @@ export function VideoSubmitForm({
         </div>
       </div>
 
-      {/* 截图上传区 */}
-      <ScreenshotUpload
-        slots={formData.screenshots}
-        onSlotsChange={(slots) => updateField("screenshots", slots)}
-        onOcrDataExtracted={(data) => {
+      {/* 截图上传区 v2 - 2个槽位 */}
+      <ScreenshotUploadV2
+        onOcrDataExtracted={(role: SubmissionSlotRole, data: Record<string, number>) => {
           // 自动填充 OCR 识别的数据
-          if (data.play_count) updateField("play_count", String(data.play_count));
-          if (data.likes) updateField("likes", String(data.likes));
-          if (data.comments) updateField("comments", String(data.comments));
-          if (data.shares) updateField("shares", String(data.shares));
+          Object.entries(data).forEach(([key, value]) => {
+            if (value !== null && value !== undefined) {
+              updateField(key, String(value));
+            }
+          });
         }}
       />
 
