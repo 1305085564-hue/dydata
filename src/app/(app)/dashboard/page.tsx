@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
-import { DashboardRedesignContainer } from "./redesign/dashboard-redesign-container";
-import { DashboardRedesignSkeleton } from "./redesign/dashboard-redesign-skeleton";
+import { VideoSubmitPanel } from "./video-submit-panel";
 
 export const metadata: Metadata = {
   title: "工作台 - DYData",
@@ -10,14 +9,17 @@ export const metadata: Metadata = {
 };
 
 /**
- * 今日提交页面 - 从零重写版
- * 基于 Claude 设计哲学：人文出版物感 + 温润不刺眼 + 安静搭档
+ * 今日提交页面
+ *
+ * 注意：V2 改造正在进行中
+ * - 测试路由：/dashboard/test-v2（VideoSubmitFormV2 单独测试）
+ * - 生产路由：/dashboard（使用原有 Antigravity 版本 + VideoSubmitForm）
  */
-export default function DashboardPageRedesign() {
+export default function DashboardPage() {
   return (
-    <AppShell width="full" className="dashboard-redesign max-w-none">
-      <Suspense fallback={<DashboardRedesignSkeleton />}>
-        <DashboardRedesignContainer />
+    <AppShell width="full" className="max-w-none">
+      <Suspense fallback={<div className="p-6 text-[#78716C]">加载中...</div>}>
+        <VideoSubmitPanel />
       </Suspense>
     </AppShell>
   );
