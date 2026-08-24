@@ -25,6 +25,7 @@ import {
 import { HistoryList } from "./history-list";
 import { HistoryReportEditForm, type HistoryReportEditData } from "./history-report-edit-form";
 import { VideoSubmitFormV2 } from "./video-submit-form-v2";
+import { ExemptionDialogV2 } from "./redesign/exemption-dialog-v2";
 import {
   getTodaySubmissionSummary,
   resolveSubmissionDayStatus,
@@ -183,6 +184,7 @@ export function VideoSubmitPanelV2({
   const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [isExemptionDialogOpen, setIsExemptionDialogOpen] = useState(false);
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(() => {
     try {
       const raw = window.localStorage.getItem("dydata:dismissed-pending-exemption");
@@ -467,15 +469,31 @@ export function VideoSubmitPanelV2({
               <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C] opacity-0 pointer-events-none">
                 操作
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsHistoryOpen(true)}
-                className="h-[42px] w-full sm:w-auto rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] transition-colors shadow-sm"
-              >
-                <History className="size-4 mr-1.5" />
-                历史记录
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="h-[42px] rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] transition-colors shadow-sm"
+                >
+                  <History className="size-4 mr-1.5" />
+                  历史记录
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsExemptionDialogOpen(true)}
+                  className={cn(
+                    "h-[42px] rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium transition-colors shadow-sm",
+                    hasPendingExemption
+                      ? "border-[#D99E55]/40 bg-[#D99E55]/10 text-[#8A6A2F] hover:bg-[#D99E55]/20"
+                      : "text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917]"
+                  )}
+                >
+                  <FilePenLine className="size-4 mr-1.5" />
+                  {hasPendingExemption ? "申请审批中" : "申请豁免"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -700,6 +718,42 @@ export function VideoSubmitPanelV2({
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {/* 申请豁免弹窗 */}
+      {isExemptionDialogOpen && (
+        <ExemptionDialogV2
+          isOpen={isExemptionDialogOpen}
+          onClose={() => setIsExemptionDialogOpen(false)}
+          today={today}
+          submittedDates={activityData?.monthSubmittedDates ?? []}
+          waiveDates={userExemptionGrants.filter((g) => g.exemption_type === "waive").map((g) => g.date)}
+          leaveDates={userExemptionGrants.filter((g) => g.exemption_type === "leave").map((g) => g.date)}
+          onSubmit={async (dates, type, reason) => {
+            try {
+              const response = await fetch("/api/exemptions/apply", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  dates,
+                  exemption_type: type,
+                  reason,
+                }),
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || "申请失败");
+              }
+
+              setIsExemptionDialogOpen(false);
+              // 刷新页面以显示最新状态
+              window.location.reload();
+            } catch (error) {
+              throw error;
+            }
+          }}
+        />
+      )}
     </>
   );
 }
