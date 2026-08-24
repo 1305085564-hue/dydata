@@ -52,6 +52,7 @@ export function DashboardRedesignContent({
   userId,
   todayReports,
   monthSubmittedDates,
+  accountDisplayNameMap,
   exemptionGrants = [],
 }: DashboardRedesignContentProps) {
   const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id ?? "");
