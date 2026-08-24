@@ -130,10 +130,10 @@ export function MetricInputCard({
   return (
     <div className="space-y-0.5 sm:space-y-1 transition-colors min-w-0">
       <div className="flex items-center justify-between gap-0.5">
-        <Label className={cn("font-medium text-[#78716C] text-[11px] sm:text-[12.5px] truncate select-none")}>
+        <Label className={cn("font-medium text-[#78716C] text-[11px] sm:text-[12.5px] lg:text-[13px] truncate select-none")}>
           {label}
           {optional && (
-            <span className="ml-0.5 font-normal opacity-60 text-[10px]">可选</span>
+            <span className="ml-0.5 lg:ml-1 font-normal opacity-60 text-[10px] lg:text-[13px]">可选</span>
           )}
         </Label>
       </div>
@@ -174,11 +174,11 @@ export function MetricInputCard({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              "rounded-lg tabular-nums text-[#1C1917] transition-all duration-150",
+              "rounded-lg lg:pr-8 tabular-nums text-[#1C1917] transition-all duration-150",
               "bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/50 text-[12px] sm:text-[13px]",
               "focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
-              "h-8 sm:h-9 min-h-[32px] sm:min-h-0 px-2 sm:px-3",
-              suffix ? "pr-5 sm:pr-6" : "",
+              "h-8 sm:h-9 lg:h-9.5 min-h-[32px] sm:min-h-0 px-2 sm:px-3",
+              suffix ? "pr-5 sm:pr-6 lg:pr-8" : "",
               field.source === "ocr"
                 ? "border-b-2 border-b-[#D97757]/70 shadow-[0_1px_2px_rgba(217,119,87,0.06)]"
                 : "",
@@ -187,7 +187,7 @@ export function MetricInputCard({
         </motion.div>
         {/* 后缀单位 (如 % 或 秒) */}
         {suffix && (
-          <span className="pointer-events-none absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 text-[10px] sm:text-[11px] text-[#78716C]">
+          <span className="pointer-events-none absolute right-1.5 sm:right-2 lg:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-[11px] lg:text-[12px] text-[#78716C]">
             {suffix}
           </span>
         )}
@@ -196,7 +196,7 @@ export function MetricInputCard({
           <span
             className={cn(
               "absolute top-1/2 -translate-y-1/2 cursor-help",
-              suffix ? "right-5 sm:right-6" : "right-2 sm:right-2.5"
+              suffix ? "right-5 sm:right-6 lg:right-3" : "right-2 sm:right-2.5 lg:right-3"
             )}
             onMouseEnter={() => setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
@@ -208,7 +208,7 @@ export function MetricInputCard({
               )}
             />
             {showTooltip ? (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#1C1917] text-white text-[11px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#1C1917] text-white text-[11px] lg:text-[12px] rounded-lg px-2 py-1 whitespace-nowrap pointer-events-none z-30 shadow-sm ring-1 ring-white/10">
                 {confidenceProps.tooltip}
               </span>
             ) : null}

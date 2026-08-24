@@ -107,9 +107,9 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
   const showInteractionWarning = playCount > 0 && interactions > playCount;
 
   return (
-    <motion.div variants={itemVariants} className="flex h-full flex-col">
+    <motion.div variants={itemVariants} className="flex h-full flex-col lg:space-y-2">
       {/* 3-4-4 高密度紧密数据矩阵 (整体收拢，行间亲密) */}
-      <div className="flex flex-1 flex-col gap-1.5 sm:gap-2">
+      <div className="flex flex-1 flex-col gap-1.5 sm:gap-2 lg:gap-3.5">
         
         {/* 1. 核心数据网格 (3列等分) */}
         <div>
@@ -151,7 +151,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
             ))}
           </div>
           {showInteractionWarning && (
-            <div className="mt-1 pl-0.5 text-[10.5px] sm:text-[11.5px] font-medium text-[#B98A54] transition-opacity duration-150">
+            <div className="mt-1 pl-0.5 text-[10.5px] sm:text-[11.5px] lg:mt-1.5 font-medium text-[#B98A54] transition-opacity duration-150">
               ⚠️ 互动数据总和已超过播放量，请核对输入
             </div>
           )}

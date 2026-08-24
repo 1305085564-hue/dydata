@@ -146,7 +146,7 @@ export function SubmissionSlotsSection({
       />
 
       {/* 两个槽位在移动端横向并排，在桌面端垂直排布 */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:flex lg:flex-col lg:gap-2.5 flex-1 min-h-0">
+      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 lg:flex lg:flex-col lg:gap-2.5 lg:justify-between flex-1 min-h-0">
         {SLOT_META.map((item) => {
           const slot = slots[item.role];
           const isProcessing = slot.status === "uploading" || slot.status === "recognizing";
@@ -234,7 +234,8 @@ export function SubmissionSlotsSection({
                       </div>
                       <div className="min-w-0 space-y-0.5">
                         <div className="text-[12px] sm:text-[13px] font-semibold text-[#292524] leading-tight truncate">
-                          {item.shortTitle}
+                          <span className="lg:hidden">{item.shortTitle}</span>
+                          <span className="hidden lg:inline">{item.title}截图</span>
                         </div>
                         <div className="text-[10.5px] sm:text-[11.5px] text-[#78716C] truncate hidden xs:block">
                           {item.description}
@@ -248,7 +249,7 @@ export function SubmissionSlotsSection({
                           e.stopPropagation();
                           globalFileInputRef.current?.click();
                         }}
-                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 items-center justify-center gap-0.5 text-[11px] sm:text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
+                        className="inline-flex min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 lg:min-h-0 lg:min-w-0 lg:px-0 lg:py-0 items-center justify-center lg:justify-start gap-0.5 text-[11px] sm:text-[12px] lg:text-[11.5px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer shrink-0 py-0.5 px-1.5"
                         title="选择多张截图自动分流"
                       >
                         <Plus className="size-3 stroke-[2.5]" />
@@ -261,33 +262,33 @@ export function SubmissionSlotsSection({
                 /* 已上传/识别中/已识别/失败态 */
                 <div className="flex h-full flex-col justify-between">
                   {/* 顶栏：标题 + 状态徽标 + 操作按钮 */}
-                  <div className="flex items-center justify-between gap-1 pb-0.5">
-                    <div className="flex items-center gap-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1 lg:gap-1.5 pb-0.5">
+                    <div className="flex items-center gap-1 lg:gap-1.5 min-w-0">
                       <span className="text-[11.5px] sm:text-[12px] font-medium text-[#292524] truncate">
                         {item.shortTitle}
                       </span>
                       {isProcessing ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#D97757]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#D97757]">
-                          <Loader2 className="size-2 animate-spin stroke-[2]" />
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#D97757]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#D97757]">
+                          <Loader2 className="size-2 lg:size-2.5 animate-spin stroke-[2]" />
                           读取中
                         </span>
                       ) : isSuccess ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#16A34A]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#16A34A]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#16A34A]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#16A34A]">
                           已识别
                         </span>
                       ) : isWarning ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#D99E55]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#D99E55]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#D99E55]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#D99E55]">
                           待核对
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-[#DC2626]/10 px-1.5 py-0.2 text-[10px] sm:text-[11px] font-medium text-[#DC2626]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#DC2626]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#DC2626]">
                           失败
                         </span>
                       )}
                     </div>
 
                     {/* 操作按钮 */}
-                    <div className="flex items-center gap-0.5 shrink-0">
+                    <div className="flex items-center gap-0.5 lg:gap-1 shrink-0">
                       {canRetry && (
                         <button
                           type="button"
@@ -308,7 +309,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onManualFill?.(item.role);
                           }}
-                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#E5E0D6] shadow-2xs transition-colors cursor-pointer"
+                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 lg:text-[10.5px] items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#E5E0D6] shadow-2xs transition-colors cursor-pointer"
                         >
                           手输
                         </button>
@@ -330,7 +331,7 @@ export function SubmissionSlotsSection({
                   </div>
 
                   {/* 中间内容：缩略图 + 描述 */}
-                  <div className="flex items-center gap-2 my-0.5 min-w-0">
+                  <div className="flex items-center gap-2 lg:gap-2.5 my-0.5 min-w-0">
                     {slot.assetUrl ? (
                       <Dialog>
                         <DialogTrigger
@@ -365,8 +366,8 @@ export function SubmissionSlotsSection({
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] sm:text-[11.5px] font-medium text-[#292524] truncate leading-tight">
                         {isProcessing
-                          ? "AI 分析中..."
-                          : slot.fileName || (item.role === "screenshot_1" ? "流量图" : "留存图")}
+                          ? <><span className="lg:hidden">AI 分析中...</span><span className="hidden lg:inline">AI 正在分析图片指标...</span></>
+                          : slot.fileName || <><span className="lg:hidden">{item.role === "screenshot_1" ? "流量图" : "留存图"}</span><span className="hidden lg:inline">{item.role === "screenshot_1" ? "流量指标图" : "留存完播图"}</span></>}
                       </div>
                       <div className="text-[10px] sm:text-[10.5px] text-[#78716C] truncate mt-0.5 hidden xs:block">
                         {item.description}
@@ -376,8 +377,8 @@ export function SubmissionSlotsSection({
 
                   {/* 底栏：失败提示或确认说明 */}
                   {(isError || slot.ocrFallback) && (
-                    <div className="text-[10.5px] sm:text-[11px] text-[#C9604D] leading-tight mt-0.5 truncate">
-                      {slot.error || "识别失败，请手输"}
+                    <div className="text-[10.5px] sm:text-[11px] text-[#C9604D] leading-tight mt-0.5 lg:mt-1 truncate lg:whitespace-normal lg:overflow-visible lg:text-clip">
+                      {slot.error || <><span className="lg:hidden">识别失败，请手输</span><span className="hidden lg:inline">识别失败，截图已保留，请在右侧直接填写</span></>}
                     </div>
                   )}
                   {slot.ocrSummary && slot.ocrSummary.length > 0 && (
