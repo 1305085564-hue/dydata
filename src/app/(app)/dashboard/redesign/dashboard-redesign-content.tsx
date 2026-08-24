@@ -7,6 +7,8 @@ import { SubmissionCalendar } from "./submission-calendar";
 import { AccountTabs } from "./account-tabs";
 import { SubmissionOverviewCard } from "./submission-overview-card";
 import { VideoSubmitForm } from "./video-submit-form";
+import { HistoryDrawer } from "./history-drawer";
+import { ExemptionDialog } from "./exemption-dialog";
 import type { VideoSubmitFormData, SubmitPanelMode } from "./types";
 
 interface Account {
@@ -56,6 +58,9 @@ export function DashboardRedesignContent({
   const [activeBizDate, setActiveBizDate] = useState(today);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [submitMode, setSubmitMode] = useState<SubmitPanelMode>("empty");
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isExemptionOpen, setIsExemptionOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState<TodayReport | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
   // 当前账号的今日报告
@@ -97,10 +102,45 @@ export function DashboardRedesignContent({
 
   // 提交处理
   const handleSubmit = async (data: VideoSubmitFormData) => {
-    // TODO: 调用实际 API
-    console.log("提交数据", data);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    // 提交成功后刷新数据
+    const response = await fetch("/api/dashboard/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...data,
+        account_id: selectedAccountId,
+        report_date: activeBizDate,
+        user_id: userId,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "提交失败");
+    }
+
+    // 提交成功后刷新页面数据
+    window.location.reload();
+  };
+
+  // 豁免申请处理
+  const handleExemptionSubmit = async (dates: string[], reason: string) => {
+    const response = await fetch("/api/dashboard/exemption", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        dates,
+        reason,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "申请失败");
+    }
+
+    // 申请成功后刷新
+    window.location.reload();
   };
 
   return (
@@ -176,10 +216,19 @@ export function DashboardRedesignContent({
             <nav className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={() => setIsHistoryOpen(true)}
                 className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium text-[#78716C] transition-all duration-150 hover:bg-[#F5F3EE] hover:text-[#1C1917]"
               >
                 <History size={12} className="stroke-[1.6]" />
                 <span className="hidden sm:inline">历史记录</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsExemptionOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-[#E5E0D6]/80 bg-[#FBF9F5]/80 px-3 py-2 text-[13px] font-medium text-[#292524] transition-all duration-150 hover:border-[#E5E0D6] hover:bg-white hover:text-[#1C1917]"
+              >
+                申请豁免
               </button>
             </nav>
           </div>
@@ -214,6 +263,28 @@ export function DashboardRedesignContent({
             onModeChange={setSubmitMode}
           />
         </div>
+
+        {/* ========== 历史记录抽屉 ========== */}
+        <HistoryDrawer
+          isOpen={isHistoryOpen}
+          onClose={() => setIsHistoryOpen(false)}
+          history={todayReports}
+          accountDisplayNameMap={accountDisplayNameMap}
+          onEditReport={(report) => {
+            setEditingReport(report);
+            setIsHistoryOpen(false);
+            // TODO: 弹出编辑表单
+          }}
+        />
+
+        {/* ========== 豁免申请弹窗 ========== */}
+        <ExemptionDialog
+          isOpen={isExemptionOpen}
+          onClose={() => setIsExemptionOpen(false)}
+          today={today}
+          submittedDates={monthSubmittedDates}
+          onSubmit={handleExemptionSubmit}
+        />
       </main>
     </div>
   );

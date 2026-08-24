@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Loader2, Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScreenshotUpload } from "./screenshot-upload";
 import type { VideoSubmitFormData, ScreenshotSlot, SubmitPanelMode } from "./types";
 
 interface VideoSubmitFormProps {
@@ -294,6 +295,19 @@ export function VideoSubmitForm({
           </div>
         </div>
       </div>
+
+      {/* 截图上传区 */}
+      <ScreenshotUpload
+        slots={formData.screenshots}
+        onSlotsChange={(slots) => updateField("screenshots", slots)}
+        onOcrDataExtracted={(data) => {
+          // 自动填充 OCR 识别的数据
+          if (data.play_count) updateField("play_count", String(data.play_count));
+          if (data.likes) updateField("likes", String(data.likes));
+          if (data.comments) updateField("comments", String(data.comments));
+          if (data.shares) updateField("shares", String(data.shares));
+        }}
+      />
 
       {/* 话术方向 + 备注 */}
       <div className="space-y-4 rounded-2xl border border-[#E5E0D6] bg-white p-6">
