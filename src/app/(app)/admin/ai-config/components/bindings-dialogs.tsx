@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { type AiFeatureControl, useAiConfig } from "../hooks/use-ai-config";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,16 +20,41 @@ export function BindingDialog({
   onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { bundle } = useAiConfig();
-  const [providerKeyModelId, setProviderKeyModelId] = useState<string | null>(null);
+  const [modelId, setModelId] = useState<string | null>(null);
   const [ocrChannel, setOcrChannel] = useState<"baidu" | "vision">("baidu");
   const [isEnabled, setIsEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  // 模型为主：按模型聚合可用渠道（渠道顺位由系统按 Key/供应商优先级自动排列）
+  const modelOptions = useMemo(() => {
+    if (!bundle) return [];
+    const byModel = new Map<string, { modelId: string; label: string; channels: { name: string; score: number }[] }>();
+    for (const model of bundle.models) {
+      if (!model.is_enabled) continue;
+      const key = bundle.keys.find((item) => item.id === model.key_id);
+      if (!key || !key.is_enabled) continue;
+      const provider = bundle.providers.find((item) => item.id === key.provider_id);
+      if (!provider || !provider.is_enabled) continue;
+      const entry = byModel.get(model.model_id) ?? {
+        modelId: model.model_id,
+        label: model.display_name || model.model_id,
+        channels: [],
+      };
+      entry.channels.push({ name: `${provider.name} / ${key.label}`, score: key.priority + provider.priority });
+      byModel.set(model.model_id, entry);
+    }
+    return [...byModel.values()]
+      .map((entry) => ({ ...entry, channels: [...entry.channels].sort((a, b) => a.score - b.score) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [bundle]);
+
   useEffect(() => {
-    setProviderKeyModelId(control?.providerKeyModelId ?? null);
+    setModelId(control?.modelId ?? null);
     setOcrChannel(control?.key === "ocr_screenshot" ? (control?.ocrChannel ?? "baidu") : "baidu");
     setIsEnabled(control?.isEnabled ?? true);
   }, [control, open]);
+
+  const selectedOption = modelOptions.find((option) => option.modelId === modelId) ?? null;
 
   const handleSubmit = async () => {
     if (!control) return;
@@ -37,7 +62,8 @@ export function BindingDialog({
     try {
       const saved = await onSave({
         feature_key: control.key,
-        provider_key_model_id: providerKeyModelId,
+        model_id: modelId,
+        provider_key_model_id: control.providerKeyModelId,
         system_prompt: control.systemPrompt,
         output_token_limit: control.outputTokenLimit,
         context_message_limit: control.contextMessageLimit,
@@ -90,25 +116,43 @@ export function BindingDialog({
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="binding-model">模型策略</Label>
+            <Label htmlFor="binding-model">模型（主）</Label>
             <select
               id="binding-model"
               className="h-9 w-full rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
-              value={providerKeyModelId ?? ""}
-              onChange={(event) => setProviderKeyModelId(event.target.value || null)}
+              value={modelId ?? ""}
+              onChange={(event) => setModelId(event.target.value || null)}
             >
-              <option value="">自动选择当前健康模型</option>
-              {bundle?.models.map((model) => {
-                const key = bundle.keys.find((item) => item.id === model.key_id);
-                const provider = bundle.providers.find((item) => item.id === key?.provider_id);
-                const enabled = model.is_enabled && (key?.is_enabled ?? true) && (provider?.is_enabled ?? true);
-                return (
-                  <option key={model.id} value={model.id} disabled={!enabled}>
-                    {provider?.name || "未知渠道"} / {model.display_name || model.model_id}{!enabled ? "（已停用）" : ""}
-                  </option>
-                );
-              })}
+              <option value="">不指定 · 走全局默认兜底</option>
+              {modelOptions.map((option) => (
+                <option key={option.modelId} value={option.modelId}>
+                  {option.label}（{option.channels.length} 个渠道可用）
+                </option>
+              ))}
             </select>
+            <p className="text-[12px] text-[#78716C]">
+              绑定的是模型，不是渠道。该模型的渠道顺位由系统自动排列，首选失败会自动切到下一个渠道的同一模型。
+            </p>
+            {selectedOption && (
+              <div className="rounded-lg border border-[#E5E0D6] bg-[#FBF9F5]/70 px-3 py-2 text-[12px] leading-5 text-[#292524]">
+                <span className="font-medium">{selectedOption.label} 当前顺位：</span>
+                <ol className="mt-1 space-y-0.5 list-decimal list-inside text-[#78716C]">
+                  {selectedOption.channels.map((channel, index) => (
+                    <li key={`${channel.name}-${index}`}>
+                      {channel.name}
+                      {index === 0 && (
+                        <span className="ml-1.5 text-[10px] font-medium text-[#16A34A]">首选</span>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {control?.key === "ocr_screenshot" && modelId && (
+              <p className="text-[12px] text-[#8A5A22]">
+                注意：看图回退需要支持图片输入的视觉模型，请确认所选模型具备图片能力。
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-between rounded-lg border border-[#E5E0D6] px-3 py-2.5">
             <div>

@@ -17,7 +17,6 @@ import {
 import {
   Zap,
   Plus,
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   Loader2,
@@ -206,48 +205,6 @@ export default function ModelsClient() {
     return result;
   }, [bundle]);
 
-  const defaultBinding = useMemo(() => {
-    return bundle?.featureBindings.find((b) => b.feature_key === "default");
-  }, [bundle]);
-
-  const currentDefaultModelId = useMemo(() => {
-    if (!defaultBinding?.provider_key_model_id || !bundle) return null;
-    const model = bundle.models.find(
-      (m) => m.id === defaultBinding.provider_key_model_id,
-    );
-    return model?.model_id || null;
-  }, [defaultBinding, bundle]);
-
-  const [now] = useState(() => Date.now());
-  const globalModelOptions = useMemo(() => {
-    if (!bundle) return [];
-    return bundle.models.map((m) => {
-      const key = bundle.keys.find((k) => k.id === m.key_id);
-      const provider = bundle.providers.find(
-        (p) => p.id === key?.provider_id,
-      );
-      const isKeyHealthy =
-        key?.is_enabled &&
-        (!key.unhealthy_until ||
-          new Date(key.unhealthy_until).getTime() <= now);
-      const isEnabled =
-        m.is_enabled &&
-        (key ? key.is_enabled : true) &&
-        (provider ? provider.is_enabled : true);
-      const statusPrefix = !isEnabled
-        ? "- [已停用]"
-        : isKeyHealthy
-          ? "• [正常]"
-          : "× [异常]";
-
-      return {
-        id: m.id,
-        model_id: m.model_id,
-        isEnabled,
-        label: `${statusPrefix} ${m.display_name || m.model_id} (${provider?.name || "未知渠道"})`,
-      };
-    });
-  }, [bundle, now]);
 
   if (isLoading || !bundle) {
     return (
@@ -334,26 +291,6 @@ export default function ModelsClient() {
     }
   };
 
-  const handleSetGlobalDefault = async (modelId: string) => {
-    const targetModel = bundle.models.find(
-      (m) => m.model_id === modelId && m.is_enabled,
-    );
-    if (!targetModel) return;
-
-    if (defaultBinding) {
-      await mutateEntity("update", "feature_binding", {
-        id: defaultBinding.id,
-        provider_key_model_id: targetModel.id,
-      });
-    } else {
-      await mutateEntity("create", "feature_binding", {
-        feature_key: "default",
-        label: "全局默认 AI 模型",
-        provider_key_model_id: targetModel.id,
-      });
-    }
-  };
-
   const handleTest = async (keyId: string, modelId?: string) => {
     setTestingKeyId(keyId);
     await testKeyConnection(keyId, modelId);
@@ -376,32 +313,6 @@ export default function ModelsClient() {
     <div className="space-y-5">
       {/* 规范 2.2：自然色差 Header Bar (微气垫平铺) */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F5F3EE]/70 p-2 px-3 rounded-xl select-none">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="size-4 text-[#D97757]" />
-          <span className="text-[13px] font-medium text-[#1C1917]">
-            全局默认主模型：
-          </span>
-          <select
-            className="h-7 px-2.5 text-[12px] rounded-lg border-0 bg-white font-medium text-[#292524] shadow-2xs hover:bg-[#FBF9F5] focus:outline-none cursor-pointer"
-            value={currentDefaultModelId || ""}
-            onChange={(e) => handleSetGlobalDefault(e.target.value)}
-          >
-            <option value="" disabled>
-              -- 选择全局默认主型号 --
-            </option>
-            {globalModelOptions.map((opt) => (
-              <option
-                key={opt.id}
-                value={opt.model_id}
-                disabled={!opt.isEnabled}
-                className={!opt.isEnabled ? "text-[#78716C]" : ""}
-              >
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -457,17 +368,10 @@ export default function ModelsClient() {
       ) : (
         <div className="space-y-4">
           {familyGroups.map((fam) => {
-            const hasGlobalDefault = fam.modelIds.includes(
-              currentDefaultModelId || "",
-            );
-
             return (
               <div
                 key={fam.familyId}
-                className={cn(
-                  "rounded-2xl bg-white overflow-hidden transition-all border border-[#E5E0D6] shadow-sm",
-                  hasGlobalDefault && "ring-1 ring-[#D97757]/30",
-                )}
+                className="rounded-2xl bg-white overflow-hidden transition-all border border-[#E5E0D6] shadow-sm"
               >
                 {/* 系列 Card Header */}
                 <div className="p-4 px-5 bg-[#FBF9F5]/80 space-y-2.5 border-b border-[#E5E0D6]/50">
@@ -476,11 +380,6 @@ export default function ModelsClient() {
                       <span className="font-medium text-[14px] text-[#1C1917]">
                         {fam.familyName}
                       </span>
-                      {hasGlobalDefault && (
-                        <span className="text-[12px] font-medium bg-[#D97757]/10 text-[#D97757] px-2 py-0.5 rounded-full">
-                          全局默认
-                        </span>
-                      )}
                     </div>
 
                     <Button
@@ -506,12 +405,7 @@ export default function ModelsClient() {
                     {fam.modelIds.map((mId) => (
                       <span
                         key={mId}
-                        className={cn(
-                          "font-mono text-[12px] px-2 py-0.5 rounded-md",
-                          mId === currentDefaultModelId
-                            ? "bg-[#D97757]/10 text-[#D97757] font-medium border border-[#D97757]/30"
-                            : "bg-white text-[#292524] border border-[#E5E0D6]",
-                        )}
+                        className="font-mono text-[12px] px-2 py-0.5 rounded-md bg-white text-[#292524] border border-[#E5E0D6]"
                       >
                         {mId}
                       </span>

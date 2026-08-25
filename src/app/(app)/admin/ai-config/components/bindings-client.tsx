@@ -348,9 +348,14 @@ export default function BindingsClient() {
     isLoading,
     mutateEntity,
     saveFeatureControl,
+    setGlobalDefaultModel,
     archiveFeature,
     restoreFeature,
   } = useAiConfig();
+  // 全局默认兜底模型的本地草稿：undefined 表示尚未改动，跟随线上值
+  const [defaultModelDraft, setDefaultModelDraft] = useState<
+    string | null | undefined
+  >(undefined);
   const [bindingModal, setBindingModal] = useState<{
     open: boolean;
     data: AiFeatureControl | null;
@@ -431,6 +436,59 @@ export default function BindingsClient() {
       }));
   }, [bundle]);
 
+  // 模型为主：按模型聚合全部健康渠道（顺位 = 供应商优先级 + Key 优先级）
+  const modelDirectory = useMemo(() => {
+    if (!bundle) return [];
+    const byModel = new Map<string, { modelId: string; label: string; channels: { name: string; score: number }[] }>();
+    for (const model of bundle.models) {
+      if (!model.is_enabled) continue;
+      const key = bundle.keys.find((item) => item.id === model.key_id);
+      if (!key || !key.is_enabled) continue;
+      const provider = bundle.providers.find((item) => item.id === key.provider_id);
+      if (!provider || !provider.is_enabled) continue;
+      const entry = byModel.get(model.model_id) ?? {
+        modelId: model.model_id,
+        label: model.display_name || model.model_id,
+        channels: [],
+      };
+      entry.channels.push({ name: `${provider.name} / ${key.label}`, score: key.priority + provider.priority });
+      byModel.set(model.model_id, entry);
+    }
+    return [...byModel.values()]
+      .map((entry) => ({ ...entry, channels: [...entry.channels].sort((a, b) => a.score - b.score) }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [bundle]);
+
+  const rankedChannels = useMemo(() => {
+    if (!bundle) return [];
+    return bundle.keys
+      .filter((key) => key.is_enabled)
+      .map((key) => ({
+        key,
+        provider: bundle.providers.find((item) => item.id === key.provider_id),
+      }))
+      .filter((item): item is { key: (typeof bundle.keys)[number]; provider: (typeof bundle.providers)[number] } =>
+        Boolean(item.provider && item.provider.is_enabled),
+      )
+      .map((item) => ({ ...item, score: item.key.priority + item.provider.priority }))
+      .sort((a, b) => a.score - b.score)
+      .map((item, index) => ({
+        rank: index + 1,
+        channelName: `${item.provider.name} / ${item.key.label}`,
+        models: bundle.models
+          .filter((model) => model.key_id === item.key.id && model.is_enabled)
+          .map((model) => model.display_name || model.model_id),
+        unhealthyUntil: item.key.unhealthy_until,
+        failures: item.key.consecutive_failures,
+      }));
+  }, [bundle]);
+
+  const [nowTs] = useState(() => Date.now());
+  const isChannelHealthy = (channel: (typeof rankedChannels)[number]) => {
+    if (!channel.unhealthyUntil) return true;
+    return new Date(channel.unhealthyUntil).getTime() <= nowTs;
+  };
+
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
@@ -439,13 +497,31 @@ export default function BindingsClient() {
     );
   }
 
-  const getModelName = (providerKeyModelId: string | null) => {
-    if (!providerKeyModelId) return "自动选择健康模型";
-    const model = bundle.models.find((m) => m.id === providerKeyModelId);
-    if (!model) return "未知模型";
-    const key = bundle.keys.find((k) => k.id === model.key_id);
-    const provider = bundle.providers.find((p) => p.id === key?.provider_id);
-    return `${model.display_name || model.model_id} (${provider?.name || "未知渠道"})`;
+  const defaultBinding = bundle.featureBindings.find(
+    (binding) => binding.feature_key === "default",
+  );
+  const defaultModelId =
+    defaultModelDraft !== undefined
+      ? defaultModelDraft
+      : defaultBinding?.model_id ?? null;
+
+  const resolveControlModelId = (control: AiFeatureControl) => {
+    if (control.modelId) return control.modelId;
+    if (!control.providerKeyModelId) return null;
+    const combo = bundle.models.find((m) => m.id === control.providerKeyModelId);
+    return combo?.model_id ?? null;
+  };
+
+  const describeModelStrategy = (control: AiFeatureControl) => {
+    const modelId = resolveControlModelId(control);
+    if (!modelId) {
+      return defaultBinding?.model_id
+        ? `走全局默认（${modelDirectory.find((m) => m.modelId === defaultBinding.model_id)?.label ?? defaultBinding.model_id}）`
+        : "走全局顺位自动选择";
+    }
+    const entry = modelDirectory.find((m) => m.modelId === modelId);
+    if (!entry) return modelId;
+    return `${entry.label} · ${entry.channels.length} 渠道 · 首选 ${entry.channels[0]?.name ?? "无"}`;
   };
 
   const handleSaveBinding = async (data: Record<string, unknown>) => {
@@ -489,6 +565,92 @@ export default function BindingsClient() {
           只需管理业务功能是否可用及模型策略。系统会负责路由、健康检测和备用渠道，内部标识不会影响日常操作。
         </span>
       </div>
+
+      <div className="rounded-2xl bg-white border border-[#E5E0D6] p-4 space-y-3">
+        <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+          <Star className="size-4 text-[#D97757]" />
+          <span>全局默认兜底模型</span>
+          <span className="text-[12px] font-normal text-[#78716C]">
+            场景未指定模型时走它，优先级最低
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            aria-label="全局默认兜底模型"
+            className="h-8 min-w-56 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[13px] text-[#292524]"
+            value={defaultModelId ?? ""}
+            onChange={(event) => setDefaultModelDraft(event.target.value || null)}
+          >
+            <option value="">未设置 · 走全量顺位自动选择</option>
+            {modelDirectory.map((entry) => (
+              <option key={entry.modelId} value={entry.modelId}>
+                {entry.label}（{entry.channels.length} 个渠道可用）
+              </option>
+            ))}
+          </select>
+          <Button
+            size="sm"
+            className="h-8 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
+            disabled={(defaultModelId ?? "") === (defaultBinding?.model_id ?? "")}
+            onClick={async () => {
+              await setGlobalDefaultModel(defaultModelId ?? "");
+            }}
+          >
+            保存默认模型
+          </Button>
+        </div>
+      </div>
+
+      <details className="rounded-2xl bg-white border border-[#E5E0D6] overflow-hidden">
+        <summary className="cursor-pointer select-none px-4 py-3 text-[13px] font-medium text-[#1C1917] hover:bg-[#FBF9F5]/70">
+          渠道顺位表（系统按 供应商优先级 + Key 优先级 自动排列，无需手动维护）
+        </summary>
+        <div className="overflow-x-auto border-t border-[#E5E0D6]/60">
+          <Table>
+            <TableHeader className="bg-[#FBF9F5]/80">
+              <TableRow className="hover:bg-transparent border-0">
+                <TableHead className="text-[12px] pl-5 w-[64px]">顺位</TableHead>
+                <TableHead className="text-[12px]">渠道</TableHead>
+                <TableHead className="text-[12px]">健康状态</TableHead>
+                <TableHead className="text-[12px] pr-5">可用模型</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rankedChannels.map((channel) => {
+                const healthy = isChannelHealthy(channel);
+                return (
+                  <TableRow key={channel.rank} className="text-[12px] border-b border-[#E5E0D6]/60 last:border-b-0 hover:bg-[#FBF9F5]/50">
+                    <TableCell className="pl-5 font-medium text-[#1C1917]">{channel.rank}</TableCell>
+                    <TableCell>{channel.channelName}</TableCell>
+                    <TableCell>
+                      {healthy ? (
+                        <span className="inline-flex items-center gap-1.5 text-[#16A34A]">
+                          <span className="size-1.5 rounded-full bg-[#16A34A]" />正常
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-[#C9604D]">
+                          <span className="size-1.5 rounded-full bg-[#C9604D]" />
+                          熔断中（连败 {channel.failures ?? 0} 次，系统会跳过它）
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="pr-5 text-[#78716C]">
+                      {channel.models.join("、") || "—"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {rankedChannels.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-16 text-center text-[#78716C]">
+                    暂无启用的渠道。
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </details>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -547,7 +709,7 @@ export default function BindingsClient() {
                     <TableCell>
                       <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#F5F3EE]/80 px-2 py-0.5 rounded-md">
                         <Sparkles className="size-3 text-[#D97757]" />
-                        {getModelName(control.providerKeyModelId)}
+                        {describeModelStrategy(control)}
                       </span>
                     </TableCell>
                     <TableCell>

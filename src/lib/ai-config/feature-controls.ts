@@ -12,6 +12,7 @@ export type AiFeatureBindingControlRow = {
   id: string;
   feature_key: string;
   provider_key_model_id: string | null;
+  model_id?: string | null;
   system_prompt: string | null;
   output_token_limit: number;
   context_message_limit: number;
@@ -30,6 +31,7 @@ export type AiFeatureControl = {
   routing: AiFeatureRouting;
   bindingId: string | null;
   providerKeyModelId: string | null;
+  modelId: string | null;
   systemPrompt: string | null;
   outputTokenLimit: number;
   contextMessageLimit: number;
@@ -56,6 +58,7 @@ export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFe
       routing: entry.routing,
       bindingId: binding?.id ?? null,
       providerKeyModelId: binding?.provider_key_model_id ?? null,
+      modelId: binding?.model_id ?? null,
       systemPrompt: binding?.system_prompt ?? null,
       outputTokenLimit: binding?.output_token_limit ?? 3600,
       contextMessageLimit: binding?.context_message_limit ?? 30,

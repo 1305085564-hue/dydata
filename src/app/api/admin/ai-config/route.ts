@@ -30,7 +30,8 @@ type AiConfigAction =
   | "swap_key_priority"
   | "save_feature_control"
   | "archive_feature"
-  | "restore_feature";
+  | "restore_feature"
+  | "set_global_default_model";
 
 type AiConfigBody = {
   action?: unknown;
@@ -65,7 +66,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -213,7 +214,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
     supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, created_at").order("created_at", { ascending: true }),
-    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
+    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
     supabase.from("rewrite_model_views").select("id, key, label, description, sort_order, is_enabled, is_default, created_at, updated_at").order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("rewrite_model_routes").select("id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, created_at, updated_at").order("priority", { ascending: true }).order("weight", { ascending: false }).order("created_at", { ascending: true }),
   ]);
@@ -318,6 +319,7 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
     feature_key: feature.key,
     label: feature.label,
     provider_key_model_id: toNullableString(data.provider_key_model_id),
+    model_id: toNullableString(data.model_id),
     system_prompt: toNullableString(data.system_prompt),
     output_token_limit: toPriority(data.output_token_limit, 3600),
     context_message_limit: toPriority(data.context_message_limit, 30),
@@ -493,6 +495,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(await loadAiConfig(auth.supabase));
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "交换 Key 顺位失败" }, { status: 400 });
+    }
+  }
+
+  if (action === "set_global_default_model") {
+    try {
+      const data = asRecord(body.data);
+      const modelId = toNullableString(data.model_id);
+      if (!modelId) throw new Error("请选择默认兜底模型");
+      const { error } = await auth.supabase
+        .from("ai_feature_bindings")
+        .upsert(
+          { feature_key: "default", label: "全局默认 AI 模型", model_id: modelId },
+          { onConflict: "feature_key" }
+        );
+      if (error) throw new Error(error.message);
+      aiClientInternal.resetCache();
+      return NextResponse.json(await loadAiConfig(auth.supabase));
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "设置全局默认模型失败" }, { status: 400 });
     }
   }
 

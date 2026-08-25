@@ -42,6 +42,7 @@ export type AiFeatureBinding = {
   feature_key: string;
   label: string;
   provider_key_model_id: string | null;
+  model_id?: string | null;
   system_prompt: string | null;
   output_token_limit: number;
   context_message_limit: number;
@@ -60,6 +61,7 @@ export type AiFeatureControl = {
   routing: "binding" | "rewrite" | "system";
   bindingId: string | null;
   providerKeyModelId: string | null;
+  modelId: string | null;
   systemPrompt: string | null;
   outputTokenLimit: number;
   contextMessageLimit: number;
@@ -169,7 +171,7 @@ export function useAiConfig() {
   }, [mutate]);
 
   const mutateFeatureControl = useCallback(async (
-    action: "save_feature_control" | "archive_feature" | "restore_feature",
+    action: "save_feature_control" | "archive_feature" | "restore_feature" | "set_global_default_model",
     data: Record<string, unknown>,
   ) => {
     try {
@@ -289,6 +291,7 @@ export function useAiConfig() {
     mutate,
     mutateEntity,
     saveFeatureControl: (data: Record<string, unknown>) => mutateFeatureControl("save_feature_control", data),
+    setGlobalDefaultModel: (modelId: string) => mutateFeatureControl("set_global_default_model", { model_id: modelId }),
     archiveFeature: (featureKey: string) => mutateFeatureControl("archive_feature", { feature_key: featureKey }),
     restoreFeature: (featureKey: string) => mutateFeatureControl("restore_feature", { feature_key: featureKey }),
     swapKeyPriority,
