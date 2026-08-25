@@ -1,8 +1,10 @@
 /**
  * 百度 OCR 客户端（网络图片文字识别 webimage）
- * 独立模块：access_token 换取与缓存、前置校验、错误码五类分法。
+ * 独立模块：access_token 换取与缓存、前置校验、大图压缩、错误码五类分法。
  * 本模块不依赖任何现有业务代码；接口层接入在下一批完成。
  */
+
+import sharp from "sharp";
 
 export type BaiduOcrErrorType =
   | "CONFIG"
@@ -36,6 +38,11 @@ const MAX_BASE64_LENGTH = 4 * 1024 * 1024;
 // 百度限制：最短边大于 15px，最长边小于 4096px
 const MIN_IMAGE_SIDE_PX = 15;
 const MAX_IMAGE_SIDE_PX = 4096;
+
+// 站内允许 8MB，但百度 base64 上限 4M（约等于原始 3MB）：超过阈值先本地压缩再送识别
+const COMPRESS_THRESHOLD_BYTES = 3 * 1024 * 1024;
+const COMPRESS_MAX_EDGE_PX = 2000;
+const COMPRESS_JPEG_QUALITY = 85;
 
 type TokenCache = { accessToken: string; refreshAtMs: number };
 let tokenCache: TokenCache | null = null;
@@ -146,6 +153,37 @@ export type WebImageValidation =
   | { ok: false; reason: string };
 
 /**
+ * 大图压缩：超过 3MB 的图缩到长边 2000px 内并转 JPEG，保证能过百度 base64 4M 上限。
+ * 小图原样返回；压缩失败（图片损坏等）也原样返回，交给后续校验报准确错误。
+ */
+export async function compressImageForOcr(imageBuffer: Buffer): Promise<Buffer> {
+  if (imageBuffer.length <= COMPRESS_THRESHOLD_BYTES) {
+    return imageBuffer;
+  }
+  try {
+    const compressed = await sharp(imageBuffer)
+      .resize({
+        width: COMPRESS_MAX_EDGE_PX,
+        height: COMPRESS_MAX_EDGE_PX,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: COMPRESS_JPEG_QUALITY })
+      .toBuffer();
+    console.log(
+      `[baidu-ocr] 大图压缩 ${(imageBuffer.length / 1024 / 1024).toFixed(2)}M → ${(compressed.length / 1024 / 1024).toFixed(2)}M`,
+    );
+    return compressed.length < imageBuffer.length ? compressed : imageBuffer;
+  } catch (error) {
+    console.warn(
+      "[baidu-ocr] 大图压缩失败，使用原图继续（将由前置校验拦截）：",
+      error instanceof Error ? error.message : error,
+    );
+    return imageBuffer;
+  }
+}
+
+/**
  * 前置校验：剥 data URL 头 → base64 大小 ≤ 4M → 图片边长符合百度限制。
  * 校验不通过时不发起任何网络请求。
  */
@@ -227,7 +265,8 @@ type BaiduWebimageResponse = {
  * 110/111 内部自动刷新 token 重试一次，仍失败才抛 TOKEN_INVALID。
  */
 export async function recognizeWebImage(imageBuffer: Buffer): Promise<string[]> {
-  const validation = validateWebImage(imageBuffer);
+  const preparedBuffer = await compressImageForOcr(imageBuffer);
+  const validation = validateWebImage(preparedBuffer);
   if (!validation.ok) {
     console.warn(`[baidu-ocr] 前置校验未通过，未发起请求：${validation.reason}`);
     throw new BaiduOcrError(`图片不符合百度 OCR 要求：${validation.reason}`, "IMAGE_REJECTED");

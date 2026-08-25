@@ -5,11 +5,13 @@ import {
   BaiduOcrError,
   _resetBaiduOcrTokenCacheForTest,
   classifyBaiduOcrErrorCode,
+  compressImageForOcr,
   getImageDimensions,
   getBaiduOcrAccessToken,
   recognizeWebImage,
   validateWebImage,
 } from "./baidu-ocr";
+import sharp from "sharp";
 
 type FetchCall = { url: string; body: string | null };
 type FetchHandler = (call: { url: string; body: string | null }) => Response;
@@ -300,4 +302,35 @@ test("成功解析 words_result 文字行数组，空行被过滤", async (t) =>
 
   const lines = await recognizeWebImage(Buffer.from("hello-image"));
   assert.deepEqual(lines, ["播放量 32100", "点赞 128"]);
+});
+
+test("compressImageForOcr 小图原样返回，不触发压缩", async () => {
+  const small = await sharp({
+    create: { width: 800, height: 600, channels: 3, background: "#ffffff" },
+  })
+    .png()
+    .toBuffer();
+  assert.ok(small.length <= 3 * 1024 * 1024);
+  const result = await compressImageForOcr(small);
+  assert.equal(result, small, "小图必须返回同一 Buffer（零拷贝透传）");
+});
+
+test("compressImageForOcr 大图压缩到百度限制内，且压缩结果可过前置校验", async () => {
+  const noisy = await sharp({
+    create: {
+      width: 3000,
+      height: 3000,
+      channels: 3,
+      background: "#808080",
+      noise: { type: "gaussian", mean: 128, sigma: 40 },
+    },
+  })
+    .png({ compressionLevel: 0 })
+    .toBuffer();
+  assert.ok(noisy.length > 3 * 1024 * 1024, "测试前置：构造出的图需超过 3MB 阈值");
+
+  const result = await compressImageForOcr(noisy);
+  assert.ok(result.length < noisy.length, "压缩后必须更小");
+  const validation = validateWebImage(result);
+  assert.equal(validation.ok, true, "压缩结果必须能通过百度前置校验");
 });
