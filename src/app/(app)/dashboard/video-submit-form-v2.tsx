@@ -2144,26 +2144,32 @@ export function VideoSubmitFormV2({
             className="w-full"
           >
             <div className="mx-auto max-w-5xl space-y-6 py-0">
-              {/* 草稿恢复 banner - Claude 设计 */}
+              {/* 草稿恢复 banner - Claude 人文微气垫设计 */}
               {showDraftBanner && (
-                <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/10 px-4 py-3 text-[12px]">
-                  <span className="text-[#8A6A2F]">
-                    {lastSavedAt
-                      ? `有未提交的草稿，最后保存于 ${lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`
-                      : "有未提交的草稿"}
-                  </span>
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3.5 py-2 text-[12.5px] transition-all">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54]" />
+                    <span className="font-medium text-[#292524]">
+                      发现未提交的草稿
+                    </span>
+                    {lastSavedAt && (
+                      <span className="truncate text-[#78716C]">
+                        · 最后保存于 {lastSavedAt.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
                     <button
                       type="button"
                       onClick={handleRestoreDraft}
-                      className="font-medium text-[#8A6A2F] hover:underline cursor-pointer"
+                      className="font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline cursor-pointer"
                     >
                       恢复草稿
                     </button>
                     <button
                       type="button"
                       onClick={handleDiscardDraft}
-                      className="text-[#D99E55] hover:text-[#8A6A2F] cursor-pointer"
+                      className="text-[#78716C] hover:text-[#292524] cursor-pointer"
                     >
                       丢弃
                     </button>

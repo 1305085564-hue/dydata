@@ -32,6 +32,7 @@ import {
   type VideoSubmissionEditDetail,
 } from "./video-submit-form-state";
 import { ExemptionDialogV2 } from "./redesign/exemption-dialog-v2";
+import { SubmissionCalendar } from "@/components/submission/submission-calendar";
 import { submitExemptionRequest } from "./actions";
 import {
   getDashboardSubmittedDates,
@@ -116,34 +117,57 @@ function ExemptionReviewNoticeCard({
 }: {
   notice: NonNullable<DashboardPageData["userExemptionReviewNotice"]>;
 }) {
-  const statusText = notice.request_status === "approved" ? "已通过" : "未通过";
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      const key = `dydata:notice:${notice.request_id || notice.created_at || "review"}`;
+      return window.sessionStorage.getItem(key) === "dismissed";
+    } catch {
+      return false;
+    }
+  });
+
+  if (dismissed) return null;
+
+  const isApproved = notice.request_status === "approved";
   const categoryText = notice.exemption_category === "leave" ? "请假" : "豁免";
   const dateText = notice.start_date === notice.end_date || !notice.end_date
     ? notice.start_date
     : `${notice.start_date} 至 ${notice.end_date}`;
 
+  const handleDismiss = () => {
+    setDismissed(true);
+    try {
+      const key = `dydata:notice:${notice.request_id || notice.created_at || "review"}`;
+      window.sessionStorage.setItem(key, "dismissed");
+    } catch {}
+  };
+
   return (
-    <div className="rounded-lg border border-[#E5E0D6] bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[13px] font-medium text-[#292524]">
-            {categoryText}申请{statusText}
-          </p>
-          <p className="mt-1 text-[13px] text-[#78716C]">
-            {dateText || "未记录日期"}{notice.reason ? ` · ${notice.reason}` : ""}
-          </p>
-        </div>
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3.5 py-2 text-[12.5px] transition-all">
+      <div className="flex items-center gap-2 min-w-0">
         <span
           className={cn(
-            "rounded-full px-2.5 py-1 text-[12px] font-medium",
-            notice.request_status === "approved"
-              ? "bg-[#6FAA7D]/15 text-[#3F7C51]"
-              : "bg-[#C9604D]/10 text-[#A5483D]",
+            "size-1.5 shrink-0 rounded-full",
+            isApproved ? "bg-[#2E7D32]" : "bg-[#C9604D]",
           )}
-        >
-          {statusText}
+        />
+        <span className="font-medium text-[#292524]">
+          {dateText} {categoryText}{isApproved ? "已通过" : "未通过"}
         </span>
+        {notice.reason && (
+          <span className="truncate text-[#78716C]">
+            · {notice.reason}
+          </span>
+        )}
       </div>
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="shrink-0 p-1 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F5F3EE] cursor-pointer"
+        aria-label="关闭提示"
+      >
+        <X className="size-3.5 stroke-[2]" />
+      </button>
     </div>
   );
 }
@@ -215,7 +239,8 @@ export function VideoSubmitPanelV2({
   }, [router]);
 
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
-  const dateInputRef = useRef<HTMLInputElement | null>(null);
+  const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
@@ -476,7 +501,6 @@ export function VideoSubmitPanelV2({
       if (date < today && !activityData && !activityError) {
         void loadActivity();
       }
-      formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
     [activityData, activityError, loadActivity, setActiveBizDate, today],
   );
@@ -493,9 +517,32 @@ export function VideoSubmitPanelV2({
     } catch {}
   }, [today]);
 
-  const openDatePicker = useCallback(() => {
-    dateInputRef.current?.showPicker();
-  }, []);
+  // 点击外部及 Esc 键收起日历 Popover
+  useEffect(() => {
+    if (!isCalendarOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        calendarPopoverRef.current &&
+        !calendarPopoverRef.current.contains(event.target as Node)
+      ) {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsCalendarOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isCalendarOpen]);
 
   const isActivityLoading = !activityData && !activityError;
   const historyReports = activityData?.history ?? history;
@@ -518,53 +565,41 @@ export function VideoSubmitPanelV2({
 
             {/* 右侧：控制区 */}
             <div className="flex flex-wrap items-center gap-3">
-              {/* 日期选择 */}
-              <div className="flex items-center gap-2">
+              {/* 日期选择 Popover */}
+              <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
                 <button
                   type="button"
-                  onClick={openDatePicker}
-                  className="inline-flex items-center gap-2 h-9 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] shadow-sm transition-all hover:bg-[#F5F3EE] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  onClick={() => setIsCalendarOpen((prev) => !prev)}
+                  className={cn(
+                    "inline-flex items-center gap-2 h-9 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] shadow-sm transition-all hover:bg-[#F5F3EE] active:scale-[0.985] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer",
+                    isCalendarOpen && "border-[#78716C] bg-[#F5F3EE]"
+                  )}
+                  aria-expanded={isCalendarOpen}
+                  aria-label="切换填报日期"
                 >
                   <CalendarDays className="size-4 text-[#78716C]" />
                   <span className="tabular-nums">{activeBizDate}</span>
                 </button>
-                <input
-                  ref={dateInputRef}
-                  type="date"
-                  value={activeBizDate}
-                  max={today}
-                  onChange={(event) => selectBizDate(event.target.value)}
-                  className="sr-only"
-                  tabIndex={-1}
-                  aria-hidden="true"
-                />
+
+                {isCalendarOpen && (
+                  <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+                    <div className="w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E5E0D6] bg-white p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
+                      <SubmissionCalendar
+                        today={today}
+                        submittedDates={submittedDatesIncludingActivity}
+                        waiveDates={exemptionDateBuckets.waiveDates}
+                        leaveDates={exemptionDateBuckets.leaveDates}
+                        pendingDates={localHasPendingExemption ? [today] : []}
+                        selectedDate={activeBizDate}
+                        onDateSelect={(date) => {
+                          selectBizDate(date);
+                          setIsCalendarOpen(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* 账号选择 */}
-              <select
-                id="account-select"
-                value={selectedAccountId}
-                onChange={(e) => handleAccountChange(e.target.value)}
-                className="h-9 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[14px] font-medium text-[#292524] shadow-sm outline-none transition-all hover:bg-[#F5F3EE] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
-              >
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.display_name}
-                  </option>
-                ))}
-              </select>
-
-              {/* 历史记录按钮 */}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsHistoryOpen(true)}
-                className="h-9 rounded-lg"
-              >
-                <History className="size-4 mr-1.5" />
-                历史记录
-              </Button>
 
               {/* 申请豁免按钮 */}
               <Button
@@ -584,6 +619,18 @@ export function VideoSubmitPanelV2({
                 <FilePenLine className="size-4 mr-1.5" />
                 {isExemptionPending ? "审批中" : "申请豁免"}
               </Button>
+
+              {/* 历史记录按钮 */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsHistoryOpen(true)}
+                className="h-9 rounded-lg"
+              >
+                <History className="size-4 mr-1.5" />
+                历史记录
+              </Button>
             </div>
           </div>
         </div>
@@ -591,31 +638,27 @@ export function VideoSubmitPanelV2({
         {/* 待审批豁免提示横幅 */}
         {isExemptionPending && !dismissedPendingExemption && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg border border-[#B98A54]/20 bg-[#B98A54]/10 p-4"
+            className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3.5 py-2 text-[12.5px] transition-all"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <Clock className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
-                <div>
-                  <p className="text-[13px] font-medium text-[#292524]">
-                    豁免申请审批中
-                  </p>
-                  <p className="text-[13px] text-[#78716C] mt-1">
-                    你的豁免申请正在等待管理员审批
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={dismissPendingExemption}
-                className="shrink-0 text-[#78716C] hover:text-[#292524] transition-colors"
-                aria-label="关闭提示"
-              >
-                <X className="size-4" />
-              </button>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54] animate-pulse" />
+              <span className="font-medium text-[#292524]">
+                豁免申请审批中
+              </span>
+              <span className="truncate text-[#78716C]">
+                · 正在等待管理员审批
+              </span>
             </div>
+            <button
+              type="button"
+              onClick={dismissPendingExemption}
+              className="shrink-0 p-1 text-[#78716C] hover:text-[#1C1917] transition-colors rounded hover:bg-[#F5F3EE] cursor-pointer"
+              aria-label="关闭提示"
+            >
+              <X className="size-3.5 stroke-[2]" />
+            </button>
           </motion.div>
         )}
 

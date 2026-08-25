@@ -235,7 +235,7 @@ function ExemptionModal({
                 </button>
               </div>
 
-              <div className="relative overflow-hidden rounded-xl border border-[#E5E0D6] bg-[#FBF9F5] p-1">
+              <div className="relative overflow-hidden rounded-xl border border-[#E5E0D6] bg-white p-3.5 shadow-2xs">
                 <SubmissionCalendar
                   today={today}
                   submittedDates={submittedDates}
@@ -244,6 +244,7 @@ function ExemptionModal({
                   pendingDates={pendingDates}
                   selectedDates={selectedDates}
                   onDateSelect={(date) => toggleDate(date)}
+                  showLegend={true}
                   className="border-none bg-transparent shadow-none"
                 />
               </div>

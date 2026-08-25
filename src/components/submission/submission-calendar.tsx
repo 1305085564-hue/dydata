@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,9 +23,10 @@ interface SubmissionCalendarProps {
   selectedDate?: string | null;
   selectedDates?: string[];
   onDateSelect?: (date: string, hasSubmission: boolean) => void;
+  showLegend?: boolean;
 }
 
-const WEEK_LABELS = ["一", "二", "三", "四", "五", "六", "日"];
+const WEEK_LABELS = ["日", "一", "二", "三", "四", "五", "六"];
 
 function formatLocalDate(date: Date) {
   const year = date.getFullYear();
@@ -79,8 +82,11 @@ function getCalendarCells({
   const month = targetDate.getMonth();
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(year, month + 1, 0);
-  const firstWeekday = (monthStart.getDay() + 6) % 7;
+  
+  // 周日为第一列 (0=周日, 1=周一, ... 6=周六)
+  const firstWeekday = monthStart.getDay();
   const totalDays = monthEnd.getDate();
+  
   const cells: Array<{
     key: string;
     day?: number;
@@ -123,6 +129,7 @@ export function SubmissionCalendar({
   selectedDate = null,
   selectedDates = [],
   onDateSelect,
+  showLegend = false,
 }: SubmissionCalendarProps) {
 
   const [displayDate, setDisplayDate] = useState(() => {
@@ -187,70 +194,60 @@ export function SubmissionCalendar({
   );
 
   return (
-    <section
-      className={cn(
-        "rounded-2xl border border-[#E5E0D6] bg-white p-4 shadow-sm space-y-3 select-none",
-        className,
-      )}
-    >
-      {/* 头部 Month 动态切换选择器 */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#ECE7DE]">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#78716C]" />
-          <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
-            选择日期
-          </h3>
-        </div>
+    <div className={cn("w-full select-none", className)}>
+      {/* 头部 Month 切换导航 */}
+      <div className="flex items-center justify-between px-1 mb-3.5">
+        <button
+          type="button"
+          onClick={handlePrevMonth}
+          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.98] transition-all cursor-pointer"
+          title="上个月"
+          aria-label="上个月"
+        >
+          <ChevronLeft className="size-4 stroke-[2]" />
+        </button>
 
-        <div className="flex items-center gap-0.5 rounded-full bg-[#F5F3EE] p-0.5 border border-[#E5E0D6]">
-          <button
-            type="button"
-            onClick={handlePrevMonth}
-            className="flex size-6 items-center justify-center rounded-full text-[#292524] hover:bg-white hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all"
-            title="上一个月"
-          >
-            <ChevronLeft className="size-3.5 stroke-[2]" />
-          </button>
-          <span className="text-[12px] font-medium text-[#292524] tabular-nums px-1.5">
-            {monthLabel}
-          </span>
-          <button
-            type="button"
-            disabled={!canGoNext}
-            onClick={handleNextMonth}
-            className={cn(
-              "flex size-6 items-center justify-center rounded-full transition-all",
-              canGoNext
-                ? "text-[#292524] hover:bg-white hover:text-[#1C1917] active:scale-[0.985] active:duration-75 cursor-pointer"
-                : "text-[#E5E0D6] opacity-40 cursor-not-allowed",
-            )}
-            title="下一个月"
-          >
-            <ChevronRight className="size-3.5 stroke-[2]" />
-          </button>
-        </div>
+        <h3 className="text-[15px] font-semibold text-[#1C1917] tracking-tight tabular-nums">
+          {monthLabel}
+        </h3>
+
+        <button
+          type="button"
+          disabled={!canGoNext}
+          onClick={handleNextMonth}
+          className={cn(
+            "flex size-7 items-center justify-center rounded-lg transition-all",
+            canGoNext
+              ? "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.98] cursor-pointer"
+              : "text-[#D6D3D1] opacity-30 cursor-not-allowed",
+          )}
+          title="下个月"
+          aria-label="下个月"
+        >
+          <ChevronRight className="size-4 stroke-[2]" />
+        </button>
       </div>
 
-      {/* 周标题 (Week Labels) */}
-      <div className="grid grid-cols-7 gap-1 text-center">
+      {/* 星期标头 (周日~周六) */}
+      <div className="grid grid-cols-7 gap-1 text-center mb-1">
         {WEEK_LABELS.map((label) => (
           <div
             key={label}
-            className="h-6 flex items-center justify-center text-[12px] font-medium text-[#78716C]"
+            className="h-7 flex items-center justify-center text-[13px] text-[#78716C]"
           >
             {label}
           </div>
         ))}
       </div>
 
-      {/* 日历网格 (Date Grid) */}
-      <div className="grid grid-cols-7 gap-1">
+      {/* 日历网格 */}
+      <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
         {cells.map((cell) => {
           if (!cell.day) {
             return (
               <div
                 key={cell.key}
-                className="h-10 rounded-lg"
+                className="h-9 w-full"
                 aria-hidden="true"
               />
             );
@@ -258,66 +255,70 @@ export function SubmissionCalendar({
 
           const isSelected =
             selectedDate === cell.key || selectedDates.includes(cell.key);
-          const isSubmitted =
-            cell.state === "submitted" || cell.state === "waive";
+          const isSubmitted = cell.state === "submitted";
+          const isWaive = cell.state === "waive";
           const isLeave = cell.state === "leave";
           const isPendingState = cell.state === "pending";
-          const isMissing =
-            cell.state === "missing" || cell.state === "unsubmitted";
           const isFuture = cell.state === "future";
+          const isUnsubmitted = !isSubmitted && !isWaive && !isLeave && !isPendingState && !isFuture;
 
           return (
             <button
               key={cell.key}
               type="button"
               disabled={isFuture}
-              onClick={() => onDateSelect?.(cell.key, isSubmitted)}
+              onClick={() => onDateSelect?.(cell.key, isSubmitted || isWaive)}
               className={cn(
-                "relative flex h-10 w-full flex-col items-center justify-center rounded-lg text-[13px] transition-colors duration-100 ease-out outline-none",
-                !isFuture &&
-                  "cursor-pointer active:scale-[0.985] active:duration-75",
+                "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[13.5px] tabular-nums transition-all duration-150 outline-none select-none",
+                !isFuture && "cursor-pointer active:scale-[0.96]",
 
-                // 默认/未选中态
-                !isSelected &&
-                  !isFuture &&
-                  "hover:bg-[#F5F3EE] hover:text-[#1C1917]",
+                // 选中态：暴风灰蓝实底 (Storm Blue)
+                isSelected &&
+                  "bg-[#3D687A] text-white font-medium shadow-xs z-10",
+
+                // 已提交 (未选中态)
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#6FAA7D]/10/40 text-[#292524] font-medium",
+                  "bg-[#EAF3EC] text-[#2E7D32] font-medium hover:bg-[#DDF0E1]",
+
+                // 豁免 (未选中态)
+                !isSelected &&
+                  isWaive &&
+                  "bg-[#FAF4ED] text-[#B98A54] font-medium hover:bg-[#F5EDE0]",
+
+                // 请假 (未选中态)
                 !isSelected &&
                   isLeave &&
-                  "bg-[#F5F3EE]/40 text-[#292524] font-medium",
+                  "bg-[#F0F4F8] text-[#43718E] font-medium hover:bg-[#E4ECF2]",
+
+                // 审批中 (未选中态)
                 !isSelected &&
                   isPendingState &&
-                  "bg-[#F5F3EE]/60 text-[#292524] font-medium border border-[#E5E0D6]/60",
-                !isSelected &&
-                  isMissing &&
-                  "bg-[#F5F3EE]/30 text-[#292524] font-medium",
-                !isSelected &&
-                  isFuture &&
-                  "text-[#E5E0D6] opacity-60 cursor-not-allowed",
+                  "bg-[#FAF4ED] text-[#B98A54] font-medium border border-[#B98A54]/40",
 
-                // 选中态：黑胶囊高亮浮起
-                isSelected &&
-                  "bg-[#1C1917] text-white font-medium shadow-sm scale-[1.05] z-10",
+                // 常规未提交工作日 (未选中态)
+                !isSelected &&
+                  isUnsubmitted &&
+                  "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
+
+                // 未来日期
+                isFuture &&
+                  "text-[#D6D3D1] opacity-40 cursor-not-allowed",
               )}
             >
-              <span className="tabular-nums leading-none">{cell.day}</span>
+              <span className="leading-none">{cell.day}</span>
 
-              {/* 状态微点 (Micro Status Dot) */}
+              {/* 状态微点 */}
               {!isFuture && (
                 <span
                   className={cn(
-                    "mt-1 size-1 rounded-full transition-transform",
-                    isSelected
-                      ? "bg-white"
-                      : isSubmitted
-                        ? "bg-[#6FAA7D]"
-                        : isLeave
-                          ? "bg-[#43718E]"
-                          : isPendingState
-                            ? "bg-[#D99E55] animate-pulse ring-2 ring-[#D99E55]/40"
-                            : "bg-[#78716C]",
+                    "absolute bottom-1 size-1 rounded-full",
+                    isSelected && "bg-white",
+                    !isSelected && isSubmitted && "bg-[#2E7D32]",
+                    !isSelected && isWaive && "bg-[#B98A54]",
+                    !isSelected && isLeave && "bg-[#43718E]",
+                    !isSelected && isPendingState && "bg-[#B98A54] animate-pulse",
+                    !isSelected && isUnsubmitted && "bg-[#A8A29E]",
                   )}
                 />
               )}
@@ -326,22 +327,21 @@ export function SubmissionCalendar({
         })}
       </div>
 
-      {/* 底部微型极简图例说明 (Minimal Footer Legend) */}
-      <div className="pt-2 border-t border-[#ECE7DE] flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-[#292524]">
-        <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#6FAA7D]" /> 已交/免交
+      {/* 底部四色图例说明 */}
+      <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-between px-1 text-[11.5px] text-[#78716C]">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[#2E7D32]" /> 已交
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#D99E55] animate-pulse ring-1 ring-[#D99E55]/50" />{" "}
-          审批中
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[#B98A54]" /> 豁免
         </span>
-        <span className="inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-1.5">
           <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#78716C]" /> 未交/漏交
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交
         </span>
       </div>
-    </section>
+    </div>
   );
 }

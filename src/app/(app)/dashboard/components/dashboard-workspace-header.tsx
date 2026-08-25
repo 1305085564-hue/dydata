@@ -17,6 +17,9 @@ interface DashboardWorkspaceHeaderProps {
   onDashboardAction: (key: string) => void;
   hasPendingExemption: boolean;
   submittedDates: string[];
+  waiveDates?: string[];
+  leaveDates?: string[];
+  pendingDates?: string[];
 }
 
 export function DashboardWorkspaceHeader({
@@ -26,6 +29,9 @@ export function DashboardWorkspaceHeader({
   onDashboardAction,
   hasPendingExemption,
   submittedDates,
+  waiveDates = [],
+  leaveDates = [],
+  pendingDates = [],
 }: DashboardWorkspaceHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -66,8 +72,8 @@ export function DashboardWorkspaceHeader({
       <div className="flex items-center justify-between gap-4">
         {/* 左侧：分类标签 + 页面大标题（H1）融入日期交互 */}
         <div className="min-w-0 flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.25em] text-[#78716C]">
-            <Activity size={12} className="text-[#78716C]" />
+          <div className="flex items-center gap-1.5 text-[12px] font-medium tracking-wide text-[#78716C]">
+            <Activity size={13} className="text-[#78716C] stroke-[2]" />
             <span>数据台</span>
           </div>
 
@@ -79,11 +85,12 @@ export function DashboardWorkspaceHeader({
               aria-expanded={isCalendarOpen}
               aria-label="切换填报日期"
             >
-              <h1 className="text-2xl font-semibold tracking-tight text-[#1C1917] group-hover:text-[#D97757] transition-colors flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-[#1C1917] group-hover:text-[#D97757] transition-colors flex items-center gap-2">
                 {activeBizDate === today ? (
                   <>
                     <span>今日提交</span>
-                    <span className="text-lg font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors">
+                    <span className="text-[#78716C] font-normal">·</span>
+                    <span className="font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors">
                       {activeBizDate}
                     </span>
                   </>
@@ -93,7 +100,8 @@ export function DashboardWorkspaceHeader({
                       <span className="inline-block size-2 rounded-full bg-[#D97757] animate-pulse" />
                       补交历史
                     </span>
-                    <span className="text-lg font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors">
+                    <span className="text-[#78716C] font-normal">·</span>
+                    <span className="font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors">
                       {activeBizDate}
                     </span>
                   </>
@@ -101,7 +109,7 @@ export function DashboardWorkspaceHeader({
               </h1>
               <ChevronDown
                 className={cn(
-                  "size-4 stroke-[2] text-[#78716C] transition-transform duration-150 group-hover:text-[#D97757]",
+                  "size-4 stroke-[2.2] text-[#78716C] transition-transform duration-150 group-hover:text-[#D97757]",
                   isCalendarOpen && "rotate-180 text-[#D97757]"
                 )}
               />
@@ -109,11 +117,14 @@ export function DashboardWorkspaceHeader({
 
             {/* 锚定在标题正下方的日历 Popover */}
             {isCalendarOpen && (
-              <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                <div className="w-[calc(100vw-2.5rem)] max-w-[330px] rounded-2xl border border-[#E5E0D6] bg-white/98 p-2.5 shadow-claude-float backdrop-blur-2xl ring-1 ring-black/5">
+              <div className="absolute left-0 top-full mt-2.5 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+                <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E5E0D6] bg-white p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
                   <SubmissionCalendar
                     today={today}
                     submittedDates={submittedDates}
+                    waiveDates={waiveDates}
+                    leaveDates={leaveDates}
+                    pendingDates={pendingDates}
                     selectedDate={activeBizDate}
                     onDateSelect={(date) => {
                       onDateChange(date);
