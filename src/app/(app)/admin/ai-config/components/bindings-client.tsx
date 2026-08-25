@@ -554,13 +554,6 @@ export default function BindingsClient() {
       ? defaultModelDraft
       : defaultBinding?.model_id ?? null;
 
-  const resolveControlModelId = (control: AiFeatureControl) => {
-    if (control.modelId) return control.modelId;
-    if (!control.providerKeyModelId) return null;
-    const combo = bundle.models.find((m) => m.id === control.providerKeyModelId);
-    return combo?.model_id ?? null;
-  };
-
   const handleSaveBinding = async (data: Record<string, unknown>) => {
     return saveFeatureControl(data);
   };
@@ -603,91 +596,114 @@ export default function BindingsClient() {
         </span>
       </div>
 
-      <div className="rounded-2xl bg-white border border-[#E5E0D6] p-4 space-y-3">
-        <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
-          <Star className="size-4 text-[#D97757]" />
-          <span>全局默认兜底模型</span>
-          <span className="text-[12px] font-normal text-[#78716C]">
-            场景未指定模型时走它，优先级最低
-          </span>
+      {/* 顶部两列联动：全局默认兜底 + 渠道顺位表 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {/* 左侧：全局默认兜底模型 */}
+        <div className="lg:col-span-5 rounded-2xl bg-white border border-[#E5E0D6] p-4 flex flex-col justify-between space-y-3">
+          <div>
+            <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+              <Star className="size-4 text-[#D97757]" />
+              <span>全局默认兜底模型</span>
+            </div>
+            <p className="text-[12px] text-[#78716C] mt-1 leading-normal">
+              场景未指定具体模型时使用，优先级最低。
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <select
+              aria-label="全局默认兜底模型"
+              className="h-8 flex-1 min-w-[180px] rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[13px] text-[#292524]"
+              value={defaultModelId ?? ""}
+              onChange={(event) => setDefaultModelDraft(event.target.value || null)}
+            >
+              <option value="">未设置 · 走全量顺位自动选择</option>
+              {modelDirectory.map((entry) => (
+                <option key={entry.modelId} value={entry.modelId}>
+                  {entry.label}（{entry.channels.length} 个渠道可用）
+                </option>
+              ))}
+            </select>
+            <Button
+              size="sm"
+              className="h-8 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524] shrink-0"
+              disabled={(defaultModelId ?? "") === (defaultBinding?.model_id ?? "")}
+              onClick={async () => {
+                await setGlobalDefaultModel(defaultModelId ?? "");
+              }}
+            >
+              保存默认
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            aria-label="全局默认兜底模型"
-            className="h-8 min-w-56 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[13px] text-[#292524]"
-            value={defaultModelId ?? ""}
-            onChange={(event) => setDefaultModelDraft(event.target.value || null)}
-          >
-            <option value="">未设置 · 走全量顺位自动选择</option>
-            {modelDirectory.map((entry) => (
-              <option key={entry.modelId} value={entry.modelId}>
-                {entry.label}（{entry.channels.length} 个渠道可用）
-              </option>
-            ))}
-          </select>
-          <Button
-            size="sm"
-            className="h-8 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
-            disabled={(defaultModelId ?? "") === (defaultBinding?.model_id ?? "")}
-            onClick={async () => {
-              await setGlobalDefaultModel(defaultModelId ?? "");
-            }}
-          >
-            保存默认模型
-          </Button>
-        </div>
-      </div>
 
-      <details className="rounded-2xl bg-white border border-[#E5E0D6] overflow-hidden">
-        <summary className="cursor-pointer select-none px-4 py-3 text-[13px] font-medium text-[#1C1917] hover:bg-[#FBF9F5]/70">
-          渠道顺位表（系统按 供应商优先级 + Key 优先级 自动排列，无需手动维护）
-        </summary>
-        <div className="overflow-x-auto border-t border-[#E5E0D6]/60">
-          <Table>
-            <TableHeader className="bg-[#FBF9F5]/80">
-              <TableRow className="hover:bg-transparent border-0">
-                <TableHead className="text-[12px] pl-5 w-[64px]">顺位</TableHead>
-                <TableHead className="text-[12px]">渠道</TableHead>
-                <TableHead className="text-[12px]">健康状态</TableHead>
-                <TableHead className="text-[12px] pr-5">可用模型</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rankedChannels.map((channel) => {
-                const healthy = isChannelHealthy(channel);
-                return (
-                  <TableRow key={channel.rank} className="text-[12px] border-b border-[#E5E0D6]/60 last:border-b-0 hover:bg-[#FBF9F5]/50">
-                    <TableCell className="pl-5 font-medium text-[#1C1917]">{channel.rank}</TableCell>
-                    <TableCell>{channel.channelName}</TableCell>
-                    <TableCell>
-                      {healthy ? (
-                        <span className="inline-flex items-center gap-1.5 text-[#16A34A]">
-                          <span className="size-1.5 rounded-full bg-[#16A34A]" />正常
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-[#C9604D]">
-                          <span className="size-1.5 rounded-full bg-[#C9604D]" />
-                          熔断中（连败 {channel.failures ?? 0} 次，系统会跳过它）
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="pr-5 text-[#78716C]">
-                      {channel.models.join("、") || "—"}
+        {/* 右侧：渠道顺位表 */}
+        <div className="lg:col-span-7 rounded-2xl bg-white border border-[#E5E0D6] overflow-hidden flex flex-col">
+          <div className="px-4 py-2.5 bg-[#FBF9F5]/70 border-b border-[#E5E0D6]/60 flex items-center justify-between">
+            <span className="text-[13px] font-medium text-[#1C1917]">
+              渠道自动顺位
+            </span>
+            <span className="text-[11px] text-[#78716C]">
+              按 供应商 + Key 优先级自动排列
+            </span>
+          </div>
+          <div className="overflow-x-auto max-h-[140px] overflow-y-auto flex-1">
+            <Table>
+              <TableHeader className="bg-[#FBF9F5]/50 sticky top-0 z-10">
+                <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
+                  <TableHead className="text-[11px] pl-4 w-[50px] py-1.5">顺位</TableHead>
+                  <TableHead className="text-[11px] py-1.5">渠道与 Key</TableHead>
+                  <TableHead className="text-[11px] py-1.5">健康态</TableHead>
+                  <TableHead className="text-[11px] pr-4 py-1.5">支持模型</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rankedChannels.map((channel) => {
+                  const healthy = isChannelHealthy(channel);
+                  return (
+                    <TableRow
+                      key={channel.rank}
+                      className="text-[12px] border-b border-[#E5E0D6]/40 last:border-b-0 hover:bg-[#FBF9F5]/40"
+                    >
+                      <TableCell className="pl-4 py-1 font-medium text-[#1C1917]">
+                        {channel.rank}
+                      </TableCell>
+                      <TableCell className="py-1 font-medium text-[12px] text-[#292524] truncate max-w-[150px]">
+                        {channel.channelName}
+                      </TableCell>
+                      <TableCell className="py-1">
+                        {healthy ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#16A34A]">
+                            <span className="size-1.5 rounded-full bg-[#16A34A]" />
+                            正常
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D]">
+                            <span className="size-1.5 rounded-full bg-[#C9604D]" />
+                            熔断中
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="pr-4 py-1 text-[11px] text-[#78716C] truncate max-w-[180px]">
+                        {channel.models.join("、") || "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {rankedChannels.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="h-12 text-center text-[12px] text-[#78716C]"
+                    >
+                      暂无启用的渠道。
                     </TableCell>
                   </TableRow>
-                );
-              })}
-              {rankedChannels.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-16 text-center text-[#78716C]">
-                    暂无启用的渠道。
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </details>
+      </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -702,7 +718,7 @@ export default function BindingsClient() {
             <TableHeader className="bg-[#FBF9F5]/80">
               <TableRow className="hover:bg-transparent border-0">
                 <TableHead className="text-[12px] pl-5 w-[220px]">业务功能</TableHead>
-                <TableHead className="text-[12px]">选用模型与调度链路</TableHead>
+                <TableHead className="text-[12px]">选用模型</TableHead>
                 <TableHead className="w-[120px] text-[12px]">运行状态</TableHead>
                 <TableHead className="w-[120px] text-right text-[12px] pr-5">
                   操作
@@ -721,26 +737,12 @@ export default function BindingsClient() {
                 </TableRow>
               ) : (
                 businessControls.map((control) => {
-                  const effectiveModelId =
-                    resolveControlModelId(control) ||
-                    defaultBinding?.model_id ||
-                    null;
-                  const currentModelEntry = effectiveModelId
-                    ? modelDirectory.find(
-                        (m) => m.modelId === effectiveModelId,
-                      )
-                    : null;
-                  const primaryChannel = currentModelEntry?.channels[0];
-                  const backupCount = currentModelEntry
-                    ? Math.max(0, currentModelEntry.channels.length - 1)
-                    : 0;
-
                   return (
                     <TableRow
                       key={control.key}
                       className="hover:bg-[#FBF9F5]/50 text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0"
                     >
-                      <TableCell className="pl-5 py-3 align-top">
+                      <TableCell className="pl-5 py-3 align-middle">
                         <div className="flex items-center gap-1.5">
                           <span className="font-medium text-[#1C1917]">
                             {control.label}
@@ -760,78 +762,35 @@ export default function BindingsClient() {
                         </div>
                       </TableCell>
 
-                      {/* 模型策略：行内直选 + 调度链路透视小胶囊 */}
-                      <TableCell className="py-3 align-top">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <select
-                              aria-label={`${control.label} 选用模型`}
-                              value={control.modelId ?? ""}
-                              onChange={async (e) => {
-                                await saveFeatureControl({
-                                  feature_key: control.key,
-                                  model_id: e.target.value || null,
-                                  is_enabled: control.isEnabled,
-                                  system_prompt: control.systemPrompt,
-                                  output_token_limit: control.outputTokenLimit,
-                                  context_message_limit:
-                                    control.contextMessageLimit,
-                                  provider_key_model_id:
-                                    control.providerKeyModelId,
-                                });
-                              }}
-                              className="h-7.5 rounded-md border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer max-w-[280px] truncate"
-                            >
-                              <option value="">
-                                全局默认 ({defaultBinding?.model_id || "全量顺位"})
-                              </option>
-                              {modelDirectory.map((entry) => (
-                                <option key={entry.modelId} value={entry.modelId}>
-                                  {entry.label} ({entry.channels.length} 个可用渠道)
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* 链路透视小胶囊 */}
-                          {currentModelEntry &&
-                          currentModelEntry.channels.length > 0 ? (
-                            <div
-                              className="flex flex-wrap items-center gap-1.5 text-[11px]"
-                              title={`顺位调度链路：${currentModelEntry.channels.map((c, i) => `${i + 1}. ${c.name} (${c.healthy ? "健康" : "熔断跳过"})`).join(" → ")}`}
-                            >
-                              <span
-                                className={cn(
-                                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-mono",
-                                  primaryChannel?.healthy
-                                    ? "bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20"
-                                    : "bg-[#C9604D]/10 text-[#C9604D] border border-[#C9604D]/20",
-                                )}
-                              >
-                                <span
-                                  className={cn(
-                                    "size-1.5 rounded-full",
-                                    primaryChannel?.healthy
-                                      ? "bg-[#16A34A]"
-                                      : "bg-[#C9604D]",
-                                  )}
-                                />
-                                {primaryChannel?.healthy
-                                  ? `首选: ${primaryChannel.name}`
-                                  : `首选熔断 · 切换备用`}
-                              </span>
-                              {backupCount > 0 && (
-                                <span className="text-[11px] text-[#78716C] bg-[#F5F3EE] border border-[#E5E0D6] px-1.5 py-0.5 rounded-md">
-                                  +{backupCount} 备用渠道
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-[11px] text-[#78716C] flex items-center gap-1">
-                              <span>走全量渠道顺位自动分配</span>
-                            </div>
-                          )}
-                        </div>
+                      {/* 模型策略：行内直选 */}
+                      <TableCell className="py-3 align-middle">
+                        <select
+                          aria-label={`${control.label} 选用模型`}
+                          value={control.modelId ?? ""}
+                          onChange={async (e) => {
+                            await saveFeatureControl({
+                              feature_key: control.key,
+                              model_id: e.target.value || null,
+                              is_enabled: control.isEnabled,
+                              system_prompt: control.systemPrompt,
+                              output_token_limit: control.outputTokenLimit,
+                              context_message_limit:
+                                control.contextMessageLimit,
+                              provider_key_model_id:
+                                control.providerKeyModelId,
+                            });
+                          }}
+                          className="h-7.5 rounded-md border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
+                        >
+                          <option value="">
+                            全局默认 ({defaultBinding?.model_id || "全量顺位"})
+                          </option>
+                          {modelDirectory.map((entry) => (
+                            <option key={entry.modelId} value={entry.modelId}>
+                              {entry.label} ({entry.channels.length} 渠道可用)
+                            </option>
+                          ))}
+                        </select>
                       </TableCell>
 
                       {/* 运行状态：行内即时 Switch */}
