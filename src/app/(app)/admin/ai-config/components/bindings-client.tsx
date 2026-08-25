@@ -37,6 +37,7 @@ import {
   Star,
   Archive,
   ArchiveRestore,
+  ChevronDown,
 } from "lucide-react";
 import { BindingDialog } from "./bindings-dialogs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -384,6 +385,7 @@ export default function BindingsClient() {
   const [defaultModelDraft, setDefaultModelDraft] = useState<
     string | null | undefined
   >(undefined);
+  const [showRankedChannels, setShowRankedChannels] = useState(false);
   const [bindingModal, setBindingModal] = useState<{
     open: boolean;
     data: AiFeatureControl | null;
@@ -596,37 +598,36 @@ export default function BindingsClient() {
         </span>
       </div>
 
-      {/* 顶部两列联动：全局默认兜底 + 渠道顺位表 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        {/* 左侧：全局默认兜底模型 */}
-        <div className="lg:col-span-5 rounded-2xl bg-white border border-[#E5E0D6] p-4 flex flex-col justify-between space-y-3">
-          <div>
-            <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
+      {/* 极简单行工具条：全局默认兜底 + 渠道顺位可折叠透视 */}
+      <div className="rounded-2xl bg-white border border-[#E5E0D6] overflow-hidden select-none">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 bg-white">
+          {/* 左侧：全局默认兜底设置 */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#1C1917]">
               <Star className="size-4 text-[#D97757]" />
-              <span>全局默认兜底模型</span>
+              <span>全局默认兜底：</span>
             </div>
-            <p className="text-[12px] text-[#78716C] mt-1 leading-normal">
-              场景未指定具体模型时使用，优先级最低。
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
             <select
               aria-label="全局默认兜底模型"
-              className="h-8 flex-1 min-w-[180px] rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[13px] text-[#292524]"
+              className="h-7.5 min-w-[200px] rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer"
               value={defaultModelId ?? ""}
-              onChange={(event) => setDefaultModelDraft(event.target.value || null)}
+              onChange={(event) =>
+                setDefaultModelDraft(event.target.value || null)
+              }
             >
               <option value="">未设置 · 走全量顺位自动选择</option>
               {modelDirectory.map((entry) => (
                 <option key={entry.modelId} value={entry.modelId}>
-                  {entry.label}（{entry.channels.length} 个渠道可用）
+                  {entry.label} ({entry.channels.length} 渠道可用)
                 </option>
               ))}
             </select>
             <Button
               size="sm"
-              className="h-8 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524] shrink-0"
-              disabled={(defaultModelId ?? "") === (defaultBinding?.model_id ?? "")}
+              className="h-7.5 px-2.5 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
+              disabled={
+                (defaultModelId ?? "") === (defaultBinding?.model_id ?? "")
+              }
               onClick={async () => {
                 await setGlobalDefaultModel(defaultModelId ?? "");
               }}
@@ -634,26 +635,34 @@ export default function BindingsClient() {
               保存默认
             </Button>
           </div>
+
+          {/* 右侧：渠道顺位收展按钮 */}
+          <button
+            type="button"
+            onClick={() => setShowRankedChannels((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#F5F3EE] transition-colors cursor-pointer border border-[#E5E0D6]/80 bg-white"
+          >
+            <span className="size-1.5 rounded-full bg-[#16A34A]" />
+            <span>渠道顺位表 ({rankedChannels.length})</span>
+            <ChevronDown
+              className={cn(
+                "size-3.5 transition-transform duration-200 opacity-70",
+                showRankedChannels && "rotate-180",
+              )}
+            />
+          </button>
         </div>
 
-        {/* 右侧：渠道顺位表 */}
-        <div className="lg:col-span-7 rounded-2xl bg-white border border-[#E5E0D6] overflow-hidden flex flex-col">
-          <div className="px-4 py-2.5 bg-[#FBF9F5]/70 border-b border-[#E5E0D6]/60 flex items-center justify-between">
-            <span className="text-[13px] font-medium text-[#1C1917]">
-              渠道自动顺位
-            </span>
-            <span className="text-[11px] text-[#78716C]">
-              按 供应商 + Key 优先级自动排列
-            </span>
-          </div>
-          <div className="overflow-x-auto max-h-[140px] overflow-y-auto flex-1">
+        {/* 折叠区：渠道自动顺位表（默认收起，展开时平滑展示） */}
+        {showRankedChannels && (
+          <div className="border-t border-[#E5E0D6]/60 bg-[#FBF9F5]/40 overflow-x-auto max-h-[220px] overflow-y-auto">
             <Table>
-              <TableHeader className="bg-[#FBF9F5]/50 sticky top-0 z-10">
+              <TableHeader className="bg-[#FBF9F5]/80 sticky top-0 z-10">
                 <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
-                  <TableHead className="text-[11px] pl-4 w-[50px] py-1.5">顺位</TableHead>
+                  <TableHead className="text-[11px] pl-5 w-[60px] py-1.5">顺位</TableHead>
                   <TableHead className="text-[11px] py-1.5">渠道与 Key</TableHead>
                   <TableHead className="text-[11px] py-1.5">健康态</TableHead>
-                  <TableHead className="text-[11px] pr-4 py-1.5">支持模型</TableHead>
+                  <TableHead className="text-[11px] pr-5 py-1.5">支持模型</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -662,15 +671,15 @@ export default function BindingsClient() {
                   return (
                     <TableRow
                       key={channel.rank}
-                      className="text-[12px] border-b border-[#E5E0D6]/40 last:border-b-0 hover:bg-[#FBF9F5]/40"
+                      className="text-[12px] border-b border-[#E5E0D6]/40 last:border-b-0 hover:bg-[#FBF9F5]/60"
                     >
-                      <TableCell className="pl-4 py-1 font-medium text-[#1C1917]">
+                      <TableCell className="pl-5 py-1.5 font-medium text-[#1C1917]">
                         {channel.rank}
                       </TableCell>
-                      <TableCell className="py-1 font-medium text-[12px] text-[#292524] truncate max-w-[150px]">
+                      <TableCell className="py-1.5 font-medium text-[12px] text-[#292524]">
                         {channel.channelName}
                       </TableCell>
-                      <TableCell className="py-1">
+                      <TableCell className="py-1.5">
                         {healthy ? (
                           <span className="inline-flex items-center gap-1 text-[11px] text-[#16A34A]">
                             <span className="size-1.5 rounded-full bg-[#16A34A]" />
@@ -679,11 +688,11 @@ export default function BindingsClient() {
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D]">
                             <span className="size-1.5 rounded-full bg-[#C9604D]" />
-                            熔断中
+                            熔断中 (连败 {channel.failures ?? 0} 次)
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="pr-4 py-1 text-[11px] text-[#78716C] truncate max-w-[180px]">
+                      <TableCell className="pr-5 py-1.5 text-[11px] text-[#78716C]">
                         {channel.models.join("、") || "—"}
                       </TableCell>
                     </TableRow>
@@ -702,7 +711,7 @@ export default function BindingsClient() {
               </TableBody>
             </Table>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="space-y-3">
