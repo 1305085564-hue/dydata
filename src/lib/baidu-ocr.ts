@@ -4,8 +4,6 @@
  * 本模块不依赖任何现有业务代码；接口层接入在下一批完成。
  */
 
-import sharp from "sharp";
-
 export type BaiduOcrErrorType =
   | "CONFIG"
   | "TOKEN_INVALID"
@@ -152,12 +150,36 @@ export type WebImageValidation =
   | { ok: true; base64: string; rawByteLength: number; dimensions: ImageDimensions | null }
   | { ok: false; reason: string };
 
+// sharp 原生模块运行时懒加载：加载失败只降级跳过压缩，绝不阻断识别接口
+type SharpFactory = (typeof import("sharp"))["default"];
+let sharpModule: SharpFactory | null | undefined;
+
+async function loadSharp(): Promise<SharpFactory | null> {
+  if (sharpModule !== undefined) return sharpModule;
+  try {
+    const imported = await import("sharp");
+    sharpModule = imported.default;
+    return sharpModule;
+  } catch (error) {
+    console.warn(
+      "[baidu-ocr] sharp 加载失败，大图压缩不可用（超限图将被前置校验拦截）：",
+      error instanceof Error ? error.message : error,
+    );
+    sharpModule = null;
+    return null;
+  }
+}
+
 /**
  * 大图压缩：超过 3MB 的图缩到长边 2000px 内并转 JPEG，保证能过百度 base64 4M 上限。
- * 小图原样返回；压缩失败（图片损坏等）也原样返回，交给后续校验报准确错误。
+ * 小图原样返回；sharp 不可用或压缩失败时原样返回，交给后续校验报准确错误。
  */
 export async function compressImageForOcr(imageBuffer: Buffer): Promise<Buffer> {
   if (imageBuffer.length <= COMPRESS_THRESHOLD_BYTES) {
+    return imageBuffer;
+  }
+  const sharp = await loadSharp();
+  if (!sharp) {
     return imageBuffer;
   }
   try {
