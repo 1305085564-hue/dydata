@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
-import { DashboardContent } from "./dashboard-content";
+import { DashboardDataContainer } from "./dashboard-data-container";
+import DashboardLoading from "./loading";
 
 export const metadata: Metadata = {
   title: "工作台 - DYData",
@@ -21,8 +22,8 @@ export const dynamic = "force-dynamic";
 export default function DashboardPage() {
   return (
     <AppShell width="full" className="max-w-none">
-      <Suspense fallback={<div className="p-6 text-[#78716C]">加载中...</div>}>
-        <DashboardContent />
+      <Suspense fallback={<DashboardLoading />}>
+        <DashboardDataContainer />
       </Suspense>
     </AppShell>
   );

@@ -35,7 +35,7 @@ export default function TestV2Page() {
           account={mockAccount}
           userId={mockUserId}
           today={today}
-          mode="daily"
+          mode="create"
           initialSummary={null}
           onSubmitted={(video, aiTags, summary) => {
             console.log("提交成功", { video, aiTags, summary });

@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
-import type { DashboardActivityReport } from "@/lib/loaders/dashboard-activity";
+import {
+  DASHBOARD_REPORT_SELECT,
+  type DashboardActivityReport,
+} from "@/lib/loaders/dashboard-activity";
+import {
+  getDashboardSubmittedDates,
+  isDashboardReport,
+  mergeDashboardReports,
+} from "@/app/(app)/dashboard/video-submit-panel-state";
 import {
   getExemptionStateForDate,
   type ExemptionGrantLike,
@@ -19,6 +27,20 @@ type DashboardAccountRow = {
   name: string;
   content_direction: string | null;
 };
+
+async function loadDashboardAccounts(
+  supabase: DashboardSupabase,
+  userId: string,
+): Promise<DashboardAccountRow[]> {
+  const result = await supabase
+    .from("accounts")
+    .select("id, name, content_direction")
+    .eq("profile_id", userId)
+    .order("created_at", { ascending: true });
+
+  assertSupabaseQuerySucceeded(result.error, "加载账号失败");
+  return (result.data ?? []) as DashboardAccountRow[];
+}
 
 type ProfileWithExemptionRow = {
   name: string | null;
@@ -277,29 +299,29 @@ export async function loadDashboardPageData({
   supabase: DashboardSupabase;
   userId: string;
 }): Promise<DashboardPageData> {
-  const [accountsResult, profile] = await Promise.all([
-    supabase
-      .from("accounts")
-      .select("id, name, content_direction")
-      .eq("profile_id", userId)
-      .order("created_at", { ascending: true }),
+  const [initialAccounts, profile] = await Promise.all([
+    loadDashboardAccounts(supabase, userId),
     loadDashboardProfile(supabase, userId),
   ]);
 
-  const accounts = accountsResult.data;
-  assertSupabaseQuerySucceeded(accountsResult.error, "加载账号失败");
+  let accounts = initialAccounts;
   const userDisplayName = profile?.name?.trim() || "当前用户";
   const userRole = profile?.role ?? "member";
 
-  if (!accounts || accounts.length === 0) {
+  if (accounts.length === 0) {
+    let shouldReloadAccounts = false;
     try {
-      await ensureDefaultDashboardAccount({
+      const provisioning = await ensureDefaultDashboardAccount({
         adminSupabase: supabase as never,
         profileId: userId,
         preferredName: userDisplayName,
       });
+      shouldReloadAccounts = provisioning.created;
     } catch {
       // 兜底失败就继续空态，让前端明确提示“联系管理员分配账号”
+    }
+    if (shouldReloadAccounts) {
+      accounts = await loadDashboardAccounts(supabase, userId);
     }
   }
   const userExemptionProfile: ExemptionProfileLike = {
@@ -331,7 +353,7 @@ export async function loadDashboardPageData({
 
   const [
     todayReportsResult,
-    monthSubmittedDatesResult,
+    monthReportsResult,
     userExemptionGrants,
     hasPendingExemption,
     userExemptionReviewNotice,
@@ -349,10 +371,12 @@ export async function loadDashboardPageData({
     accountIds.length
       ? supabase
           .from("daily_reports")
-          .select("report_date")
+          .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
           .gte("report_date", monthStartDate)
           .lte("report_date", today)
+          .order("report_date", { ascending: false })
+          .order("uploaded_at", { ascending: false })
       : Promise.resolve({ data: [], error: null }),
     loadUserExemptionGrants(supabase, userId),
     loadHasPendingExemptionRequest(supabase, userId),
@@ -360,19 +384,18 @@ export async function loadDashboardPageData({
   ]);
 
   assertSupabaseQuerySucceeded(todayReportsResult.error, "加载今日提交记录失败");
-  assertSupabaseQuerySucceeded(monthSubmittedDatesResult.error, "加载本月提交日期失败");
+  assertSupabaseQuerySucceeded(monthReportsResult.error, "加载本月提交记录失败");
   const rawTodayReports = todayReportsResult.data;
 
   const todayReports = ((rawTodayReports ?? []) as TodaySubmissionReportLike[]).filter(
     (report) => typeof report.account_id === "string",
   );
-  const monthSubmittedDates = Array.from(
-    new Set(
-      ((monthSubmittedDatesResult.data ?? []) as Array<{ report_date: string | null }>)
-        .map((report) => report.report_date)
-        .filter((reportDate): reportDate is string => Boolean(reportDate)),
+  const monthReports = mergeDashboardReports({
+    initialReports: ((monthReportsResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
+      isDashboardReport,
     ),
-  );
+  });
+  const monthSubmittedDates = getDashboardSubmittedDates(monthReports);
   const submittedAccountIds = new Set(todayReports.map((report) => report.account_id).filter(Boolean));
 
   const todayExemptionState = getExemptionStateForDate(
@@ -392,7 +415,7 @@ export async function loadDashboardPageData({
     today,
     isExternalUser: false,
     monthSubmittedDates,
-    monthReports: [],
+    monthReports,
     userId,
     userRole,
     userDisplayName,

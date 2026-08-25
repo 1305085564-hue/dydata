@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getTeamMeta } from "@/lib/teams";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
@@ -8,7 +9,6 @@ import {
   buildRequestDraft,
   buildRequestDraftsForDates,
   isMissingExemptionRequestCategoryError,
-  stripExemptionCategoryFromRequestDraft,
   type GrantMode,
 } from "@/lib/豁免流程";
 import { loadApplicantTeamId } from "@/lib/豁免";
@@ -156,98 +156,161 @@ export async function hasPendingExemptionRequest(): Promise<boolean> {
   return (data?.length ?? 0) > 0;
 }
 
-export async function submitExemptionRequest(input: {
+export interface SubmitExemptionRequestInput {
   mode: GrantMode;
   category: ExemptionCategory;
   reason: string;
   dates?: string[];
   startDate?: string;
   endDate?: string;
-}): Promise<{ error?: string }> {
+}
+
+export interface SubmitExemptionRequestResult {
+  success?: boolean;
+  error?: string;
+  submittedDates?: string[];
+}
+
+interface ExemptionSubmitContext {
+  supabase: Pick<SupabaseClient, "from">;
+  user: Pick<User, "id" | "user_metadata">;
+}
+
+interface ExemptionSubmitOptions {
+  today?: string;
+}
+
+const PENDING_EXEMPTION_REQUEST_ERROR = "已有申请审批中，请勿重复提交";
+
+// 同一运行实例内挡住两次并发点击；跨实例仍依赖数据库侧后续唯一约束。
+const activeExemptionSubmissions = new Set<string>();
+
+/**
+ * 可测试的 dashboard 豁免申请核心。Server Action 只负责鉴权和缓存失效，
+ * 这样分类、pending 防重和失败结果可以直接用小型 Supabase fake 回归。
+ */
+export async function submitExemptionRequestWithClient(
+  input: SubmitExemptionRequestInput,
+  context: ExemptionSubmitContext,
+  options: ExemptionSubmitOptions = {},
+): Promise<SubmitExemptionRequestResult> {
+  const { supabase, user } = context;
+
+  if (activeExemptionSubmissions.has(user.id)) {
+    return { error: PENDING_EXEMPTION_REQUEST_ERROR };
+  }
+
+  activeExemptionSubmissions.add(user.id);
+
+  try {
+    const { data: existing, error: pendingError } = await supabase
+      .from("exemption_request")
+      .select("id")
+      .eq("applicant_user_id", user.id)
+      .eq("request_status", "pending")
+      .limit(1);
+
+    if (pendingError) {
+      console.error("[exemptions] failed to check pending dashboard request", {
+        error: pendingError,
+        userId: user.id,
+      });
+      return { error: "暂时无法确认申请状态，请稍后重试" };
+    }
+
+    if ((existing?.length ?? 0) > 0) {
+      return { error: PENDING_EXEMPTION_REQUEST_ERROR };
+    }
+
+    if (input.category !== "leave" && input.category !== "waive") {
+      return { error: "申请类型不正确" };
+    }
+
+    if (!input.reason?.trim()) {
+      return { error: "请填写申请原因" };
+    }
+
+    const today = options.today ?? formatShanghaiDateOnly();
+    const teamId = await loadApplicantTeamId(
+      supabase,
+      user.id,
+      getTeamMeta(user.user_metadata).teamId,
+    );
+
+    if (!teamId) {
+      console.error("[exemptions] missing team_id for user", user.id);
+      return { error: "账号未分配团队，请联系管理员" };
+    }
+
+    let drafts;
+    try {
+      drafts =
+        input.dates && input.dates.length > 0
+          ? buildRequestDraftsForDates({
+              applicantUserId: user.id,
+              teamId,
+              category: input.category,
+              reason: input.reason,
+              dates: input.dates,
+              today,
+            })
+          : [
+              buildRequestDraft({
+                applicantUserId: user.id,
+                teamId,
+                mode: input.mode,
+                category: input.category,
+                reason: input.reason,
+                today,
+                startDate: input.startDate,
+                endDate: input.endDate,
+              }),
+            ];
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : "申请日期不正确" };
+    }
+
+    const { error } = await supabase.from("exemption_request").insert(drafts);
+    if (error) {
+      console.error("[exemptions] failed to submit dashboard request", {
+        error,
+        userId: user.id,
+        teamId,
+        draftCount: drafts.length,
+      });
+
+      // 分类字段缺失时不能降级为默认 waive，否则 leave 会被静默改义。
+      if (isMissingExemptionRequestCategoryError(error)) {
+        return { error: "申请分类字段未就绪，请联系管理员" };
+      }
+
+      return { error: "提交豁免申请失败" };
+    }
+
+    return {
+      success: true,
+      submittedDates: drafts.map((draft) => draft.start_date),
+    };
+  } catch (error) {
+    console.error("[exemptions] dashboard request threw", { error, userId: user.id });
+    return { error: "提交豁免申请失败（系统异常）" };
+  } finally {
+    activeExemptionSubmissions.delete(user.id);
+  }
+}
+
+export async function submitExemptionRequest(
+  input: SubmitExemptionRequestInput,
+): Promise<SubmitExemptionRequestResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "请先登录" };
 
-  const { data: existing } = await supabase
-    .from("exemption_request")
-    .select("id")
-    .eq("applicant_user_id", user.id)
-    .eq("request_status", "pending")
-    .limit(1);
-
-  if ((existing?.length ?? 0) > 0) return { error: "已有待审批申请" };
-
-  const today = formatShanghaiDateOnly();
-  const teamId = await loadApplicantTeamId(
-    supabase,
-    user.id,
-    getTeamMeta(user.user_metadata).teamId,
-  );
-
-  // 校验 team_id 必须存在
-  if (!teamId) {
-    console.error("[exemptions] missing team_id for user", user.id);
-    return { error: "账号未分配团队，请联系管理员" };
-  }
-
-  const drafts =
-    input.dates && input.dates.length > 0
-      ? buildRequestDraftsForDates({
-          applicantUserId: user.id,
-          teamId,
-          category: input.category,
-          reason: input.reason,
-          dates: input.dates,
-          today,
-        })
-      : [
-          buildRequestDraft({
-            applicantUserId: user.id,
-            teamId,
-            mode: input.mode,
-            category: input.category,
-            reason: input.reason,
-            today,
-            startDate: input.startDate,
-            endDate: input.endDate,
-          }),
-        ];
-
-  try {
-    const { error } = await supabase.from("exemption_request").insert(drafts);
-    if (error) {
-      if (!isMissingExemptionRequestCategoryError(error)) {
-        console.error("[exemptions] failed to submit dashboard request", {
-          error,
-          userId: user.id,
-          teamId,
-          draftCount: drafts.length,
-        });
-        return { error: "提交豁免申请失败" };
-      }
-
-      const fallback = await supabase
-        .from("exemption_request")
-        .insert(drafts.map((draft) => stripExemptionCategoryFromRequestDraft(draft)));
-
-      if (fallback.error) {
-        console.error("[exemptions] failed to submit legacy dashboard request", {
-          error: fallback.error,
-          userId: user.id,
-          teamId,
-        });
-        return { error: "提交豁免申请失败" };
-      }
-    }
-  } catch (error) {
-    console.error("[exemptions] dashboard request threw", { error, userId: user.id, teamId });
-    return { error: "提交豁免申请失败（系统异常）" };
-  }
-
-  revalidatePath("/dashboard");
-  return {};
+  const result = await submitExemptionRequestWithClient(input, { supabase, user });
+  if (!result.error) revalidatePath("/dashboard");
+  return result;
 }
 
 export async function updateProfile(name: string) {

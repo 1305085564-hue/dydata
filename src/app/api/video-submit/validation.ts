@@ -32,10 +32,14 @@ export interface VideoSubmitValidationMetrics {
   completion_rate: number;
 }
 
+export const SUBMISSION_TOPIC_TAGS = ["干货", "复盘"] as const;
+export type VideoSubmitMode = "create" | "edit" | "abnormal";
+
 export interface VideoSubmitValidationResult {
   ok: true;
   normalized: {
     account_id: string;
+    mode: VideoSubmitMode;
     video_id: string | null;
     video_url: string | null;
     video_title: string | null;
@@ -128,6 +132,51 @@ function normalizeScriptFormat(value: unknown): ScriptFormat {
     : "oral";
 }
 
+function normalizeSubmissionMode(
+  value: unknown,
+  anomalyStatus: string,
+  videoId: string | null,
+): VideoSubmitMode | null {
+  if (value === undefined || value === null || value === "") {
+    return videoId ? "edit" : anomalyStatus === "abnormal" ? "abnormal" : "create";
+  }
+
+  return value === "create" || value === "edit" || value === "abnormal"
+    ? value
+    : null;
+}
+
+const SCREENSHOT_ROLE_LABELS: Record<"screenshot_1" | "screenshot_2", string> = {
+  screenshot_1: "互动截图",
+  screenshot_2: "完播截图",
+};
+
+function validateSubmissionAssetShape(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (!Array.isArray(value)) return "截图资产格式不正确，请重新上传截图";
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") {
+      return "截图资产格式不正确，请重新上传截图";
+    }
+
+    const role = (item as { role?: unknown }).role;
+    const url = (item as { url?: unknown }).url;
+    const confirmed = (item as { confirmed?: unknown }).confirmed;
+    if (role !== "screenshot_1" && role !== "screenshot_2") {
+      return "截图槽位不正确，请重新上传截图";
+    }
+    if (typeof url !== "string" || !url.trim()) {
+      return `${SCREENSHOT_ROLE_LABELS[role]}地址不能为空，请重新上传截图`;
+    }
+    if (typeof confirmed !== "boolean") {
+      return `${SCREENSHOT_ROLE_LABELS[role]}确认状态不正确，请重新上传截图`;
+    }
+  }
+
+  return null;
+}
+
 function validateSubmissionAssetUrls(value: unknown): string | null {
   if (!Array.isArray(value)) return null;
 
@@ -173,20 +222,58 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const title = normalizeOptionalText(payload.video_title);
   const content = normalizeOptionalText(payload.content);
   const keywords = normalizeContentKeywords(payload.content_keywords);
+  const videoId = normalizeVideoIdLike(payload.video_id);
+  const anomalyStatus = normalizeVideoAnomalyStatus(payload.anomaly_status);
+  const mode = normalizeSubmissionMode(payload.mode, anomalyStatus, videoId);
+  const scriptText = normalizeOptionalText(payload.script_text);
+  const metrics = normalizeMetrics(payload.metrics);
+  const topicTag = normalizeOptionalText(payload.topic_tag);
+  const assetShapeError = validateSubmissionAssetShape(payload.assets);
   const assetUrlError = validateSubmissionAssetUrls(payload.assets);
+  const rawMetrics = payload.metrics && typeof payload.metrics === "object" && !Array.isArray(payload.metrics)
+    ? payload.metrics as Record<string, unknown>
+    : null;
   const scriptAuthorUserId = normalizeOptionalUserId(payload.script_author_user_id);
   const videoEditorUserId = normalizeOptionalUserId(payload.video_editor_user_id);
   const operatorUserId = normalizeOptionalUserId(payload.operator_user_id);
 
+  if (!mode) {
+    return { ok: false, error: "mode 必须是 create、edit 或 abnormal" };
+  }
+
+  if (videoId && !isUuidLike(videoId)) {
+    return { ok: false, error: "video_id 必须是合法 UUID" };
+  }
+  if (mode === "edit" && (!videoId || !isUuidLike(videoId))) {
+    return { ok: false, error: "编辑提交必须携带合法 video_id" };
+  }
+  if (mode === "create" && videoId) {
+    return { ok: false, error: "新建提交不能携带 video_id" };
+  }
+  if (mode === "abnormal" && videoId) {
+    return { ok: false, error: "异常新建不能携带 video_id" };
+  }
+  if (mode === "abnormal" && anomalyStatus !== "abnormal") {
+    return { ok: false, error: "异常提交 mode 必须使用异常状态" };
+  }
+
+  if (assetShapeError) {
+    return { ok: false, error: assetShapeError };
+  }
   if (assetUrlError) {
     return { ok: false, error: assetUrlError };
+  }
+  if (
+    rawMetrics?.follower_convert !== undefined &&
+    rawMetrics.follower_convert !== null &&
+    (typeof rawMetrics.follower_convert !== "number" || !Number.isFinite(rawMetrics.follower_convert))
+  ) {
+    return { ok: false, error: "导粉指标格式不正确" };
   }
 
   if (scriptAuthorUserId === undefined) return { ok: false, error: "script_author_user_id 必须是合法 UUID" };
   if (videoEditorUserId === undefined) return { ok: false, error: "video_editor_user_id 必须是合法 UUID" };
   if (operatorUserId === undefined) return { ok: false, error: "operator_user_id 必须是合法 UUID" };
-
-  const anomalyStatus = normalizeVideoAnomalyStatus(payload.anomaly_status);
 
   if (anomalyStatus === "abnormal") {
     if (!content) {
@@ -196,12 +283,37 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
     return { ok: false, error: "标题和文案为必填项" };
   }
 
+  if (topicTag && !SUBMISSION_TOPIC_TAGS.includes(topicTag as (typeof SUBMISSION_TOPIC_TAGS)[number])) {
+    return { ok: false, error: "话题标签必须是干货或复盘" };
+  }
+  if (anomalyStatus !== "abnormal" && !topicTag) {
+    return { ok: false, error: "正常提交时话题标签为必填项" };
+  }
+
+  if (metrics.follower_convert > 0 && !scriptText) {
+    return { ok: false, error: "导粉大于 0 时导粉话术为必填项" };
+  }
+
+  const assets = normalizeSubmissionAssets(payload.assets);
+  if (anomalyStatus === "normal" && (mode !== "edit" || assets.length > 0)) {
+    const roles = new Set(assets.map((asset) => asset.role));
+    if (assets.length !== 2 || roles.size !== 2 || !roles.has("screenshot_1") || !roles.has("screenshot_2")) {
+      return { ok: false, error: "正常提交必须包含互动截图和完播截图" };
+    }
+
+    const unconfirmed = assets.find((asset) => !asset.confirmed);
+    if (unconfirmed) {
+      return { ok: false, error: `${SCREENSHOT_ROLE_LABELS[unconfirmed.role]}必须先确认` };
+    }
+  }
+
   return {
     ok: true,
     contentKeywords: keywords,
     normalized: {
       account_id: accountId,
-      video_id: normalizeVideoIdLike(payload.video_id),
+      mode,
+      video_id: videoId,
       video_url: normalizeOptionalText(payload.video_url),
       video_title: title,
       content,
@@ -215,17 +327,17 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       }),
       platform_notice: normalizeOptionalText(payload.platform_notice),
       appeal: normalizeOptionalText(payload.appeal),
-      topic_tag: normalizeOptionalText(payload.topic_tag),
+      topic_tag: topicTag,
       topic_id: normalizeVideoIdLike(payload.topic_id),
       script_author_user_id: scriptAuthorUserId,
       video_editor_user_id: videoEditorUserId,
       operator_user_id: operatorUserId,
       video_form: normalizeOptionalText(payload.video_form),
       content_keywords: keywords,
-      script_text: normalizeOptionalText(payload.script_text),
+      script_text: scriptText,
       script_format: normalizeScriptFormat(payload.script_format),
-      assets: normalizeSubmissionAssets(payload.assets),
-      metrics: normalizeMetrics(payload.metrics),
+      assets,
+      metrics,
     },
   };
 }

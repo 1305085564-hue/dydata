@@ -6,6 +6,7 @@
  */
 
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -40,6 +41,7 @@ interface ProductionControlSystemProps {
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
 }
@@ -57,6 +59,7 @@ export function ProductionControlSystem({
   ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption = false,
+  userExemptionReviewNotice,
   userExemptionProfile,
   userExemptionGrants,
 }: ProductionControlSystemProps) {
@@ -110,41 +113,28 @@ export function ProductionControlSystem({
   }
 
   return (
-    <div className="antialiased">
-      <main className="px-3 py-2 sm:px-4 sm:py-3 lg:px-8 lg:py-5 pb-20 md:pb-5">
-        <DashboardWorkspaceHeader
-          today={today}
-          activeBizDate={activeBizDate}
-          onDateChange={(date) => {
-            setActiveBizDate(date);
-            setDashboardDate(date);
-          }}
-          onDashboardAction={openDashboardTool}
-          hasPendingExemption={hasPendingExemption}
-          submittedDates={submittedDates}
-        />
-
-        <VideoSubmitPanelV2
-          key={`${selectedAccountId}-${activeBizDate}`}
-          accounts={accounts}
-          selectedAccountId={selectedAccountId}
-          onSelectedAccountChange={setSelectedAccountId}
-          activeBizDate={activeBizDate}
-          onActiveBizDateChange={setActiveBizDate}
-          userId={userId}
-          userDisplayName={userDisplayName}
-          today={today}
-          todayReports={todayReports}
-          monthReports={monthReports}
-          history={history}
-          accountIds={accountIds}
-          ownContentDirections={ownContentDirections}
-          accountDisplayNameMap={accountDisplayNameMap}
-          hasPendingExemption={hasPendingExemption}
-          userExemptionProfile={userExemptionProfile}
-          userExemptionGrants={userExemptionGrants}
-        />
-      </main>
+    <div className="antialiased max-w-5xl mx-auto">
+      <VideoSubmitPanelV2
+        accounts={accounts}
+        selectedAccountId={selectedAccountId}
+        onSelectedAccountChange={setSelectedAccountId}
+        activeBizDate={activeBizDate}
+        onActiveBizDateChange={setActiveBizDate}
+        userId={userId}
+        userDisplayName={userDisplayName}
+        today={today}
+        todayReports={todayReports}
+        monthSubmittedDates={submittedDates}
+        monthReports={monthReports}
+        history={history}
+        accountIds={accountIds}
+        ownContentDirections={ownContentDirections}
+        accountDisplayNameMap={accountDisplayNameMap}
+        hasPendingExemption={hasPendingExemption}
+        {...{ userExemptionReviewNotice }}
+        userExemptionProfile={userExemptionProfile}
+        userExemptionGrants={userExemptionGrants}
+      />
     </div>
   );
 }

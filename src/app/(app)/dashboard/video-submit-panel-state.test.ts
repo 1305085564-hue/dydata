@@ -136,3 +136,164 @@ test("同账号存在重复记录时，首页卡片只取最新一条", async ()
   assert.equal(summary?.playCount, 9000);
   assert.equal(summary?.content, "新文案");
 });
+
+test("历史已有日报解析为已提交，不能进入补交模式", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  const report = {
+    account_id: "acc-1",
+    title: "历史作品",
+    content: "历史文案",
+    report_date: "2026-03-20",
+    play_count: 1000,
+    likes: 10,
+    comments: 1,
+    shares: 2,
+    favorites: 3,
+    follower_gain: 4,
+    follower_convert: null,
+    completion_rate: "20",
+    avg_play_duration: "12",
+    bounce_rate_2s: "10",
+    completion_rate_5s: "40",
+    published_at: "2026-03-19 18:00",
+    uploaded_at: "2026-03-20 09:00",
+  };
+
+  const status = mod.resolveSubmissionDayStatus({
+    date: "2026-03-20",
+    today: "2026-03-25",
+    report,
+    exemption: { isExempt: false, category: null },
+  });
+
+  assert.equal(status.state, "submitted");
+  assert.equal(status.canBackfill, false);
+  assert.equal(
+    mod.resolveSubmitPanelMode({ summary: null, requestedMode: "backfill", report }),
+    "summary",
+  );
+});
+
+test("历史漏交日期允许补交", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  const status = mod.resolveSubmissionDayStatus({
+    date: "2026-03-20",
+    today: "2026-03-25",
+    report: null,
+    exemption: { isExempt: false, category: null },
+  });
+
+  assert.equal(status.state, "missing");
+  assert.equal(status.canBackfill, true);
+});
+
+test("活动数据加载失败时禁止补交，并要求错误重试", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  const status = mod.resolveSubmissionDayStatus({
+    date: "2026-03-20",
+    today: "2026-03-25",
+    report: null,
+    exemption: { isExempt: false, category: null },
+    activity: { status: "error", message: "活动记录加载失败" },
+  });
+
+  assert.equal(status.state, "activityError");
+  assert.equal(status.canBackfill, false);
+  assert.equal(status.requiresActivityRetry, true);
+  assert.equal(status.errorMessage, "活动记录加载失败");
+});
+
+test("未来日期禁止提交", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  const status = mod.resolveSubmissionDayStatus({
+    date: "2026-03-26",
+    today: "2026-03-25",
+    report: null,
+    exemption: { isExempt: false, category: null },
+  });
+
+  assert.equal(status.state, "future");
+  assert.equal(status.canBackfill, false);
+});
+
+test("首屏、活动数据和本地 override 按账号日期合并，本地最新 override 优先", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  const baseReport = {
+    id: "report-base",
+    account_id: "acc-1",
+    title: "首屏旧数据",
+    content: null,
+    report_date: "2026-03-20",
+    play_count: 100,
+    likes: 1,
+    comments: 1,
+    shares: 1,
+    favorites: 1,
+    follower_gain: 1,
+    follower_convert: null,
+    completion_rate: null,
+    avg_play_duration: null,
+    bounce_rate_2s: null,
+    completion_rate_5s: null,
+    published_at: null,
+    uploaded_at: "2026-03-20T01:00:00Z",
+  };
+  const activityReport = { ...baseReport, id: "report-activity", title: "活动新数据", uploaded_at: "2026-03-20T02:00:00Z" };
+  const localOverride = { ...activityReport, id: undefined, title: "本地最新数据", uploaded_at: "2026-03-20T03:00:00Z" };
+
+  const merged = mod.mergeDashboardReports({
+    initialReports: [baseReport],
+    activityReports: [activityReport],
+    overrides: [localOverride],
+  });
+
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0]?.account_id, "acc-1");
+  assert.equal(merged[0]?.report_date, "2026-03-20");
+  assert.equal(merged[0]?.title, "本地最新数据");
+});
+
+test("首屏和活动接口的本月提交日期合并去重并保持日期排序", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  assert.deepEqual(
+    mod.mergeDashboardSubmittedDates(
+      ["2026-03-25", "2026-03-20"],
+      ["2026-03-20", "2026-03-22"],
+      ["", "2026-03-25"],
+    ),
+    ["2026-03-20", "2026-03-22", "2026-03-25"],
+  );
+});
+
+test("活动记录错误时补交请求即使由日期状态驱动也必须保持 summary 态", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  assert.equal(
+    mod.resolveSubmitPanelMode({
+      summary: null,
+      requestedMode: "backfill",
+      activeDateStatus: { state: "activityError", canBackfill: false },
+    }),
+    "summary",
+  );
+});

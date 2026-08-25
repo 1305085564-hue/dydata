@@ -47,10 +47,9 @@ import { cn } from "@/lib/utils";
 import { getDefaultPublishedAtValue } from "@/lib/日报";
 import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 
-// 使用 redesign 目录的 v2 组件
-import { ScreenshotUploadV2 } from "./redesign/screenshot-upload-v2";
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
+import { 截图槽位区 } from "@/components/submission/截图槽位区";
 
 // 保留所有原有的业务逻辑导入
 import {
@@ -71,6 +70,11 @@ import {
 } from "@/components/submission/截图上传错误";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { isVideoSubmitDraftEmpty } from "@/lib/video-submit-draft";
+import {
+  buildVideoSubmitDraftKey,
+  resolveVideoSubmitCreateDraftStorageKey,
+  type VideoSubmitDraftMode,
+} from "@/lib/video-submit-draft-key";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import {
   syncPublishedAtAndText,
@@ -78,15 +82,23 @@ import {
 } from "@/components/submission/填报表单状态";
 import {
   addRoleOverride as addSubmissionRoleOverride,
+  buildVideoSubmissionEditRefill,
+  getVideoSubmissionEditDetailError,
   normalizeOptionalText,
   removeRoleOverride as removeSubmissionRoleOverride,
   findNextScreenshotUploadRole,
+  resolveAssigneeDisplay,
+  resolveVideoSubmitMetaFields,
+  resolveVideoSubmitMode,
   type ScreenshotUploadSlotRole,
   preserveBizDateWhenPublishedAtChanges,
   setOperatorToSelf as resolveSelfOperatorUserId,
   setOperatorUser as resolveSelectedOperatorUserId,
   shouldAutoRedirectToGrowthAfterSubmit,
+  type AssigneeDisplay,
+  type HistoricalAssigneeProfile,
   type SubmissionAssigneeRole,
+  type VideoSubmissionEditDetail,
 } from "./video-submit-form-state";
 
 import type {
@@ -122,6 +134,7 @@ interface VideoSubmitFormProps {
   today: string;
   mode: SubmitPanelMode;
   initialSummary: TodaySubmissionSummary | null;
+  editDetail?: VideoSubmissionEditDetail | null;
   initialBizDate?: string | null;
   submittedViewActive?: boolean;
   onSubmitted: (
@@ -150,6 +163,40 @@ type SubmitResponse = {
   error?: string;
 };
 
+type CompleteEditPayload = {
+  video_id: string;
+  account_id: string;
+  biz_date: string;
+  metrics: Record<string, unknown>;
+  assignees: {
+    script_author_user_id: string | null;
+    video_editor_user_id: string | null;
+    operator_user_id: string | null;
+  };
+  script_format: string | null;
+};
+
+function resolveCompleteEditPayload(
+  detail: VideoSubmissionEditDetail | null | undefined,
+  expected: { accountId: string; bizDate: string },
+): CompleteEditPayload | null {
+  if (getVideoSubmissionEditDetailError(detail, expected)) return null;
+  if (!detail) return null;
+
+  return {
+    video_id: detail.videoId,
+    account_id: detail.accountId,
+    biz_date: detail.bizDate,
+    metrics: detail.metrics,
+    assignees: {
+      script_author_user_id: detail.meta.scriptAuthorUserId,
+      video_editor_user_id: detail.meta.videoEditorUserId,
+      operator_user_id: detail.meta.operatorUserId,
+    },
+    script_format: detail.conversionScript?.format ?? "oral",
+  };
+}
+
 type OcrApiPayload = {
   data?: {
     slot_status: "pending_confirm" | "confirmed" | "failed";
@@ -175,10 +222,9 @@ type OcrApiPayload = {
   error?: string;
   error_code?: string;
   retry_after?: number;
-  screenshot_type_source?: "explicit" | "asset_role" | "classification" | "asset_role_fallback";
+  screenshot_type_source?: "explicit" | "asset_role" | "asset_role_fallback";
   timings?: {
     download_ms?: number;
-    classify_ms?: number;
     ocr_ms?: number;
     parse_ms?: number;
     total_ms: number;
@@ -232,7 +278,7 @@ type SlotViewState = SubmissionState["slots"][SubmissionSlotRole] & {
   previewUrl?: string | null;
   file?: File | null;
   screenshotType?: "data" | "curve" | "retention" | null;
-  recognizedFields?: Record<string, string | number | boolean | null> | null;
+  recognizedFields?: Record<string, unknown> | null;
   ocrSummary?: string[];
   ocrFallback?: boolean;
 };
@@ -248,8 +294,8 @@ const OVERVIEW_FIELDS: EditableMetricKey[] = [
 ];
 
 const SLOT_LABELS: Record<SubmissionSlotRole, string> = {
-  screenshot_1: "完播截图",
-  screenshot_2: "互动截图",
+  screenshot_1: "互动截图",
+  screenshot_2: "完播截图",
 };
 
 const VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
@@ -317,35 +363,14 @@ function buildOcrSummary(
     return [];
   }
 
+  // 曲线形态识别已下线：历史 curve 槽位不再展示分析结果
   if (screenshotType === "curve") {
-    return [
-      recognizedFields.curve_pattern
-        ? `曲线类型：${recognizedFields.curve_pattern}`
-        : null,
-      recognizedFields.first_peak_position
-        ? `首峰位置：${recognizedFields.first_peak_position}`
-        : null,
-      recognizedFields.drop_severity
-        ? `掉速程度：${recognizedFields.drop_severity}`
-        : null,
-      recognizedFields.tail_strength
-        ? `长尾强弱：${recognizedFields.tail_strength}`
-        : null,
-    ].filter((item): item is string => Boolean(item));
+    return [];
   }
 
   if (screenshotType === "retention") {
     const retentionMetrics = recognizedFields.retention_metrics as
       Record<string, number | null> | undefined;
-    const retentionAnalysis = recognizedFields.retention_analysis as
-      | {
-          bounce_peak_time?: string | null;
-          replay_peak_time?: string | null;
-          segment_summary?: Array<{ segment?: string; performance?: string }>;
-        }
-      | undefined;
-
-    const firstSegment = retentionAnalysis?.segment_summary?.[0];
 
     return [
       retentionMetrics?.avg_play_duration != null
@@ -359,15 +384,6 @@ function buildOcrSummary(
         : null,
       retentionMetrics?.completion_rate != null
         ? `整体完播率：${retentionMetrics.completion_rate}%`
-        : null,
-      retentionAnalysis?.bounce_peak_time
-        ? `跳出峰值：${retentionAnalysis.bounce_peak_time}`
-        : null,
-      retentionAnalysis?.replay_peak_time
-        ? `回放峰值：${retentionAnalysis.replay_peak_time}`
-        : null,
-      firstSegment?.segment && firstSegment?.performance
-        ? `分段摘要：${firstSegment.segment}${firstSegment.performance}`
         : null,
     ].filter((item): item is string => Boolean(item));
   }
@@ -383,18 +399,6 @@ function buildOcrSummary(
     )
     .slice(0, 4)
     .map(([key, value]) => `${key}：${String(value)}`);
-
-  const curveInfo = recognizedFields.curve_info as unknown as
-    Record<string, string | null> | undefined;
-  const retentionInfo = recognizedFields.retention_info as unknown as
-    Record<string, string | null> | undefined;
-
-  if (curveInfo?.curve_pattern) {
-    baseSummary.push(`推流曲线：${curveInfo.curve_pattern}`);
-  }
-  if (retentionInfo?.bounce_peak_time) {
-    baseSummary.push(`跳出峰值：${retentionInfo.bounce_peak_time}`);
-  }
 
   return baseSummary;
 }
@@ -421,6 +425,87 @@ function createEditableSlots(): Record<SubmissionSlotRole, SlotViewState> {
     screenshot_1: { ...initial.screenshot_1 },
     screenshot_2: { ...initial.screenshot_2 },
   };
+}
+
+function createMetaFromEditDetail(
+  detail: VideoSubmissionEditDetail,
+  today: string,
+  userId: string,
+): FormMetaState {
+  const refill = buildVideoSubmissionEditRefill(detail);
+  const meta = refill.meta;
+  const roleOverrides = ([
+    ["script_author", meta.scriptAuthorUserId],
+    ["video_editor", meta.videoEditorUserId],
+    ["operator", meta.operatorUserId],
+  ] as const).flatMap(([role, assignee]) =>
+    assignee && assignee !== userId ? [role] : [],
+  );
+
+  return {
+    ...createInitialMeta(today, userId),
+    videoUrl: meta.videoUrl ?? "",
+    videoTitle: meta.videoTitle ?? "",
+    content: meta.content,
+    bizDate: refill.bizDate,
+    publishedAt: meta.publishedAt ?? "",
+    publishedAtText: meta.publishedAtText ?? "",
+    anomalyStatus: meta.anomalyStatus,
+    uploadedAt: refill.uploadedAt ?? "",
+    topicTag: meta.topicTag ?? "",
+    videoForm: meta.videoForm ?? "",
+    contentKeywords: [...meta.contentKeywords],
+    punishType: meta.punishType ?? "",
+    platformNotice: meta.platformNotice ?? "",
+    appeal: meta.appeal ?? "",
+    scriptAuthorUserId: meta.scriptAuthorUserId,
+    videoEditorUserId: meta.videoEditorUserId,
+    operatorUserId: meta.operatorUserId,
+    roleOverrides,
+  };
+}
+
+function createEditableFieldsFromEditDetail(
+  detail: VideoSubmissionEditDetail,
+): SubmissionState["fields"] {
+  const refill = buildVideoSubmissionEditRefill(detail);
+  const fields = createEditableFields();
+  for (const [key, value] of Object.entries(refill.metrics) as Array<[EditableMetricKey, string]>) {
+    fields[key] = {
+      ...fields[key],
+      value,
+      source: "manual",
+      confirmed: true,
+      requiresManualConfirmation: false,
+    };
+  }
+  return fields;
+}
+
+function createEditableSlotsFromEditDetail(
+  detail: VideoSubmissionEditDetail,
+): Record<SubmissionSlotRole, SlotViewState> {
+  const refill = buildVideoSubmissionEditRefill(detail);
+  const slots = createEditableSlots();
+  for (const role of VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER) {
+    const asset = refill.assets[role];
+    if (!asset) continue;
+    slots[role] = {
+      ...slots[role],
+      status: asset.confirmed ? "confirmed" : "pending_confirm",
+      confirmed: asset.confirmed,
+      confidenceScore: asset.confidenceScore,
+      assetUrl: asset.url,
+      previewUrl: asset.url,
+      file: null,
+      fileName: "已保存截图",
+      screenshotType: asset.screenshotType,
+      recognizedFields: asset.recognizedFields,
+      ocrSummary: buildOcrSummary(asset.screenshotType, asset.recognizedFields),
+      ocrFallback: !asset.confirmed,
+    };
+  }
+  return slots;
 }
 
 function mapConfidenceToScore(value?: "high" | "medium" | "low") {
@@ -563,6 +648,7 @@ export function VideoSubmitFormV2({
   today,
   mode,
   initialSummary,
+  editDetail = null,
   initialBizDate = null,
   submittedViewActive = false,
   onSubmitted,
@@ -574,13 +660,15 @@ export function VideoSubmitFormV2({
 
   // 保留所有原有状态管理
   const [meta, setMeta] = useState<FormMetaState>(() =>
-    createInitialMeta(today, userId),
+    editDetail
+      ? createMetaFromEditDetail(editDetail, today, userId)
+      : createInitialMeta(today, userId),
   );
   const [fields, setFields] = useState<SubmissionState["fields"]>(() =>
-    createEditableFields(),
+    editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
   );
   const [slots, setSlots] = useState<Record<SubmissionSlotRole, SlotViewState>>(
-    () => createEditableSlots(),
+    () => (editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots()),
   );
 
   const slotsRef = useRef(slots);
@@ -677,6 +765,22 @@ export function VideoSubmitFormV2({
         m.display_name?.toLowerCase().includes(q),
     );
   }, [operatorMembers, memberSearchQuery]);
+
+  // 历史责任人档案：GET 编辑详情返回的旧责任人姓名与状态
+  const historicalAssigneeProfiles: HistoricalAssigneeProfile[] = useMemo(
+    () => editDetail?.assigneeProfiles ?? [],
+    [editDetail],
+  );
+  const resolveRoleDisplay = useCallback(
+    (assignedUserId: string | null) =>
+      resolveAssigneeDisplay({
+        assignedUserId,
+        currentUserId: userId,
+        activeMembers: operatorMembers,
+        historicalProfiles: historicalAssigneeProfiles,
+      }),
+    [historicalAssigneeProfiles, operatorMembers, userId],
+  );
 
   const filteredMembersForRole = useMemo(() => {
     if (!roleSearchQuery.trim()) return operatorMembers;
@@ -800,8 +904,9 @@ export function VideoSubmitFormV2({
 
   // 初始化 operator
   useEffect(() => {
+    if (mode === "editToday") return;
     setOperatorToSelf();
-  }, [setOperatorToSelf]);
+  }, [mode, setOperatorToSelf]);
 
   // 加载团队成员
   useEffect(() => {
@@ -857,11 +962,27 @@ export function VideoSubmitFormV2({
     );
   }, []);
 
-  // 草稿管理
-  const draftKey = useMemo(
-    () => `dydata.draft.videoSubmit.${userId}`,
-    [userId],
+  // 草稿管理：新建 / 补交 / 编辑使用互相隔离的草稿 key
+  const draftMode: VideoSubmitDraftMode =
+    mode === "editToday" ? "edit" : mode === "backfill" ? "backfill" : "create";
+  const [createDraftStorageKey] = useState(() =>
+    resolveVideoSubmitCreateDraftStorageKey({
+      userId,
+      accountId: account?.id ?? null,
+      bizDate: today,
+    }),
   );
+  const editDraftVideoId = editDetail?.videoId ?? null;
+  const draftKey = useMemo(() => {
+    if (draftMode === "create") return createDraftStorageKey;
+    return buildVideoSubmitDraftKey({
+      userId,
+      mode: draftMode,
+      accountId: account?.id ?? null,
+      bizDate: meta.bizDate || today,
+      videoId: editDraftVideoId,
+    });
+  }, [account?.id, createDraftStorageKey, draftMode, editDraftVideoId, meta.bizDate, today, userId]);
 
   type DraftData = {
     meta: FormMetaState;
@@ -985,12 +1106,14 @@ export function VideoSubmitFormV2({
     });
     blobUrlsRef.current.clear();
 
-    const nextMeta = createInitialMeta(today, userId);
+    const nextMeta = editDetail
+      ? createMetaFromEditDetail(editDetail, today, userId)
+      : createInitialMeta(today, userId);
     if (initialBizDate) {
       nextMeta.bizDate = initialBizDate;
     }
 
-    if (initialSummary) {
+    if (initialSummary && !editDetail) {
       nextMeta.videoTitle = initialSummary.title ?? "";
       nextMeta.content = initialSummary.content ?? "";
       nextMeta.bizDate = initialSummary.reportDate;
@@ -999,19 +1122,20 @@ export function VideoSubmitFormV2({
     }
 
     setMeta(nextMeta);
-    setFields(createEditableFields());
-    updateSlotsState(createEditableSlots());
+    setFields(editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields());
+    updateSlotsState(editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots());
     setIsSubmitted(false);
     setSubmittedVideo(null);
     setQualityCheck({ data: null, loading: false });
     setDeleteTargetRole(null);
     setKeywordInput("");
-    setScriptText("");
+    setScriptText(editDetail?.conversionScript?.text ?? "");
     setFocusedRole(null);
     setHasManualScriptAuthorSelection(false);
     setHasManualOperatorSelection(false);
   }, [
     account?.id,
+    editDetail,
     initialBizDate,
     initialSummary,
     isBackfillMode,
@@ -1288,7 +1412,6 @@ export function VideoSubmitFormV2({
           upload_ms: uploadMs,
           ocr_request_ms: ocrRequestMs,
           server_download_ms: serverTimings?.download_ms,
-          server_classify_ms: serverTimings?.classify_ms,
           server_ocr_ms: serverTimings?.ocr_ms,
           server_parse_ms: serverTimings?.parse_ms,
           server_total_ms: serverTimings?.total_ms,
@@ -1563,6 +1686,36 @@ export function VideoSubmitFormV2({
       return;
     }
 
+    const editDetailError =
+      mode === "editToday" && account
+        ? getVideoSubmissionEditDetailError(editDetail, {
+            accountId: account.id,
+            bizDate: meta.bizDate,
+          })
+        : null;
+    const editPayload =
+      mode === "editToday" && account
+        ? resolveCompleteEditPayload(editDetail, {
+            accountId: account.id,
+            bizDate: meta.bizDate,
+          })
+        : null;
+    if (editDetailError || (mode === "editToday" && !editPayload)) {
+      triggerFormShake();
+      feedbackToast.error(editDetailError ?? "缺少原视频完整详情，已停止保存以避免覆盖旧数据");
+      return;
+    }
+    const shouldReuseExistingScreenshots = mode === "editToday" && buildAssets(slots).length === 0;
+    const submitMeta = resolveVideoSubmitMetaFields({
+      mode,
+      anomalyStatus: meta.anomalyStatus,
+      publishedAt: meta.publishedAt,
+      punishType: meta.punishType ?? "",
+      platformNotice: meta.platformNotice ?? "",
+      appeal: meta.appeal ?? "",
+      defaultPublishedAt: getDefaultPublishedAtValue(),
+    });
+
     const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit(
       {
         mode,
@@ -1588,26 +1741,23 @@ export function VideoSubmitFormV2({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          account_id: account.id,
-          biz_date: meta.bizDate,
+          mode: resolveVideoSubmitMode({
+            panelMode: mode,
+            anomalyStatus: meta.anomalyStatus,
+            videoId: editPayload?.video_id ?? null,
+          }),
+          video_id: editPayload?.video_id ?? null,
+          account_id: editPayload?.account_id ?? account.id,
+          biz_date: editPayload?.biz_date ?? meta.bizDate,
           video_url: normalizeOptionalText(meta.videoUrl),
           video_title: normalizeOptionalText(meta.videoTitle),
           content: normalizeOptionalText(meta.content),
-          published_at: meta.publishedAt || getDefaultPublishedAtValue(),
+          published_at: submitMeta.publishedAt,
           published_at_text: normalizeOptionalText(meta.publishedAtText),
           anomaly_status: meta.anomalyStatus,
-          punish_type:
-            meta.anomalyStatus === "abnormal"
-              ? meta.punishType || "限流"
-              : undefined,
-          platform_notice:
-            meta.anomalyStatus === "abnormal"
-              ? normalizeOptionalText(meta.platformNotice ?? "")
-              : undefined,
-          appeal:
-            meta.anomalyStatus === "abnormal"
-              ? normalizeOptionalText(meta.appeal ?? "")
-              : undefined,
+          punish_type: submitMeta.punishType,
+          platform_notice: submitMeta.platformNotice,
+          appeal: submitMeta.appeal,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
           topic_id: null,
@@ -1615,11 +1765,12 @@ export function VideoSubmitFormV2({
           video_editor_user_id: meta.videoEditorUserId,
           operator_user_id: meta.operatorUserId,
           content_keywords: meta.contentKeywords,
-          assets: buildAssets(slots),
+          assets: shouldReuseExistingScreenshots ? [] : buildAssets(slots),
           script_text:
             parseMetric(fields.follower_convert.value) > 0
               ? scriptText.trim() || null
               : null,
+          script_format: editPayload?.script_format ?? "oral",
           metrics: {
             play_count: parseMetric(fields.play_count.value),
             likes: parseMetric(fields.likes.value),
@@ -2052,47 +2203,49 @@ export function VideoSubmitFormV2({
                 </div>
 
                 {/* 两栏布局：左侧截图 + 右侧数据 */}
-                <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-[290px_minmax(0,1fr)] lg:gap-5 items-stretch">
                   {/* 左栏：截图上传 */}
-                  <div className="space-y-4" ref={slotsSectionRef}>
-                    <ScreenshotUploadV2
-                      slots={slots}
-                      onSelectFile={handleSlotUpload}
-                      onUploadFiles={handleUnifiedUpload}
-                      onDelete={(role) => setDeleteTargetRole(role)}
-                      onRetry={handleSlotRetry}
-                      onManualFill={(role) => {
-                        updateSlotsState((current) => {
-                          const hasUploadedScreenshot = Boolean(current[role].assetUrl);
-                          return {
-                            ...current,
-                            [role]: {
-                              ...current[role],
-                              status: hasUploadedScreenshot ? "confirmed" : "empty",
-                              confirmed: hasUploadedScreenshot,
-                              requiresManualConfirmation: false,
-                              error: null,
-                              assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
-                              previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
-                              file: hasUploadedScreenshot ? current[role].file : null,
-                              fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
-                              recognizedFields: null,
-                              ocrSummary: undefined,
-                              ocrFallback: hasUploadedScreenshot,
-                            },
-                          };
-                        });
-                        metricsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }}
-                      screenshotsRequired={screenshotsRequired}
-                      focusedRole={focusedRole}
-                      highlightedOcrIndex={highlightedOcrIndex}
-                    />
+                  <div className="flex min-w-0 flex-col gap-3 lg:h-full lg:gap-6">
+                    <div ref={slotsSectionRef}>
+                      <截图槽位区
+                        slots={slots}
+                        onSelectFile={handleSlotUpload}
+                        onUploadFiles={handleUnifiedUpload}
+                        onDelete={(role) => setDeleteTargetRole(role)}
+                        onRetry={handleSlotRetry}
+                        onManualFill={(role) => {
+                          updateSlotsState((current) => {
+                            const hasUploadedScreenshot = Boolean(current[role].assetUrl);
+                            return {
+                              ...current,
+                              [role]: {
+                                ...current[role],
+                                status: hasUploadedScreenshot ? "confirmed" : "empty",
+                                confirmed: hasUploadedScreenshot,
+                                requiresManualConfirmation: false,
+                                error: null,
+                                assetUrl: hasUploadedScreenshot ? current[role].assetUrl : null,
+                                previewUrl: hasUploadedScreenshot ? current[role].previewUrl : null,
+                                file: hasUploadedScreenshot ? current[role].file : null,
+                                fileName: hasUploadedScreenshot ? current[role].fileName : undefined,
+                                recognizedFields: null,
+                                ocrSummary: undefined,
+                                ocrFallback: hasUploadedScreenshot,
+                              },
+                            };
+                          });
+                          metricsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }}
+                        screenshotsRequired={screenshotsRequired}
+                        focusedRole={focusedRole}
+                        highlightedOcrIndex={highlightedOcrIndex}
+                      />
+                    </div>
 
                     {/* 团队分工 */}
-                    <div className="rounded-xl border border-[#ECE7DE] bg-white p-4 shadow-sm space-y-3">
+                    <div className="space-y-2.5 rounded-xl border border-[#ECE7DE] bg-white/90 p-3 shadow-2xs lg:flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-[13px] font-semibold text-[#292524]">团队分工</h3>
+                        <h3 className="text-[12.5px] font-semibold text-[#292524]">团队分工</h3>
                         {!hasAnyVisibleRole && (
                           <button
                             type="button"
@@ -2109,13 +2262,12 @@ export function VideoSubmitFormV2({
                           由我独立完成 (文案 · 剪辑 · 运营)
                         </div>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {isScriptAuthorVisible && (
                             <RoleItemRow
                               label="文案"
                               icon={<FileText className="size-3.5 text-[#78716C]" />}
-                              member={operatorMembers.find((m) => m.id === meta.scriptAuthorUserId)}
-                              userId={userId}
+                              display={resolveRoleDisplay(meta.scriptAuthorUserId)}
                               onOpenSelector={() =>
                                 setSelectingRole({
                                   role: "script_author",
@@ -2130,8 +2282,7 @@ export function VideoSubmitFormV2({
                             <RoleItemRow
                               label="剪辑"
                               icon={<Scissors className="size-3.5 text-[#78716C]" />}
-                              member={operatorMembers.find((m) => m.id === meta.videoEditorUserId)}
-                              userId={userId}
+                              display={resolveRoleDisplay(meta.videoEditorUserId)}
                               onOpenSelector={() =>
                                 setSelectingRole({
                                   role: "video_editor",
@@ -2146,8 +2297,7 @@ export function VideoSubmitFormV2({
                             <RoleItemRow
                               label="运营"
                               icon={<Rocket className="size-3.5 text-[#78716C]" />}
-                              member={operatorMembers.find((m) => m.id === meta.operatorUserId)}
-                              userId={userId}
+                              display={resolveRoleDisplay(meta.operatorUserId)}
                               onOpenSelector={() =>
                                 setSelectingRole({
                                   role: "operator",
@@ -2161,51 +2311,87 @@ export function VideoSubmitFormV2({
                         </div>
                       )}
 
-                      {/* 题材与形式 */}
-                      <div className="space-y-2 pt-2 border-t border-[#ECE7DE]" ref={topicTagSectionRef}>
-                        <label className="block text-[12px] font-medium text-[#292524]">
-                          题材标签 <span className="text-[#DC2626]">*</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(["干货", "复盘"] as const).map((tag) => (
+                      {/* 题材与形式：默认摘要，按需展开编辑 */}
+                      <div className="border-t border-[#ECE7DE] pt-2" ref={topicTagSectionRef}>
+                        {!isMemoryExpanded ? (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <span className="shrink-0 text-[12px] font-medium text-[#292524]">
+                                题材与形式：
+                              </span>
+                              <span className="rounded-md border border-[#E5E0D6] bg-white px-2 py-0.5 text-[11.5px] font-medium text-[#292524] shadow-2xs">
+                                {meta.topicTag || "未选"}
+                              </span>
+                              <span className="text-[10px] text-[#78716C]">·</span>
+                              <span className="rounded-md border border-[#E5E0D6] bg-white px-2 py-0.5 text-[11.5px] font-medium text-[#292524] shadow-2xs">
+                                {meta.videoForm || "未选"}
+                              </span>
+                            </div>
                             <button
-                              key={tag}
                               type="button"
-                              onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-                              className={cn(
-                                "h-8 rounded-lg border text-[12px] font-medium transition-colors",
-                                meta.topicTag === tag
-                                  ? "border-[#E5E0D6] bg-white text-[#1C1917] shadow-sm"
-                                  : "border-transparent bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6]"
-                              )}
+                              onClick={() => setIsMemoryExpanded(true)}
+                              className="shrink-0 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D]"
                             >
-                              {tag}
+                              修改
                             </button>
-                          ))}
-                        </div>
-                      </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5 rounded-lg bg-[#F5F3EE]/70 p-2.5">
+                            <div className="space-y-1.5">
+                              <label className="block text-[12px] font-medium text-[#292524]">
+                                题材标签 <span className="text-[#DC2626]">*</span>
+                              </label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {(["干货", "复盘"] as const).map((tag) => (
+                                  <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
+                                    className={cn(
+                                      "h-8 rounded-lg border text-[12px] font-medium transition-colors",
+                                      meta.topicTag === tag
+                                        ? "border-[#E5E0D6] bg-white text-[#1C1917] shadow-2xs"
+                                        : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50"
+                                    )}
+                                  >
+                                    {tag}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
 
-                      <div className="space-y-2">
-                        <label className="block text-[12px] font-medium text-[#292524]">
-                          视频形式 <span className="text-[#DC2626]">*</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(["出镜", "图文"] as const).map((form) => (
+                            <div className="space-y-1.5">
+                              <label className="block text-[12px] font-medium text-[#292524]">
+                                视频形式 <span className="text-[#DC2626]">*</span>
+                              </label>
+                              <div className="grid grid-cols-2 gap-2">
+                                {(["出镜", "图文"] as const).map((form) => (
+                                  <button
+                                    key={form}
+                                    type="button"
+                                    onClick={() => updateMeta("videoForm", form)}
+                                    className={cn(
+                                      "h-8 rounded-lg border text-[12px] font-medium transition-colors",
+                                      meta.videoForm === form
+                                        ? "border-[#E5E0D6] bg-white text-[#1C1917] shadow-2xs"
+                                        : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50"
+                                    )}
+                                  >
+                                    {form}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
                             <button
-                              key={form}
                               type="button"
-                              onClick={() => updateMeta("videoForm", form)}
-                              className={cn(
-                                "h-8 rounded-lg border text-[12px] font-medium transition-colors",
-                                meta.videoForm === form
-                                  ? "border-[#E5E0D6] bg-white text-[#1C1917] shadow-sm"
-                                  : "border-transparent bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6]"
-                              )}
+                              onClick={() => setIsMemoryExpanded(false)}
+                              className="text-[12px] font-medium text-[#78716C] hover:text-[#292524]"
                             >
-                              {form}
+                              收起
                             </button>
-                          ))}
-                        </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* 异常状态补充 */}
@@ -2300,7 +2486,7 @@ export function VideoSubmitFormV2({
                   </div>
 
                   {/* 右栏：核心数据 + 标题文案 */}
-                  <div className="space-y-6">
+                  <div className="flex min-w-0 flex-col gap-6 lg:h-full">
                     {/* 核心数据指标 */}
                     <div ref={metricsSectionRef} className="space-y-4">
                       <指标分组区
@@ -2354,7 +2540,7 @@ export function VideoSubmitFormV2({
                     {/* 视频文案 */}
                     <div
                       className={cn(
-                        "flex flex-col rounded-xl p-4 bg-white border border-[#E5E0D6] shadow-sm transition-colors",
+                        "flex flex-1 flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E5E0D6] shadow-sm transition-colors",
                         hasAttemptedSubmit &&
                           issueSummary.missingRequiredMeta.includes("content") &&
                           "border-[#DC2626]/40 bg-rose-50/40"
@@ -2392,7 +2578,7 @@ export function VideoSubmitFormV2({
                         value={meta.content}
                         onChange={(event) => updateMeta("content", event.target.value)}
                         placeholder="粘贴视频文案..."
-                        className="min-h-[180px] w-full resize-none bg-transparent border-0 text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:ring-0"
+                        className="min-h-[140px] w-full flex-1 resize-none bg-transparent border-0 text-[13px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 outline-none focus:ring-0 lg:min-h-[100px] lg:flex-1"
                       />
                       {hasAttemptedSubmit &&
                         issueSummary.missingRequiredMeta.includes("content") && (
@@ -2644,8 +2830,7 @@ function VideoStatusSegmented({
 interface RoleItemRowProps {
   label: string;
   icon?: React.ReactNode;
-  member: OperatorMember | undefined;
-  userId: string;
+  display: AssigneeDisplay;
   onOpenSelector: () => void;
   onResetSelf: () => void;
 }
@@ -2653,13 +2838,10 @@ interface RoleItemRowProps {
 function RoleItemRow({
   label,
   icon,
-  member,
-  userId,
+  display,
   onOpenSelector,
   onResetSelf,
 }: RoleItemRowProps) {
-  const isExternal = Boolean(member && member.id !== userId);
-
   return (
     <div className="flex items-center justify-between gap-2">
       {/* 左侧岗位 */}
@@ -2673,17 +2855,16 @@ function RoleItemRow({
         <button
           type="button"
           onClick={onOpenSelector}
-          className="flex h-7 items-center justify-between gap-2 rounded-lg bg-[#FBF9F5] hover:bg-white border border-[#E5E0D6]/80 hover:border-[#78716C]/40 px-2.5 text-[12px] font-medium text-[#292524] transition-colors"
+          className={cn(
+            "flex h-7 items-center justify-between gap-2 rounded-lg bg-[#FBF9F5] hover:bg-white border border-[#E5E0D6]/80 hover:border-[#78716C]/40 px-2.5 text-[12px] font-medium transition-colors",
+            display.historical ? "text-[#78716C]" : "text-[#292524]",
+          )}
         >
-          <span>
-            {member
-              ? `${member.display_name || member.name}${member.id === userId ? " (我)" : ""}`
-              : "阿禅 (我)"}
-          </span>
+          <span>{display.text}</span>
           <ChevronDown className="size-3 text-[#78716C]" />
         </button>
 
-        {isExternal && (
+        {display.external && (
           <button
             type="button"
             onClick={onResetSelf}

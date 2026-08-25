@@ -171,10 +171,9 @@ type OcrApiPayload = {
   error?: string;
   error_code?: string;
   retry_after?: number;
-  screenshot_type_source?: "explicit" | "asset_role" | "classification" | "asset_role_fallback";
+  screenshot_type_source?: "explicit" | "asset_role" | "asset_role_fallback";
   timings?: {
     download_ms?: number;
-    classify_ms?: number;
     ocr_ms?: number;
     parse_ms?: number;
     total_ms: number;
@@ -312,35 +311,14 @@ function buildOcrSummary(
     return [];
   }
 
+  // 曲线形态识别已下线：历史 curve 槽位不再展示分析结果
   if (screenshotType === "curve") {
-    return [
-      recognizedFields.curve_pattern
-        ? `曲线类型：${recognizedFields.curve_pattern}`
-        : null,
-      recognizedFields.first_peak_position
-        ? `首峰位置：${recognizedFields.first_peak_position}`
-        : null,
-      recognizedFields.drop_severity
-        ? `掉速程度：${recognizedFields.drop_severity}`
-        : null,
-      recognizedFields.tail_strength
-        ? `长尾强弱：${recognizedFields.tail_strength}`
-        : null,
-    ].filter((item): item is string => Boolean(item));
+    return [];
   }
 
   if (screenshotType === "retention") {
     const retentionMetrics = recognizedFields.retention_metrics as
       Record<string, number | null> | undefined;
-    const retentionAnalysis = recognizedFields.retention_analysis as
-      | {
-          bounce_peak_time?: string | null;
-          replay_peak_time?: string | null;
-          segment_summary?: Array<{ segment?: string; performance?: string }>;
-        }
-      | undefined;
-
-    const firstSegment = retentionAnalysis?.segment_summary?.[0];
 
     return [
       retentionMetrics?.avg_play_duration != null
@@ -354,15 +332,6 @@ function buildOcrSummary(
         : null,
       retentionMetrics?.completion_rate != null
         ? `整体完播率：${retentionMetrics.completion_rate}%`
-        : null,
-      retentionAnalysis?.bounce_peak_time
-        ? `跳出峰值：${retentionAnalysis.bounce_peak_time}`
-        : null,
-      retentionAnalysis?.replay_peak_time
-        ? `回放峰值：${retentionAnalysis.replay_peak_time}`
-        : null,
-      firstSegment?.segment && firstSegment?.performance
-        ? `分段摘要：${firstSegment.segment}${firstSegment.performance}`
         : null,
     ].filter((item): item is string => Boolean(item));
   }
@@ -378,18 +347,6 @@ function buildOcrSummary(
     )
     .slice(0, 4)
     .map(([key, value]) => `${key}：${String(value)}`);
-
-  const curveInfo = recognizedFields.curve_info as unknown as
-    Record<string, string | null> | undefined;
-  const retentionInfo = recognizedFields.retention_info as unknown as
-    Record<string, string | null> | undefined;
-
-  if (curveInfo?.curve_pattern) {
-    baseSummary.push(`推流曲线：${curveInfo.curve_pattern}`);
-  }
-  if (retentionInfo?.bounce_peak_time) {
-    baseSummary.push(`跳出峰值：${retentionInfo.bounce_peak_time}`);
-  }
 
   return baseSummary;
 }
@@ -1271,7 +1228,6 @@ export function VideoSubmitForm({
           upload_ms: uploadMs,
           ocr_request_ms: ocrRequestMs,
           server_download_ms: serverTimings?.download_ms,
-          server_classify_ms: serverTimings?.classify_ms,
           server_ocr_ms: serverTimings?.ocr_ms,
           server_parse_ms: serverTimings?.parse_ms,
           server_total_ms: serverTimings?.total_ms,

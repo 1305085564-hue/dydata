@@ -1,22 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { TodaySubmissionReportLike } from "@/app/(app)/dashboard/video-submit-panel-state";
+import {
+  getDashboardSubmittedDates,
+  isDashboardReport,
+  mergeDashboardReports,
+  type DashboardReportRecord,
+} from "@/app/(app)/dashboard/video-submit-panel-state";
+import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { formatShanghaiDateOnly } from "./shared";
 
 type DashboardActivitySupabase = SupabaseClient;
 
-export type DashboardActivityReport = Omit<TodaySubmissionReportLike, "account_id"> & {
-  id: string;
-  account_id: string;
-};
+export type DashboardActivityReport = DashboardReportRecord;
 
-const DASHBOARD_REPORT_SELECT =
+export const DASHBOARD_REPORT_SELECT =
   "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at";
-
-function isDashboardActivityReport(
-  report: TodaySubmissionReportLike & { id: string },
-): report is DashboardActivityReport {
-  return typeof report.account_id === "string";
-}
 
 export interface DashboardActivityData {
   monthSubmittedDates: string[];
@@ -31,23 +29,23 @@ export async function loadDashboardActivityData({
   supabase: DashboardActivitySupabase;
   userId: string;
 }): Promise<DashboardActivityData> {
-  const { data: accounts } = await supabase
+  const accountsResult = await supabase
     .from("accounts")
     .select("id")
     .eq("profile_id", userId)
     .order("created_at", { ascending: true });
 
-  const accountIds = (accounts ?? []).map((account) => account.id).filter(Boolean);
+  assertSupabaseQuerySucceeded(accountsResult.error, "加载账号失败");
+
+  const accountIds = (accountsResult.data ?? []).map((account) => account.id).filter(Boolean);
   if (accountIds.length === 0) {
     return { monthSubmittedDates: [], monthReports: [], history: [] };
   }
 
   const today = formatShanghaiDateOnly(new Date());
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  const monthStartDate = formatShanghaiDateOnly(monthStart);
+  const monthStartDate = `${today.slice(0, 8)}01`;
 
-  const [{ data: history }, { data: monthDateRows }, { data: monthHistory }] = await Promise.all([
+  const [historyResult, monthDateRowsResult, monthHistoryResult] = await Promise.all([
     supabase
       .from("daily_reports")
       .select(DASHBOARD_REPORT_SELECT)
@@ -71,19 +69,26 @@ export async function loadDashboardActivityData({
       .order("uploaded_at", { ascending: false }),
   ]);
 
+  assertSupabaseQuerySucceeded(historyResult.error, "加载历史记录失败");
+  assertSupabaseQuerySucceeded(monthDateRowsResult.error, "加载本月提交日期失败");
+  assertSupabaseQuerySucceeded(monthHistoryResult.error, "加载本月提交记录失败");
+
+  const history = mergeDashboardReports({
+    activityReports: ((historyResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
+      isDashboardReport,
+    ),
+  });
+  const monthReports = mergeDashboardReports({
+    activityReports: ((monthHistoryResult.data ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
+      isDashboardReport,
+    ),
+  });
+
   return {
-    monthSubmittedDates: Array.from(
-      new Set(
-        ((monthDateRows ?? []) as Array<{ report_date: string | null }>)
-          .map((report) => report.report_date)
-          .filter((reportDate): reportDate is string => Boolean(reportDate)),
-      ),
+    monthSubmittedDates: getDashboardSubmittedDates(
+      ((monthDateRowsResult.data ?? []) as Array<{ report_date: string | null }>),
     ),
-    monthReports: ((monthHistory ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
-      isDashboardActivityReport,
-    ),
-    history: ((history ?? []) as Array<TodaySubmissionReportLike & { id: string }>).filter(
-      isDashboardActivityReport,
-    ),
+    monthReports,
+    history,
   };
 }

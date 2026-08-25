@@ -1,19 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { X, Calendar } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useExemptionCalendar } from "@/lib/dashboard-logic/use-exemption-calendar";
+import {
+  formatShanghaiDateOnlyParts,
+  getShanghaiDaysInMonth,
+  getShanghaiWeekday,
+  mergeSubmittedDates,
+  parseShanghaiDateOnly,
+  useExemptionCalendar,
+} from "@/lib/dashboard-logic/use-exemption-calendar";
 import { getDateStatus } from "@/lib/dashboard-logic/submission-status";
+import {
+  buildExemptionRequestInput,
+  type ExemptionDialogSubmit,
+  type ExemptionRequestInput,
+  type ExemptionRequestResult,
+  type LegacyExemptionSubmit,
+} from "./exemption-dialog-v2.logic";
 
 interface ExemptionDialogV2Props {
   isOpen: boolean;
   onClose: () => void;
   today: string;
   submittedDates: string[];
+  activitySubmittedDates?: string[];
   waiveDates?: string[];
   leaveDates?: string[];
-  onSubmit: (dates: string[], type: "waive" | "leave", reason: string) => Promise<void>;
+  pendingDates?: string[];
+  /** First-batch compatibility bridge; second batch should use onSubmitRequest. */
+  onSubmit?: LegacyExemptionSubmit;
+  onSubmitRequest?: ExemptionDialogSubmit;
 }
 
 /**
@@ -25,25 +43,31 @@ export function ExemptionDialogV2({
   onClose,
   today,
   submittedDates,
+  activitySubmittedDates = [],
   waiveDates = [],
   leaveDates = [],
+  pendingDates = [],
   onSubmit,
+  onSubmitRequest,
 }: ExemptionDialogV2Props) {
+  const allSubmittedDates = mergeSubmittedDates(submittedDates, activitySubmittedDates);
   const calendar = useExemptionCalendar({
     today,
     submittedDates,
+    additionalSubmittedDates: activitySubmittedDates,
     waiveDates,
     leaveDates,
+    pendingDates,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // 当前月份
-  const todayDate = new Date(today);
-  const year = todayDate.getFullYear();
-  const month = todayDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const { year, month: monthNumber } = parseShanghaiDateOnly(today);
+  const daysInMonth = getShanghaiDaysInMonth(year, monthNumber);
+  const firstDayOfMonth = getShanghaiWeekday(year, monthNumber, 1);
+  const month = monthNumber - 1;
 
   // 生成日期网格
   const days = [];
@@ -55,21 +79,32 @@ export function ExemptionDialogV2({
   }
 
   const formatDate = (day: number) => {
-    const m = (month + 1).toString().padStart(2, "0");
-    const d = day.toString().padStart(2, "0");
-    return `${year}-${m}-${d}`;
+    return formatShanghaiDateOnlyParts(year, monthNumber, day);
   };
 
   const handleSubmit = async () => {
     if (!calendar.isValid) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
-      await onSubmit(calendar.selectedDates, calendar.exemptionType, calendar.reason);
+      const request = buildExemptionRequestInput({
+        dates: calendar.selectedDates,
+        type: calendar.exemptionType,
+        reason: calendar.reason,
+      });
+
+      // 保留第一批与旧 V2 面板的三参数兼容；第二批接线后直接传 Server Action。
+      const result = await invokeExemptionSubmit(onSubmitRequest, onSubmit, request);
+      if (result?.error) {
+        setSubmitError(result.error);
+        return;
+      }
+
       calendar.reset();
       onClose();
     } catch (error) {
-      console.error("申请失败", error);
+      setSubmitError(error instanceof Error ? error.message : "提交申请失败，请稍后重试");
     } finally {
       setIsSubmitting(false);
     }
@@ -154,7 +189,7 @@ export function ExemptionDialogV2({
                   const status = getDateStatus({
                     date,
                     today,
-                    submittedDates,
+                    submittedDates: allSubmittedDates,
                     waiveDates,
                     leaveDates,
                   });
@@ -305,6 +340,12 @@ export function ExemptionDialogV2({
                 </div>
               </div>
 
+              {submitError ? (
+                <p role="alert" className="text-sm text-[#C0685C]">
+                  {submitError}
+                </p>
+              ) : null}
+
               {/* 按钮 */}
               <div className="flex justify-end gap-3 pt-2">
                 <button
@@ -330,4 +371,24 @@ export function ExemptionDialogV2({
       </div>
     </>
   );
+}
+
+async function invokeExemptionSubmit(
+  onSubmitRequest: ExemptionDialogSubmit | undefined,
+  onSubmit: LegacyExemptionSubmit | undefined,
+  request: ExemptionRequestInput,
+): Promise<ExemptionRequestResult | void> {
+  if (onSubmitRequest) {
+    return onSubmitRequest(request);
+  }
+
+  if (onSubmit) {
+    return (onSubmit as LegacyExemptionSubmit)(
+      request.dates,
+      request.category,
+      request.reason,
+    );
+  }
+
+  return { error: "提交入口未接入，请稍后重试" };
 }

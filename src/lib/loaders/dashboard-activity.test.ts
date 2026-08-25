@@ -3,10 +3,13 @@ import assert from "node:assert/strict";
 
 import { loadDashboardActivityData } from "./dashboard-activity";
 
-type QueryResult = { data: unknown[] };
+type QueryResult = { data: unknown[] | null; error: { message: string } | null };
 
-function createQueryResult(data: unknown[]): QueryResult & Record<string, unknown> {
-  const result: QueryResult & Record<string, unknown> = { data };
+function createQueryResult(
+  data: unknown[] | null,
+  error: { message: string } | null = null,
+): QueryResult & Record<string, unknown> {
+  const result: QueryResult & Record<string, unknown> = { data, error };
   result.eq = () => result;
   result.in = () => result;
   result.gte = () => result;
@@ -86,4 +89,28 @@ test("loadDashboardActivityData returns only account-linked reports", async () =
   assert.deepEqual(result.monthSubmittedDates, ["2026-05-05"]);
   assert.deepEqual(result.history, [report]);
   assert.deepEqual(result.monthReports, [report]);
+});
+
+test("loadDashboardActivityData 查询失败时抛错，不能伪装成无记录", async () => {
+  const results = [
+    createQueryResult([{ id: "account-1" }]),
+    createQueryResult(null, { message: "daily reports unavailable" }),
+    createQueryResult([]),
+    createQueryResult([]),
+  ];
+  let queryIndex = 0;
+  const supabase = {
+    from() {
+      return {
+        select() {
+          return results[queryIndex++] ?? createQueryResult([]);
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" }),
+    /加载历史记录失败/,
+  );
 });

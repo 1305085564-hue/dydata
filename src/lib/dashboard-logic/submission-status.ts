@@ -3,6 +3,8 @@
  * 根据日期、提交记录、豁免记录判断状态
  */
 
+import { formatShanghaiDateOnlyParts, getShanghaiDaysInMonth } from "./use-exemption-calendar";
+
 export type SubmissionStatus =
   | "submitted" // 已提交
   | "waived" // 已豁免
@@ -126,11 +128,10 @@ export function getBatchDateStatus(
  */
 export function getMonthDates(year: number, month: number): string[] {
   const dates: string[] = [];
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInMonth = getShanghaiDaysInMonth(year, month + 1);
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(year, month, day);
-    dates.push(date.toISOString().split("T")[0]);
+    dates.push(formatShanghaiDateOnlyParts(year, month + 1, day));
   }
 
   return dates;

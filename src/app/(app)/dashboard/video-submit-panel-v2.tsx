@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { Video, VideoTagReviewDimension } from "@/types";
+import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import {
   getExemptionStateForDate,
+  getExemptionDatesForMonth,
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
@@ -25,9 +27,16 @@ import {
 import { HistoryList } from "./history-list";
 import { HistoryReportEditForm, type HistoryReportEditData } from "./history-report-edit-form";
 import { VideoSubmitFormV2 } from "./video-submit-form-v2";
-import { ExemptionDialogV2 } from "./redesign/exemption-dialog-v2";
 import {
+  getVideoSubmissionEditDetailError,
+  type VideoSubmissionEditDetail,
+} from "./video-submit-form-state";
+import { ExemptionDialogV2 } from "./redesign/exemption-dialog-v2";
+import { submitExemptionRequest } from "./actions";
+import {
+  getDashboardSubmittedDates,
   getTodaySubmissionSummary,
+  mergeDashboardReports,
   resolveSubmissionDayStatus,
   resolveSubmitPanelMode,
   type SubmitPanelRequestedMode,
@@ -49,6 +58,11 @@ type AsyncActivityData = {
 
 type ActivityRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
+type EditDetailLoadState =
+  | { status: "idle" | "loading"; detail: null; error: null }
+  | { status: "ready"; detail: VideoSubmissionEditDetail; error: null }
+  | { status: "error"; detail: null; error: string };
+
 export async function fetchDashboardActivity(
   request: ActivityRequest = fetch,
 ): Promise<AsyncActivityData> {
@@ -69,6 +83,21 @@ export async function fetchDashboardActivity(
   };
 }
 
+export async function fetchVideoSubmissionEditDetail(
+  input: { accountId: string; bizDate: string },
+  request: ActivityRequest = fetch,
+): Promise<VideoSubmissionEditDetail> {
+  const params = new URLSearchParams({ account_id: input.accountId, biz_date: input.bizDate });
+  const response = await request(`/api/video-submit/edit-detail?${params.toString()}`);
+  const payload = (await response.json()) as { detail?: unknown; error?: string };
+  if (!response.ok) {
+    throw new Error(payload.error || "加载原视频详情失败");
+  }
+  const error = getVideoSubmissionEditDetailError(payload.detail, input);
+  if (error) throw new Error(error);
+  return payload.detail as VideoSubmissionEditDetail;
+}
+
 function DashboardActivityError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
@@ -78,6 +107,43 @@ function DashboardActivityError({ message, onRetry }: { message: string; onRetry
       <Button type="button" variant="outline" size="sm" onClick={onRetry}>
         重新加载
       </Button>
+    </div>
+  );
+}
+
+function ExemptionReviewNoticeCard({
+  notice,
+}: {
+  notice: NonNullable<DashboardPageData["userExemptionReviewNotice"]>;
+}) {
+  const statusText = notice.request_status === "approved" ? "已通过" : "未通过";
+  const categoryText = notice.exemption_category === "leave" ? "请假" : "豁免";
+  const dateText = notice.start_date === notice.end_date || !notice.end_date
+    ? notice.start_date
+    : `${notice.start_date} 至 ${notice.end_date}`;
+
+  return (
+    <div className="rounded-lg border border-[#E5E0D6] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[13px] font-medium text-[#292524]">
+            {categoryText}申请{statusText}
+          </p>
+          <p className="mt-1 text-[13px] text-[#78716C]">
+            {dateText || "未记录日期"}{notice.reason ? ` · ${notice.reason}` : ""}
+          </p>
+        </div>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-1 text-[12px] font-medium",
+            notice.request_status === "approved"
+              ? "bg-[#6FAA7D]/15 text-[#3F7C51]"
+              : "bg-[#C9604D]/10 text-[#A5483D]",
+          )}
+        >
+          {statusText}
+        </span>
+      </div>
     </div>
   );
 }
@@ -104,12 +170,14 @@ interface VideoSubmitPanelV2Props {
   userDisplayName: string;
   today: string;
   todayReports: TodaySubmissionReportLike[];
+  monthSubmittedDates?: string[];
   monthReports: MonthReport[];
   history: MonthReport[];
   accountIds: string[];
   ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
+  userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
   embeddedChrome?: boolean;
@@ -117,31 +185,6 @@ interface VideoSubmitPanelV2Props {
   onSelectedAccountChange?: (accountId: string) => void;
   activeBizDate?: string;
   onActiveBizDateChange?: (date: string) => void;
-}
-
-function toOverrideReport(summaryOverride: TodaySubmissionReportLike): MonthReport | null {
-  if (!summaryOverride.account_id) return null;
-
-  return {
-    id: `override-${summaryOverride.account_id}-${summaryOverride.report_date}`,
-    account_id: summaryOverride.account_id,
-    title: summaryOverride.title,
-    content: summaryOverride.content ?? null,
-    report_date: summaryOverride.report_date,
-    play_count: summaryOverride.play_count,
-    likes: summaryOverride.likes,
-    comments: summaryOverride.comments,
-    shares: summaryOverride.shares,
-    favorites: summaryOverride.favorites,
-    follower_gain: summaryOverride.follower_gain,
-    follower_convert: summaryOverride.follower_convert,
-    completion_rate: summaryOverride.completion_rate,
-    avg_play_duration: summaryOverride.avg_play_duration,
-    bounce_rate_2s: summaryOverride.bounce_rate_2s,
-    completion_rate_5s: summaryOverride.completion_rate_5s,
-    published_at: summaryOverride.published_at,
-    uploaded_at: summaryOverride.uploaded_at,
-  };
 }
 
 /**
@@ -153,14 +196,16 @@ export function VideoSubmitPanelV2({
   userId,
   today,
   todayReports,
+  monthSubmittedDates = [],
   monthReports,
   history,
   accountDisplayNameMap,
   hasPendingExemption = false,
+  userExemptionReviewNotice = null,
   userExemptionProfile,
   userExemptionGrants,
-  embeddedChrome = false,
   selectedAccountId: controlledSelectedAccountId,
+  onSelectedAccountChange,
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
 }: VideoSubmitPanelV2Props) {
@@ -171,20 +216,23 @@ export function VideoSubmitPanelV2({
 
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const dateInputRef = useRef<HTMLInputElement | null>(null);
-  const internalSelectedAccountId = accounts[0]?.id ?? "";
+  const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
-  const [isDataViewOpen, setIsDataViewOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [watchConclusion, setWatchConclusion] = useState<string | null>(null);
   const [editingReport, setEditingReport] = useState<MonthReport | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
-  const [pendingBackfillDate, setPendingBackfillDate] = useState<string | null>(null);
-  const [pendingFocusDate, setPendingFocusDate] = useState<string | null>(null);
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [editDetailLoadState, setEditDetailLoadState] = useState<EditDetailLoadState>({
+    status: "idle",
+    detail: null,
+    error: null,
+  });
+  const [editDetailRequestVersion, setEditDetailRequestVersion] = useState(0);
   const [isExemptionDialogOpen, setIsExemptionDialogOpen] = useState(false);
+  const [localHasPendingExemption, setLocalHasPendingExemption] = useState(hasPendingExemption);
   const [dismissedPendingExemption, setDismissedPendingExemption] = useState(() => {
     try {
       const raw = window.localStorage.getItem("dydata:dismissed-pending-exemption");
@@ -198,6 +246,17 @@ export function VideoSubmitPanelV2({
 
   const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
+  const setSelectedAccountId = useCallback(
+    (accountId: string) => {
+      setInternalSelectedAccountId(accountId);
+      onSelectedAccountChange?.(accountId);
+    },
+    [onSelectedAccountChange],
+  );
+
+  useEffect(() => {
+    setLocalHasPendingExemption(hasPendingExemption);
+  }, [hasPendingExemption]);
   const setActiveBizDate = useCallback(
     (date: string) => {
       setInternalActiveBizDate(date);
@@ -217,15 +276,15 @@ export function VideoSubmitPanelV2({
   }, []);
 
   useEffect(() => {
-    if ((!isDataViewOpen && !isHistoryOpen) || activityData || activityError) return;
+    if (!isHistoryOpen || activityData || activityError) return;
     const timeoutId = window.setTimeout(() => {
       void loadActivity();
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [activityData, activityError, isDataViewOpen, isHistoryOpen, loadActivity]);
+  }, [activityData, activityError, isHistoryOpen, loadActivity]);
 
   useEffect(() => {
-    if (hasPendingExemption) return;
+    if (localHasPendingExemption) return;
     try {
       window.localStorage.removeItem("dydata:dismissed-pending-exemption");
     } catch {}
@@ -233,24 +292,37 @@ export function VideoSubmitPanelV2({
       setDismissedPendingExemption(false);
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, [hasPendingExemption]);
+  }, [localHasPendingExemption]);
 
-  const allReportsIncludingOverrides = useMemo(() => {
-    const result = [...monthReports];
-    for (const override of Object.values(reportOverrides)) {
-      const converted = toOverrideReport(override);
-      if (!converted) continue;
-      const existingIndex = result.findIndex(
-        (r) => r.account_id === converted.account_id && r.report_date === converted.report_date,
-      );
-      if (existingIndex >= 0) {
-        result[existingIndex] = converted;
-      } else {
-        result.push(converted);
-      }
-    }
-    return result;
-  }, [monthReports, reportOverrides]);
+  const allReportsIncludingOverrides = useMemo(
+    () =>
+      mergeDashboardReports({
+        initialReports: monthReports,
+        activityReports: activityData?.monthReports ?? [],
+        overrides: Object.values(reportOverrides),
+      }),
+    [activityData?.monthReports, monthReports, reportOverrides],
+  );
+
+  const submittedDatesIncludingActivity = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...monthSubmittedDates,
+          ...(activityData?.monthSubmittedDates ?? []),
+          ...getDashboardSubmittedDates(allReportsIncludingOverrides),
+        ]),
+      ).sort(),
+    [activityData?.monthSubmittedDates, allReportsIncludingOverrides, monthSubmittedDates],
+  );
+
+  const todayReportsIncludingOverrides = useMemo(
+    () => [
+      ...todayReports,
+      ...allReportsIncludingOverrides.filter((report) => report.report_date === today),
+    ],
+    [allReportsIncludingOverrides, today, todayReports],
+  );
 
   const selectedAccount = useMemo(
     () => accounts.find((acc) => acc.id === selectedAccountId) ?? null,
@@ -258,49 +330,104 @@ export function VideoSubmitPanelV2({
   );
 
   const primarySummary = useMemo(
-    () =>
-      getTodaySubmissionSummary(
-        activeBizDate,
-        selectedAccountId,
-        todayReports,
-        allReportsIncludingOverrides,
-      ),
-    [activeBizDate, selectedAccountId, todayReports, allReportsIncludingOverrides],
+    () => getTodaySubmissionSummary(todayReportsIncludingOverrides, selectedAccountId),
+    [selectedAccountId, todayReportsIncludingOverrides],
   );
-
-  const primaryMode = useMemo(
-    () => resolveSubmitPanelMode(activeBizDate, today, requestedMode, primarySummary),
-    [activeBizDate, today, requestedMode, primarySummary],
-  );
-
-  const isPrimarySummaryMode = primaryMode === "today" && primarySummary.submitted;
-  const activeDateStatus = useMemo(() => {
-    return resolveSubmissionDayStatus({
-      bizDate: activeBizDate,
-      today,
-      summary: primarySummary,
-    });
-  }, [activeBizDate, today, primarySummary]);
-
-  const activeExemptionState = useMemo(
-    () => getExemptionStateForDate(activeBizDate, userExemptionProfile, userExemptionGrants),
-    [activeBizDate, userExemptionProfile, userExemptionGrants],
-  );
-
-  const shouldShowBlockedStateCard =
-    (activeDateStatus.state === "waive" || activeDateStatus.state === "leave") &&
-    !submittedViewActive;
-
-  const shouldHideFormForExemption =
-    (activeDateStatus.state === "waive" || activeDateStatus.state === "leave") &&
-    activeDateStatus.explicitBlock &&
-    !submittedViewActive;
 
   const activeDateReport = useMemo(() => {
     return allReportsIncludingOverrides.find(
       (r) => r.account_id === selectedAccountId && r.report_date === activeBizDate,
-    );
+    ) ?? null;
   }, [allReportsIncludingOverrides, selectedAccountId, activeBizDate]);
+
+  const activeExemptionState = useMemo(
+    () => getExemptionStateForDate(userExemptionProfile, activeBizDate, userExemptionGrants),
+    [activeBizDate, userExemptionProfile, userExemptionGrants],
+  );
+  const exemptionDateBuckets = useMemo(
+    () => getExemptionDatesForMonth(userExemptionProfile, today, userExemptionGrants),
+    [today, userExemptionGrants, userExemptionProfile],
+  );
+  const activeDateStatus = useMemo(() => {
+    return resolveSubmissionDayStatus({
+      date: activeBizDate,
+      today,
+      report: activeBizDate === today ? primarySummary : activeDateReport,
+      exemption: activeExemptionState,
+      activity: activeBizDate < today && activityError
+        ? { status: "error", message: activityError }
+        : activityData
+          ? { status: "ready" }
+          : activeBizDate < today
+            ? { status: "loading" }
+            : null,
+    });
+  }, [activeBizDate, activeDateReport, activeExemptionState, activityData, activityError, primarySummary, today]);
+
+  const primaryMode = useMemo(
+    () =>
+      resolveSubmitPanelMode({
+        summary: activeBizDate === today ? primarySummary : null,
+        requestedMode: activeBizDate === today ? requestedMode : "backfill",
+        report: activeDateReport,
+        activeDateStatus,
+      }),
+    [activeBizDate, activeDateReport, activeDateStatus, primarySummary, requestedMode, today],
+  );
+
+  useEffect(() => {
+    if (primaryMode !== "editToday" || !selectedAccount || activeBizDate !== today) {
+      setEditDetailLoadState({ status: "idle", detail: null, error: null });
+      return;
+    }
+
+    let cancelled = false;
+    setEditDetailLoadState({ status: "loading", detail: null, error: null });
+    void fetchVideoSubmissionEditDetail({ accountId: selectedAccount.id, bizDate: activeBizDate })
+      .then((detail) => {
+        if (!cancelled) setEditDetailLoadState({ status: "ready", detail, error: null });
+      })
+      .catch((cause) => {
+        if (!cancelled) {
+          setEditDetailLoadState({
+            status: "error",
+            detail: null,
+            error: cause instanceof Error ? cause.message : "加载原视频详情失败",
+          });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeBizDate, editDetailRequestVersion, primaryMode, selectedAccount, today]);
+
+  const isPrimarySummaryMode = primaryMode === "summary" && primarySummary !== null;
+  const shouldShowBlockedStateCard =
+    (activeDateStatus.state === "waive" || activeDateStatus.state === "leave") &&
+    !submittedViewActive;
+  const isPermanentExemption = activeExemptionState.isExempt && activeExemptionState.type === "permanent";
+
+  const shouldHideFormForExemption =
+    shouldShowBlockedStateCard && !isPermanentExemption;
+  const shouldShowActivityErrorCard = activeDateStatus.requiresActivityRetry;
+  const shouldShowActivityLoadingCard =
+    activeBizDate < today &&
+    !activityData &&
+    !activityError;
+  const shouldShowHistoricalSubmittedCard =
+    activeBizDate < today && activeDateStatus.state === "submitted" && Boolean(activeDateReport);
+  const isTodayEdit = activeBizDate === today && primaryMode === "editToday" && Boolean(primarySummary);
+  const shouldShowEditDetailLoading = isTodayEdit && editDetailLoadState.status === "loading";
+  const shouldShowEditDetailError = isTodayEdit && editDetailLoadState.status === "error";
+  const isExemptionPending = localHasPendingExemption;
+  const shouldShowForm =
+    Boolean(selectedAccount) &&
+    !shouldHideFormForExemption &&
+    !shouldShowActivityLoadingCard &&
+    !shouldShowActivityErrorCard &&
+    !shouldShowHistoricalSubmittedCard &&
+    (!isTodayEdit || editDetailLoadState.status === "ready") &&
+    (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive);
 
   const handleSubmitted = useCallback(
     (
@@ -315,6 +442,7 @@ export function VideoSubmitPanelV2({
     ) => {
       setSubmittedViewActive(true);
       setRequestedMode(null);
+      void loadActivity();
 
       if (summaryOverride) {
         const key = `${summaryOverride.account_id}-${summaryOverride.report_date}`;
@@ -328,16 +456,16 @@ export function VideoSubmitPanelV2({
         formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     },
-    [],
+    [loadActivity],
   );
 
   const handleAccountChange = useCallback(
     (accountId: string) => {
-      if (controlledSelectedAccountId !== undefined) return;
+      setSelectedAccountId(accountId);
       setRequestedMode(null);
       setSubmittedViewActive(false);
     },
-    [controlledSelectedAccountId],
+    [setSelectedAccountId],
   );
 
   const selectBizDate = useCallback(
@@ -345,9 +473,12 @@ export function VideoSubmitPanelV2({
       setActiveBizDate(date);
       setRequestedMode(null);
       setSubmittedViewActive(false);
+      if (date < today && !activityData && !activityError) {
+        void loadActivity();
+      }
       formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     },
-    [setActiveBizDate],
+    [activityData, activityError, loadActivity, setActiveBizDate, today],
   );
 
   const handleHistoryReportOpen = useCallback((report: MonthReport) => {
@@ -366,72 +497,36 @@ export function VideoSubmitPanelV2({
     dateInputRef.current?.showPicker();
   }, []);
 
-  // 加载观察结论
-  useEffect(() => {
-    if (!selectedAccountId) return;
-    let cancelled = false;
-    const timeoutId = window.setTimeout(() => {
-      setWatchConclusion(null);
-      fetch(`/api/dashboard/watch-overview?account_id=${selectedAccountId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (!cancelled && data && data.conclusion) {
-            setWatchConclusion(data.conclusion);
-          }
-        })
-        .catch((err) => console.error("Failed to fetch watch overview", err));
-    }, 0);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeoutId);
-    };
-  }, [selectedAccountId]);
-
   const isActivityLoading = !activityData && !activityError;
   const historyReports = activityData?.history ?? history;
 
   return (
     <>
-      <div className="mx-auto w-full space-y-6 px-4 py-6 lg:px-6">
-        {/* 头部：账号选择 + 日期选择 */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between pb-4 border-b border-[#ECE7DE]">
-          <div className="flex-1">
-            <h1 className="text-[20px] font-semibold text-[#1C1917] tracking-tight">
-              今日提交工作台
-            </h1>
-            <p className="text-[13px] text-[#78716C] mt-1">
-              记录运营数据，提交今日内容
-            </p>
-            {watchConclusion && (
-              <p className="text-[12px] text-[#78716C] mt-2 max-w-md">
-                {watchConclusion}
+      <div className="w-full space-y-6">
+        {/* 新版控制栏：今日提交工作台 */}
+        <div className="rounded-xl border border-[#E5E0D6] bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* 左侧：标题和描述 */}
+            <div>
+              <h1 className="text-[20px] font-semibold text-[#1C1917] tracking-tight">
+                今日提交工作台
+              </h1>
+              <p className="mt-1 text-[13px] text-[#78716C]">
+                记录运营数据，提交今日内容
               </p>
-            )}
-          </div>
+            </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* 日期选择器 */}
-            {!embeddedChrome && (
-              <div className="space-y-1">
-                <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C]">
-                  {activeBizDate === today ? "今天" : "补交日期"}
-                </div>
+            {/* 右侧：控制区 */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* 日期选择 */}
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={openDatePicker}
-                  aria-label="选择填报日期或补交历史"
-                  className="group inline-flex items-center gap-2.5 rounded-xl border border-[#E5E0D6]/90 bg-white px-4 py-2.5 text-[13px] font-medium text-[#1C1917] shadow-sm transition-all hover:border-[#78716C]/40 hover:shadow-md focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                  className="inline-flex items-center gap-2 h-9 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] shadow-sm transition-all hover:bg-[#F5F3EE] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                 >
-                  <CalendarDays className="size-4 text-[#78716C] transition-transform group-hover:scale-105" />
-                  <div className="flex flex-col leading-none space-y-1">
-                    <span className="text-base font-semibold tracking-tight text-[#1C1917]">
-                      {activeBizDate === today ? "提交今日" : "补交历史"}
-                    </span>
-                    <span className="text-[12px] font-normal tabular-nums text-[#78716C] group-hover:text-[#292524] transition-colors">
-                      {activeBizDate} ▾
-                    </span>
-                  </div>
+                  <CalendarDays className="size-4 text-[#78716C]" />
+                  <span className="tabular-nums">{activeBizDate}</span>
                 </button>
                 <input
                   ref={dateInputRef}
@@ -444,17 +539,13 @@ export function VideoSubmitPanelV2({
                   aria-hidden="true"
                 />
               </div>
-            )}
 
-            {/* 账号选择下拉 */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C]">
-                账号
-              </div>
+              {/* 账号选择 */}
               <select
+                id="account-select"
                 value={selectedAccountId}
                 onChange={(e) => handleAccountChange(e.target.value)}
-                className="h-[42px] w-full sm:w-auto rounded-xl border border-[#E5E0D6] bg-white px-4 text-[13px] font-medium text-[#292524] shadow-sm outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                className="h-9 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[14px] font-medium text-[#292524] shadow-sm outline-none transition-all hover:bg-[#F5F3EE] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
               >
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
@@ -462,72 +553,75 @@ export function VideoSubmitPanelV2({
                   </option>
                 ))}
               </select>
-            </div>
 
-            {/* 历史记录按钮 */}
-            <div className="space-y-1">
-              <div className="text-[11px] font-medium uppercase tracking-[0.22em] text-[#78716C] opacity-0 pointer-events-none">
-                操作
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsHistoryOpen(true)}
-                  className="h-[42px] rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] transition-colors shadow-sm"
-                >
-                  <History className="size-4 mr-1.5" />
-                  历史记录
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsExemptionDialogOpen(true)}
-                  className={cn(
-                    "h-[42px] rounded-xl border-[#E5E0D6] bg-white text-[13px] font-medium transition-colors shadow-sm",
-                    hasPendingExemption
-                      ? "border-[#D99E55]/40 bg-[#D99E55]/10 text-[#8A6A2F] hover:bg-[#D99E55]/20"
-                      : "text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917]"
-                  )}
-                >
-                  <FilePenLine className="size-4 mr-1.5" />
-                  {hasPendingExemption ? "申请审批中" : "申请豁免"}
-                </Button>
-              </div>
+              {/* 历史记录按钮 */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsHistoryOpen(true)}
+                className="h-9 rounded-lg"
+              >
+                <History className="size-4 mr-1.5" />
+                历史记录
+              </Button>
+
+              {/* 申请豁免按钮 */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (!isExemptionPending) setIsExemptionDialogOpen(true);
+                }}
+                disabled={isExemptionPending}
+                className={cn(
+                  "h-9 rounded-lg",
+                  isExemptionPending && "border-[#B98A54]/40 bg-[#B98A54]/10 text-[#B98A54]"
+                )}
+                title={isExemptionPending ? "已有申请审批中" : undefined}
+              >
+                <FilePenLine className="size-4 mr-1.5" />
+                {isExemptionPending ? "审批中" : "申请豁免"}
+              </Button>
             </div>
           </div>
         </div>
 
         {/* 待审批豁免提示横幅 */}
-        {hasPendingExemption && !dismissedPendingExemption && (
+        {isExemptionPending && !dismissedPendingExemption && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-[#D99E55]/30 bg-[#D99E55]/10 p-4"
+            className="rounded-lg border border-[#B98A54]/20 bg-[#B98A54]/10 p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <Clock className="size-5 shrink-0 text-[#D99E55] mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-[13px] font-semibold text-[#8A6A2F]">
+                <Clock className="size-4 shrink-0 text-[#B98A54] mt-0.5" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#292524]">
                     豁免申请审批中
                   </p>
-                  <p className="text-[12px] leading-[1.7] text-[#78716C]">
-                    你的豁免申请正在等待管理员审批，审批结果将在这里更新。
+                  <p className="text-[13px] text-[#78716C] mt-1">
+                    你的豁免申请正在等待管理员审批
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={dismissPendingExemption}
-                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#78716C] transition-colors hover:bg-[#FBF9F5] hover:text-[#292524]"
+                className="shrink-0 text-[#78716C] hover:text-[#292524] transition-colors"
+                aria-label="关闭提示"
               >
-                <X className="size-3.5" />
-                关闭
+                <X className="size-4" />
               </button>
             </div>
           </motion.div>
         )}
+
+        {userExemptionReviewNotice ? (
+          <ExemptionReviewNoticeCard notice={userExemptionReviewNotice} />
+        ) : null}
 
         {/* 主内容区 */}
         <Card className="border-[#ECE7DE] shadow-sm">
@@ -632,8 +726,73 @@ export function VideoSubmitPanelV2({
               </div>
             ) : null}
 
+            {shouldShowActivityErrorCard ? (
+              <div className="mb-6 rounded-xl border border-[#C9604D]/20 bg-[#C9604D]/10 p-5">
+                <DashboardActivityError
+                  message={activeDateStatus.errorMessage ?? "历史记录加载失败，请先重试后再补交。"}
+                  onRetry={() => void loadActivity()}
+                />
+              </div>
+            ) : null}
+
+            {shouldShowActivityLoadingCard ? (
+              <div className="mb-6 rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/10 p-5">
+                <p className="text-[13px] font-semibold text-[#8A6A2F]">正在核对历史记录</p>
+                <p className="mt-1 text-[13px] text-[#78716C]">
+                  正在确认 {activeBizDate} 是否已有日报，核对完成前不会开放补交。
+                </p>
+              </div>
+            ) : null}
+
+            {shouldShowHistoricalSubmittedCard && activeDateReport ? (
+              <div className="mb-6 rounded-xl border border-[#6FAA7D]/20 bg-[#6FAA7D]/10 p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[13px] font-semibold text-[#3F7C51]">该日期已提交</p>
+                    <p className="mt-1 text-[13px] text-[#78716C]">
+                      {activeDateReport.title || "未命名日报"} · {activeDateReport.report_date}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 rounded-xl border-[#E5E0D6] text-[13px] font-medium"
+                    onClick={() => setEditingReport(activeDateReport)}
+                  >
+                    查看并修改
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {shouldShowEditDetailLoading ? (
+              <div className="mb-6 rounded-xl border border-[#D99E55]/30 bg-[#D99E55]/10 p-5">
+                <p className="text-[13px] font-semibold text-[#8A6A2F]">
+                  正在加载原视频完整详情
+                </p>
+                <p className="mt-1 text-[13px] text-[#78716C]">
+                  正在核对旧视频、24小时指标、截图、标签、责任人与导粉话术；完成前不会开放保存。
+                </p>
+              </div>
+            ) : null}
+
+            {shouldShowEditDetailError ? (
+              <div className="mb-6 rounded-xl border border-[#C9604D]/20 bg-[#C9604D]/10 p-5">
+                <p className="text-[13px] font-semibold text-[#A5483D]">无法安全加载原视频详情</p>
+                <p className="mt-1 text-[13px] text-[#78716C]">{editDetailLoadState.error}</p>
+                <div className="mt-3 flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setEditDetailRequestVersion((value) => value + 1)}>
+                    重新加载
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setRequestedMode(null)}>
+                    返回摘要
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
             {/* 表单区域 */}
-            {selectedAccount && !shouldHideFormForExemption && (!isPrimarySummaryMode || activeBizDate !== today || submittedViewActive) ? (
+            {shouldShowForm && selectedAccount ? (
               <VideoSubmitFormV2
                 key={`form-${selectedAccount.id}-${activeBizDate}`}
                 account={selectedAccount}
@@ -641,6 +800,7 @@ export function VideoSubmitPanelV2({
                 today={today}
                 mode={primaryMode}
                 initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
+                editDetail={editDetailLoadState.status === "ready" ? editDetailLoadState.detail : null}
                 initialBizDate={activeBizDate}
                 submittedViewActive={submittedViewActive}
                 onSubmitted={handleSubmitted}
@@ -725,32 +885,18 @@ export function VideoSubmitPanelV2({
           isOpen={isExemptionDialogOpen}
           onClose={() => setIsExemptionDialogOpen(false)}
           today={today}
-          submittedDates={activityData?.monthSubmittedDates ?? []}
-          waiveDates={userExemptionGrants.filter((g) => g.exemption_type === "waive").map((g) => g.date)}
-          leaveDates={userExemptionGrants.filter((g) => g.exemption_type === "leave").map((g) => g.date)}
-          onSubmit={async (dates, type, reason) => {
-            try {
-              const response = await fetch("/api/exemptions/apply", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  dates,
-                  exemption_type: type,
-                  reason,
-                }),
-              });
-
-              if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "申请失败");
-              }
-
+          submittedDates={submittedDatesIncludingActivity}
+          activitySubmittedDates={activityData?.monthSubmittedDates ?? []}
+          waiveDates={exemptionDateBuckets.waiveDates}
+          leaveDates={exemptionDateBuckets.leaveDates}
+          onSubmitRequest={async (request) => {
+            const result = await submitExemptionRequest(request);
+            if (!result.error) {
+              setLocalHasPendingExemption(true);
               setIsExemptionDialogOpen(false);
-              // 刷新页面以显示最新状态
-              window.location.reload();
-            } catch (error) {
-              throw error;
+              void loadActivity();
             }
+            return result;
           }}
         />
       )}

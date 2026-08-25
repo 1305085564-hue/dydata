@@ -3,7 +3,7 @@
  * 管理日历中的日期选择、快捷操作
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 export type ExemptionType = "waive" | "leave";
 
@@ -16,61 +16,162 @@ export interface ExemptionCalendarState {
 export interface ExemptionCalendarOptions {
   today: string;
   submittedDates: string[];
+  additionalSubmittedDates?: string[];
   waiveDates?: string[];
   leaveDates?: string[];
+  pendingDates?: string[];
   initialDates?: string[];
+}
+
+export interface ShanghaiDateOnlyParts {
+  year: number;
+  month: number;
+  day: number;
+}
+
+/** Parse a YYYY-MM-DD business date without letting the host timezone alter it. */
+export function parseShanghaiDateOnly(date: string): ShanghaiDateOnlyParts {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) throw new Error(`无效业务日期：${date}`);
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const value = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    value.getUTCFullYear() !== year ||
+    value.getUTCMonth() !== month - 1 ||
+    value.getUTCDate() !== day
+  ) {
+    throw new Error(`无效业务日期：${date}`);
+  }
+
+  return { year, month, day };
+}
+
+export function formatShanghaiDateOnlyParts(year: number, month: number, day: number) {
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function getShanghaiDaysInMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+export function getShanghaiWeekday(year: number, month: number, day: number) {
+  return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+}
+
+export function addShanghaiDateOnly(date: string, days: number) {
+  const parts = parseShanghaiDateOnly(date);
+  const value = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+  value.setUTCDate(value.getUTCDate() + days);
+  return formatShanghaiDateOnlyParts(
+    value.getUTCFullYear(),
+    value.getUTCMonth() + 1,
+    value.getUTCDate(),
+  );
+}
+
+export function mergeSubmittedDates(...dateLists: Array<readonly string[] | undefined>) {
+  return Array.from(
+    new Set(dateLists.flatMap((dates) => (dates ?? []).filter(Boolean))),
+  ).sort();
+}
+
+export function getAvailableExemptionDates(options: {
+  today: string;
+  submittedDates: string[];
+  additionalSubmittedDates?: string[];
+  waiveDates?: string[];
+  leaveDates?: string[];
+  pendingDates?: string[];
+}) {
+  const { year, month, day: todayDay } = parseShanghaiDateOnly(options.today);
+  const submittedDates = new Set(
+    mergeSubmittedDates(options.submittedDates, options.additionalSubmittedDates),
+  );
+  const blockedDates = new Set([
+    ...submittedDates,
+    ...(options.waiveDates ?? []),
+    ...(options.leaveDates ?? []),
+    ...(options.pendingDates ?? []),
+  ]);
+
+  return Array.from({ length: todayDay }, (_, index) =>
+    formatShanghaiDateOnlyParts(year, month, index + 1),
+  ).filter((date) => !blockedDates.has(date));
 }
 
 /**
  * 豁免日历核心逻辑
  */
 export function useExemptionCalendar(options: ExemptionCalendarOptions) {
-  const { today, submittedDates, waiveDates = [], leaveDates = [], initialDates = [] } = options;
+  const {
+    today,
+    submittedDates,
+    additionalSubmittedDates = [],
+    waiveDates = [],
+    leaveDates = [],
+    pendingDates = [],
+    initialDates = [],
+  } = options;
 
-  const [selectedDates, setSelectedDates] = useState<string[]>(initialDates);
+  const mergedSubmittedDates = useMemo(
+    () => mergeSubmittedDates(submittedDates, additionalSubmittedDates),
+    [submittedDates, additionalSubmittedDates],
+  );
+
+  const availableDates = useMemo(
+    () =>
+      getAvailableExemptionDates({
+        today,
+        submittedDates: mergedSubmittedDates,
+        waiveDates,
+        leaveDates,
+        pendingDates,
+      }),
+    [today, mergedSubmittedDates, waiveDates, leaveDates, pendingDates],
+  );
+
+  const [selectedDates, setSelectedDates] = useState<string[]>(() =>
+    initialDates.filter((date) => availableDates.includes(date)),
+  );
   const [exemptionType, setExemptionType] = useState<ExemptionType>("leave");
   const [reason, setReason] = useState("");
+  const validSelectedDates = useMemo(() => {
+    const available = new Set(availableDates);
+    return selectedDates.filter((date) => available.has(date));
+  }, [selectedDates, availableDates]);
 
-  // 可选日期：本月内、未提交、未豁免、未请假的日期
-  const availableDates = useMemo(() => {
-    const dates: string[] = [];
-    const todayDate = new Date(today);
-    const year = todayDate.getFullYear();
-    const month = todayDate.getMonth();
-
-    for (let day = 1; day <= todayDate.getDate(); day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split("T")[0];
-
-      // 排除已提交、已豁免、已请假的日期
-      if (
-        !submittedDates.includes(dateStr) &&
-        !waiveDates.includes(dateStr) &&
-        !leaveDates.includes(dateStr)
-      ) {
-        dates.push(dateStr);
-      }
-    }
-
-    return dates;
-  }, [today, submittedDates, waiveDates, leaveDates]);
+  // 异步活动数据到达后，清除已经变成不可申请的本地选择。
+  useEffect(() => {
+    const available = new Set(availableDates);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 活动数据异步到达后必须回写失效选择。
+    setSelectedDates((current) => {
+      const next = current.filter((date) => available.has(date));
+      return next.length === current.length ? current : next;
+    });
+  }, [availableDates]);
 
   // 切换日期选择
-  const toggleDate = useCallback((date: string) => {
-    setSelectedDates((prev) =>
-      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
-    );
-  }, []);
+  const toggleDate = useCallback(
+    (date: string) => {
+      setSelectedDates((prev) => {
+        if (prev.includes(date)) return prev.filter((d) => d !== date);
+        if (!availableDates.includes(date)) return prev;
+        return [...prev, date].sort();
+      });
+    },
+    [availableDates],
+  );
 
   // 快捷操作：一键全选近 7 天
   const selectRecentSevenDays = useCallback(() => {
-    const todayDate = new Date(today);
     const recentDates: string[] = [];
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(todayDate);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = addShanghaiDateOnly(today, -i);
 
       if (availableDates.includes(dateStr)) {
         recentDates.push(dateStr);
@@ -87,18 +188,18 @@ export function useExemptionCalendar(options: ExemptionCalendarOptions) {
 
   // 验证
   const isValid = useMemo(() => {
-    return selectedDates.length > 0 && reason.trim().length > 0;
-  }, [selectedDates, reason]);
+    return validSelectedDates.length > 0 && reason.trim().length > 0;
+  }, [validSelectedDates, reason]);
 
   // 重置状态
   const reset = useCallback(() => {
-    setSelectedDates(initialDates);
+    setSelectedDates(initialDates.filter((date) => availableDates.includes(date)));
     setExemptionType("leave");
     setReason("");
-  }, [initialDates]);
+  }, [initialDates, availableDates]);
 
   return {
-    selectedDates,
+    selectedDates: validSelectedDates,
     exemptionType,
     reason,
     availableDates,

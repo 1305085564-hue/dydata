@@ -14,8 +14,19 @@ type QueryCall = {
   limitCount: number | null;
 };
 
-function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; error: { message: string } | null }>> = {}) {
+type MockResponse = { data: unknown; error: { message: string } | null };
+
+type MockOptions = {
+  accountResponses?: MockResponse[];
+  reviewNotice?: unknown;
+};
+
+function createSupabaseMock(
+  overrides: Partial<Record<string, MockResponse>> = {},
+  options: MockOptions = {},
+) {
   const calls: QueryCall[] = [];
+  let accountQueryIndex = 0;
 
   function resolve(call: QueryCall) {
     if (overrides[call.table]) {
@@ -23,6 +34,9 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
     }
 
     if (call.table === "accounts") {
+      const customResponse = options.accountResponses?.[accountQueryIndex];
+      accountQueryIndex += 1;
+      if (customResponse) return customResponse;
       return {
         data: [{ id: "account-1", name: "账号A", content_direction: "口播" }],
         error: null,
@@ -53,6 +67,33 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
           { report_date: "2026-05-02" },
           { report_date: null },
         ],
+        error: null,
+      };
+    }
+
+    if (call.table === "daily_reports" && call.gteFilters.length > 0) {
+      const latestReport = {
+        id: "report-1",
+        account_id: "account-1",
+        title: "作品",
+        report_date: "2026-05-02",
+        play_count: 100,
+        completion_rate: null,
+        avg_play_duration: null,
+        bounce_rate_2s: null,
+        completion_rate_5s: null,
+        likes: 1,
+        comments: 2,
+        shares: 3,
+        favorites: 4,
+        follower_gain: 5,
+        follower_convert: null,
+        content: null,
+        published_at: null,
+        uploaded_at: "2026-05-02T01:00:00Z",
+      };
+      return {
+        data: [latestReport, { ...latestReport, id: "report-0", report_date: "2026-05-01" }],
         error: null,
       };
     }
@@ -91,6 +132,10 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
 
     if (call.table === "exemption_request" && call.columns === "id") {
       return { data: [], error: null };
+    }
+
+    if (call.table === "exemption_request" && call.columns.startsWith("id, request_status")) {
+      return { data: options.reviewNotice ?? null, error: null };
     }
 
     if (call.table === "exemption_request") {
@@ -160,6 +205,9 @@ function createSupabaseMock(overrides: Partial<Record<string, { data: unknown; e
 
           return chain;
         },
+        insert() {
+          return Promise.resolve({ data: [], error: null });
+        },
       };
     },
   };
@@ -213,4 +261,60 @@ test("loadDashboardPageData 会返回本月已提交日期并去重", async () =
   });
 
   assert.deepEqual(result.monthSubmittedDates, ["2026-05-01", "2026-05-02"]);
+});
+
+test("loadDashboardPageData 首屏会返回本月日报，而不是空 monthReports", async () => {
+  const supabase = createSupabaseMock();
+
+  const result = await loadDashboardPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+  });
+
+  assert.equal(result.monthReports.length, 2);
+  assert.equal(result.monthReports.find((report) => report.id === "report-1")?.report_date, "2026-05-02");
+});
+
+test("默认账号创建成功后，本次请求重新查询并返回新账号", async () => {
+  const supabase = createSupabaseMock({}, {
+    accountResponses: [
+      { data: [], error: null },
+      { data: [], error: null },
+      { data: [{ id: "account-created", name: "测试成员", content_direction: null }], error: null },
+    ],
+  });
+
+  const result = await loadDashboardPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+  });
+
+  assert.deepEqual(result.accountIds, ["account-created"]);
+  assert.equal(result.accounts[0]?.id, "account-created");
+});
+
+test("审批通过和拒绝通知都能到达首屏页面数据契约", async () => {
+  for (const requestStatus of ["approved", "rejected"] as const) {
+    const supabase = createSupabaseMock({}, {
+      reviewNotice: {
+        id: `request-${requestStatus}`,
+        request_status: requestStatus,
+        exemption_type: "temporary",
+        exemption_category: requestStatus === "approved" ? "waive" : "leave",
+        start_date: "2026-05-01",
+        end_date: "2026-05-01",
+        reason: "测试原因",
+        reviewed_at: "2026-05-02T01:00:00Z",
+        created_at: "2026-05-01T01:00:00Z",
+      },
+    });
+
+    const result = await loadDashboardPageData({
+      supabase: supabase as never,
+      userId: "user-1",
+    });
+
+    assert.equal(result.userExemptionReviewNotice?.id, `request-${requestStatus}`);
+    assert.equal(result.userExemptionReviewNotice?.request_status, requestStatus);
+  }
 });

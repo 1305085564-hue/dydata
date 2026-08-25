@@ -4,8 +4,6 @@ import assert from "node:assert/strict";
 import {
   getScreenshotTypeByAssetRole,
   getScreenshotTypeFallbackByAssetRole,
-  parseClassificationContent,
-  parseCurveContent,
   parseOcrResponse,
   parseRetentionContent,
   resolveKnownScreenshotType,
@@ -13,7 +11,7 @@ import {
 
 test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映射为 OCR 类型", () => {
   assert.equal(getScreenshotTypeByAssetRole("overview"), "data");
-  assert.equal(getScreenshotTypeByAssetRole("traffic_curve"), "curve");
+  assert.equal(getScreenshotTypeByAssetRole("traffic_curve"), null);
   assert.equal(getScreenshotTypeByAssetRole("retention_curve"), "retention");
   assert.equal(getScreenshotTypeByAssetRole("engagement_extra"), "data");
   assert.equal(getScreenshotTypeByAssetRole("other"), "data");
@@ -22,13 +20,13 @@ test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映
   assert.equal(getScreenshotTypeByAssetRole("unknown"), null);
 });
 
-test("AI 分类失败时按槽位做兜底，避免完播截图误跑互动 OCR", () => {
+test("截图类型由槽位直接决定，不再跑 AI 分类", () => {
   assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_1"), "data");
   assert.equal(getScreenshotTypeFallbackByAssetRole("screenshot_2"), "retention");
   assert.equal(getScreenshotTypeFallbackByAssetRole("unknown"), "data");
 });
 
-test("有截图槽位时先按槽位识别，避免每张图都额外跑 AI 分类", () => {
+test("有截图槽位时按槽位决定识别类型", () => {
   assert.deepEqual(
     resolveKnownScreenshotType({ screenshotType: null, assetRole: "screenshot_1" }),
     { type: "data", source: "asset_role" },
@@ -38,16 +36,27 @@ test("有截图槽位时先按槽位识别，避免每张图都额外跑 AI 分�
     { type: "retention", source: "asset_role" },
   );
   assert.deepEqual(
-    resolveKnownScreenshotType({ screenshotType: "curve", assetRole: "screenshot_1" }),
-    { type: "curve", source: "explicit" },
+    resolveKnownScreenshotType({ screenshotType: "data", assetRole: "screenshot_1" }),
+    { type: "data", source: "explicit" },
   );
   assert.equal(resolveKnownScreenshotType({ screenshotType: null, assetRole: null }), null);
 });
 
-test("自动分类识别截图类型", () => {
-  const result = parseClassificationContent('{"screenshot_type":"curve"}');
-
-  assert.equal(result, "curve");
+test("曲线形态识别已下线：curve 别名不再产出识别结果", () => {
+  assert.equal(
+    parseOcrResponse(
+      JSON.stringify({
+        recognized: true,
+        curve_pattern: "二次起量",
+        first_peak_position: "前段",
+        drop_severity: "medium",
+        tail_strength: "high",
+        confidence: 0.86,
+      }),
+      "traffic_curve"
+    ),
+    null
+  );
 });
 
 test("overview OCR 返回待确认结果结构", () => {
@@ -95,58 +104,37 @@ test("overview OCR 返回待确认结果结构", () => {
   });
 });
 
-test("推流曲线识别返回结构化字段", () => {
-  const result = parseCurveContent(
-    JSON.stringify({
-      recognized: true,
-      curve_pattern: "二次起量",
-      first_peak_position: "前段",
-      drop_severity: "medium",
-      tail_strength: "high",
-      confidence: 0.86,
-    })
-  );
-
-  assert.deepEqual(result, {
-    recognized: true,
-    curve_pattern: "二次起量",
-    first_peak_position: "前段",
-    drop_severity: "medium",
-    tail_strength: "high",
-    confidence: 0.86,
-  });
-});
-
-test("低置信曲线结果会标记待确认", () => {
+test("data OCR 忽略 AI 返回的 curve_info / retention_info", () => {
   const result = parseOcrResponse(
     JSON.stringify({
-      recognized: true,
-      curve_pattern: "二次起量",
-      first_peak_position: "前段",
-      drop_severity: "medium",
-      tail_strength: "high",
-      confidence: 0.68,
+      play_count: 1000,
+      likes: 10,
+      comments: null,
+      shares: null,
+      favorites: null,
+      follower_gain: null,
+      confidence: {
+        play_count: "high",
+        likes: "high",
+        comments: "low",
+        shares: "low",
+        favorites: "low",
+        follower_gain: "low",
+      },
+      curve_info: { curve_pattern: "二次起量" },
+      retention_info: { bounce_peak_time: "0-3秒" },
     }),
-    "traffic_curve"
+    "overview"
   );
 
-  assert.deepEqual(result, {
-    slot_status: "pending_confirm",
-    screenshot_type: "curve",
-    confidence_score: 0.68,
-    requires_manual_confirmation: true,
-    recognized_fields: {
-      recognized: true,
-      curve_pattern: "二次起量",
-      first_peak_position: "前段",
-      drop_severity: "medium",
-      tail_strength: "high",
-      confidence: 0.68,
-    },
+  assert.ok(result);
+  assert.deepEqual(result.recognized_fields, {
+    play_count: 1000,
+    likes: 10,
   });
 });
 
-test("跳出回看图识别返回 retention_metrics 和 retention_analysis", () => {
+test("跳出回看图只返回 retention_metrics 四个数字指标", () => {
   const result = parseRetentionContent(
     JSON.stringify({
       recognized: true,
@@ -159,10 +147,7 @@ test("跳出回看图识别返回 retention_metrics 和 retention_analysis", () 
       retention_analysis: {
         bounce_peak_time: "0-3秒",
         replay_peak_time: "12-15秒",
-        segment_summary: [
-          { segment: "0-5秒", performance: "跳出高" },
-          { segment: "10-15秒", performance: "回看明显" },
-        ],
+        segment_summary: [{ segment: "0-5秒", performance: "跳出高" }],
       },
       confidence: 0.78,
     })
@@ -175,14 +160,6 @@ test("跳出回看图识别返回 retention_metrics 和 retention_analysis", () 
       bounce_rate_2s: 41.2,
       completion_rate_5s: 32.8,
       completion_rate: 18.5,
-    },
-    retention_analysis: {
-      bounce_peak_time: "0-3秒",
-      replay_peak_time: "12-15秒",
-      segment_summary: [
-        { segment: "0-5秒", performance: "跳出高" },
-        { segment: "10-15秒", performance: "回看明显" },
-      ],
     },
     confidence: 0.78,
   });
@@ -197,11 +174,6 @@ test("retention 部分识别也返回待确认结果", () => {
         bounce_rate_2s: "41.2%",
         completion_rate_5s: null,
         completion_rate: "18.5%",
-      },
-      retention_analysis: {
-        bounce_peak_time: null,
-        replay_peak_time: "12-15秒",
-        segment_summary: [{ segment: "10-15秒", performance: "回看明显" }],
       },
       confidence: 0.69,
     }),
@@ -220,11 +192,6 @@ test("retention 部分识别也返回待确认结果", () => {
         bounce_rate_2s: 41.2,
         completion_rate_5s: null,
         completion_rate: 18.5,
-      },
-      retention_analysis: {
-        bounce_peak_time: null,
-        replay_peak_time: "12-15秒",
-        segment_summary: [{ segment: "10-15秒", performance: "回看明显" }],
       },
       confidence: 0.69,
     },
@@ -248,36 +215,5 @@ test("识别失败时返回 failed 槽位状态", () => {
     error_code: "LOW_CONFIDENCE",
     error: "图片不清晰",
     recognized_fields: null,
-  });
-});
-
-test("retention 识别：AI 没返回 segment_summary 也能成功", () => {
-  const result = parseRetentionContent(
-    JSON.stringify({
-      recognized: true,
-      retention_metrics: {
-        avg_play_duration: "23.6秒",
-        bounce_rate_2s: "41.2%",
-        completion_rate_5s: null,
-        completion_rate: "18.5%",
-      },
-      confidence: 0.8,
-    })
-  );
-
-  assert.deepEqual(result, {
-    recognized: true,
-    retention_metrics: {
-      avg_play_duration: 23.6,
-      bounce_rate_2s: 41.2,
-      completion_rate_5s: null,
-      completion_rate: 18.5,
-    },
-    retention_analysis: {
-      bounce_peak_time: null,
-      replay_peak_time: null,
-      segment_summary: [],
-    },
-    confidence: 0.8,
   });
 });
