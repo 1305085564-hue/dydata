@@ -2,75 +2,42 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AiChannelError, callAi } from "@/lib/ai/client";
-import type { AiMessage, AiResponse } from "@/lib/ai/client";
+import type { AiMessage } from "@/lib/ai/client";
 import { validateOcrStorageReference } from "./input";
 import { detectImageMimeType, hasMatchingImageSignature } from "@/lib/file-signatures";
 import { logApiRequest, resolveRequestId } from "@/lib/api-logger";
+import { runBaiduOcrAttempt, mapBaiduErrorToOcrCode } from "./baidu-channel";
+import { resolveOcrScreenshotChannel, type OcrScreenshotChannel } from "./channel-config";
 
-type ConfidenceLevel = "high" | "medium" | "low";
-type ScreenshotType = "data" | "retention";
-type ScreenshotTypeSource = "explicit" | "asset_role" | "asset_role_fallback";
-export type OcrErrorCode =
-  | "RATE_LIMITED"
-  | "AI_TIMEOUT"
-  | "AI_CHANNEL_UNAVAILABLE"
-  | "AI_EMPTY_RESPONSE"
-  | "AI_PARSE_FAILED"
-  | "LOW_CONFIDENCE"
-  | "STORAGE_READ_FAILED";
-type ScreenshotTypeInput =
-  | ScreenshotType
-  | "overview"
-  | "traffic_curve"
-  | "retention_curve"
-  | "engagement_extra"
-  | "other"
-  | ScreenshotAssetRole;
-export type ScreenshotAssetRole = "screenshot_1" | "screenshot_2";
+// 输出契约与解析函数已抽到 ocr-contract.ts，这里统一再导出保持既有导入路径兼容
+export {
+  getScreenshotTypeByAssetRole,
+  getScreenshotTypeFallbackByAssetRole,
+  parseOcrResponse,
+  parseRetentionContent,
+  resolveKnownScreenshotType,
+} from "./ocr-contract";
+export type {
+  ConfidenceLevel,
+  OcrErrorCode,
+  ParsedScreenshotResponse,
+  RetentionMetrics,
+  ScreenshotType,
+} from "./ocr-contract";
 
-type OcrFieldKey =
-  | "play_count"
-  | "likes"
-  | "comments"
-  | "shares"
-  | "favorites"
-  | "follower_gain";
+import {
+  getScreenshotTypeFallbackByAssetRole,
+  parseOcrResponse,
+  resolveKnownScreenshotType,
+} from "./ocr-contract";
+import type {
+  OcrErrorCode,
+  ParsedScreenshotResponse,
+  ScreenshotType,
+  ScreenshotAssetRole,
+} from "./ocr-contract";
 
-type ParsedOcrResult = {
-  play_count: number | null;
-  likes: number | null;
-  comments: number | null;
-  shares: number | null;
-  favorites: number | null;
-  follower_gain: number | null;
-  confidence: Record<OcrFieldKey, ConfidenceLevel>;
-};
-
-type RetentionMetrics = {
-  avg_play_duration: number | null;
-  bounce_rate_2s: number | null;
-  completion_rate_5s: number | null;
-  completion_rate: number | null;
-};
-
-type RetentionRecognitionResult =
-  | {
-      recognized: true;
-      retention_metrics: RetentionMetrics;
-      confidence: number | null;
-    }
-  | {
-      recognized: false;
-      reason: string;
-    };
-
-type OpenAICompatibleMessageContentBlock = {
-  type?: string;
-  text?: string;
-};
-
-type JsonValue = string | number | boolean | null | JsonObject | JsonValue[];
-type JsonObject = { [key: string]: JsonValue };
+export type { OcrScreenshotChannel };
 
 type ImagePayloadSuccess = {
   dataUrl: string;
@@ -83,6 +50,7 @@ type ResolvedScreenshotType = {
   type: ScreenshotType;
   source: ScreenshotTypeSource;
 };
+type ScreenshotTypeSource = "explicit" | "asset_role" | "asset_role_fallback";
 
 type ImagePayloadError = {
   error: string;
@@ -90,34 +58,17 @@ type ImagePayloadError = {
   status?: number;
 };
 
-export type ParsedScreenshotResponse = {
-  slot_status: "pending_confirm" | "confirmed" | "failed";
-  screenshot_type: ScreenshotType;
-  confidence_score: number;
-  requires_manual_confirmation: boolean;
-  recognized_fields: JsonObject | null;
-  confidence?: Record<OcrFieldKey, ConfidenceLevel>;
-  error_code?: OcrErrorCode;
-  error?: string;
-};
-
 type OcrTimings = {
   download_ms?: number;
   ocr_ms?: number;
+  baidu_ms?: number;
+  structure_ms?: number;
   parse_ms?: number;
   total_ms: number;
 };
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const OCR_FIELDS: OcrFieldKey[] = [
-  "play_count",
-  "likes",
-  "comments",
-  "shares",
-  "favorites",
-  "follower_gain",
-];
 const SCREENSHOT_TYPES: ScreenshotType[] = ["data", "retention"];
 
 function getOcrErrorMessage(errorCode: OcrErrorCode) {
@@ -152,11 +103,11 @@ function getAiErrorCode(error: unknown): OcrErrorCode {
   return "AI_CHANNEL_UNAVAILABLE";
 }
 
-async function runOcrAttempt(
+async function runVisionOcrAttempt(
   dataUrl: string,
   screenshotType: ScreenshotType,
   timings: Partial<OcrTimings>,
-): Promise<{ parsed: ParsedScreenshotResponse | null; aiResult: AiResponse }> {
+): Promise<OcrAttempt> {
   const messages: AiMessage[] = [{
     role: "user",
     content: [
@@ -180,8 +131,14 @@ async function runOcrAttempt(
   const parsed = parseOcrResponse(aiResult.content, screenshotType);
   timings.parse_ms = (timings.parse_ms ?? 0) + Date.now() - parseStart;
 
-  return { parsed, aiResult };
+  return { parsed, channelName: "vision", model: aiResult.model };
 }
+
+type OcrAttempt = {
+  parsed: ParsedScreenshotResponse | null;
+  channelName: string;
+  model: string | null;
+};
 
 export async function POST(request: NextRequest) {
   const requestId = resolveRequestId(request);
@@ -192,6 +149,7 @@ export async function POST(request: NextRequest) {
     assetRole?: ScreenshotAssetRole | null;
     screenshotType?: ScreenshotType | null;
     screenshotTypeSource?: ScreenshotTypeSource | null;
+    ocrChannel?: OcrScreenshotChannel | null;
     aiChannel?: string | null;
     aiModel?: string | null;
   } = {};
@@ -218,6 +176,7 @@ export async function POST(request: NextRequest) {
         screenshot_type_source: logContext.screenshotTypeSource ?? null,
         error_code: errorCode ?? null,
         timings,
+        channel: logContext.ocrChannel ?? null,
         ai_channel: logContext.aiChannel ?? null,
         ai_model: logContext.aiModel ?? null,
       },
@@ -268,13 +227,19 @@ export async function POST(request: NextRequest) {
       screenshotTypeSource: resolvedScreenshotType.source,
     };
 
+    const ocrChannel = await resolveOcrScreenshotChannel();
+    logContext = { ...logContext, ocrChannel };
+
     try {
-      const attempt = await runOcrAttempt(dataUrl, screenshotType, timings);
+      const attempt =
+        ocrChannel === "baidu"
+          ? await runBaiduOcrAttempt({ dataUrl, screenshotType, timings })
+          : await runVisionOcrAttempt(dataUrl, screenshotType, timings);
       const parsed = attempt.parsed;
       logContext = {
         ...logContext,
-        aiChannel: attempt.aiResult.channelName,
-        aiModel: attempt.aiResult.model,
+        aiChannel: attempt.channelName,
+        aiModel: attempt.model,
       };
 
       if (!parsed) {
@@ -320,7 +285,7 @@ export async function POST(request: NextRequest) {
         user.id,
       );
     } catch (error) {
-      const errorCode = getAiErrorCode(error);
+      const errorCode = mapBaiduErrorToOcrCode(error) ?? getAiErrorCode(error);
       return finish(
         {
           error: getOcrErrorMessage(errorCode),
@@ -499,24 +464,6 @@ function resolveScreenshotType(imagePayload: ImagePayloadSuccess): ResolvedScree
   };
 }
 
-export function resolveKnownScreenshotType(input: {
-  screenshotType: ScreenshotType | null;
-  assetRole: ScreenshotAssetRole | null;
-}): ResolvedScreenshotType | null {
-  if (input.screenshotType) {
-    return { type: input.screenshotType, source: "explicit" };
-  }
-
-  if (input.assetRole) {
-    return {
-      type: getScreenshotTypeFallbackByAssetRole(input.assetRole),
-      source: "asset_role",
-    };
-  }
-
-  return null;
-}
-
 function buildPromptByType(type: ScreenshotType): string {
   if (type === "retention") {
     return buildRetentionPrompt();
@@ -580,283 +527,6 @@ function buildRetentionPrompt(): string {
   ].join("\n");
 }
 
-function normalizeScreenshotTypeInput(value: unknown): ScreenshotType | null {
-  switch (value) {
-    case "overview":
-    case "engagement_extra":
-    case "other":
-    case "data":
-      return "data";
-    case "retention_curve":
-    case "retention":
-      return "retention";
-    // curve / traffic_curve 类型识别已下线，不再映射为任何识别类型。
-    // screenshot_1 / screenshot_2 由 getScreenshotTypeFallbackByAssetRole 按槽位决定类型。
-    default:
-      return null;
-  }
-}
-
-export function parseOcrResponse(
-  content: unknown,
-  screenshotType: ScreenshotTypeInput
-): ParsedScreenshotResponse | null {
-  const normalizedType = normalizeScreenshotTypeInput(screenshotType);
-  if (!normalizedType) {
-    return null;
-  }
-
-  if (normalizedType === "retention") {
-    const parsed = parseRetentionContent(content);
-    if (!parsed) {
-      return null;
-    }
-
-    if (!parsed.recognized) {
-      return {
-        slot_status: "failed",
-        screenshot_type: normalizedType,
-        confidence_score: 0,
-        requires_manual_confirmation: true,
-        error_code: "LOW_CONFIDENCE",
-        error: parsed.reason,
-        recognized_fields: null,
-      };
-    }
-
-    const confidenceScore = parsed.confidence ?? 0;
-    return {
-      slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-      screenshot_type: normalizedType,
-      confidence_score: confidenceScore,
-      requires_manual_confirmation: confidenceScore < 0.7,
-      recognized_fields: {
-        recognized: true,
-        retention_metrics: parsed.retention_metrics,
-        confidence: parsed.confidence,
-      } as unknown as JsonObject,
-    };
-  }
-
-  const parsed = parseOcrContent(content);
-  if (!parsed) {
-    return null;
-  }
-
-  const recognizedFields = Object.fromEntries(
-    OCR_FIELDS.filter((field) => parsed[field] !== null).map((field) => [field, parsed[field]])
-  ) as JsonObject;
-
-  const hasAnyValue = OCR_FIELDS.some((field) => parsed[field] !== null);
-  if (!hasAnyValue) {
-    return {
-      slot_status: "failed",
-      screenshot_type: normalizedType,
-      confidence_score: 0,
-      requires_manual_confirmation: true,
-      error_code: "LOW_CONFIDENCE",
-      error: "图片不清晰或未识别到数据",
-      recognized_fields: null,
-    };
-  }
-
-  const confidenceScore = getConfidenceScore(parsed.confidence);
-
-  return {
-    slot_status: confidenceScore < 0.7 ? "pending_confirm" : "confirmed",
-    screenshot_type: normalizedType,
-    confidence_score: confidenceScore,
-    requires_manual_confirmation: confidenceScore < 0.7,
-    recognized_fields: recognizedFields,
-    confidence: parsed.confidence,
-  };
-}
-
-function parseOcrContent(content: unknown): ParsedOcrResult | null {
-  const normalizedContent = normalizeMessageContent(content);
-  if (!normalizedContent) {
-    return null;
-  }
-
-  const jsonText = extractJson(normalizedContent);
-  if (!jsonText) {
-    return null;
-  }
-
-  try {
-    const raw = JSON.parse(jsonText) as Partial<ParsedOcrResult> & {
-      confidence?: Partial<Record<OcrFieldKey, ConfidenceLevel>>;
-    };
-
-    const normalized: ParsedOcrResult = {
-      play_count: normalizeNumber(raw.play_count, true),
-      likes: normalizeNumber(raw.likes),
-      comments: normalizeNumber(raw.comments),
-      shares: normalizeNumber(raw.shares),
-      favorites: normalizeNumber(raw.favorites),
-      follower_gain: normalizeNumber(raw.follower_gain),
-      confidence: {
-        play_count: normalizeConfidence(raw.confidence?.play_count),
-        likes: normalizeConfidence(raw.confidence?.likes),
-        comments: normalizeConfidence(raw.confidence?.comments),
-        shares: normalizeConfidence(raw.confidence?.shares),
-        favorites: normalizeConfidence(raw.confidence?.favorites),
-        follower_gain: normalizeConfidence(raw.confidence?.follower_gain),
-      },
-    };
-
-    return normalized;
-  } catch {
-    return null;
-  }
-}
-
-export function parseRetentionContent(content: unknown): RetentionRecognitionResult | null {
-  const normalizedContent = normalizeMessageContent(content);
-  if (!normalizedContent) {
-    return null;
-  }
-
-  const jsonText = extractJson(normalizedContent);
-  if (!jsonText) {
-    return null;
-  }
-
-  try {
-    const raw = JSON.parse(jsonText) as {
-      recognized?: unknown;
-      reason?: unknown;
-      retention_metrics?: {
-        avg_play_duration?: unknown;
-        bounce_rate_2s?: unknown;
-        completion_rate_5s?: unknown;
-        completion_rate?: unknown;
-      };
-      confidence?: unknown;
-    };
-
-    if (raw.recognized === false) {
-      const reason = normalizeReason(raw.reason);
-      return reason ? { recognized: false, reason } : null;
-    }
-
-    const retentionMetrics: RetentionMetrics = {
-      avg_play_duration: normalizeMetricNumber(raw.retention_metrics?.avg_play_duration),
-      bounce_rate_2s: normalizeMetricNumber(raw.retention_metrics?.bounce_rate_2s),
-      completion_rate_5s: normalizeMetricNumber(raw.retention_metrics?.completion_rate_5s),
-      completion_rate: normalizeMetricNumber(raw.retention_metrics?.completion_rate),
-    };
-
-    const hasAnyMetric = Object.values(retentionMetrics).some((value) => value !== null);
-    if (!hasAnyMetric) {
-      return null;
-    }
-
-    return {
-      recognized: true,
-      retention_metrics: retentionMetrics,
-      confidence: normalizeScore(raw.confidence),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function normalizeMessageContent(content: unknown): string | null {
-  if (typeof content === "string" && content.trim()) {
-    return content;
-  }
-
-  if (Array.isArray(content)) {
-    const text = (content as OpenAICompatibleMessageContentBlock[])
-      .filter((item) => item?.type === "text" && typeof item.text === "string")
-      .map((item) => item.text?.trim() || "")
-      .filter(Boolean)
-      .join("\n");
-
-    return text || null;
-  }
-
-  return null;
-}
-
-function extractJson(content: string): string | null {
-  const start = content.indexOf("{");
-  const end = content.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    return null;
-  }
-  return content.slice(start, end + 1);
-}
-
-function normalizeNumber(value: unknown, allowDecimal = false): number | null {
-  if (value == null || value === "") {
-    return null;
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value)
-      ? allowDecimal
-        ? Math.round(value * 100) / 100
-        : Math.round(value)
-      : null;
-  }
-
-  if (typeof value === "string") {
-    const hasWan = /万$/.test(value);
-    const normalized = value.replace(/[,%\s]/g, "").replace(/万$/, "");
-    if (!normalized) {
-      return null;
-    }
-    let parsed = Number(normalized);
-    if (!Number.isFinite(parsed)) {
-      return null;
-    }
-    if (hasWan) parsed *= 10000;
-    return allowDecimal ? Math.round(parsed * 100) / 100 : Math.round(parsed);
-  }
-
-  return null;
-}
-
-function normalizeMetricNumber(value: unknown): number | null {
-  if (typeof value === "string") {
-    return normalizeNumber(value.replace(/[秒sS]/g, ""), true);
-  }
-
-  return normalizeNumber(value, true);
-}
-
-function getConfidenceScore(confidence: Record<OcrFieldKey, ConfidenceLevel>) {
-  const scoreMap: Record<ConfidenceLevel, number> = {
-    high: 1,
-    medium: 0.5,
-    low: 0,
-  };
-
-  const total = OCR_FIELDS.reduce((sum, field) => sum + scoreMap[confidence[field]], 0);
-  return Math.round((total / OCR_FIELDS.length) * 100) / 100;
-}
-
-function normalizeConfidence(value: unknown): ConfidenceLevel {
-  if (value === "high" || value === "medium" || value === "low") {
-    return value;
-  }
-  return "low";
-}
-
-export function getScreenshotTypeByAssetRole(assetRole: unknown): ScreenshotType | null {
-  return normalizeScreenshotTypeInput(assetRole);
-}
-
-export function getScreenshotTypeFallbackByAssetRole(assetRole: unknown): ScreenshotType {
-  if (assetRole === "screenshot_2") {
-    return "retention";
-  }
-
-  return "data";
-}
-
 function normalizeScreenshotType(value: unknown): ScreenshotType | null {
   return typeof value === "string" && SCREENSHOT_TYPES.includes(value as ScreenshotType)
     ? (value as ScreenshotType)
@@ -865,16 +535,4 @@ function normalizeScreenshotType(value: unknown): ScreenshotType | null {
 
 function normalizeAssetRole(value: unknown): ScreenshotAssetRole | null {
   return value === "screenshot_1" || value === "screenshot_2" ? value : null;
-}
-
-function normalizeScore(value: unknown): number | null {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return null;
-  }
-
-  return Math.max(0, Math.min(1, Math.round(value * 100) / 100));
-}
-
-function normalizeReason(value: unknown): string | null {
-  return typeof value === "string" && value.trim() ? value.trim() : null;
 }

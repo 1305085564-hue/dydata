@@ -21,11 +21,13 @@ export function BindingDialog({
 }) {
   const { bundle } = useAiConfig();
   const [providerKeyModelId, setProviderKeyModelId] = useState<string | null>(null);
+  const [ocrChannel, setOcrChannel] = useState<"baidu" | "vision">("baidu");
   const [isEnabled, setIsEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setProviderKeyModelId(control?.providerKeyModelId ?? null);
+    setOcrChannel(control?.key === "ocr_screenshot" ? (control?.ocrChannel ?? "baidu") : "baidu");
     setIsEnabled(control?.isEnabled ?? true);
   }, [control, open]);
 
@@ -40,6 +42,9 @@ export function BindingDialog({
         output_token_limit: control.outputTokenLimit,
         context_message_limit: control.contextMessageLimit,
         is_enabled: isEnabled,
+        ...(control.key === "ocr_screenshot"
+          ? { ocr_screenshot_channel: ocrChannel }
+          : {}),
       });
       if (saved) onOpenChange(false);
     } finally {
@@ -57,7 +62,31 @@ export function BindingDialog({
           <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
           {control?.key === "ocr_screenshot" && (
             <div className="rounded-lg border border-[#D99E55]/35 bg-[#FFF8ED] px-3 py-2.5 text-[12px] leading-5 text-[#8A5A22]">
-              截图识别必须绑定已通过 OCR 图片测试的视觉模型；如果模型只支持文本，首页上传会返回空结果或识别失败。
+              「看图回退」通道必须绑定支持图片输入的视觉模型；如果模型只支持文本，切回视觉通道后首页上传会识别失败。
+            </div>
+          )}
+          {control?.key === "ocr_screenshot_structure" && (
+            <div className="rounded-lg border border-[#43718E]/30 bg-[#F0F5F8] px-3 py-2.5 text-[12px] leading-5 text-[#2E5876]">
+              「文字结构化」只接收 OCR 提取的文字行，绑定文本模型即可，无需图片能力。
+            </div>
+          )}
+          {control?.key === "ocr_screenshot" && (
+            <div className="space-y-2">
+              <Label htmlFor="binding-ocr-channel">识别通道</Label>
+              <select
+                id="binding-ocr-channel"
+                className="h-9 w-full rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
+                value={ocrChannel}
+                onChange={(event) =>
+                  setOcrChannel(event.target.value === "vision" ? "vision" : "baidu")
+                }
+              >
+                <option value="baidu">百度 OCR（默认）</option>
+                <option value="vision">视觉模型（旧通道回退）</option>
+              </select>
+              <p className="text-[12px] text-[#78716C]">
+                切换保存后立即生效，无需发版；百度通道故障时可一键切回视觉模型。
+              </p>
             </div>
           )}
           <div className="space-y-2">

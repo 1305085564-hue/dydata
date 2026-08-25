@@ -38,16 +38,16 @@ test("恢复功能同样走事务，并让数据库按最新快照还原此前�
   };
 
   await changeAiFeatureLifecycle(client, {
-    featureKey: "ocr_screenshot",
-    label: "截图识别",
+    featureKey: "ocr_screenshot_structure",
+    label: "截图识别·文字结构化",
     action: "restore",
   });
 
   assert.deepEqual(calls[0], {
     name: "manage_ai_feature_lifecycle",
     args: {
-      p_feature_key: "ocr_screenshot",
-      p_label: "截图识别",
+      p_feature_key: "ocr_screenshot_structure",
+      p_label: "截图识别·文字结构化",
       p_action: "restore",
     },
   });

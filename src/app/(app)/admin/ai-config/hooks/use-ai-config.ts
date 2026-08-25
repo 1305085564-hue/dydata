@@ -45,6 +45,7 @@ export type AiFeatureBinding = {
   system_prompt: string | null;
   output_token_limit: number;
   context_message_limit: number;
+  channel_settings?: Record<string, unknown> | null;
   is_enabled: boolean;
   lifecycle_state: "active" | "archived";
   archived_at: string | null;
@@ -62,6 +63,7 @@ export type AiFeatureControl = {
   systemPrompt: string | null;
   outputTokenLimit: number;
   contextMessageLimit: number;
+  ocrChannel: "baidu" | "vision";
   isEnabled: boolean;
   lifecycleState: "active" | "archived";
   archivedAt: string | null;

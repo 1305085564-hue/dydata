@@ -3,6 +3,10 @@ import {
   type AiFeatureGroup,
   type AiFeatureRouting,
 } from "@/lib/ai/feature-catalog";
+import {
+  parseOcrScreenshotChannel,
+  type OcrScreenshotChannel,
+} from "@/lib/ai-config/ocr-channel";
 
 export type AiFeatureBindingControlRow = {
   id: string;
@@ -11,6 +15,7 @@ export type AiFeatureBindingControlRow = {
   system_prompt: string | null;
   output_token_limit: number;
   context_message_limit: number;
+  channel_settings?: Record<string, unknown> | null;
   is_enabled: boolean;
   lifecycle_state: "active" | "archived" | null;
   archived_at: string | null;
@@ -28,6 +33,7 @@ export type AiFeatureControl = {
   systemPrompt: string | null;
   outputTokenLimit: number;
   contextMessageLimit: number;
+  ocrChannel: OcrScreenshotChannel;
   isEnabled: boolean;
   lifecycleState: "active" | "archived";
   archivedAt: string | null;
@@ -53,6 +59,10 @@ export function buildAiFeatureControls(rows: AiFeatureBindingControlRow[]): AiFe
       systemPrompt: binding?.system_prompt ?? null,
       outputTokenLimit: binding?.output_token_limit ?? 3600,
       contextMessageLimit: binding?.context_message_limit ?? 30,
+      ocrChannel:
+        entry.key === "ocr_screenshot"
+          ? parseOcrScreenshotChannel(binding)
+          : "baidu",
       isEnabled: archived ? false : (binding?.is_enabled ?? true),
       lifecycleState: archived ? "archived" : "active",
       archivedAt: binding?.archived_at ?? null,

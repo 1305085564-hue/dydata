@@ -8,6 +8,8 @@ import {
   parseRetentionContent,
   resolveKnownScreenshotType,
 } from "./route";
+import { resolveOcrScreenshotChannel } from "./channel-config";
+import { parseOcrScreenshotChannel } from "@/lib/ai-config/ocr-channel";
 
 test("asset_role 只保留旧类型别名映射，不再把截图槽位强制映射为 OCR 类型", () => {
   assert.equal(getScreenshotTypeByAssetRole("overview"), "data");
@@ -216,4 +218,28 @@ test("识别失败时返回 failed 槽位状态", () => {
     error: "图片不清晰",
     recognized_fields: null,
   });
+});
+
+test("通道开关解析：缺省、空配置、非法值都按百度兜底，只有显式 vision 才切回旧通道", () => {
+  assert.equal(parseOcrScreenshotChannel(null), "baidu");
+  assert.equal(parseOcrScreenshotChannel({ channel_settings: null }), "baidu");
+  assert.equal(parseOcrScreenshotChannel({ channel_settings: {} }), "baidu");
+  assert.equal(parseOcrScreenshotChannel({ channel_settings: { ocr_screenshot_channel: "baidu" } }), "baidu");
+  assert.equal(parseOcrScreenshotChannel({ channel_settings: { ocr_screenshot_channel: "chatgpt" } }), "baidu");
+  assert.equal(parseOcrScreenshotChannel({ channel_settings: { ocr_screenshot_channel: "vision" } }), "vision");
+});
+
+test("通道解析异步读真实配置，读取失败按百度兜底保证识别链路不断", async () => {
+  const vision = await resolveOcrScreenshotChannel(async () => ({
+    channel_settings: { ocr_screenshot_channel: "vision" },
+  }));
+  assert.equal(vision, "vision");
+
+  const fallbackOnMissing = await resolveOcrScreenshotChannel(async () => null);
+  assert.equal(fallbackOnMissing, "baidu");
+
+  const fallbackOnError = await resolveOcrScreenshotChannel(async () => {
+    throw new Error("数据库连接失败");
+  });
+  assert.equal(fallbackOnError, "baidu");
 });

@@ -531,7 +531,7 @@ export default function BindingsClient() {
                         <span className="font-medium text-[#1C1917]">
                           {control.label}
                         </span>
-                        {control.key === "ocr_screenshot" && (
+                        {(control.key === "ocr_screenshot" || control.key === "ocr_screenshot_structure") && (
                           <Badge
                             variant="secondary"
                             className="bg-[#F5F3EE] text-[#292524] text-[10px] h-4.5 px-1.5 font-normal"
@@ -963,12 +963,12 @@ export default function BindingsClient() {
       <ConfirmDialog
         open={!!archiveControl}
         title={
-          archiveControl?.key === "ocr_screenshot"
+          archiveControl?.key === "ocr_screenshot" || archiveControl?.key === "ocr_screenshot_structure"
             ? `停止使用 ${archiveControl?.label}（警告：首页核心功能）`
             : `停止使用${archiveControl?.label ?? "该功能"}`
         }
         description={
-          archiveControl?.key === "ocr_screenshot"
+          archiveControl?.key === "ocr_screenshot" || archiveControl?.key === "ocr_screenshot_structure"
             ? "警告：截图识别是首页日报填报的核心依赖。停止使用后，用户在首页将无法自动解析上传的截图图片。确认要停止该功能吗？"
             : "系统会保存当前模型映射和历史设置，并阻止前台发起该 AI 功能请求。恢复前不会删除任何配置。"
         }

@@ -213,7 +213,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
     supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, created_at").order("created_at", { ascending: true }),
-    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, system_prompt, output_token_limit, context_message_limit, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
+    supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
     supabase.from("rewrite_model_views").select("id, key, label, description, sort_order, is_enabled, is_default, created_at, updated_at").order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
     supabase.from("rewrite_model_routes").select("id, model_view_id, workflow_step_id, channel_id, provider_key_model_id, actual_model, priority, weight, is_enabled, created_at, updated_at").order("priority", { ascending: true }).order("weight", { ascending: false }).order("created_at", { ascending: true }),
   ]);
@@ -308,9 +308,13 @@ function requireManageableBusinessFeature(data: Record<string, unknown>) {
   return feature;
 }
 
+function parseOcrChannelSetting(value: unknown): "baidu" | "vision" {
+  return value === "vision" ? "vision" : "baidu";
+}
+
 async function saveFeatureControl(supabase: SupabaseClient, data: Record<string, unknown>) {
   const feature = requireManageableBusinessFeature(data);
-  const patch = {
+  const patch: Record<string, unknown> = {
     feature_key: feature.key,
     label: feature.label,
     provider_key_model_id: toNullableString(data.provider_key_model_id),
@@ -322,6 +326,11 @@ async function saveFeatureControl(supabase: SupabaseClient, data: Record<string,
     archived_at: null,
     archived_reason: null,
   };
+  if (feature.key === "ocr_screenshot") {
+    patch.channel_settings = {
+      ocr_screenshot_channel: parseOcrChannelSetting(data.ocr_screenshot_channel),
+    };
+  }
   const { error } = await supabase.from("ai_feature_bindings").upsert(patch, { onConflict: "feature_key" });
   if (error) throw new Error(error.message);
   return feature;
