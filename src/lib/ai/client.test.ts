@@ -23,6 +23,10 @@ class FakeQuery implements PromiseLike<{ data: unknown; error: { message: string
     return this;
   }
 
+  maybeSingle() {
+    return this.then((result) => ({ data: result.data ? [result.data].flat()[0] ?? null : null, error: null }));
+  }
+
   then<TResult1 = { data: unknown; error: { message: string } | null }, TResult2 = never>(
     onfulfilled?:
       | ((value: { data: unknown; error: { message: string } | null }) => TResult1 | PromiseLike<TResult1>)
@@ -278,6 +282,159 @@ test("正式功能被归档后会在运行时阻断，不会继续使用旧映�
       callAi({ featureKey: "content_analysis", messages: [{ role: "user", content: "hello" }] }),
       /该 AI 功能已归档/,
     );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+function makePkmRow(opts: {
+  id: string;
+  modelId: string;
+  keyPriority: number;
+  keyName: string;
+  providerPriority?: number;
+  modelName?: string;
+}) {
+  return {
+    id: opts.id,
+    model_id: opts.modelId,
+    is_enabled: true,
+    key: [
+      {
+        id: opts.keyName,
+        api_key: "sk-test",
+        is_enabled: true,
+        priority: opts.keyPriority,
+        consecutive_failures: 0,
+        unhealthy_until: null,
+        provider: [
+          {
+            id: "prov-1",
+            name: opts.modelName ?? "测试供应商",
+            base_url: "https://example.com",
+            priority: opts.providerPriority ?? 1,
+            is_enabled: true,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+test("场景绑定模型后，调用链是该模型在全部渠道的顺位（同模型跨渠道切换）", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      {
+        feature_key: "ocr_screenshot_structure",
+        provider_key_model_id: null,
+        model_id: "gemini-2.5-flash",
+        system_prompt: null,
+        is_enabled: true,
+      },
+      { feature_key: "default", provider_key_model_id: null, model_id: null, system_prompt: null, is_enabled: true },
+    ],
+    ai_provider_key_models: [
+      makePkmRow({ id: "pkm-gemini-b", modelId: "gemini-2.5-flash", keyPriority: 9, keyName: "keyB" }),
+      makePkmRow({ id: "pkm-gpt-a", modelId: "gpt-5.4-mini", keyPriority: 1, keyName: "keyA" }),
+      makePkmRow({ id: "pkm-gemini-a", modelId: "gemini-2.5-flash", keyPriority: 2, keyName: "keyA" }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot_structure");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+
+    assert.deepEqual(
+      chain.map((c) => c.providerKeyModelId),
+      ["pkm-gemini-a", "pkm-gemini-b"],
+    );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("场景未指定模型时，走全局默认模型的渠道顺位（最低优先级兜底）", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      {
+        feature_key: "content_analysis",
+        provider_key_model_id: null,
+        model_id: null,
+        system_prompt: null,
+        is_enabled: true,
+      },
+      {
+        feature_key: "default",
+        provider_key_model_id: null,
+        model_id: "gpt-5.6-luna",
+        system_prompt: null,
+        is_enabled: true,
+      },
+    ],
+    ai_provider_key_models: [
+      makePkmRow({ id: "pkm-luna-1", modelId: "gpt-5.6-luna", keyPriority: 1, keyName: "keyA" }),
+      makePkmRow({ id: "pkm-luna-2", modelId: "gpt-5.6-luna", keyPriority: 2, keyName: "keyA" }),
+      makePkmRow({ id: "pkm-mini-1", modelId: "gpt-5.4-mini", keyPriority: 1, keyName: "keyA" }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("content_analysis");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+
+    assert.deepEqual(
+      chain.map((c) => c.providerKeyModelId),
+      ["pkm-luna-1", "pkm-luna-2"],
+    );
+  } finally {
+    __internal.setServiceClientForTests(null);
+  }
+});
+
+test("旧组合绑定兼容：从组合推导模型后同样展开为该模型的跨渠道顺位", async () => {
+  const db: FakeDb = {
+    ai_feature_bindings: [
+      {
+        feature_key: "ocr_screenshot",
+        provider_key_model_id: "pkm-combo-old",
+        model_id: null,
+        system_prompt: null,
+        is_enabled: true,
+      },
+      { feature_key: "default", provider_key_model_id: null, model_id: null, system_prompt: null, is_enabled: true },
+    ],
+    ai_provider_key_models: [
+      {
+        id: "pkm-combo-old",
+        model_id: "gemini-2.5-flash",
+        is_enabled: true,
+        key: [
+          {
+            id: "keyC",
+            api_key: "sk-test",
+            is_enabled: true,
+            priority: 5,
+            consecutive_failures: 0,
+            unhealthy_until: null,
+            provider: [
+              { id: "prov-1", name: "api7", base_url: "https://example.com", priority: 1, is_enabled: true },
+            ],
+          },
+        ],
+      },
+      makePkmRow({ id: "pkm-gemini-fast", modelId: "gemini-2.5-flash", keyPriority: 3, keyName: "keyD" }),
+    ],
+  };
+  __internal.setServiceClientForTests(createFakeService(db));
+
+  try {
+    const config = await __internal.getFeatureConfigForTests("ocr_screenshot");
+    const chain = await __internal.resolveFeatureChannelChainForTests(config!);
+
+    assert.equal(chain.every((c) => c.model === "gemini-2.5-flash"), true);
+    assert.equal(chain.length, 2);
   } finally {
     __internal.setServiceClientForTests(null);
   }

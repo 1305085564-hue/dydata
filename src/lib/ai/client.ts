@@ -10,6 +10,7 @@ import {
   getProviderKeyModelConfig,
   listRankedProviderKeyModels,
   markProviderKeySuccess,
+  type ProviderKeyModelConfig,
 } from "./provider-routing";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
@@ -65,6 +66,7 @@ type ChannelConfig = {
 type FeatureConfig = {
   featureKey: string;
   providerKeyModelId: string | null;
+  modelId: string | null;
   systemPrompt: string | null;
   isEnabled: boolean;
   lifecycleState: "active" | "archived";
@@ -73,6 +75,7 @@ type FeatureConfig = {
 type AiFeatureBindingRow = {
   feature_key: string;
   provider_key_model_id: string | null;
+  model_id?: string | null;
   system_prompt: string | null;
   is_enabled: boolean;
   lifecycle_state?: "active" | "archived" | null;
@@ -162,6 +165,7 @@ function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
   return {
     featureKey: row.feature_key,
     providerKeyModelId: row.provider_key_model_id,
+    modelId: row.model_id ?? null,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
     lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
@@ -183,9 +187,16 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
     return null;
   }
 
-  const { data: bindingData, error: bindingError } = await supabase
+  // 优先读取 model_id（模型为主改造）；生产库尚未执行加列 migration 时降级为旧字段
+  let result = await supabase
     .from("ai_feature_bindings")
-    .select("feature_key, provider_key_model_id, system_prompt, is_enabled, lifecycle_state");
+    .select("feature_key, provider_key_model_id, model_id, system_prompt, is_enabled, lifecycle_state");
+  if (result.error) {
+    result = await supabase
+      .from("ai_feature_bindings")
+      .select("feature_key, provider_key_model_id, system_prompt, is_enabled, lifecycle_state");
+  }
+  const { data: bindingData, error: bindingError } = result;
 
   const configs = new Map<string, FeatureConfig>();
   if (!bindingError && bindingData?.length) {
@@ -203,33 +214,52 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
   return configs.get(featureKey) ?? null;
 }
 
-/** 场景路由解析出调用链：绑定了模型 → 只用绑定的；没绑定 → 按顺位返回全部健康候选 */
+/** 把顺位候选转成调用渠道 */
+function rankedCandidatesToChannels(
+  candidates: Array<{ providerKeyModelId: string; config: ProviderKeyModelConfig }>,
+): ChannelConfig[] {
+  return candidates.map((candidate) => ({
+    id: candidate.config.providerKeyModelId,
+    name: candidate.config.providerName,
+    baseUrl: candidate.config.baseUrl,
+    apiKey: candidate.config.apiKey,
+    model: candidate.config.modelId,
+    providerKeyModelId: candidate.config.providerKeyModelId,
+    providerKeyId: candidate.config.providerKeyId,
+    source: "provider_key_model" as const,
+  }));
+}
+
+/** 场景路由解析调用链（模型为主，渠道为辅）：
+ * 1) 场景指定了模型 → 该模型在所有渠道上的部署按 Key/供应商优先级排成顺位，同模型跨渠道自动切换；
+ *    model_id 为空时兼容从旧组合绑定推导出模型
+ * 2) 场景未指定 → 走「全局默认」（feature_key=default，最低优先级）的模型，同样跨渠道顺位
+ * 3) 指定/默认模型全部不健康或不存在 → 全量顺位最后兜底 */
 async function resolveFeatureChannelChain(
   featureConfig: FeatureConfig,
 ): Promise<ChannelConfig[]> {
-  if (featureConfig.providerKeyModelId) {
-    const pinned = await getProviderKeyModelChannel(featureConfig.providerKeyModelId);
-    return pinned ? [pinned] : [];
-  }
-
   const supabase = getServiceSupabaseClient();
   if (!supabase) return [];
 
-  const ranked = await listRankedProviderKeyModels(supabase, undefined);
-  const channels: ChannelConfig[] = [];
-  for (const candidate of ranked) {
-    channels.push({
-      id: candidate.config.providerKeyModelId,
-      name: candidate.config.providerName,
-      baseUrl: candidate.config.baseUrl,
-      apiKey: candidate.config.apiKey,
-      model: candidate.config.modelId,
-      providerKeyModelId: candidate.config.providerKeyModelId,
-      providerKeyId: candidate.config.providerKeyId,
-      source: "provider_key_model",
-    });
+  let modelId = featureConfig.modelId?.trim() || null;
+  if (!modelId && featureConfig.providerKeyModelId) {
+    const pinnedConfig = await getProviderKeyModelConfig(supabase, featureConfig.providerKeyModelId);
+    modelId = pinnedConfig?.modelId ?? null;
   }
-  return channels;
+  if (!modelId) {
+    const fallback = await getFeatureConfig("default");
+    modelId = fallback?.modelId?.trim() || null;
+  }
+
+  if (modelId) {
+    const forModel = await listRankedProviderKeyModels(supabase, modelId);
+    if (forModel.length > 0) {
+      return rankedCandidatesToChannels(forModel);
+    }
+  }
+
+  const allRanked = await listRankedProviderKeyModels(supabase, undefined);
+  return rankedCandidatesToChannels(allRanked);
 }
 
 async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<ChannelConfig | null> {
@@ -730,6 +760,7 @@ export const __internal = {
   normalizeResponseContent,
   describeMissingResponseContent,
   getFeatureConfigForTests: getFeatureConfig,
+  resolveFeatureChannelChainForTests: resolveFeatureChannelChain,
   parseChatCompletionSse,
   setServiceClientForTests(client: unknown) {
     _serviceClient = client;
