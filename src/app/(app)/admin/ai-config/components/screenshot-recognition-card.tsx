@@ -1,22 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Camera, Archive, ArchiveRestore } from "lucide-react";
 import { useAiConfig } from "../hooks/use-ai-config";
-import { buildModelDirectory } from "../model-directory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { ModelChainSelect } from "./model-chain-select";
 import { cn } from "@/lib/utils";
 
 type ChannelMode = "baidu" | "vision";
 
 /**
- * 截图识别合并卡片（视觉与交互打磨版）：
- * - 通道开关决定槽位显隐：百度 = 归位模型(structure) + 备用看图模型(ocr)；视觉 = 看图模型(ocr)
- * - 数据层仍是两个绑定行，界面合并；保存走现有 saveFeatureControl
+ * 截图识别通道控制卡片（上面管通道切换，下面表格管模型与运行开关）
  */
 export function ScreenshotRecognitionCard() {
   const {
@@ -26,46 +20,28 @@ export function ScreenshotRecognitionCard() {
     restoreFeature,
   } = useAiConfig();
 
-  const ocrControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
-  const structureControl = bundle?.featureControls.find((c) => c.key === "ocr_screenshot_structure") ?? null;
+  const ocrControl =
+    bundle?.featureControls.find((c) => c.key === "ocr_screenshot") ?? null;
 
   // 草稿状态：undefined = 未改动，跟随线上值
-  const [channelDraft, setChannelDraft] = useState<ChannelMode | undefined>(undefined);
-  const [ocrModelDraft, setOcrModelDraft] = useState<string | null | undefined>(undefined);
-  const [structureModelDraft, setStructureModelDraft] = useState<string | null | undefined>(undefined);
-  const [structureEnabledDraft, setStructureEnabledDraft] = useState<boolean | undefined>(undefined);
+  const [channelDraft, setChannelDraft] = useState<ChannelMode | undefined>(
+    undefined,
+  );
   const [saving, setSaving] = useState(false);
-
-  const modelDirectory = useMemo(() => (bundle ? buildModelDirectory(bundle) : []), [bundle]);
 
   if (!bundle || !ocrControl) return null;
 
   const channel: ChannelMode = channelDraft ?? ocrControl.ocrChannel;
-  const ocrModelId = ocrModelDraft !== undefined ? ocrModelDraft : ocrControl.modelId;
-  const structureModelId =
-    structureModelDraft !== undefined ? structureModelDraft : structureControl?.modelId ?? null;
-  const structureEnabled =
-    structureEnabledDraft !== undefined ? structureEnabledDraft : structureControl?.isEnabled ?? true;
-
   const dirty =
-    channelDraft !== undefined ||
-    ocrModelDraft !== undefined ||
-    structureModelDraft !== undefined ||
-    structureEnabledDraft !== undefined;
+    channelDraft !== undefined && channelDraft !== ocrControl.ocrChannel;
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const jobs: Array<Record<string, unknown>> = [];
-      if (
-        channelDraft !== undefined ||
-        ocrModelDraft !== undefined ||
-        channel !== ocrControl.ocrChannel ||
-        ocrModelId !== ocrControl.modelId
-      ) {
-        jobs.push({
+      if (channelDraft !== undefined) {
+        const ok = await saveFeatureControl({
           feature_key: "ocr_screenshot",
-          model_id: ocrModelId,
+          model_id: ocrControl.modelId,
           provider_key_model_id: ocrControl.providerKeyModelId,
           system_prompt: ocrControl.systemPrompt,
           output_token_limit: ocrControl.outputTokenLimit,
@@ -73,31 +49,9 @@ export function ScreenshotRecognitionCard() {
           is_enabled: ocrControl.isEnabled,
           ocr_screenshot_channel: channel,
         });
-      }
-      if (structureControl) {
-        const structureChanged =
-          structureModelDraft !== undefined ||
-          structureEnabledDraft !== undefined ||
-          structureModelId !== structureControl.modelId ||
-          structureEnabled !== structureControl.isEnabled;
-        if (structureChanged) {
-          jobs.push({
-            feature_key: "ocr_screenshot_structure",
-            model_id: structureModelId,
-            provider_key_model_id: structureControl.providerKeyModelId,
-            system_prompt: structureControl.systemPrompt,
-            output_token_limit: structureControl.outputTokenLimit,
-            context_message_limit: structureControl.contextMessageLimit,
-            is_enabled: structureEnabled,
-          });
+        if (ok) {
+          setChannelDraft(undefined);
         }
-      }
-      const results = await Promise.all(jobs.map((job) => saveFeatureControl(job)));
-      if (results.every(Boolean)) {
-        setChannelDraft(undefined);
-        setOcrModelDraft(undefined);
-        setStructureModelDraft(undefined);
-        setStructureEnabledDraft(undefined);
       }
     } finally {
       setSaving(false);
@@ -165,7 +119,7 @@ export function ScreenshotRecognitionCard() {
                 disabled={!dirty || saving}
                 onClick={handleSave}
               >
-                {saving ? "保存中…" : dirty ? "保存修改" : "已保存"}
+                {saving ? "保存中…" : dirty ? "保存通道" : "已保存"}
               </Button>
               <Button
                 variant="ghost"
@@ -182,17 +136,19 @@ export function ScreenshotRecognitionCard() {
         </div>
       </div>
 
-      {/* 识别通道切换分段器 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-[#FAF8F4]/80 border border-[#E5E0D6]/70">
+      {/* 识别通道切换 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
         <div className="space-y-0.5">
-          <div className="text-[13px] font-medium text-[#1C1917]">识别通道策略</div>
+          <div className="text-[13px] font-medium text-[#1C1917]">
+            识别通道策略
+          </div>
           <div className="text-[11px] text-[#78716C]">
             {channel === "baidu"
               ? "百度 OCR 提取文本 + 归位大模型清洗结构，兼顾高准确率与低成本"
               : "单视觉大模型（Vision）直接处理原图，无需第三方 OCR 接口"}
           </div>
         </div>
-        <div className="inline-flex p-0.5 rounded-lg bg-[#EAE5DC]/60 border border-[#E5E0D6]/80 shrink-0 select-none">
+        <div className="inline-flex p-0.5 rounded-lg bg-[#F5F3EE] border border-[#E5E0D6] shrink-0 select-none">
           {(
             [
               { value: "baidu", label: "百度 OCR + 归位" },
@@ -207,9 +163,9 @@ export function ScreenshotRecognitionCard() {
                 aria-pressed={active}
                 onClick={() => setChannelDraft(option.value)}
                 className={cn(
-                  "h-7 px-3 rounded-md text-[12px] transition-all cursor-pointer",
+                  "h-7.5 px-3.5 rounded-md text-[12px] transition-all cursor-pointer",
                   active
-                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#E5E0D6]/60"
+                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#E5E0D6]/80"
                     : "text-[#78716C] hover:text-[#1C1917]",
                 )}
               >
@@ -219,92 +175,6 @@ export function ScreenshotRecognitionCard() {
           })}
         </div>
       </div>
-
-      {/* 槽位排布 */}
-      {channel === "baidu" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          {structureControl && (
-            <div className="rounded-xl border border-[#E5E0D6]/80 bg-[#FAF8F4]/30 p-3 space-y-2 flex flex-col justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="screenshot-structure-model"
-                    className="text-[13px] font-medium text-[#1C1917]"
-                  >
-                    归位模型 (Structure)
-                  </Label>
-                  <span className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
-                    允许使用
-                    <Switch
-                      aria-label="启用文字结构化"
-                      checked={structureEnabled}
-                      onCheckedChange={(checked) => setStructureEnabledDraft(checked)}
-                    />
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#78716C] leading-normal">
-                  百度提字后，由它负责将无序文字精准填入对应数据字段。
-                </p>
-              </div>
-              <ModelChainSelect
-                modelDirectory={modelDirectory}
-                value={structureModelId}
-                onChange={setStructureModelDraft}
-                id="screenshot-structure-model"
-              />
-            </div>
-          )}
-          <div className="rounded-xl border border-[#E5E0D6]/80 bg-[#FAF8F4]/30 p-3 space-y-2 flex flex-col justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <Label
-                  htmlFor="screenshot-ocr-model"
-                  className="text-[13px] font-medium text-[#1C1917]"
-                >
-                  备用看图模型 (Vision Fallback)
-                </Label>
-                <span className="text-[10px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded border border-[#E5E0D6]/60">
-                  自动熔断兜底
-                </span>
-              </div>
-              <p className="text-[11px] text-[#78716C] leading-normal">
-                仅当百度 OCR 或归位失败时才介入，需支持图片识别输入。
-              </p>
-            </div>
-            <ModelChainSelect
-              modelDirectory={modelDirectory}
-              value={ocrModelId}
-              onChange={setOcrModelDraft}
-              id="screenshot-ocr-model"
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-[#E5E0D6]/80 bg-[#FAF8F4]/30 p-3 space-y-2">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label
-                htmlFor="screenshot-vision-model"
-                className="text-[13px] font-medium text-[#1C1917]"
-              >
-                看图模型 (Vision Direct)
-              </Label>
-              <span className="text-[10px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded border border-[#E5E0D6]/60">
-                一步到位
-              </span>
-            </div>
-            <p className="text-[11px] text-[#78716C] leading-normal">
-              直接分析截图并输出结构化数据，跳过外部 OCR 接口，需支持图片输入。
-            </p>
-          </div>
-          <ModelChainSelect
-            modelDirectory={modelDirectory}
-            value={ocrModelId}
-            onChange={setOcrModelDraft}
-            id="screenshot-vision-model"
-          />
-        </div>
-      )}
     </div>
   );
 }

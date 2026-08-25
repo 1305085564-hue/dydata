@@ -597,7 +597,6 @@ export default function BindingsClient() {
   const businessControls = bundle.featureControls.filter(
     (control) =>
       control.group === "business" &&
-      control.key !== "ocr_screenshot" &&
       control.key !== "ocr_screenshot_structure",
   );
 
@@ -820,20 +819,24 @@ export default function BindingsClient() {
                       <TableCell className="pl-5 py-3 align-middle">
                         <div className="flex items-center gap-1.5">
                           <span className="font-medium text-[#1C1917]">
-                            {control.label}
+                            {control.key === "ocr_screenshot"
+                              ? "截图识别"
+                              : control.label}
                           </span>
                           {(control.key === "ocr_screenshot" ||
                             control.key === "ocr_screenshot_structure") && (
                             <Badge
                               variant="secondary"
-                              className="bg-[#F5F3EE] text-[#292524] text-[10px] h-4.5 px-1.5 font-normal"
+                              className="bg-[#F5F3EE] text-[#78716C] text-[10px] h-4.5 px-1.5 font-normal"
                             >
                               首页核心
                             </Badge>
                           )}
                         </div>
-                        <div className="mt-0.5 text-[12px] text-[#78716C] max-w-[200px] leading-relaxed">
-                          {control.description}
+                        <div className="mt-0.5 text-[12px] text-[#78716C] max-w-[220px] leading-relaxed">
+                          {control.key === "ocr_screenshot"
+                            ? "图片文字识别与结构化提取"
+                            : control.description}
                         </div>
                       </TableCell>
 
