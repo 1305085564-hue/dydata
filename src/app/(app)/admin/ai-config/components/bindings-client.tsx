@@ -833,108 +833,33 @@ export default function BindingsClient() {
 
                       {/* 模型策略：行内直选 */}
                       <TableCell className="py-3 align-middle">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            render={
-                              <button
-                                type="button"
-                                aria-label={`${control.label} 选用模型`}
-                                className="h-7.5 min-w-[210px] max-w-[280px] rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs"
-                              >
-                                <span className="truncate">
-                                  {control.modelId ? (
-                                    modelDirectory.find(
-                                      (m) => m.modelId === control.modelId,
-                                    )?.label ?? control.modelId
-                                  ) : (
-                                    <span className="text-[#78716C]">
-                                      全局默认 (
-                                      {defaultBinding?.model_id || "全量顺位"})
-                                    </span>
-                                  )}
-                                </span>
-                                <ChevronDown className="size-3.5 opacity-60 shrink-0" />
-                              </button>
-                            }
-                          />
-                          <DropdownMenuContent
-                            align="start"
-                            className="min-w-[260px] max-h-[320px] overflow-y-auto bg-white border border-[#E5E0D6] shadow-claude-float p-1"
-                          >
-                            <DropdownMenuItem
-                              onClick={async () => {
-                                await saveFeatureControl({
-                                  feature_key: control.key,
-                                  model_id: null,
-                                  is_enabled: control.isEnabled,
-                                  system_prompt: control.systemPrompt,
-                                  output_token_limit: control.outputTokenLimit,
-                                  context_message_limit:
-                                    control.contextMessageLimit,
-                                  provider_key_model_id:
-                                    control.providerKeyModelId,
-                                });
-                              }}
-                              className={cn(
-                                "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
-                                !control.modelId
-                                  ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
-                                  : "hover:bg-[#F5F3EE] text-[#292524]",
-                              )}
-                            >
-                              <span>
-                                跟随全局默认 (
-                                {defaultBinding?.model_id || "全量顺位"})
-                              </span>
-                              {!control.modelId && (
-                                <Check className="size-3.5 text-[#D97757]" />
-                              )}
-                            </DropdownMenuItem>
-                            {modelDirectory.length > 0 && (
-                              <DropdownMenuSeparator className="bg-[#E5E0D6]/60 my-1" />
-                            )}
-                            {modelDirectory.map((entry) => {
-                              const isSelected = control.modelId === entry.modelId;
-                              return (
-                                <DropdownMenuItem
-                                  key={entry.modelId}
-                                  onClick={async () => {
-                                    await saveFeatureControl({
-                                      feature_key: control.key,
-                                      model_id: entry.modelId,
-                                      is_enabled: control.isEnabled,
-                                      system_prompt: control.systemPrompt,
-                                      output_token_limit:
-                                        control.outputTokenLimit,
-                                      context_message_limit:
-                                        control.contextMessageLimit,
-                                      provider_key_model_id:
-                                        control.providerKeyModelId,
-                                    });
-                                  }}
-                                  className={cn(
-                                    "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
-                                    isSelected
-                                      ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
-                                      : "hover:bg-[#F5F3EE] text-[#292524]",
-                                  )}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="font-mono truncate">
-                                      {entry.label}
-                                    </span>
-                                    <span className="text-[10px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
-                                      {entry.channels.length} 渠道
-                                    </span>
-                                  </div>
-                                  {isSelected && (
-                                    <Check className="size-3.5 text-[#D97757] shrink-0" />
-                                  )}
-                                </DropdownMenuItem>
-                              );
-                            })}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <select
+                          aria-label={`${control.label} 选用模型`}
+                          value={control.modelId ?? ""}
+                          onChange={async (e) => {
+                            await saveFeatureControl({
+                              feature_key: control.key,
+                              model_id: e.target.value || null,
+                              is_enabled: control.isEnabled,
+                              system_prompt: control.systemPrompt,
+                              output_token_limit: control.outputTokenLimit,
+                              context_message_limit:
+                                control.contextMessageLimit,
+                              provider_key_model_id:
+                                control.providerKeyModelId,
+                            });
+                          }}
+                          className="h-7.5 rounded-md border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
+                        >
+                          <option value="">
+                            全局默认 ({defaultBinding?.model_id || "全量顺位"})
+                          </option>
+                          {modelDirectory.map((entry) => (
+                            <option key={entry.modelId} value={entry.modelId}>
+                              {entry.label} ({entry.channels.length} 渠道可用)
+                            </option>
+                          ))}
+                        </select>
                       </TableCell>
 
                       {/* 运行状态：行内即时 Switch */}
