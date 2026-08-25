@@ -48,6 +48,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { BindingDialog } from "./bindings-dialogs";
+import { ScreenshotRecognitionCard } from "./screenshot-recognition-card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
@@ -594,7 +595,10 @@ export default function BindingsClient() {
     (a, b) => a.sort_order - b.sort_order,
   );
   const businessControls = bundle.featureControls.filter(
-    (control) => control.group === "business",
+    (control) =>
+      control.group === "business" &&
+      control.key !== "ocr_screenshot" &&
+      control.key !== "ocr_screenshot_structure",
   );
 
   return (
@@ -781,6 +785,8 @@ export default function BindingsClient() {
             <span>业务功能</span>
           </div>
         </div>
+
+        <ScreenshotRecognitionCard />
 
         <div className="rounded-2xl bg-white overflow-hidden border border-[#E5E0D6] w-full overflow-x-auto">
           <Table>
