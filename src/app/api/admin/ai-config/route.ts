@@ -31,7 +31,9 @@ type AiConfigAction =
   | "save_feature_control"
   | "archive_feature"
   | "restore_feature"
-  | "set_global_default_model";
+  | "set_global_default_model"
+  | "sync_key_models"
+  | "set_key_model_selection";
 
 type AiConfigBody = {
   action?: unknown;
@@ -66,7 +68,7 @@ function maskApiKeyLast4(value: unknown) {
 
 function parseAction(value: unknown): AiConfigAction | null {
   const action = toTrimmedString(value);
-  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" ? action : null;
+  return action === "create" || action === "update" || action === "delete" || action === "test_key" || action === "swap_key_priority" || action === "save_feature_control" || action === "archive_feature" || action === "restore_feature" || action === "set_global_default_model" || action === "sync_key_models" || action === "set_key_model_selection" ? action : null;
 }
 
 function parseEntity(value: unknown): AiConfigEntity | null {
@@ -212,7 +214,7 @@ async function loadAiConfig(supabase: SupabaseClient) {
     rewriteModelRoutesResult,
   ] = await Promise.all([
     supabase.from("ai_providers").select("id, name, base_url, description, priority, is_enabled, created_at, updated_at").order("priority", { ascending: true }),
-    supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, created_at, updated_at").order("priority", { ascending: true }),
+    supabase.from("ai_provider_keys").select("id, provider_id, label, api_key, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message, available_models, created_at, updated_at").order("priority", { ascending: true }),
     supabase.from("ai_provider_key_models").select("id, key_id, model_id, display_name, is_enabled, created_at").order("created_at", { ascending: true }),
     supabase.from("ai_feature_bindings").select("id, feature_key, label, provider_key_model_id, model_id, system_prompt, output_token_limit, context_message_limit, channel_settings, is_enabled, lifecycle_state, archived_at, archived_reason, created_at, updated_at").order("created_at", { ascending: true }),
     supabase.from("rewrite_model_views").select("id, key, label, description, sort_order, is_enabled, is_default, created_at, updated_at").order("sort_order", { ascending: true }).order("created_at", { ascending: true }),
@@ -365,6 +367,84 @@ export async function GET() {
   }
 }
 
+async function handleSyncKeyModels(supabase: SupabaseClient, data: Record<string, unknown>) {
+  const keyId = toTrimmedString(data.key_id);
+  if (!keyId) throw new Error("缺少 key_id");
+
+  const { data: keyData, error: keyErr } = await supabase
+    .from("ai_provider_keys")
+    .select("id, api_key, provider:ai_providers(id, name, base_url)")
+    .eq("id", keyId)
+    .single();
+  if (keyErr || !keyData) throw new Error(keyErr?.message || "密钥不存在");
+
+  const provider = firstOrNull(
+    (keyData as unknown as { provider: { base_url: string } | Array<{ base_url: string }> | null }).provider,
+  );
+  if (!provider?.base_url) throw new Error("渠道 URL 不存在");
+
+  const baseUrlClean = provider.base_url.replace(/\/+$/, "");
+  const targetUrl = baseUrlClean.endsWith("/models") ? baseUrlClean : `${baseUrlClean}/models`;
+
+  const res = await fetch(targetUrl, {
+    headers: { Authorization: `Bearer ${(keyData as unknown as { api_key: string }).api_key}` },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) {
+    throw new Error(`拉取模型列表失败 HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
+  }
+  const payload = (await res.json()) as { data?: Array<{ id?: string }>; models?: Array<{ id?: string; name?: string }> };
+  const rawList = Array.isArray(payload.data) ? payload.data : Array.isArray(payload.models) ? payload.models : [];
+  const modelIds = [...new Set(rawList.map((item) => toTrimmedString(item?.id)).filter(Boolean))].sort();
+
+  const { error: updateErr } = await supabase
+    .from("ai_provider_keys")
+    .update({ available_models: modelIds })
+    .eq("id", keyId);
+  if (updateErr) throw new Error(updateErr.message);
+
+  return { ok: true, count: modelIds.length, models: modelIds };
+}
+
+async function handleSetKeyModelSelection(supabase: SupabaseClient, data: Record<string, unknown>) {
+  const keyId = toTrimmedString(data.key_id);
+  if (!keyId) throw new Error("缺少 key_id");
+  const modelIds = Array.isArray(data.model_ids)
+    ? [...new Set(data.model_ids.map((id) => toTrimmedString(id)).filter(Boolean))]
+    : [];
+  if (modelIds.length === 0) throw new Error("勾选列表不能为空（如需清空请直接停用该 Key）");
+
+  const { data: existing, error: existErr } = await supabase
+    .from("ai_provider_key_models")
+    .select("id, model_id")
+    .eq("key_id", keyId);
+  if (existErr) throw new Error(existErr.message);
+
+  const existingByModel = new Map(
+    ((existing ?? []) as Array<{ id: string; model_id: string }>).map((row) => [row.model_id, row.id]),
+  );
+  const nowIso = new Date().toISOString();
+
+  const toCreate = modelIds.filter((modelId) => !existingByModel.has(modelId));
+  if (toCreate.length > 0) {
+    const { error: insertErr } = await supabase.from("ai_provider_key_models").insert(
+      toCreate.map((modelId) => ({ key_id: keyId, model_id: modelId, display_name: modelId, is_enabled: true, created_at: nowIso })),
+    );
+    if (insertErr) throw new Error(insertErr.message);
+  }
+
+  const toRemove = [...existingByModel.entries()].filter(([modelId]) => !modelIds.includes(modelId));
+  if (toRemove.length > 0) {
+    const { error: deleteErr } = await supabase
+      .from("ai_provider_key_models")
+      .delete()
+      .in("id", toRemove.map(([, id]) => id));
+    if (deleteErr) throw new Error(deleteErr.message);
+  }
+
+  return { ok: true, created: toCreate.length, removed: toRemove.length };
+}
+
 async function handleTestKey(supabase: SupabaseClient, data: Record<string, unknown>) {
   const keyId = toTrimmedString(data.key_id);
   const modelId = toTrimmedString(data.model_id);
@@ -476,6 +556,27 @@ export async function POST(request: NextRequest) {
   const action = parseAction(body.action);
   if (!action) {
     return NextResponse.json({ error: "action 不正确" }, { status: 400 });
+  }
+
+  if (action === "sync_key_models") {
+    try {
+      const result = await handleSyncKeyModels(auth.supabase, asRecord(body.data));
+      const bundle = await loadAiConfig(auth.supabase);
+      return NextResponse.json({ syncResult: result, ...bundle });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "同步模型列表失败" }, { status: 400 });
+    }
+  }
+
+  if (action === "set_key_model_selection") {
+    try {
+      const result = await handleSetKeyModelSelection(auth.supabase, asRecord(body.data));
+      aiClientInternal.resetCache();
+      const bundle = await loadAiConfig(auth.supabase);
+      return NextResponse.json({ syncResult: result, ...bundle });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "保存模型勾选失败" }, { status: 400 });
+    }
   }
 
   if (action === "test_key") {
