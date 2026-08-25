@@ -65,9 +65,9 @@ export function ScreenshotRecognitionCard({
   const archived = ocrControl.lifecycleState === "archived";
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-2.5", className)}>
       {/* 顶部标题行 + 状态 + 动作 */}
-      <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-[#E5E0D6]/40">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
           <Camera className="size-4 text-[#D97757]" />
           <span>截图识别</span>
@@ -141,7 +141,7 @@ export function ScreenshotRecognitionCard({
       </div>
 
       {/* 识别通道切换 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-0.5">
           <div className="text-[13px] font-medium text-[#1C1917]">
             识别通道策略
