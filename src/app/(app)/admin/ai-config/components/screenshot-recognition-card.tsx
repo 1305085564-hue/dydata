@@ -12,7 +12,11 @@ type ChannelMode = "baidu" | "vision";
 /**
  * 截图识别通道控制卡片（上面管通道切换，下面表格管模型与运行开关）
  */
-export function ScreenshotRecognitionCard() {
+export function ScreenshotRecognitionCard({
+  className,
+}: {
+  className?: string;
+}) {
   const {
     bundle,
     saveFeatureControl,
@@ -61,9 +65,9 @@ export function ScreenshotRecognitionCard() {
   const archived = ocrControl.lifecycleState === "archived";
 
   return (
-    <div className="rounded-2xl bg-white border border-[#E5E0D6] p-4 space-y-3.5">
+    <div className={cn("space-y-3", className)}>
       {/* 顶部标题行 + 状态 + 动作 */}
-      <div className="flex items-center justify-between gap-2 flex-wrap pb-0.5 border-b border-[#E5E0D6]/40">
+      <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-[#E5E0D6]/40">
         <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
           <Camera className="size-4 text-[#D97757]" />
           <span>截图识别</span>

@@ -609,175 +609,7 @@ export default function BindingsClient() {
         </span>
       </div>
 
-      {/* 极简单行工具条：全局默认兜底 + 渠道顺位可折叠透视 */}
-      <div className="rounded-2xl bg-white border border-[#E5E0D6] overflow-hidden select-none">
-        <div className="flex flex-wrap items-center justify-between gap-3 p-3 px-4 bg-white">
-          {/* 左侧：全局默认兜底设置 */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#1C1917]">
-              <Star className="size-4 text-[#D97757]" />
-              <span>全局默认兜底：</span>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <button
-                    type="button"
-                    aria-label="全局默认兜底模型"
-                    className="h-7.5 min-w-[210px] max-w-[280px] rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs"
-                  >
-                    <span className="truncate">
-                      {defaultModelId
-                        ? modelDirectory.find((m) => m.modelId === defaultModelId)
-                            ?.label ?? defaultModelId
-                        : "未设置 · 全量顺位自动选择"}
-                    </span>
-                    <ChevronDown className="size-3.5 opacity-60 shrink-0" />
-                  </button>
-                }
-              />
-              <DropdownMenuContent
-                align="start"
-                className="min-w-[260px] max-h-[320px] overflow-y-auto bg-white border border-[#E5E0D6] shadow-claude-float p-1"
-              >
-                <DropdownMenuItem
-                  onClick={() => setDefaultModelDraft(null)}
-                  className={cn(
-                    "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
-                    !defaultModelId
-                      ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
-                      : "hover:bg-[#F5F3EE] text-[#292524]",
-                  )}
-                >
-                  <span>未设置 · 全量顺位自动选择</span>
-                  {!defaultModelId && (
-                    <Check className="size-3.5 text-[#D97757]" />
-                  )}
-                </DropdownMenuItem>
-                {modelDirectory.length > 0 && (
-                  <DropdownMenuSeparator className="bg-[#E5E0D6]/60 my-1" />
-                )}
-                {modelDirectory.map((entry) => {
-                  const isSelected = defaultModelId === entry.modelId;
-                  return (
-                    <DropdownMenuItem
-                      key={entry.modelId}
-                      onClick={() => setDefaultModelDraft(entry.modelId)}
-                      className={cn(
-                        "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
-                        isSelected
-                          ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
-                          : "hover:bg-[#F5F3EE] text-[#292524]",
-                      )}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono truncate">{entry.label}</span>
-                        <span className="text-[10px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
-                          {entry.channels.length} 渠道
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <Check className="size-3.5 text-[#D97757] shrink-0" />
-                      )}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button
-              size="sm"
-              className="h-7.5 px-2.5 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
-              disabled={
-                (defaultModelId ?? "") === (defaultBinding?.model_id ?? "")
-              }
-              onClick={async () => {
-                await setGlobalDefaultModel(defaultModelId ?? "");
-              }}
-            >
-              保存默认
-            </Button>
-          </div>
-
-          {/* 右侧：渠道顺位收展按钮 */}
-          <button
-            type="button"
-            onClick={() => setShowRankedChannels((prev) => !prev)}
-            className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#F5F3EE] transition-colors cursor-pointer border border-[#E5E0D6]/80 bg-white"
-          >
-            <span className="size-1.5 rounded-full bg-[#16A34A]" />
-            <span>渠道顺位表 ({rankedChannels.length})</span>
-            <ChevronDown
-              className={cn(
-                "size-3.5 transition-transform duration-200 opacity-70",
-                showRankedChannels && "rotate-180",
-              )}
-            />
-          </button>
-        </div>
-
-        {/* 折叠区：渠道自动顺位表（默认收起，展开时平滑展示） */}
-        {showRankedChannels && (
-          <div className="border-t border-[#E5E0D6]/60 bg-[#FBF9F5]/40 overflow-x-auto max-h-[220px] overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-[#FBF9F5]/80 sticky top-0 z-10">
-                <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
-                  <TableHead className="text-[11px] pl-5 w-[60px] py-1.5">顺位</TableHead>
-                  <TableHead className="text-[11px] py-1.5">渠道与 Key</TableHead>
-                  <TableHead className="text-[11px] py-1.5">健康态</TableHead>
-                  <TableHead className="text-[11px] pr-5 py-1.5">支持模型</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rankedChannels.map((channel) => {
-                  const healthy = isChannelHealthy(channel);
-                  return (
-                    <TableRow
-                      key={channel.rank}
-                      className="text-[12px] border-b border-[#E5E0D6]/40 last:border-b-0 hover:bg-[#FBF9F5]/60"
-                    >
-                      <TableCell className="pl-5 py-1.5 font-medium text-[#1C1917]">
-                        {channel.rank}
-                      </TableCell>
-                      <TableCell className="py-1.5 font-medium text-[12px] text-[#292524]">
-                        {channel.channelName}
-                      </TableCell>
-                      <TableCell className="py-1.5">
-                        {healthy ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-[#16A34A]">
-                            <span className="size-1.5 rounded-full bg-[#16A34A]" />
-                            正常
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D]">
-                            <span className="size-1.5 rounded-full bg-[#C9604D]" />
-                            熔断中 (连败 {channel.failures ?? 0} 次)
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="pr-5 py-1.5 text-[11px] text-[#78716C]">
-                        {channel.models.join("、") || "—"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {rankedChannels.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="h-12 text-center text-[12px] text-[#78716C]"
-                    >
-                      暂无启用的渠道。
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-[#1C1917] font-medium text-[14px]">
             <Sparkles className="size-4 text-[#78716C]" />
@@ -785,8 +617,192 @@ export default function BindingsClient() {
           </div>
         </div>
 
-        <ScreenshotRecognitionCard />
+        {/* 统一顶层策略卡片（截图识别通道 + 全局默认兜底与顺位，留白分隔） */}
+        <div className="rounded-2xl bg-white border border-[#E5E0D6] p-4.5 space-y-4 shadow-2xs">
+          {/* 上半部：截图识别通道策略 */}
+          <ScreenshotRecognitionCard />
 
+          {/* 留白分隔与下半部：全局默认兜底 + 渠道顺位折叠透视 */}
+          <div className="border-t border-[#E5E0D6]/50 pt-3.5 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* 左侧：全局默认兜底设置 */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#1C1917]">
+                <Star className="size-4 text-[#D97757]" />
+                <span>全局默认兜底：</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <button
+                      type="button"
+                      aria-label="全局默认兜底模型"
+                      className="h-7.5 min-w-[210px] max-w-[280px] rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs"
+                    >
+                      <span className="truncate">
+                        {defaultModelId
+                          ? modelDirectory.find(
+                              (m) => m.modelId === defaultModelId,
+                            )?.label ?? defaultModelId
+                          : "未设置 · 全量顺位自动选择"}
+                      </span>
+                      <ChevronDown className="size-3.5 opacity-60 shrink-0" />
+                    </button>
+                  }
+                />
+                <DropdownMenuContent
+                  align="start"
+                  className="min-w-[260px] max-h-[320px] overflow-y-auto bg-white border border-[#E5E0D6] shadow-claude-float p-1"
+                >
+                  <DropdownMenuItem
+                    onClick={() => setDefaultModelDraft(null)}
+                    className={cn(
+                      "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
+                      !defaultModelId
+                        ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
+                        : "hover:bg-[#F5F3EE] text-[#292524]",
+                    )}
+                  >
+                    <span>未设置 · 全量顺位自动选择</span>
+                    {!defaultModelId && (
+                      <Check className="size-3.5 text-[#D97757]" />
+                    )}
+                  </DropdownMenuItem>
+                  {modelDirectory.length > 0 && (
+                    <DropdownMenuSeparator className="bg-[#E5E0D6]/60 my-1" />
+                  )}
+                  {modelDirectory.map((entry) => {
+                    const isSelected = defaultModelId === entry.modelId;
+                    return (
+                      <DropdownMenuItem
+                        key={entry.modelId}
+                        onClick={() => setDefaultModelDraft(entry.modelId)}
+                        className={cn(
+                          "cursor-pointer text-[12px] flex items-center justify-between py-1.5 px-2 rounded-md transition-colors",
+                          isSelected
+                            ? "bg-[#F5F3EE] font-medium text-[#1C1917]"
+                            : "hover:bg-[#F5F3EE] text-[#292524]",
+                        )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono truncate">
+                            {entry.label}
+                          </span>
+                          <span className="text-[10px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.2 rounded shrink-0">
+                            {entry.channels.length} 渠道
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <Check className="size-3.5 text-[#D97757] shrink-0" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                size="sm"
+                className="h-7.5 px-2.5 text-[12px] bg-white border border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
+                disabled={
+                  (defaultModelId ?? "") === (defaultBinding?.model_id ?? "")
+                }
+                onClick={async () => {
+                  await setGlobalDefaultModel(defaultModelId ?? "");
+                }}
+              >
+                保存默认
+              </Button>
+            </div>
+
+            {/* 右侧：渠道顺位收展按钮 */}
+            <button
+              type="button"
+              onClick={() => setShowRankedChannels((prev) => !prev)}
+              className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#F5F3EE] transition-colors cursor-pointer border border-[#E5E0D6]/80 bg-white"
+            >
+              <span className="size-1.5 rounded-full bg-[#16A34A]" />
+              <span>渠道顺位表 ({rankedChannels.length})</span>
+              <ChevronDown
+                className={cn(
+                  "size-3.5 transition-transform duration-200 opacity-70",
+                  showRankedChannels && "rotate-180",
+                )}
+              />
+            </button>
+          </div>
+
+          {/* 折叠区：渠道自动顺位表（默认收起，展开时平滑展示） */}
+          {showRankedChannels && (
+            <div className="border-t border-[#E5E0D6]/60 bg-[#FBF9F5]/40 overflow-x-auto max-h-[220px] overflow-y-auto">
+              <Table>
+                <TableHeader className="bg-[#FBF9F5]/80 sticky top-0 z-10">
+                  <TableRow className="hover:bg-transparent border-b border-[#E5E0D6]/60">
+                    <TableHead className="text-[11px] pl-5 w-[60px] py-1.5">
+                      顺位
+                    </TableHead>
+                    <TableHead className="text-[11px] py-1.5">
+                      渠道与 Key
+                    </TableHead>
+                    <TableHead className="text-[11px] py-1.5">
+                      健康态
+                    </TableHead>
+                    <TableHead className="text-[11px] pr-5 py-1.5">
+                      支持模型
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rankedChannels.map((channel) => {
+                    const healthy = isChannelHealthy(channel);
+                    return (
+                      <TableRow
+                        key={channel.rank}
+                        className="text-[12px] border-b border-[#E5E0D6]/40 last:border-b-0 hover:bg-[#FBF9F5]/60"
+                      >
+                        <TableCell className="pl-5 py-1.5 font-medium text-[#1C1917]">
+                          {channel.rank}
+                        </TableCell>
+                        <TableCell className="py-1.5 font-medium text-[12px] text-[#292524]">
+                          {channel.channelName}
+                        </TableCell>
+                        <TableCell className="py-1.5">
+                          {healthy ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-[#16A34A]">
+                              <span className="size-1.5 rounded-full bg-[#16A34A]" />
+                              正常
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] text-[#C9604D]">
+                              <span className="size-1.5 rounded-full bg-[#C9604D]" />
+                              熔断中 (连败 {channel.failures ?? 0} 次)
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="pr-5 py-1.5 text-[11px] text-[#78716C]">
+                          {channel.models.join("、") || "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {rankedChannels.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="h-12 text-center text-[12px] text-[#78716C]"
+                      >
+                        暂无启用的渠道。
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          </div>
+        </div>
+
+        {/* 3. 业务功能表格 */}
         <div className="rounded-2xl bg-white overflow-hidden border border-[#E5E0D6] w-full overflow-x-auto">
           <Table>
             <TableHeader className="bg-[#FBF9F5]/80">
