@@ -41,7 +41,7 @@ export function HealthBar({ summary }: HealthBarProps) {
         }`}
       >
         {isHealthy ? (
-          <CheckCircle2 className="size-3.5 text-[#16A34A] shrink-0 opacity-80" />
+          <CheckCircle2 className="size-3.5 text-[#6FAA7D] shrink-0 opacity-80" />
         ) : (
           <AlertCircle className="size-3.5 text-[#D99E55] shrink-0 opacity-90" />
         )}

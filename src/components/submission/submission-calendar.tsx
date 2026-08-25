@@ -283,7 +283,7 @@ export function SubmissionCalendar({
                   "hover:bg-[#F5F3EE] hover:text-[#1C1917]",
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#16A34A]/10/40 text-[#292524] font-medium",
+                  "bg-[#6FAA7D]/10/40 text-[#292524] font-medium",
                 !isSelected &&
                   isLeave &&
                   "bg-[#F5F3EE]/40 text-[#292524] font-medium",
@@ -312,7 +312,7 @@ export function SubmissionCalendar({
                     isSelected
                       ? "bg-white"
                       : isSubmitted
-                        ? "bg-[#16A34A]"
+                        ? "bg-[#6FAA7D]"
                         : isLeave
                           ? "bg-[#43718E]"
                           : isPendingState
@@ -329,7 +329,7 @@ export function SubmissionCalendar({
       {/* 底部微型极简图例说明 (Minimal Footer Legend) */}
       <div className="pt-2 border-t border-[#ECE7DE] flex flex-wrap items-center justify-center gap-3.5 text-[11px] text-[#292524]">
         <span className="inline-flex items-center gap-1">
-          <span className="size-1.5 rounded-full bg-[#16A34A]" /> 已交/免交
+          <span className="size-1.5 rounded-full bg-[#6FAA7D]" /> 已交/免交
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="size-1.5 rounded-full bg-[#D99E55] animate-pulse ring-1 ring-[#D99E55]/50" />{" "}

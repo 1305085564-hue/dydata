@@ -273,7 +273,7 @@ export function SubmissionSlotsSection({
                           读取中
                         </span>
                       ) : isSuccess ? (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#16A34A]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#16A34A]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#6FAA7D]">
                           已识别
                         </span>
                       ) : isWarning ? (

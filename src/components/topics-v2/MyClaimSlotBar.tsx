@@ -136,7 +136,7 @@ export function MyClaimSlotBar({
               onClick={() => item.subTopicId && onSelectTopic(item.subTopicId)}
               className={`group relative rounded-xl p-3.5 border transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[110px] shadow-xs ${
                 isScripting
-                  ? "bg-[#16A34A]/10/40 border-[#E5E0D6]/80 hover:border-[#E5E0D6]"
+                  ? "bg-[#6FAA7D]/10/40 border-[#E5E0D6]/80 hover:border-[#E5E0D6]"
                   : "bg-white border-[#E5E0D6] hover:border-[#E5E0D6]"
               }`}
             >
@@ -144,8 +144,8 @@ export function MyClaimSlotBar({
                 {/* 状态徽章与顶栏 */}
                 <div className="flex items-center justify-between gap-1 mb-1.5">
                   {isScripting ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#16A34A]/10 text-[#292524]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#6FAA7D]/10 text-[#292524]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#6FAA7D] animate-pulse" />
                       <span>脚本写作中</span>
                     </span>
                   ) : (
@@ -184,7 +184,7 @@ export function MyClaimSlotBar({
                       item.subTopicId &&
                       handleStartScripting(e, item.subTopicId)
                     }
-                    className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-[#16A34A]/80 hover:bg-[#16A34A]/60 text-white text-[11px] font-medium transition-all shadow-2xs active:scale-[0.985] active:duration-75"
+                    className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-[#6FAA7D]/80 hover:bg-[#6FAA7D]/60 text-white text-[11px] font-medium transition-all shadow-2xs active:scale-[0.985] active:duration-75"
                   >
                     <FileText className="w-3 h-3" />
                     <span>去写脚本</span>

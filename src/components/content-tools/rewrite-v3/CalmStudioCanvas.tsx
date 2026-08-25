@@ -387,7 +387,7 @@ export function CalmStudioCanvas({
                           return (
                             <ins
                               key={tIdx}
-                              className="bg-[#16A34A]/10 text-[#292524] no-underline border-b border-[#E5E0D6] px-0.5 rounded"
+                              className="bg-[#6FAA7D]/10 text-[#292524] no-underline border-b border-[#E5E0D6] px-0.5 rounded"
                             >
                               {token.value}
                             </ins>

@@ -55,11 +55,11 @@ export function ModelChainSelect({
                   className={cn(
                     "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono",
                     index === 0
-                      ? "bg-[#16A34A]/10 text-[#15803D] border border-[#16A34A]/20 font-medium"
+                      ? "bg-[#6FAA7D]/10 text-[#15803D] border border-[#6FAA7D]/20 font-medium"
                       : "bg-[#F5F3EE] text-[#78716C] border border-[#E5E0D6]/80",
                   )}
                 >
-                  {index === 0 && <span className="size-1 rounded-full bg-[#16A34A]" />}
+                  {index === 0 && <span className="size-1 rounded-full bg-[#6FAA7D]" />}
                   {channel.name}
                   {index === 0 && <span className="text-[9px] opacity-80">(首选)</span>}
                 </span>

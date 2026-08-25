@@ -85,8 +85,8 @@ export function ScreenshotRecognitionCard({
               已停止
             </Badge>
           ) : ocrControl.isEnabled ? (
-            <span className="inline-flex items-center gap-1.5 text-[12px] font-normal text-[#16A34A]">
-              <span className="size-1.5 rounded-full bg-[#16A34A]" />
+            <span className="inline-flex items-center gap-1.5 text-[12px] font-normal text-[#6FAA7D]">
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               使用中
             </span>
           ) : (

@@ -2020,7 +2020,7 @@ export function VideoSubmitFormV2({
                   className={cn(
                     "inline-flex h-5 items-center justify-center rounded-lg px-2 text-[12px] font-medium",
                     qualityCheck.data.overallStatus === "pass"
-                      ? "bg-[#16A34A]/10 text-[#16A34A]"
+                      ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                       : qualityCheck.data.overallStatus === "warning"
                         ? "bg-[#D99E55]/10 text-[#8A6A2F]"
                         : "bg-[#DC2626]/10 text-[#DC2626]",
@@ -2556,7 +2556,7 @@ export function VideoSubmitFormV2({
                           className={cn(
                             "inline-flex items-center gap-1.5 text-[12px] font-medium transition-colors",
                             isPastedFeedback
-                              ? "text-[#16A34A]"
+                              ? "text-[#6FAA7D]"
                               : "text-[#78716C] hover:text-[#292524]"
                           )}
                         >
@@ -2758,7 +2758,7 @@ const VIDEO_STATUS_OPTIONS: Array<{
   {
     value: "normal",
     label: "正常",
-    dotClass: "bg-[#16A34A]",
+    dotClass: "bg-[#6FAA7D]",
   },
   {
     value: "abnormal",

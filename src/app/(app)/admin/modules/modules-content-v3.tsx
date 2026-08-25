@@ -1846,7 +1846,7 @@ export function AdminModulesContentV3({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="text-base font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
+                <DialogTitle className="font-serif tracking-tight text-base font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
               </div>
               <Button
                 variant="ghost"

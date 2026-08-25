@@ -122,7 +122,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
   assert.match(register, /barColor: "#D99E55", textColor: "#8F641B"/);
   assert.match(register, /barColor: "#43718E", textColor: "#355B72"/);
   assert.match(register, /barColor: "#6FAA7D", textColor: "#3F7A4E"/);
-  assert.match(forgot, /bg-\[#16A34A\]\/10[^"]*text-\[#15803D\]/);
+  assert.match(forgot, /bg-\[#6FAA7D\]\/10[^"]*text-\[#1C1917\]/);
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {

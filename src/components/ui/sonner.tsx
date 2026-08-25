@@ -9,7 +9,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="light"
       className="toaster group"
       icons={{
-        success: <CircleCheckIcon className="size-4 stroke-[1.5] text-[#16A34A]" />,
+        success: <CircleCheckIcon className="size-4 stroke-[1.5] text-[#6FAA7D]" />,
         info: <InfoIcon className="size-4 stroke-[1.5] text-[#78716C]" />,
         warning: <TriangleAlertIcon className="size-4 stroke-[1.5] text-[#D99E55]" />,
         error: <OctagonXIcon className="size-4 stroke-[1.5] text-[#DC2626]" />,

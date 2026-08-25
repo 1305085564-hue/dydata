@@ -1564,7 +1564,7 @@ export function ContentDiagnosisWorkbench({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12px]">
                     <Sparkles className="size-3.5 text-[#78716C]" />
-                    <span>AI 辅助诊断思路（仅供参考）</span>
+                    <span className="font-serif tracking-tight">AI 辅助诊断思路（仅供参考）</span>
                   </div>
                   <button
                     type="button"
@@ -1594,7 +1594,7 @@ export function ContentDiagnosisWorkbench({
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="font-semibold text-[#1C1917] block">
+                    <span className="font-serif tracking-tight font-semibold text-[#1C1917] block">
                       数据特征总结：
                     </span>
                     <p className="mt-0.5 text-[#292524]">
@@ -1607,7 +1607,7 @@ export function ContentDiagnosisWorkbench({
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="font-semibold text-[#1C1917] block">
+                    <span className="font-serif tracking-tight font-semibold text-[#1C1917] block">
                       改进方向与思路：
                     </span>
                     <p className="mt-0.5 text-[#292524]">
@@ -1622,7 +1622,7 @@ export function ContentDiagnosisWorkbench({
                           visible: { opacity: 1, y: 0 },
                         }}
                       >
-                        <span className="font-semibold text-[#1C1917] block">
+                        <span className="font-serif tracking-tight font-semibold text-[#1C1917] block">
                           异常提示点：
                         </span>
                         <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[#292524]">

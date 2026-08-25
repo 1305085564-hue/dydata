@@ -25,7 +25,7 @@ function getConfidenceDotProps(score: number | null | undefined) {
   const s = score ?? 0.5; // 无 confidence 默认中置信
   if (s >= 0.95) {
     return {
-      color: "bg-[#16A34A]",
+      color: "bg-[#6FAA7D]",
       tooltip: "AI 高置信识别",
     };
   }
@@ -49,7 +49,7 @@ function getStatusBadge(field: SubmissionFieldState) {
     return {
       label: "AI 已识别",
       className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
-      dotClass: "bg-[#16A34A]",
+      dotClass: "bg-[#6FAA7D]",
     };
   }
   if (score >= 0.8) {

@@ -13,6 +13,23 @@ interface TalentTabProps {
 
 type SortField = "totalPlay" | "reportCount" | "hitCount" | "accountCount";
 
+function SortIcon({
+  field,
+  sortField,
+  sortOrder,
+}: {
+  field: SortField;
+  sortField: SortField;
+  sortOrder: "asc" | "desc";
+}) {
+  if (sortField !== field) return null;
+  return sortOrder === "desc" ? (
+    <ChevronDown className="inline size-3 ml-0.5" />
+  ) : (
+    <ChevronUp className="inline size-3 ml-0.5" />
+  );
+}
+
 export function TalentTab({
   talents,
   onSelectPerson,
@@ -56,15 +73,6 @@ export function TalentTab({
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return null;
-    return sortOrder === "desc" ? (
-      <ChevronDown className="inline size-3 ml-0.5" />
-    ) : (
-      <ChevronUp className="inline size-3 ml-0.5" />
-    );
-  };
-
   return (
     <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden">
       <div className="overflow-x-auto">
@@ -79,28 +87,28 @@ export function TalentTab({
                 onClick={() => toggleSort("accountCount")}
               >
                 账号数
-                <SortIcon field="accountCount" />
+                <SortIcon field="accountCount" sortField={sortField} sortOrder={sortOrder} />
               </th>
               <th
                 className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
                 onClick={() => toggleSort("reportCount")}
               >
                 本月发布
-                <SortIcon field="reportCount" />
+                <SortIcon field="reportCount" sortField={sortField} sortOrder={sortOrder} />
               </th>
               <th
                 className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
                 onClick={() => toggleSort("totalPlay")}
               >
                 总播放
-                <SortIcon field="totalPlay" />
+                <SortIcon field="totalPlay" sortField={sortField} sortOrder={sortOrder} />
               </th>
               <th
                 className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
                 onClick={() => toggleSort("hitCount")}
               >
                 爆款
-                <SortIcon field="hitCount" />
+                <SortIcon field="hitCount" sortField={sortField} sortOrder={sortOrder} />
               </th>
               <th className="py-2.5 px-2 text-left font-medium text-[#78716C]">
                 名下账号

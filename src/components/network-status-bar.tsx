@@ -63,7 +63,7 @@ export function NetworkStatusBar() {
   if (!visible) return null;
 
   const isOffline = state === "offline";
-  const bgColor = isOffline ? "bg-[#C9604D]" : "bg-[#16A34A]";
+  const bgColor = isOffline ? "bg-[#C9604D]" : "bg-[#6FAA7D]";
   const text = isOffline ? "网络已断开，部分功能可能不可用" : "网络已恢复";
 
   return (
