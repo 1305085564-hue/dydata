@@ -276,21 +276,48 @@ function RewriteRouteDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="route-priority">Priority (优先级)</Label>
-              <Input
-                id="route-priority"
-                type="number"
-                value={formData.priority ?? 100}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    priority: Number.parseInt(e.target.value, 10) || 100,
-                  })
-                }
-              />
+              <Label htmlFor="route-priority">调度顺位 (优先级)</Label>
+              <div className="space-y-1.5">
+                <Input
+                  id="route-priority"
+                  type="number"
+                  value={formData.priority ?? 100}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      priority: Number.parseInt(e.target.value, 10) || 100,
+                    })
+                  }
+                />
+                <div className="flex items-center gap-1 text-[11px] text-[#78716C]">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, priority: 10 })}
+                    className="hover:text-[#D97757] underline"
+                  >
+                    首选 (10)
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, priority: 50 })}
+                    className="hover:text-[#D97757] underline"
+                  >
+                    次选 (50)
+                  </button>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, priority: 100 })}
+                    className="hover:text-[#D97757] underline"
+                  >
+                    备用 (100)
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="route-weight">Weight (权重)</Label>
+              <Label htmlFor="route-weight">分流权重 (Weight)</Label>
               <Input
                 id="route-weight"
                 type="number"
@@ -308,6 +335,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-actual-model">实际调用 Model ID</Label>
             <Input
               id="route-actual-model"
+              placeholder="如 gpt-5.4-mini, gemini-2.5-flash"
               value={formData.actual_model || ""}
               onChange={(e) =>
                 setFormData({ ...formData, actual_model: e.target.value })
@@ -436,28 +464,50 @@ export default function BindingsClient() {
       }));
   }, [bundle]);
 
+  const [nowTs] = useState(() => Date.now());
+
   // 模型为主：按模型聚合全部健康渠道（顺位 = 供应商优先级 + Key 优先级）
   const modelDirectory = useMemo(() => {
     if (!bundle) return [];
-    const byModel = new Map<string, { modelId: string; label: string; channels: { name: string; score: number }[] }>();
+    const byModel = new Map<
+      string,
+      {
+        modelId: string;
+        label: string;
+        channels: { name: string; score: number; healthy: boolean }[];
+      }
+    >();
     for (const model of bundle.models) {
       if (!model.is_enabled) continue;
       const key = bundle.keys.find((item) => item.id === model.key_id);
       if (!key || !key.is_enabled) continue;
-      const provider = bundle.providers.find((item) => item.id === key.provider_id);
+      const provider = bundle.providers.find(
+        (item) => item.id === key.provider_id,
+      );
       if (!provider || !provider.is_enabled) continue;
+      const healthy =
+        !key.unhealthy_until ||
+        new Date(key.unhealthy_until).getTime() <= nowTs;
+
       const entry = byModel.get(model.model_id) ?? {
         modelId: model.model_id,
-        label: model.display_name || model.model_id,
+        label: model.model_id,
         channels: [],
       };
-      entry.channels.push({ name: `${provider.name} / ${key.label}`, score: key.priority + provider.priority });
+      entry.channels.push({
+        name: `${provider.name} / ${key.label}`,
+        score: key.priority + provider.priority,
+        healthy,
+      });
       byModel.set(model.model_id, entry);
     }
     return [...byModel.values()]
-      .map((entry) => ({ ...entry, channels: [...entry.channels].sort((a, b) => a.score - b.score) }))
+      .map((entry) => ({
+        ...entry,
+        channels: [...entry.channels].sort((a, b) => a.score - b.score),
+      }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [bundle]);
+  }, [bundle, nowTs]);
 
   const rankedChannels = useMemo(() => {
     if (!bundle) return [];
@@ -483,7 +533,6 @@ export default function BindingsClient() {
       }));
   }, [bundle]);
 
-  const [nowTs] = useState(() => Date.now());
   const isChannelHealthy = (channel: (typeof rankedChannels)[number]) => {
     if (!channel.unhealthyUntil) return true;
     return new Date(channel.unhealthyUntil).getTime() <= nowTs;
@@ -510,18 +559,6 @@ export default function BindingsClient() {
     if (!control.providerKeyModelId) return null;
     const combo = bundle.models.find((m) => m.id === control.providerKeyModelId);
     return combo?.model_id ?? null;
-  };
-
-  const describeModelStrategy = (control: AiFeatureControl) => {
-    const modelId = resolveControlModelId(control);
-    if (!modelId) {
-      return defaultBinding?.model_id
-        ? `走全局默认（${modelDirectory.find((m) => m.modelId === defaultBinding.model_id)?.label ?? defaultBinding.model_id}）`
-        : "走全局顺位自动选择";
-    }
-    const entry = modelDirectory.find((m) => m.modelId === modelId);
-    if (!entry) return modelId;
-    return `${entry.label} · ${entry.channels.length} 渠道 · 首选 ${entry.channels[0]?.name ?? "无"}`;
   };
 
   const handleSaveBinding = async (data: Record<string, unknown>) => {
@@ -664,10 +701,10 @@ export default function BindingsClient() {
           <Table>
             <TableHeader className="bg-[#FBF9F5]/80">
               <TableRow className="hover:bg-transparent border-0">
-                <TableHead className="text-[12px] pl-5">功能</TableHead>
-                <TableHead className="text-[12px]">模型策略</TableHead>
-                <TableHead className="w-[96px] text-[12px]">状态</TableHead>
-                <TableHead className="w-[140px] text-right text-[12px] pr-5">
+                <TableHead className="text-[12px] pl-5 w-[220px]">业务功能</TableHead>
+                <TableHead className="text-[12px]">选用模型与调度链路</TableHead>
+                <TableHead className="w-[120px] text-[12px]">运行状态</TableHead>
+                <TableHead className="w-[120px] text-right text-[12px] pr-5">
                   操作
                 </TableHead>
               </TableRow>
@@ -683,103 +720,206 @@ export default function BindingsClient() {
                   </TableCell>
                 </TableRow>
               ) : (
-                businessControls.map((control) => (
-                  <TableRow
-                    key={control.key}
-                    className="hover:bg-[#FBF9F5]/50 text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0"
-                  >
-                    <TableCell className="pl-5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-[#1C1917]">
-                          {control.label}
-                        </span>
-                        {(control.key === "ocr_screenshot" || control.key === "ocr_screenshot_structure") && (
-                          <Badge
-                            variant="secondary"
-                            className="bg-[#F5F3EE] text-[#292524] text-[10px] h-4.5 px-1.5 font-normal"
-                          >
-                            首页核心
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mt-0.5 text-[12px] text-[#78716C]">
-                        {control.description}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-1 text-[12px] text-[#292524] bg-[#F5F3EE]/80 px-2 py-0.5 rounded-md">
-                        <Sparkles className="size-3 text-[#D97757]" />
-                        {describeModelStrategy(control)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {control.lifecycleState === "archived" ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-[#F5F3EE] text-[#292524] border-[#E5E0D6] text-[11px] font-normal"
-                        >
-                          已停止
-                        </Badge>
-                      ) : control.isEnabled ? (
-                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#292524]">
-                          <span className="size-1.5 rounded-full bg-[#16A34A]/100" />
-                          使用中
-                        </span>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]/80 text-[11px] font-normal"
-                        >
-                          已关闭
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right pr-5">
-                      <div className="flex items-center justify-end gap-1">
+                businessControls.map((control) => {
+                  const effectiveModelId =
+                    resolveControlModelId(control) ||
+                    defaultBinding?.model_id ||
+                    null;
+                  const currentModelEntry = effectiveModelId
+                    ? modelDirectory.find(
+                        (m) => m.modelId === effectiveModelId,
+                      )
+                    : null;
+                  const primaryChannel = currentModelEntry?.channels[0];
+                  const backupCount = currentModelEntry
+                    ? Math.max(0, currentModelEntry.channels.length - 1)
+                    : 0;
+
+                  return (
+                    <TableRow
+                      key={control.key}
+                      className="hover:bg-[#FBF9F5]/50 text-[13px] border-b border-[#E5E0D6]/60 last:border-b-0"
+                    >
+                      <TableCell className="pl-5 py-3 align-top">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-[#1C1917]">
+                            {control.label}
+                          </span>
+                          {(control.key === "ocr_screenshot" ||
+                            control.key === "ocr_screenshot_structure") && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-[#F5F3EE] text-[#292524] text-[10px] h-4.5 px-1.5 font-normal"
+                            >
+                              首页核心
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="mt-0.5 text-[12px] text-[#78716C] max-w-[200px] leading-relaxed">
+                          {control.description}
+                        </div>
+                      </TableCell>
+
+                      {/* 模型策略：行内直选 + 调度链路透视小胶囊 */}
+                      <TableCell className="py-3 align-top">
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <select
+                              aria-label={`${control.label} 选用模型`}
+                              value={control.modelId ?? ""}
+                              onChange={async (e) => {
+                                await saveFeatureControl({
+                                  feature_key: control.key,
+                                  model_id: e.target.value || null,
+                                  is_enabled: control.isEnabled,
+                                  system_prompt: control.systemPrompt,
+                                  output_token_limit: control.outputTokenLimit,
+                                  context_message_limit:
+                                    control.contextMessageLimit,
+                                  provider_key_model_id:
+                                    control.providerKeyModelId,
+                                });
+                              }}
+                              className="h-7.5 rounded-md border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer max-w-[280px] truncate"
+                            >
+                              <option value="">
+                                全局默认 ({defaultBinding?.model_id || "全量顺位"})
+                              </option>
+                              {modelDirectory.map((entry) => (
+                                <option key={entry.modelId} value={entry.modelId}>
+                                  {entry.label} ({entry.channels.length} 个可用渠道)
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* 链路透视小胶囊 */}
+                          {currentModelEntry &&
+                          currentModelEntry.channels.length > 0 ? (
+                            <div
+                              className="flex flex-wrap items-center gap-1.5 text-[11px]"
+                              title={`顺位调度链路：${currentModelEntry.channels.map((c, i) => `${i + 1}. ${c.name} (${c.healthy ? "健康" : "熔断跳过"})`).join(" → ")}`}
+                            >
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-mono",
+                                  primaryChannel?.healthy
+                                    ? "bg-[#16A34A]/10 text-[#16A34A] border border-[#16A34A]/20"
+                                    : "bg-[#C9604D]/10 text-[#C9604D] border border-[#C9604D]/20",
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "size-1.5 rounded-full",
+                                    primaryChannel?.healthy
+                                      ? "bg-[#16A34A]"
+                                      : "bg-[#C9604D]",
+                                  )}
+                                />
+                                {primaryChannel?.healthy
+                                  ? `首选: ${primaryChannel.name}`
+                                  : `首选熔断 · 切换备用`}
+                              </span>
+                              {backupCount > 0 && (
+                                <span className="text-[11px] text-[#78716C] bg-[#F5F3EE] border border-[#E5E0D6] px-1.5 py-0.5 rounded-md">
+                                  +{backupCount} 备用渠道
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-[#78716C] flex items-center gap-1">
+                              <span>走全量渠道顺位自动分配</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* 运行状态：行内即时 Switch */}
+                      <TableCell className="py-3 align-top">
                         {control.lifecycleState === "archived" ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            title={`恢复${control.label}`}
-                            aria-label={`恢复${control.label}`}
-                            className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
-                            onClick={() => restoreFeature(control.key)}
+                          <Badge
+                            variant="outline"
+                            className="bg-[#F5F3EE] text-[#78716C] border-[#E5E0D6] text-[11px] font-normal"
                           >
-                            <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
-                            恢复
-                          </Button>
+                            已停止
+                          </Badge>
                         ) : (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              title={`设置${control.label}`}
-                              aria-label={`设置${control.label}`}
-                              className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
-                              onClick={() =>
-                                setBindingModal({ open: true, data: control })
-                              }
-                            >
-                              <Pencil className="size-3.5 mr-1 text-[#78716C]" />
-                              设置
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              title={`停止使用${control.label}`}
-                              aria-label={`停止使用${control.label}`}
-                              className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#F5F3EE]/50"
-                              onClick={() => setArchiveControl(control)}
-                            >
-                              <Archive className="size-3.5 mr-1 opacity-70" />
-                              停止
-                            </Button>
-                          </>
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <Switch
+                              aria-label={`启用 ${control.label}`}
+                              checked={control.isEnabled}
+                              onCheckedChange={async (checked) => {
+                                await saveFeatureControl({
+                                  feature_key: control.key,
+                                  model_id: control.modelId,
+                                  is_enabled: checked,
+                                  system_prompt: control.systemPrompt,
+                                  output_token_limit: control.outputTokenLimit,
+                                  context_message_limit:
+                                    control.contextMessageLimit,
+                                  provider_key_model_id:
+                                    control.providerKeyModelId,
+                                });
+                              }}
+                            />
+                            <span className="text-[12px] text-[#78716C] select-none">
+                              {control.isEnabled ? "运行中" : "已暂停"}
+                            </span>
+                          </div>
                         )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+
+                      {/* 操作列 */}
+                      <TableCell className="text-right pr-5 py-3 align-top">
+                        <div className="flex items-center justify-end gap-1">
+                          {control.lifecycleState === "archived" ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              title={`恢复${control.label}`}
+                              aria-label={`恢复${control.label}`}
+                              className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                              onClick={() => restoreFeature(control.key)}
+                            >
+                              <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
+                              恢复
+                            </Button>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title={`设置${control.label}`}
+                                aria-label={`设置${control.label}`}
+                                className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                                onClick={() =>
+                                  setBindingModal({
+                                    open: true,
+                                    data: control,
+                                  })
+                                }
+                              >
+                                <Pencil className="size-3.5 mr-1 text-[#78716C]" />
+                                高级设置
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                title={`停止使用${control.label}`}
+                                aria-label={`停止使用${control.label}`}
+                                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#F5F3EE]/50"
+                                onClick={() => setArchiveControl(control)}
+                              >
+                                <Archive className="size-3.5 mr-1 opacity-70" />
+                                停止
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -958,8 +1098,8 @@ export default function BindingsClient() {
                       <Table>
                         <TableHeader className="bg-[#FBF9F5]/80">
                           <TableRow className="hover:bg-transparent border-0">
-                            <TableHead className="h-8 w-[80px] py-1.5 pl-4 text-left text-[12px] font-normal text-[#78716C]">
-                              优先级
+                            <TableHead className="h-8 w-[110px] py-1.5 pl-4 text-left text-[12px] font-normal text-[#78716C]">
+                              顺位 (优先级)
                             </TableHead>
                             <TableHead className="h-8 py-1.5 text-left text-[12px] font-normal text-[#78716C]">
                               实际 Model ID
@@ -1006,8 +1146,20 @@ export default function BindingsClient() {
                                     !route.is_enabled && "opacity-60",
                                   )}
                                 >
-                                  <TableCell className="py-1 text-[12px] font-mono text-[#78716C] font-normal pl-4 text-left">
-                                    P{route.priority}
+                                  <TableCell className="py-1 pl-4 text-left">
+                                    {route.priority <= 10 ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#16A34A]/10 text-[#16A34A]">
+                                        首选 (P{route.priority})
+                                      </span>
+                                    ) : route.priority <= 50 ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                                        次选 (P{route.priority})
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-normal bg-[#F5F3EE] text-[#78716C] border border-[#E5E0D6]">
+                                        备用 (P{route.priority})
+                                      </span>
+                                    )}
                                   </TableCell>
                                   <TableCell className="py-1 font-mono text-[12px] font-medium text-[#1C1917] text-left">
                                     {route.actual_model}

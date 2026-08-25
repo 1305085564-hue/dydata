@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AiProvider,
   AiProviderKey,
@@ -70,6 +70,26 @@ export default function ProvidersClient() {
     title: string;
   }>({ open: false, entity: null, id: null, title: "" });
 
+  const [nowTs] = useState(() => Date.now());
+
+  const stats = useMemo(() => {
+    if (!bundle)
+      return { totalKeys: 0, healthyKeys: 0, totalModels: 0, totalProviders: 0 };
+    const totalKeys = bundle.keys.length;
+    const healthyKeys = bundle.keys.filter((k) => {
+      if (!k.is_enabled) return false;
+      if (!k.unhealthy_until) return true;
+      return new Date(k.unhealthy_until).getTime() <= nowTs;
+    }).length;
+    const uniqueModels = new Set(bundle.models.map((m) => m.model_id)).size;
+    return {
+      totalKeys,
+      healthyKeys,
+      totalModels: uniqueModels,
+      totalProviders: bundle.providers.length,
+    };
+  }, [bundle, nowTs]);
+
   if (isLoading || !bundle) {
     return (
       <div className="space-y-4">
@@ -123,7 +143,36 @@ export default function ProvidersClient() {
 
   return (
     <div className="space-y-5">
-      {/* 规范 2.2：极简浅灰槽底单行 Header，无割裂下划线 */}
+      {/* 算力健康态总览面板 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#FBF9F5]/90 rounded-2xl border border-[#E5E0D6] select-none">
+        <div className="space-y-0.5">
+          <div className="text-[12px] text-[#78716C]">服务商渠道</div>
+          <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
+            {stats.totalProviders} <span className="text-[12px] font-normal text-[#78716C]">个配置</span>
+          </div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="text-[12px] text-[#78716C]">接入密钥池</div>
+          <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
+            {stats.totalKeys} <span className="text-[12px] font-normal text-[#78716C]">个 Key</span>
+          </div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="text-[12px] text-[#78716C]">健康在线状态</div>
+          <div className="text-lg font-medium text-[#16A34A] tabular-nums font-mono flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[#16A34A]" />
+            {stats.healthyKeys} <span className="text-[12px] font-normal text-[#78716C]">/ {stats.totalKeys} 在线</span>
+          </div>
+        </div>
+        <div className="space-y-0.5">
+          <div className="text-[12px] text-[#78716C]">覆盖可用型号</div>
+          <div className="text-lg font-medium text-[#1C1917] tabular-nums font-mono">
+            {stats.totalModels} <span className="text-[12px] font-normal text-[#78716C]">个型号</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 极简浅灰槽底单行 Header */}
       <div className="flex items-center justify-between bg-[#F5F3EE]/70 p-2.5 px-3.5 rounded-xl">
         <span className="text-[13px] font-medium text-[#1C1917]">
           第三方中转站 Base URL 与 API 密钥池
