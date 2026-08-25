@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT,
   loadVideoSubmissionEditDetailPage,
   type EditDetailPageDbAdapter,
 } from "./route-core";
@@ -95,7 +96,6 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
         data: ids.map((id) => ({
           id,
           name: `用户-${id.slice(0, 4)}`,
-          display_name: `昵称-${id.slice(0, 4)}`,
           membership_status: id === ARCHIVED_MEMBER_ID ? "archived" : "active",
         })),
         error: null,
@@ -105,6 +105,10 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
   };
   return base;
 }
+
+test("历史责任人查询只使用 profiles 真实字段，不读取不存在的 display_name", () => {
+  assert.equal(EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT, "id, name, membership_status");
+});
 
 test("400：biz_date 格式错误直接拒绝，不触达数据库", async () => {
   const adapter = buildAdapter();

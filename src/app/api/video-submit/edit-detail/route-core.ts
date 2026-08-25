@@ -6,6 +6,7 @@ export const EDIT_DETAIL_VIDEO_SELECT =
 export const EDIT_DETAIL_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
 export const EDIT_DETAIL_REPORT_SELECT = "id, user_id, account_id, report_date";
+export const EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT = "id, name, membership_status";
 
 type QueryOutcome<T> = { data: T[] | null; error: { message: string } | null };
 type SingleOutcome<T> = { data: T | null; error: { message: string } | null };
@@ -18,7 +19,7 @@ export interface EditDetailPageDbAdapter {
   listTagsByVideoId(videoId: string): Promise<QueryOutcome<{ tag_dimension: string | null; tag_value: string | null }>>;
   listUsageRecordsByReportAndUser(reportId: string, userId: string): Promise<QueryOutcome<{ id: string; script_text: string | null; script_format: string | null }>>;
   /** 只查询原记录中精确的三个责任人 ID；由调用方在完成归属校验后提供 */
-  listAssigneeProfilesByIds(userIds: string[]): Promise<QueryOutcome<{ id: string; name: string | null; display_name: string | null; membership_status: string | null }>>;
+  listAssigneeProfilesByIds(userIds: string[]): Promise<QueryOutcome<{ id: string; name: string | null; membership_status: string | null }>>;
 }
 
 export interface EditDetailPageInput {
@@ -87,7 +88,7 @@ export async function loadVideoSubmissionEditDetailPage(
   const [snapshotsResult, tagsResult, profilesResult] = await Promise.all([
     db.list24hSnapshotsByVideoId(video.id),
     db.listTagsByVideoId(video.id),
-    assigneeIds.length ? db.listAssigneeProfilesByIds(assigneeIds) : Promise.resolve({ data: [], error: null } as QueryOutcome<{ id: string; name: string | null; display_name: string | null; membership_status: string | null }>),
+    assigneeIds.length ? db.listAssigneeProfilesByIds(assigneeIds) : Promise.resolve({ data: [], error: null } as QueryOutcome<{ id: string; name: string | null; membership_status: string | null }>),
   ]);
 
   if (snapshotsResult.error) return { status: 500, body: { error: "读取原24h快照失败" } };
@@ -119,7 +120,7 @@ export async function loadVideoSubmissionEditDetailPage(
     assigneeProfiles: (profilesResult.data ?? []).map((profile) => ({
       userId: profile.id,
       name: profile.name,
-      displayName: profile.display_name,
+      displayName: profile.name,
       membershipStatus: profile.membership_status,
     })),
     bizDate: input.bizDate,

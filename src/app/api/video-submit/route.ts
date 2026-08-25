@@ -18,7 +18,7 @@ import {
   type ExistingSubmissionScreenshotFields,
 } from "./edit-detail";
 import {
-  collectUnchangedOriginalAssigneeIds,
+  collectAssigneeIdsRequiringValidation,
   EDIT_BINDING_REPORT_SELECT,
   EDIT_BINDING_SNAPSHOT_SELECT,
   EDIT_BINDING_VIDEO_SELECT,
@@ -289,20 +289,18 @@ export async function POST(request: NextRequest) {
         operatorUserId: editContract.assignees.operator_user_id,
       }
     : resolveSubmissionRoleUserIds(normalized, user.id);
-  const externalAssigneeIds = [...new Set(
-    Object.values(roleUserIds).filter((id): id is string => typeof id === "string" && id !== user.id),
-  )].filter((id) => {
-    // 编辑时未修改的旧责任人保留原值，即使已归档/离队也放行
-    if (editBinding && editBinding.ok) {
-      const unchanged = collectUnchangedOriginalAssigneeIds(roleUserIds, {
+  const originalAssignees = editBinding && editBinding.ok
+    ? {
         scriptAuthorUserId: editBinding.video.script_author_user_id,
         videoEditorUserId: editBinding.video.video_editor_user_id,
         operatorUserId: editBinding.video.operator_user_id,
-      });
-      if (unchanged.has(id)) return false;
-    }
-    return true;
-  });
+      }
+    : null;
+  const externalAssigneeIds = collectAssigneeIdsRequiringValidation(
+    roleUserIds,
+    originalAssignees,
+    user.id,
+  );
 
   if (externalAssigneeIds.length) {
     const assigneeProfilesResult = await loadWithMembershipFallback({

@@ -4,6 +4,7 @@ import { isUuidLike } from "../stability";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
+  EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT,
   EDIT_DETAIL_REPORT_SELECT,
   EDIT_DETAIL_SNAPSHOT_SELECT,
   EDIT_DETAIL_VIDEO_SELECT,
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     listAssigneeProfilesByIds: async (ids) => {
       const { data, error } = await createAdminClient()
         .from("profiles")
-        .select("id, name, display_name, membership_status")
+        .select(EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT)
         .in("id", ids);
       return { data, error };
     },

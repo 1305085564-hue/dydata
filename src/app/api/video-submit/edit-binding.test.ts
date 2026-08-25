@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  collectUnchangedOriginalAssigneeIds,
+  collectAssigneeIdsRequiringValidation,
   editVideoMatchesBizDate,
   mergePreservedEditSnapshotFields,
   validateEditSubmissionBinding,
@@ -232,7 +232,33 @@ test("编辑保存只改文案时，不可编辑旧指标全部保持数据库�
   assert.equal(created.homepage_visits, 0);
 });
 
-test("编辑时未修改的旧责任人允许保留（含归档），修改后的责任人不在豁免名单", () => {
+test("编辑保存时数据库旧指标为 null 也必须原样保留，不能被前端默认 0 覆盖", () => {
+  const merged = mergePreservedEditSnapshotFields(
+    "edit",
+    {
+      follower_loss: 0,
+      homepage_visits: 0,
+      fan_play_ratio: 0,
+      cover_click_rate: 0,
+      avg_play_ratio: 0,
+    },
+    {
+      follower_loss: null,
+      homepage_visits: null,
+      fan_play_ratio: null,
+      cover_click_rate: null,
+      avg_play_ratio: null,
+    },
+  );
+
+  assert.equal(merged.follower_loss, null);
+  assert.equal(merged.homepage_visits, null);
+  assert.equal(merged.fan_play_ratio, null);
+  assert.equal(merged.cover_click_rate, null);
+  assert.equal(merged.avg_play_ratio, null);
+});
+
+test("编辑时只按岗位豁免未修改的旧责任人，新岗位复用同一归档成员仍必须校验", () => {
   const archivedMemberId = "623e4567-e89b-12d3-a456-426614174007";
   const originalAssignees = {
     scriptAuthorUserId: USER_ID,
@@ -240,20 +266,33 @@ test("编辑时未修改的旧责任人允许保留（含归档），修改后�
     operatorUserId: null,
   };
 
-  // 未修改：剪辑仍是归档成员 → 豁免
-  const keptUnchanged = collectUnchangedOriginalAssigneeIds(
+  // 剪辑岗位未修改可以保留，但把同一个归档成员新指派到文案岗位必须重新校验。
+  const requiringValidation = collectAssigneeIdsRequiringValidation(
+    {
+      scriptAuthorUserId: archivedMemberId,
+      videoEditorUserId: archivedMemberId,
+      operatorUserId: USER_ID,
+    },
+    originalAssignees,
+    USER_ID,
+  );
+  assert.deepEqual(requiringValidation, [archivedMemberId]);
+
+  // 仅保留原剪辑责任人，没有新增外部指派时无需校验。
+  const keptUnchanged = collectAssigneeIdsRequiringValidation(
     { scriptAuthorUserId: USER_ID, videoEditorUserId: archivedMemberId, operatorUserId: USER_ID },
     originalAssignees,
+    USER_ID,
   );
-  assert.equal(keptUnchanged.has(archivedMemberId), true);
+  assert.deepEqual(keptUnchanged, []);
 
-  // 修改：剪辑换成另一个人 → 不豁免
-  const changed = collectUnchangedOriginalAssigneeIds(
+  // 剪辑换成另一个人时，新成员必须校验。
+  const changed = collectAssigneeIdsRequiringValidation(
     { scriptAuthorUserId: USER_ID, videoEditorUserId: OTHER_USER_ID, operatorUserId: USER_ID },
     originalAssignees,
+    USER_ID,
   );
-  assert.equal(changed.has(archivedMemberId), false);
-  assert.equal(changed.has(OTHER_USER_ID), false);
+  assert.deepEqual(changed, [OTHER_USER_ID]);
 });
 
 test("日期匹配使用上海时区的发布或上传时间", () => {

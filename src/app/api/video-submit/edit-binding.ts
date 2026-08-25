@@ -138,10 +138,8 @@ export function mergePreservedEditSnapshotFields<M extends Record<string, unknow
   if (mode !== "edit" || !existingSnapshot) return payload;
   const next = { ...payload };
   for (const field of PRESERVED_SNAPSHOT_METRIC_FIELDS) {
-    const value = existingSnapshot[field];
-    if (value !== null && value !== undefined) {
-      (next as Record<string, unknown>)[field] = value;
-    }
+    // 编辑模式的这些字段不可编辑：数据库原值即使是 null，也必须原样保留。
+    (next as Record<string, unknown>)[field] = existingSnapshot[field];
   }
   return next;
 }
@@ -156,16 +154,18 @@ export type SubmissionRoleAssigneeIds = {
  * 编辑时未修改的旧责任人允许保留原值（即使已归档）；
  * 只有发生变化的外协责任人才要求是在职同队成员。
  */
-export function collectUnchangedOriginalAssigneeIds(
+export function collectAssigneeIdsRequiringValidation(
   roleUserIds: SubmissionRoleAssigneeIds,
-  originalAssignees: SubmissionRoleAssigneeIds,
+  originalAssignees: SubmissionRoleAssigneeIds | null,
+  submitterUserId: string,
 ) {
-  const unchanged = new Set<string>();
+  const requiringValidation = new Set<string>();
   for (const key of ["scriptAuthorUserId", "videoEditorUserId", "operatorUserId"] as const) {
     const current = roleUserIds[key];
-    if (current && originalAssignees[key] && current === originalAssignees[key]) {
-      unchanged.add(current);
-    }
+    if (!current || current === submitterUserId) continue;
+    // 只豁免“同一岗位保留同一旧值”；不能因其他岗位未变而全局放行这个人员 ID。
+    if (originalAssignees?.[key] === current) continue;
+    requiringValidation.add(current);
   }
-  return unchanged;
+  return [...requiringValidation];
 }
