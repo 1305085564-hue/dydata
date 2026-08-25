@@ -218,7 +218,7 @@ export function SyncModelsDialog({
         <div className="flex-1 min-h-[260px] max-h-[50vh] overflow-y-auto border border-[#E5E0D6] rounded-xl bg-white select-none divide-y divide-[#ECE7DE]/50">
           {filteredModels.length === 0 ? (
             <div className="p-10 text-center text-[13px] text-[#78716C]">
-              {searchQuery ? "未找到匹配的型号" : "暂无可启用的型号"}
+              {searchQuery ? "未找到匹配的型号" : "还没有可启用的型号"}
             </div>
           ) : (
             filteredModels.map((mId) => {

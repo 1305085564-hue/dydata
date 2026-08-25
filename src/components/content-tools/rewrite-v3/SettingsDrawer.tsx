@@ -298,7 +298,7 @@ export function SettingsDrawer({
                 <div className="text-center py-10 border border-dashed border-[#E5E0D6] rounded-lg space-y-2">
                   <BookOpen className="h-6 w-6 text-[#78716C] mx-auto" />
                   <p className="text-[12px] text-[#78716C] font-medium">
-                    暂无个人技能，点击上方按钮创建
+                    还没有个人技能，需要时点上方按钮创建
                   </p>
                 </div>
               ) : (

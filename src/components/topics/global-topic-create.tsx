@@ -115,13 +115,13 @@ export function GlobalTopicCreate({ initialRequest }: GlobalTopicCreateProps) {
     e.preventDefault();
     let hasError = false;
     if (!selectedTopicId) {
-      setTopicError("请选择母题分类");
+      setTopicError("选一个母题分类");
       hasError = true;
     } else {
       setTopicError("");
     }
     if (!inputText.trim()) {
-      setTitleError("请输入选题标题");
+      setTitleError("输入选题标题");
       hasError = true;
     } else {
       setTitleError("");

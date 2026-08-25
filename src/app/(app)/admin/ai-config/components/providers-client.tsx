@@ -159,8 +159,8 @@ export default function ProvidersClient() {
         </div>
         <div className="space-y-0.5">
           <div className="text-[12px] text-[#78716C]">健康在线状态</div>
-          <div className="text-lg font-medium text-[#16A34A] tabular-nums font-mono flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-[#16A34A]" />
+          <div className="text-lg font-medium text-[#6FAA7D] tabular-nums font-mono flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[#6FAA7D]" />
             {stats.healthyKeys} <span className="text-[12px] font-normal text-[#78716C]">/ {stats.totalKeys} 在线</span>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function ProvidersClient() {
         <div className="rounded-2xl bg-[#FBF9F5]/70 p-12 text-center space-y-3">
           <Server className="size-8 text-[#78716C] mx-auto" />
           <p className="text-[13px] text-[#78716C]">
-            暂无供应商渠道。可添加第三方中转站或 API 服务商。
+            还没有供应商渠道。需要时可添加第三方中转站或 API 服务商。
           </p>
           <Button
             size="sm"
@@ -306,7 +306,7 @@ export default function ProvidersClient() {
                             colSpan={6}
                             className="text-center py-6 text-[13px] text-[#78716C] border-0"
                           >
-                            暂无 API 密钥分组，点击右上角新建 Key
+                            还没有 API 密钥分组，需要时点右上角新建
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -340,8 +340,8 @@ export default function ProvidersClient() {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 {healthStatus === "healthy" ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#16A34A]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
-                                    <CheckCircle2 className="size-3 text-[#16A34A]" />{" "}
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
+                                    <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                     正常
                                   </span>
                                 ) : healthStatus === "untested" ? (

@@ -108,7 +108,7 @@ export function TopicCreateModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !hook.trim() || !topicId) {
-      setErrorMsg("请填写必填项：母题、子题标题、一句话 Hook");
+      setErrorMsg("还有必填项没填：母题、子题标题、一句话 Hook");
       return;
     }
 

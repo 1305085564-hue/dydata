@@ -78,7 +78,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title={`本月暂无${roleLabel}归属记录`}
+          title={`本月还没有${roleLabel}归属记录`}
           description="2026-07-27 起开始统计团队作品分工"
         />
       </div>

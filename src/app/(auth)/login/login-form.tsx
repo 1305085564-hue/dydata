@@ -154,7 +154,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
               id="password"
               name="password"
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="请输入密码"
+              placeholder="输入密码"
               required
               type={showPassword ? "text" : "password"}
               value={password}

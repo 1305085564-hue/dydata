@@ -1156,7 +1156,7 @@ export function ContentDiagnosisWorkbench({
                     onValueChange={(val) => setSelectedRefUserId(val)}
                   >
                     <SelectTrigger className="h-7 min-w-36 text-[11px] bg-white border-[#E5E0D6] rounded-md">
-                      <SelectValue placeholder="请选择成员" />
+                      <SelectValue placeholder="选一个成员" />
                     </SelectTrigger>
                     <SelectContent>
                       {profiles
@@ -1187,7 +1187,7 @@ export function ContentDiagnosisWorkbench({
                   <p className="font-semibold text-[#292524]">归因待数据齐</p>
                   <p className="mt-1 text-[11px] text-[#78716C]">
                     {multiAttribution
-                      ? "这条视频暂无 24h 快照数据，请人工核对下方曲线与素材"
+                      ? "这条视频还没有 24h 快照数据，先人工核对下方曲线与素材"
                       : "正在加载归因数据..."}
                   </p>
                 </div>
@@ -1386,7 +1386,7 @@ export function ContentDiagnosisWorkbench({
                 </div>
               ) : (
                 <div className="rounded-xl bg-[#F5F3EE]/50 p-6 text-center text-[12px] text-[#78716C]">
-                  暂无 24h 快照留存曲线数据
+                  还没有 24h 快照留存曲线数据
                 </div>
               )}
             </div>
@@ -1693,7 +1693,7 @@ export function ContentDiagnosisWorkbench({
                   </div>
                 ) : (
                   <span className="text-[11px] text-[#78716C] italic">
-                    暂无指标偏离证据，该视频表现良好。
+                    没有指标偏离证据，这个视频表现良好。
                   </span>
                 )}
               </div>
@@ -2102,7 +2102,7 @@ function MultiRefMetricCard({
 
           const toneClass =
             tone === "good"
-              ? "text-[#16A34A] bg-[#16A34A]/8 border-[#16A34A]/20"
+              ? "text-[#6FAA7D] bg-[#6FAA7D]/8 border-[#6FAA7D]/20"
               : tone === "warn"
                 ? "text-[#D99E55] bg-[#D99E55]/8 border-[#D99E55]/20"
                 : tone === "bad"

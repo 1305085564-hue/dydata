@@ -799,7 +799,7 @@ export function DataManager({
       </div>
 
       {localReports.length === 0 ? (
-        <p className="py-4 text-[13px] text-[#78716C]">该日期暂无提交记录</p>
+        <p className="py-4 text-[13px] text-[#78716C]">该日期还没有提交记录</p>
       ) : viewMode === "profile" ? (
         <div className="space-y-6">
           {profileGroups.map((group) => (

@@ -232,7 +232,7 @@ export function MyClaimDrawer({
                               </span>
                             </div>
                             <p className="text-xs text-[#78716C] line-clamp-1 mb-2 font-normal">
-                              “{sub?.hook || "暂无 Hook"}”
+                              “{sub?.hook || "还没有 Hook"}”
                             </p>
 
                             <div className="flex items-center justify-between pt-2 border-t border-[#ECE7DE] text-xs">
@@ -300,7 +300,7 @@ export function MyClaimDrawer({
                               </span>
                             </div>
                             <p className="text-xs text-[#78716C] line-clamp-1 mb-2 font-normal">
-                              “{sub?.hook || "暂无 Hook"}”
+                              “{sub?.hook || "还没有 Hook"}”
                             </p>
 
                             <div className="flex items-center justify-between pt-2 border-t border-[#ECE7DE] text-xs">

@@ -58,7 +58,7 @@ export function PermissionGuard({
             <span>需访问权限</span>
           </div>
           <h2 className="text-lg font-semibold tracking-tight text-[#1C1917]">
-            暂无「{moduleTitle}」权限
+            还没有「{moduleTitle}」权限
           </h2>
           <p className="text-[13px] leading-relaxed text-[#292524]">
             {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系管理员开通对应权限。`}

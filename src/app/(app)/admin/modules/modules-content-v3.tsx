@@ -203,7 +203,7 @@ function getProgressColor(ratio: number): string {
   if (ratio <= 30) return "bg-[#78716C]";
   if (ratio <= 70) return "bg-[#43718E]";
   if (ratio < 100) return "bg-[#D97757]";
-  return "bg-[#16A34A]";
+  return "bg-[#6FAA7D]";
 }
 
 function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean }) {
@@ -2130,7 +2130,7 @@ export function AdminModulesContentV3({
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <p className="text-[13px] text-[#78716C] py-3 text-center">暂无团队记录</p>
+                <p className="text-[13px] text-[#78716C] py-3 text-center">还没有团队记录</p>
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;

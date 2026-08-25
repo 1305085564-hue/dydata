@@ -142,7 +142,7 @@ function RewriteRouteDialog({
               value={formData.model_view_id || ""}
               onChange={(e) => setFormData({ ...formData, model_view_id: e.target.value })}
             >
-              <option value="">请选择</option>
+              <option value="">选一个模型视图</option>
               {viewOptions.map((option) => (
                 <option key={option.id} value={option.id} disabled={!option.isEnabled} className={!option.isEnabled ? "text-[#78716C]" : ""}>
                   {option.label}
@@ -296,7 +296,7 @@ export default function RewriteClient() {
 
           <div className="space-y-0.5 max-h-[600px] overflow-y-auto pr-1">
             {views.length === 0 ? (
-              <div className="text-[12px] text-[#78716C] py-6 text-center">暂无改写视图</div>
+              <div className="text-[12px] text-[#78716C] py-6 text-center">还没有改写视图</div>
             ) : (
               views.map((v) => {
                 const isViewActive = activeViewId === v.id;
@@ -399,7 +399,7 @@ export default function RewriteClient() {
                         {routes.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={5} className="py-8 text-center text-[13px] text-[#78716C]">
-                              暂无路由规则，点击右上角添加
+                              还没有路由规则，需要时点右上角添加
                             </TableCell>
                           </TableRow>
                         ) : (

@@ -187,7 +187,7 @@ export function ExceptionQueue({
           全员今日已完成履约 · 团队节奏平稳
         </h3>
         <p className="mt-1 text-[12px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
-          当前范围内所有成员的发布状态均已确认或完成登记，暂无待处置的异常。
+          当前范围内成员的发布状态都已确认或登记完毕，没有待处置的异常。
         </p>
       </div>
     );

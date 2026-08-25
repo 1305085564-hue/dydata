@@ -38,7 +38,7 @@ export function TalentTab({
       <div className="py-16 text-center">
         <Video className="mx-auto size-8 text-[#E5E0D6]" />
         <p className="mt-3 text-[13px] font-medium text-[#78716C]">
-          本月暂无达人数据
+          本月还没有达人数据
         </p>
         <p className="mt-1 text-[12px] text-[#78716C]">
           达人 = 名下有账号的出镜成员

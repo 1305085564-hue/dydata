@@ -73,7 +73,7 @@ export function QuotaConfigPanel({
 
     if (!effectiveDate) {
       toast.error("无法提交", {
-        description: "请选择规则生效日期",
+        description: "选一个规则生效日期",
       });
       return;
     }
@@ -234,7 +234,7 @@ export function QuotaConfigPanel({
 
           {rules.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-white py-12 text-center text-[#78716C] text-[13px]">
-              暂无历史指标配置记录
+              还没有历史指标配置记录
             </div>
           ) : (
             <div className="overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white">

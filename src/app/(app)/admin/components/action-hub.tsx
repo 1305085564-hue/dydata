@@ -182,7 +182,7 @@ export function ActionHub({
               ))
             ) : (
               <p className="py-2 text-[13px] text-[#78716C]">
-                暂无推荐快捷操作
+                还没有推荐的快捷操作
               </p>
             )}
           </div>

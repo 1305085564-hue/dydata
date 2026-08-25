@@ -168,8 +168,8 @@ export function Leaderboard({
       items: ranked,
       emptyMessage:
         boardType === "tag"
-          ? "当前时间范围内暂无同标签账号数据。"
-          : "当前时间范围内暂无排行榜数据。",
+          ? "当前时间范围内还没有同标签账号数据。"
+          : "当前时间范围内还没有排行榜数据。",
     };
   }, [baseRows, boardType, normalizedOwnDirections, ownAccountIds, progressByAccount, sortKey, sortDir]);
 

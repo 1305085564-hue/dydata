@@ -141,7 +141,7 @@ function ExemptionRequestList({ requests, onHandled, onRestore }: Props) {
   }
 
   if (localRequests.length === 0) {
-    return <p className="text-[13px] text-[#78716C]">暂无待审批申请</p>;
+    return <p className="text-[13px] text-[#78716C]">还没有待审批的申请</p>;
   }
 
   return (

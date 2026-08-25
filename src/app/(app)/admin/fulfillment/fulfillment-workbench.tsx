@@ -796,7 +796,7 @@ export function FulfillmentWorkbench({
             ) : pendingAppeals.length === 0 ? (
               <div className="rounded-xl border border-[#E5E0D6] bg-white py-12">
                 <EmptyState
-                  title="暂无待审核申诉"
+                  title="还没有待审核的申诉"
                   description="所有成员的申诉请求已处理完毕"
                 />
               </div>

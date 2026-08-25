@@ -150,7 +150,7 @@ export function SmartReplaceModal({
           </div>
 
           {error && (
-            <div className="mb-3 p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#DC2626] text-xs text-[#292524] font-normal shrink-0">
+            <div className="mb-3 p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#C9604D] text-xs text-[#292524] font-normal shrink-0">
               {error}
             </div>
           )}
@@ -160,7 +160,7 @@ export function SmartReplaceModal({
             className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden"
           >
             <div className="text-xs font-normal text-[#292524] shrink-0">
-              请选择要被替换放回的选题：
+              选一条要放回的选题：
             </div>
 
             <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
@@ -196,7 +196,7 @@ export function SmartReplaceModal({
                           {sub?.title || "已认领子题"}
                         </div>
                         <div className="text-xs text-[#78716C] line-clamp-1 mt-0.5 font-normal">
-                          “{sub?.hook || "暂无 Hook"}”
+                          “{sub?.hook || "还没有 Hook"}”
                         </div>
                       </div>
                     </div>

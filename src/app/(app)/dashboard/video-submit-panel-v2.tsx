@@ -149,7 +149,7 @@ function ExemptionReviewNoticeCard({
 }
 
 const formatDateTime = (isoString: string | null | undefined) => {
-  if (!isoString) return "暂无";
+  if (!isoString) return "—";
   try {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) return isoString;
@@ -835,7 +835,7 @@ export function VideoSubmitPanelV2({
           ) : !historyReports || historyReports.length === 0 ? (
             <EmptyState
               icon={History}
-              title="暂无历史记录"
+              title="还没有历史记录"
               description="完成提交或补交后，这里会显示最近 30 条记录。"
             />
           ) : (

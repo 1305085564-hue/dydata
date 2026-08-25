@@ -124,7 +124,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
       <form action={formAction} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="name">姓名</Label>
-            <Input autoComplete="name" id="name" name="name" placeholder="请输入姓名" required type="text" />
+            <Input autoComplete="name" id="name" name="name" placeholder="输入姓名" required type="text" />
           </div>
 
           <div className="space-y-2">
@@ -143,7 +143,7 @@ export function RegisterForm({ action, initialTeams }: RegisterFormProps) {
               required
             >
               <option value="" disabled>
-                {isLoadingTeams ? "正在加载团队" : "请选择目标团队"}
+                {isLoadingTeams ? "正在加载团队" : "选一个目标团队"}
               </option>
               {teams.map((team) => (
                 <option key={team.id} value={team.id}>

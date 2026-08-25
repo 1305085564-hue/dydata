@@ -31,7 +31,6 @@ function LoadingPlaceholder() {
     <div className="flex h-48 items-center justify-center rounded-2xl bg-[#FBF9F5]/70 text-[#78716C]">
       <div className="flex items-center gap-3">
         <Skeleton className="size-4 rounded-full" />
-        <span className="text-[13px]">正在加载模块...</span>
       </div>
     </div>
   );

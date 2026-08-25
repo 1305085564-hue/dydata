@@ -99,7 +99,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
           );
         })}
         {availableSkills.length === 0 && (
-          <span className="text-[12px] text-[#78716C] italic">暂无可用技能</span>
+          <span className="text-[12px] text-[#78716C] italic">还没有可用技能</span>
         )}
       </div>
 

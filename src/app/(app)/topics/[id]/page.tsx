@@ -719,7 +719,7 @@ export default function SubTopicDetailPage({
             </div>
           ) : claimsData.claims.length === 0 ? (
             <div className="rounded-xl bg-[#F5F3EE]/50 p-4 text-center text-[12.5px] text-[#78716C] italic">
-              暂无其他人认领此选题，可抢先创作。
+              还没有其他人认领这个选题，认领后即可开始创作。
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -801,7 +801,7 @@ export default function SubTopicDetailPage({
             </div>
           ) : works.length === 0 ? (
             <div className="py-8 rounded-xl bg-[#F5F3EE]/50 text-center text-[#78716C] text-[12.5px] italic">
-              本选题暂无作品发布记录。
+              这个选题还没有作品发布记录。
             </div>
           ) : (
             <div className="divide-y divide-[#ECE7DE]">
@@ -1082,11 +1082,11 @@ export default function SubTopicDetailPage({
           <DialogHeader>
             <DialogTitle className="text-[#1C1917] text-[15px] font-semibold flex items-center gap-2">
               <ArrowRightLeft className="size-4 text-[#D97757]" />
-              <span>候选位已满 (5/5) · 请选择替换</span>
+              <span>候选位已满 (5/5) · 选一条替换</span>
             </DialogTitle>
             <DialogDescription className="text-[#78716C] text-[12.5px]">
               您的候选选题库已达 5
-              条上限。请选择一条放回选题池，以便腾出空间认领本题。
+              条上限。选一条放回选题池，腾出位置好认领本题。
             </DialogDescription>
           </DialogHeader>
 

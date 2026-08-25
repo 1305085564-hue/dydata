@@ -565,7 +565,7 @@ export default function ModelsClient() {
                           colSpan={7}
                           className="text-center py-8 text-[12px] text-[#78716C]"
                         >
-                          暂无支持当前型号 ({activeModelId}) 的可用密钥
+                          还没有支持当前型号 ({activeModelId}) 的可用密钥
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -695,8 +695,8 @@ export default function ModelsClient() {
 
                             <TableCell>
                               {healthStatus === "healthy" ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#16A34A]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
-                                  <CheckCircle2 className="size-3 text-[#16A34A]" />{" "}
+                                <span className="inline-flex items-center gap-1 text-[11px] text-[#292524] bg-[#6FAA7D]/10 border border-[#E5E0D6]/60 px-2 py-0.5 rounded-full font-medium">
+                                  <CheckCircle2 className="size-3 text-[#6FAA7D]" />{" "}
                                   正常
                                 </span>
                               ) : healthStatus === "untested" ? (

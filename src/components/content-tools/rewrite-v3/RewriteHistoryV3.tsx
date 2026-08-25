@@ -93,7 +93,7 @@ export function RewriteHistoryV3({
         {conversations.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center px-4 py-12">
             <FileText className="h-6 w-6 text-[#78716C] animate-pulse" />
-            <p className="text-[12px] font-medium text-[#78716C] mt-2">暂无记录</p>
+            <p className="text-[12px] font-medium text-[#78716C] mt-2">还没有记录</p>
           </div>
         ) : (
           sections.map((section) => (

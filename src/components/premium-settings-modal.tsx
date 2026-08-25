@@ -281,7 +281,7 @@ export function PremiumSettingsModal({
     const trimmedRemark = newAccRemark.trim();
     const trimmedDir = newAccDir.trim();
     if (!trimmedName) {
-      setAddAccountError("请填写账号名称");
+      setAddAccountError("填写账号名称");
       return;
     }
     if (trimmedName.length > 30) {
@@ -455,7 +455,7 @@ export function PremiumSettingsModal({
                     : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]/70",
                 )}
               >
-                <Settings2 className="size-4 text-[#16A34A]" />
+                <Settings2 className="size-4 text-[#6FAA7D]" />
                 系统参数配置
               </button>
             </div>
@@ -520,7 +520,7 @@ export function PremiumSettingsModal({
                         className={cn(
                           "relative px-4 py-1.5 rounded-lg text-[12px] font-medium text-white transition-colors duration-100 min-w-[80px]",
                           saveSuccess
-                            ? "bg-[#16A34A]"
+                            ? "bg-[#6FAA7D]"
                             : "bg-[#D97757] hover:bg-[#C46A4D]",
                         )}
                       >

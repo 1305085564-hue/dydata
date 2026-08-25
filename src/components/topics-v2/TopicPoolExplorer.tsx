@@ -442,7 +442,7 @@ export function TopicPoolExplorer({
                     {sub.title}
                   </h3>
                   <p className="text-xs text-[#78716C] line-clamp-2 mb-3.5 leading-relaxed font-normal">
-                    {sub.hook ? `“${sub.hook}”` : "暂无 Hook"}
+                    {sub.hook ? `“${sub.hook}”` : "还没有 Hook"}
                   </p>
                 </div>
 
@@ -469,7 +469,7 @@ export function TopicPoolExplorer({
                         均播 {(summary.averagePlayCount / 10000).toFixed(1)}万
                       </span>
                     ) : (
-                      <span className="text-[#78716C]">暂无成片</span>
+                      <span className="text-[#78716C]">还没有成片</span>
                     )}
 
                     <span className="text-[#E5E0D6] select-none">·</span>
@@ -538,7 +538,7 @@ export function TopicPoolExplorer({
                         {sub.title}
                       </div>
                       <div className="text-[#78716C] text-xs truncate font-normal">
-                        “{sub.hook || "暂无 Hook"}”
+                        “{sub.hook || "还没有 Hook"}”
                       </div>
                     </td>
                     <td className="py-3 px-3 text-[#292524] font-normal">

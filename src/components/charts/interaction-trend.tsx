@@ -63,7 +63,7 @@ function 趋势方向图标({ positive }: { positive: boolean }) {
     <svg
       aria-hidden="true"
       viewBox="0 0 12 12"
-      className={cn("h-3 w-3", positive ? "text-[#DC2626]" : "text-[#16A34A]")}
+      className={cn("h-3 w-3", positive ? "text-[#DC2626]" : "text-[#6FAA7D]")}
       fill="none"
     >
       <path
@@ -291,7 +291,7 @@ export function InteractionTrend({
           </div>
           <p className="text-[13px] text-[#292524]">
             按真实日期展示最近 {range} 天
-            {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时暂无对比线。"}
+            {showTeamLine ? "，灰线为团队 P70。" : "，团队人数不足 5 人时还没有对比线。"}
           </p>
         </div>
         <div className="flex items-center gap-1">

@@ -79,13 +79,13 @@ export function ProviderDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.name?.trim()) {
-      setNameError("请输入渠道名称");
+      setNameError("输入渠道名称");
       hasError = true;
     } else {
       setNameError("");
     }
     if (!formData.base_url?.trim()) {
-      setUrlError("请输入 Base URL");
+      setUrlError("输入 Base URL");
       hasError = true;
     } else {
       setUrlError("");
@@ -198,13 +198,13 @@ export function KeyDialog({
   const handleSubmit = async () => {
     let hasError = false;
     if (!formData.label?.trim()) {
-      setLabelError("请输入名称");
+      setLabelError("输入名称");
       hasError = true;
     } else {
       setLabelError("");
     }
     if (!apiKey?.id && !apiKeyValue.trim()) {
-      setKeyError("请输入 API Key");
+      setKeyError("输入 API Key");
       hasError = true;
     } else {
       setKeyError("");
@@ -354,7 +354,7 @@ export function ModelDialog({
 
   const handleSubmit = async () => {
     if (!formData.model_id?.trim()) {
-      setModelIdError("请输入型号标识");
+      setModelIdError("输入型号标识");
       return;
     }
     setModelIdError("");
@@ -447,7 +447,7 @@ export function ModelDialog({
               <div className="space-y-2 max-h-[160px] overflow-y-auto p-2 bg-[#FBF9F5]/80 rounded-xl border border-[#E5E0D6]/60">
                 {presetTab === "used" ? (
                   usedModels.length === 0 ? (
-                    <div className="text-center py-4 text-[12px] text-[#78716C]">暂无已记录的型号，可切换至【主流预设】选填</div>
+                    <div className="text-center py-4 text-[12px] text-[#78716C]">还没记录过型号，需要时可切到【主流预设】选填</div>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {usedModels.map((mId) => (

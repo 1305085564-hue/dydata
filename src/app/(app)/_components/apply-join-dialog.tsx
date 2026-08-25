@@ -39,7 +39,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
 
   function handleSubmit() {
     if (!teamId) {
-      setErrorText("请选择团队");
+      setErrorText("选一个团队");
       return;
     }
     setErrorText("");
@@ -84,7 +84,7 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
             disabled={isPending}
           >
             <option value="" disabled>
-              请选择目标团队
+              选一个目标团队
             </option>
             {teams.map((team) => (
               <option key={team.id} value={team.id}>

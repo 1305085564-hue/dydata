@@ -226,7 +226,7 @@ export function RewriteWorkbenchV3() {
             <span className="text-[13px] font-medium text-[#1C1917]">
               定稿阅览室
             </span>
-            <span className="rounded bg-[#16A34A]/100/10 px-1.5 py-0.5 text-[12px] font-medium text-[#16A34A] uppercase tracking-wide">
+            <span className="rounded bg-[#6FAA7D]/100/10 px-1.5 py-0.5 text-[12px] font-medium text-[#6FAA7D] uppercase tracking-wide">
               沉浸模式
             </span>
           </div>
@@ -272,7 +272,7 @@ export function RewriteWorkbenchV3() {
               ))}
               {!state.polishedText && (
                 <p className="py-12 text-center italic text-[#78716C]">
-                  暂无定稿内容
+                  还没有定稿内容
                 </p>
               )}
             </div>

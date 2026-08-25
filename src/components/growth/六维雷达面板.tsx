@@ -146,7 +146,7 @@ export function SixRadarPanel({
   if (!radar || radar.length === 0) {
     return (
       <div className="flex h-[280px] flex-col items-center justify-center rounded-xl bg-[#F5F3EE]/60">
-        <p className="text-[13px] text-[#78716C]">暂无雷达数据，请先提交日报</p>
+        <p className="text-[13px] text-[#78716C]">还没有雷达数据，提交日报后就会生成</p>
       </div>
     );
   }
@@ -157,7 +157,7 @@ export function SixRadarPanel({
     return (
       <div className="space-y-4">
         <p className="text-[13px] leading-[1.7] text-[#78716C]">
-          团队暂无可比样本，以下只列你的真实指标，不生成虚拟基准。
+          团队样本还不够，下面只列你的真实指标，不会凑虚拟基准。
         </p>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
           {radar.map((item) => (
@@ -366,7 +366,7 @@ export function SixRadarPanel({
               <span
                 className={cn(
                   "font-medium text-right",
-                  radar[hoveredIndex].rating === "strong" && "text-[#16A34A]",
+                  radar[hoveredIndex].rating === "strong" && "text-[#6FAA7D]",
                   radar[hoveredIndex].rating === "weak" && "text-[#DC2626]",
                   radar[hoveredIndex].rating === "mid" && "text-[#D99E55]",
                 )}
@@ -393,7 +393,7 @@ export function SixRadarPanel({
               className={cn(
                 "flex flex-col items-center justify-center rounded-lg py-1.5 text-center transition-all",
                 isWeak && "bg-[#DC2626]/10",
-                isStrong && "bg-[#16A34A]/10",
+                isStrong && "bg-[#6FAA7D]/10",
                 !isWeak && !isStrong && "bg-[#F5F3EE]/70",
               )}
             >
@@ -404,7 +404,7 @@ export function SixRadarPanel({
                 className={cn(
                   "text-[12px] font-medium mt-0.5",
                   isWeak && "text-[#DC2626]",
-                  isStrong && "text-[#16A34A]",
+                  isStrong && "text-[#6FAA7D]",
                   !isWeak && !isStrong && "text-[#1C1917]",
                 )}
               >

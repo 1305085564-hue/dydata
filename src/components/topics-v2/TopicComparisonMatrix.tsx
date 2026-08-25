@@ -179,7 +179,7 @@ export function TopicComparisonMatrix({
             <BarChart2 className="w-4 h-4" />
           </div>
           <h3 className="text-sm font-semibold text-[#292524] mb-1">
-            暂无对比数据
+            还没有对比数据
           </h3>
           <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
             需要至少 2 个账号有作品后才能对比
@@ -275,7 +275,7 @@ export function TopicComparisonMatrix({
                       <div className="text-[11px] text-[#78716C] font-normal">
                         最高播放
                       </div>
-                      <div className="font-semibold text-[#16A34A] text-xs mt-0.5">
+                      <div className="font-semibold text-[#6FAA7D] text-xs mt-0.5">
                         {format(item.bestPlayCount)}
                       </div>
                     </div>

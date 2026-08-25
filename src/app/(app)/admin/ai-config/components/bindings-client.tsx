@@ -243,7 +243,7 @@ function RewriteRouteDialog({
                 setFormData({ ...formData, model_view_id: e.target.value })
               }
             >
-              <option value="">请选择</option>
+              <option value="">选一个模型视图</option>
               {viewOptions.map((option) => (
                 <option
                   key={option.id}
@@ -714,7 +714,7 @@ export default function BindingsClient() {
               onClick={() => setShowRankedChannels((prev) => !prev)}
               className="inline-flex items-center gap-1.5 text-[12px] text-[#78716C] hover:text-[#1C1917] px-2.5 py-1 rounded-md hover:bg-[#F5F3EE] transition-colors cursor-pointer border border-[#E5E0D6]/80 bg-white"
             >
-              <span className="size-1.5 rounded-full bg-[#16A34A]" />
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>渠道顺位表 ({rankedChannels.length})</span>
               <ChevronDown
                 className={cn(
@@ -761,8 +761,8 @@ export default function BindingsClient() {
                         </TableCell>
                         <TableCell className="py-1.5">
                           {healthy ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-[#16A34A]">
-                              <span className="size-1.5 rounded-full bg-[#16A34A]" />
+                            <span className="inline-flex items-center gap-1 text-[11px] text-[#6FAA7D]">
+                              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                               正常
                             </span>
                           ) : (
@@ -784,7 +784,7 @@ export default function BindingsClient() {
                         colSpan={4}
                         className="h-12 text-center text-[12px] text-[#78716C]"
                       >
-                        暂无启用的渠道。
+                        还没有启用的渠道。
                       </TableCell>
                     </TableRow>
                   )}
@@ -815,7 +815,7 @@ export default function BindingsClient() {
                     colSpan={4}
                     className="h-24 text-center text-[#78716C] text-[13px]"
                   >
-                    暂无可管理的业务功能。
+                    暂时没有可管理的业务功能。
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1010,7 +1010,7 @@ export default function BindingsClient() {
             <div className="space-y-0.5 max-h-[500px] overflow-y-auto">
               {views.length === 0 ? (
                 <div className="text-[12px] text-[#78716C] py-6 text-center">
-                  暂无视图
+                  还没有视图
                 </div>
               ) : (
                 views.map((v) => {
@@ -1168,7 +1168,7 @@ export default function BindingsClient() {
                                 colSpan={5}
                                 className="py-8 text-center text-[13px] text-[#78716C]"
                               >
-                                暂无路由规则，点击右上角添加
+                                还没有路由规则，需要时点右上角添加
                               </TableCell>
                             </TableRow>
                           ) : (
@@ -1194,7 +1194,7 @@ export default function BindingsClient() {
                                 >
                                   <TableCell className="py-1 pl-4 text-left">
                                     {route.priority <= 10 ? (
-                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#16A34A]/10 text-[#16A34A]">
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-[#6FAA7D]/10 text-[#6FAA7D]">
                                         首选 (P{route.priority})
                                       </span>
                                     ) : route.priority <= 50 ? (

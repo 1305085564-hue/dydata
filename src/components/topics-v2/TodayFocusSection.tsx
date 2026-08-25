@@ -53,7 +53,7 @@ export function TodayFocusSection({
   if (error) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-[#DC2626] bg-red-50/50 px-3.5 py-2 text-xs">
+        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-[#C9604D] bg-red-50/50 px-3.5 py-2 text-xs">
           <div className="flex items-center gap-2 text-[#292524]">
             <AlertCircle className="w-3.5 h-3.5 text-[#DC2626]" />
             <span>团队动态加载失败: {error}</span>
@@ -81,7 +81,7 @@ export function TodayFocusSection({
     return (
       <section className="my-2 sm:my-3.5">
         <div className="rounded-xl bg-[#FBF9F5]/70 px-3.5 py-2 text-xs text-[#78716C]">
-          暂无团队动态，认领或产出成片后会自动出现。
+          还没有团队动态，认领选题或产出成片后会自动出现在这里。
         </div>
       </section>
     );
@@ -190,7 +190,7 @@ export function TodayFocusSection({
             </div>
             {pastClaims.length === 0 ? (
               <div className="text-xs text-[#78716C] py-3 text-center">
-                暂无更多往期认领
+                没有更多往期认领了
               </div>
             ) : (
               pastClaims.map((claim: TopicClaimItem) => (
@@ -229,7 +229,7 @@ export function TodayFocusSection({
             </div>
             {pastWorks.length === 0 ? (
               <div className="text-xs text-[#78716C] py-3 text-center">
-                暂无更多往期作品
+                没有更多往期作品了
               </div>
             ) : (
               pastWorks.map((work) => (

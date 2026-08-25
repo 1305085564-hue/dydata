@@ -68,7 +68,7 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
   {
     normal: {
       label: "正常",
-      className: "bg-[#16A34A]/10 text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E5E0D6]/60",
     },
     abnormal: {
       label: "异常",
@@ -76,7 +76,7 @@ const statusBadgeConfig: Record<string, { label: string; className: string }> =
     },
     正常: {
       label: "正常",
-      className: "bg-[#16A34A]/10 text-[#292524] border-[#E5E0D6]/60",
+      className: "bg-[#6FAA7D]/10 text-[#292524] border-[#E5E0D6]/60",
     },
     异常: {
       label: "异常",
@@ -315,7 +315,7 @@ export function VideoDetailDialog({
                       type="button"
                       onClick={() => handleLifecycleAction("restore")}
                       disabled={isOperating}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#16A34A]/10/80 px-3 text-[12px] font-medium text-[#292524] hover:bg-[#16A34A]/10/80 transition-colors disabled:opacity-50"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#6FAA7D]/10/80 px-3 text-[12px] font-medium text-[#292524] hover:bg-[#6FAA7D]/10/80 transition-colors disabled:opacity-50"
                     >
                       <RotateCcw className="size-3.5" />
                       恢复作品
@@ -570,7 +570,7 @@ export function VideoDetailDialog({
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
                       <span className="text-[#292524]">涨粉量</span>
-                      <span className="font-medium tabular-nums text-[#16A34A]">
+                      <span className="font-medium tabular-nums text-[#6FAA7D]">
                         +{formatNumber(snapshot.follower_gain)}
                       </span>
                     </div>
@@ -630,7 +630,7 @@ export function VideoDetailDialog({
                     </div>
                     <div className="flex items-center justify-between py-1 border-b border-[#ECE7DE]/60">
                       <span className="text-[#292524]">5s 完播率</span>
-                      <span className="font-medium tabular-nums text-[#16A34A]">
+                      <span className="font-medium tabular-nums text-[#6FAA7D]">
                         {formatPercent(snapshot.completion_rate_5s)}
                       </span>
                     </div>
@@ -663,7 +663,7 @@ export function VideoDetailDialog({
                       className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
                     >
                       {copiedContent ? (
-                        <Check className="size-3.5 text-[#16A34A]" />
+                        <Check className="size-3.5 text-[#6FAA7D]" />
                       ) : (
                         <Copy className="size-3.5" />
                       )}
@@ -674,7 +674,7 @@ export function VideoDetailDialog({
 
                 <div className="rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
-                    <span className="text-[#78716C] italic">暂无文案记录。</span>
+                    <span className="text-[#78716C] italic">还没有文案记录。</span>
                   )}
                 </div>
               </section>

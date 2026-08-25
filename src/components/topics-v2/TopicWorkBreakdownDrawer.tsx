@@ -305,7 +305,7 @@ export function TopicWorkBreakdownDrawer({
                 <span>一句话选题 Hook</span>
               </div>
               <p className="text-sm font-normal text-[#1C1917] leading-relaxed">
-                “{subTopicInfo?.hook || "暂无 Hook"}”
+                “{subTopicInfo?.hook || "还没有 Hook"}”
               </p>
             </div>
           )}
@@ -337,7 +337,7 @@ export function TopicWorkBreakdownDrawer({
                   </div>
                 ) : claimsData?.claims.length === 0 ? (
                   <div className="text-xs text-[#78716C] py-4 text-center rounded-xl bg-[#F5F3EE]/50 font-normal">
-                    暂无团队成员认领
+                    还没有团队成员认领
                   </div>
                 ) : (
                   claimsData && (
@@ -425,7 +425,7 @@ export function TopicWorkBreakdownDrawer({
                 </div>
                 {worksData?.items.length === 0 ? (
                   <div className="text-xs text-[#78716C] py-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-[#FBF9F5]/50 font-normal">
-                    暂无已上线的成片作品
+                    还没有已上线的成片作品
                   </div>
                 ) : (
                   <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">

@@ -207,7 +207,7 @@ export function PersonalCard({
                             {(data.operatorSummary.momChange * 100).toFixed(1)}%
                           </span>
                         ) : data.operatorSummary.momChange < 0 ? (
-                          <span className="text-[#16A34A] inline-flex items-center gap-0.5 font-semibold">
+                          <span className="text-[#6FAA7D] inline-flex items-center gap-0.5 font-semibold">
                             <TrendingDown className="size-3" />
                             {(data.operatorSummary.momChange * 100).toFixed(1)}%
                           </span>
@@ -251,7 +251,7 @@ export function PersonalCard({
                     </div>
                   ) : (
                     <div className="text-center py-6 text-[12px] text-[#78716C]">
-                      本月暂无带人运营记录
+                      本月还没有带人运营记录
                     </div>
                   )}
                 </div>
@@ -338,7 +338,7 @@ export function PersonalCard({
 
                 {data.records.length === 0 ? (
                   <div className="flex-1 rounded-xl border border-[#E5E0D6] p-4 text-center text-[12px] text-[#78716C] flex items-center justify-center">
-                    本月暂无明细记录
+                    本月还没有明细记录
                   </div>
                 ) : (
                   <div className="flex-1 overflow-y-auto rounded-xl border border-[#ECE7DE] bg-white">

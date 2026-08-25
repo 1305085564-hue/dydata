@@ -95,7 +95,7 @@ export function OperatorTab({
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title="本月暂无运营归属记录"
+          title="本月还没有运营归属记录"
           description="2026-07-27 起开始统计团队运营分工"
         />
       </div>
@@ -278,7 +278,7 @@ export function OperatorTab({
                             {(mom * 100).toFixed(1)}%
                           </span>
                         ) : mom < 0 ? (
-                          <span className="inline-flex items-center justify-end gap-0.5 text-[#16A34A]">
+                          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D]">
                             <TrendingDown className="size-3" />
                             {(mom * 100).toFixed(1)}%
                           </span>

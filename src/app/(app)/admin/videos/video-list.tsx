@@ -194,9 +194,9 @@ function getVideoStatusInfo(
   }
   if (status === "normal" || status === "正常") {
     return {
-      dotColor: "bg-[#16A34A]/100",
+      dotColor: "bg-[#6FAA7D]/100",
       textColor: "text-[#292524]",
-      bgColor: "bg-[#16A34A]/10",
+      bgColor: "bg-[#6FAA7D]/10",
       label: "正常",
     };
   }
@@ -1190,7 +1190,7 @@ export function VideoList({
                   className="px-4 py-16 text-center text-[13px] text-[#78716C]"
                 >
                   <div className="flex flex-col items-center justify-center gap-2.5">
-                    <span>当前筛选条件下暂无视频数据。</span>
+                    <span>当前筛选条件下还没有视频数据。</span>
                     <Button
                       variant="outline"
                       size="sm"

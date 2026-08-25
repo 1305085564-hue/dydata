@@ -265,7 +265,7 @@ export function UnifiedCommandHub({
       case "warning":
         return "bg-[#D99E55]/10 text-[#8A6A2F] border-transparent/50 ";
       case "success":
-        return "bg-[#16A34A]/10 text-[#16A34A] border-transparent ";
+        return "bg-[#6FAA7D]/10 text-[#6FAA7D] border-transparent ";
       default:
         return "bg-[#FBF9F5] text-[#292524] dark:bg-[#1C1917] dark:text-[#78716C] border-[#E5E0D6] dark:border-[#292524]";
     }
@@ -489,11 +489,11 @@ export function UnifiedCommandHub({
                     </div>
                   ) : pendingApprovals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl py-12 text-center">
-                      <div className="flex size-10 items-center justify-center rounded-xl bg-[#16A34A]/10 text-[#16A34A] mb-2.5">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-2.5">
                         <CheckCircle2 className="size-5 stroke-[2]" />
                       </div>
                       <h3 className="text-[13px] font-medium text-[#1C1917]">
-                        暂无待审豁免
+                        还没有待审的豁免
                       </h3>
                       <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-[#78716C]">
                         当前没有新的豁免申请，审批队列已经清空。
@@ -588,7 +588,7 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewApproval(item, "approved")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#16A34A]/10 px-2.5 text-[11px] font-medium text-[#15803D] transition-all hover:bg-[#16A34A]/20 active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#15803D] transition-all hover:bg-[#6FAA7D]/20 active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 {isApproving ? (
                                   <Loader2 className="size-3 animate-spin" />
@@ -658,7 +658,7 @@ export function UnifiedCommandHub({
                   {/* Active Todos List */}
                   {!loading && activeTodos.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="flex size-10 items-center justify-center rounded-xl bg-[#16A34A]/10 text-[#16A34A] mb-2.5">
+                      <div className="flex size-10 items-center justify-center rounded-xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-2.5">
                         <CheckCircle2 className="size-5 stroke-[2]" />
                       </div>
                       <h3 className="text-[13px] font-medium text-[#1C1917]">
@@ -796,8 +796,8 @@ export function UnifiedCommandHub({
                             key={id}
                             className="flex items-center gap-2 rounded-lg p-2 bg-[#FBF9F5] border border-[#E5E0D6]/50"
                           >
-                            <span className="text-[#16A34A] shrink-0">
-                              <CheckCircle2 className="size-3.5 fill-[#16A34A] text-white" />
+                            <span className="text-[#6FAA7D] shrink-0">
+                              <CheckCircle2 className="size-3.5 fill-[#6FAA7D] text-white" />
                             </span>
                             <span className="text-[11px] font-medium text-[#78716C] line-through truncate flex-1">
                               {completedSessionTitles[id] || "完成的待办事项"}

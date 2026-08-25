@@ -409,7 +409,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               />
             ) : (
               <div className="flex h-40 items-center justify-center rounded-xl border border-[#E5E0D6] bg-white text-[13px] text-[#78716C]">
-                暂无趋势数据
+                还没有趋势数据
               </div>
             )}
             {ratesUnlocked ? (
@@ -423,7 +423,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 />
               ) : (
                 <div className="flex h-40 items-center justify-center rounded-xl border border-[#E5E0D6] bg-white text-[13px] text-[#78716C]">
-                  暂无趋势数据
+                  还没有趋势数据
                 </div>
               )
             ) : (
@@ -517,13 +517,13 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[12px] text-[#78716C] italic">暂无对标文案片段，先参考该同事近期内容。</p>
+                    <p className="text-[12px] text-[#78716C] italic">还没有对标文案片段，可以先参考这位同事近期的内容。</p>
                   )}
                 </div>
               ) : benchmark.state === "fallback_team_avg" ? (
                 <div className="rounded-lg bg-[#F5F3EE] p-4 text-center">
                   <p className="text-[13px] text-[#292524] font-medium">
-                    当前暂无可实名展示的同题材稳定对标人。
+                    当前还没有可实名展示的同题材稳定对标人。
                   </p>
                   <p className="mt-1.5 text-[12px] text-[#78716C]">
                     已为您兜底拉取团队在此维度上的均值基准：
@@ -592,7 +592,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               />
             ) : (
               <div className="h-40 flex items-center justify-center text-[#78716C] text-[13px]">
-                暂无排行榜数据
+                还没有排行榜数据
               </div>
             )}
           </div>

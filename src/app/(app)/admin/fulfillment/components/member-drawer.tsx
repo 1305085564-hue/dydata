@@ -367,7 +367,7 @@ export function MemberDrawer({
               </h3>
               <div className="max-h-[200px] overflow-y-auto rounded-xl border border-[#E5E0D6]">
                 {historyDates.length === 0 ? (
-                  <p className="p-4 text-[13px] text-[#78716C]">暂无历史记录</p>
+                  <p className="p-4 text-[13px] text-[#78716C]">还没有历史记录</p>
                 ) : (
                   <div className="divide-y divide-[#ECE7DE]">
                     {historyDates.map((d) => {

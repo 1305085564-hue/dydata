@@ -133,14 +133,14 @@ function ExemptionModal({
   function handleSubmit() {
     let hasError = false;
     if (selectedDates.length === 0) {
-      setDateError("请选择日期");
+      setDateError("选一个日期");
       hasError = true;
     } else {
       setDateError("");
     }
 
     if (!reason.trim()) {
-      setReasonError("请填写原因");
+      setReasonError("写一下豁免原因");
       hasError = true;
     } else {
       setReasonError("");
