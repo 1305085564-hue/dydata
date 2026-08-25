@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Clock, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
+import { CalendarDays, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -229,7 +229,6 @@ export function VideoSubmitPanelV2({
   userExemptionProfile,
   userExemptionGrants,
   selectedAccountId: controlledSelectedAccountId,
-  onSelectedAccountChange,
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
 }: VideoSubmitPanelV2Props) {
@@ -241,7 +240,6 @@ export function VideoSubmitPanelV2({
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
   const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [requestedMode, setRequestedMode] = useState<SubmitPanelRequestedMode>(null);
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -269,15 +267,8 @@ export function VideoSubmitPanelV2({
     return false;
   });
 
-  const selectedAccountId = controlledSelectedAccountId ?? internalSelectedAccountId;
+  const selectedAccountId = controlledSelectedAccountId ?? accounts[0]?.id ?? "";
   const activeBizDate = controlledActiveBizDate ?? internalActiveBizDate;
-  const setSelectedAccountId = useCallback(
-    (accountId: string) => {
-      setInternalSelectedAccountId(accountId);
-      onSelectedAccountChange?.(accountId);
-    },
-    [onSelectedAccountChange],
-  );
 
   useEffect(() => {
     setLocalHasPendingExemption(hasPendingExemption);
@@ -482,15 +473,6 @@ export function VideoSubmitPanelV2({
       }, 100);
     },
     [loadActivity],
-  );
-
-  const handleAccountChange = useCallback(
-    (accountId: string) => {
-      setSelectedAccountId(accountId);
-      setRequestedMode(null);
-      setSubmittedViewActive(false);
-    },
-    [setSelectedAccountId],
   );
 
   const selectBizDate = useCallback(

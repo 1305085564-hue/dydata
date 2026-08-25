@@ -129,9 +129,8 @@ export function SubmissionCalendar({
   selectedDate = null,
   selectedDates = [],
   onDateSelect,
-  showLegend = false,
+  showLegend = true,
 }: SubmissionCalendarProps) {
-
   const [displayDate, setDisplayDate] = useState(() => {
     if (
       selectedDate &&
@@ -328,20 +327,22 @@ export function SubmissionCalendar({
       </div>
 
       {/* 底部四色图例说明 */}
-      <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-between px-1 text-[11.5px] text-[#78716C]">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-[#2E7D32]" /> 已交
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-[#B98A54]" /> 豁免
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交
-        </span>
-      </div>
+      {showLegend && (
+        <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-between px-1 text-[11.5px] text-[#78716C]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-[#2E7D32]" /> 已交
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-[#B98A54]" /> 豁免
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-[#43718E]" /> 请假
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-[#A8A29E]" /> 未交
+          </span>
+        </div>
+      )}
     </div>
   );
 }
