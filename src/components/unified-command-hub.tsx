@@ -588,7 +588,7 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewApproval(item, "approved")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#15803D] transition-all hover:bg-[#6FAA7D]/20 active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#1C1917] transition-all hover:bg-[#6FAA7D]/20 active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 {isApproving ? (
                                   <Loader2 className="size-3 animate-spin" />

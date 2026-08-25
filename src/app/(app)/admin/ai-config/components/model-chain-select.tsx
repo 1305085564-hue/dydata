@@ -55,7 +55,7 @@ export function ModelChainSelect({
                   className={cn(
                     "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono",
                     index === 0
-                      ? "bg-[#6FAA7D]/10 text-[#15803D] border border-[#6FAA7D]/20 font-medium"
+                      ? "bg-[#6FAA7D]/10 text-[#1C1917] border border-[#6FAA7D]/20 font-medium"
                       : "bg-[#F5F3EE] text-[#78716C] border border-[#E5E0D6]/80",
                   )}
                 >
