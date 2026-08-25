@@ -32,14 +32,14 @@ test("语义状态色分别提供浅色与暗色对比色", () => {
 test("触屏与键盘都能看到卡片操作，当前选择会暴露给读屏", () => {
   const providers = readSource("src/app/(app)/admin/ai-config/components/providers-client.tsx");
   const rewrite = readSource("src/app/(app)/admin/ai-config/components/rewrite-client.tsx");
-  const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
+  const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
 
   assert.match(providers, /aria-label={`启用分组 \$\{keyItem\.label\}`}/);
   assert.match(rewrite, /aria-current=\{isViewActive \? "true" : undefined\}/);
   assert.match(modules, /aria-selected=\{memberView === "active"\}/);
   assert.match(
     modules,
-    /aria-current=\{\s*isCurrentMemberActive \? "true" : undefined\s*\}/,
+    /aria-selected=\{memberView === "archived"\}/,
   );
   assert.match(rewrite, /opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100/);
 });
@@ -91,9 +91,8 @@ test("月度矩阵不再嵌套互动控件", () => {
 });
 
 test("复制、删除与关闭操作在触屏和读屏上都可达", () => {
-  const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
-  assert.match(modules, /aria-label=\{`删除团队 \$\{team\.name\}`\}/);
-  assert.match(modules, /title=\{`删除团队 \$\{team\.name\}`\}/);
+  const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
+  assert.match(modules, /title="删除空团队"/);
   assert.match(modules, /onClick=\{\(\) => setDeleteTeamTarget\(team\)\}/);
   assert.match(modules, /aria-label="关闭成员权限详情"/);
 });
@@ -127,7 +126,7 @@ test("认证页小号状态文字使用 AA 对比色", () => {
 });
 
 test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵循减少动效偏好", () => {
-  const modules = readSource("src/app/(app)/admin/modules/modules-content-v2.tsx");
+  const modules = readSource("src/app/(app)/admin/modules/modules-content-v3.tsx");
   assert.match(modules, /<Sheet[\s\S]*open=\{activeMember !== null\}/);
   assert.match(modules, /<SheetContent[\s\S]*<SheetTitle\b/);
   assert.match(modules, /<SheetDescription/);

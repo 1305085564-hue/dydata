@@ -38,8 +38,6 @@ const EXEMPT_PATHS = new Set([
   "/api/supabase-keepalive",
   "/api/notifications/cleanup",
   "/api/remind",
-  "/api/smart-alert",
-  "/api/smart-alert/notify",
   "/api/admin/first-screen-monitor",
   "/api/feishu/event",
   // 健康检查：故障时探活频率可能升高，不能被限流挡住

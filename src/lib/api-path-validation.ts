@@ -3,7 +3,6 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 const UUID_PATH_RULES = [
   /^\/api\/admin\/content-comparison\/([^/]+)$/,
   /^\/api\/admin\/content-feedback-cards\/([^/]+)$/,
-  /^\/api\/admin\/dashboard-alerts\/([^/]+)\/(?:ai-context|execute)$/,
   /^\/api\/admin\/video-assets\/([^/]+)$/,
   /^\/api\/content-tools\/rewrite\/conversations\/([^/]+)\/messages$/,
   /^\/api\/dashboard\/content-feedback-cards\/([^/]+)$/,

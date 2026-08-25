@@ -1573,6 +1573,7 @@ export function AdminModulesContentV3({
                   )}
                   <button
                     type="button"
+                    aria-label="关闭成员权限详情"
                     onClick={() => {
                       setActiveMemberId(null);
                       setAiSuggestion(null);
