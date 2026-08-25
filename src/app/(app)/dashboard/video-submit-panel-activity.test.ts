@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { fetchDashboardActivity } from "./video-submit-panel";
+import { fetchDashboardActivity } from "./video-submit-panel-v2";
 
 test("数据台活动接口失败时抛出错误，避免弹窗永久停在加载中", async () => {
   await assert.rejects(

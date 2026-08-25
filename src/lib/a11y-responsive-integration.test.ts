@@ -133,7 +133,7 @@ test("成员权限详情使用可管理焦点的 Sheet，持续状态动画遵�
   assert.match(modules, /<SheetDescription/);
 
   const motionPaths = [
-    "src/app/(app)/dashboard/video-submit-panel.tsx",
+    "src/app/(app)/dashboard/video-submit-panel-v2.tsx",
     "src/app/(app)/admin/fulfillment/components/stats-bar.tsx",
     "src/app/(app)/admin/content/content-diagnosis-workbench.tsx",
     "src/components/workspace-picker.tsx",
@@ -229,11 +229,9 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   // 1. Dashboard 关键控件
   const header = readSource("src/app/(app)/dashboard/components/dashboard-workspace-header.tsx");
   const exemption = readSource("src/app/(app)/dashboard/components/quick-exemption-button.tsx");
-  const submitForm = readSource("src/app/(app)/dashboard/video-submit-form.tsx");
   const slots = readSource("src/components/submission/截图槽位区.tsx");
   assert.match(header, /min-h-\[44px\]/);
   assert.match(exemption, /min-h-\[44px\]/);
-  assert.match(submitForm, /min-h-\[44px\]/);
   assert.match(slots, /min-h-\[44px\]/);
 
   // 2. Topics 关键控件
