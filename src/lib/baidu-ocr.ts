@@ -150,48 +150,51 @@ export type WebImageValidation =
   | { ok: true; base64: string; rawByteLength: number; dimensions: ImageDimensions | null }
   | { ok: false; reason: string };
 
-// sharp 原生模块运行时懒加载：加载失败只降级跳过压缩，绝不阻断识别接口
-type SharpFactory = (typeof import("sharp"))["default"];
-let sharpModule: SharpFactory | null | undefined;
+// jimp 纯 JS 图像库运行时懒加载：无原生依赖，Serverless 环境必定可用；加载失败只跳过压缩不阻断识别
+type JimpModule = typeof import("jimp");
+let jimpModule: JimpModule | null | undefined;
 
-async function loadSharp(): Promise<SharpFactory | null> {
-  if (sharpModule !== undefined) return sharpModule;
+async function loadJimp(): Promise<JimpModule | null> {
+  if (jimpModule !== undefined) return jimpModule;
   try {
-    const imported = await import("sharp");
-    sharpModule = imported.default;
-    return sharpModule;
+    jimpModule = await import("jimp");
+    return jimpModule;
   } catch (error) {
     console.warn(
-      "[baidu-ocr] sharp 加载失败，大图压缩不可用（超限图将被前置校验拦截）：",
+      "[baidu-ocr] jimp 加载失败，大图压缩不可用（超限图将被前置校验拦截）：",
       error instanceof Error ? error.message : error,
     );
-    sharpModule = null;
+    jimpModule = null;
     return null;
   }
 }
 
 /**
  * 大图压缩：超过 3MB 的图缩到长边 2000px 内并转 JPEG，保证能过百度 base64 4M 上限。
- * 小图原样返回；sharp 不可用或压缩失败时原样返回，交给后续校验报准确错误。
+ * 小图原样返回；jimp 不可用或压缩失败时原样返回，交给后续校验报准确错误。
  */
 export async function compressImageForOcr(imageBuffer: Buffer): Promise<Buffer> {
   if (imageBuffer.length <= COMPRESS_THRESHOLD_BYTES) {
     return imageBuffer;
   }
-  const sharp = await loadSharp();
-  if (!sharp) {
+  const jimp = await loadJimp();
+  if (!jimp) {
     return imageBuffer;
   }
   try {
-    const compressed = await sharp(imageBuffer)
-      .resize({
-        width: COMPRESS_MAX_EDGE_PX,
-        height: COMPRESS_MAX_EDGE_PX,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: COMPRESS_JPEG_QUALITY })
-      .toBuffer();
+    const image = await jimp.Jimp.read(imageBuffer);
+    image.scaleToFit({ w: COMPRESS_MAX_EDGE_PX, h: COMPRESS_MAX_EDGE_PX });
+    // 压完仍超 base64 4M 就逐轮降质量、缩尺寸（最多 3 轮）
+    const qualitySteps = [COMPRESS_JPEG_QUALITY, 65, 45];
+    let compressed: Buffer = imageBuffer;
+    for (const quality of qualitySteps) {
+      compressed = await image.getBuffer("image/jpeg", { quality });
+      const base64Length = Math.ceil((compressed.length * 4) / 3);
+      if (base64Length <= MAX_BASE64_LENGTH) {
+        break;
+      }
+      image.scale(0.7);
+    }
     console.log(
       `[baidu-ocr] 大图压缩 ${(imageBuffer.length / 1024 / 1024).toFixed(2)}M → ${(compressed.length / 1024 / 1024).toFixed(2)}M`,
     );
