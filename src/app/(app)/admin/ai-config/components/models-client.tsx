@@ -401,14 +401,14 @@ export default function ModelsClient() {
             size="sm"
             disabled={isTestingAll}
             onClick={handleTestAll}
-            className="h-7 text-[12px] gap-1 bg-white border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
+            className="h-7 text-[12px] gap-1.5 bg-white border-[#E5E0D6] hover:bg-[#F5F3EE] text-[#292524]"
           >
             {isTestingAll ? (
               <Loader2 className="size-3 animate-spin text-[#D97757]" />
             ) : (
               <Zap className="size-3 text-[#D97757] fill-[#D97757]" />
             )}
-            一键全池健康检测
+            探测密钥连通状态
           </Button>
 
           {bundle.providers.length === 0 ? (
@@ -417,7 +417,7 @@ export default function ModelsClient() {
               className="h-7 text-[12px] gap-1 bg-[#D97757] hover:bg-[#C46A4D] text-white"
               onClick={() => setKeyModal({ open: true, providerId: null })}
             >
-              <Plus className="size-3" /> 首次配置渠道与 Key
+              <Plus className="size-3" /> 添加首个渠道密钥
             </Button>
           ) : (
             <Button
@@ -427,7 +427,7 @@ export default function ModelsClient() {
                 setModelModal({ open: true, keyId: bundle.keys[0]?.id || null })
               }
             >
-              <Plus className="size-3" /> 给系列添加型号
+              <Plus className="size-3" /> 接入新型号
             </Button>
           )}
         </div>
@@ -437,14 +437,14 @@ export default function ModelsClient() {
       {familyGroups.length === 0 ? (
         <div className="rounded-2xl bg-[#FBF9F5]/70 p-12 text-center space-y-3 border border-[#E5E0D6]/80">
           <p className="text-[13px] text-[#78716C]">
-            暂无配置。添加 API Key 和对应的模型系列后生效。
+            尚未接入可用型号系列。添加 API 密钥后，将自动识别并归类呈现。
           </p>
           <Button
             size="sm"
             className="bg-[#D97757] hover:bg-[#C46A4D] text-white"
             onClick={() => setKeyModal({ open: true, providerId: null })}
           >
-            <Plus className="size-4 mr-1.5" /> 添加首个 API Key
+            <Plus className="size-4 mr-1.5" /> 添加首个渠道密钥
           </Button>
         </div>
       ) : (
@@ -488,14 +488,14 @@ export default function ModelsClient() {
                         setModelModal({ open: true, keyId: firstKeyId });
                       }}
                     >
-                      <Plus className="size-3" /> 添加系列内型号
+                      <Plus className="size-3" /> 添加型号
                     </Button>
                   </div>
 
                   {/* 包含的具体型号 Tags：可单选切换高亮 + Hover 删除 */}
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[12px] text-[#78716C] flex items-center gap-1 select-none">
-                      <Tag className="size-3" /> 型号筛选 ({fam.modelIds.length})：
+                      <Tag className="size-3" /> 包含型号 ({fam.modelIds.length})：
                     </span>
                     {fam.modelIds.map((mId) => {
                       const isSelected = mId === activeModelId;
@@ -554,7 +554,7 @@ export default function ModelsClient() {
                       </TableHead>
                       <TableHead className="text-[12px]">健康状态</TableHead>
                       <TableHead className="text-right text-[12px] pr-5">
-                        操作与连通测试
+                        调度与连通测试
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -565,7 +565,7 @@ export default function ModelsClient() {
                           colSpan={7}
                           className="text-center py-8 text-[12px] text-[#78716C]"
                         >
-                          暂无支持当前型号 ({activeModelId}) 的渠道 Key
+                          暂无支持当前型号 ({activeModelId}) 的可用密钥
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -736,7 +736,7 @@ export default function ModelsClient() {
                                   ) : (
                                     <RefreshCw className="size-3" />
                                   )}
-                                  同步模型
+                                  同步可用清单
                                 </Button>
 
                                 {/* 连通测试下拉按钮 */}
@@ -766,7 +766,7 @@ export default function ModelsClient() {
                                     className="min-w-[180px] max-h-[300px] overflow-y-auto"
                                   >
                                     <DropdownMenuLabel className="text-[11px] text-[#78716C]">
-                                      指定测试模型
+                                      指定型号测试
                                     </DropdownMenuLabel>
                                     <DropdownMenuItem
                                       onClick={() =>
@@ -774,7 +774,7 @@ export default function ModelsClient() {
                                       }
                                       className="cursor-pointer text-[12px] flex items-center justify-between"
                                     >
-                                      <span>自动 (首选/默认)</span>
+                                      <span>默认顺位首选</span>
                                       <span className="text-[11px] text-[#78716C] font-mono">
                                         auto
                                       </span>

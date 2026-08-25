@@ -332,23 +332,21 @@ export function ModelDialog({
   const [loading, setLoading] = useState(false);
   const [modelIdError, setModelIdError] = useState("");
 
-  // 自动搜集全站当前已配置/使用过的模型（去重）
+  // 自动搜集全站当前已配置的型号（去重）
   const usedModels = useMemo(() => {
     if (!bundle) return [];
-    const map = new Map<string, string>();
+    const set = new Set<string>();
     bundle.models.forEach((m) => {
-      if (m.model_id && !map.has(m.model_id)) {
-        map.set(m.model_id, m.display_name || m.model_id);
-      }
+      if (m.model_id) set.add(m.model_id);
     });
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+    return Array.from(set).sort();
   }, [bundle]);
 
   useEffect(() => {
     setFormData(
       model
         ? { ...defaultModelForm, ...model }
-        : { ...defaultModelForm, model_id: initialModelId || "" }
+        : { ...defaultModelForm, model_id: initialModelId || "", display_name: null }
     );
     setSelectedKeyId(keyId || bundle?.keys[0]?.id || "");
     setModelIdError("");
@@ -356,7 +354,7 @@ export function ModelDialog({
 
   const handleSubmit = async () => {
     if (!formData.model_id?.trim()) {
-      setModelIdError("请输入模型标识");
+      setModelIdError("请输入型号标识");
       return;
     }
     setModelIdError("");
@@ -364,6 +362,7 @@ export function ModelDialog({
     try {
       await onSave({
         ...formData,
+        display_name: null,
         key_id: selectedKeyId || keyId,
       } as Record<string, unknown>);
     } finally {
@@ -375,15 +374,15 @@ export function ModelDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{model?.id ? "编辑模型" : "添加模型关联"}</DialogTitle>
+          <DialogTitle>{model?.id ? "编辑型号" : "接入新型号"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-3">
           {/* 选择绑定的 Key */}
           <div className="space-y-1.5">
-            <Label htmlFor="model-key-select">绑定的 API Key 渠道分组</Label>
+            <Label htmlFor="model-key-select">目标渠道密钥</Label>
             <select
               id="model-key-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-white"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-white text-[#292524]"
               value={selectedKeyId}
               onChange={(e) => setSelectedKeyId(e.target.value)}
             >
@@ -401,7 +400,7 @@ export function ModelDialog({
 
           {/* 手填 / 下拉模型 ID */}
           <div className="space-y-1.5">
-            <Label htmlFor="model-id">模型标识 (Model ID)</Label>
+            <Label htmlFor="model-id">型号正名 (Model ID)</Label>
             <Input
               id="model-id"
               value={formData.model_id || ""}
@@ -409,38 +408,38 @@ export function ModelDialog({
                 setFormData({ ...formData, model_id: e.target.value });
                 if (modelIdError) setModelIdError("");
               }}
-              className={modelIdError ? "ring-1 ring-red-300 border-red-300" : ""}
-              placeholder="例如: deepseek-v4-pro"
+              className={modelIdError ? "ring-1 ring-red-300 border-red-300 font-mono text-[13px]" : "font-mono text-[13px]"}
+              placeholder="例如: gemini-2.5-flash / deepseek-chat / gpt-4o"
               disabled={!!model?.id}
             />
             {modelIdError && <p className="text-[#C0685C] text-xs mt-1">{modelIdError}</p>}
           </div>
 
-          {/* 快捷点选: 常用已用模型 VS 2026 最新主流模型 */}
+          {/* 快捷点选: 常用已用模型 VS 主流预设 */}
           {!model?.id && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] text-[#292524] font-medium">快捷一键填选模型：</span>
+                <span className="text-[12px] text-[#78716C]">快速选填常见型号：</span>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     className={cn(
                       "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757] font-medium" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                      presetTab === "used" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                     )}
                     onClick={() => setPresetTab("used")}
                   >
-                    📌 本站已用模型 ({usedModels.length})
+                    📌 已接入型号 ({usedModels.length})
                   </button>
                   <button
                     type="button"
                     className={cn(
                       "px-2.5 py-1 text-[12px] rounded-lg transition-all cursor-pointer font-medium",
-                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757] font-medium" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                      presetTab === "latest" ? "bg-[#D97757]/10 text-[#D97757]" : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                     )}
                     onClick={() => setPresetTab("latest")}
                   >
-                    ⚡ 2026 最新主流
+                    ⚡ 主流预设
                   </button>
                 </div>
               </div>
@@ -448,17 +447,17 @@ export function ModelDialog({
               <div className="space-y-2 max-h-[160px] overflow-y-auto p-2 bg-[#FBF9F5]/80 rounded-xl border border-[#E5E0D6]/60">
                 {presetTab === "used" ? (
                   usedModels.length === 0 ? (
-                    <div className="text-center py-4 text-[12px] text-[#78716C]">暂无已添加的模型，可切换至【2026 最新主流】点选</div>
+                    <div className="text-center py-4 text-[12px] text-[#78716C]">暂无已记录的型号，可切换至【主流预设】选填</div>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
-                      {usedModels.map((item) => (
+                      {usedModels.map((mId) => (
                         <button
-                          key={item.id}
+                          key={mId}
                           type="button"
-                          className="text-[12px] px-2 py-0.5 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.985] active:duration-75 transition-all font-medium shadow-2xs"
-                          onClick={() => setFormData({ ...formData, model_id: item.id, display_name: item.name })}
+                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.985] active:duration-75 transition-all shadow-2xs"
+                          onClick={() => setFormData({ ...formData, model_id: mId })}
                         >
-                          {item.name} <span className="font-mono text-[12px] text-[#78716C]">({item.id})</span>
+                          {mId}
                         </button>
                       ))}
                     </div>
@@ -466,16 +465,16 @@ export function ModelDialog({
                 ) : (
                   LATEST_2026_MODEL_GROUPS.map((group) => (
                     <div key={group.groupName} className="space-y-1">
-                      <div className="text-[12px] font-medium text-[#78716C] uppercase tracking-wider">{group.groupName}</div>
+                      <div className="text-[11px] font-medium text-[#78716C] tracking-wide">{group.groupName}</div>
                       <div className="flex flex-wrap gap-1.5">
                         {group.items.map((item) => (
                           <button
                             key={item.id}
                             type="button"
-                            className="text-[12px] px-2 py-0.5 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.985] active:duration-75 transition-all font-medium shadow-2xs"
-                            onClick={() => setFormData({ ...formData, model_id: item.id, display_name: item.name })}
+                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.985] active:duration-75 transition-all shadow-2xs"
+                            onClick={() => setFormData({ ...formData, model_id: item.id })}
                           >
-                            {item.name} <span className="font-mono text-[12px] text-[#78716C]">({item.id})</span>
+                            {item.id}
                           </button>
                         ))}
                       </div>
@@ -486,20 +485,10 @@ export function ModelDialog({
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="model-display-name">展示友好名称 (可选)</Label>
-            <Input
-              id="model-display-name"
-              value={formData.display_name || ""}
-              onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              placeholder="例如: Claude 3.5 Sonnet"
-            />
-          </div>
-
           <div className="flex items-center justify-between pt-2">
-            <Label>是否启用该模型</Label>
+            <Label>是否启用该型号</Label>
             <Switch
-              aria-label="是否启用模型"
+              aria-label="是否启用型号"
               checked={formData.is_enabled ?? true}
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />

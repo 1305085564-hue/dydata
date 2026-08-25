@@ -125,7 +125,7 @@ export function SyncModelsDialog({
   const handleSave = async () => {
     if (!keyId) return;
     if (selectedModelIds.size === 0) {
-      feedbackToast.error("勾选列表不能为空（如需清空请直接停用该 Key）");
+      feedbackToast.error("至少保留一项可用型号；若暂不使用该渠道，可直接停用该密钥。");
       return;
     }
 
@@ -133,7 +133,7 @@ export function SyncModelsDialog({
     try {
       const ok = await onSave(keyId, Array.from(selectedModelIds));
       if (ok) {
-        feedbackToast.success("已保存模型配置");
+        feedbackToast.success("已更新渠道可用型号配置");
         onOpenChange(false);
       }
     } finally {
@@ -157,7 +157,7 @@ export function SyncModelsDialog({
             </span>
           </DialogTitle>
           <p className="text-[12px] text-[#78716C] leading-normal">
-            同步到 {availableModels.length} 个可用模型。按住鼠标划过行可滑动批量勾选/取消。
+            已从渠道获取 {availableModels.length} 个可用型号。按住鼠标划过可批量启用或取消。
           </p>
         </DialogHeader>
 
@@ -168,7 +168,7 @@ export function SyncModelsDialog({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索模型名称（支持关键词快速过滤）..."
+              placeholder="按关键词过滤型号..."
               className="pl-9 pr-8 h-9 text-[13px] bg-white border-[#E5E0D6] focus-visible:ring-[#D97757]/20"
             />
             {searchQuery && (
@@ -184,10 +184,10 @@ export function SyncModelsDialog({
 
           <div className="flex items-center justify-between text-[12px] text-[#78716C] px-0.5">
             <div>
-              已选 <span className="font-mono font-medium text-[#1C1917] tabular-nums">{selectedModelIds.size}</span> / {availableModels.length} 个模型
+              已启用 <span className="font-mono font-medium text-[#1C1917] tabular-nums">{selectedModelIds.size}</span> / {availableModels.length} 个型号
               {searchQuery.trim() && (
                 <span className="text-[#78716C]/80 ml-1.5">
-                  (过滤匹配 {filteredModels.length} 项)
+                  (匹配 {filteredModels.length} 项)
                 </span>
               )}
             </div>
@@ -199,7 +199,7 @@ export function SyncModelsDialog({
                 disabled={isAllFilteredSelected || filteredModels.length === 0}
                 className="h-6 px-2 text-[12px] gap-1 text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
               >
-                <CheckCheck className="size-3 text-[#D97757]" /> 全选当前结果
+                <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
               </Button>
               <Button
                 variant="ghost"
@@ -218,7 +218,7 @@ export function SyncModelsDialog({
         <div className="flex-1 min-h-[260px] max-h-[50vh] overflow-y-auto border border-[#E5E0D6] rounded-xl bg-white select-none divide-y divide-[#ECE7DE]/50">
           {filteredModels.length === 0 ? (
             <div className="p-10 text-center text-[13px] text-[#78716C]">
-              {searchQuery ? "未找到匹配的模型" : "暂无可勾选的模型"}
+              {searchQuery ? "未找到匹配的型号" : "暂无可启用的型号"}
             </div>
           ) : (
             filteredModels.map((mId) => {
@@ -252,7 +252,7 @@ export function SyncModelsDialog({
         {/* 弹窗 Footer */}
         <DialogFooter className="pt-4 border-t border-[#ECE7DE]/70 flex items-center justify-between sm:justify-between w-full">
           <div className="text-[12px] text-[#78716C]">
-            勾选完成后点击保存生效
+            确认勾选后保存生效
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -273,7 +273,7 @@ export function SyncModelsDialog({
               {saving ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : null}
-              保存勾选 ({selectedModelIds.size})
+              保存启用配置 ({selectedModelIds.size})
             </Button>
           </div>
         </DialogFooter>

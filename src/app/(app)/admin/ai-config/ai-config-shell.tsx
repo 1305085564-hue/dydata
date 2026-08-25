@@ -8,9 +8,9 @@ import { Sparkles, Route, Server } from "lucide-react";
 
 export type AIConfigTabKey = "models" | "bindings" | "providers" | "rewrite";
 
-const TAB_ITEMS: Array<{ key: "models" | "bindings" | "providers"; label: string; icon: typeof Sparkles }> = [
-  { key: "models", label: "模型顺位", icon: Sparkles },
+const TAB_ITEMS: Array<{ key: "bindings" | "models" | "providers"; label: string; icon: typeof Sparkles }> = [
   { key: "bindings", label: "场景路由", icon: Route },
+  { key: "models", label: "模型顺位", icon: Sparkles },
   { key: "providers", label: "渠道密钥", icon: Server },
 ];
 
