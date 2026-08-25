@@ -187,10 +187,11 @@ export async function getProviderKeyModelConfig(
   return data ? toConfig(data as ProviderKeyModelJoinRow) : null;
 }
 
-export async function selectHealthyProviderKeyModel(
+/** 按优先级返回全部健康候选（Key.priority + Provider.priority 升序），供调用失败时顺位切换 */
+export async function listRankedProviderKeyModels(
   service: MinimalClient,
   modelIdPreference?: string,
-): Promise<{ providerKeyModelId: string; config: ProviderKeyModelConfig } | null> {
+): Promise<Array<{ providerKeyModelId: string; config: ProviderKeyModelConfig }>> {
   let query = service
     .from("ai_provider_key_models")
     .select(PROVIDER_KEY_MODEL_SELECT)
@@ -205,7 +206,7 @@ export async function selectHealthyProviderKeyModel(
     throw new Error(error.message);
   }
 
-  const candidates = ((data ?? []) as ProviderKeyModelJoinRow[])
+  return ((data ?? []) as ProviderKeyModelJoinRow[])
     .map((row) => ({ row, config: toConfig(row) }))
     .filter((item): item is { row: ProviderKeyModelJoinRow; config: ProviderKeyModelConfig } =>
       Boolean(item.config),
@@ -218,12 +219,16 @@ export async function selectHealthyProviderKeyModel(
       const leftScore = (leftKey?.priority ?? 100) + (leftProvider?.priority ?? 100);
       const rightScore = (rightKey?.priority ?? 100) + (rightProvider?.priority ?? 100);
       return leftScore - rightScore;
-    });
+    })
+    .map((item) => ({ providerKeyModelId: item.config.providerKeyModelId, config: item.config }));
+}
 
-  const selected = candidates[0];
-  return selected
-    ? { providerKeyModelId: selected.config.providerKeyModelId, config: selected.config }
-    : null;
+export async function selectHealthyProviderKeyModel(
+  service: MinimalClient,
+  modelIdPreference?: string,
+): Promise<{ providerKeyModelId: string; config: ProviderKeyModelConfig } | null> {
+  const [first] = await listRankedProviderKeyModels(service, modelIdPreference);
+  return first ?? null;
 }
 
 export async function bumpProviderKeyFailure(

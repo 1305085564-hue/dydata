@@ -53,7 +53,7 @@ test("databaseOnly 模式下 resolveModel 不读取环境变量模型", () => {
         baseUrl: "https://example.com",
         apiKey: "secret",
         model: null,
-        source: "database",
+        source: "provider_key_model",
       },
       {
         messages: [{ role: "user", content: "hello" }],
@@ -82,7 +82,7 @@ test("普通模式下 resolveModel 仍可回落到环境变量模型", () => {
         baseUrl: "https://example.com",
         apiKey: "secret",
         model: null,
-        source: "database",
+        source: "provider_key_model",
       },
       {
         messages: [{ role: "user", content: "hello" }],
@@ -110,7 +110,7 @@ test("显式传入 model 时优先于渠道和环境变量", () => {
         baseUrl: "https://example.com",
         apiKey: "secret",
         model: "channel-model",
-        source: "database",
+        source: "provider_key_model",
       },
       {
         messages: [{ role: "user", content: "hello" }],
@@ -163,7 +163,7 @@ test("describeMissingResponseContent 会带出 finish_reason 和 message 结构"
   assert.match(message, /message_keys=content,reasoning_content,tool_calls/);
 });
 
-test("feature config 优先读取 ai_feature_bindings 并覆盖旧 ai_feature_config", async () => {
+test("feature config 只读 ai_feature_bindings，旧表数据不再参与", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [
       {
@@ -172,6 +172,7 @@ test("feature config 优先读取 ai_feature_bindings 并覆盖旧 ai_feature_co
         system_prompt: "新版提示词",
         is_enabled: true,
       },
+      // 旧表残留数据：即使存在也必须被忽略
     ],
     ai_feature_config: [
       {
@@ -188,17 +189,14 @@ test("feature config 优先读取 ai_feature_bindings 并覆盖旧 ai_feature_co
   try {
     const config = await __internal.getFeatureConfigForTests("content_analysis");
 
-    assert.equal(config?.source, "binding");
     assert.equal(config?.providerKeyModelId, "pkm-new");
-    assert.equal(config?.channelId, null);
-    assert.equal(config?.model, null);
     assert.equal(config?.systemPrompt, "新版提示词");
   } finally {
     __internal.setServiceClientForTests(null);
   }
 });
 
-test("feature config 在没有 binding 时回退旧 ai_feature_config", async () => {
+test("没有 binding 时 feature config 返回 null，不再回退旧表", async () => {
   const db: FakeDb = {
     ai_feature_bindings: [],
     ai_feature_config: [
@@ -216,11 +214,7 @@ test("feature config 在没有 binding 时回退旧 ai_feature_config", async ()
   try {
     const config = await __internal.getFeatureConfigForTests("content_analysis");
 
-    assert.equal(config?.source, "legacy");
-    assert.equal(config?.providerKeyModelId, null);
-    assert.equal(config?.channelId, "channel-old");
-    assert.equal(config?.model, "legacy-model");
-    assert.equal(config?.systemPrompt, "旧版内容分析提示词");
+    assert.equal(config, null);
   } finally {
     __internal.setServiceClientForTests(null);
   }

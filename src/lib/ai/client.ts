@@ -8,8 +8,8 @@ import { DEFAULT_AI_MODEL } from "./constants";
 import {
   bumpProviderKeyFailure,
   getProviderKeyModelConfig,
+  listRankedProviderKeyModels,
   markProviderKeySuccess,
-  selectHealthyProviderKeyModel,
 } from "./provider-routing";
 import { resolveAiFeatureAccess } from "./feature-catalog";
 import { withPinnedExternalResponse } from "@/lib/server-url-security";
@@ -32,7 +32,6 @@ export type AiRequestOptions = {
   timeoutMs?: number;
   jsonMode?: boolean;
   model?: string;
-  channelId?: string;
   providerKeyModelId?: string;
   featureKey?: string;
   databaseOnly?: boolean;
@@ -58,49 +57,17 @@ type ChannelConfig = {
   apiKey: string;
   model?: string | null;
   priority?: number;
-  unhealthyUntil?: string | null;
-  consecutiveFailures?: number;
-  lastFailureAt?: string | null;
-  lastSuccessAt?: string | null;
-  lastErrorMessage?: string | null;
   providerKeyModelId?: string | null;
   providerKeyId?: string | null;
-  source: "env" | "database" | "provider_key_model";
-};
-
-type AiChannelRow = {
-  id: string;
-  name: string;
-  base_url: string;
-  api_key: string;
-  model: string | null;
-  priority: number;
-  is_enabled: boolean;
-  unhealthy_until: string | null;
-  consecutive_failures: number;
-  last_failure_at: string | null;
-  last_success_at: string | null;
-  last_error_message: string | null;
+  source: "env" | "provider_key_model";
 };
 
 type FeatureConfig = {
   featureKey: string;
-  channelId: string | null;
-  model: string | null;
   providerKeyModelId: string | null;
   systemPrompt: string | null;
   isEnabled: boolean;
   lifecycleState: "active" | "archived";
-  source: "binding" | "legacy";
-};
-
-type AiFeatureConfigRow = {
-  feature_key: string;
-  channel_id: string | null;
-  model: string | null;
-  system_prompt: string | null;
-  is_enabled: boolean;
-  lifecycle_state?: "active" | "archived" | null;
 };
 
 type AiFeatureBindingRow = {
@@ -153,8 +120,6 @@ const DEFAULT_MAX_TOKENS = 2000;
 const DEFAULT_MODEL = DEFAULT_AI_MODEL;
 const CHANNEL_CACHE_TTL_MS = 60_000;
 
-let cachedChannels: { expiresAt: number; channels: ChannelConfig[] } | null = null;
-let channelsPromise: Promise<ChannelConfig[]> | null = null;
 let cachedFeatureConfigs: { expiresAt: number; configs: Map<string, FeatureConfig> } | null = null;
 
 function getEnvFlag(name: string) {
@@ -193,79 +158,14 @@ function getServiceSupabaseClient() {
   return _serviceClient;
 }
 
-function updateCachedChannel(channelId: string, updater: (channel: ChannelConfig) => ChannelConfig) {
-  if (!cachedChannels) return;
-
-  cachedChannels = {
-    ...cachedChannels,
-    channels: cachedChannels.channels.map((channel) =>
-      channel.id === channelId ? updater(channel) : channel
-    ),
-  };
-}
-
-function mapDbChannel(row: AiChannelRow): ChannelConfig {
-  return {
-    id: row.id,
-    name: row.name,
-    baseUrl: row.base_url,
-    apiKey: row.api_key,
-    model: row.model,
-    priority: row.priority,
-    unhealthyUntil: row.unhealthy_until,
-    consecutiveFailures: row.consecutive_failures,
-    lastFailureAt: row.last_failure_at,
-    lastSuccessAt: row.last_success_at,
-    lastErrorMessage: row.last_error_message,
-    source: "database",
-  };
-}
-
-function mapFeatureConfig(row: AiFeatureConfigRow): FeatureConfig {
-  return {
-    featureKey: row.feature_key,
-    channelId: row.channel_id,
-    model: row.model,
-    providerKeyModelId: null,
-    systemPrompt: row.system_prompt,
-    isEnabled: row.is_enabled,
-    lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
-    source: "legacy",
-  };
-}
-
 function mapFeatureBinding(row: AiFeatureBindingRow): FeatureConfig {
   return {
     featureKey: row.feature_key,
-    channelId: null,
-    model: null,
     providerKeyModelId: row.provider_key_model_id,
     systemPrompt: row.system_prompt,
     isEnabled: row.is_enabled,
     lifecycleState: row.lifecycle_state === "archived" ? "archived" : "active",
-    source: "binding",
   };
-}
-
-async function fetchDatabaseChannels(): Promise<ChannelConfig[]> {
-  const supabase = getServiceSupabaseClient();
-  if (!supabase) {
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from("ai_channels")
-    .select(
-      "id, name, base_url, api_key, model, priority, is_enabled, unhealthy_until, consecutive_failures, last_failure_at, last_success_at, last_error_message"
-    )
-    .eq("is_enabled", true)
-    .order("priority", { ascending: true });
-
-  if (error || !data?.length) {
-    return [];
-  }
-
-  return (data as AiChannelRow[]).map(mapDbChannel);
 }
 
 async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | null> {
@@ -295,19 +195,6 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
     }
   }
 
-  const { data, error } = await supabase
-    .from("ai_feature_config")
-    .select("feature_key, channel_id, model, system_prompt, is_enabled, lifecycle_state");
-
-  if (!error && data?.length) {
-    for (const row of data as AiFeatureConfigRow[]) {
-      const config = mapFeatureConfig(row);
-      if (!configs.has(config.featureKey)) {
-        configs.set(config.featureKey, config);
-      }
-    }
-  }
-
   cachedFeatureConfigs = {
     expiresAt: now + CHANNEL_CACHE_TTL_MS,
     configs,
@@ -316,69 +203,33 @@ async function getFeatureConfig(featureKey: string): Promise<FeatureConfig | nul
   return configs.get(featureKey) ?? null;
 }
 
-async function getProviderKeyModelChannelByFeatureConfig(
+/** 场景路由解析出调用链：绑定了模型 → 只用绑定的；没绑定 → 按顺位返回全部健康候选 */
+async function resolveFeatureChannelChain(
   featureConfig: FeatureConfig,
-): Promise<ChannelConfig | null> {
-  if (featureConfig.source !== "binding") return null;
-
+): Promise<ChannelConfig[]> {
   if (featureConfig.providerKeyModelId) {
-    return getProviderKeyModelChannel(featureConfig.providerKeyModelId);
+    const pinned = await getProviderKeyModelChannel(featureConfig.providerKeyModelId);
+    return pinned ? [pinned] : [];
   }
 
   const supabase = getServiceSupabaseClient();
-  if (!supabase) return null;
+  if (!supabase) return [];
 
-  const selected = await selectHealthyProviderKeyModel(supabase, undefined);
-  return selected ? getProviderKeyModelChannel(selected.providerKeyModelId) : null;
-}
-
-async function getDatabaseChannels(): Promise<ChannelConfig[]> {
-  const now = Date.now();
-  if (cachedChannels && cachedChannels.expiresAt > now) {
-    return cachedChannels.channels;
+  const ranked = await listRankedProviderKeyModels(supabase, undefined);
+  const channels: ChannelConfig[] = [];
+  for (const candidate of ranked) {
+    channels.push({
+      id: candidate.config.providerKeyModelId,
+      name: candidate.config.providerName,
+      baseUrl: candidate.config.baseUrl,
+      apiKey: candidate.config.apiKey,
+      model: candidate.config.modelId,
+      providerKeyModelId: candidate.config.providerKeyModelId,
+      providerKeyId: candidate.config.providerKeyId,
+      source: "provider_key_model",
+    });
   }
-
-  if (!channelsPromise) {
-    channelsPromise = fetchDatabaseChannels()
-      .then((channels) => {
-        const envFallback = getChannelFromEnv();
-        const effectiveChannels = channels.length > 0 ? channels : envFallback ? [envFallback] : [];
-        cachedChannels = {
-          expiresAt: Date.now() + CHANNEL_CACHE_TTL_MS,
-          channels: effectiveChannels,
-        };
-        return effectiveChannels;
-      })
-      .catch((err) => {
-        console.error("[ai-client] 数据库渠道查询失败，降级到环境变量渠道", err);
-        const envFallback = getChannelFromEnv();
-        const fallbackChannels = envFallback ? [envFallback] : [];
-        cachedChannels = {
-          expiresAt: Date.now() + CHANNEL_CACHE_TTL_MS,
-          channels: fallbackChannels,
-        };
-        return fallbackChannels;
-      })
-      .finally(() => {
-        channelsPromise = null;
-      });
-  }
-
-  return channelsPromise;
-}
-
-async function getAvailableChannels(options?: Pick<AiRequestOptions, "databaseOnly">): Promise<ChannelConfig[]> {
-  const databaseChannels = await getDatabaseChannels();
-  if (options?.databaseOnly) {
-    return databaseChannels;
-  }
-
-  const envChannel = getChannelFromEnv();
-  if (!isDbChannelModeEnabled()) {
-    return envChannel ? [envChannel] : [];
-  }
-
-  return databaseChannels.length > 0 ? databaseChannels : envChannel ? [envChannel] : [];
+  return channels;
 }
 
 async function getProviderKeyModelChannel(providerKeyModelId: string): Promise<ChannelConfig | null> {
@@ -702,42 +553,7 @@ async function markChannelSuccess(channel: ChannelConfig) {
     const supabase = getServiceSupabaseClient();
     if (!supabase) return;
     await markProviderKeySuccess(supabase, channel.providerKeyId);
-    return;
   }
-
-  if (channel.source !== "database" || !channel.id) return;
-
-  const hadFailures =
-    (channel.consecutiveFailures ?? 0) > 0 ||
-    Boolean(channel.unhealthyUntil) ||
-    Boolean(channel.lastFailureAt) ||
-    Boolean(channel.lastErrorMessage);
-
-  if (!hadFailures) {
-    return;
-  }
-
-  const supabase = getServiceSupabaseClient();
-  if (!supabase) return;
-
-  await supabase
-    .from("ai_channels")
-    .update({
-      consecutive_failures: 0,
-      unhealthy_until: null,
-      last_success_at: new Date().toISOString(),
-      last_error_message: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", channel.id);
-
-  updateCachedChannel(channel.id, (cachedChannel) => ({
-    ...cachedChannel,
-    consecutiveFailures: 0,
-    unhealthyUntil: null,
-    lastSuccessAt: new Date().toISOString(),
-    lastErrorMessage: null,
-  }));
 }
 
 async function markChannelFailure(channel: ChannelConfig, message: string) {
@@ -749,41 +565,7 @@ async function markChannelFailure(channel: ChannelConfig, message: string) {
     } catch (error) {
       console.warn("[ai-client] provider key failure marker skipped", error);
     }
-    return;
   }
-
-  if (channel.source !== "database" || !channel.id) return;
-
-  const supabase = getServiceSupabaseClient();
-  if (!supabase) return;
-
-  const { data } = await supabase.rpc("bump_ai_channel_failure", {
-    target_id: channel.id,
-    error_message: message.slice(0, 500),
-  });
-
-  const row = Array.isArray(data) ? data[0] : null;
-  updateCachedChannel(channel.id, (cachedChannel) => ({
-    ...cachedChannel,
-    consecutiveFailures:
-      row && typeof row.consecutive_failures === "number"
-        ? row.consecutive_failures
-        : (cachedChannel.consecutiveFailures ?? 0) + 1,
-    unhealthyUntil:
-      row && typeof row.unhealthy_until === "string"
-        ? row.unhealthy_until
-        : row && row.unhealthy_until === null
-          ? null
-          : cachedChannel.unhealthyUntil,
-    lastFailureAt: new Date().toISOString(),
-    lastErrorMessage: message.slice(0, 500),
-  }));
-}
-
-function isChannelHealthy(channel: ChannelConfig, now: number) {
-  if (!channel.unhealthyUntil) return true;
-  const unhealthyUntilMs = Date.parse(channel.unhealthyUntil);
-  return Number.isNaN(unhealthyUntilMs) || unhealthyUntilMs <= now;
 }
 
 export class AiChannelError extends Error {
@@ -803,8 +585,13 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     messages: [...options.messages],
   };
 
-  let preferredChannelId: string | null = options.channelId?.trim() || null;
-  let preferredProviderChannel: ChannelConfig | null = null;
+  const configuredChannels: ChannelConfig[] = [];
+  const pushChannelUnique = (channel: ChannelConfig | null) => {
+    if (!channel) return;
+    if (configuredChannels.some((existing) => existing.id && existing.id === channel.id)) return;
+    configuredChannels.push(channel);
+  };
+
   if (options.featureKey) {
     const access = resolveAiFeatureAccess(options.featureKey);
     if (!access.allowed) {
@@ -819,16 +606,10 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
       throw new Error("该 AI 功能已禁用");
     }
 
-    if (featureConfig?.source === "binding") {
-      preferredProviderChannel = await getProviderKeyModelChannelByFeatureConfig(featureConfig);
-    }
-
-    if (!preferredChannelId && featureConfig?.channelId) {
-      preferredChannelId = featureConfig.channelId;
-    }
-
-    if (!effectiveOptions.model && featureConfig?.model) {
-      effectiveOptions.model = featureConfig.model;
+    if (featureConfig) {
+      for (const channel of await resolveFeatureChannelChain(featureConfig)) {
+        pushChannelUnique(channel);
+      }
     }
 
     if (featureConfig?.systemPrompt) {
@@ -839,53 +620,46 @@ export async function callAi(options: AiRequestOptions): Promise<AiResponse> {
     }
   }
 
-  let configuredChannels = await getAvailableChannels(options);
-  if (preferredProviderChannel) {
-    configuredChannels = [
-      preferredProviderChannel,
-      ...configuredChannels.filter((channel) => channel.id !== preferredProviderChannel.id),
-    ];
-  }
   const providerKeyModelId = options.providerKeyModelId?.trim();
   if (providerKeyModelId) {
     const providerChannel = await getProviderKeyModelChannel(providerKeyModelId);
     if (providerChannel) {
-      configuredChannels = [
-        providerChannel,
-        ...configuredChannels.filter((channel) => channel.id !== providerChannel.id),
-      ];
+      const existingIndex = configuredChannels.findIndex((c) => c.id === providerChannel.id);
+      if (existingIndex >= 0) {
+        configuredChannels.unshift(...configuredChannels.splice(existingIndex, 1));
+      } else {
+        configuredChannels.unshift(providerChannel);
+      }
     }
   }
-  if (options.channelId?.trim()) {
-    configuredChannels = configuredChannels.filter((channel) => channel.id === options.channelId?.trim());
-  } else if (preferredChannelId) {
-    const preferredChannel = configuredChannels.find((channel) => channel.id === preferredChannelId);
-    if (preferredChannel) {
-      configuredChannels = [
-        preferredChannel,
-        ...configuredChannels.filter((channel) => channel.id !== preferredChannelId),
-      ];
+
+  if (!isDbChannelModeEnabled()) {
+    const envChannel = getChannelFromEnv();
+    const channels = envChannel ? [envChannel] : [];
+    if (channels.length === 0) {
+      throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY）");
     }
+    return sendWithFailover(channels, effectiveOptions);
+  }
+
+  if (!options.databaseOnly) {
+    pushChannelUnique(getChannelFromEnv());
   }
 
   if (configuredChannels.length === 0) {
-    if (options.channelId?.trim()) {
-      throw new Error("指定 AI 渠道不存在或未启用");
-    }
     if (options.databaseOnly) {
       throw new Error("AI 渠道未配置，请先在后台完成 AI 渠道与功能配置");
     }
-    throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY，或配置 ai_channels）");
+    throw new Error("AI API 未配置（需设置 AI_BASE_URL 和 AI_API_KEY，或在后台配置模型顺位）");
   }
 
-  const now = Date.now();
-  const healthyChannels = configuredChannels.filter((channel) => isChannelHealthy(channel, now));
-  const channels = healthyChannels.length > 0 ? healthyChannels : configuredChannels.filter((channel) => channel.source === "env");
+  return sendWithFailover(configuredChannels, effectiveOptions);
+}
 
-  if (channels.length === 0) {
-    throw new Error("所有 AI 渠道不可用");
-  }
-
+async function sendWithFailover(
+  channels: ChannelConfig[],
+  effectiveOptions: AiRequestOptions,
+): Promise<AiResponse> {
   let lastRetryableError: Error | null = null;
   for (const channel of channels) {
     try {
@@ -952,7 +726,6 @@ export const __internal = {
   getChannelFromEnv,
   isDbChannelModeEnabled,
   isRetryableStatus,
-  isChannelHealthy,
   resolveModel,
   normalizeResponseContent,
   describeMissingResponseContent,
@@ -960,13 +733,9 @@ export const __internal = {
   parseChatCompletionSse,
   setServiceClientForTests(client: unknown) {
     _serviceClient = client;
-    cachedChannels = null;
-    channelsPromise = null;
     cachedFeatureConfigs = null;
   },
   resetCache() {
-    cachedChannels = null;
-    channelsPromise = null;
     cachedFeatureConfigs = null;
   },
 };

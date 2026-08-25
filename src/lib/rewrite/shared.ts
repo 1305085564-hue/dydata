@@ -2215,7 +2215,6 @@ async function executeRewriteStep(input: {
 
     try {
       const aiResult = await rewriteAiCaller({
-        channelId: route.channel_id ?? undefined,
         providerKeyModelId: route.provider_key_model_id ?? undefined,
         model: route.actual_model,
         databaseOnly: true,

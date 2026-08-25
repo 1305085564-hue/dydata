@@ -36,23 +36,8 @@ export async function loadFeaturePrompt(featureKey: string, fallback: string) {
     .eq("feature_key", featureKey)
     .maybeSingle();
 
-  const bindingPrompt = !bindingError && typeof bindingData?.system_prompt === "string"
+  const prompt = !bindingError && typeof bindingData?.system_prompt === "string"
     ? bindingData.system_prompt.trim() || null
-    : null;
-
-  if (bindingPrompt) {
-    cache.set(featureKey, { expiresAt: now + CACHE_TTL_MS, prompt: bindingPrompt });
-    return bindingPrompt;
-  }
-
-  const { data, error } = await supabase
-    .from("ai_feature_config")
-    .select("system_prompt")
-    .eq("feature_key", featureKey)
-    .maybeSingle();
-
-  const prompt = !error && typeof data?.system_prompt === "string"
-    ? data.system_prompt.trim() || null
     : null;
 
   cache.set(featureKey, { expiresAt: now + CACHE_TTL_MS, prompt });
