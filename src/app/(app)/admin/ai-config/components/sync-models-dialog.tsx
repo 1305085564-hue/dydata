@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -147,7 +148,7 @@ export function SyncModelsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl w-[94vw] max-h-[90vh] flex flex-col p-6 rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
         <DialogHeader className="gap-1.5 pb-2 border-b border-[#ECE7DE]/70">
           <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917] flex items-center gap-2">
@@ -161,106 +162,108 @@ export function SyncModelsDialog({
           </p>
         </DialogHeader>
 
-        {/* 顶部搜索与快捷批量操作 */}
-        <div className="py-2.5 space-y-2 select-none">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#78716C]" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="按关键词过滤型号..."
-              className="pl-9 pr-8 h-9 text-[13px] border-[#E5E0D6] focus-visible:ring-[#D97757]/20"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-sm hover:bg-[#F5F3EE] text-[#78716C] hover:text-[#1C1917]"
-              >
-                <X className="size-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between text-[12px] text-[#78716C] px-0.5">
-            <div>
-              已启用 <span className="font-mono font-medium text-[#1C1917] tabular-nums">{selectedModelIds.size}</span> / {availableModels.length} 个型号
-              {searchQuery.trim() && (
-                <span className="text-[#78716C]/80 ml-1.5">
-                  (匹配 {filteredModels.length} 项)
-                </span>
+        <DialogBody className="flex min-h-0 flex-1 flex-col overflow-hidden py-1">
+          {/* 顶部搜索与快捷批量操作 */}
+          <div className="shrink-0 select-none space-y-2 py-2.5">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#78716C]" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="按关键词过滤型号..."
+                className="h-9 border-[#E5E0D6] pl-9 pr-8 text-[13px] focus-visible:ring-[#D97757]/20"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                >
+                  <X className="size-3.5" />
+                </button>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSelectAllFiltered}
-                disabled={isAllFilteredSelected || filteredModels.length === 0}
-                className="h-6 px-2 text-[12px] gap-1 text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
-              >
-                <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDeselectAllFiltered}
-                disabled={filteredModels.length === 0}
-                className="h-6 px-2 text-[12px] gap-1 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
-              >
-                <Square className="size-3" /> 取消全选
-              </Button>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[13px] text-[#78716C]">
+              <div>
+                已启用 <span className="font-mono font-medium tabular-nums text-[#1C1917]">{selectedModelIds.size}</span> / {availableModels.length} 个型号
+                {searchQuery.trim() && (
+                  <span className="ml-1.5 text-[#78716C]/80">
+                    (匹配 {filteredModels.length} 项)
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAllFiltered}
+                  disabled={isAllFilteredSelected || filteredModels.length === 0}
+                  className="h-7 gap-1 px-2 text-[13px] text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                >
+                  <CheckCheck className="size-3 text-[#D97757]" /> 全选过滤结果
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeselectAllFiltered}
+                  disabled={filteredModels.length === 0}
+                  className="h-7 gap-1 px-2 text-[13px] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+                >
+                  <Square className="size-3" /> 取消全选
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 模型列表：支持按住鼠标滑动批量选择 */}
-        <div className="flex-1 min-h-[260px] max-h-[50vh] overflow-y-auto border border-[#E5E0D6] rounded-xl bg-white select-none divide-y divide-[#ECE7DE]/50">
-          {filteredModels.length === 0 ? (
-            <div className="p-10 text-center text-[13px] text-[#78716C]">
-              {searchQuery ? "未找到匹配的型号" : "还没有可启用的型号"}
-            </div>
-          ) : (
-            filteredModels.map((mId) => {
-              const isChecked = selectedModelIds.has(mId);
-              return (
-                <div
-                  key={mId}
-                  onMouseDown={(e) => handleRowMouseDown(mId, e)}
-                  onMouseEnter={() => handleRowMouseEnter(mId)}
-                  className={cn(
-                    "flex items-center gap-3 px-3.5 py-2 text-[13px] cursor-pointer transition-colors select-none",
-                    isChecked
-                      ? "bg-[#FAF8F4] text-[#1C1917] font-medium"
-                      : "text-[#292524] hover:bg-[#F5F3EE]/60"
-                  )}
-                >
-                  <Checkbox
-                    checked={isChecked}
-                    className="pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  <span className="font-mono text-[12px] truncate">
-                    {mId}
-                  </span>
-                </div>
-              );
-            })
-          )}
-        </div>
+          {/* 模型列表：支持按住鼠标滑动批量选择 */}
+          <div className="min-h-0 flex-1 overflow-y-auto divide-y divide-[#ECE7DE]/50 rounded-xl border border-[#E5E0D6] bg-white select-none">
+            {filteredModels.length === 0 ? (
+              <div className="p-10 text-center text-[13px] text-[#78716C]">
+                {searchQuery ? "未找到匹配的型号" : "还没有可启用的型号"}
+              </div>
+            ) : (
+              filteredModels.map((mId) => {
+                const isChecked = selectedModelIds.has(mId);
+                return (
+                  <div
+                    key={mId}
+                    onMouseDown={(e) => handleRowMouseDown(mId, e)}
+                    onMouseEnter={() => handleRowMouseEnter(mId)}
+                    className={cn(
+                      "flex cursor-pointer select-none items-center gap-3 px-3.5 py-2 text-[13px] transition-colors",
+                      isChecked
+                        ? "bg-[#FAF8F4] font-medium text-[#1C1917]"
+                        : "text-[#292524] hover:bg-[#F5F3EE]/60",
+                    )}
+                  >
+                    <Checkbox
+                      checked={isChecked}
+                      className="pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    <span className="truncate font-mono text-[12px]">
+                      {mId}
+                    </span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogBody>
 
         {/* 弹窗 Footer */}
-        <DialogFooter className="pt-4 border-t border-[#ECE7DE]/70 flex items-center justify-between sm:justify-between w-full">
-          <div className="text-[12px] text-[#78716C]">
+        <DialogFooter className="w-full flex-col items-stretch gap-2 border-t border-[#ECE7DE]/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-[13px] text-[#78716C]">
             确认勾选后保存生效
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onOpenChange(false)}
               disabled={saving}
-              className="h-8 text-[12px] border-[#E5E0D6] hover:bg-[#F5F3EE]"
+              className="h-9 border-[#E5E0D6] text-[13px] hover:bg-[#F5F3EE]"
             >
               取消
             </Button>
@@ -268,7 +271,7 @@ export function SyncModelsDialog({
               size="sm"
               onClick={handleSave}
               disabled={saving}
-              className="h-8 text-[12px] gap-1.5 bg-[#D97757] hover:bg-[#C46A4D] text-white"
+              className="h-9 gap-1.5 bg-[#D97757] text-[13px] text-white hover:bg-[#C46A4D]"
             >
               {saving ? (
                 <Loader2 className="size-3.5 animate-spin" />

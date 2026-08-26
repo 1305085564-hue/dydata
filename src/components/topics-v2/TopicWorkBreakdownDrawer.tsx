@@ -255,9 +255,9 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] w-full max-w-xl bg-[#FBF9F5]/95 backdrop-blur-xl border-l border-[#E5E0D6] shadow-claude-dialog p-6 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E5E0D6] bg-[#FBF9F5]/95 p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
       >
-        <div>
+        <div className="shrink-0">
           <div className="flex items-start justify-between pb-4 border-b border-[#ECE7DE] mb-4 pt-1">
             <div className="min-w-0 pr-3">
               <div className="flex items-center gap-2 text-xs font-normal text-[#78716C] mb-1 truncate">
@@ -289,7 +289,9 @@ export function TopicWorkBreakdownDrawer({
               <X className="w-5 h-5" />
             </button>
           </div>
+        </div>
 
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {detailError ? (
             <div className="py-8 text-center text-[#292524] bg-red-50/50 rounded-xl">
               <AlertTriangle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
@@ -463,7 +465,7 @@ export function TopicWorkBreakdownDrawer({
         </div>
 
         {/* 底部按钮栏 */}
-        <div className="pt-4 mt-6 border-t border-[#E5E0D6] space-y-2">
+        <div className="mt-6 shrink-0 space-y-2 border-t border-[#E5E0D6] pt-4">
           <div className="flex items-center gap-2">
             {!action.canClaim && action.label === "脚本中" ? (
               <span className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-center rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] font-medium text-xs">

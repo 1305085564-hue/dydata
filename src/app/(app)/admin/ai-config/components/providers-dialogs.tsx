@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AiProvider, AiProviderKey, AiProviderKeyModel, useAiConfig } from "../hooks/use-ai-config";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,11 +109,11 @@ export function ProviderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{provider?.id ? "编辑渠道" : "新建渠道"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           <div className="space-y-2">
             <Label htmlFor="provider-name">渠道名称</Label>
             <Input
@@ -152,7 +159,7 @@ export function ProviderDialog({
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
-        </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             取消
@@ -226,11 +233,11 @@ export function KeyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{apiKey?.id ? "编辑 API 密钥分组" : "新建 API 密钥分组"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           <div className="space-y-2">
             <Label htmlFor="provider-select">所属渠道 (Provider)</Label>
             <select
@@ -296,7 +303,7 @@ export function KeyDialog({
               onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 50 })}
             />
           </div>
-        </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             取消
@@ -372,11 +379,11 @@ export function ModelDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>{model?.id ? "编辑型号" : "接入新型号"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-3">
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           {/* 选择绑定的 Key */}
           <div className="space-y-1.5">
             <Label htmlFor="model-key-select">目标渠道密钥</Label>
@@ -493,7 +500,7 @@ export function ModelDialog({
               onCheckedChange={(checked) => setFormData({ ...formData, is_enabled: checked })}
             />
           </div>
-        </div>
+        </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             取消

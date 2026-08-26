@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/sheet";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -1610,7 +1611,7 @@ export function AdminModulesContentV3({
               </div>
 
               {/* 抽屉内容主体（单页直通） */}
-              <div className="px-6 pt-6 pb-8 space-y-8 flex-1 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8 pt-6 space-y-8">
                 {/* 1. 细粒度权限配置 (标准 MemberPermissionEditor) */}
                 <MemberPermissionEditor
                   member={{
@@ -1865,7 +1866,7 @@ export function AdminModulesContentV3({
 
       {/* AI 诊断弹窗 */}
       <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-        <DialogContent className="max-w-[480px] p-6 rounded-2xl">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[480px] p-6 rounded-2xl">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1888,7 +1889,7 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             {aiSuggestion?.loading && (
               <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FBF9F5] rounded-xl">
                 <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
@@ -1967,13 +1968,13 @@ export function AdminModulesContentV3({
                 )}
               </div>
             )}
-          </div>
+          </DialogBody>
         </DialogContent>
       </Dialog>
 
       {/* 日报豁免与请假弹窗 */}
       <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
-        <DialogContent className="max-w-[440px] p-6 rounded-2xl">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[440px] p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">设置日报豁免与请假</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
@@ -1981,7 +1982,7 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             <div className="grid grid-cols-3 gap-1 bg-[#F5F3EE] p-1 rounded-xl">
               <button
                 type="button"
@@ -2086,7 +2087,7 @@ export function AdminModulesContentV3({
                 </div>
               </div>
             )}
-          </div>
+          </DialogBody>
 
           <DialogFooter className="flex items-center justify-end gap-2 pt-2">
             <Button
@@ -2115,7 +2116,7 @@ export function AdminModulesContentV3({
 
       {/* 3.4 团队架构管理弹窗 (支持删除空团队与新建) */}
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
-        <DialogContent className="max-w-[460px] p-6 rounded-2xl">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">团队架构管理</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
@@ -2123,7 +2124,7 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
             {canManageCompany && (
               <div className="space-y-1.5">
                 <Label htmlFor="v3-team-name" className="text-[13px] font-medium text-[#292524]">
@@ -2186,7 +2187,7 @@ export function AdminModulesContentV3({
                 })
               )}
             </div>
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button
@@ -2226,7 +2227,7 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">确认归档成员账号</DialogTitle>
             <DialogDescription>
@@ -2395,13 +2396,15 @@ export function AdminModulesContentV3({
             </DialogDescription>
           </DialogHeader>
 
-          {toolConfirmationModal?.preview && (
-            <div className="bg-[#FBF9F5] p-3 rounded-xl border border-[#E5E0D6]/60 text-[13px] space-y-1 text-[#292524] max-h-48 overflow-y-auto">
-              <pre className="whitespace-pre-wrap font-sans">
-                {JSON.stringify(toolConfirmationModal.preview, null, 2)}
-              </pre>
-            </div>
-          )}
+          <DialogBody className="min-h-0 flex-1 overflow-y-auto py-2">
+            {toolConfirmationModal?.preview && (
+              <div className="bg-[#FBF9F5] p-3 rounded-xl border border-[#E5E0D6]/60 text-[13px] space-y-1 text-[#292524]">
+                <pre className="whitespace-pre-wrap font-sans">
+                  {JSON.stringify(toolConfirmationModal.preview, null, 2)}
+                </pre>
+              </div>
+            )}
+          </DialogBody>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setToolConfirmationModal(null)}>

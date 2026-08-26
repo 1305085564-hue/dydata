@@ -109,7 +109,7 @@ export function AdaptiveSheetContent({
           "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#E5E0D6] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
           "data-open:animate-in data-open:slide-in-from-bottom-6 data-open:fade-in-0 data-closed:animate-out data-closed:slide-out-to-bottom-6 data-closed:fade-out-0",
           // 桌面端：居中弹窗模式 (Centered Dialog)
-          "md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:max-h-[85vh] md:rounded-2xl md:border md:border-[#E5E0D6] md:p-6 md:pb-6",
+          "md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:border md:border-[#E5E0D6] md:p-6 md:pb-6",
           "md:data-open:zoom-in-95 md:data-closed:zoom-out-95",
           className,
         )}
@@ -198,7 +198,7 @@ export function AdaptiveSheetBody({
   return (
     <div
       data-slot="adaptive-sheet-body"
-      className={cn("flex-1 overflow-y-auto py-3 space-y-3", className)}
+      className={cn("min-h-0 flex-1 overflow-y-auto py-3 space-y-3", className)}
       {...props}
     />
   );

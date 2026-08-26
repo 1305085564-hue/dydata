@@ -348,12 +348,12 @@ export function SubmissionSlotsSection({
                             </div>
                           }
                         />
-                        <DialogContent className="w-auto max-w-4xl overflow-hidden border-none bg-transparent p-0 shadow-none">
+                        <DialogContent className="w-auto max-w-[calc(100vw-2rem)] overflow-hidden border-none bg-transparent p-0 shadow-none">
                           <DialogTitle className="sr-only">放大预览</DialogTitle>
                           <img
                             src={slot.assetUrl}
                             alt="放大预览"
-                            className="h-auto max-h-[85vh] w-full rounded-xl object-contain shadow-claude-dialog"
+                            className="h-auto max-h-[calc(100dvh-2rem)] w-full rounded-xl object-contain shadow-claude-dialog"
                           />
                         </DialogContent>
                       </Dialog>

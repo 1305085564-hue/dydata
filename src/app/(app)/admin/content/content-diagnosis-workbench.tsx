@@ -2178,13 +2178,13 @@ function ScreenshotPreview({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#1C1917]/60 backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-y-auto bg-[#1C1917]/60 p-4 backdrop-blur-md"
         onClick={onClose}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 text-white/70 hover:text-white p-2"
+          className="absolute right-4 top-4 inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-white/70 hover:text-white"
         >
           关闭
         </button>
@@ -2197,7 +2197,7 @@ function ScreenshotPreview({
                 e.stopPropagation();
                 onPrev();
               }}
-              className="absolute left-5 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-3"
+              className="absolute left-4 top-1/2 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
             >
               ←
             </button>
@@ -2207,7 +2207,7 @@ function ScreenshotPreview({
                 e.stopPropagation();
                 onNext();
               }}
-              className="absolute right-5 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white rounded-full p-3"
+              className="absolute right-4 top-1/2 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full bg-white/10 p-3 text-white hover:bg-white/20"
             >
               →
             </button>
@@ -2215,7 +2215,7 @@ function ScreenshotPreview({
         )}
 
         <div
-          className="relative max-h-[85vh] max-w-[85vw]"
+          className="relative max-h-[calc(100dvh-6rem)] max-w-[calc(100vw-2rem)]"
           onClick={(e) => e.stopPropagation()}
         >
           <Image
@@ -2224,7 +2224,7 @@ function ScreenshotPreview({
             width={1600}
             height={1200}
             unoptimized
-            className="rounded-xl border border-white/10 bg-black object-contain max-h-[85vh] max-w-[85vw]"
+            className="max-h-[calc(100dvh-6rem)] max-w-[calc(100vw-2rem)] rounded-xl border border-white/10 bg-black object-contain"
           />
         </div>
         <p className="mt-4 text-[12px] font-medium text-white/80">

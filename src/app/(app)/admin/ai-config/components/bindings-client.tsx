@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -101,13 +102,13 @@ function RewriteViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {view?.id ? "编辑改写视图" : "添加改写视图"}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           <div className="space-y-2">
             <Label htmlFor="view-key">Key</Label>
             <Input
@@ -167,7 +168,7 @@ function RewriteViewDialog({
               </div>
             </div>
           </div>
-        </div>
+        </DialogBody>
         <DialogFooter>
           <Button
             variant="outline"
@@ -226,13 +227,13 @@ function RewriteRouteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {route?.id ? "编辑路由规则" : "添加路由规则"}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
           <div className="space-y-2">
             <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
@@ -362,7 +363,7 @@ function RewriteRouteDialog({
               }
             />
           </div>
-        </div>
+        </DialogBody>
         <DialogFooter>
           <Button
             variant="outline"
@@ -652,7 +653,7 @@ export default function BindingsClient() {
                   />
                   <DropdownMenuContent
                     align="start"
-                    className="min-w-[260px] max-h-[320px] overflow-y-auto bg-white border border-[#E5E0D6] shadow-claude-float p-1"
+                    className="w-[min(260px,calc(100vw-2rem))] min-w-0 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] overflow-y-auto bg-white border border-[#E5E0D6] shadow-claude-float p-1"
                   >
                     <DropdownMenuItem
                       onClick={async () => {

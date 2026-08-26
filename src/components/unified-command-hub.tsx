@@ -336,7 +336,7 @@ export function UnifiedCommandHub({
             exit={{ opacity: 0, scale: 0.96, y: -6 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "absolute right-0 top-full mt-2 z-50 flex w-[440px] max-h-[580px] flex-col overflow-hidden rounded-2xl border bg-[#FAF8F4] shadow-claude-float",
+              "absolute right-0 top-full z-50 mt-2 flex w-[min(440px,calc(100vw-1rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border bg-[#FAF8F4] shadow-claude-float",
               "border-[#E5E0D6]",
             )}
           >

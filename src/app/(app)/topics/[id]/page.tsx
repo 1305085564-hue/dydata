@@ -8,7 +8,9 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -924,66 +926,73 @@ export default function SubTopicDetailPage({
 
       {/* 编辑 Modal */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg p-6 rounded-2xl">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl p-6 sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-[#1C1917] text-base font-medium">
               编辑选题
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-4 mt-2">
-            <div className="space-y-1">
-              <label className="text-[12px] font-medium text-[#292524]">
-                选题标题 (必填)
-              </label>
-              <input
-                value={editTitle}
-                onChange={(e) => {
-                  setEditTitle(e.target.value);
-                  if (editTitleError) setEditTitleError("");
-                }}
-                className={cn(
-                  "w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors",
-                  editTitleError && "border-red-300 ring-1 ring-red-300",
+          <form
+            onSubmit={handleEditSubmit}
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
+            <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
+              <div className="space-y-1">
+                <label className="text-[12px] font-medium text-[#292524]">
+                  选题标题 (必填)
+                </label>
+                <input
+                  value={editTitle}
+                  onChange={(e) => {
+                    setEditTitle(e.target.value);
+                    if (editTitleError) setEditTitleError("");
+                  }}
+                  className={cn(
+                    "w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors",
+                    editTitleError && "border-red-300 ring-1 ring-red-300",
+                  )}
+                  required
+                />
+                {editTitleError && (
+                  <p className="text-[#C0685C] text-xs mt-1">
+                    {editTitleError}
+                  </p>
                 )}
-                required
-              />
-              {editTitleError && (
-                <p className="text-[#C0685C] text-xs mt-1">{editTitleError}</p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <label className="text-[12px] font-medium text-[#292524]">
-                一句话钩子 (选填)
-              </label>
-              <textarea
-                value={editHook}
-                onChange={(e) => setEditHook(e.target.value)}
-                className="w-full h-20 rounded-xl border border-[#E5E0D6] p-3 text-[13px] outline-none focus:border-[#D97757] resize-none transition-colors"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[12px] font-medium text-[#292524]">
-                  情绪标签
-                </label>
-                <input
-                  value={editEmotionTag}
-                  onChange={(e) => setEditEmotionTag(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
-                />
               </div>
               <div className="space-y-1">
                 <label className="text-[12px] font-medium text-[#292524]">
-                  目标受众
+                  一句话钩子 (选填)
                 </label>
-                <input
-                  value={editAudience}
-                  onChange={(e) => setEditAudience(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                <textarea
+                  value={editHook}
+                  onChange={(e) => setEditHook(e.target.value)}
+                  className="w-full h-20 rounded-xl border border-[#E5E0D6] p-3 text-[13px] outline-none focus:border-[#D97757] resize-none transition-colors"
                 />
               </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-[#292524]">
+                    情绪标签
+                  </label>
+                  <input
+                    value={editEmotionTag}
+                    onChange={(e) => setEditEmotionTag(e.target.value)}
+                    className="w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-[#292524]">
+                    目标受众
+                  </label>
+                  <input
+                    value={editAudience}
+                    onChange={(e) => setEditAudience(e.target.value)}
+                    className="w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                  />
+                </div>
+              </div>
+            </DialogBody>
+            <DialogFooter className="flex-row justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1004,7 +1013,7 @@ export default function SubTopicDetailPage({
                 ) : null}
                 保存修改
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

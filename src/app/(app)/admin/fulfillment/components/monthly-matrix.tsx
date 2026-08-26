@@ -58,6 +58,37 @@ function formatDateKey(year: number, month: number, day: number) {
   return `${year}-${m}-${d}`;
 }
 
+const TOOLTIP_ESTIMATED_HEIGHT = 220;
+
+function getTooltipPlacement(
+  rect: DOMRect,
+  viewportWidth: number,
+  viewportHeight: number,
+) {
+  const centerX = Math.min(
+    Math.max(138, viewportWidth - 138),
+    Math.max(138, rect.left + rect.width / 2),
+  );
+  const canPlaceAbove = rect.top >= TOOLTIP_ESTIMATED_HEIGHT + 10;
+
+  if (canPlaceAbove) {
+    return {
+      top: Math.max(10, rect.top - 8),
+      left: centerX,
+      transform: "translate(-50%, -100%)",
+    };
+  }
+
+  return {
+    top: Math.min(
+      Math.max(10, rect.bottom + 8),
+      Math.max(10, viewportHeight - TOOLTIP_ESTIMATED_HEIGHT - 10),
+    ),
+    left: centerX,
+    transform: "translate(-50%, 0)",
+  };
+}
+
 function getStatusColor(status: FulfillmentStatus | undefined): string {
   if (!status) return "bg-[#FBF9F5] border-[#ECE7DE]";
   switch (status) {
@@ -172,6 +203,15 @@ export function MonthlyMatrix({
     const now = new Date();
     return year === now.getFullYear() && month === now.getMonth() + 1;
   };
+
+  const tooltipPosition =
+    hoveredCell && typeof window !== "undefined"
+      ? getTooltipPlacement(
+          hoveredCell.rect,
+          window.innerWidth,
+          window.innerHeight,
+        )
+      : undefined;
 
   return (
     <div className="space-y-3">
@@ -433,15 +473,8 @@ export function MonthlyMatrix({
       {/* Claude 便签卡 Tooltip */}
       {hoveredCell && !openMenuCell && (
         <div
-          className="fixed z-50 flex w-64 flex-col items-start gap-1.5 rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 backdrop-blur-md p-3.5 text-[12px] text-[#292524] shadow-claude-float pointer-events-none transition-opacity duration-100"
-          style={{
-            top: Math.max(10, hoveredCell.rect.top - 8),
-            left: Math.min(
-              typeof window !== "undefined" ? window.innerWidth - 140 : 500,
-              Math.max(140, hoveredCell.rect.left + hoveredCell.rect.width / 2),
-            ),
-            transform: "translate(-50%, -100%)",
-          }}
+          className="pointer-events-none fixed z-50 flex max-h-[calc(100dvh-1rem)] w-64 flex-col items-start gap-1.5 overflow-y-auto rounded-xl border border-[#E5E0D6] bg-[#FDFCFB]/95 p-3.5 text-[12px] text-[#292524] shadow-claude-float backdrop-blur-md transition-opacity duration-100"
+          style={tooltipPosition}
         >
           <div className="flex w-full items-center justify-between gap-2 border-b border-[#ECE7DE] pb-1.5">
             <span className="font-semibold text-[#1C1917]">
@@ -518,7 +551,7 @@ export function MonthlyMatrix({
             onClick={() => setOpenMenuCell(null)}
           />
           <div
-            className="fixed z-50 w-40 bg-[#FDFCFB] border border-[#E5E0D6] rounded-2xl p-1.5 shadow-claude-float text-[12px] animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 max-h-[calc(100dvh-1rem)] w-40 overflow-y-auto rounded-2xl border border-[#E5E0D6] bg-[#FDFCFB] p-1.5 text-[12px] shadow-claude-float animate-in fade-in zoom-in-95 duration-100"
             style={{
               top: Math.min(
                 typeof window !== "undefined" ? window.innerHeight - 200 : 600,

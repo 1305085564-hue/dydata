@@ -1,8 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { AlertTriangle, X, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import type { TopicClaimItem } from "./types";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface SmartReplaceModalProps {
   isOpen: boolean;
@@ -25,9 +34,6 @@ export function SmartReplaceModal({
   const [selectedReturnId, setSelectedReturnId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
-  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
-
   // 只有候选状态占用可替换槽位，脚本中记录不能被替换。
   const candidateClaims = useMemo(
     () => myClaims.filter((claim) => claim.status === "candidate"),
@@ -46,33 +52,6 @@ export function SmartReplaceModal({
       setError(null);
     }
   }, [isOpen, candidateClaims]);
-
-  // Focus Management & Esc Key Support
-  useEffect(() => {
-    if (isOpen) {
-      previousActiveElement.current =
-        document.activeElement as HTMLElement | null;
-      closeBtnRef.current?.focus();
-    }
-    return () => {
-      if (
-        previousActiveElement.current &&
-        typeof previousActiveElement.current.focus === "function"
-      ) {
-        previousActiveElement.current.focus();
-      }
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
 
   if (!isOpen || !targetTopic) return null;
 
@@ -96,74 +75,52 @@ export function SmartReplaceModal({
   };
 
   return (
-    <>
-      {/* 遮罩：z-[60] */}
-      <div
-        className="fixed inset-0 bg-[#1C1917]/25 backdrop-blur-xs z-[60] transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      {/* 毛玻璃黄金比例弹窗：z-[61] */}
-      <div className="fixed inset-0 z-[61] flex items-center justify-center p-4">
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="replace-modal-title"
-          className="w-full max-w-lg max-h-[85vh] flex flex-col bg-white/95 border border-[#E5E0D6] rounded-2xl shadow-claude-dialog p-6 animate-in zoom-in-95 duration-150"
-        >
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECE7DE] shrink-0">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white/95 p-6 shadow-claude-dialog sm:max-w-lg">
+        <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
+          <DialogTitle className="flex items-center gap-2 font-serif text-base font-semibold tracking-tight text-[#1C1917]">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F3EE] text-[#292524] font-semibold text-xs">
                 <AlertTriangle className="w-3.5 h-3.5" />
               </span>
-              <h3
-                id="replace-modal-title"
-                className="font-serif text-base font-semibold tracking-tight text-[#1C1917]"
-              >
-                候选槽位已满 (5/5)，选择要替换的选题
-              </h3>
+              <span>候选槽位已满 (5/5)，选择要替换的选题</span>
             </div>
-            <button
-              ref={closeBtnRef}
-              type="button"
-              onClick={onClose}
-              className="p-1 rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors"
-              title="关闭弹窗"
-              aria-label="关闭弹窗"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          </DialogTitle>
+        </DialogHeader>
 
-          <div className="mb-4 shrink-0">
-            <p className="text-xs text-[#78716C] mb-2 font-normal">
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
+          <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-1 pr-1">
+            <DialogDescription className="mb-1 text-[13px] font-normal text-[#78716C]">
               即将认领新选题：
               <span className="font-semibold text-[#1C1917]">
                 《{targetTopic.title}》
               </span>
-            </p>
-            <div className="bg-[#FBF9F5] rounded-xl p-3 text-xs text-[#292524] font-normal">
-              已为你自动推荐放回
-              <span className="font-medium">挂机时间最长</span>
-              的候选选题。脚本中的选题不会出现在替换列表。
-            </div>
-          </div>
+              <span className="mt-2 block rounded-xl bg-[#FBF9F5] p-3 font-normal text-[#292524]">
+                已为你自动推荐放回
+                <span className="font-medium">挂机时间最长</span>
+                的候选选题。脚本中的选题不会出现在替换列表。
+              </span>
+            </DialogDescription>
 
-          {error && (
-            <div className="mb-3 p-3 bg-red-50/50 rounded-r-lg border-l-2 border-l-[#C9604D] text-xs text-[#292524] font-normal shrink-0">
-              {error}
-            </div>
-          )}
+            {error && (
+              <div className="rounded-r-lg border-l-2 border-l-[#C9604D] bg-red-50/50 p-3 text-[13px] font-normal text-[#292524]">
+                {error}
+              </div>
+            )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="flex-1 min-h-0 flex flex-col space-y-3 overflow-hidden"
-          >
-            <div className="text-xs font-normal text-[#292524] shrink-0">
+            <div className="shrink-0 text-[13px] font-normal text-[#292524]">
               选一条要放回的选题：
             </div>
 
-            <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="space-y-2">
               {candidateClaims.map((claim) => {
                 const sub = claim.subTopic;
                 const isSelected = selectedReturnId === claim.subTopicId;
@@ -192,17 +149,17 @@ export function SmartReplaceModal({
                         className="mt-0.5 text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                       />
                       <div>
-                        <div className="text-xs font-normal text-[#292524]">
+                        <div className="text-[13px] font-normal text-[#292524]">
                           {sub?.title || "已认领子题"}
                         </div>
-                        <div className="font-serif not-italic text-xs text-[#292524] line-clamp-1 mt-0.5 leading-relaxed">
+                        <div className="font-serif not-italic text-[13px] text-[#292524] line-clamp-1 mt-0.5 leading-relaxed">
                           “{sub?.hook || "还没有 Hook"}”
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <span className="text-xs font-normal tabular-nums px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[#292524]">
+                      <span className="rounded bg-[#F5F3EE] px-1.5 py-0.5 text-[13px] font-normal tabular-nums text-[#292524]">
                         {daysIdle === 0 ? "今天认领" : `已挂机 ${daysIdle} 天`}
                       </span>
                     </div>
@@ -211,11 +168,13 @@ export function SmartReplaceModal({
               })}
             </div>
 
-            <div className="pt-4 border-t border-[#ECE7DE] flex items-center justify-end gap-2">
+          </DialogBody>
+
+          <DialogFooter className="flex-row justify-end border-t border-[#ECE7DE] pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-1.5 rounded-lg border border-[#E5E0D6] text-[#292524] hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75 text-xs font-medium transition-all"
+                className="rounded-lg border border-[#E5E0D6] px-4 py-1.5 text-[13px] font-medium text-[#292524] transition-all hover:bg-[#FBF9F5] active:scale-[0.985] active:duration-75"
                 aria-label="取消替换"
               >
                 取消
@@ -223,7 +182,7 @@ export function SmartReplaceModal({
               <button
                 type="submit"
                 disabled={loading || !selectedReturnId}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium shadow-2xs transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-1.5 text-[13px] font-medium text-white shadow-2xs transition-all hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 disabled:opacity-50"
                 aria-label="确认替换并认领新选题"
               >
                 {loading ? (
@@ -231,10 +190,9 @@ export function SmartReplaceModal({
                 ) : null}
                 <span>{loading ? "替换中..." : "确认替换并认领新选题"}</span>
               </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

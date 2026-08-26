@@ -530,7 +530,7 @@ export function RewriteWorkbenchV3() {
         {/* 左侧：操作控制区 */}
         <aside
           className={cn(
-            "shrink-0 flex flex-col border-r border-[#E5E0D6] bg-[#F5F3EE]/70 relative z-20 w-full md:w-[var(--workbench-left-width,35%)] md:min-w-[340px]",
+            "relative z-20 flex w-full shrink-0 flex-col border-r border-[#E5E0D6] bg-[#F5F3EE]/70 md:w-[var(--workbench-left-width,35%)] md:min-w-0 lg:min-w-[340px]",
             mobileTab === "chat" ? "flex flex-1" : "hidden md:flex",
           )}
         >
@@ -589,7 +589,7 @@ export function RewriteWorkbenchV3() {
         {/* 右侧：主工作画布 */}
         <main
           className={cn(
-            "flex-1 flex flex-col min-h-0 bg-white relative z-10 w-full md:w-[calc(100%-var(--workbench-left-width,35%))] md:min-w-[450px]",
+            "relative z-10 flex min-h-0 w-full flex-1 flex-col bg-white md:w-[calc(100%-var(--workbench-left-width,35%))] md:min-w-0 lg:min-w-[450px]",
             mobileTab === "canvas" ? "flex" : "hidden md:flex",
           )}
         >

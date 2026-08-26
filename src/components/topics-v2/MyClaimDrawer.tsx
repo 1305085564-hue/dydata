@@ -123,9 +123,9 @@ export function MyClaimDrawer({
             role="dialog"
             aria-modal="true"
             aria-labelledby="claim-drawer-title"
-            className="absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] bg-[#FAF8F4]/98 backdrop-blur-xl border border-[#E5E0D6] rounded-xl shadow-claude-float z-[62] p-4 animate-in fade-in duration-150"
+            className="absolute right-0 top-full z-[62] mt-2 flex max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-96 max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/98 p-4 shadow-claude-float backdrop-blur-xl animate-in fade-in duration-150"
           >
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECE7DE]">
+            <div className="flex shrink-0 items-center justify-between pb-3 mb-3 border-b border-[#ECE7DE]">
               <div>
                 <h4
                   id="claim-drawer-title"
@@ -149,7 +149,7 @@ export function MyClaimDrawer({
             </div>
 
             {/* 槽位进度条 */}
-            <div className="mb-4">
+            <div className="mb-4 shrink-0">
               <div className="flex justify-between text-xs text-[#292524] mb-1 font-normal">
                 <span>候选占用率</span>
                 <span className="tabular-nums text-[#292524] font-medium">
@@ -179,6 +179,7 @@ export function MyClaimDrawer({
             </div>
 
             {/* 认领列表 */}
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
             {error ? (
               <div className="py-6 text-center text-xs text-[#292524] bg-red-50/50 rounded-lg">
                 <p className="font-medium">我的认领加载失败</p>
@@ -203,7 +204,7 @@ export function MyClaimDrawer({
                 暂未认领任何选题，浏览大盘点击“认领”
               </div>
             ) : (
-              <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
+              <div className="space-y-4">
                 {/* 1. 候选池区块 */}
                 {activeClaims.filter((c) => c.status === "candidate").length >
                   0 && (
@@ -328,6 +329,7 @@ export function MyClaimDrawer({
                 )}
               </div>
             )}
+            </div>
           </div>
         </>
       )}
