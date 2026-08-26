@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { ContentFeedbackCardView, ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { Check } from "lucide-react";
 import {
@@ -489,23 +488,13 @@ export function ContentList({
               <tr>
                 <td
                   colSpan={15}
-                  className="py-12 px-4 text-center text-[#292524]"
+                  className="py-12 text-center text-[#292524]"
                 >
-                  {view === "pending" ? (
-                    <EmptyState
-                      variant="zen"
-                      size={80}
-                      title="待盘队列尽数清空 · 创作体征平稳"
-                      description="当前没有需要紧急归因的异常波动视频，从容收卷。"
-                    />
-                  ) : (
-                    <EmptyState
-                      variant="scroll"
-                      size={80}
-                      title="全量视频资产静候收卷"
-                      description="当前周期尚未记录到符合条件的视频资产。"
-                    />
-                  )}
+                  <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F5F3EE] text-[#292524] mb-2">
+                    <Check className="size-4 text-[#6FAA7D]" />
+                  </div>
+                  <p className="text-[13px] font-semibold text-[#292524]">今日待复盘已清完</p>
+                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">当前没有需要紧急复盘的异常视频</p>
                 </td>
               </tr>
             ) : (

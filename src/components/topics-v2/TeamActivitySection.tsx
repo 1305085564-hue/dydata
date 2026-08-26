@@ -80,9 +80,8 @@ export function TeamActivitySection({
   if (totalActivityCount === 0) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="flex items-center gap-2 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/80 px-3.5 py-2 text-xs text-[#78716C]">
-          <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-          <span>团队灵感节奏平稳 · 认领新选题或完成成片立卷后将同步呈现在此。</span>
+        <div className="rounded-xl bg-[#FBF9F5]/70 px-3.5 py-2 text-xs text-[#78716C]">
+          还没有团队动态，认领选题或产出成片后会自动出现在这里。
         </div>
       </section>
     );
@@ -94,14 +93,14 @@ export function TeamActivitySection({
 
   return (
     <section className="mt-4 sm:mt-5 mb-5 sm:mb-6 transition-all">
-      {/* 单行极简状态条 (宣纸漫反射微底便签) */}
-      <div className="bg-[#FAF8F4]/80 border border-[#ECE7DE] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors hover:border-[#D97757]/30">
+      {/* 单行极简状态条 (Ticker) */}
+      <div className="bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
         <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
           {/* 最新认领 */}
           {latestClaim ? (
             <div className="flex items-center gap-1.5 truncate max-w-full sm:max-w-[48%]">
-              <span className="inline-flex items-center gap-1 text-[#43718E] font-mono text-[11px] font-medium shrink-0 bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
-                <UserCheck className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 text-[#43718E] font-medium shrink-0">
+                <UserCheck className="w-3.5 h-3.5" />
                 <span>最新认领:</span>
               </span>
               <button
@@ -110,14 +109,14 @@ export function TeamActivitySection({
                 className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
                 title={`查看选题《${latestClaim.subTopic?.title || "选题"}》`}
               >
-                <span className="font-serif font-semibold text-[#1C1917]">
+                <span className="font-semibold text-[#1C1917]">
                   {latestClaim.displayName || "团队成员"}
                 </span>
-                <span className="font-serif text-[#292524] ml-1">
+                <span className="text-[#292524] ml-1">
                   《{latestClaim.subTopic?.title || "未命名选题"}》
                 </span>
               </button>
-              <span className="text-[11px] text-[#78716C] font-mono tabular-nums shrink-0">
+              <span className="text-[11px] text-[#78716C] tabular-nums shrink-0">
                 ({formatDateCompact(latestClaim.claimedAt)})
               </span>
             </div>
@@ -130,8 +129,8 @@ export function TeamActivitySection({
           {/* 最新成片 */}
           {latestWork ? (
             <div className="flex items-center gap-1.5 truncate max-w-full sm:max-w-[48%]">
-              <span className="inline-flex items-center gap-1 text-[#D97757] font-mono text-[11px] font-medium shrink-0 bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
-                <Video className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 text-[#D97757] font-medium shrink-0">
+                <Video className="w-3.5 h-3.5" />
                 <span>最新成片:</span>
               </span>
               <button
@@ -143,7 +142,7 @@ export function TeamActivitySection({
                 className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
                 title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
               >
-                <span className="font-serif font-semibold text-[#1C1917]">
+                <span className="font-semibold text-[#1C1917]">
                   《{latestWork.videoTitle}》
                 </span>
                 {latestWork.subTopic?.title && (
@@ -152,7 +151,7 @@ export function TeamActivitySection({
                   </span>
                 )}
               </button>
-              <span className="text-[11px] text-[#78716C] font-mono tabular-nums shrink-0">
+              <span className="text-[11px] text-[#78716C] tabular-nums shrink-0">
                 ({formatDateCompact(latestWork.uploadedAt)})
               </span>
             </div>
@@ -163,7 +162,7 @@ export function TeamActivitySection({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="inline-flex items-center justify-center gap-1 text-[11px] font-mono text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+          className="inline-flex items-center justify-center gap-1 text-[11px] text-[#78716C] hover:text-[#1C1917] font-medium px-2 py-0.5 rounded-md hover:bg-[#E5E0D6]/60 transition-colors shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
           aria-expanded={isExpanded}
         >
           <span>动态 ({totalActivityCount})</span>

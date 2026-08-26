@@ -19,10 +19,10 @@ import { 追赶条 } from "@/components/growth/追赶条";
 import { 锁定图占位 } from "@/components/growth/锁定图占位";
 import { AppShell } from "@/components/app-shell";
 import { ErrorState } from "@/components/ui/error-state";
-import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { CompassConstellationIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
+import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 import {
   GROWTH_DIMENSION_RULES,
   GROWTH_RATE_UNLOCK_SAMPLE_COUNT,
@@ -258,15 +258,15 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   return (
     <AppShell width="wide" className="pb-16 space-y-10">
       {/* 头部标题与阶段指示 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#ECE7DE]/80 pb-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-[#ECE7DE]/80 pb-6">
+        <div className="flex items-center gap-5">
           <div className="shrink-0 hidden sm:block">
-            <CompassConstellationIllustration size={36} />
+            <CompassConstellationIllustration size={72} />
           </div>
           <div>
             <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">创作成长体检</h1>
-            <p className="mt-1 text-[12.5px] text-[#78716C] leading-relaxed">
-              分析主体：<span className="font-serif font-semibold text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计沉淀 <span className="tabular-nums font-medium">{stage.lifetimeReportCount}</span> 份日报
+            <p className="mt-1 text-[13px] text-[#78716C]">
+              分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计沉淀 {stage.lifetimeReportCount} 份日报
             </p>
           </div>
         </div>
@@ -274,15 +274,15 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         <div className="flex items-center gap-2">
           <div
             className={cn(
-              "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11.5px] font-mono font-medium transition-colors bg-[#FAF8F4]",
-              phase === "accumulation" && "border-[#D99E55]/30 text-[#8A6A2F]",
-              phase === "observation" && "border-[#ECE7DE] text-[#292524]",
-              phase === "mature" && "border-[#6FAA7D]/30 text-[#3F7050]"
+              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors",
+              phase === "accumulation" && "border-[#D99E55]/25 bg-[#D99E55]/10 text-[#8A6A2F]",
+              phase === "observation" && "border-[#ECE7DE] bg-[#FBF9F5] text-[#292524]",
+              phase === "mature" && "border-[#6FAA7D]/25 bg-[#6FAA7D]/10 text-[#3F7050]"
             )}
           >
             <span
               className={cn(
-                "h-1.5 w-1.5 rounded-full",
+                "h-2 w-2 rounded-full",
                 phase === "accumulation" && "bg-[#D99E55]",
                 phase === "observation" && "bg-[#78716C]",
                 phase === "mature" && "bg-[#6FAA7D]"
@@ -295,6 +295,12 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         </div>
       </div>
 
+      {/* 卷首寄语 */}
+      <EditorialEpigraph
+        quote="灵感偶得，工致乃成。数据记录着作品与读者的每一次相遇，指引下一篇章的航向。"
+        author="创作札记"
+      />
+
       {/* 断流横幅：断流不降级模块，只提醒（累积期已并入进度卡，不重复） */}
       {staleText && phase !== "accumulation" && stage.lastReportDate && stage.daysSinceLastReport !== null ? (
         <断流横幅 lastReportDate={stage.lastReportDate} daysSince={stage.daysSinceLastReport} />
@@ -306,22 +312,25 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       ) : verdict ? (
         <section className="border-b border-[#ECE7DE]/80 pb-8 space-y-5">
           <div className="flex items-start justify-between gap-4 border-b border-[#ECE7DE] pb-4">
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-mono font-medium text-[#78716C] uppercase tracking-wider">
+            <div className="space-y-1">
+              <span className="text-[12px] font-medium text-[#78716C] uppercase tracking-widest">
                 VERDICT · 首屏体检焦点
               </span>
-              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-[#1C1917] leading-[1.4] tracking-tight text-balance">
+              <h2 className="font-serif text-lg sm:text-xl font-semibold text-[#1C1917] leading-[1.4] text-balance">
                 你现在最该补的是「<span className="text-[#D97757]">{verdict.weakestDimension}</span>」
               </h2>
               {phase === "observation" ? (
-                <p className="text-[12.5px] text-[#78716C] pt-0.5 leading-relaxed tabular-nums">
+                <p className="text-[12px] text-[#78716C]">
                   基于近 30 天 {stage.windowReportCount} 份日报 · 样本累积中，结论会随数据变化。
                 </p>
               ) : null}
             </div>
 
             <span className={cn(
-              "rounded-md border px-2.5 py-1 text-[11.5px] font-mono font-medium select-none bg-[#FAF8F4] border-[#ECE7DE] text-[#57534E]"
+              "rounded-full border px-2.5 py-1 text-[12px] font-medium select-none",
+              verdict.source === "ai"
+                ? "bg-[#FBF9F5] text-[#292524] border-[#E5E0D6]"
+                : "bg-[#F5F3EE] text-[#292524] border-[#E5E0D6]"
             )}>
               {verdict.source === "ai" ? "AI 深度诊断" : "规则分析"}
             </span>
@@ -331,9 +340,9 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C]">
                 <Target className="h-4 w-4 text-[#D97757]" />
-                <span>诊断依据</span>
+                诊断依据
               </div>
-              <p className="font-serif text-[13.5px] font-normal text-[#292524] text-pretty leading-relaxed">
+              <p className="font-serif text-[13px] sm:text-sm font-normal text-[#292524] text-pretty leading-relaxed">
                 {verdict.diagnosis}
               </p>
             </div>
@@ -341,9 +350,9 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="space-y-2 border-t border-[#ECE7DE] pt-4 md:border-t-0 md:pt-0 md:border-l md:border-[#ECE7DE] md:pl-6">
               <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#78716C]">
                 <Award className="h-4 w-4 text-[#6FAA7D]" />
-                <span>下一条视频改法（药方）</span>
+                下一条视频改法（药方）
               </div>
-              <p className="font-serif text-[13.5px] font-medium text-[#1C1917] leading-relaxed bg-[#FAF8F4] border border-[#ECE7DE] p-3.5 rounded-xl">
+              <p className="text-[13px] font-medium text-[#1C1917] leading-[1.6] bg-[#F5F3EE] p-3 rounded-lg">
                 {verdict.prescription}
               </p>
             </div>
@@ -352,18 +361,18 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       ) : (
         /* 重度断流：窗口内无数据，主卡冻结而不是误报"还没有数据" */
         <section className="border-b border-[#ECE7DE]/80 pb-8 space-y-3">
-          <span className="text-[11px] font-mono font-medium uppercase tracking-wider text-[#78716C]">
+          <span className="text-[12px] font-medium uppercase tracking-widest text-[#78716C]">
             体检暂停
           </span>
-          <h2 className="font-serif mt-2 text-xl font-semibold text-[#1C1917] leading-[1.4] tracking-tight">
+          <h2 className="mt-2 text-lg font-semibold text-[#1C1917] leading-[1.4]">
             数据停在 {stage.lastReportDate ? 格式化为月日(stage.lastReportDate) : "很久以前"}，近 30 天没有新日报
           </h2>
-          <p className="mt-2 text-[12.5px] text-[#78716C] leading-relaxed">
-            你历史累计 <span className="tabular-nums font-medium">{stage.lifetimeReportCount}</span> 份日报还在。恢复同步后，体检会基于新数据重新生成。
+          <p className="mt-2 text-[13px] text-[#78716C] leading-[1.6]">
+            你历史累计 {stage.lifetimeReportCount} 份日报还在。恢复同步后，体检会基于新数据重新生成。
           </p>
           <Link
             href="/dashboard"
-            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2.5 text-[13px] font-medium text-white shadow-2xs transition-all hover:bg-[#C46A4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
+            className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-3 text-[13px] font-medium text-white transition-colors hover:bg-[#C46A4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D97757]/30"
           >
             去同步今日数据
             <ArrowRight className="h-4 w-4" />
@@ -412,13 +421,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 teamSize={stage.teamActiveCount}
               />
             ) : (
-              <div className="flex h-full min-h-[260px] items-center justify-center rounded-2xl border border-[#E5E0D6] bg-white p-4">
-                <EmptyState
-                  variant="compass"
-                  size={72}
-                  title="结果趋势静候样本"
-                  description="提交满两天有效日报后，此处将自动绘制结果走势。"
-                />
+              <div className="flex h-40 items-center justify-center rounded-xl border border-[#E5E0D6] bg-white text-[13px] text-[#78716C]">
+                还没有趋势数据
               </div>
             )}
             {ratesUnlocked ? (
@@ -431,13 +435,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   teamSize={stage.teamActiveCount}
                 />
               ) : (
-                <div className="flex h-full min-h-[260px] items-center justify-center rounded-2xl border border-[#E5E0D6] bg-white p-4">
-                  <EmptyState
-                    variant="compass"
-                    size={72}
-                    title="质量走势静候样本"
-                    description="提交满两天有效日报后，此处将自动绘制互动质量趋势。"
-                  />
+                <div className="flex h-40 items-center justify-center rounded-xl border border-[#E5E0D6] bg-white text-[13px] text-[#78716C]">
+                  还没有趋势数据
                 </div>
               )
             ) : (
@@ -454,8 +453,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
       <section className="grid gap-10 lg:grid-cols-[340px_1fr] border-b border-[#ECE7DE]/80 pb-10">
         <div className="space-y-6">
           <div>
-            <h3 className="font-serif text-base font-semibold text-[#1C1917] leading-tight tracking-tight">能力画像</h3>
-            <p className="mt-1 text-[12.5px] text-[#78716C] leading-relaxed">
+            <h3 className="text-base font-medium text-[#292524] leading-tight">能力画像</h3>
+            <p className="mt-1.5 text-[12px] text-[#78716C]">
               {phase === "accumulation" ? "六维能力轮廓，随日报积累点亮。" : "看清六维能力相较于团队的相对表现。"}
             </p>
           </div>
@@ -475,8 +474,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 stroke-[1.5] text-[#43718E]" />
               <div>
-                <h4 className="font-serif text-[14.5px] font-semibold text-[#1C1917] leading-tight tracking-tight">同伴 · 追赶视角</h4>
-                <p className="text-[12.5px] text-[#78716C] mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
+                <h4 className="text-sm font-medium text-[#292524] leading-tight">同伴 · 追赶视角</h4>
+                <p className="text-[12px] text-[#78716C] mt-1">两个人的竞争不配叫榜单，只给你下一个追赶目标。</p>
               </div>
             </div>
             {benchmark.state === "ok" && benchmark.peer && weakestRule ? (
@@ -487,7 +486,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 peerRatio={weakestRule.unit === "%" ? benchmark.peer.dimensionValue / 100 : 1}
               />
             ) : (
-              <p className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 text-center text-[12.5px] leading-relaxed text-[#78716C]">
+              <p className="rounded-lg bg-[#F5F3EE] p-4 text-center text-[13px] leading-[1.6] text-[#78716C]">
                 团队还没有可比同伴。数据积累后，这里会出现你的第一个追赶目标。
               </p>
             )}
@@ -497,8 +496,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <div className="flex items-center gap-2 mb-6">
               <Users className="h-5 w-5 text-[#43718E]" />
               <div>
-                <h4 className="font-serif text-[14.5px] font-semibold text-[#1C1917] leading-tight tracking-tight">该学谁 · 双人对比</h4>
-                <p className="text-[12.5px] text-[#78716C] mt-1">对比同题材高表现同事，吸收实操经验。</p>
+                <h4 className="text-sm font-medium text-[#292524] leading-tight">该学谁 · 双人对比</h4>
+                <p className="text-[12px] text-[#78716C] mt-1">对比同题材高表现同事，吸收实操经验。</p>
               </div>
             </div>
 
@@ -506,8 +505,8 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               {benchmark.state === "ok" && benchmark.peer ? (
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1 text-[13px] text-[#292524]">
-                    <div>对标同事：<span className="font-serif font-semibold text-[#1C1917]">{benchmark.peer.name}</span></div>
-                    <div>指标数据：<span className="tabular-nums font-semibold text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
+                    <div>对标同事：<span className="font-medium text-[#1C1917]">{benchmark.peer.name}</span></div>
+                    <div>指标数据：<span className="font-medium text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
                   </div>
 
                   {benchmark.peer.scriptSnippet ? (
@@ -516,14 +515,14 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       <div className={cn("grid gap-4", ownScriptSnippet ? "md:grid-cols-2" : "")}>
                         <div className="space-y-1.5">
                           <span className="text-[12px] text-[#78716C]">同事的写法 · {benchmark.peer.name}</span>
-                          <blockquote className="font-serif relative rounded-r-xl border-l-2 border-l-[#D97757] bg-[#FAF8F4] border border-[#ECE7DE] p-3.5 text-[12.5px] text-[#292524] italic leading-relaxed whitespace-pre-wrap">
+                          <blockquote className="relative rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[12px] text-[#292524] italic leading-[1.6] whitespace-pre-wrap">
                             “{benchmark.peer.scriptSnippet}”
                           </blockquote>
                         </div>
                         {ownScriptSnippet ? (
                           <div className="space-y-1.5">
                             <span className="text-[12px] text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）</span>
-                            <blockquote className="font-serif relative rounded-r-xl border-l-2 border-l-[#ECE7DE] bg-[#FAF8F4] border border-[#ECE7DE] p-3.5 text-[12.5px] text-[#292524] leading-relaxed whitespace-pre-wrap">
+                            <blockquote className="relative rounded-r-lg border-l-2 border-l-[#E5E0D6] bg-[#F5F3EE] p-3.5 text-[12px] text-[#292524] leading-[1.6] whitespace-pre-wrap">
                               “{ownScriptSnippet.snippet}”
                             </blockquote>
                           </div>
@@ -531,23 +530,23 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[12.5px] text-[#78716C] italic">还没有对标文案片段，可以先参考这位同事近期的内容。</p>
+                    <p className="text-[12px] text-[#78716C] italic">还没有对标文案片段，可以先参考这位同事近期的内容。</p>
                   )}
                 </div>
               ) : benchmark.state === "fallback_team_avg" ? (
-                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 text-center">
-                  <p className="font-serif text-[13.5px] text-[#292524] font-medium">
+                <div className="rounded-lg bg-[#F5F3EE] p-4 text-center">
+                  <p className="text-[13px] text-[#292524] font-medium">
                     当前还没有可实名展示的同题材稳定对标人。
                   </p>
                   <p className="mt-1.5 text-[12px] text-[#78716C]">
                     已为您兜底拉取团队在此维度上的均值基准：
-                    <span className="tabular-nums font-semibold text-[#1C1917]">
+                    <span className="font-semibold text-[#1C1917]">
                       {verdict && benchmark.teamAvg !== undefined ? formatMetricValue(verdict.weakestDimension, benchmark.teamAvg) : benchmark.teamAvg}
                     </span>，建议先围绕自己历史最好内容进行优化。
                   </p>
                 </div>
               ) : (
-                <p className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 text-center text-[12.5px] leading-relaxed text-[#78716C]">
+                <p className="rounded-lg bg-[#F5F3EE] p-4 text-center text-[13px] leading-[1.6] text-[#78716C]">
                   团队还没有可比同伴。数据积累后，这里会出现你的第一个对标同事。
                 </p>
               )}
@@ -556,28 +555,28 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         ) : (
           <div className="space-y-6">
             <div>
-              <h3 className="font-serif text-base font-semibold text-[#1C1917] leading-tight tracking-tight">排行榜 · 全局排行</h3>
-              <p className="mt-1 text-[12.5px] text-[#78716C]">团队已满 5 人，启用榜单形态。对比高表现同事，检验相对位置。</p>
+              <h3 className="text-base font-medium text-[#292524] leading-tight">排行榜 · 全局排行</h3>
+              <p className="mt-1.5 text-[12px] text-[#78716C]">团队已满 5 人，启用榜单形态。对比高表现同事，检验相对位置。</p>
             </div>
             {/* 榜单只有数字，补上"学他怎么写"的定性内容（旧页功能，避免榜单化后丢失） */}
             {benchmark.state === "ok" && benchmark.peer ? (
-              <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] px-4 py-3">
-                <p className="text-[11.5px] font-mono font-medium text-[#78716C]">该学谁</p>
+              <div className="rounded-xl bg-[#F5F3EE] px-4 py-3">
+                <p className="text-[12px] font-medium text-[#78716C]">该学谁</p>
                 <p className="mt-1 text-[13px] text-[#292524]">
-                  <span className="font-serif font-semibold text-[#1C1917]">{benchmark.peer.name}</span>
+                  <span className="font-medium text-[#1C1917]">{benchmark.peer.name}</span>
                   {verdict ? (
                     <span>
-                      {" "}· <span className="tabular-nums font-semibold text-[#D97757]">{formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue)}</span>
+                      {" "}· <span className="font-medium text-[#D97757]">{formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue)}</span>
                     </span>
                   ) : null}
                 </p>
                 {benchmark.peer.scriptSnippet ? (
-                  <blockquote className="font-serif mt-2 whitespace-pre-wrap border-l-2 border-[#D97757] pl-3 text-[12.5px] italic leading-relaxed text-[#292524]">
+                  <blockquote className="mt-2 whitespace-pre-wrap border-l-2 border-[#D97757] pl-3 text-[12px] italic leading-[1.6] text-[#292524]">
                     “{benchmark.peer.scriptSnippet}”
                   </blockquote>
                 ) : null}
                 {ownScriptSnippet ? (
-                  <p className="font-serif mt-2 whitespace-pre-wrap border-l-2 border-[#ECE7DE] pl-3 text-[12.5px] leading-relaxed text-[#292524]">
+                  <p className="mt-2 whitespace-pre-wrap border-l-2 border-[#E5E0D6] pl-3 text-[12px] leading-[1.6] text-[#292524]">
                     <span className="font-medium text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）：</span>
                     “{ownScriptSnippet.snippet}”
                   </p>

@@ -398,11 +398,8 @@ export default function RewriteClient() {
                       <TableBody>
                         {routes.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="py-8 text-center text-[12.5px] text-[#78716C]">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <span className="size-1.5 rounded-full bg-[#A8A29E]" />
-                                <span>当前视图尚未配置模型路由规则，需要时可点右上角添加。</span>
-                              </div>
+                            <TableCell colSpan={5} className="py-8 text-center text-[13px] text-[#78716C]">
+                              还没有路由规则，需要时点右上角添加
                             </TableCell>
                           </TableRow>
                         ) : (

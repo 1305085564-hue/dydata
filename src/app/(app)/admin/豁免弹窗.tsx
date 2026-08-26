@@ -182,9 +182,7 @@ export function ExemptionDialog({
         showCloseButton={!isPending}
       >
         <DialogHeader>
-          <DialogTitle className="font-serif text-[16px] font-medium tracking-tight text-[#1C1917]">
-            停笔调养 · 特许豁免设置
-          </DialogTitle>
+          <DialogTitle>设置豁免</DialogTitle>
           <DialogDescription>
             {profile
               ? `为 ${profile.name} 设置正常、昨日豁免、多日豁免或永久豁免。`

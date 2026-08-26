@@ -5,7 +5,6 @@ import { RewriteWorkbenchV3 } from "@/components/content-tools/rewrite-v3";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
 import { canUseAiCopywriting } from "@/lib/permission-utils";
-import { PermissionGuard } from "@/components/permission-guard";
 
 export const metadata: Metadata = {
   title: "文案助手 - DYData",
@@ -25,15 +24,7 @@ export default async function RewritePage() {
   const permissionInfo = await getUserPermissions();
 
   if (!permissionInfo || !canUseAiCopywriting(permissionInfo.role, permissionInfo.permissions)) {
-    return (
-      <div className="flex min-h-[calc(100vh-var(--app-top-offset)-2rem)] w-full items-center justify-center">
-        <PermissionGuard
-          moduleTitle="文案助手"
-          requiredRoleLabel="文案创作者或管理员"
-          description="还没有「文案助手」权限。该功能属于 AI 辅助创作模块，如有业务需要，请联系管理员开通。"
-        />
-      </div>
-    );
+    redirect("/dashboard");
   }
 
   return (

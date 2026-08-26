@@ -79,10 +79,10 @@ export function MemberPermissionEditor({
       )}
 
       {/* 板块一：数据范围 (Data Scope) */}
-      <section className="space-y-3">
-        <h4 className="font-serif text-[14px] font-semibold text-[#1C1917] tracking-tight">数据可见范围</h4>
+      <section className="space-y-4">
+        <h4 className="text-[14px] font-medium text-[#1C1917]">数据范围</h4>
 
-        <div className="bg-[#FAF8F4] p-1 rounded-xl border border-[#ECE7DE] grid grid-cols-3 gap-1.5">
+        <div className="bg-[#F5F3EE]/70 p-0.5 rounded-lg grid grid-cols-3 gap-1">
           {DATA_SCOPE_OPTIONS.map((option) => {
             const Icon = option.icon;
             const isSelected = draftDataScope === option.value;
@@ -95,15 +95,15 @@ export function MemberPermissionEditor({
                 title={option.sublabel}
                 onClick={() => !isDisabled && onChangeDataScope(option.value)}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-lg text-center transition-all duration-150 relative cursor-pointer select-none",
+                  "flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-md text-center transition-colors duration-100 relative",
                   isSelected
-                    ? "bg-white text-[#1C1917] shadow-2xs border border-[#E5E0D6] font-semibold"
-                    : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/60 font-normal",
+                    ? "bg-white text-[#1C1917] shadow-xs border border-[#E5E0D6]/80 font-medium"
+                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50",
                   isDisabled && "opacity-60 cursor-not-allowed"
                 )}
               >
-                <Icon className={cn("size-3.5", isSelected ? "text-[#D97757]" : "text-[#78716C]")} />
-                <span className="text-[12.5px]">{option.label}</span>
+                <Icon className={cn("size-3.5", isSelected ? "text-[#1C1917]" : "text-[#78716C]")} />
+                <span className="text-[13px] font-medium">{option.label}</span>
               </button>
             );
           })}
@@ -113,13 +113,13 @@ export function MemberPermissionEditor({
       {/* 板块二：功能权限 (Functional Permissions) */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-serif text-[14px] font-semibold text-[#1C1917] tracking-tight">功能权限配置</h4>
+          <h4 className="text-[14px] font-medium text-[#1C1917]">功能权限</h4>
 
           {!isDisabled && onToggleAllPermissions && (
             <button
               type="button"
               onClick={onToggleAllPermissions}
-              className="text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] hover:underline transition-colors shrink-0 cursor-pointer"
+              className="text-[12px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors shrink-0"
             >
               {isAllPermissionsChecked ? "取消全选" : "全选所有权限"}
             </button>
@@ -136,14 +136,14 @@ export function MemberPermissionEditor({
             return (
               <div
                 key={category}
-                className="space-y-2.5"
+                className="space-y-2"
               >
                 {/* 类别标头 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-serif text-[13px] font-semibold text-[#1C1917]">{categoryLabel}</span>
-                    <span className="text-[11px] font-mono font-medium text-[#78716C] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
-                      {enabledCount}/{keys.length} 开启
+                    <span className="text-[13px] font-medium text-[#78716C]">{categoryLabel}</span>
+                    <span className="text-[12px] font-medium text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded-md">
+                      {enabledCount} / {keys.length} 已开启
                     </span>
                   </div>
 
@@ -151,7 +151,7 @@ export function MemberPermissionEditor({
                     <button
                       type="button"
                       onClick={() => onToggleCategory(category)}
-                      className="text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
+                      className="text-[12px] font-medium text-[#78716C] hover:text-[#292524] transition-colors"
                     >
                       {allChecked ? "取消全选" : "全选本类"}
                     </button>

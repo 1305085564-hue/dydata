@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Layers, X, AlertTriangle, RefreshCw } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { TopicClaimItem } from "./types";
 
 interface MyClaimDrawerProps {
@@ -200,13 +199,8 @@ export function MyClaimDrawer({
                 <span>加载认领列表中...</span>
               </div>
             ) : activeClaims.length === 0 ? (
-              <div className="py-6 px-2 text-center rounded-xl bg-[#FAF8F4]/50 border border-[#ECE7DE]">
-                <EmptyState
-                  variant="scroll"
-                  size={64}
-                  title="认领槽位静候落笔"
-                  description="浏览选题大盘，点击「认领」将心仪灵感放入候选池。"
-                />
+              <div className="py-8 text-center text-xs text-[#78716C] font-normal rounded-lg bg-[#F5F3EE]/50">
+                暂未认领任何选题，浏览大盘点击“认领”
               </div>
             ) : (
               <div className="space-y-4 max-h-80 overflow-y-auto pr-1">

@@ -43,9 +43,9 @@ export default async function CollaborationPage({ searchParams }: CollaborationP
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="TEAM SYNERGY · 协同履约"
-      title="团队协同履约台 · 并肩同行"
-      description="按角色沉淀创作履约手稿，洞察达人、编导、文案与剪辑的并肩产出效能"
+      eyebrow="协作管理"
+      title="协作管理"
+      description="跨角色协同效率与创作者协作复盘"
       indexItems={[]}
       width="wide"
     >

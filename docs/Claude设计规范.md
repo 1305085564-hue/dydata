@@ -31,53 +31,48 @@
 - 大尺寸指标 (24-36px) 必须用中性灰阶，不可配彩色渐变
 - 用对比、微气垫（`bg-[#F5F3EE]`）、状态点突出内容，不用放大字号
 
-**输入框宣纸漫反射层**：
-- 输入框与文本域采用象牙漫反射微底色（`bg-[#FAF8F4]/50`）+ 暖砂发丝边（`border-[#E5E0D6]`）+ 微投影（`shadow-2xs`），激活聚焦时才温润显影为纯白（`focus:bg-white focus:border-[#78716C]`），彻底杜绝刺眼白洞。
-- **输入框安全空间红线**：所有 AI 识别状态、置信度指示圆点、单位后缀，**严禁绝对定位在 input 内部遮挡数字，必须外置在 Label 栏右侧**。
+**输入框纸层**：
+- 输入框与文本域采用纯白纸底（`bg-white`）+ 暖砂发丝边（`border-[#E5E0D6]`）+ 微投影（`shadow-2xs`），在象牙暖底上建立清晰可交互的纸面层级。
 
 ---
 
-## 2. 排版与字阶体系
+## 2. 排版与字阶
 
-### 2.1 双字体协同字体栈 (Dual-Type System)
+### 2.1 字体栈
 
-- **古典学者衬线栈（Serif · 骨相）**：
-  `"Iowan Old Style", Charter, Georgia, "Songti SC", "Source Han Serif SC", "STSong", serif`
-  用于：全站所有页面 H1/H2 大标题、模块与卡片标题、成员名牌、弹窗抽屉大标题、Hook 金句引述、卷首寄语。
-- **现代人文细黑栈（Sans · 肉相）**：
-  `Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`
-  用于：正文描述、列表说明、表单 Label、选项文案与操作按钮。
-- **活字雕版等宽栈（Mono / Tabular · 脉络）**：
-  `ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace` 配合 `tabular-nums`
-  用于：所有播放量、完播率、跳出率、发布条数、金额等指标数字。
+- **英文/数字**：`Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto`
+- **中文**：`"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`
+- **数字列与指标**：强制开启 `tabular-nums`
 
 ### 2.2 字阶与字重锁死
 
-| 层级 | 语义与场景 | 字体类别 | 字号 | 字重 | 墨度（暗色） |
-|---|---|---|---|---|---|
-| **H1 页面级** | 页面大标题 (Page Hero) | **Serif 衬线** | `24px` (`text-2xl`) | `600` (Semibold) | `#1C1917` (Ink 950) |
-| **H2 区域级** | 侧边栏/抽屉主标题、独立面板 | **Serif 衬线** | `18px~20px` (`text-lg/xl`) | `600` (Semibold) | `#1C1917` (Ink 950) |
-| **H3 篇章级** | 选题卡片标题、成员名牌、弹窗标题 | **Serif 衬线** | `14px~16px` (`text-sm/base`) | `600` (Semibold) | `#1C1917` (Ink 950) |
-| **Hook 灵感级** | 视频 Hook 金句、观点引述 | **Serif 衬线** | `13px~14px` | `400/500` | `#292524` (Ink 800) |
-| **Body 正文** | 列表数据、大段描述、输入框 | **Sans 细黑** | `13px~14px` (`text-sm`) | `400` (Normal) | `#292524` (Ink 800) |
-| **Caption 次级** | 发丝副标题、时间戳、元数据 | **Sans 细黑** | `12.5px~13px` | `400` (Normal) | `#78716C` (Ink 600) |
-| **Stamp 微印章** | 角色标签 (创始人/主管)、母题 | **Mono/Sans** | `11px~11.5px` | `500` (Medium) | `#57534E` / `#78716C` |
-| **Badge 微缩** | 状态圆点旁说明、占位符 | **Sans 细黑** | `11px~12px` | `400` (Normal) | `#78716C` / `#A8A29E` |
+| 层级 | 语义与场景 | 字号 | 字重 | 墨度（暗色） |
+|---|---|---|---|---|
+| **H1 页面级** | 页面大标题 (Page Hero) | `24px` (`text-2xl`) | `600` (Semibold) | `#1C1917` (Ink 950) |
+| **H2 区域级** | 侧边栏/抽屉主标题、独立面板 | `18px` (`text-lg`) | `600` (Semibold) | `#1C1917` (Ink 950) |
+| **H3 容器级** | 卡片标题、弹窗标题 | `16px` (`text-base`) | `500` (Medium) | `#292524` (Ink 800) |
+| **H4 内容级** | 卡片内部子模块 | `14px` (`text-sm`) | `500` (Medium) | `#292524` (Ink 800) |
+| **H5 辅助标头** | 表头、微型分组名 | `13px` | `500` (Medium) | `#78716C` (Ink 600) |
+| **Body 正文** | 列表数据、大段描述、输入框 | `14px` (`text-sm`) | `400` (Normal) | `#292524` (Ink 800) |
+| **Caption 次级** | 次级副标题、时间戳、元数据 | `13px` | `400` (Normal) | `#78716C` (Ink 600) |
+| **Badge 微缩** | 状态徽章、极小提示、占位符 | `12px` | `500` / `400` | `#78716C` / `#A8A29E` |
 
 ### 2.3 中文排版三禁令
 
 1. **渲染与等宽隔离**：
    - 全局强制开启 `antialiased` 抗锯齿
-   - 含中文容器禁止 `font-mono`（微印章与纯英文标签除外）
+   - 含中文容器禁止 `font-mono`
    - 数字混排必须用 `tabular-nums`
 
 2. **字重防糊锁死**：
-   - `font-semibold (600)` 仅特许给 H1/H2/H3 衬线大标题与名牌
-   - 全站正文与说明严禁脱离 400（Normal）
+   - `font-semibold (600)` 仅特许给 H1/H2 大标题
+   - H3 及以下严禁使用 600
+   - 全站正文严禁脱离 400
 
 3. **小字可读底线与豁免**：
-   - 常规正文文本字号不得小于 `13px`，颜色不得浅于 `#78716C` (Ink 600)
-   - `11px~12px` 仅限用于：微印章、极小时间注或不可用状态
+   - 常规文本字号不得小于 `13px`，颜色不得浅于 `#78716C` (Ink 600)
+   - `12px` 与更浅墨度仅限用于：微缩徽章、占位符或不可用状态
+   - **高密度豁免**：紧凑型列表的辅助元数据允许整体向下连降一档（破例至 `12px`），排版层级关系高于绝对字号底线
 
 ### 2.4 数字与指标强制规则
 
@@ -85,31 +80,29 @@
 - 数字右对齐（`text-right`）
 - 大尺寸指标 (24-36px) 保持中性灰阶，不配彩色背景
 
-### 2.5 全站出版物级衬线体与排版协同规范
+### 2.5 衬线标题负间距强制规则
 
-使用衬线字体的标题（H1/H2/H3/名牌/金句），必须设置收紧字间距：
+使用衬线字体的标题（H1/H2/特殊点睛场景），必须设置负字间距：
 
 | 场景 | Tailwind 类 | 实际值 | 为什么 |
 |---|---|---|---|
-| 页面大标题 (H1) | `font-serif tracking-tight text-2xl font-semibold` | -0.025em | 消除松散感，建立精装书卷首风骨 |
-| 区域/抽屉标题 (H2) | `font-serif tracking-tight text-xl font-semibold` | -0.025em | 保持现代高定出版物感 |
-| 模块/卡片/名牌 (H3) | `font-serif tracking-tight text-[14px] font-semibold` | -0.02em | 骨感利落，字形清瘦锐利 |
-| 立意金句 (Hook) | `font-serif text-[13px] leading-relaxed` | normal | 灵感火花摘录感 |
+| 页面大标题 (H1) | `tracking-tighter` | -0.05em | 衬线默认偏松，不收紧会显得"学术论文感" |
+| 区域标题 (H2) | `tracking-tight` | -0.025em | 保持现代出版物感 |
+| AI 洞察结论 | `tracking-tight` | -0.025em | 局部点睛用衬线 |
 
-**必须使用衬线体（Serif）的场景**：
-- ✅ 全站所有页面的 H1 页面大标题与 H2 模块大标题
-- ✅ 选题库卡片标题、素材库标题、视频复盘标题
-- ✅ 成员档案名牌姓名、播报条认领人姓名与作品《书名号》
-- ✅ 弹窗与侧边抽屉（Sheet）的大标题
-- ✅ 视频 Hook 金句、立意提炼、卷首寄语 (Epigraph)
-- ✅ 404 / 异常 / 空状态的大提示标题
+**字体栈**：`"Iowan Old Style", Charter, Georgia, "Songti SC", serif`
 
-**保持清爽无衬线（Sans）的场景（严禁滥用衬线防发虚）**：
-- ✅ 正文段落、表单输入框文本、按钮文字
-- ✅ 筛选工具栏（Tab 切换、搜索框、下拉筛选菜单）
-- ✅ 表单 Label（如“播放量”、“互动率”）
-- ✅ 卡片底部辅助元数据（如“1人在写 · 尚未成片”）
-- ✅ 密集数据表格中的描述文本
+**禁止**：
+- ❌ 衬线标题使用 `tracking-normal` 或 `tracking-wide`
+- ❌ 表格、表单、按钮、导航、数据列使用衬线
+- ❌ 给衬线标题加粗到 600+（会从"思想读本"变"营销海报"）
+
+**使用场景限定**：
+- ✅ 首页 Hero 大标题
+- ✅ AI 洞察/诊断结论（点睛作用）
+- ✅ 报告总结语
+- ❌ 常规页面标题（保持无衬线）
+- ❌ 数据密集页面（防止视觉冲突）
 
 ---
 
@@ -132,7 +125,6 @@
 | 呼吸 (Breath) | `24px` | 标题与该区域内容之间 |
 | 紧凑 (Tight) | `16px` | 同级内容项之间 |
 | 亲密 (Intimate) | `8px` | 强关联元素之间 |
-| **副标微阶 (Sub-header)** | `8px~12px` (`pt-1` / `space-y-2`) | 页面大标题与下方发丝副标/问候语之间（严禁两行粘连） |
 
 ### 3.3 数据表格规格
 
@@ -176,11 +168,11 @@
 - **内容**：单行不超 20 字
 - **时长**：3 秒消失
 
-### 5.2 Tag / Badge / Stamp
+### 5.2 Tag / Badge
 
 - **最小点击高度**：20px（防点击盲区）
 - **圆角**：`rounded-md`（6px）
-- **字号**：`11.5px~12px`，字重 `500`
+- **字号**：`12px`，字重 `500`
 
 ### 5.3 图表标注
 
@@ -188,12 +180,10 @@
 - **图例触发**：≥3 系列才引入图例
 - **色彩限制**：同一图表最多 3 色系列
 
-### 5.4 控制栏与筛选工具 (Control & Filter Bar)
+### 5.4 控制栏 
 
-- **去框平铺**：`bg-transparent`，按钮高度 `h-7`（28px，`px-2.5`），功能群之间用 16px 微竖线隔离（原尺寸基准完全保留）
-- **筛选与搜索**：Tab 与下拉必须保持清爽细黑 (`text-[13px] font-sans`)；搜索框采用宣纸漫反射微底 (`bg-[#FAF8F4]/50 border-[#E5E0D6]`)
-- **配额与槽位**：指标必须采用象牙纸面微印章 (`bg-[#FAF8F4] border-[#ECE7DE] font-mono text-[11.5px] tabular-nums`)
-- **主 CTA**：暖橙实底 (`bg-[#D97757] text-white`)，每栏至多 1 个
+- **去框平铺**：`bg-transparent`，功能群之间用 16px 微竖线隔离
+- **按钮高度**：`h-7`（28px），内边距 `px-2.5`
 
 ### 5.5 出版物装帧组件 (Editorial Craft)
 
@@ -201,10 +191,7 @@
 |---|---|---|
 | **卷首寄语 (Epigraph)** | `font-serif italic text-[13.5px] text-[#292524]/90 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg` | 深度诊断、复盘报告顶部开篇 |
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
-| **文人微印章 (Rice Paper Stamp)** | `bg-[#FAF8F4] border border-[#ECE7DE] text-[#57534E] text-[11.5px] font-mono px-2 py-0.5 rounded-md` | 创始人/主管/组员角色标签、母题分组名、数据口径微注 |
 | **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
-| **动态播报便签条** | `bg-[#FAF8F4]/80 border border-[#ECE7DE] rounded-xl px-4 py-2`，名牌与《书名》用 `font-serif font-semibold`，数字用 `tabular-nums` | 选题/内容库顶部滚动播报 |
-| **灵感卡片四层阶梯** | 顶层微印章 + `font-serif` 主标题 + `font-serif italic` 金句 + `font-sans` 元数据小注 | 选题卡片、案例卡片微观装帧 |
 
 ### 5.6 暖墨矢量插图规格 (Editorial Illustrations)
 
@@ -302,16 +289,14 @@
 
 ### 7.2 字体禁区
 
-- ❌ 给衬线标题加粗到 600+（必须保持 600 Semibold 的骨相，杜绝傻粗）
-- ❌ 用普通黑体做全站 H1/H2 页面大标题与名牌（页面顶标、模块大标、名牌姓名必须统一使用 `font-serif`）
-- ❌ 衬线标题使用 `tracking-normal` 或正间距（必须使用 `tracking-tight` 收紧字距）
-- ❌ 含中文容器使用 `font-mono`（微印章与纯英文标签除外）
-- ❌ 常规正文字号小于 13px（除微印章/时间注/不可用状态豁免）
+- ❌ 给衬线标题加粗到 600+（会从"思想读本"变"营销海报"）
+- ❌ 用无衬线字体做首页/AI洞察的大标题（H1/H2 点睛场景必须衬线）
+- ❌ 衬线标题使用 `tracking-normal` 或正间距（必须负间距）
+- ❌ 含中文容器使用 `font-mono`
+- ❌ 正文字号小于 13px（除豁免场景：徽章/占位符/不可用状态）
 
-### 7.3 布局与表单禁区
+### 7.3 布局禁区
 
-- ❌ 把 AI 识别状态、置信度圆点绝对定位在 input 框内部遮挡数据（必须外置在 Label 栏右侧）
-- ❌ 页面大标题与发丝副标贴死粘连（必须留足 8~12px 垂直呼吸留白）
 - ❌ 连续两个区块用相同底色（破坏呼吸节奏）
 - ❌ 在纸上叠纸（纸内套娃白卡片）
 - ❌ 用营销插图假装代码能力（优先用真实代码窗口）

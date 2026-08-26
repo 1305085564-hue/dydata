@@ -317,13 +317,13 @@ export function RewriteWorkbenchV3() {
         {/* 桌面端左侧操作组 (>= 768px) */}
         <div className="hidden md:flex items-center gap-6">
           <div className="flex items-center gap-3">
-            {/* 产品标识 (象牙纸面微印章) */}
-            <div className="flex items-center gap-1.5 font-mono select-none mr-1 bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 rounded-md">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+            {/* 产品标识 (单色灰阶) */}
+            <div className="flex items-center gap-1.5 font-sans select-none mr-1">
+              <span className="relative flex h-1 w-1">
+                <span className="relative inline-flex h-1 w-1 rounded-full bg-[#78716C]" />
               </span>
-              <span className="text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                DYDATA WRITER · 文案精修
+              <span className="text-[12px] font-medium uppercase tracking-[0.2em] text-[#78716C] font-outfit">
+                DYDATA WRITER V3
               </span>
             </div>
 

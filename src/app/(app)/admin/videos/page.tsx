@@ -47,9 +47,6 @@ export default async function AdminVideosPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="VIDEO ASSETS · 作品资产"
-      title="作品资产总库 · 历史脉络"
-      description="统一管理团队所有视频作品、审核状态与生命周期归档"
       indexItems={[]}
       width="extra-wide"
     >
