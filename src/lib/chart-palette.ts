@@ -38,7 +38,7 @@ export const CHART_GRADIENT_PRIMARY = {
 export const CHART_AXIS_TICK = {
   fontSize: 10,
   fill: CHART_COLORS.axis,
-  fontFamily: "-apple-system, BlinkMacSystemFont, PingFang SC, Source Han Sans CN, system-ui, sans-serif",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans CN', system-ui, sans-serif",
 } as const;
 
 /**
