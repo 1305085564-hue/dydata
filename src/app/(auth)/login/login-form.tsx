@@ -90,17 +90,17 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
   }, [notice]);
 
   return (
-    <AuthShell title="回到工作台">
+    <AuthShell title="回到工作台" subtitle="翻开今日篇章，记录每一次真实表达">
       <form action={formAction} className="space-y-5">
         {showArchivedAlert && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#DC2626]/30 bg-[#DC2626]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
-            <span className="text-[12px] font-medium text-[#DC2626] dark:text-[#DC2626]">
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#C0685C]/30 bg-[#C0685C]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
+            <span className="text-[12.5px] font-medium text-[#C0685C]">
               账号已归档，请联系 owner 恢复
             </span>
             <button
               type="button"
               onClick={() => setShowArchivedAlert(false)}
-              className="shrink-0 text-[#DC2626] transition-colors hover:opacity-80 p-0.5"
+              className="shrink-0 text-[#C0685C] transition-colors hover:opacity-80 p-0.5"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
@@ -109,7 +109,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
         )}
         {showExpiredAlert && (
           <div className="flex items-center justify-between gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
-            <span className="text-[12px] font-medium text-[#8A6A2F] dark:text-[#D99E55]">
+            <span className="text-[12.5px] font-medium text-[#8A6A2F] dark:text-[#D99E55]">
               登录会话已过期，请重新登录
             </span>
             <button

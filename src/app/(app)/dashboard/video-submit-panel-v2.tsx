@@ -6,6 +6,7 @@ import { CalendarDays, FilePenLine, History, PencilLine, ShieldAlert, X } from "
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
 import {
   Dialog,
   DialogContent,
@@ -119,7 +120,7 @@ function ExemptionReviewNoticeCard({
 }) {
   const [dismissed, setDismissed] = useState(() => {
     try {
-      const key = `dydata:notice:${notice.request_id || notice.created_at || "review"}`;
+      const key = `dydata:notice:${notice.id || notice.created_at || "review"}`;
       return window.sessionStorage.getItem(key) === "dismissed";
     } catch {
       return false;
@@ -137,7 +138,7 @@ function ExemptionReviewNoticeCard({
   const handleDismiss = () => {
     setDismissed(true);
     try {
-      const key = `dydata:notice:${notice.request_id || notice.created_at || "review"}`;
+      const key = `dydata:notice:${notice.id || notice.created_at || "review"}`;
       window.sessionStorage.setItem(key, "dismissed");
     } catch {}
   };
@@ -651,69 +652,85 @@ export function VideoSubmitPanelV2({
         {/* 主内容区 */}
         <Card className="border-[#ECE7DE] shadow-sm">
           <CardContent className="p-6" ref={formAnchorRef}>
-            {/* 已提交概览卡片 */}
+            {/* 已提交概览卡片（禅意归档态） */}
             {isPrimarySummaryMode && activeBizDate === today && !submittedViewActive ? (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 rounded-xl border border-[#6FAA7D]/20 bg-[#6FAA7D]/10 p-6"
+                className="mb-6 rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-6 shadow-sm"
               >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/20 px-3 py-1 text-[12px] font-semibold text-[#6FAA7D]">
-                        <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                        已提交
-                      </span>
-                      <span className="text-[12px] text-[#78716C] tabular-nums">
-                        {formatDateTime(primarySummary.uploadedAt)}
-                      </span>
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                  {/* 左侧：禅意线描插图 + 温润寄语 */}
+                  <div className="flex items-center gap-4">
+                    <div className="shrink-0 hidden sm:block">
+                      <ZenFinishedIllustration size={88} />
                     </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/15 px-2.5 py-0.5 text-[11.5px] font-medium text-[#6FAA7D]">
+                          <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                          今日已归档
+                        </span>
+                        <span className="text-[12px] text-[#78716C] tabular-nums">
+                          {formatDateTime(primarySummary.uploadedAt)}
+                        </span>
+                      </div>
+                      <h2 className="font-serif text-lg font-medium tracking-tight text-[#1C1917]">
+                        今日创作已完成收卷
+                      </h2>
+                      <p className="text-[12.5px] text-[#78716C] leading-relaxed">
+                        记录已安全落库。剩下的时间，留给生活与思考。
+                      </p>
+                    </div>
+                  </div>
 
-                    {/* 数据概览 */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">播放</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
+                  {/* 中间/右侧：数据指标与操作 */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 lg:gap-6">
+                    {/* 数据指标三联 */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
+                      <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
+                        <div className="text-[11px] font-medium text-[#78716C]">播放量</div>
+                        <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN")
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">涨粉</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
+                      <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
+                        <div className="text-[11px] font-medium text-[#78716C]">涨粉</div>
+                        <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN")
                             : "--"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-[#F5F3EE]/70 p-4">
-                        <div className="text-[11.5px] font-medium uppercase tracking-wider text-[#78716C]">完播率</div>
-                        <div className="mt-1.5 text-[20px] font-semibold tracking-tight tabular-nums text-[#292524]">
+                      <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
+                        <div className="text-[11px] font-medium text-[#78716C]">完播率</div>
+                        <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
                           {primarySummary.completionRate ?? "--"}
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex shrink-0 flex-col gap-3 lg:w-[200px]">
-                    <Button
-                      type="button"
-                      className="h-10 w-full rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white text-[13px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985]"
-                      onClick={handleGoToGrowth}
-                    >
-                      查看成长分析
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-10 rounded-xl border-[#E5E0D6] text-[13px] font-medium"
-                      onClick={() => setRequestedMode("editToday")}
-                    >
-                      <PencilLine className="size-4 mr-1.5" />
-                      修改今日数据
-                    </Button>
+                    {/* 操作按钮 */}
+                    <div className="flex flex-col gap-2 shrink-0 sm:w-[130px]">
+                      <Button
+                        type="button"
+                        className="h-9 w-full rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985]"
+                        onClick={handleGoToGrowth}
+                      >
+                        成长复盘
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-9 rounded-lg border-[#E5E0D6] text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
+                        onClick={() => setRequestedMode("editToday")}
+                      >
+                        <PencilLine className="size-3.5 mr-1" />
+                        微调数据
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
