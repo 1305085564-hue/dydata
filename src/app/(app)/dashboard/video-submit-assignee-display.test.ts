@@ -25,6 +25,7 @@ test("本人显示为（我），不算外协", () => {
     assignedUserId: USER_ID,
     currentUserId: USER_ID,
     activeMembers,
+    selfLabel: "阿禅",
   }), { text: "阿禅 (我)", external: false, historical: false });
 
   // 未指派默认按本人处理
@@ -32,6 +33,7 @@ test("本人显示为（我），不算外协", () => {
     assignedUserId: null,
     currentUserId: USER_ID,
     activeMembers,
+    selfLabel: "阿禅",
   }), { text: "阿禅 (我)", external: false, historical: false });
 });
 

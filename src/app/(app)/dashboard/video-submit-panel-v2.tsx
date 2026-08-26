@@ -219,6 +219,7 @@ interface VideoSubmitPanelV2Props {
 export function VideoSubmitPanelV2({
   accounts,
   userId,
+  userDisplayName,
   today,
   todayReports,
   monthSubmittedDates = [],
@@ -740,27 +741,27 @@ export function VideoSubmitPanelV2({
             {selectedAccount && shouldShowBlockedStateCard ? (
               <div
                 className={cn(
-                  "mb-6 p-5 rounded-xl border-l-4",
+                  "mb-6 p-5 rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 shadow-sm border-l-4",
                   activeDateStatus.state === "waive"
-                    ? "border-l-[#6FAA7D] bg-[#6FAA7D]/10"
-                    : "border-l-[#D99E55] bg-[#D99E55]/10",
+                    ? "border-l-[#6FAA7D]"
+                    : "border-l-[#D99E55]",
                 )}
               >
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <span className={getDashboardStatusClass(activeDateStatus.tone)}>
-                    <FilePenLine className="size-4" />
+                    <FilePenLine className="size-3.5" />
                     {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                   </span>
                   <div>
-                    <div className="text-lg font-semibold text-[#1C1917]">
-                      {activeBizDate} 已标记为{activeDateStatus.label}
-                    </div>
-                    <p className="mt-1 text-[13px] text-[#78716C]">
+                    <h3 className="font-serif text-base font-semibold text-[#1C1917] tracking-tight">
+                      {activeBizDate} · 停笔调养 ({activeDateStatus.label})
+                    </h3>
+                    <p className="mt-1 text-[12.5px] leading-relaxed text-[#78716C]">
                       {activeDateStatus.description}
                     </p>
                     {activeExemptionState.reason && (
-                      <p className="mt-1 text-[13px] text-[#78716C]">
-                        原因：{activeExemptionState.reason}
+                      <p className="mt-1 text-[12.5px] text-[#78716C]">
+                        事由：{activeExemptionState.reason}
                       </p>
                     )}
                   </div>
@@ -839,6 +840,7 @@ export function VideoSubmitPanelV2({
                 key={`form-${selectedAccount.id}-${activeBizDate}`}
                 account={selectedAccount}
                 userId={userId}
+                userDisplayName={userDisplayName}
                 today={today}
                 mode={primaryMode}
                 initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}

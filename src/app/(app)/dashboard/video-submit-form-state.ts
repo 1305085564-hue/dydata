@@ -419,7 +419,7 @@ export function resolveAssigneeDisplay({
   currentUserId,
   activeMembers,
   historicalProfiles = [],
-  selfLabel = "阿禅",
+  selfLabel = "我",
 }: {
   assignedUserId: string | null | undefined;
   currentUserId: string;
@@ -428,7 +428,9 @@ export function resolveAssigneeDisplay({
   selfLabel?: string;
 }): AssigneeDisplay {
   if (!assignedUserId || assignedUserId === currentUserId) {
-    return { text: `${selfLabel} (我)`, external: false, historical: false };
+    const currentMember = activeMembers.find((member) => member.id === currentUserId);
+    const selfName = currentMember?.display_name || currentMember?.name || selfLabel;
+    return { text: `${selfName} (我)`, external: false, historical: false };
   }
 
   const activeMember = activeMembers.find((member) => member.id === assignedUserId);

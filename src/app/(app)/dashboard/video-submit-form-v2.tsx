@@ -131,6 +131,7 @@ interface VideoSubmitFormProps {
     content_direction: string | null;
   } | null;
   userId: string;
+  userDisplayName?: string;
   today: string;
   mode: SubmitPanelMode;
   initialSummary: TodaySubmissionSummary | null;
@@ -645,6 +646,7 @@ function buildIssueHintText(messages: string[]) {
 export function VideoSubmitFormV2({
   account,
   userId,
+  userDisplayName,
   today,
   mode,
   initialSummary,
@@ -657,6 +659,7 @@ export function VideoSubmitFormV2({
 }: VideoSubmitFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const selfLabel = userDisplayName?.trim() || "我";
 
   // 保留所有原有状态管理
   const [meta, setMeta] = useState<FormMetaState>(() =>
@@ -778,8 +781,9 @@ export function VideoSubmitFormV2({
         currentUserId: userId,
         activeMembers: operatorMembers,
         historicalProfiles: historicalAssigneeProfiles,
+        selfLabel,
       }),
-    [historicalAssigneeProfiles, operatorMembers, userId],
+    [historicalAssigneeProfiles, operatorMembers, userId, selfLabel],
   );
 
   const filteredMembersForRole = useMemo(() => {
@@ -2182,8 +2186,8 @@ export function VideoSubmitFormV2({
                 {/* 头部：状态 + 日期 */}
                 <div className="flex items-center justify-between pb-4 border-b border-[#ECE7DE]">
                   <div className="flex items-center gap-3">
-                    <h2 className="text-[15px] font-semibold text-[#1C1917] tracking-tight">
-                      {isBackfillMode ? `补交数据录入 (${meta.bizDate})` : "今日数据与内容填报"}
+                    <h2 className="font-serif text-[15.5px] font-semibold text-[#1C1917] tracking-tight">
+                      {isBackfillMode ? `创作纪事补录 (${meta.bizDate})` : "今日创作立卷 · 表达纪事"}
                     </h2>
                     <VideoStatusSegmented
                       value={meta.anomalyStatus}
@@ -2656,7 +2660,7 @@ export function VideoSubmitFormV2({
                           )}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">阿禅</span>
+                            <span className="font-medium">{selfLabel}</span>
                             <span className="rounded bg-[#D97757]/15 px-1.5 py-0.5 text-[10px] text-[#D97757]">
                               本人
                             </span>
