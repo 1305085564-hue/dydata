@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   formatShanghaiDateOnlyParts,
@@ -113,38 +121,14 @@ export function ExemptionDialogV2({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* 遮罩 */}
-      <div
-        className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <Dialog open={isOpen} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent className="flex flex-col overflow-hidden p-0 sm:max-w-4xl max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:rounded-none">
+        <DialogHeader className="border-b border-[#ECE7DE]/80 px-6 py-4 pr-12">
+          <DialogTitle className="text-lg">申请请假或豁免</DialogTitle>
+        </DialogHeader>
 
-      {/* 弹窗 - 左右分栏 */}
-      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 animate-in fade-in zoom-in-95 duration-150">
-        <div
-          className="rounded-2xl border border-[#E5E0D6] bg-white"
-          style={{
-            boxShadow:
-              "0 1px 3px rgba(0,0,0,0.02), 0 12px 32px -4px rgba(28,25,23,0.06)",
-          }}
-        >
-          {/* 头部 */}
-          <div className="flex items-center justify-between border-b border-[#ECE7DE]/80 px-6 py-4">
-            <h3 className="font-serif text-lg font-semibold text-[#1C1917] tracking-tight">
-              申请请假或豁免
-            </h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg p-1.5 text-[#78716C] transition-colors hover:bg-[#F5F3EE] hover:text-[#1C1917]"
-            >
-              <X size={18} />
-            </button>
-          </div>
-
-          {/* 左右分栏内容 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+        {/* 左右分栏内容 */}
+        <DialogBody className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
             {/* 左侧：日历 */}
             <div className="space-y-4">
               {/* 选择日期标题 */}
@@ -345,31 +329,29 @@ export function ExemptionDialogV2({
                   {submitError}
                 </p>
               ) : null}
-
-              {/* 按钮 */}
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isSubmitting}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-[#78716C] transition-colors hover:bg-[#F5F3EE] disabled:opacity-50"
-                >
-                  取消
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !calendar.isValid}
-                  className="rounded-lg bg-[#D97757] px-6 py-2 text-sm font-medium text-white transition-all hover:bg-[#C46A4D] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isSubmitting ? "提交中..." : "提交申请"}
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </>
+        </DialogBody>
+
+        <DialogFooter className="flex-row items-center justify-end gap-3 border-t border-[#ECE7DE]/80 px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-[#78716C] transition-colors hover:bg-[#F5F3EE] disabled:opacity-50"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting || !calendar.isValid}
+            className="rounded-lg bg-[#D97757] px-6 py-2 text-sm font-medium text-white transition-all hover:bg-[#C46A4D] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? "提交中..." : "提交申请"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

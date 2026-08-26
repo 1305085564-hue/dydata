@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -533,21 +534,24 @@ export function VideoSubmitPanelV2({
   return (
     <>
       <div className="w-full space-y-6">
-        {/* 新版控制栏：今日提交工作台 */}
-        <div className="rounded-xl border border-[#E5E0D6] bg-white p-6 shadow-sm">
+        {/* 新版控制栏：创作立卷 · 表达纪事 */}
+        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
-            <div>
-              <h1 className="font-serif text-[20px] font-semibold text-[#1C1917] tracking-tight">
-                今日提交工作台
-              </h1>
-              <p className="mt-1 text-[13px] text-[#78716C]">
-                记录运营数据，提交今日内容
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
+                <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
+                  创作立卷 · 表达纪事
+                </h1>
+              </div>
+              <p className="text-[12.5px] text-[#78716C] leading-relaxed">
+                从容记录每一次真实表达 · 数据沉淀与成长复盘
               </p>
             </div>
 
             {/* 右侧：控制区 */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               {/* 日期选择 Popover */}
               <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
                 <button
@@ -584,7 +588,7 @@ export function VideoSubmitPanelV2({
                 )}
               </div>
 
-              {/* 申请豁免按钮 */}
+              {/* 停笔调养申请按钮 */}
               <Button
                 type="button"
                 variant="outline"
@@ -594,25 +598,25 @@ export function VideoSubmitPanelV2({
                 }}
                 disabled={isExemptionPending}
                 className={cn(
-                  "h-9 rounded-lg",
+                  "h-9 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]",
                   isExemptionPending && "border-[#B98A54]/40 bg-[#B98A54]/10 text-[#B98A54]"
                 )}
-                title={isExemptionPending ? "已有申请审批中" : undefined}
+                title={isExemptionPending ? "已有调养申请审批中" : undefined}
               >
-                <FilePenLine className="size-4 mr-1.5" />
-                {isExemptionPending ? "审批中" : "申请豁免"}
+                <FilePenLine className="size-3.5 mr-1.5 text-[#78716C]" />
+                {isExemptionPending ? "调养审批中" : "停笔调养"}
               </Button>
 
-              {/* 历史记录按钮 */}
+              {/* 历史手稿按钮 */}
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsHistoryOpen(true)}
-                className="h-9 rounded-lg"
+                className="h-9 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
               >
-                <History className="size-4 mr-1.5" />
-                历史记录
+                <History className="size-3.5 mr-1.5 text-[#78716C]" />
+                历史手稿
               </Button>
             </div>
           </div>
@@ -865,10 +869,11 @@ export function VideoSubmitPanelV2({
 
       {/* 历史记录弹窗 */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
+        <DialogContent className="flex flex-col overflow-hidden sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
           <DialogHeader>
             <DialogTitle className="font-serif tracking-tight text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
           </DialogHeader>
+          <DialogBody>
           {activityError ? (
             <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
           ) : isActivityLoading ? (
@@ -877,9 +882,8 @@ export function VideoSubmitPanelV2({
             </div>
           ) : !historyReports || historyReports.length === 0 ? (
             <EmptyState
-              icon={History}
-              title="还没有历史记录"
-              description="完成提交或补交后，这里会显示最近 30 条记录。"
+              title="历史手稿静待立卷"
+              description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
             />
           ) : (
             <HistoryList
@@ -900,12 +904,13 @@ export function VideoSubmitPanelV2({
               }}
             />
           )}
+          </DialogBody>
         </DialogContent>
       </Dialog>
 
       {/* 编辑历史记录弹窗 */}
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto p-4 gap-3 sm:max-w-5xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
+        <DialogContent className="flex flex-col overflow-hidden p-4 gap-3 sm:max-w-5xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
           <DialogHeader>
             <DialogTitle className="font-serif tracking-tight text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
           </DialogHeader>
@@ -917,8 +922,8 @@ export function VideoSubmitPanelV2({
                 setEditingReport(null);
                 void loadActivity();
               }}
-            />
-          ) : null}
+              />
+            ) : null}
         </DialogContent>
       </Dialog>
 

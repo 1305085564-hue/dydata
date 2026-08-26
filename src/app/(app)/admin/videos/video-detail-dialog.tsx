@@ -358,7 +358,7 @@ export function VideoDetailDialog({
           </div>
         </SheetHeader>
 
-        <SheetBody className="p-6 space-y-5 overflow-y-auto max-h-[calc(100vh-65px)]">
+        <SheetBody className="p-6 space-y-5 overflow-y-auto max-h-[calc(100dvh-65px)]">
           {video ? (
             <>
               {/* 锁定提示横幅 */}

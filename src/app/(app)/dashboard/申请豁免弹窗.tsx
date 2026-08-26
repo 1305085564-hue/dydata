@@ -5,7 +5,9 @@ import { Bell, ShieldAlert, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -212,14 +214,14 @@ function ExemptionModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl border border-[#E5E0D6] bg-white/98 p-0 shadow-claude-dialog sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
-          <DialogHeader className="px-6 pb-2 pt-6">
-            <DialogTitle className="font-serif text-lg font-semibold tracking-tight text-[#1C1917]">
-              申请请假或豁免
+        <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white/98 p-0 shadow-claude-dialog sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
+          <DialogHeader className="shrink-0 px-6 pb-2 pt-6">
+            <DialogTitle className="font-serif text-lg font-medium tracking-tight text-[#1C1917]">
+              停笔调养 · 申请请假或豁免
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid grid-cols-1 gap-6 px-6 pb-6 lg:grid-cols-2">
+          <DialogBody className="grid grid-cols-1 gap-6 px-6 pb-6 lg:grid-cols-2">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p className="text-[12.5px] leading-[1.7] text-[#78716C]">
@@ -250,7 +252,7 @@ function ExemptionModal({
               </div>
             </div>
 
-            <div className="flex flex-col justify-between space-y-5">
+            <div className="space-y-5">
               <div className="space-y-3.5">
                 {/* 申请类型单行微型分段切换 (Compact Category Segmented Control) */}
                 <div className="space-y-1.5">
@@ -368,28 +370,28 @@ function ExemptionModal({
                   </p>
                 </div>
               </div>
-
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setOpen(false)}
-                  disabled={isPending}
-                  className="h-11 px-6 text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
-                >
-                  取消
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isPending}
-                  className="h-11 bg-[#D97757] px-8 font-medium text-white shadow-sm transition-colors duration-100 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.985] active:duration-75"
-                >
-                  {isPending ? "提交中..." : "提交申请"}
-                </Button>
-              </div>
             </div>
-          </div>
+          </DialogBody>
+
+          <DialogFooter className="flex-row items-center justify-end gap-3 border-t border-[#ECE7DE]/80 px-6 py-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+              className="h-11 px-6 text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isPending}
+              className="h-11 bg-[#D97757] px-8 font-medium text-white shadow-sm transition-colors duration-100 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.985] active:duration-75"
+            >
+              {isPending ? "提交中..." : "提交申请"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

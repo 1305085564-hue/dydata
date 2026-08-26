@@ -914,7 +914,7 @@ export function VideoList({
       <div
         ref={tableContainerRef}
         className="flex-1 w-full overflow-x-auto rounded-xl border border-[#ECE7DE]"
-        style={{ maxHeight: "calc(100vh - 260px)" }}
+        style={{ maxHeight: "calc(100dvh - 260px)" }}
       >
         <table className="w-full text-left border-collapse table-auto min-w-full">
           <thead className="sticky top-0 z-10 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C] select-none">

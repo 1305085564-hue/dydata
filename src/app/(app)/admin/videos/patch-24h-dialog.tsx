@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -158,7 +159,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
-      <DialogContent key={dialogKey} className="max-w-3xl" showCloseButton={!isPending}>
+      <DialogContent key={dialogKey} className="flex flex-col overflow-hidden max-w-3xl" showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">补录24h数据</DialogTitle>
           <DialogDescription>
@@ -166,7 +167,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[75vh] space-y-6 overflow-y-auto pr-1">
+        <DialogBody className="space-y-6 pr-1">
           <ScreenshotImport
             initialValues={toScreenshotInitialValues(form)}
             onConfirm={handleImportConfirm}
@@ -189,7 +190,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
               </div>
             ))}
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter className="gap-2 sm:justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>

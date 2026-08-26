@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
+import { DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitReport } from "./actions";
@@ -121,11 +122,11 @@ export function HistoryReportEditForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col gap-3">
       <input type="hidden" name="account_id" value={report.account_id} />
       <input type="hidden" name="report_date" value={report.report_date} />
 
-      <div className="space-y-5">
+      <DialogBody className="space-y-5">
         <section className="space-y-3">
           <div className="flex items-center gap-2 text-[13px] font-semibold text-[#292524]">
             <CheckCircle2 className="size-4 text-[#6FAA7D]" />
@@ -196,10 +197,10 @@ export function HistoryReportEditForm({
             ))}
           </div>
         </section>
-      </div>
+      </DialogBody>
 
-      <div className="rounded-xl border border-[#E5E0D6] bg-white px-4 py-2.5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <DialogFooter className="rounded-xl border border-[#E5E0D6] bg-white px-4 py-2.5">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-[12px] leading-[1.7] text-[#78716C]">
             这里只修正历史日报本身，不会重新生成截图识别和视频素材记录。
           </div>
@@ -207,7 +208,7 @@ export function HistoryReportEditForm({
             {isPending ? "保存中..." : "保存历史日报"}
           </Button>
         </div>
-      </div>
+      </DialogFooter>
     </form>
   );
 }
