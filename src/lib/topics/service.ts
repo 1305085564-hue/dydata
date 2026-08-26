@@ -1086,29 +1086,14 @@ export async function loadSubTopicDetail(
   if (error) return { ok: false, status: 500, message: error.message };
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
 
-  const { data: claims, error: claimsError } = await supabase
-    .from("sub_topic_claims")
-    .select("id, sub_topic_id, user_id, status, claimed_at")
-    .eq("sub_topic_id", id)
-    .in("status", ["candidate", "scripting"])
-    .order("claimed_at", { ascending: false });
-  if (claimsError) return { ok: false, status: 500, message: claimsError.message };
-
-  const claimRows = (claims ?? []) as Array<{
-    id?: unknown;
-    sub_topic_id?: unknown;
-    user_id?: unknown;
-    status?: unknown;
-    claimed_at?: unknown;
-  }>;
-  const myClaim = buildMyClaim(claimRows, userId, id);
+  // 认领状态由前端经 /api/topics/pool?view=my_claims 判定，详情不再重复查 claims（2026-08-26）
 
   const works = await loadSubTopicWorks(supabase, id, scope, { sort: "best", page: 1, pageSize: 20 });
   if (!works.ok) return works;
   return {
     ok: true,
     value: {
-      subTopic: { ...subTopic, myClaim },
+      subTopic,
       works: works.value,
     },
   };
@@ -1284,7 +1269,7 @@ export async function loadActiveTopics(
   const claimsTask = measureAsync("topics.active.claims", async (): Promise<TaskResult<unknown[]>> => {
     let claimsQuery = supabase
       .from("sub_topic_claims")
-      .select("*, profiles(name), sub_topics(id, title, hook, created_by, topics(id, name), topic_groups(id, name))")
+      .select("id, sub_topic_id, user_id, status, claimed_at, profiles(name), sub_topics(id, title)")
       .neq("status", "returned")
       .order("claimed_at", { ascending: false })
       .limit(limit);
@@ -1297,7 +1282,7 @@ export async function loadActiveTopics(
   const recentWorksTask = measureAsync("topics.active.recentWorks", async (): Promise<TaskResult<unknown[]>> => {
     let worksQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name))")
+      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics(id, title)")
       .eq("lifecycle_state", "active")
       .not("topic_id", "is", null)
       .order("uploaded_at", { ascending: false })
