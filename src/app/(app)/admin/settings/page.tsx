@@ -76,6 +76,7 @@ export default async function AdminSettingsPage() {
       title="系统维护"
       description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置与业务阈值。"
       indexItems={[]}
+      className="max-w-5xl"
     >
       <div className="space-y-8">
         {/* 异常阈值配置区块 */}
