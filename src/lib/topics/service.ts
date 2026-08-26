@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DataAccessScope } from "@/lib/data-access-scope";
+import { measureAsync } from "@/lib/perf";
 
 export const TOPIC_POOL_VIEWS = [
   "all",
@@ -997,7 +998,7 @@ async function loadScoredTopicPool(
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
 
-  const { data: subTopics, error: subTopicsError } = await subTopicsQuery;
+  const { data: subTopics, error: subTopicsError } = await measureAsync("topics.pool.scored.subTopics", () => subTopicsQuery);
   if (subTopicsError) return { ok: false, status: 500, message: subTopicsError.message };
 
   const allSubTopics = (subTopics ?? []) as Array<Record<string, unknown>>;
@@ -1009,14 +1010,15 @@ async function loadScoredTopicPool(
     };
   }
 
+  // content 一并取出，让汇总统计直接复用这次结果，省掉一次同表全量扫描
   let worksQuery = supabase
     .from("videos")
-    .select("topic_id, user_id, uploaded_at, video_metrics_snapshots(play_count)")
+    .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
     .eq("lifecycle_state", "active")
     .in("topic_id", subTopicIds);
   if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
 
-  const { data: works, error: worksError } = await worksQuery;
+  const { data: works, error: worksError } = await measureAsync("topics.pool.scored.works", () => worksQuery);
   if (worksError) return { ok: false, status: 500, message: worksError.message };
 
   const worksBySubTopic = new Map<string, { latestUploadedAt: string; playCounts: number[] }>();
@@ -1099,16 +1101,7 @@ async function loadScoredTopicPool(
   const totalItems = scored.length;
   const from = (options.page - 1) * options.pageSize;
   const pageItems = scored.slice(from, from + options.pageSize);
-  let summaries: Map<string, TopicWorkSummary>;
-  try {
-    summaries = await loadTopicSummaries(
-      supabase,
-      pageItems.map(({ item }) => String(item.id)),
-      scope,
-    );
-  } catch (error) {
-    return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
-  }
+  const summaries = summarizeScopedWorksBySubTopic((works ?? []) as ScopedWorkRow[], scope);
 
   return {
     ok: true,
@@ -1309,7 +1302,7 @@ export async function loadTopicPool(
   }
   if (options.view === "my_created") query = query.eq("created_by", userId);
 
-  const { data, error } = await query;
+  const { data, error } = await measureAsync("topics.pool.items", () => query);
   if (error) return { ok: false, status: 500, message: error.message };
 
   const items = ((data ?? []) as Array<Record<string, unknown>>)
@@ -1317,7 +1310,9 @@ export async function loadTopicPool(
 
   let summaries: Map<string, TopicWorkSummary>;
   try {
-    summaries = await loadTopicSummaries(supabase, items.map((item) => String(item.id)), scope);
+    summaries = await measureAsync("topics.pool.summaries", () =>
+      loadTopicSummaries(supabase, items.map((item) => String(item.id)), scope),
+    );
   } catch (error) {
     return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
   }
@@ -1366,24 +1361,36 @@ export async function loadTopicSummaries(supabase: TopicSupabase, subTopicIds: s
     .in("topic_id", subTopicIds);
   if (error) throw new Error(error.message);
 
-  const scopedRows = applyScope((data ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>, scope);
-  for (const subTopicId of subTopicIds) {
-    const rows = scopedRows
-      .filter((row) => row.topic_id === subTopicId)
-      .map((row) => {
-        const snapshots = Array.isArray(row.video_metrics_snapshots)
-          ? row.video_metrics_snapshots as Array<{ play_count?: number | null }>
-          : [];
-        const playCount = snapshots.reduce((max, snapshot) => Math.max(max, Number(snapshot.play_count ?? 0)), 0);
-        return {
-          playCount,
-          content: typeof row.content === "string" ? row.content : null,
-          uploadedAt: typeof row.uploaded_at === "string" ? row.uploaded_at : null,
-        };
-      });
-    summaryMap.set(subTopicId, calculateTopicWorkSummary(rows));
+  return summarizeScopedWorksBySubTopic(
+    (data ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>,
+    scope,
+  );
+}
+
+type ScopedWorkRow = Record<string, unknown> & { user_id?: string | null };
+
+function summarizeScopedWorksBySubTopic(rows: ScopedWorkRow[], scope: DataAccessScope) {
+  const rowsBySubTopic = new Map<string, TopicWorkMetricInput[]>();
+  for (const row of applyScope(rows, scope)) {
+    const subTopicId = String(row.topic_id ?? "");
+    if (!subTopicId) continue;
+    const snapshots = Array.isArray(row.video_metrics_snapshots)
+      ? row.video_metrics_snapshots as Array<{ play_count?: number | null }>
+      : [];
+    const playCount = snapshots.reduce((max, snapshot) => Math.max(max, Number(snapshot.play_count ?? 0)), 0);
+    const list = rowsBySubTopic.get(subTopicId) ?? [];
+    list.push({
+      playCount,
+      content: typeof row.content === "string" ? row.content : null,
+      uploadedAt: typeof row.uploaded_at === "string" ? row.uploaded_at : null,
+    });
+    rowsBySubTopic.set(subTopicId, list);
   }
 
+  const summaryMap = new Map<string, TopicWorkSummary>();
+  for (const [subTopicId, workRows] of rowsBySubTopic) {
+    summaryMap.set(subTopicId, calculateTopicWorkSummary(workRows));
+  }
   return summaryMap;
 }
 
@@ -1393,42 +1400,80 @@ export async function loadActiveTopics(
   scope: DataAccessScope,
   limit = 8,
 ): Promise<ApiResult<unknown>> {
-  let claimsQuery = supabase
-    .from("sub_topic_claims")
-    .select("*, profiles(name), sub_topics(id, title, hook, created_by, topics(id, name), topic_groups(id, name))")
-    .neq("status", "returned")
-    .order("claimed_at", { ascending: false });
-  if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
-  const { data: claims, error: claimsError } = await claimsQuery.limit(limit);
-  if (claimsError) return { ok: false, status: 500, message: claimsError.message };
+  type TaskResult<T> = { ok: true; data: T } | ApiFailure;
 
-  let worksQuery = supabase
-    .from("videos")
-    .select("id, topic_id, user_id, video_title, content, uploaded_at, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name))")
-    .eq("lifecycle_state", "active")
-    .not("topic_id", "is", null)
-    .order("uploaded_at", { ascending: false })
-    .limit(limit * 3);
-  if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
-  const { data: works, error: worksError } = await worksQuery;
-  if (worksError) return { ok: false, status: 500, message: worksError.message };
+  const claimsTask = measureAsync("topics.active.claims", async (): Promise<TaskResult<unknown[]>> => {
+    let claimsQuery = supabase
+      .from("sub_topic_claims")
+      .select("*, profiles(name), sub_topics(id, title, hook, created_by, topics(id, name), topic_groups(id, name))")
+      .neq("status", "returned")
+      .order("claimed_at", { ascending: false })
+      .limit(limit);
+    if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
+    const { data, error } = await claimsQuery;
+    if (error) return { ok: false, status: 500, message: error.message };
+    return { ok: true, data: data ?? [] };
+  });
 
-  let focusWorksQuery = supabase
-    .from("videos")
-    .select("topic_id, user_id, uploaded_at, video_metrics_snapshots(play_count, snapshot_type, captured_at)")
-    .eq("lifecycle_state", "active")
-    .not("topic_id", "is", null);
-  if (scope.kind !== "all") focusWorksQuery = focusWorksQuery.in("user_id", scope.visibleUserIds);
-  const { data: focusWorks, error: focusWorksError } = await focusWorksQuery;
-  if (focusWorksError) return { ok: false, status: 500, message: "加载今日聚焦作品失败" };
+  // 一次查询同时服务：最近作品、今日聚焦、值得再做三块，避免同表全量扫三遍
+  const mergedWorksTask = measureAsync("topics.active.mergedWorks", async (): Promise<TaskResult<ScopedWorkRow[]>> => {
+    let worksQuery = supabase
+      .from("videos")
+      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name)), video_metrics_snapshots(play_count, snapshot_type, captured_at)")
+      .eq("lifecycle_state", "active")
+      .not("topic_id", "is", null);
+    if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+    const { data, error } = await worksQuery;
+    if (error) return { ok: false, status: 500, message: error.message };
+    return { ok: true, data: (data ?? []) as ScopedWorkRow[] };
+  });
 
-  const { data: focusSubTopics, error: focusSubTopicsError } = await supabase
-    .from("sub_topics")
-    .select("id, title, hook, topics(id, name), topic_groups(id, name)")
-    .order("created_at", { ascending: false });
-  if (focusSubTopicsError) return { ok: false, status: 500, message: "加载今日聚焦选题失败" };
+  const focusSubTopicsTask = measureAsync("topics.active.focusSubTopics", async (): Promise<TaskResult<Record<string, unknown>[]>> => {
+    const { data, error } = await supabase
+      .from("sub_topics")
+      .select("id, title, hook, topics(id, name), topic_groups(id, name)")
+      .order("created_at", { ascending: false });
+    if (error) return { ok: false, status: 500, message: "加载今日聚焦选题失败" };
+    return { ok: true, data: (data ?? []) as Array<Record<string, unknown>> };
+  });
 
-  const focusRows: FocusTopicInput[] = (focusSubTopics ?? []).flatMap((raw) => {
+  const createdTask = measureAsync("topics.active.recentlyCreated", async (): Promise<TaskResult<unknown[]>> => {
+    const { data, error } = await supabase
+      .from("sub_topics")
+      .select("*, topics(id, name), topic_groups(id, name)")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) return { ok: false, status: 500, message: error.message };
+    return { ok: true, data: data ?? [] };
+  });
+
+  const [claimsResult, mergedWorksResult, focusSubTopicsResult, createdResult] = await Promise.all([
+    claimsTask,
+    mergedWorksTask,
+    focusSubTopicsTask,
+    createdTask,
+  ]);
+  if (!claimsResult.ok) return claimsResult;
+  if (!mergedWorksResult.ok) return { ...mergedWorksResult, message: "加载最近作品失败" };
+  if (!focusSubTopicsResult.ok) return focusSubTopicsResult;
+  if (!createdResult.ok) return createdResult;
+
+  const scopedWorks = applyScope(mergedWorksResult.data, scope);
+
+  const recentlyWorked = [...scopedWorks]
+    .sort((left, right) => (Date.parse(String(right.uploaded_at ?? "")) || 0) - (Date.parse(String(left.uploaded_at ?? "")) || 0))
+    .slice(0, limit);
+
+  const worksBySubTopicId = new Map<string, ScopedWorkRow[]>();
+  for (const work of scopedWorks) {
+    const subTopicId = String(work.topic_id ?? "");
+    if (!subTopicId) continue;
+    const list = worksBySubTopicId.get(subTopicId) ?? [];
+    list.push(work);
+    worksBySubTopicId.set(subTopicId, list);
+  }
+
+  const focusRows: FocusTopicInput[] = focusSubTopicsResult.data.flatMap((raw) => {
     const item = raw as Record<string, unknown>;
     if (typeof item.id !== "string" || typeof item.title !== "string") return [];
     const topic = Array.isArray(item.topics) ? item.topics[0] : item.topics;
@@ -1439,21 +1484,19 @@ export async function loadActiveTopics(
     const groupRef = group && typeof group === "object" && typeof (group as { id?: unknown }).id === "string" && typeof (group as { name?: unknown }).name === "string"
       ? { id: (group as { id: string }).id, name: (group as { name: string }).name }
       : null;
-    const topicWorks = ((focusWorks ?? []) as Array<Record<string, unknown>>)
-      .filter((work) => work.topic_id === item.id)
-      .map((work) => {
-        const snapshots = Array.isArray(work.video_metrics_snapshots)
-          ? (work.video_metrics_snapshots as Array<Record<string, unknown>>)
-          : [];
-        const latest24h = snapshots
-          .filter((snapshot) => snapshot.snapshot_type === "24h" && typeof snapshot.captured_at === "string")
-          .sort((left, right) => (Date.parse(String(right.captured_at)) || 0) - (Date.parse(String(left.captured_at)) || 0))[0];
-        return {
-          uploadedAt: typeof work.uploaded_at === "string" ? work.uploaded_at : null,
-          recentSnapshotAt: typeof latest24h?.captured_at === "string" ? latest24h.captured_at : null,
-          playCount: typeof latest24h?.play_count === "number" ? latest24h.play_count : null,
-        };
-      });
+    const topicWorks = (worksBySubTopicId.get(item.id) ?? []).map((work) => {
+      const snapshots = Array.isArray(work.video_metrics_snapshots)
+        ? (work.video_metrics_snapshots as Array<Record<string, unknown>>)
+        : [];
+      const latest24h = snapshots
+        .filter((snapshot) => snapshot.snapshot_type === "24h" && typeof snapshot.captured_at === "string")
+        .sort((left, right) => (Date.parse(String(right.captured_at)) || 0) - (Date.parse(String(left.captured_at)) || 0))[0];
+      return {
+        uploadedAt: typeof work.uploaded_at === "string" ? work.uploaded_at : null,
+        recentSnapshotAt: typeof latest24h?.captured_at === "string" ? latest24h.captured_at : null,
+        playCount: typeof latest24h?.play_count === "number" ? latest24h.play_count : null,
+      };
+    });
     return [{
       id: item.id,
       title: item.title,
@@ -1465,24 +1508,8 @@ export async function loadActiveTopics(
   });
   const focusTopics = buildFocusTopics(focusRows, new Date(), 3);
 
-  const { data: created, error: createdError } = await supabase
-    .from("sub_topics")
-    .select("*, topics(id, name), topic_groups(id, name)")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (createdError) return { ok: false, status: 500, message: createdError.message };
-
-  let worthRedoingQuery = supabase
-    .from("videos")
-    .select("topic_id, user_id, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name))")
-    .eq("lifecycle_state", "active")
-    .not("topic_id", "is", null);
-  if (scope.kind !== "all") worthRedoingQuery = worthRedoingQuery.in("user_id", scope.visibleUserIds);
-  const { data: worthRedoingWorks, error: worthRedoingError } = await worthRedoingQuery;
-  if (worthRedoingError) return { ok: false, status: 500, message: "加载值得再做选题失败" };
-
   const subTopicsById = new Map<string, Record<string, unknown>>();
-  for (const work of (worthRedoingWorks ?? []) as Array<Record<string, unknown>>) {
+  for (const work of scopedWorks) {
     const subTopic = Array.isArray(work.sub_topics) ? work.sub_topics[0] : work.sub_topics;
     if (!subTopic || typeof (subTopic as { id?: unknown }).id !== "string") continue;
     subTopicsById.set((subTopic as { id: string }).id, subTopic as Record<string, unknown>);
@@ -1490,7 +1517,9 @@ export async function loadActiveTopics(
 
   let worthRedoing: Array<Record<string, unknown>> = [];
   try {
-    const summaries = await loadTopicSummaries(supabase, [...subTopicsById.keys()], scope);
+    const summaries = await measureAsync("topics.active.worthRedoingSummaries", async () =>
+      summarizeScopedWorksBySubTopic(mergedWorksResult.data, scope),
+    );
     worthRedoing = buildWorthRedoingTopics(
       [...subTopicsById.values()].map((subTopic) => ({
         ...subTopic,
@@ -1504,9 +1533,9 @@ export async function loadActiveTopics(
   return {
     ok: true,
     value: {
-      recentlyClaimed: claims ?? [],
-      recentlyWorked: (works ?? []).slice(0, limit),
-      recentlyCreated: created ?? [],
+      recentlyClaimed: claimsResult.data,
+      recentlyWorked,
+      recentlyCreated: createdResult.data,
       worthRedoing,
       focusTopics,
     },
@@ -1546,7 +1575,7 @@ export async function loadTopicComparison(
   if (scope.kind !== "all") videosQuery = videosQuery.in("user_id", scope.visibleUserIds);
   if (options.topicId) videosQuery = videosQuery.eq("sub_topics.topic_id", options.topicId);
 
-  const { data: videos, error: videosError } = await videosQuery;
+  const { data: videos, error: videosError } = await measureAsync("topics.comparison.videos", () => videosQuery);
   if (videosError) return { ok: false, status: 500, message: "加载对比作品失败" };
   const videoRows = (videos ?? []) as Array<Record<string, unknown>>;
   const videoIds = videoRows.map((row) => String(row.id)).filter(Boolean);
@@ -1554,12 +1583,12 @@ export async function loadTopicComparison(
     return { ok: true, value: { dimension: options.dimension, windowDays: options.days, rows: [], sampleTotal: 0 } };
   }
 
-  const { data: snapshots, error: snapshotsError } = await supabase
+  const { data: snapshots, error: snapshotsError } = await measureAsync("topics.comparison.snapshots", () => supabase
     .from("video_metrics_snapshots")
     .select("video_id, play_count, captured_at")
     .in("video_id", videoIds)
     .eq("snapshot_type", "24h")
-    .order("captured_at", { ascending: false });
+    .order("captured_at", { ascending: false }));
   if (snapshotsError) return { ok: false, status: 500, message: "加载播放数据失败" };
 
   const playCountByVideoId = new Map<string, number>();
