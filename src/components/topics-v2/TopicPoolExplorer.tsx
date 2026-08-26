@@ -47,6 +47,7 @@ interface TopicPoolExplorerProps {
   onReturnClaim: (subTopicId: string) => Promise<void>;
   onSelectTopic: (subTopicId: string) => void;
   onCreateClick: () => void;
+  claimDrawerSlot?: React.ReactNode;
 }
 
 export function TopicPoolExplorer({
@@ -72,6 +73,7 @@ export function TopicPoolExplorer({
   onReturnClaim,
   onSelectTopic,
   onCreateClick,
+  claimDrawerSlot,
 }: TopicPoolExplorerProps) {
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
   const [operatingId, setOperatingId] = useState<string | null>(null);
@@ -122,7 +124,7 @@ export function TopicPoolExplorer({
   return (
     <section
       id="topic-pool-explorer"
-      className="space-y-6 pb-12"
+      className="space-y-3.5 pb-12"
     >
       {/* 控制栏：左右主次分层 (纯留白自然平铺，微气垫与呼吸微竖线) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-1">
@@ -342,14 +344,18 @@ export function TopicPoolExplorer({
             </button>
           </div>
 
-          {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+          {/* 认领位微胶囊抽屉 */}
+          {claimDrawerSlot && (
+            <div className="shrink-0">
+              {claimDrawerSlot}
+            </div>
+          )}
 
           {/* 主 CTA：录入 (单加号图标 + 录入) */}
           <button
             type="button"
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer shrink-0"
             aria-label="录入选题"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -425,12 +431,12 @@ export function TopicPoolExplorer({
               <div
                 key={sub.id}
                 onClick={() => onSelectTopic(sub.id)}
-                className="group relative bg-white border border-[#E5E0D6]/90 rounded-2xl p-4.5 hover:border-[#E5E0D6]/90 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-white border border-[#E5E0D6] rounded-2xl p-4.5 hover:border-[#D97757]/40 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  {/* 顶栏：彻底放空右侧，只保留最纯正通透的母题与分组标签 */}
+                  {/* 顶栏：象牙漫反射微气垫母题与分组标签 */}
                   <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
-                    <span className="text-[11px] font-normal px-2 py-0.5 rounded-md bg-[#F5F3EE]/80 text-[#292524] truncate min-w-0">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] text-[#57534E] truncate min-w-0">
                       {sub.topics?.name || "常规"}{" "}
                       {sub.topic_groups?.name
                         ? `· ${sub.topic_groups.name}`
@@ -438,16 +444,16 @@ export function TopicPoolExplorer({
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5 tracking-tight">
+                  <h3 className="font-serif text-[14.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5 tracking-tight">
                     {sub.title}
                   </h3>
-                  <p className="text-xs text-[#78716C] line-clamp-2 mb-3.5 leading-relaxed font-normal">
-                    {sub.hook ? `“${sub.hook}”` : "还没有 Hook"}
+                  <p className="text-[12px] text-[#78716C] line-clamp-2 mb-3.5 leading-relaxed font-normal">
+                    {sub.hook ? `“${sub.hook}”` : "“尚未提炼立意金句”"}
                   </p>
                 </div>
 
                 <div className="pt-1 flex items-center justify-between text-xs min-w-0">
-                  {/* 底栏统一冷灰排版：写作中防撞车、均播、认领人次合一 */}
+                  {/* 底栏：写作中防撞车、均播、认领人次 */}
                   <div className="text-[#78716C] text-xs tabular-nums truncate min-w-0 pr-2 flex items-center gap-1.5 font-normal">
                     {(item.scriptingCount ?? 0) > 0 ? (
                       <span className="text-[#292524] font-medium inline-flex items-center gap-1">
@@ -469,7 +475,7 @@ export function TopicPoolExplorer({
                         均播 {(summary.averagePlayCount / 10000).toFixed(1)}万
                       </span>
                     ) : (
-                      <span className="text-[#78716C]">还没有成片</span>
+                      <span className="text-[#78716C]">尚未成片</span>
                     )}
 
                     <span className="text-[#E5E0D6] select-none">·</span>
@@ -478,7 +484,7 @@ export function TopicPoolExplorer({
                     </span>
                   </div>
 
-                  {/* 右侧常态彻底留白，Hover 优雅浮出（移动端常态可见以便触控） */}
+                  {/* 右侧常态留白，Hover 浮出 */}
                   <div className="shrink-0">
                     {isMyClaimed ? (
                       <button
@@ -534,11 +540,11 @@ export function TopicPoolExplorer({
                     className="group hover:bg-[#FBF9F5]/80 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-3 max-w-xs">
-                      <div className="font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
+                      <div className="font-serif text-[13.5px] font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
                         {sub.title}
                       </div>
                       <div className="text-[#78716C] text-xs truncate font-normal">
-                        “{sub.hook || "还没有 Hook"}”
+                        “{sub.hook || "尚未提炼立意金句"}”
                       </div>
                     </td>
                     <td className="py-3 px-3 text-[#292524] font-normal">

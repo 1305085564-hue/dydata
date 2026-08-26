@@ -11,10 +11,9 @@ import {
   useSyncExternalStore,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Zap, ChevronDown } from "lucide-react";
+import { Bell, ChevronDown } from "lucide-react";
 import { getNavGroups } from "@/components/nav-bar-items";
 import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
-import { WorkspacePicker } from "@/components/workspace-picker";
 import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { MobileMoreDrawer } from "@/components/mobile-more-drawer";
@@ -349,17 +348,17 @@ export function NavBarClient({
                 onMouseEnter={() => prefetchOnHover("/dashboard")}
                 className="flex items-center gap-2.5 shrink-0 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#43718E] rounded-xl p-0.5 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
               >
-                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#E5E0D6]/80 bg-[#1C1917] text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#1C1917] group-hover:border-[#292524]">
-                  <Zap className="size-4 stroke-[2.2] fill-current text-white transition-transform duration-200 group-hover:scale-110" />
+                <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#292524]/20 bg-[#1C1917] text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#292524]">
+                  <span className="text-[14px] leading-none text-[#F5F3EE] select-none group-hover:rotate-12 transition-transform duration-200">✦</span>
                 </div>
                 <div className="hidden sm:block">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-medium tracking-tight text-[#1C1917] leading-none">
+                    <span className="font-serif text-[14.5px] font-semibold tracking-tight text-[#1C1917] leading-none">
                       DYData
                     </span>
                   </div>
-                  <div className="mt-1 text-[12px] font-normal tracking-wider text-[#78716C] uppercase leading-none transition-colors duration-200 group-hover:text-[#78716C]">
-                    短视频数据工作台
+                  <div className="mt-1 text-[11px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#292524]">
+                    创作数据读本
                   </div>
                 </div>
               </Link>
@@ -389,21 +388,18 @@ export function NavBarClient({
                         prefetch={false}
                         onMouseEnter={() => prefetchOnHover(group.href!)}
                         className={cn(
-                          "relative inline-flex h-8.5 shrink-0 items-center rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
+                          "relative inline-flex h-8 shrink-0 items-center rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive
-                            ? "text-[#43718E] font-medium bg-[#F5F3EE]/70"
-                            : "text-[#292524] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.985] active:duration-75",
+                            ? "text-[#1C1917] font-semibold bg-[#F5F3EE] shadow-2xs"
+                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.985]",
                         )}
                       >
-                        {isGroupActive && (
-                          <span className="absolute bottom-0 inset-x-3 h-[2px] rounded-full bg-[#43718E] transition-all duration-200" />
-                        )}
                         {Icon && (
                           <Icon
                             className={cn(
                               "size-3.5 stroke-[1.8] shrink-0 mr-1.5 transition-transform duration-200 group-hover:scale-105",
                               isGroupActive
-                                ? "text-[#43718E]"
+                                ? "text-[#D97757]"
                                 : "text-[#78716C] group-hover:text-[#292524]",
                             )}
                           />
@@ -433,10 +429,10 @@ export function NavBarClient({
                         aria-expanded={isDropdownOpen}
                         aria-haspopup="true"
                         className={cn(
-                          "relative inline-flex h-8.5 shrink-0 items-center gap-1 rounded-xl px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center",
+                          "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive || isDropdownOpen
-                            ? "text-[#43718E] font-medium bg-[#F5F3EE]"
-                            : "text-[#292524] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75",
+                            ? "text-[#1C1917] font-semibold bg-[#F5F3EE] shadow-2xs"
+                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.985]",
                         )}
                       >
                         {isGroupActive && (
@@ -487,7 +483,7 @@ export function NavBarClient({
                                     className={cn(
                                       "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors duration-150 group/item",
                                       active
-                                        ? "bg-[#F5F3EE] text-[#43718E] font-medium"
+                                        ? "bg-[#F5F3EE] text-[#1C1917] font-semibold"
                                         : "text-[#292524] font-medium hover:bg-[#F5F3EE] hover:text-[#1C1917]",
                                     )}
                                   >
@@ -497,7 +493,7 @@ export function NavBarClient({
                                           className={cn(
                                             "size-4 stroke-[1.8] shrink-0 transition-transform duration-150 group-hover/item:scale-105",
                                             active
-                                              ? "text-[#43718E]"
+                                              ? "text-[#D97757]"
                                               : "text-[#78716C] group-hover/item:text-[#1C1917]",
                                           )}
                                         />

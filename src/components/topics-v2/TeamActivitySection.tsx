@@ -92,7 +92,7 @@ export function TeamActivitySection({
   const pastWorks = (data?.recentlyWorked ?? []).slice(1, 6);
 
   return (
-    <section className="my-2 sm:my-3.5 transition-all">
+    <section className="mt-4 sm:mt-5 mb-5 sm:mb-6 transition-all">
       {/* 单行极简状态条 (Ticker) */}
       <div className="bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
         <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">

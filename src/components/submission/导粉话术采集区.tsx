@@ -35,10 +35,12 @@ export function ScriptCaptureSection({
           <div className="relative mt-8 pl-4">
             <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
 
-            <div className="mb-4 flex items-center gap-2">
-              <h3 className="text-[13px] font-medium text-[#1C1917]">导粉话术</h3>
-              <span className="text-[12px] uppercase tracking-[0.25em] font-medium text-[#78716C]">
-                required
+            <div className="mb-3 flex items-center gap-2">
+              <h3 className="font-serif text-[13.5px] font-semibold text-[#1C1917] tracking-tight">
+                导粉话术 · 灵感手记
+              </h3>
+              <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#FAF8F4] border border-[#ECE7DE] font-normal text-[#78716C]">
+                必填
               </span>
             </div>
 
@@ -47,20 +49,20 @@ export function ScriptCaptureSection({
                 "rounded-2xl border transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 showError
                   ? "border-[#C9604D]/40 bg-[#FBF9F5]"
-                  : "border-[#E5E0D6] bg-white",
+                  : "border-[#E5E0D6] bg-[#FAF8F4]/50 focus-within:bg-white focus-within:border-[#78716C]",
               )}
             >
               <textarea
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                placeholder="粘贴本条视频中使用的导粉话术文案"
+                placeholder="在此记录本期视频中打动人心、促成关注转化的核心话术或互动文案..."
                 rows={4}
                 aria-invalid={showError ? "true" : "false"}
                 aria-describedby={showError ? "script_capture_error" : undefined}
                 className={cn(
                   "w-full resize-none rounded-2xl border-0 bg-transparent px-4 py-3",
-                  "text-[13px] leading-[1.7] tracking-[0.005em] text-[#1C1917] placeholder:text-[#78716C]",
-                  "outline-none focus-visible:ring-1 focus-visible:ring-[#1C1917]/5",
+                  "text-[13px] leading-[1.7] tracking-[0.005em] text-[#1C1917] placeholder:text-[#78716C]/70",
+                  "outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/20",
                 )}
               />
 

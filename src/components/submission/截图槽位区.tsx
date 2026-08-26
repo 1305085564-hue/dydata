@@ -195,7 +195,7 @@ export function SubmissionSlotsSection({
               className={cn(
                 "relative flex flex-col justify-center flex-1 min-h-[58px] sm:min-h-[64px] lg:min-h-[105px] rounded-xl border p-2 sm:p-2.5 lg:p-3.5 transition-all duration-150",
                 slot.status === "empty"
-                  ? "border-[#ECE7DE] bg-white/90 hover:border-[#D97757]/60 hover:bg-white cursor-pointer shadow-2xs hover:shadow-sm"
+                  ? "border-dashed border-[#ECE7DE] bg-[#FAF8F4]/40 hover:border-[#D97757]/60 hover:bg-[#FAF8F4] cursor-pointer shadow-2xs hover:shadow-sm"
                   : "border-[#ECE7DE] bg-white shadow-2xs",
                 isSlotDragTarget && "border-[#D97757] bg-[#FDF9F7] ring-2 ring-[#D97757]/30",
                 isFocused && "border-[#D97757]/80 ring-2 ring-[#D97757]/20 bg-[#FDF9F7]/35",

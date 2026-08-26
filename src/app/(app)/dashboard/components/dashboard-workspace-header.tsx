@@ -77,7 +77,7 @@ export function DashboardWorkspaceHeader({
   };
 
   return (
-    <div className="mb-6 space-y-1.5">
+    <div className="mb-7 space-y-2">
       <div className="flex items-center justify-between gap-4">
         {/* 左侧：分类标签 + 页面大标题（H1）融入日期交互 */}
         <div className="min-w-0 flex items-center gap-3">
@@ -177,7 +177,7 @@ export function DashboardWorkspaceHeader({
           />
         </nav>
       </div>
-      <p className="text-[12.5px] text-[#78716C] font-normal pl-0.5 select-none">
+      <p className="text-[12.5px] text-[#78716C] font-normal pl-0.5 select-none pt-1 leading-relaxed">
         {getGreeting()}
       </p>
     </div>

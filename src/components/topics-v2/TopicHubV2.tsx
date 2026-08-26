@@ -29,7 +29,6 @@ import { TopicWorkBreakdownDrawer } from "./TopicWorkBreakdownDrawer";
 import { TopicCreateModal } from "./TopicCreateModal";
 import { SmartReplaceModal } from "./SmartReplaceModal";
 import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
-import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 
 export function TopicHubV2() {
   // Toast 反馈
@@ -379,42 +378,24 @@ export function TopicHubV2() {
           </div>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* 卷首寄语 */}
-          <EditorialEpigraph
-            quote="每一篇打动人心的作品，都始于对时代痛点最敏锐的洞察与立意。"
-            author="选题立卷指南"
-            className="my-0"
-          />
-
-          {/* 全局顶栏：黄金大标题 Header (纯留白自然分隔) */}
-          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 sm:pb-3">
+        <div className="max-w-7xl mx-auto space-y-3">
+          {/* 全局顶栏：黄金大标题 Header */}
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 pt-1">
             <div className="flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs">
-                <CompassConstellationIllustration size={24} />
+              <div className="size-9.5 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
+                <CompassConstellationIllustration size={22} />
               </div>
-              <div>
+              <div className="space-y-1">
                 <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
                   灵感手稿 · 选题库
                 </h1>
-                <p className="text-[12px] text-[#78716C] mt-0.5">
-                  全团队选题热度透视、协同认领与创作复盘
+                <p className="text-[12.5px] text-[#78716C] font-normal leading-relaxed">
+                  时代痛点与敏锐立意 · 协同认领与创作复盘
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {/* 我的认领位抽屉 */}
-              <MyClaimDrawer
-                claims={myClaims}
-                loading={claimsLoading}
-                error={claimsError}
-                onRetry={fetchMyClaims}
-                onStartScripting={handleStartScripting}
-                onReturnClaim={handleReturnClaim}
-                onSelectTopic={(id) => setInspectTopicId(id)}
-              />
-
               <button
                 type="button"
                 onClick={refreshAll}
@@ -469,6 +450,17 @@ export function TopicHubV2() {
             onReturnClaim={handleReturnClaim}
             onSelectTopic={(id) => setInspectTopicId(id)}
             onCreateClick={() => setIsCreateModalOpen(true)}
+            claimDrawerSlot={
+              <MyClaimDrawer
+                claims={myClaims}
+                loading={claimsLoading}
+                error={claimsError}
+                onRetry={fetchMyClaims}
+                onStartScripting={handleStartScripting}
+                onReturnClaim={handleReturnClaim}
+                onSelectTopic={(id) => setInspectTopicId(id)}
+              />
+            }
           />
 
           {/* 3. 选题效果横向对比 */}

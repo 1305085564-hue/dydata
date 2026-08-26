@@ -89,26 +89,24 @@ export function MyClaimDrawer({
 
   return (
     <div className="relative">
-      {/* 触发控制条 */}
+      {/* 触发控制条 (紧凑气垫微胶囊) */}
       <button
         ref={triggerBtnRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-label="打开我的选题库槽位"
-        className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-2 px-3 py-1.5 rounded-lg bg-transparent hover:bg-[#F5F3EE] text-[#292524] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
+        className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[#292524] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 transition-all cursor-pointer select-none text-xs font-medium"
       >
-        <span className="w-2 h-2 rounded-full bg-[#D97757]" />
-        <Layers className="w-3.5 h-3.5 text-[#78716C]" />
-        <span className="text-xs font-medium text-[#292524]">我的选题槽位</span>
-        <div className="flex items-center gap-1 text-xs tabular-nums px-1.5 py-0.5 rounded bg-[#F5F3EE] text-[#292524] font-normal">
-          <span>{candidateCount}</span>
-          <span className="text-[#78716C]">/</span>
-          <span>5</span>
-        </div>
+        <Layers className="size-3.5 text-[#78716C]" />
+        <span>槽位</span>
+        <span className="tabular-nums font-semibold text-[#1C1917]">
+          {candidateCount}/5
+        </span>
         {scriptingCount > 0 && (
-          <span className="text-xs bg-[#F5F3EE] text-[#292524] px-1.5 py-0.5 rounded-full font-medium">
-            {scriptingCount} 脚本中
+          <span className="inline-flex items-center gap-1 text-[11px] text-[#D97757] font-semibold">
+            <span className="size-1.5 rounded-full bg-[#D97757]" />
+            <span>{scriptingCount}篇中</span>
           </span>
         )}
       </button>
