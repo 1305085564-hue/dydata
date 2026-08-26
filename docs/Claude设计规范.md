@@ -185,26 +185,6 @@
 - **去框平铺**：`bg-transparent`，功能群之间用 16px 微竖线隔离
 - **按钮高度**：`h-7`（28px），内边距 `px-2.5`
 
-### 5.5 出版物装帧组件 (Editorial Craft)
-
-| 组件 | Tailwind 规格 | 适用场景 |
-|---|---|---|
-| **卷首寄语 (Epigraph)** | `font-serif italic text-[13.5px] text-[#292524]/90 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg` | 深度诊断、复盘报告顶部开篇 |
-| **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
-| **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
-
-### 5.6 暖墨矢量插图规格 (Editorial Illustrations)
-
-- **风格标准**：100% 纯 SVG 矢量单线蚀刻手稿（Monoline Ink Sketch），禁止外链位图 (PNG/JPG)、禁止 3D 拟物与渐变大色块。
-- **色彩 Token 绑定**：
-  * 主线墨色：`stroke-[#292524]` (Ink 800) / 发丝辅助：`stroke-[#78716C]` (Ink 600)
-  * 底色光晕：`fill-[#F5F3EE]` (Surface-soft)
-  * 点睛高光：`fill-[#D97757]` (Terracotta) / 生长绿：`fill-[#6FAA7D]`
-- **尺寸三档锁死**：
-  * **紧凑级 (72px)**：抽屉、侧边栏、卡片局部点睛
-  * **标准级 (96px)**：登录卡片头部、普通弹窗
-  * **展卷级 (120px)**：今日已归档空态、全屏 Hero 迎宾
-
 ---
 
 ## 6. 深层质感规格（进阶）
@@ -268,12 +248,11 @@
 
 导航栏、Sticky 表头：`bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/80`
 
-### 6.8 空状态与归档态
+### 6.8 空状态
 
-- **常规空状态**：垂直留白 `py-16`（常规）/ `py-24`（整页），图标 16-20px 单线色 `#A8A29E`（或省略），说明 `text-[13px] text-[#78716C]` 业务化措辞。
-- **完成归档态**：采用纯矢量暖墨手稿插图（如静谧茶盏 `ZenFinishedIllustration`）+ `bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 border border-[#ECE7DE]` 温润底色 + 指标三联 + 就地操作。
+垂直留白 `py-16`（常规）/ `py-24`（整页），图标 16-20px 单线色 `#A8A29E`（或省略），说明 `text-[13px] text-[#78716C]` 业务化措辞。
 
-**禁止**：大面积彩色营销插画、彩色空状态图、感叹号、「暂无数据」系统语。
+**禁止**：插画、彩色图、感叹号、「暂无数据」系统语。
 
 ---
 

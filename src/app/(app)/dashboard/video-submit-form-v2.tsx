@@ -2248,26 +2248,24 @@ export function VideoSubmitFormV2({
                       />
                     </div>
 
-                    {/* 共创伙伴 */}
+                    {/* 团队分工 */}
                     <div className="space-y-2.5 rounded-xl border border-[#ECE7DE] bg-white/90 p-3 shadow-2xs lg:flex-1">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-[12.5px] font-medium text-[#292524] flex items-center gap-1.5">
-                          <span>共创伙伴</span>
-                        </h3>
+                        <h3 className="text-[12.5px] font-semibold text-[#292524]">团队分工</h3>
                         {!hasAnyVisibleRole && (
                           <button
                             type="button"
                             onClick={showAllRoles}
                             className="text-[12px] font-medium text-[#D97757] hover:underline"
                           >
-                            + 协同创作
+                            + 协同指派
                           </button>
                         )}
                       </div>
 
                       {!hasAnyVisibleRole ? (
                         <div className="text-[12px] text-[#78716C]">
-                          独立创作完成 · 文案 / 剪辑 / 运营
+                          由我独立完成 (文案 · 剪辑 · 运营)
                         </div>
                       ) : (
                         <div className="space-y-1.5">

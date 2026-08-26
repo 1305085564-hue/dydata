@@ -67,23 +67,14 @@ export function DashboardWorkspaceHeader({
     };
   }, [isCalendarOpen]);
 
-  // 时段感知的温和问候语
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "晨光正好，记录今天的每一次表达";
-    if (hour >= 12 && hour < 14) return "正午小憩，整理上午的创作收获";
-    if (hour >= 14 && hour < 19) return "午后心流，沉淀今日的传播痕迹";
-    return "夜色渐深，收纳今天的表达与思考";
-  };
-
   return (
-    <div className="mb-6 space-y-1.5">
+    <div className="mb-6">
       <div className="flex items-center justify-between gap-4">
         {/* 左侧：分类标签 + 页面大标题（H1）融入日期交互 */}
         <div className="min-w-0 flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-[12px] font-medium tracking-wide text-[#78716C]">
             <Activity size={13} className="text-[#78716C] stroke-[2]" />
-            <span>数据台 · 创作纪事</span>
+            <span>数据台</span>
           </div>
 
           <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
@@ -94,12 +85,12 @@ export function DashboardWorkspaceHeader({
               aria-expanded={isCalendarOpen}
               aria-label="切换填报日期"
             >
-              <h1 className="font-serif text-2xl font-semibold tracking-tight text-[#1C1917] group-hover:text-[#D97757] transition-colors flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-[#1C1917] group-hover:text-[#D97757] transition-colors flex items-center gap-2">
                 {activeBizDate === today ? (
                   <>
                     <span>今日提交</span>
                     <span className="text-[#78716C] font-normal">·</span>
-                    <span className="font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors text-xl">
+                    <span className="font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors">
                       {activeBizDate}
                     </span>
                   </>
@@ -110,7 +101,7 @@ export function DashboardWorkspaceHeader({
                       补交历史
                     </span>
                     <span className="text-[#78716C] font-normal">·</span>
-                    <span className="font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors text-xl">
+                    <span className="font-normal text-[#78716C] group-hover:text-[#292524] tabular-nums transition-colors">
                       {activeBizDate}
                     </span>
                   </>
@@ -177,9 +168,6 @@ export function DashboardWorkspaceHeader({
           />
         </nav>
       </div>
-      <p className="text-[12.5px] text-[#78716C] font-normal pl-0.5 select-none">
-        {getGreeting()}
-      </p>
     </div>
   );
 }
