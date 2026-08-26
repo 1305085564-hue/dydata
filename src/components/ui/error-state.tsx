@@ -1,9 +1,9 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DraftRecalibrateIllustration } from "@/components/editorial/editorial-illustrations";
 
 interface ErrorStateProps {
   title?: string;
@@ -13,8 +13,8 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = "加载失败",
-  description = "数据获取失败，请稍后重试",
+  title = "暂时未能连通",
+  description = "内容同步稍有延迟，正在为你保留当前手稿，不妨稍作歇息后重试",
   className,
   onRetry,
 }: ErrorStateProps) {
@@ -31,30 +31,28 @@ export function ErrorState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5]/50 px-6 py-10 text-center",
+        "flex flex-col items-center justify-center gap-2 rounded-2xl border border-[#ECE7DE] bg-gradient-to-b from-[#FAF8F4] to-[#F5F3EE]/40 px-6 py-10 text-center shadow-sm",
         className
       )}
     >
-      <div className="relative flex size-2 items-center justify-center">
-        <span className="absolute inline-flex size-2 rounded-full bg-[#C9604D]" />
-        <span className="absolute inline-flex size-3 rounded-full bg-[#C9604D]/15" />
+      <div className="-mt-2 -mb-1">
+        <DraftRecalibrateIllustration size={80} />
       </div>
-      <div className="mt-2 space-y-1">
-        <p className="flex items-center justify-center gap-1.5 text-lg font-semibold text-[#1C1917]">
-          <AlertCircle className="size-4 stroke-[1.5] text-[#C9604D]" />
+      <div className="space-y-1.5 max-w-sm">
+        <h3 className="font-serif text-base font-medium text-[#1C1917] tracking-tight">
           {title}
-        </p>
+        </h3>
         {description && (
-          <p className="max-w-[240px] text-[12px] leading-[1.7] text-[#78716C]">{description}</p>
+          <p className="text-[12.5px] leading-[1.65] text-[#78716C]">{description}</p>
         )}
       </div>
       <Button
         variant="outline"
         size="sm"
-        className="mt-1"
+        className="mt-3 h-8 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
         onClick={handleRetry}
       >
-        重试
+        重新对齐同步
       </Button>
     </div>
   );

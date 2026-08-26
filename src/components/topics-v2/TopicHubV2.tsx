@@ -18,10 +18,8 @@ import {
 } from "@/lib/topics/v2-client-contract";
 import {
   RefreshCw,
-  Lock,
   CheckCircle2,
   AlertTriangle,
-  Lightbulb,
 } from "lucide-react";
 import { TeamActivitySection } from "./TeamActivitySection";
 import { MyClaimDrawer } from "./MyClaimDrawer";
@@ -30,6 +28,8 @@ import { TopicComparisonMatrix } from "./TopicComparisonMatrix";
 import { TopicWorkBreakdownDrawer } from "./TopicWorkBreakdownDrawer";
 import { TopicCreateModal } from "./TopicCreateModal";
 import { SmartReplaceModal } from "./SmartReplaceModal";
+import { DeskStudyIllustration, CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
+import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 
 export function TopicHubV2() {
   // Toast 反馈
@@ -361,32 +361,46 @@ export function TopicHubV2() {
       {authError ? (
         <div className="min-h-[60vh] flex items-center justify-center p-4">
           <div className="bg-white border border-[#E5E0D6] rounded-2xl p-8 max-w-md w-full text-center shadow-claude-dialog animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-[#F5F3EE]/80 border border-[#E5E0D6]/60 text-[#D97757] flex items-center justify-center mx-auto mb-4 shadow-2xs">
-              <Lock className="w-6 h-6" />
+            <div className="flex justify-center -mt-2 -mb-2">
+              <DeskStudyIllustration size={88} />
             </div>
-            <h3 className="text-base font-medium text-[#292524] mb-1.5 tracking-tight">
-              需要登录后再体验选题指挥舱
+            <h3 className="font-serif text-lg font-medium text-[#1C1917] mb-1.5 tracking-tight">
+              翻开灵感篇章 · 请先登录
             </h3>
             <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-6 leading-relaxed">
-              为了确保选题防撞车、认领权限与数据隔离，请先登录系统账号后再访问选题指挥舱。
+              为了确保选题防撞车、认领权限与协同创作，请登录账号后开启灵感探索。
             </p>
             <a
               href="/login"
               className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold shadow-xs transition-all"
             >
-              <span>前往登录账号</span>
+              <span>前往登录创作账号</span>
             </a>
           </div>
         </div>
       ) : (
-        <div className="max-w-7xl mx-auto space-y-10">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* 卷首寄语 */}
+          <EditorialEpigraph
+            quote="每一篇打动人心的作品，都始于对时代痛点最敏锐的洞察与立意。"
+            author="选题立卷指南"
+            className="my-0"
+          />
+
           {/* 全局顶栏：黄金大标题 Header (纯留白自然分隔) */}
-          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 sm:pb-3 mb-6">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-2xl font-semibold text-[#1C1917] tracking-tight flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6 text-[#D97757] stroke-[1.8]" />
-                <span>选题库</span>
-              </h1>
+          <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2 sm:pb-3">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs">
+                <CompassConstellationIllustration size={24} />
+              </div>
+              <div>
+                <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
+                  灵感手稿 · 选题库
+                </h1>
+                <p className="text-[12px] text-[#78716C] mt-0.5">
+                  全团队选题热度透视、协同认领与创作复盘
+                </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">

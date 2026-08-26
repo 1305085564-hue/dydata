@@ -1560,18 +1560,18 @@ export function ContentDiagnosisWorkbench({
 
             {/* AI 辅助分析（默认折叠为 AI 参考入口） */}
             {analysisResult && (
-              <div className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3.5 shadow-2xs">
+              <div className="rounded-xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-4 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12px]">
-                    <Sparkles className="size-3.5 text-[#78716C]" />
-                    <span className="font-serif tracking-tight">AI 辅助诊断思路（仅供参考）</span>
+                  <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12.5px]">
+                    <Sparkles className="size-3.5 text-[#D97757]" />
+                    <span className="font-serif tracking-tight font-medium">编辑部智囊 · 诊断思路批注</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setAnalysisResult(null)}
                     className="text-[#78716C] hover:text-[#292524] text-[11px] font-medium transition-colors"
                   >
-                    清除
+                    收起批注
                   </button>
                 </div>
                 <motion.div

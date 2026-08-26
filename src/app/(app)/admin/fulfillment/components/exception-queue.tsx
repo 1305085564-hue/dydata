@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { EmptyState } from "@/components/ui/empty-state";
+import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -179,15 +179,15 @@ export function ExceptionQueue({
 
   if (members.length === 0) {
     return (
-      <div className="rounded-xl border border-[#ECE7DE] bg-[#F5F3EE] p-8 sm:p-12 text-center">
-        <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D] mb-3">
-          <span className="text-base">✓</span>
+      <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-8 sm:p-12 text-center shadow-sm">
+        <div className="flex justify-center -mt-2 -mb-1">
+          <ZenFinishedIllustration size={80} />
         </div>
-        <h3 className="text-[14px] font-semibold text-[#1C1917]">
-          全员今日已完成履约 · 团队节奏平稳
+        <h3 className="font-serif text-[15px] font-medium text-[#1C1917] tracking-tight">
+          团队创作节奏平稳 · 今日已悉数收卷
         </h3>
-        <p className="mt-1 text-[12px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
-          当前范围内成员的发布状态都已确认或登记完毕，没有待处置的异常。
+        <p className="mt-1.5 text-[12.5px] text-[#78716C] max-w-sm mx-auto leading-relaxed">
+          当前范围内伙伴的发布状态均已确认或登记，没有待处理的异常。
         </p>
       </div>
     );

@@ -268,3 +268,68 @@ export function ColophonMark({ className = "" }: { className?: string }) {
     </div>
   );
 }
+
+/**
+ * 5. 风中手稿与重新校准 (Recalibration & Floating Drafts)
+ * 意象：微风吹拂的纸页手稿与正在校准的指针，象征异常时的温和自检与从容恢复。
+ * 适用：Error 页面、404 未找到、网络受阻、重新重试。
+ */
+export function DraftRecalibrateIllustration({ className = "", size = 120 }: IllustrationProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`select-none ${className}`}
+      aria-hidden="true"
+    >
+      {/* 柔和背景光晕 */}
+      <circle cx="80" cy="80" r="54" fill="#F5F3EE" fillOpacity="0.85" />
+
+      {/* 案头基准线 */}
+      <line x1="32" y1="122" x2="128" y2="122" stroke="#E5E0D6" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 飘落的手稿纸张 1 */}
+      <g transform="translate(42, 60) rotate(-12)">
+        <rect x="0" y="0" width="36" height="48" rx="2" fill="#FFFFFF" stroke="#292524" strokeWidth="1.2" />
+        <line x1="6" y1="10" x2="26" y2="10" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
+        <line x1="6" y1="16" x2="30" y2="16" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
+        <line x1="6" y1="22" x2="22" y2="22" stroke="#A8A29E" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="28" cy="38" r="3" fill="#D97757" fillOpacity="0.25" />
+      </g>
+
+      {/* 飘落的手稿纸张 2 */}
+      <g transform="translate(82, 54) rotate(14)">
+        <rect x="0" y="0" width="34" height="46" rx="2" fill="#FAF8F4" stroke="#292524" strokeWidth="1.2" />
+        <line x1="6" y1="10" x2="24" y2="10" stroke="#78716C" strokeWidth="1" strokeLinecap="round" />
+        <line x1="6" y1="16" x2="28" y2="16" stroke="#78716C" strokeWidth="1" strokeLinecap="round" />
+        <line x1="6" y1="22" x2="18" y2="22" stroke="#78716C" strokeWidth="1" strokeLinecap="round" />
+      </g>
+
+      {/* 微风轨迹曲线 */}
+      <path
+        d="M28 64C40 50 60 52 74 60"
+        stroke="#D97757"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        strokeDasharray="2 3"
+      />
+      <path
+        d="M96 46C110 38 126 44 134 56"
+        stroke="#78716C"
+        strokeWidth="1"
+        strokeLinecap="round"
+        strokeDasharray="2 3"
+      />
+
+      {/* 重新校准的微型罗盘针 */}
+      <g transform="translate(74, 96)">
+        <circle cx="6" cy="6" r="8" fill="#FFFFFF" stroke="#292524" strokeWidth="1.2" />
+        <line x1="6" y1="1" x2="6" y2="11" stroke="#D97757" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="6" cy="6" r="1.5" fill="#292524" />
+      </g>
+    </svg>
+  );
+}
