@@ -44,6 +44,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getDefaultPublishedAtValue } from "@/lib/日报";
 import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 
@@ -2194,16 +2201,20 @@ export function VideoSubmitFormV2({
                       onChange={(value) => updateMeta("anomalyStatus", value)}
                     />
                     {meta.anomalyStatus === "abnormal" && (
-                      <select
+                      <Select
                         value={meta.punishType || "限流"}
-                        onChange={(e) => updateMeta("punishType", e.target.value)}
-                        className="h-8 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[12px] font-medium text-[#292524] shadow-sm outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                        onValueChange={(value) => updateMeta("punishType", value || undefined)}
                       >
-                        <option value="限流">限流</option>
-                        <option value="删稿">删稿</option>
-                        <option value="投流">投流</option>
-                        <option value="活动干预">活动干预</option>
-                      </select>
+                        <SelectTrigger className="h-8 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[12px] font-medium text-[#292524] shadow-sm hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25">
+                          <SelectValue>{meta.punishType || "限流"}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+                          <SelectItem value="限流">限流</SelectItem>
+                          <SelectItem value="删稿">删稿</SelectItem>
+                          <SelectItem value="投流">投流</SelectItem>
+                          <SelectItem value="活动干预">活动干预</SelectItem>
+                        </SelectContent>
+                      </Select>
                     )}
                   </div>
 

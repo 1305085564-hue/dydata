@@ -8,6 +8,13 @@ import {
   parseCreatedSubTopicResponse,
   parseSuggestedSubTopicsResponse,
 } from "@/lib/topics/v2-client-contract";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TopicCreateModalProps {
   isOpen: boolean;
@@ -198,20 +205,28 @@ export function TopicCreateModal({
               <label className="block text-xs font-medium text-[#292524] mb-1">
                 选择所属母题 <span className="text-[#DC2626]">*</span>
               </label>
-              <select
+              <Select
                 value={topicId}
-                onChange={(e) => setTopicId(e.target.value)}
-                className="w-full text-xs bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-lg px-3 py-2 text-[#292524] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 font-normal"
-                required
-                aria-label="选择所属母题"
+                onValueChange={(val) => setTopicId(val || "")}
               >
-                <option value="">选择母题...</option>
-                {topics.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  aria-label="选择所属母题"
+                  className="w-full text-xs bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-lg px-3 py-2 text-[#292524] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 font-normal"
+                >
+                  <SelectValue>
+                    {topicId
+                      ? topics.find((t) => t.id === topicId)?.name || "选择母题..."
+                      : "选择母题..."}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-44">
+                  {topics.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* 子题标题 */}

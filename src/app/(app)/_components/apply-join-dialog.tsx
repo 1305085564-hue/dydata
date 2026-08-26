@@ -13,6 +13,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import type { TeamOption } from "@/lib/teams";
 
@@ -73,25 +80,30 @@ export function ApplyJoinDialog({ teams, trigger, open: controlledOpen, onOpenCh
 
         <div className="space-y-2">
           <Label htmlFor="apply-team-id">目标团队</Label>
-          <select
-            id="apply-team-id"
-            className={`flex h-8 w-full rounded-lg border border-transparent bg-[#FBF9F5] px-3 text-[13px] text-[#1C1917] outline-none transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:bg-white focus-visible:border-[#E5E0D6] focus-visible:shadow-sm focus-visible:ring-1 focus-visible:ring-[#1C1917]/5 ${errorText ? "ring-1 ring-red-300" : ""}`}
+          <Select
             value={teamId}
-            onChange={(e) => {
-              setTeamId(e.target.value);
+            onValueChange={(val) => {
+              setTeamId(val || "");
               if (errorText) setErrorText("");
             }}
             disabled={isPending}
           >
-            <option value="" disabled>
-              选一个目标团队
-            </option>
-            {teams.map((team) => (
-              <option key={team.id} value={team.id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              id="apply-team-id"
+              className={`h-8 w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 ${errorText ? "ring-1 ring-red-300" : ""}`}
+            >
+              <SelectValue>
+                {teamId ? teams.find((t) => t.id === teamId)?.name || "选一个目标团队" : "选一个目标团队"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-44">
+              {teams.map((team) => (
+                <SelectItem key={team.id} value={team.id}>
+                  {team.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {errorText && <p className="text-[#C0685C] text-xs mt-1">{errorText}</p>}
         </div>
 

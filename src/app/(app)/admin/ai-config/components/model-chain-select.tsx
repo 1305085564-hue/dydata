@@ -3,6 +3,13 @@
 import { useMemo } from "react";
 import { type ModelDirectoryEntry } from "../model-directory";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 /** 模型选择下拉 + 该模型渠道顺位预览（模型为主，跨渠道自动切换） */
 export function ModelChainSelect({
@@ -25,20 +32,30 @@ export function ModelChainSelect({
 
   return (
     <div className="space-y-1.5">
-      <select
-        id={id}
-        aria-label={id}
-        className="h-8 w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 text-[12px] font-mono text-[#1C1917] hover:bg-white focus:bg-white focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer"
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value || null)}
+      <Select
+        value={value ?? (allowEmptyLabel ? "__empty__" : "")}
+        onValueChange={(val) => onChange(val === "__empty__" || !val ? null : val)}
       >
-        {allowEmptyLabel && <option value="">{allowEmptyLabel}</option>}
-        {modelDirectory.map((entry) => (
-          <option key={entry.modelId} value={entry.modelId}>
-            {entry.label} ({entry.channels.length} 渠道可用)
-          </option>
-        ))}
-      </select>
+        <SelectTrigger
+          id={id}
+          aria-label={id}
+          className="h-8 w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 text-[12px] font-mono text-[#1C1917] hover:bg-white focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/30 transition-colors"
+        >
+          <SelectValue>
+            {selected
+              ? `${selected.label} (${selected.channels.length} 渠道可用)`
+              : allowEmptyLabel || "请选择模型..."}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-56 font-mono text-[12px]">
+          {allowEmptyLabel && <SelectItem value="__empty__">{allowEmptyLabel}</SelectItem>}
+          {modelDirectory.map((entry) => (
+            <SelectItem key={entry.modelId} value={entry.modelId}>
+              {entry.label} ({entry.channels.length} 渠道可用)
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       {selected && (
         <div className="rounded-lg border border-[#E5E0D6]/70 bg-white/90 p-2 text-[11px] leading-relaxed text-[#292524] space-y-1 shadow-2xs">
           <div className="flex items-center justify-between text-[#78716C]">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BarChart2, AlertTriangle, RefreshCw, ChevronDown } from "lucide-react";
+import { BarChart2, AlertTriangle, RefreshCw } from "lucide-react";
 import {
   fetchTopicJson,
   parseComparisonResponse,
@@ -11,6 +11,13 @@ import type {
   TopicComparisonItem,
   TopicOption,
 } from "./types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TopicComparisonMatrixProps {
   topics: TopicOption[];
@@ -106,47 +113,58 @@ export function TopicComparisonMatrix({
             </button>
           </div>
 
-          {dimension === "account" && topicsError ? (
+          {topicsError ? (
             <span className="text-xs text-[#78716C]">母题加载失败</span>
           ) : (
             dimension === "account" && (
-              <div className="relative inline-flex items-center">
-                <select
-                  value={topicId}
-                  onChange={(event) => setTopicId(event.target.value)}
-                  className={`appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors ${
+              <Select
+                value={topicId}
+                onValueChange={(val) => setTopicId(val || "")}
+              >
+                <SelectTrigger
+                  aria-label="选择对比母题"
+                  className={`h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-normal shadow-none transition-colors ${
                     !topicId
                       ? "ring-1 ring-[#D97757]/40 bg-[#D97757]/5 text-[#D97757]"
                       : ""
                   }`}
-                  aria-label="选择对比母题"
                 >
-                  <option value="">选择母题...</option>
+                  <SelectValue>
+                    {topicId
+                      ? topics.find((t) => t.id === topicId)?.name || "选择母题..."
+                      : "选择母题..."}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-36">
                   {topics.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
+                    <SelectItem key={topic.id} value={topic.id}>
                       {topic.name}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-                <ChevronDown className="size-3.5 text-[#78716C] absolute right-1 pointer-events-none" />
-              </div>
+                </SelectContent>
+              </Select>
             )
           )}
 
           {/* 时间跨度平铺下拉 */}
-          <div className="relative inline-flex items-center">
-            <select
-              value={days}
-              onChange={(event) => setDays(Number(event.target.value))}
-              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
+          <Select
+            value={String(days)}
+            onValueChange={(val) => setDays(Number(val))}
+          >
+            <SelectTrigger
               aria-label="时间跨度"
+              className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-normal shadow-none transition-colors"
             >
-              <option value={14}>近 14 天</option>
-              <option value={30}>近 30 天</option>
-              <option value={60}>近 60 天</option>
-            </select>
-            <ChevronDown className="size-3.5 text-[#78716C] absolute right-1 pointer-events-none" />
-          </div>
+              <SelectValue>
+                {days === 14 ? "近 14 天" : days === 30 ? "近 30 天" : "近 60 天"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+              <SelectItem value="14">近 14 天</SelectItem>
+              <SelectItem value="30">近 30 天</SelectItem>
+              <SelectItem value="60">近 60 天</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

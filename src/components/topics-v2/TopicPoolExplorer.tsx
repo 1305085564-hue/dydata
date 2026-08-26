@@ -14,6 +14,13 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type {
   TopicPoolItem,
   TopicOption,
@@ -267,20 +274,33 @@ export function TopicPoolExplorer({
             )}
           </div>
 
-          {/* 排序下拉 (去框平铺 + 自定义统一箭头) */}
+          {/* 排序下拉 */}
           <div className="relative inline-flex items-center">
-            <select
+            <Select
               value={sortBy}
-              onChange={(e) => onSortByChange(e.target.value as SortByOption)}
-              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
-              aria-label="排序依据"
+              onValueChange={(val) => onSortByChange(val as SortByOption)}
             >
-              <option value="ai_recommended">推荐</option>
-              <option value="avg_play">均播</option>
-              <option value="claim_count">热度</option>
-              <option value="latest">最新</option>
-            </select>
-            <ChevronDown className="size-3.5 text-[#78716C] absolute right-1.5 pointer-events-none" />
+              <SelectTrigger
+                aria-label="排序依据"
+                className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-normal shadow-none transition-colors"
+              >
+                <SelectValue>
+                  {sortBy === "ai_recommended"
+                    ? "推荐"
+                    : sortBy === "avg_play"
+                      ? "均播"
+                      : sortBy === "claim_count"
+                        ? "热度"
+                        : "最新"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+                <SelectItem value="ai_recommended">推荐</SelectItem>
+                <SelectItem value="avg_play">均播</SelectItem>
+                <SelectItem value="claim_count">热度</SelectItem>
+                <SelectItem value="latest">最新</SelectItem>
+              </SelectContent>
+            </Select>
             {sortBy === "ai_recommended" && (
               <Badge
                 variant="outline"
@@ -292,24 +312,35 @@ export function TopicPoolExplorer({
             )}
           </div>
 
-          {/* 时间范围下拉 (去框平铺 + 自定义统一箭头) */}
-          <div className="relative inline-flex items-center">
-            <select
-              value={currentTimeRange}
-              onChange={(e) =>
-                onTimeRangeChange(e.target.value as TopicTimeRange)
-              }
-              className="appearance-none text-xs bg-transparent hover:bg-[#F5F3EE] rounded-lg pl-2 pr-5.5 py-1.5 min-h-[44px] sm:min-h-0 text-[#292524] hover:text-[#1C1917] font-normal focus:outline-none cursor-pointer transition-colors"
+          {/* 时间范围下拉 */}
+          <Select
+            value={currentTimeRange}
+            onValueChange={(val) => onTimeRangeChange(val as TopicTimeRange)}
+          >
+            <SelectTrigger
               aria-label="时间范围"
+              className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-normal shadow-none transition-colors"
             >
-              <option value="all">全部</option>
-              <option value="3m">90天</option>
-              <option value="1m">30天</option>
-              <option value="1w">7天</option>
-              <option value="3d">3天</option>
-            </select>
-            <ChevronDown className="size-3.5 text-[#78716C] absolute right-1.5 pointer-events-none" />
-          </div>
+              <SelectValue>
+                {currentTimeRange === "all"
+                  ? "全部"
+                  : currentTimeRange === "3m"
+                    ? "90天"
+                    : currentTimeRange === "1m"
+                      ? "30天"
+                      : currentTimeRange === "1w"
+                        ? "7天"
+                        : "3天"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+              <SelectItem value="all">全部</SelectItem>
+              <SelectItem value="3m">90天</SelectItem>
+              <SelectItem value="1m">30天</SelectItem>
+              <SelectItem value="1w">7天</SelectItem>
+              <SelectItem value="3d">3天</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* 结构呼吸微竖线 */}
           <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
