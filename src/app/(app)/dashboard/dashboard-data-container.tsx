@@ -21,7 +21,6 @@ export async function DashboardDataContainer() {
       <DashboardContent
         today={data.today}
         userDisplayName={data.userDisplayName}
-        userRole={data.userRole}
         accounts={data.accounts}
         userId={data.userId}
         todayReports={data.todayReports}
@@ -29,7 +28,6 @@ export async function DashboardDataContainer() {
         monthReports={data.monthReports}
         history={data.history}
         accountIds={data.accountIds}
-        ownContentDirections={data.ownContentDirections}
         accountDisplayNameMap={data.accountDisplayNameMap}
         hasPendingExemption={data.hasPendingExemption}
         userExemptionReviewNotice={data.userExemptionReviewNotice}

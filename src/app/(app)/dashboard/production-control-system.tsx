@@ -15,13 +15,11 @@ import {
   setDashboardDate,
 } from "@/lib/dashboard-store";
 
-import { DashboardWorkspaceHeader } from "./components/dashboard-workspace-header";
 import { VideoSubmitPanelV2 } from "./video-submit-panel-v2";
 
 interface ProductionControlSystemProps {
   today: string;
   userDisplayName: string;
-  userRole: "member" | "admin" | "owner";
   accounts: {
     id: string;
     name: string;
@@ -38,7 +36,6 @@ interface ProductionControlSystemProps {
     Omit<TodaySubmissionReportLike, "account_id"> & { id: string; account_id: string }
   >;
   accountIds: string[];
-  ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];
@@ -56,7 +53,6 @@ export function ProductionControlSystem({
   monthReports,
   history,
   accountIds,
-  ownContentDirections,
   accountDisplayNameMap,
   hasPendingExemption = false,
   userExemptionReviewNotice,
@@ -128,7 +124,6 @@ export function ProductionControlSystem({
         monthReports={monthReports}
         history={history}
         accountIds={accountIds}
-        ownContentDirections={ownContentDirections}
         accountDisplayNameMap={accountDisplayNameMap}
         hasPendingExemption={hasPendingExemption}
         {...{ userExemptionReviewNotice }}

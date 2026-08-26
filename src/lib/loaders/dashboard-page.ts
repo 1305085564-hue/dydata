@@ -10,15 +10,13 @@ import {
   mergeDashboardReports,
 } from "@/app/(app)/dashboard/video-submit-panel-state";
 import {
-  getExemptionStateForDate,
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
 import { ensureDefaultDashboardAccount } from "@/lib/dashboard-account-provisioning";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import { isMissingExemptionRequestCategoryError } from "@/lib/豁免流程";
-import type { UserRole } from "@/types";
-import { formatShanghaiDateOnly, getSafeAccountDisplayName, uniqueNonEmpty } from "./shared";
+import { formatShanghaiDateOnly, getSafeAccountDisplayName } from "./shared";
 
 type DashboardSupabase = SupabaseClient;
 
@@ -44,7 +42,6 @@ async function loadDashboardAccounts(
 
 type ProfileWithExemptionRow = {
   name: string | null;
-  role: UserRole | null;
   status: string | null;
   exempt_type: "permanent" | "temporary" | null;
   exempt_start_date: string | null;
@@ -77,9 +74,9 @@ export type UserExemptionReviewNotice = {
 };
 
 const DASHBOARD_PROFILE_SELECT =
-  "name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+  "name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
 const DASHBOARD_PROFILE_SELECT_FALLBACK =
-  "name, role, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
+  "name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
 
 let profileExemptionCategoryAvailable: boolean | null = null;
 let exemptionGrantTableAvailable: boolean | null = null;
@@ -268,28 +265,19 @@ async function loadLatestExemptionReviewNotice(
 
 export interface DashboardPageData {
   today: string;
-  isExternalUser: boolean;
   monthSubmittedDates: string[];
   monthReports: DashboardActivityReport[];
   userId: string;
-  userRole: UserRole;
   userDisplayName: string;
   accounts: Array<DashboardAccountRow & { display_name: string }>;
   accountIds: string[];
   accountDisplayNameMap: Record<string, string>;
-  ownContentDirections: string[];
   todayReports: TodaySubmissionReportLike[];
   history: DashboardActivityReport[];
   hasPendingExemption: boolean;
   userExemptionReviewNotice: UserExemptionReviewNotice | null;
   userExemptionProfile: ExemptionProfileLike;
   userExemptionGrants: ExemptionGrantLike[];
-  summary: {
-    totalAccounts: number;
-    submittedCount: number;
-    pendingCount: number;
-    historyCount: number;
-  };
 }
 
 export async function loadDashboardPageData({
@@ -306,7 +294,6 @@ export async function loadDashboardPageData({
 
   let accounts = initialAccounts;
   const userDisplayName = profile?.name?.trim() || "当前用户";
-  const userRole = profile?.role ?? "member";
 
   if (accounts.length === 0) {
     let shouldReloadAccounts = false;
@@ -347,7 +334,6 @@ export async function loadDashboardPageData({
 
   const today = formatShanghaiDateOnly();
   const accountIds = displayAccounts.map((account) => account.id);
-  const ownContentDirections = uniqueNonEmpty(displayAccounts.map((account) => account.content_direction));
   const accountDisplayNameMap = Object.fromEntries(displayAccounts.map((account) => [account.id, account.display_name]));
   const monthStartDate = `${today.slice(0, 8)}01`;
 
@@ -396,45 +382,22 @@ export async function loadDashboardPageData({
     ),
   });
   const monthSubmittedDates = getDashboardSubmittedDates(monthReports);
-  const submittedAccountIds = new Set(todayReports.map((report) => report.account_id).filter(Boolean));
-
-  const todayExemptionState = getExemptionStateForDate(
-    userExemptionProfile,
-    today,
-    userExemptionGrants,
-  );
-  const submittedCountForSummary =
-    todayExemptionState.isExempt && todayExemptionState.category !== "leave"
-      ? displayAccounts.length
-      : submittedAccountIds.size;
-  const pendingCountForSummary = todayExemptionState.isExempt
-    ? 0
-    : Math.max(displayAccounts.length - submittedAccountIds.size, 0);
 
   return {
     today,
-    isExternalUser: false,
     monthSubmittedDates,
     monthReports,
     userId,
-    userRole,
     userDisplayName,
     accounts: displayAccounts,
     accountIds,
     accountDisplayNameMap,
-    ownContentDirections,
     todayReports,
     history: [],
     hasPendingExemption,
     userExemptionReviewNotice,
     userExemptionProfile,
     userExemptionGrants,
-    summary: {
-      totalAccounts: displayAccounts.length,
-      submittedCount: submittedCountForSummary,
-      pendingCount: pendingCountForSummary,
-      historyCount: 0,
-    },
   };
 }
 

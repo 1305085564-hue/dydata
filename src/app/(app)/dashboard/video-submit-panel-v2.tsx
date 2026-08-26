@@ -199,7 +199,6 @@ interface VideoSubmitPanelV2Props {
   monthReports: MonthReport[];
   history: MonthReport[];
   accountIds: string[];
-  ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   userExemptionReviewNotice?: DashboardPageData["userExemptionReviewNotice"];
@@ -539,7 +538,7 @@ export function VideoSubmitPanelV2({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div>
-              <h1 className="text-[20px] font-semibold text-[#1C1917] tracking-tight">
+              <h1 className="font-serif text-[20px] font-semibold text-[#1C1917] tracking-tight">
                 今日提交工作台
               </h1>
               <p className="mt-1 text-[13px] text-[#78716C]">

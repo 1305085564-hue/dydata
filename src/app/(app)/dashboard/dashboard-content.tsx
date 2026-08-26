@@ -1,7 +1,6 @@
 "use client";
 
 import { ProductionControlSystem } from "./production-control-system";
-import type { UserRole } from "@/types";
 import type { DashboardPageData } from "@/lib/loaders/dashboard-page";
 import type { ExemptionGrantLike, ExemptionProfileLike } from "@/lib/豁免";
 import type { TodaySubmissionReportLike } from "./video-submit-panel-state";
@@ -14,7 +13,6 @@ type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 interface DashboardContentProps {
   today: string;
   userDisplayName: string;
-  userRole: UserRole;
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
   userId: string;
   todayReports: TodaySubmissionReportLike[];
@@ -22,7 +20,6 @@ interface DashboardContentProps {
   monthReports: MonthReport[];
   history: MonthReport[];
   accountIds: string[];
-  ownContentDirections: string[];
   accountDisplayNameMap: Record<string, string>;
   hasPendingExemption?: boolean;
   userExemptionReviewNotice: DashboardPageData["userExemptionReviewNotice"];

@@ -47,7 +47,6 @@ function createSupabaseMock(
       return {
         data: {
           name: "测试成员",
-          role: "admin",
           status: "active",
           exempt_type: null,
           exempt_start_date: null,
@@ -227,10 +226,10 @@ test("loadDashboardPageData 账号查询失败时抛错，不伪装成无账号"
   );
 });
 
-test("dashboard profile 查询合同包含 role 且不使用通配符", () => {
+test("dashboard profile 查询合同不使用通配符", () => {
   assert.equal(__internal.DASHBOARD_PROFILE_SELECT.includes("*"), false);
-  assert.match(__internal.DASHBOARD_PROFILE_SELECT, /role/);
-  assert.match(__internal.DASHBOARD_PROFILE_SELECT_FALLBACK, /role/);
+  assert.equal(__internal.DASHBOARD_PROFILE_SELECT.includes("role"), false);
+  assert.equal(__internal.DASHBOARD_PROFILE_SELECT_FALLBACK.includes("role"), false);
 });
 
 test("loadDashboardPageData 首屏只查一次 profiles 且不再拉 team review requests", async () => {
@@ -247,7 +246,7 @@ test("loadDashboardPageData 首屏只查一次 profiles 且不再拉 team review
   assert.equal(profileCalls.length, 1);
   assert.equal(profileCalls[0]?.columns, __internal.DASHBOARD_PROFILE_SELECT);
   assert.equal(exemptionRequestCalls.length, 2);
-  assert.equal(result.userRole, "admin");
+  assert.equal("userRole" in result, false);
   assert.equal(result.userDisplayName, "测试成员");
   assert.equal("teamReviewRequests" in result, false);
 });
