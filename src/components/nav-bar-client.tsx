@@ -153,42 +153,7 @@ export function NavBarClient({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const [centerBadges, setCenterBadges] = useState<{
-    cockpit: number;
-    videos: number;
-    content: number;
-    conversion_hub: number;
-    ai_channels: number;
-  } | null>(null);
-
   const isAdmin = showAdmin;
-
-  // Poll for admin center badges (video/content anomaly review queue counts)
-  useEffect(() => {
-    if (!showAdmin) return;
-    let active = true;
-    const load = async () => {
-      if (
-        typeof document !== "undefined" &&
-        document.visibilityState !== "visible"
-      )
-        return;
-      try {
-        const res = await fetch("/api/admin/sidebar-badges", {
-          credentials: "include",
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (active) setCenterBadges(json);
-      } catch {}
-    };
-    void load();
-    const id = setInterval(load, 120_000);
-    return () => {
-      active = false;
-      clearInterval(id);
-    };
-  }, [showAdmin]);
 
   const loadPendingApprovalsCount = useCallback(async () => {
     if (!isAdmin) return 0;
@@ -317,17 +282,6 @@ export function NavBarClient({
     setSettingsOpen(true);
   }, []);
 
-  // Helper to get total badge count for a group
-  const getGroupBadgeCount = (group: NavGroup): number => {
-    if (!group.children) return 0;
-    return group.children.reduce((acc, child) => {
-      if (child.badgeKey && centerBadges?.[child.badgeKey as keyof typeof centerBadges]) {
-        return acc + (centerBadges[child.badgeKey as keyof typeof centerBadges] ?? 0);
-      }
-      return acc;
-    }, 0);
-  };
-
   return (
     <>
       <nav
@@ -374,8 +328,6 @@ export function NavBarClient({
                     ? group.match!(pathname)
                     : group.children?.some((child) => child.match(pathname));
 
-                  const groupBadgeCount = getGroupBadgeCount(group);
-                  void groupBadgeCount;
                   const isDropdownOpen = activeDropdownGroup === group.key;
 
                   if (isSingle) {

@@ -17,7 +17,6 @@ export type NavSubItem = {
   label: string;
   icon?: LucideIcon;
   match: (pathname: string) => boolean;
-  badgeKey?: "content" | "videos";
 };
 
 export type NavGroup = {
@@ -73,7 +72,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       href: "/admin/content",
       label: "视频复盘",
       icon: FileEdit,
-      badgeKey: "content",
       match: (pathname) =>
         pathname === "/admin" || pathname === "/admin/content" || pathname.startsWith("/admin/content/"),
     },
@@ -81,7 +79,6 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
       href: "/admin/videos",
       label: "素材库",
       icon: Library,
-      badgeKey: "videos",
       match: (pathname) => pathname === "/admin/videos" || pathname.startsWith("/admin/videos/"),
     },
   ];
