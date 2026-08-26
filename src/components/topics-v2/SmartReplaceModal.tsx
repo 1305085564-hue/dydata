@@ -143,7 +143,7 @@ export function SmartReplaceModal({
               </span>
             </p>
             <div className="bg-[#FBF9F5] rounded-xl p-3 text-xs text-[#292524] font-normal">
-              系统已为您自动推荐放回
+              已为你自动推荐放回
               <span className="font-medium">挂机时间最长</span>
               的候选选题。脚本中的选题不会出现在替换列表。
             </div>
@@ -195,7 +195,7 @@ export function SmartReplaceModal({
                         <div className="text-xs font-normal text-[#292524]">
                           {sub?.title || "已认领子题"}
                         </div>
-                        <div className="text-xs text-[#78716C] line-clamp-1 mt-0.5 font-normal">
+                        <div className="font-serif not-italic text-xs text-[#292524] line-clamp-1 mt-0.5 leading-relaxed">
                           “{sub?.hook || "还没有 Hook"}”
                         </div>
                       </div>

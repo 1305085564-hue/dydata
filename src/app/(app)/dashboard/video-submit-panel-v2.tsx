@@ -693,7 +693,7 @@ export function VideoSubmitPanelV2({
                         <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN")
-                            : "--"}
+                            : "—"}
                         </div>
                       </div>
                       <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
@@ -701,13 +701,13 @@ export function VideoSubmitPanelV2({
                         <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN")
-                            : "--"}
+                            : "—"}
                         </div>
                       </div>
                       <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
                         <div className="text-[11px] font-medium text-[#78716C]">完播率</div>
                         <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
-                          {primarySummary.completionRate ?? "--"}
+                          {primarySummary.completionRate ?? "—"}
                         </div>
                       </div>
                     </div>
@@ -867,7 +867,7 @@ export function VideoSubmitPanelV2({
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
           </DialogHeader>
           {activityError ? (
             <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
@@ -907,7 +907,7 @@ export function VideoSubmitPanelV2({
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto p-4 gap-3 sm:max-w-5xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
           </DialogHeader>
           {editingReport ? (
             <HistoryReportEditForm

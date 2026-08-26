@@ -166,7 +166,7 @@ export function HistoryReportEditForm({
                 name="content"
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                className="min-h-[120px] w-full resize-y rounded-xl border border-[#E5E0D6] bg-white shadow-2xs px-3.5 py-3 text-[13px] leading-[1.7] text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                className="min-h-[120px] w-full resize-y rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs px-3.5 py-3 text-[13px] leading-[1.7] text-[#292524] outline-none transition hover:border-[#78716C]/40 placeholder:text-[#78716C]/60 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                 placeholder="补充或修正历史文案"
               />
             </div>

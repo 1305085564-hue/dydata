@@ -166,7 +166,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F5F3EE] text-[#78716C] mb-5">
             <Sparkles className="h-8 w-8 text-[#D97757]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#1C1917] leading-[1.4]">
+          <h2 className="font-serif tracking-tight text-lg font-semibold text-[#1C1917] leading-[1.4]">
             开启内容成长体检
           </h2>
           <p className="mt-3 text-[13px] text-[#78716C] leading-[1.6]">
@@ -364,7 +364,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <span className="text-[12px] font-medium uppercase tracking-widest text-[#78716C]">
             体检暂停
           </span>
-          <h2 className="mt-2 text-lg font-semibold text-[#1C1917] leading-[1.4]">
+          <h2 className="font-serif tracking-tight mt-2 text-lg font-semibold text-[#1C1917] leading-[1.4]">
             数据停在 {stage.lastReportDate ? 格式化为月日(stage.lastReportDate) : "很久以前"}，近 30 天没有新日报
           </h2>
           <p className="mt-2 text-[13px] text-[#78716C] leading-[1.6]">

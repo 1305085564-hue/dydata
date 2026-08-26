@@ -620,7 +620,7 @@ export function ContentDiagnosisWorkbench({
     for (const f of feedbackFindings) {
       if (f.tone === "bad" || f.tone === "warn") {
         list.push(
-          `${f.ref_label} · ${f.metric_label} ${f.value != null ? f.value.toFixed(1) : "缺数据"}${RATE_METRICS.has(f.metric) && f.value != null ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`,
+          `${f.ref_label} · ${f.metric_label} ${f.value != null ? f.value.toFixed(1) : "—"}${RATE_METRICS.has(f.metric) && f.value != null ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`,
         );
       }
     }
@@ -1155,7 +1155,7 @@ export function ContentDiagnosisWorkbench({
                     value={selectedRefUserId || undefined}
                     onValueChange={(val) => setSelectedRefUserId(val)}
                   >
-                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-white border-[#E5E0D6] rounded-md">
+                    <SelectTrigger className="h-7 min-w-36 text-[11px] bg-[#FAF8F4]/50 border-[#E5E0D6] rounded-md">
                       <SelectValue placeholder="选一个成员" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1368,7 +1368,7 @@ export function ContentDiagnosisWorkbench({
                               ? val
                               : parseFloat(String(val));
                           return [
-                            `${isNaN(numericVal) ? "缺数据" : numericVal.toFixed(1)}%`,
+                            isNaN(numericVal) ? "—" : `${numericVal.toFixed(1)}%`,
                             "留存率",
                           ];
                         }}
@@ -1709,7 +1709,7 @@ export function ContentDiagnosisWorkbench({
                     onChange={(e) => setMainIssues(e.target.value)}
                     disabled={!isEditable}
                     placeholder="例如：开头前5s钩子不够吸引人，完播偏低..."
-                    className="w-full h-9 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-9 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs px-3 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -1723,7 +1723,7 @@ export function ContentDiagnosisWorkbench({
                     onChange={(e) => setFeedback(e.target.value)}
                     disabled={!isEditable}
                     placeholder="输入具体优化台词的话术改写方向或操作建议..."
-                    className="w-full rounded-xl border border-[#E5E0D6] bg-white shadow-2xs p-3 text-[12px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs p-3 text-[12px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
               </div>
@@ -1984,7 +1984,7 @@ function MultiRefMetricCard({
 
   const formattedCurrent =
     currentVal == null
-      ? "缺数据"
+      ? "—"
       : unit === "%" || unit === "pp"
         ? `${currentVal.toFixed(1)}%`
         : unit === "s"

@@ -159,7 +159,7 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-8.5 w-36 rounded-lg border border-[#E5E0D6] bg-white text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+              className="h-8.5 w-36 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
@@ -177,7 +177,7 @@ export function FilterBar({
         {/* 飞书催交开关（沉静平铺） */}
         <div
           className="flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3 py-1.5 transition-colors"
-          title="开启后，系统将在每日 18:00 自动向今日未提交视频的成员发送飞书消息提醒"
+          title="开启后，每天 18:00 会自动核对团队发布进度，向未提交视频的成员发送飞书提醒"
         >
           <span className="text-[12px] font-normal text-[#292524]">
             飞书自动催交
@@ -227,15 +227,15 @@ export function FilterBar({
       >
         <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
               {confirmToggleTarget
                 ? "确认开启飞书自动催交"
                 : "确认关闭飞书自动催交"}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
               {confirmToggleTarget
-                ? "开启后，系统将在每日 18:00 自动检查团队发布进度，并向未提交视频的成员发送飞书消息提醒。"
-                : "关闭后，系统将停止每日 18:00 的飞书自动催交提醒。"}
+                ? "开启后，每天 18:00 会自动核对团队发布进度，向未提交视频的成员发送飞书提醒。"
+                : "关闭后，将停止每天 18:00 的飞书自动催交提醒。"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">

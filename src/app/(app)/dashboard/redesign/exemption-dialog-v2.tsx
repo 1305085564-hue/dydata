@@ -330,7 +330,7 @@ export function ExemptionDialogV2({
                   onChange={(e) => calendar.setReason(e.target.value)}
                   rows={4}
                   maxLength={100}
-                  className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-white px-3.5 py-2.5 text-sm text-[#292524] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-150 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                  className="w-full resize-none rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3.5 py-2.5 text-sm text-[#292524] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all duration-150 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                   placeholder="简述请假原因，如：病假、事假、外出拍摄等（最多100字）"
                 />
                 <div className="flex justify-end">

@@ -281,7 +281,7 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-7.5 min-w-36 rounded-lg border border-[#E5E0D6] bg-white text-[12px] font-medium text-[#292524] hover:border-[#E5E0D6] shadow-2xs cursor-pointer">
+              <SelectTrigger className="h-7.5 min-w-36 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] hover:border-[#E5E0D6] shadow-2xs cursor-pointer">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>

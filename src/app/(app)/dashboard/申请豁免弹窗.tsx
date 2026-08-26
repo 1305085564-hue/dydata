@@ -347,7 +347,7 @@ function ExemptionModal({
                   </p>
                   <textarea
                     className={cn(
-                      "h-[100px] w-full resize-none rounded-xl border border-[#E5E0D6] bg-white px-3.5 py-2.5 text-[13px] leading-[1.7] text-[#292524] shadow-2xs transition-colors duration-150 ease-out placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
+                      "h-[100px] w-full resize-none rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3.5 py-2.5 text-[13px] leading-[1.7] text-[#292524] shadow-2xs transition-colors duration-150 ease-out placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0",
                       reasonError && "ring-1 ring-[#C0685C]/40 border-[#C0685C]/40",
                     )}
                     maxLength={100}

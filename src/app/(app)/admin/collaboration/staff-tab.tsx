@@ -174,8 +174,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                           </span>
                         </TooltipTrigger>
                         <TooltipContent className="text-[12px] max-w-xs">
-                          <p className="font-medium text-[#ECE7DE] mb-1">经手账号：</p>
-                          <p className="text-[#E5E0D6] leading-relaxed">
+                          <p className="font-medium text-[#FBF9F5] mb-1">经手账号：</p>
+                          <p className="text-[#FBF9F5] leading-relaxed">
                             {displayedAccounts} 等共 {row.involvedAccountTotal} 个账号（点击成员姓名查看个人档案明细）
                           </p>
                         </TooltipContent>

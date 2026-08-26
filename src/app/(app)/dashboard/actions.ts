@@ -293,7 +293,7 @@ export async function submitExemptionRequestWithClient(
     };
   } catch (error) {
     console.error("[exemptions] dashboard request threw", { error, userId: user.id });
-    return { error: "提交豁免申请失败（系统异常）" };
+    return { error: "豁免申请没能交上去，请稍后再试" };
   } finally {
     activeExemptionSubmissions.delete(user.id);
   }

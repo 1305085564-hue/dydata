@@ -644,7 +644,7 @@ export default function SubTopicDetailPage({
                 <Sparkles className="size-3.5 text-[#D97757]" />
                 <span>一句话钩子</span>
               </div>
-              <p className="text-[#292524]">"{detail.hook}"</p>
+              <p className="text-[#292524]">“{detail.hook}”</p>
             </div>
           )}
 

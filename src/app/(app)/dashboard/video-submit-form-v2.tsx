@@ -1959,7 +1959,7 @@ export function VideoSubmitFormV2({
                 />
               </svg>
             </div>
-            <h3 className="text-base font-medium tracking-tight text-[#292524]">
+            <h3 className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
               数据提交成功
             </h3>
             <p className="mt-2 text-[13px] text-[#78716C]">
@@ -2197,7 +2197,7 @@ export function VideoSubmitFormV2({
                       <select
                         value={meta.punishType || "限流"}
                         onChange={(e) => updateMeta("punishType", e.target.value)}
-                        className="h-8 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[12px] font-medium text-[#292524] shadow-sm outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
+                        className="h-8 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[12px] font-medium text-[#292524] shadow-sm outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                       >
                         <option value="限流">限流</option>
                         <option value="删稿">删稿</option>
@@ -2208,7 +2208,7 @@ export function VideoSubmitFormV2({
                   </div>
 
                   <div className="text-[12px] text-[#78716C] tabular-nums">
-                    {meta.bizDate !== today ? `归属日期：${meta.bizDate}` : "当天填报"}
+                    {meta.bizDate !== today ? `归属日期：${meta.bizDate}` : "当日"}
                   </div>
                 </div>
 
@@ -2418,7 +2418,7 @@ export function VideoSubmitFormV2({
                               value={meta.platformNotice || ""}
                               onChange={(e) => updateMeta("platformNotice", e.target.value)}
                               placeholder="如处罚通知文案"
-                              className="h-8 rounded-lg bg-white/90 border-amber-200/60 text-[12px]"
+                              className="h-8 rounded-lg bg-[#FAF8F4]/50 border-amber-200/60 text-[12px]"
                             />
                           </div>
                           <div className="space-y-1">
@@ -2430,7 +2430,7 @@ export function VideoSubmitFormV2({
                               value={meta.appeal || ""}
                               onChange={(e) => updateMeta("appeal", e.target.value)}
                               placeholder="如申诉处理中"
-                              className="h-8 rounded-lg bg-white/90 border-amber-200/60 text-[12px]"
+                              className="h-8 rounded-lg bg-[#FAF8F4]/50 border-amber-200/60 text-[12px]"
                             />
                           </div>
                         </div>
@@ -2488,7 +2488,7 @@ export function VideoSubmitFormV2({
                               </div>
                               <div className="flex justify-between text-[11px] text-[#78716C]">
                                 <span>上传时间戳</span>
-                                <span className="tabular-nums">{meta.uploadedAt || "--"}</span>
+                                <span className="tabular-nums">{meta.uploadedAt || "—"}</span>
                               </div>
                             </motion.div>
                           )}
@@ -2538,7 +2538,7 @@ export function VideoSubmitFormV2({
                         value={meta.videoTitle}
                         onChange={(event) => updateMeta("videoTitle", event.target.value)}
                         placeholder="输入视频标题"
-                        className="h-10 rounded-lg bg-white border border-[#E5E0D6] shadow-sm text-[13px]"
+                        className="h-10 rounded-lg bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-sm text-[13px]"
                       />
                       {hasAttemptedSubmit &&
                         meta.anomalyStatus !== "abnormal" &&
@@ -2615,7 +2615,7 @@ export function VideoSubmitFormV2({
               >
                 <DialogContent className="max-w-sm rounded-2xl bg-white p-4 shadow-lg">
                   <DialogHeader className="pb-3 border-b border-[#ECE7DE]">
-                    <DialogTitle className="text-[15px] font-semibold text-[#1C1917]">
+                    <DialogTitle className="font-serif tracking-tight text-[15px] font-semibold text-[#1C1917]">
                       选择{selectingRole?.label}负责人
                     </DialogTitle>
                   </DialogHeader>
@@ -2628,7 +2628,7 @@ export function VideoSubmitFormV2({
                         value={memberSearchQuery}
                         onChange={(e) => setMemberSearchQuery(e.target.value)}
                         placeholder="搜索团队成员..."
-                        className="h-9 rounded-lg border-[#E5E0D6] bg-[#FAF8F5] pl-9 text-[13px]"
+                        className="h-9 rounded-lg border-[#E5E0D6] bg-[#FAF8F4]/50 pl-9 text-[13px]"
                       />
                     </div>
 

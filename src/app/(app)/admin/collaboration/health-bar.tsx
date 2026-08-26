@@ -58,7 +58,7 @@ export function HealthBar({ summary }: HealthBarProps) {
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#ECE7DE]">
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 text-[#D99E55]" />
-              <DialogTitle className="text-base font-medium text-[#1C1917]">
+              <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
                 归属健康度明细
               </DialogTitle>
             </div>

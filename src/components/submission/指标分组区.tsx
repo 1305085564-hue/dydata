@@ -152,7 +152,7 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
           </div>
           {showInteractionWarning && (
             <div className="mt-1 pl-0.5 text-[10.5px] sm:text-[11.5px] lg:mt-1.5 font-medium text-[#B98A54] transition-opacity duration-150">
-              ⚠️ 互动数据总和已超过播放量，请核对输入
+              互动数据总和超过了播放量，请核对一遍
             </div>
           )}
         </div>

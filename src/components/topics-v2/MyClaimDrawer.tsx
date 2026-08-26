@@ -229,7 +229,7 @@ export function MyClaimDrawer({
                                 候选准备
                               </span>
                             </div>
-                            <p className="text-xs text-[#78716C] line-clamp-1 mb-2 font-normal">
+                            <p className="font-serif not-italic text-xs text-[#292524] line-clamp-1 mb-2 leading-relaxed">
                               “{sub?.hook || "还没有 Hook"}”
                             </p>
 
@@ -297,7 +297,7 @@ export function MyClaimDrawer({
                                 脚本中
                               </span>
                             </div>
-                            <p className="text-xs text-[#78716C] line-clamp-1 mb-2 font-normal">
+                            <p className="font-serif not-italic text-xs text-[#292524] line-clamp-1 mb-2 leading-relaxed">
                               “{sub?.hook || "还没有 Hook"}”
                             </p>
 

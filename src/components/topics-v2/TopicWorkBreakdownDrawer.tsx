@@ -304,7 +304,7 @@ export function TopicWorkBreakdownDrawer({
                 <FileText className="w-3.5 h-3.5 text-[#78716C]" />
                 <span>一句话选题 Hook</span>
               </div>
-              <p className="text-sm font-normal text-[#1C1917] leading-relaxed">
+              <p className="font-serif not-italic text-sm text-[#292524] leading-relaxed">
                 “{subTopicInfo?.hook || "还没有 Hook"}”
               </p>
             </div>
@@ -535,7 +535,7 @@ function Metric({
 }
 
 function formatPlayCount(value: number | null) {
-  if (value === null) return "未拉取";
+  if (value === null) return "—";
   return value >= 10000
     ? `${(value / 10000).toFixed(1)}万`
     : value.toLocaleString();

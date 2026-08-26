@@ -185,7 +185,7 @@ export function TopicPoolExplorer({
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              className="text-xs bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -392,7 +392,7 @@ export function TopicPoolExplorer({
           </div>
           {totalCount === 0 && !searchQuery && selectedTopicIds.length === 0 ? (
             <>
-              <h3 className="text-sm font-semibold text-[#292524] mb-1">
+              <h3 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] mb-1">
                 还没有选题
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-4 font-normal leading-relaxed">
@@ -409,7 +409,7 @@ export function TopicPoolExplorer({
             </>
           ) : (
             <>
-              <h3 className="text-sm font-semibold text-[#292524] mb-1">
+              <h3 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] mb-1">
                 未找到符合条件的选题
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
@@ -447,7 +447,7 @@ export function TopicPoolExplorer({
                   <h3 className="font-serif text-[14.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5 tracking-tight">
                     {sub.title}
                   </h3>
-                  <p className="text-[12px] text-[#78716C] line-clamp-2 mb-3.5 leading-relaxed font-normal">
+                  <p className="font-serif not-italic text-[12px] text-[#292524] line-clamp-2 mb-3.5 leading-relaxed">
                     {sub.hook ? `“${sub.hook}”` : "“尚未提炼立意金句”"}
                   </p>
                 </div>
@@ -543,7 +543,7 @@ export function TopicPoolExplorer({
                       <div className="font-serif text-[13.5px] font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
                         {sub.title}
                       </div>
-                      <div className="text-[#78716C] text-xs truncate font-normal">
+                      <div className="font-serif not-italic text-xs text-[#292524] truncate leading-relaxed">
                         “{sub.hook || "尚未提炼立意金句"}”
                       </div>
                     </td>
@@ -559,7 +559,7 @@ export function TopicPoolExplorer({
                         <span className="font-semibold text-[#D97757]">
                           {summary?.averagePlayCount
                             ? `${(summary.averagePlayCount / 10000).toFixed(1)}万`
-                            : "无"}
+                            : "—"}
                         </span>
                       </div>
                       <div className="text-xs text-[#78716C] font-normal">

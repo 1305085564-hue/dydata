@@ -206,7 +206,7 @@ export function SubmissionCalendar({
           <ChevronLeft className="size-4 stroke-[2]" />
         </button>
 
-        <h3 className="text-[15px] font-semibold text-[#1C1917] tracking-tight tabular-nums">
+        <h3 className="font-serif tracking-tight text-[15px] font-semibold text-[#1C1917] tabular-nums">
           {monthLabel}
         </h3>
 

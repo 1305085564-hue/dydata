@@ -280,7 +280,7 @@ export function MemberDrawer({
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full max-w-[480px]">
           <SheetHeader>
-            <SheetTitle>成员详情</SheetTitle>
+            <SheetTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">成员详情</SheetTitle>
           </SheetHeader>
           <SheetBody>
             <p className="text-[13px] text-[#78716C]">未选择成员</p>
@@ -296,7 +296,7 @@ export function MemberDrawer({
         <SheetContent side="right" className="w-full max-w-[480px] bg-white">
           <SheetHeader>
             <div className="flex items-center gap-2">
-              <SheetTitle>{member.userName}</SheetTitle>
+              <SheetTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
             <SheetDescription>{member.teamName ?? "无团队"}</SheetDescription>
@@ -498,7 +498,7 @@ export function MemberDrawer({
                     {dayRecord.reason ? (
                       <div className="rounded-lg bg-white/90 p-2.5">
                         <p className="text-[12px] text-[#78716C]">
-                          打标备注原因
+                          备注原因
                         </p>
                         <p className="mt-1 text-[13px] text-[#292524] leading-normal">
                           {dayRecord.reason}
@@ -548,7 +548,7 @@ export function MemberDrawer({
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       placeholder="输入原因..."
-                      className="w-full rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 py-2 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+                      className="w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs px-3 py-2 text-[13px] text-[#292524] outline-none transition-[background-color,border-color,box-shadow] duration-150 placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:shadow-2xs focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
                       disabled={isSubmitting}
                     />
                   </div>

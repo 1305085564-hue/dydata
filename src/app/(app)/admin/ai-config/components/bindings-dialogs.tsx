@@ -81,7 +81,7 @@ export function BindingDialog({
               <Label htmlFor="binding-ocr-channel">识别通道</Label>
               <select
                 id="binding-ocr-channel"
-                className="h-9 w-full rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
+                className="h-9 w-full rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
                 value={ocrChannel}
                 onChange={(event) =>
                   setOcrChannel(event.target.value === "vision" ? "vision" : "baidu")

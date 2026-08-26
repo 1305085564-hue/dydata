@@ -151,7 +151,7 @@ async function createClaim(subTopicId: string, userId: string, status: string) {
   }
 }
 
-function printTestScenarios(topics: any[]) {
+function printTestScenarios(topics: { title: string }[]) {
   console.log("┌─────────────────────────────────────────────────────────────────┐");
   console.log("│                    功能测试场景清单                              │");
   console.log("├─────────────────────────────────────────────────────────────────┤");

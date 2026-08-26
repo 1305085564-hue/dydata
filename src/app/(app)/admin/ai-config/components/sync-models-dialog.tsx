@@ -150,7 +150,7 @@ export function SyncModelsDialog({
       <DialogContent className="sm:max-w-3xl w-[94vw] max-h-[90vh] flex flex-col p-6 rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden">
         {/* 弹窗 Header */}
         <DialogHeader className="gap-1.5 pb-2 border-b border-[#ECE7DE]/70">
-          <DialogTitle className="text-base font-medium text-[#1C1917] flex items-center gap-2">
+          <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917] flex items-center gap-2">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
               · {keyLabel}
@@ -169,7 +169,7 @@ export function SyncModelsDialog({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="按关键词过滤型号..."
-              className="pl-9 pr-8 h-9 text-[13px] bg-white border-[#E5E0D6] focus-visible:ring-[#D97757]/20"
+              className="pl-9 pr-8 h-9 text-[13px] border-[#E5E0D6] focus-visible:ring-[#D97757]/20"
             />
             {searchQuery && (
               <button

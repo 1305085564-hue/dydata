@@ -1061,7 +1061,7 @@ export function AdminModulesContentV3({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="搜索成员姓名或邮箱…"
-                  className="h-8 pl-8 pr-4 text-[13px] bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
+                  className="h-8 pl-8 pr-4 text-[13px] bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 rounded-full w-48 sm:w-56 focus-visible:w-64 focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 outline-none transition-all placeholder:text-[#78716C]/60"
                 />
               </div>
 
@@ -1190,7 +1190,7 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
+                                <span className="font-serif tracking-tight text-[14px] font-semibold text-[#1C1917] truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
@@ -1232,7 +1232,7 @@ export function AdminModulesContentV3({
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
                               ) : isCurrentlyExempt ? (
-                                <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
+                                <span className="text-[11.5px] text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">已豁免</span>
                               ) : required === 0 ? (
                                 <span className="text-[13px] font-normal text-[#78716C]">—</span>
                               ) : (
@@ -1344,7 +1344,7 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
+                                <span className="font-serif tracking-tight text-[14px] font-semibold text-[#1C1917] truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
@@ -1386,7 +1386,7 @@ export function AdminModulesContentV3({
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
                               ) : isCurrentlyExempt ? (
-                                <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
+                                <span className="text-[11.5px] text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">已豁免</span>
                               ) : required === 0 ? (
                                 <span className="text-[13px] font-normal text-[#78716C]">—</span>
                               ) : (
@@ -1524,7 +1524,7 @@ export function AdminModulesContentV3({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-lg font-semibold text-[#1C1917] truncate">
+                      <SheetTitle className="font-serif tracking-tight text-lg font-semibold text-[#1C1917] truncate">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
@@ -1860,7 +1860,7 @@ export function AdminModulesContentV3({
               </Button>
             </div>
             <DialogDescription className="text-[13px] text-[#292524]">
-              综合分析近期填报周期、异常断流及个人表现
+              综合分析近期日报周期、异常断流及个人表现
             </DialogDescription>
           </DialogHeader>
 
@@ -1868,7 +1868,7 @@ export function AdminModulesContentV3({
             {aiSuggestion?.loading && (
               <div className="py-8 text-center text-[13px] text-[#292524] space-y-2 bg-[#FBF9F5] rounded-xl">
                 <RefreshCw className="size-5 text-[#D97757] animate-spin mx-auto" />
-                <p>正在结合近期填报、播放量与异常数据生成诊断...</p>
+                <p>正在结合近期日报、播放量与异常数据生成诊断...</p>
               </div>
             )}
 
@@ -1951,9 +1951,9 @@ export function AdminModulesContentV3({
       <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
         <DialogContent className="max-w-[440px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">设置日报豁免与请假</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">设置日报豁免与请假</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
-              设置免交或请假区间，系统将不会产生催发与缺发预警
+              设置免交或请假区间，这段时间不会收到催发提醒
             </DialogDescription>
           </DialogHeader>
 
@@ -2093,7 +2093,7 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">团队架构管理</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">团队架构管理</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
               新建团队或维护现有团队架构
             </DialogDescription>
@@ -2204,7 +2204,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>确认归档成员账号</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">确认归档成员账号</DialogTitle>
             <DialogDescription>
               即将归档「{archiveTarget?.name}」的账号。归档将立即封禁登录并移出团队，历史日报不受影响。
             </DialogDescription>
@@ -2254,7 +2254,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>批量归档成员账号</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">批量归档成员账号</DialogTitle>
             <DialogDescription>
               即将批量归档选中的 {selectedMemberIds.length} 位成员账号，归档后将封禁登录并移出各自团队。
             </DialogDescription>
@@ -2319,7 +2319,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>重置登录密码</DialogTitle>
+            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">重置登录密码</DialogTitle>
             <DialogDescription>
               为「{passwordResetTarget?.name}」设置新的临时登录密码（至少 6 位）。
             </DialogDescription>
@@ -2362,7 +2362,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917] flex items-center gap-2">
               <AlertCircle className="size-5 text-[#D97757]" />
               确认执行 AI 管理建议动作
             </DialogTitle>

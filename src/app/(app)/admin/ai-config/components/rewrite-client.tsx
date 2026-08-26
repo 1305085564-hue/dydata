@@ -138,7 +138,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-model-view">目标模型视图</Label>
             <select
               id="route-model-view"
-              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
+              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
               value={formData.model_view_id || ""}
               onChange={(e) => setFormData({ ...formData, model_view_id: e.target.value })}
             >
@@ -154,7 +154,7 @@ function RewriteRouteDialog({
             <Label htmlFor="route-provider-key-model">物理映射 (渠道 / Key / 模型)</Label>
             <select
               id="route-provider-key-model"
-              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-white px-3 text-[13px]"
+              className="w-full h-9 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 px-3 text-[13px] text-[#292524]"
               value={formData.provider_key_model_id || ""}
               onChange={(e) => setFormData({ ...formData, provider_key_model_id: e.target.value || null })}
             >
@@ -355,7 +355,7 @@ export default function RewriteClient() {
                 <div className="flex justify-between items-center border-b border-[#ECE7DE] pb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-[14px] text-[#1C1917]">{view.label}</h3>
+                      <h3 className="font-serif tracking-tight font-semibold text-[14px] text-[#1C1917]">{view.label}</h3>
                       <Badge variant="outline" className="font-mono text-[12px] bg-[#FBF9F5]">{view.key}</Badge>
                       {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10 border-0 font-medium">默认规则</Badge>}
                     </div>

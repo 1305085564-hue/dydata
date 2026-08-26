@@ -235,7 +235,7 @@ export function KeyDialog({
             <Label htmlFor="provider-select">所属渠道 (Provider)</Label>
             <select
               id="provider-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-white"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[#292524]"
               value={selectedProviderId}
               onChange={(e) => setSelectedProviderId(e.target.value)}
             >
@@ -382,7 +382,7 @@ export function ModelDialog({
             <Label htmlFor="model-key-select">目标渠道密钥</Label>
             <select
               id="model-key-select"
-              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-white text-[#292524]"
+              className="w-full h-9 px-3 text-[13px] rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[#292524]"
               value={selectedKeyId}
               onChange={(e) => setSelectedKeyId(e.target.value)}
             >

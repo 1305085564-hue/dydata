@@ -72,7 +72,7 @@ export function MyClaimSlotBar({
             <Layers className="w-3.5 h-3.5" />
           </span>
           <div>
-            <h2 className="text-sm font-medium text-[#1C1917] tracking-tight flex items-center gap-2">
+            <h2 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] flex items-center gap-2">
               <span>我的选题槽位</span>
               <span className="text-xs tabular-nums text-[#78716C] font-normal">
                 (
@@ -136,7 +136,7 @@ export function MyClaimSlotBar({
               onClick={() => item.subTopicId && onSelectTopic(item.subTopicId)}
               className={`group relative rounded-xl p-3.5 border transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[110px] shadow-xs ${
                 isScripting
-                  ? "bg-[#6FAA7D]/10/40 border-[#E5E0D6]/80 hover:border-[#E5E0D6]"
+                  ? "bg-[#6FAA7D]/10 border-[#E5E0D6]/80 hover:border-[#E5E0D6]"
                   : "bg-white border-[#E5E0D6] hover:border-[#E5E0D6]"
               }`}
             >
@@ -184,7 +184,7 @@ export function MyClaimSlotBar({
                       item.subTopicId &&
                       handleStartScripting(e, item.subTopicId)
                     }
-                    className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-[#6FAA7D]/80 hover:bg-[#6FAA7D]/60 text-white text-[11px] font-medium transition-all shadow-2xs active:scale-[0.985] active:duration-75"
+                    className="w-full inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[11px] font-medium transition-all shadow-sm active:scale-[0.985] active:duration-75"
                   >
                     <FileText className="w-3 h-3" />
                     <span>去写脚本</span>

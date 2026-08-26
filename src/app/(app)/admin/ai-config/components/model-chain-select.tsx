@@ -28,7 +28,7 @@ export function ModelChainSelect({
       <select
         id={id}
         aria-label={id}
-        className="h-8 w-full rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-mono text-[#1C1917] hover:bg-[#FAF8F4] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer"
+        className="h-8 w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 px-2.5 text-[12px] font-mono text-[#1C1917] hover:bg-white focus:bg-white focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer"
         value={value ?? ""}
         onChange={(event) => onChange(event.target.value || null)}
       >

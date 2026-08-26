@@ -200,7 +200,7 @@ export function RewriteWorkbenchV3() {
           <div className="text-[12px] font-medium uppercase tracking-[0.2em] text-[#DC2626]">
             初始化异常
           </div>
-          <h3 className="text-base font-medium text-[#1C1917]">
+          <h3 className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
             {state.errorState.title}
           </h3>
           <p className="text-[13px] text-[#292524] leading-relaxed">
@@ -226,7 +226,7 @@ export function RewriteWorkbenchV3() {
             <span className="text-[13px] font-medium text-[#1C1917]">
               定稿阅览室
             </span>
-            <span className="rounded bg-[#6FAA7D]/100/10 px-1.5 py-0.5 text-[12px] font-medium text-[#6FAA7D] uppercase tracking-wide">
+            <span className="rounded bg-[#6FAA7D]/10 px-1.5 py-0.5 text-[12px] font-medium text-[#6FAA7D] uppercase tracking-wide">
               沉浸模式
             </span>
           </div>

@@ -184,7 +184,7 @@ export function MonthlyMatrix({
           onClick={() => setExpanded((current) => !current)}
           className="flex items-center gap-2.5 text-left rounded-lg transition-colors cursor-pointer group"
         >
-          <span className="text-base font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors">
+          <span className="font-serif tracking-tight text-base font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors">
             月度履约热力矩阵
           </span>
           <span className="text-[12px] font-normal text-[#78716C]">

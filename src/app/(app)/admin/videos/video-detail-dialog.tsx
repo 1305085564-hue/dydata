@@ -315,7 +315,7 @@ export function VideoDetailDialog({
                       type="button"
                       onClick={() => handleLifecycleAction("restore")}
                       disabled={isOperating}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#6FAA7D]/10/80 px-3 text-[12px] font-medium text-[#292524] hover:bg-[#6FAA7D]/10/80 transition-colors disabled:opacity-50"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#6FAA7D]/10 px-3 text-[12px] font-medium text-[#292524] hover:bg-[#6FAA7D]/20 transition-colors disabled:opacity-50"
                     >
                       <RotateCcw className="size-3.5" />
                       恢复作品

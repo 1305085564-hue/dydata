@@ -452,7 +452,7 @@ export function ExceptionQueue({
       >
         <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
               确认标记 {quickConfirm?.userName} 缺勤
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
@@ -487,7 +487,7 @@ export function ExceptionQueue({
       >
         <DialogContent className="max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
-            <DialogTitle className="text-base font-medium text-[#1C1917]">
+            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
               标记选中项为{batchAction ? ACTION_LABELS[batchAction] : ""}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
@@ -503,7 +503,7 @@ export function ExceptionQueue({
               value={batchReason}
               onChange={(e) => setBatchReason(e.target.value)}
               placeholder="输入操作原因..."
-              className="w-full rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3 py-2 text-[13px] text-[#292524] placeholder:text-[#78716C]/60 outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+              className="w-full rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs px-3 py-2 text-[13px] text-[#292524] placeholder:text-[#78716C]/60 outline-none hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
             />
           </div>
           <DialogFooter className="mt-6 gap-2">
