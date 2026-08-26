@@ -23,11 +23,8 @@ type RawVideoRow = Omit<VideoRow, "accounts" | "profiles"> & {
 };
 
 type FilterOption = Pick<Profile, "id" | "name">;
-type AccountOption = { id: string; name: string; profile_id?: string | null };
 type LoadMode = "initial" | "full";
-type FeedbackCardStatusRow = Pick<ContentFeedbackCard, "video_id" | "card_status">;
 type SegmentRow = { video_id: string };
-type SnapshotVideoIdRow = { video_id: string };
 type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
 type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
 
@@ -51,23 +48,11 @@ export interface AdminContentPageData {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
-  accounts: AccountOption[];
-  reviewedVideoIds: string[];
   feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   summary: {
     totalVideos: number;
-    reviewedCount: number;
-    snapshotCount: number;
     pendingReviewCount: number;
-  };
-  workflowSummary: {
-    notStarted: number;
-    draft: number;
-    confirmed: number;
-    sent: number;
-    viewed: number;
-    pendingDelivery: number;
   };
   isPartial?: boolean;
 }
@@ -110,37 +95,6 @@ async function selectInBatches<Row>(
     }
   }
   return rows;
-}
-
-function buildWorkflowSummary(videos: VideoRow[], cardStatusRows: FeedbackCardStatusRow[]) {
-  const statusByVideoId = new Map(cardStatusRows.map((row) => [row.video_id, row.card_status]));
-  const counts = {
-    notStarted: 0,
-    draft: 0,
-    confirmed: 0,
-    sent: 0,
-    viewed: 0,
-    pendingDelivery: 0,
-  };
-
-  for (const video of videos) {
-    const status = statusByVideoId.get(video.id) ?? "not_started";
-    if (status === "draft") {
-      counts.draft += 1;
-      counts.pendingDelivery += 1;
-    } else if (status === "confirmed") {
-      counts.confirmed += 1;
-      counts.pendingDelivery += 1;
-    } else if (status === "sent") {
-      counts.sent += 1;
-    } else if (status === "viewed") {
-      counts.viewed += 1;
-    } else {
-      counts.notStarted += 1;
-    }
-  }
-
-  return counts;
 }
 
 function buildLatestPlayCountByVideoId(snapshots: PreviousSnapshotRow[]) {
@@ -400,10 +354,9 @@ export async function loadAdminContentPageData({
     videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
-  const [videosResult, profilesResult, accountsResult, reviewedResultsResult] = await Promise.all([
+  const [videosResult, profilesResult, reviewedResultsResult] = await Promise.all([
     videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
-    supabase.from("accounts").select("id, name, profile_id").order("name", { ascending: true }),
     mode === "full"
       ? serviceClient
           .from("ai_insight_result")
@@ -415,10 +368,8 @@ export async function loadAdminContentPageData({
 
   assertSupabaseQuerySucceeded(videosResult.error, "加载内容视频失败");
   assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
-  assertSupabaseQuerySucceeded(accountsResult.error, "加载账号列表失败");
   const videosRaw = videosResult.data;
   const profiles = profilesResult.data;
-  const accounts = accountsResult.data;
   const reviewedResults = reviewedResultsResult?.error ? [] : (reviewedResultsResult?.data ?? []);
 
   const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
@@ -447,9 +398,7 @@ export async function loadAdminContentPageData({
   const visibleVideos = view === "pending" ? pendingVideos : videos;
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
-  const summaryVideoIds = mode === "initial" ? visibleVideoIds : scopedVideoIds;
-  const shouldReuseFeedbackRowsForSummary = mode === "initial";
-  const [snapshots, segmentRows, feedbackCardRows, feedbackCardStatusRows, snapshotFlagRows] = await Promise.all([
+  const [snapshots, segmentRows, feedbackCardRows] = await Promise.all([
     visibleVideoIds.length > 0
       ? selectInBatches<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
           Promise.resolve(supabase
@@ -473,25 +422,6 @@ export async function loadAdminContentPageData({
             .in("video_id", batch)),
         )
       : Promise.resolve([]),
-    shouldReuseFeedbackRowsForSummary
-      ? Promise.resolve([])
-      : summaryVideoIds.length > 0
-      ? selectInBatches<FeedbackCardStatusRow>(summaryVideoIds, (batch) =>
-          Promise.resolve(serviceClient
-            .from("content_feedback_cards")
-            .select("video_id, card_status")
-            .in("video_id", batch)),
-        )
-      : Promise.resolve([]),
-    mode === "full" && scopedVideoIds.length > 0
-      ? selectInBatches<SnapshotVideoIdRow>(scopedVideoIds, (batch) =>
-          Promise.resolve(supabase
-            .from("video_metrics_snapshots")
-            .select("video_id")
-            .eq("snapshot_type", "24h")
-            .in("video_id", batch)),
-        )
-      : Promise.resolve([]),
   ]);
   const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
     supabase,
@@ -500,9 +430,6 @@ export async function loadAdminContentPageData({
     currentSnapshots: snapshots as PreviousSnapshotRow[],
   });
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id as string));
-  const snapshotSummaryVideoIds = mode === "initial"
-    ? snapshotVideoIds
-    : new Set(snapshotFlagRows.map((row) => row.video_id));
   const segmentedVideoIds = new Set(segmentRows.map((row) => row.video_id));
   const feedbackCardMap = new Map<string, ContentFeedbackCard>();
   for (const row of feedbackCardRows) {
@@ -522,15 +449,6 @@ export async function loadAdminContentPageData({
       }),
     ]),
   ) as Record<string, ContentReviewReadiness>;
-  const workflowSummary = buildWorkflowSummary(
-    videos,
-    shouldReuseFeedbackRowsForSummary
-      ? feedbackCardRows.map((row) => ({
-          video_id: row.video_id,
-          card_status: row.card_status,
-        }))
-      : feedbackCardStatusRows,
-  );
 
   return {
     videos: initialVisibleVideosWithSignals,
@@ -538,19 +456,12 @@ export async function loadAdminContentPageData({
     profiles: (profiles ?? [])
       .filter((profile) => visibleProfileIds.has(profile.id))
       .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" })),
-    accounts: (accounts ?? [])
-      .filter((account) => visibleProfileIds.has(account.profile_id))
-      .map((account) => ({ id: account.id, name: account.name ?? "未命名账号" })),
-    reviewedVideoIds,
     feedbackCards,
     reviewReadiness,
     summary: {
       totalVideos: videos.length,
-      reviewedCount: reviewedVideoIds.length,
-      snapshotCount: snapshotSummaryVideoIds.size,
       pendingReviewCount: pendingVideos.length,
     },
-    workflowSummary,
     isPartial: mode === "initial" && visibleVideos.length > initialVisibleVideos.length,
   };
 }
@@ -616,7 +527,6 @@ export const __internal = {
   ADMIN_CONTENT_FIRST_SCREEN_RPC,
   CONTENT_VIDEO_SELECT,
   CONTENT_SNAPSHOT_SELECT,
-  buildWorkflowSummary,
   attachPlayChangeSignals,
   enforcePlayChangeThresholdsOnVideos,
   findPreviousVideoByVisibleId,

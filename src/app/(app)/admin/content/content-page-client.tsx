@@ -162,16 +162,7 @@ export function ContentPageClient({
           hasSegments: true,
         });
       }
-      const cards = Object.values(nextFeedbackCards);
-      const workflowSummary = {
-        notStarted: cards.filter((c) => c.workflow_status === "not_started").length,
-        draft: cards.filter((c) => c.workflow_status === "draft").length,
-        confirmed: cards.filter((c) => c.workflow_status === "confirmed").length,
-        sent: cards.filter((c) => c.workflow_status === "sent").length,
-        viewed: cards.filter((c) => c.workflow_status === "viewed").length,
-        pendingDelivery: cards.filter((c) => c.workflow_status === "draft" || c.workflow_status === "confirmed").length,
-      };
-      return { ...prev, feedbackCards: nextFeedbackCards, reviewReadiness: nextReadiness, workflowSummary };
+      return { ...prev, feedbackCards: nextFeedbackCards, reviewReadiness: nextReadiness };
     });
   }, []);
 
