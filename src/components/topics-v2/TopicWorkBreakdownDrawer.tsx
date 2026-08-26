@@ -273,7 +273,7 @@ export function TopicWorkBreakdownDrawer({
               </div>
               <h3
                 id="drawer-title"
-                className="text-lg font-semibold text-[#1C1917] leading-snug"
+                className="font-serif text-lg font-semibold tracking-tight text-[#1C1917] leading-snug"
               >
                 {subTopicInfo?.title || "子题详情"}
               </h3>

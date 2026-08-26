@@ -515,7 +515,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       <div className={cn("grid gap-4", ownScriptSnippet ? "md:grid-cols-2" : "")}>
                         <div className="space-y-1.5">
                           <span className="text-[12px] text-[#78716C]">同事的写法 · {benchmark.peer.name}</span>
-                          <blockquote className="relative rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[12px] text-[#292524] italic leading-[1.6] whitespace-pre-wrap">
+                          <blockquote className="relative rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[12px] text-[#292524] not-italic leading-[1.6] whitespace-pre-wrap">
                             “{benchmark.peer.scriptSnippet}”
                           </blockquote>
                         </div>
@@ -530,7 +530,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[12px] text-[#78716C] italic">还没有对标文案片段，可以先参考这位同事近期的内容。</p>
+                    <p className="text-[12px] text-[#78716C]">还没有对标文案片段，可以先参考这位同事近期的内容。</p>
                   )}
                 </div>
               ) : benchmark.state === "fallback_team_avg" ? (
@@ -571,7 +571,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   ) : null}
                 </p>
                 {benchmark.peer.scriptSnippet ? (
-                  <blockquote className="mt-2 whitespace-pre-wrap border-l-2 border-[#D97757] pl-3 text-[12px] italic leading-[1.6] text-[#292524]">
+                  <blockquote className="mt-2 whitespace-pre-wrap border-l-2 border-[#D97757] pl-3 text-[12px] not-italic leading-[1.6] text-[#292524]">
                     “{benchmark.peer.scriptSnippet}”
                   </blockquote>
                 ) : null}

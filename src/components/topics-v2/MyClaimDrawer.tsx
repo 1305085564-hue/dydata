@@ -129,7 +129,7 @@ export function MyClaimDrawer({
               <div>
                 <h4
                   id="claim-drawer-title"
-                  className="text-sm font-medium text-[#1C1917]"
+                  className="font-serif text-sm font-semibold tracking-tight text-[#1C1917]"
                 >
                   我的选题认领
                 </h4>

@@ -1275,7 +1275,7 @@ export function VideoList({
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1C1917]/40 backdrop-blur-[2px]">
           <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-[#1C1917]">
+            <h3 className="font-serif text-base font-semibold text-[#1C1917] tracking-tight">
               永久删除确认
             </h3>
             <p className="mt-2 text-sm text-[#78716C] leading-relaxed">

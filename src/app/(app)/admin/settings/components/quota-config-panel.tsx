@@ -117,7 +117,7 @@ export function QuotaConfigPanel({
   return (
     <div className="border-t border-[#E5E0D6] pt-8 space-y-10">
       <div>
-        <h2 className="text-lg font-semibold tracking-tight text-[#1C1917] flex items-center gap-2">
+        <h2 className="font-serif text-lg font-semibold tracking-tight text-[#1C1917] flex items-center gap-2">
           <Settings className="size-5 text-[#D97757]" />
           产量目标管理
         </h2>

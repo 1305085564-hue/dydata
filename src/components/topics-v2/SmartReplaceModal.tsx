@@ -118,7 +118,7 @@ export function SmartReplaceModal({
               </span>
               <h3
                 id="replace-modal-title"
-                className="text-base font-semibold text-[#1C1917]"
+                className="font-serif text-base font-semibold tracking-tight text-[#1C1917]"
               >
                 候选槽位已满 (5/5)，选择要替换的选题
               </h3>

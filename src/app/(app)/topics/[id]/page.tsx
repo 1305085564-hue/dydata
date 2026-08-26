@@ -644,7 +644,7 @@ export default function SubTopicDetailPage({
                 <Sparkles className="size-3.5 text-[#D97757]" />
                 <span>一句话钩子</span>
               </div>
-              <p className="italic text-[#292524]">“{detail.hook}”</p>
+              <p className="text-[#292524]">"{detail.hook}"</p>
             </div>
           )}
 
@@ -718,7 +718,7 @@ export default function SubTopicDetailPage({
               </Button>
             </div>
           ) : claimsData.claims.length === 0 ? (
-            <div className="rounded-xl bg-[#F5F3EE]/50 p-4 text-center text-[12.5px] text-[#78716C] italic">
+            <div className="rounded-xl bg-[#F5F3EE]/50 p-4 text-center text-[12.5px] text-[#78716C]">
               还没有其他人认领这个选题，认领后即可开始创作。
             </div>
           ) : (
@@ -800,7 +800,7 @@ export default function SubTopicDetailPage({
               <span>加载关联作品中...</span>
             </div>
           ) : works.length === 0 ? (
-            <div className="py-8 rounded-xl bg-[#F5F3EE]/50 text-center text-[#78716C] text-[12.5px] italic">
+            <div className="py-8 rounded-xl bg-[#F5F3EE]/50 text-center text-[#78716C] text-[12.5px]">
               这个选题还没有作品发布记录。
             </div>
           ) : (

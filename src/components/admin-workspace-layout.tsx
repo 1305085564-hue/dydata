@@ -50,7 +50,7 @@ export function AdminWorkspaceLayout({
         <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between pb-1">
           <div>
             {eyebrow ? <p className="text-[12px] font-medium uppercase tracking-[0.25em] text-[#78716C]">{eyebrow}</p> : null}
-            {title ? <h1 className={cn("text-2xl font-semibold tracking-tight text-[#1C1917]", eyebrow && "mt-2")}>{title}</h1> : null}
+            {title ? <h1 className={cn("font-serif text-2xl font-semibold tracking-tight text-[#1C1917]", eyebrow && "mt-2")}>{title}</h1> : null}
             {description ? <p className="mt-2 max-w-3xl text-[13px] leading-[1.7] text-[#78716C]">{description}</p> : null}
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

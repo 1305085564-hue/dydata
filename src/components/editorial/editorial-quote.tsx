@@ -13,7 +13,7 @@ interface EditorialEpigraphProps {
 export function EditorialEpigraph({ quote, author, className = "" }: EditorialEpigraphProps) {
   return (
     <div className={`relative py-4 my-2 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg ${className}`}>
-      <p className="font-serif italic text-[13.5px] leading-[1.7] text-[#292524]/90 tracking-normal">
+      <p className="font-serif not-italic text-[13.5px] leading-[1.7] text-[#292524]/90 tracking-normal">
         “{quote}”
       </p>
       {author ? (

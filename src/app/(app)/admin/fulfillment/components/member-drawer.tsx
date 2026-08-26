@@ -420,7 +420,7 @@ export function MemberDrawer({
                   <span className="size-2 rounded-full bg-[#D99E55]" />
                   员工发起申诉
                 </h4>
-                <div className="text-[13px] text-[#292524] bg-white/90 p-2.5 rounded-lg italic">
+                <div className="text-[13px] text-[#292524] bg-white/90 p-2.5 rounded-lg">
                   “{dateAppeal.reason}”
                 </div>
                 <p className="text-[12px] text-[#292524]">

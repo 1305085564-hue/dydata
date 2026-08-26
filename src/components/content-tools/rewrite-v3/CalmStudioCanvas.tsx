@@ -406,7 +406,7 @@ export function CalmStudioCanvas({
                         return <span key={tIdx}>{token.value}</span>;
                       })
                     : para.content || (
-                        <span className="text-[#78716C] italic select-none">
+                        <span className="text-[#78716C] select-none">
                           此段内容为空
                         </span>
                       )}

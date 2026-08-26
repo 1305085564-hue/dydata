@@ -328,7 +328,7 @@ export function PersonalCard({
               {/* 底部：经手作品明细 (flex-1 弹性延伸分配剩余高度) */}
               <div className="flex-1 flex flex-col min-h-0 space-y-2">
                 <div className="flex items-center justify-between shrink-0">
-                  <h4 className="text-[12px] font-semibold text-[#1C1917]">
+                  <h4 className="font-serif text-[12px] font-semibold tracking-tight text-[#1C1917]">
                     本月经手作品明细
                   </h4>
                   <span className="text-[11px] text-[#78716C]">

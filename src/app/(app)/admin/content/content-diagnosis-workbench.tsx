@@ -1692,7 +1692,7 @@ export function ContentDiagnosisWorkbench({
                     ))}
                   </div>
                 ) : (
-                  <span className="text-[11px] text-[#78716C] italic">
+                  <span className="text-[11px] text-[#78716C]">
                     没有指标偏离证据，这个视频表现良好。
                   </span>
                 )}

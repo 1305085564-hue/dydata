@@ -44,7 +44,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
             <div className="grid gap-2 md:grid-cols-2">
               <div className="space-y-1.5">
                 <span className="text-[12.5px] text-[#78716C]">同事的写法 · {peer.name}</span>
-                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] italic leading-[1.6] text-[#292524]">
+                <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] not-italic leading-[1.6] text-[#292524]">
                   “{peer.scriptSnippet}”
                 </blockquote>
               </div>
@@ -61,7 +61,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
             <span className="text-[13px] font-medium text-[#292524]">
               示例 · 来自{peer.name}，团队验证过的写法：
             </span>
-            <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] italic leading-[1.6] text-[#292524]">
+            <blockquote className="whitespace-pre-wrap rounded-r-lg border-l-2 border-l-[#D97757] bg-[#B98A54]/10 p-3.5 text-[13px] not-italic leading-[1.6] text-[#292524]">
               “{peer.scriptSnippet}”
             </blockquote>
           </div>

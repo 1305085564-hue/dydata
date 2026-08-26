@@ -112,7 +112,7 @@ export function TeamActivitySection({
                 <span className="font-semibold text-[#1C1917]">
                   {latestClaim.displayName || "团队成员"}
                 </span>
-                <span className="text-[#292524] ml-1">
+                <span className="font-serif text-[#292524] ml-1">
                   《{latestClaim.subTopic?.title || "未命名选题"}》
                 </span>
               </button>
@@ -142,7 +142,7 @@ export function TeamActivitySection({
                 className="text-[#292524] hover:text-[#D97757] transition-colors truncate font-normal text-left min-h-[44px] sm:min-h-0 inline-flex items-center"
                 title={`查看对应选题《${latestWork.subTopic?.title || "未命名选题"}》`}
               >
-                <span className="font-semibold text-[#1C1917]">
+                <span className="font-serif font-semibold text-[#1C1917]">
                   《{latestWork.videoTitle}》
                 </span>
                 {latestWork.subTopic?.title && (
@@ -205,7 +205,7 @@ export function TeamActivitySection({
                       {claim.displayName || "团队成员"}
                     </span>
                     <span className="text-[#78716C] ml-1.5">
-                      认领《{claim.subTopic?.title || "未命名选题"}》
+                      认领<span className="font-serif">《{claim.subTopic?.title || "未命名选题"}》</span>
                     </span>
                   </div>
                   <span className="text-[11px] text-[#78716C] shrink-0 font-normal tabular-nums">
@@ -245,7 +245,7 @@ export function TeamActivitySection({
                     className="min-w-0 flex-1 truncate font-normal text-left"
                     title={`查看选题《${work.subTopic?.title || "未命名选题"}》的剖析详情`}
                   >
-                    <span className="font-medium text-[#292524] group-hover:text-[#D97757] transition-colors">
+                    <span className="font-serif font-medium text-[#292524] group-hover:text-[#D97757] transition-colors">
                       成片《{work.videoTitle}》
                     </span>
                     {work.subTopic?.title && (

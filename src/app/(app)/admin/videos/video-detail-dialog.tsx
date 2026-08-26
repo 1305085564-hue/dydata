@@ -407,7 +407,7 @@ export function VideoDetailDialog({
                         {statusBadgeConfig[video.anomaly_status]?.label ??
                           video.anomaly_status}
                       </Badge>
-                      <h2 className="text-lg font-semibold text-[#1C1917] tracking-tight leading-snug">
+                      <h2 className="font-serif text-lg font-semibold text-[#1C1917] tracking-tight leading-snug">
                         {video.video_title?.trim() || "未命名视频"}
                       </h2>
                     </div>
@@ -674,7 +674,7 @@ export function VideoDetailDialog({
 
                 <div className="rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
-                    <span className="text-[#78716C] italic">还没有文案记录。</span>
+                    <span className="text-[#78716C]">还没有文案记录。</span>
                   )}
                 </div>
               </section>

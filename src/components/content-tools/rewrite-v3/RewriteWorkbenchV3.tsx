@@ -271,7 +271,7 @@ export function RewriteWorkbenchV3() {
                 <p key={i}>{para}</p>
               ))}
               {!state.polishedText && (
-                <p className="py-12 text-center italic text-[#78716C]">
+                <p className="py-12 text-center text-[#78716C]">
                   还没有定稿内容
                 </p>
               )}

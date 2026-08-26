@@ -131,7 +131,7 @@ export function ExemptionDialogV2({
         >
           {/* 头部 */}
           <div className="flex items-center justify-between border-b border-[#ECE7DE]/80 px-6 py-4">
-            <h3 className="text-lg font-semibold text-[#1C1917]">
+            <h3 className="font-serif text-lg font-semibold text-[#1C1917] tracking-tight">
               申请请假或豁免
             </h3>
             <button
