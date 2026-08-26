@@ -306,7 +306,6 @@ test("buildGrowthDataContract 零数据和无脚本返回明确空状态", () =>
   assert.deepEqual(empty.metricsOverview, []);
   assert.equal(empty.benchmark.state, "none");
   assert.equal(empty.ownScriptSnippet, null);
-  assert.deepEqual(empty.trend, []);
 });
 
 test("buildGrowthDataContract 提取最近一篇文案开头作为对照片段，缺实名对标时只回团队均值", () => {

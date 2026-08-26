@@ -273,13 +273,6 @@ export type GrowthPageContract = {
   benchmark: GrowthBenchmark;
   /** 最近一篇带文案日报的开头片段，用于"该学谁"里的「同事的写法 vs 你的写法」对照；没有则为 null */
   ownScriptSnippet: { reportDate: string; snippet: string } | null;
-  trend: Array<{
-    date: string;
-    playCount: number;
-    followerGain: number;
-    completionRate5s: number;
-    completionRate: number;
-  }>;
   emptyState: { isEmpty: boolean; reason?: string };
 };
 
@@ -604,7 +597,6 @@ export function buildGrowthDataContract({
       metricsOverview: [],
       benchmark: { state: "none" },
       ownScriptSnippet: null,
-      trend: [],
       emptyState: isNewcomer ? { isEmpty: true, reason: "还没有真实日报数据" } : { isEmpty: false },
     };
   }
@@ -659,15 +651,6 @@ export function buildGrowthDataContract({
       scriptSegmentsByAccountId,
     }),
     ownScriptSnippet: buildOwnScriptSnippet(myReports),
-    trend: [...myReports]
-      .sort((left, right) => left.report_date.localeCompare(right.report_date))
-      .map((report) => ({
-        date: report.report_date,
-        playCount: safeNumber(report.play_count),
-        followerGain: safeNumber(report.follower_gain),
-        completionRate5s: parsePercentText(report.completion_rate_5s),
-        completionRate: parsePercentText(report.completion_rate),
-      })),
     emptyState: { isEmpty: false },
   };
 }

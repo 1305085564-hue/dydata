@@ -51,10 +51,6 @@ function buildContract(overrides: Partial<GrowthPageContract> = {}): GrowthPageC
       peer: { name: "真实对标同事", dimensionValue: 52, scriptSnippet: "开头直接说结果。" },
     },
     ownScriptSnippet: { reportDate: "2026-07-15", snippet: "我的开头先讲了两句背景。" },
-    trend: [
-      { date: "2026-07-10", playCount: 10000, followerGain: 20, completionRate5s: 40, completionRate: 25 },
-      { date: "2026-07-11", playCount: 12000, followerGain: 28, completionRate5s: 44, completionRate: 28 },
-    ],
     emptyState: { isEmpty: false },
     ...overrides,
   };
@@ -79,7 +75,6 @@ test("新人（全历史 0 份）只显示真实引导，不渲染虚构结果",
         metricsOverview: [],
         benchmark: { state: "none" },
         ownScriptSnippet: null,
-        trend: [],
         emptyState: { isEmpty: true, reason: "还没有真实日报数据" },
       }),
     }),
@@ -201,7 +196,6 @@ test("重度断流（窗口空但全历史有数据）主卡冻结而不是误�
         metricsOverview: [],
         benchmark: { state: "none" },
         ownScriptSnippet: null,
-        trend: [],
         stage: buildStage({
           phase: "observation",
           lifetimeReportCount: 20,
