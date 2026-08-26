@@ -53,6 +53,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -1006,49 +1007,72 @@ export function AdminModulesContentV3({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#ECE7DE]">
             <div className="flex flex-wrap items-center gap-1.5">
               {/* 团队选择器 */}
-              <div className="relative">
-                <select
-                  value={selectedTeamId}
-                  onChange={(e) => {
-                    if (e.target.value === "__manage__") {
-                      setTeamManagementDialogOpen(true);
-                    } else {
-                      setSelectedTeamId(e.target.value);
-                    }
-                  }}
-                  className="h-8 pl-2.5 pr-6 text-[13px] font-medium bg-transparent text-[#292524] border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-[#F5F3EE]/70 transition-colors"
-                >
-                  <option value={ALL_TEAMS_ID}>
+              <Select
+                value={selectedTeamId}
+                onValueChange={(val) => {
+                  if (!val) return;
+                  if (val === "__manage__") {
+                    setTeamManagementDialogOpen(true);
+                  } else {
+                    setSelectedTeamId(val);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F5F3EE]">
+                  <SelectValue>
+                    {selectedTeamId === ALL_TEAMS_ID
+                      ? `${memberView === "archived" ? "归档大盘" : "全员"} (${profilesForCurrentView.length})`
+                      : (() => {
+                          const currentTeam = localTeams.find((t) => t.id === selectedTeamId);
+                          if (!currentTeam) return "全员";
+                          const count = countProfilesInTeamForView(profilesForCurrentView, memberView, currentTeam.id);
+                          return `${truncateTeamName(currentTeam.name, 10)} (${count})`;
+                        })()}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-44 py-1">
+                  <SelectItem value={ALL_TEAMS_ID}>
                     {memberView === "archived" ? "归档大盘" : "全员"} ({profilesForCurrentView.length})
-                  </option>
+                  </SelectItem>
                   {localTeams.map((t) => {
                     const count = countProfilesInTeamForView(profilesForCurrentView, memberView, t.id);
                     return (
-                      <option key={t.id} value={t.id}>
+                      <SelectItem key={t.id} value={t.id}>
                         {truncateTeamName(t.name, 10)} ({count})
-                      </option>
+                      </SelectItem>
                     );
                   })}
-                  {canManageCompany && <option value="__manage__">管理架构…</option>}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-[#78716C]" />
-              </div>
+                  {canManageCompany && <SelectSeparator />}
+                  {canManageCompany && (
+                    <SelectItem value="__manage__" className="text-[#78716C] hover:text-[#1C1917]">
+                      管理架构…
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
 
               {/* 16px 呼吸竖线 */}
               <span className="text-[#ECE7DE] mx-1 select-none" aria-hidden="true">|</span>
 
               {/* 排序 */}
-              <div className="relative">
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value as "role" | "published")}
-                  className="h-8 pl-2.5 pr-6 text-[13px] font-normal bg-transparent text-[#292524] border-0 rounded-md outline-none cursor-pointer appearance-none hover:bg-[#F5F3EE]/70 transition-colors"
-                >
-                  <option value="role">按职位</option>
-                  <option value="published">按发布</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-1.5 top-2.5 size-3 text-[#78716C]" />
-              </div>
+              <Select
+                value={sortOption}
+                onValueChange={(val) => {
+                  if (val === "role" || val === "published") {
+                    setSortOption(val);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-normal text-[#292524] hover:bg-[#F5F3EE] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F5F3EE]">
+                  <SelectValue>
+                    {sortOption === "role" ? "按职位" : "按发布"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28 py-1">
+                  <SelectItem value="role">按职位</SelectItem>
+                  <SelectItem value="published">按发布</SelectItem>
+                </SelectContent>
+              </Select>
 
               {/* 16px 呼吸竖线 */}
               <span className="text-[#ECE7DE] mx-1 select-none" aria-hidden="true">|</span>

@@ -61,9 +61,9 @@ function SelectContent({
   children,
   side = "bottom",
   sideOffset = 4,
-  align = "center",
+  align = "start",
   alignOffset = 0,
-  alignItemWithTrigger = true,
+  alignItemWithTrigger = false,
   ...props
 }: SelectPrimitive.Popup.Props &
   Pick<
@@ -84,7 +84,7 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] text-[#292524] shadow-claude-float duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] p-1 text-[#292524] shadow-claude-float duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
           {...props}
@@ -105,7 +105,7 @@ function SelectLabel({
   return (
     <SelectPrimitive.GroupLabel
       data-slot="select-label"
-      className={cn("px-2 py-1 text-[12px] text-[#292524] font-normal", className)}
+      className={cn("px-2.5 py-1 text-[11.5px] font-medium text-[#78716C]", className)}
       {...props}
     />
   )
@@ -120,7 +120,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 pr-8 pl-2 text-[13px] text-[#292524] outline-hidden select-none transition-[background-color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus:bg-[#F5F3EE] data-highlighted:bg-[#F5F3EE] data-selected:font-medium data-selected:text-[#1C1917] data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5] *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default items-center gap-2 rounded-lg py-1.5 pr-8 pl-2.5 text-[13px] text-[#57534E] outline-hidden select-none transition-colors duration-100 ease-out hover:bg-[#EBE7DF]/70 hover:text-[#1C1917] focus:bg-[#EBE7DF]/70 focus:text-[#1C1917] data-highlighted:bg-[#EBE7DF]/70 data-highlighted:text-[#1C1917] data-selected:bg-[#ECE7DE] data-selected:font-medium data-selected:text-[#1C1917] data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}
@@ -130,10 +130,10 @@ function SelectItem({
       </SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator
         render={
-          <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center text-[#D97757]" />
+          <span className="pointer-events-none absolute right-2.5 flex size-4 items-center justify-center text-[#D97757]" />
         }
       >
-        <CheckIcon className="pointer-events-none" />
+        <CheckIcon className="pointer-events-none stroke-[2.2]" />
       </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
   )

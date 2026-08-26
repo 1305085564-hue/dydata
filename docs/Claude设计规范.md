@@ -195,7 +195,13 @@
 - **去框平铺**：`bg-transparent`，功能群之间用 16px 微竖线隔离
 - **按钮高度**：`h-7`（28px），内边距 `px-2.5`
 
-### 5.5 出版物装帧组件 (Editorial Craft)
+### 5.5 下拉选择器 (Select)
+
+- **展开定位**：左对齐下方展开（`align="start" side="bottom"`），严禁遮挡触发按钮。
+- **选中标定**：浅砂暖底（`bg-[#ECE7DE]`）+ 正黑加重（`text-[#1C1917]`）+ 陶土橙实勾（`#D97757`）。
+- **硬禁令**：严禁使用原生 `<select>`，全站统一使用 `@/components/ui/select`。
+
+### 5.6 出版物装帧组件 (Editorial Craft)
 
 | 组件 | Tailwind 规格 | 适用场景 |
 |---|---|---|
@@ -203,7 +209,7 @@
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
 | **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
 
-### 5.6 暖墨矢量插图规格 (Editorial Illustrations)
+### 5.7 暖墨矢量插图规格 (Editorial Illustrations)
 
 - **风格标准**：100% 纯 SVG 矢量单线蚀刻手稿（Monoline Ink Sketch），禁止外链位图 (PNG/JPG)、禁止 3D 拟物与渐变大色块。
 - **色彩 Token 绑定**：
