@@ -15,7 +15,7 @@ import type {
   TopicClaimItem,
 } from "./types";
 
-interface TodayFocusSectionProps {
+interface TeamActivitySectionProps {
   data: ActiveTopicsResponse | null;
   loading: boolean;
   error: string | null;
@@ -33,13 +33,13 @@ function formatDateCompact(value: string | null) {
   return `${month}-${day}`;
 }
 
-export function TodayFocusSection({
+export function TeamActivitySection({
   data,
   loading,
   error,
   onRetry,
   onSelectTopic,
-}: TodayFocusSectionProps) {
+}: TeamActivitySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (loading) {
@@ -277,5 +277,3 @@ export function TodayFocusSection({
     </section>
   );
 }
-
-export { TodayFocusSection as TeamActivitySection };

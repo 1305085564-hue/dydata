@@ -21,6 +21,8 @@ import { AppShell } from "@/components/app-shell";
 import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/lib/utils";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
+import { CompassConstellationIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
+import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 import {
   GROWTH_DIMENSION_RULES,
   GROWTH_RATE_UNLOCK_SAMPLE_COUNT,
@@ -256,12 +258,17 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   return (
     <AppShell width="wide" className="pb-16 space-y-10">
       {/* 头部标题与阶段指示 */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-[#ECE7DE]/80 pb-6">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">数据分析</h1>
-          <p className="mt-1 text-[13px] text-[#78716C]">
-            内容成长体检 · 分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计提交 {stage.lifetimeReportCount} 份日报
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 border-b border-[#ECE7DE]/80 pb-6">
+        <div className="flex items-center gap-5">
+          <div className="shrink-0 hidden sm:block">
+            <CompassConstellationIllustration size={72} />
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">创作成长体检</h1>
+            <p className="mt-1 text-[13px] text-[#78716C]">
+              分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计沉淀 {stage.lifetimeReportCount} 份日报
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -287,6 +294,12 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           </div>
         </div>
       </div>
+
+      {/* 卷首寄语 */}
+      <EditorialEpigraph
+        quote="灵感偶得，工致乃成。数据记录着作品与读者的每一次相遇，指引下一篇章的航向。"
+        author="创作札记"
+      />
 
       {/* 断流横幅：断流不降级模块，只提醒（累积期已并入进度卡，不重复） */}
       {staleText && phase !== "accumulation" && stage.lastReportDate && stage.daysSinceLastReport !== null ? (
@@ -598,6 +611,9 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           </div>
         )}
       </section>
+
+      {/* 出版物卷尾徽记 */}
+      <ColophonMark />
     </AppShell>
   );
 }

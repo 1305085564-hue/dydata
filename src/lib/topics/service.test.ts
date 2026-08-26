@@ -4,13 +4,11 @@ import type { DataAccessScope } from "../data-access-scope";
 
 import {
   buildClaimActivity,
-  buildFocusTopics,
   buildMyClaim,
   buildTopicComparisonQueryOptions,
   buildTopicComparisonRows,
   buildPoolQueryOptions,
   sortTopicPoolItems,
-  buildWorthRedoingTopics,
   calculateTopicWorkSummary,
   deleteSubTopic,
   filterTopicClaimsByScope,
@@ -289,34 +287,6 @@ test("替换不允许把 scripting 认领当成可替换候选", async () => {
     status: 409,
     message: "脚本中的选题不能替换，请先放回或完成脚本",
   });
-});
-
-test("聚焦选题按近期成绩和历史高均播久未重做分组，并去重", () => {
-  const focus = buildFocusTopics([
-    {
-      id: "sub-recent",
-      title: "近期成绩",
-      hook: null,
-      topics: { id: "topic-1", name: "母题" },
-      topic_groups: null,
-      works: [
-        { uploadedAt: "2026-08-01T00:00:00.000Z", recentSnapshotAt: "2026-08-01T01:00:00.000Z", playCount: 50000 },
-        { uploadedAt: "2026-07-28T00:00:00.000Z", recentSnapshotAt: "2026-07-28T01:00:00.000Z", playCount: 29999 },
-      ],
-    },
-    {
-      id: "sub-stale",
-      title: "历史高均播",
-      hook: null,
-      topics: { id: "topic-1", name: "母题" },
-      topic_groups: null,
-      works: [{ uploadedAt: "2026-05-01T00:00:00.000Z", recentSnapshotAt: null, playCount: 50000 }],
-    },
-  ], new Date("2026-08-03T00:00:00.000Z"), 3);
-
-  assert.deepEqual(focus.map((item) => item.id), ["sub-recent", "sub-stale"]);
-  assert.equal(focus[0]?.reasonType, "recent_success");
-  assert.equal(focus[1]?.reasonType, "historical_high_avg_stale");
 });
 
 test("手动录入选题允许不填写钩子", () => {
@@ -680,35 +650,6 @@ test("横向对比参数只接受两种维度、有效天数和合法母题 ID",
     status: 400,
     message: "days 必须是 1 到 90 之间的整数",
   });
-});
-
-test("值得再做只保留有达标作品的子题并按平均播放倒序", () => {
-  const result = buildWorthRedoingTopics([
-    {
-      id: "sub-1",
-      title: "普通选题",
-      topics: { name: "母题一" },
-      topic_groups: { name: "分组一" },
-      summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
-    },
-    {
-      id: "sub-2",
-      title: "值得复拍",
-      topics: { name: "母题二" },
-      topic_groups: { name: "分组二" },
-      summary: { qualifiedWorkCount: 1, averagePlayCount: 5000, bestPlayCount: 5000, bestCopy: "最佳文案", latestCopy: "最佳文案" },
-    },
-    {
-      id: "sub-3",
-      title: "更值得复拍",
-      topics: { name: "母题三" },
-      topic_groups: null,
-      summary: { qualifiedWorkCount: 2, averagePlayCount: 8000, bestPlayCount: 8000, bestCopy: "更佳文案", latestCopy: "新文案" },
-    },
-  ]);
-
-  assert.deepEqual(result.map((item) => item.id), ["sub-3", "sub-2"]);
-  assert.equal(result[0]?.summary.qualifiedWorkCount, 2);
 });
 
 test("采纳 AI 建议要求标题和切入角度，并保留可选分类和标签", () => {

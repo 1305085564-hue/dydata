@@ -118,20 +118,9 @@ export interface V2RecentlyWorked {
   subTopic: V2SubTopic | null;
 }
 
-export interface V2FocusTopic extends V2SubTopic {
-  reasonType: "recent_success" | "historical_high_avg_stale" | "legacy";
-  reasonText: string;
-  latestWorkedAt: string | null;
-  daysSinceLastWork: number | null;
-  summary: V2WorkSummary;
-}
-
 export interface V2ActiveTopicsResponse {
-  focusTopics: V2FocusTopic[];
   recentlyClaimed: V2ActivityClaim[];
   recentlyWorked: V2RecentlyWorked[];
-  recentlyCreated: V2SubTopic[];
-  worthRedoing: V2FocusTopic[];
 }
 
 export interface V2ComparisonResponse {
@@ -358,41 +347,8 @@ function parseActivityClaim(value: unknown): V2ActivityClaim | null {
   };
 }
 
-function parseFocusTopic(value: unknown, legacy = false): V2FocusTopic | null {
-  if (!isRecord(value)) return null;
-  const nestedSubTopic = isRecord(value.subTopic) ? value.subTopic : value;
-  const subTopic = parseSubTopicResponse(nestedSubTopic);
-  const summary = parseSummary(value.summary) ?? {
-    qualifiedWorkCount: 0,
-    averagePlayCount: null,
-    bestPlayCount: null,
-    bestCopy: null,
-    latestCopy: null,
-  };
-  return {
-    ...subTopic,
-    reasonType: value.reasonType === "recent_success" || value.reasonType === "historical_high_avg_stale"
-      ? value.reasonType
-      : "legacy",
-    reasonText: nullableString(value.reasonText)
-      ?? (legacy ? "历史有合格作品，可查看详情" : "暂无聚焦理由"),
-    latestWorkedAt: nullableString(value.latestWorkedAt),
-    daysSinceLastWork: nullableNumber(value.daysSinceLastWork),
-    summary,
-  };
-}
-
 export function parseActiveTopicsResponse(value: unknown): V2ActiveTopicsResponse {
-  if (!isRecord(value)) throw new Error("今日聚焦接口返回结构无效");
-  const parseList = (key: string, parser: (item: unknown) => V2FocusTopic | null) =>
-    Array.isArray(value[key]) ? value[key].flatMap((item) => {
-      try {
-        const parsed = parser(item);
-        return parsed ? [parsed] : [];
-      } catch {
-        return [];
-      }
-    }) : [];
+  if (!isRecord(value)) throw new Error("团队动态接口返回结构无效");
   const recentlyClaimed = Array.isArray(value.recentlyClaimed)
     ? value.recentlyClaimed.flatMap((item) => {
         const parsed = parseActivityClaim(item);
@@ -419,21 +375,9 @@ export function parseActiveTopicsResponse(value: unknown): V2ActiveTopicsRespons
         }];
       })
     : [];
-  const recentlyCreated = Array.isArray(value.recentlyCreated)
-    ? value.recentlyCreated.flatMap((item) => {
-        try {
-          return [parseSubTopicResponse(item)];
-        } catch {
-          return [];
-        }
-      })
-    : [];
   return {
-    focusTopics: parseList("focusTopics", (item) => parseFocusTopic(item)),
     recentlyClaimed,
     recentlyWorked,
-    recentlyCreated,
-    worthRedoing: parseList("worthRedoing", (item) => parseFocusTopic(item, true)),
   };
 }
 

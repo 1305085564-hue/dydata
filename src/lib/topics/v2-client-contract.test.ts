@@ -79,18 +79,8 @@ test("V2 契约解析选题池统计、当前认领和真实分页", () => {
   assert.deepEqual(pool.pagination, { page: 2, pageSize: 20, totalItems: 41 });
 });
 
-test("V2 契约解析今日聚焦理由和动态，空 Hook 不报错", () => {
+test("V2 契约解析团队动态，空 Hook 不报错", () => {
   const active = parseActiveTopicsResponse({
-    focusTopics: [{
-      id: "sub-1",
-      title: "聚焦选题",
-      hook: null,
-      reasonType: "recent_success",
-      reasonText: "近 30 天 2 条合格作品，均播 3.2万",
-      latestWorkedAt: "2026-08-02T00:00:00.000Z",
-      daysSinceLastWork: 0,
-      summary: { qualifiedWorkCount: 2, averagePlayCount: 3200, bestPlayCount: 5000 },
-    }],
     recentlyClaimed: [{
       id: "claim-1",
       sub_topic_id: "sub-1",
@@ -106,11 +96,8 @@ test("V2 契约解析今日聚焦理由和动态，空 Hook 不报错", () => {
       uploaded_at: "2026-08-02T00:00:00.000Z",
       sub_topics: { id: "sub-1", title: "聚焦选题", hook: null },
     }],
-    recentlyCreated: [],
-    worthRedoing: [],
   });
 
-  assert.equal(active.focusTopics[0]?.reasonText, "近 30 天 2 条合格作品，均播 3.2万");
   assert.equal(active.recentlyClaimed[0]?.displayName, "小王");
   assert.equal(active.recentlyClaimed[0]?.subTopic?.hook, null);
   assert.equal(active.recentlyWorked[0]?.subTopic?.title, "聚焦选题");

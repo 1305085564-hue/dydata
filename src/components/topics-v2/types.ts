@@ -89,16 +89,7 @@ export interface TopicClaimsDetailResponse {
   }>;
 }
 
-export interface TopicFocusItem extends SubTopicItem {
-  reasonType: "recent_success" | "historical_high_avg_stale" | "legacy";
-  reasonText: string;
-  latestWorkedAt: string | null;
-  daysSinceLastWork: number | null;
-  summary: TopicWorkSummary;
-}
-
 export interface ActiveTopicsResponse {
-  focusTopics: TopicFocusItem[];
   recentlyClaimed: TopicClaimItem[];
   recentlyWorked: Array<{
     id: string;
@@ -106,8 +97,6 @@ export interface ActiveTopicsResponse {
     uploadedAt: string | null;
     subTopic: SubTopicItem | null;
   }>;
-  recentlyCreated: SubTopicItem[];
-  worthRedoing: TopicFocusItem[];
 }
 
 export interface TopicComparisonItem {

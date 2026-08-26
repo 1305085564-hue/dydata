@@ -435,129 +435,6 @@ export function buildTopicComparisonRows(rows: TopicComparisonInputRow[], dimens
     );
 }
 
-export function buildWorthRedoingTopics(
-  rows: Array<Record<string, unknown> & { id?: string; title?: string; summary: TopicWorkSummary }>,
-) {
-  return rows
-    .filter((row) => row.summary.qualifiedWorkCount >= 1)
-    .sort((a, b) => (b.summary.averagePlayCount ?? 0) - (a.summary.averagePlayCount ?? 0));
-}
-
-export interface FocusTopicWorkInput {
-  uploadedAt: string | null;
-  recentSnapshotAt: string | null;
-  playCount: number | null;
-  content?: string | null;
-}
-
-export interface FocusTopicInput {
-  id: string;
-  title: string;
-  hook: string | null;
-  topics: { id: string; name: string } | null;
-  topic_groups: { id: string; name: string } | null;
-  works: FocusTopicWorkInput[];
-}
-
-export interface FocusTopicOutput extends Omit<FocusTopicInput, "works"> {
-  reasonType: "recent_success" | "historical_high_avg_stale";
-  reasonText: string;
-  latestWorkedAt: string | null;
-  daysSinceLastWork: number | null;
-  summary: TopicWorkSummary;
-}
-
-function formatFocusPlayCount(value: number | null) {
-  if (value === null) return "暂无";
-  return value >= 10_000 ? `${(value / 10_000).toFixed(1)}万` : value.toLocaleString("zh-CN");
-}
-
-function latestValidDate(values: Array<string | null>) {
-  return values
-    .filter((value): value is string => {
-      if (!value) return false;
-      return Number.isFinite(Date.parse(value));
-    })
-    .sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? null;
-}
-
-function buildFocusSummary(works: FocusTopicWorkInput[]): TopicWorkSummary {
-  return calculateTopicWorkSummary(works.map((work) => ({
-    playCount: work.playCount,
-    content: work.content ?? null,
-    uploadedAt: work.uploadedAt,
-  })));
-}
-
-export function buildFocusTopics(rows: FocusTopicInput[], now = new Date(), perReason = 3): FocusTopicOutput[] {
-  const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000;
-  const recentCandidates: FocusTopicOutput[] = [];
-  const historicalCandidates: FocusTopicOutput[] = [];
-
-  for (const row of rows) {
-    const historicalWorks = row.works.filter((work) => (work.playCount ?? 0) >= 30_000);
-    const recentWorks = historicalWorks.filter((work) => {
-      const snapshotTime = work.recentSnapshotAt ? Date.parse(work.recentSnapshotAt) : Number.NaN;
-      return Number.isFinite(snapshotTime) && snapshotTime >= cutoff;
-    });
-
-    if (recentWorks.length > 0) {
-      const summary = buildFocusSummary(recentWorks);
-      recentCandidates.push({
-        id: row.id,
-        title: row.title,
-        hook: row.hook,
-        topics: row.topics,
-        topic_groups: row.topic_groups,
-        reasonType: "recent_success",
-        reasonText: `近 30 天 ${summary.qualifiedWorkCount} 条合格作品，均播 ${formatFocusPlayCount(summary.averagePlayCount)}`,
-        latestWorkedAt: latestValidDate(recentWorks.map((work) => work.uploadedAt)),
-        daysSinceLastWork: 0,
-        summary,
-      });
-      continue;
-    }
-
-    if (historicalWorks.length === 0) continue;
-    const latestWorkedAt = latestValidDate(historicalWorks.map((work) => work.uploadedAt));
-    const latestTime = latestWorkedAt ? Date.parse(latestWorkedAt) : Number.NaN;
-    if (Number.isFinite(latestTime) && latestTime >= cutoff) continue;
-    const summary = buildFocusSummary(historicalWorks);
-    const daysSinceLastWork = Number.isFinite(latestTime)
-      ? Math.max(0, Math.floor((now.getTime() - latestTime) / (24 * 60 * 60 * 1000)))
-      : null;
-    historicalCandidates.push({
-      id: row.id,
-      title: row.title,
-      hook: row.hook,
-      topics: row.topics,
-      topic_groups: row.topic_groups,
-      reasonType: "historical_high_avg_stale",
-      reasonText: `历史均播 ${formatFocusPlayCount(summary.averagePlayCount)}，${daysSinceLastWork ?? "较久"} 天未重做`,
-      latestWorkedAt,
-      daysSinceLastWork,
-      summary,
-    });
-  }
-
-  recentCandidates.sort((left, right) =>
-    (right.summary.averagePlayCount ?? 0) - (left.summary.averagePlayCount ?? 0) ||
-    (Date.parse(right.latestWorkedAt ?? "") || 0) - (Date.parse(left.latestWorkedAt ?? "") || 0) ||
-    left.id.localeCompare(right.id),
-  );
-  const recentIds = new Set(recentCandidates.slice(0, perReason).map((item) => item.id));
-  historicalCandidates.sort((left, right) =>
-    (right.summary.averagePlayCount ?? 0) - (left.summary.averagePlayCount ?? 0) ||
-    (right.daysSinceLastWork ?? 0) - (left.daysSinceLastWork ?? 0) ||
-    left.id.localeCompare(right.id),
-  );
-
-  return [
-    ...recentCandidates.slice(0, perReason),
-    ...historicalCandidates.filter((item) => !recentIds.has(item.id)).slice(0, perReason),
-  ];
-}
-
 export function validateRecommendationSubTopicInput(body: unknown) {
   if (!body || typeof body !== "object") {
     return { ok: false as const, status: 400, message: "请求体格式不正确" };
@@ -1394,6 +1271,8 @@ function summarizeScopedWorksBySubTopic(rows: ScopedWorkRow[], scope: DataAccess
   return summaryMap;
 }
 
+// 只服务选题库顶部的「团队动态」条：最新认领 + 最新成片。
+// 旧的 focusTopics / worthRedoing / recentlyCreated 已随「今日聚焦」卡片下线一并删除，不要复活。
 export async function loadActiveTopics(
   supabase: TopicSupabase,
   userId: string,
@@ -1415,129 +1294,29 @@ export async function loadActiveTopics(
     return { ok: true, data: data ?? [] };
   });
 
-  // 一次查询同时服务：最近作品、今日聚焦、值得再做三块，避免同表全量扫三遍
-  const mergedWorksTask = measureAsync("topics.active.mergedWorks", async (): Promise<TaskResult<ScopedWorkRow[]>> => {
+  const recentWorksTask = measureAsync("topics.active.recentWorks", async (): Promise<TaskResult<unknown[]>> => {
     let worksQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name)), video_metrics_snapshots(play_count, snapshot_type, captured_at)")
+      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics(id, title, hook, topics(id, name), topic_groups(id, name))")
       .eq("lifecycle_state", "active")
-      .not("topic_id", "is", null);
+      .not("topic_id", "is", null)
+      .order("uploaded_at", { ascending: false })
+      .limit(limit);
     if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
     const { data, error } = await worksQuery;
-    if (error) return { ok: false, status: 500, message: error.message };
-    return { ok: true, data: (data ?? []) as ScopedWorkRow[] };
-  });
-
-  const focusSubTopicsTask = measureAsync("topics.active.focusSubTopics", async (): Promise<TaskResult<Record<string, unknown>[]>> => {
-    const { data, error } = await supabase
-      .from("sub_topics")
-      .select("id, title, hook, topics(id, name), topic_groups(id, name)")
-      .order("created_at", { ascending: false });
-    if (error) return { ok: false, status: 500, message: "加载今日聚焦选题失败" };
-    return { ok: true, data: (data ?? []) as Array<Record<string, unknown>> };
-  });
-
-  const createdTask = measureAsync("topics.active.recentlyCreated", async (): Promise<TaskResult<unknown[]>> => {
-    const { data, error } = await supabase
-      .from("sub_topics")
-      .select("*, topics(id, name), topic_groups(id, name)")
-      .order("created_at", { ascending: false })
-      .limit(limit);
     if (error) return { ok: false, status: 500, message: error.message };
     return { ok: true, data: data ?? [] };
   });
 
-  const [claimsResult, mergedWorksResult, focusSubTopicsResult, createdResult] = await Promise.all([
-    claimsTask,
-    mergedWorksTask,
-    focusSubTopicsTask,
-    createdTask,
-  ]);
+  const [claimsResult, recentWorksResult] = await Promise.all([claimsTask, recentWorksTask]);
   if (!claimsResult.ok) return claimsResult;
-  if (!mergedWorksResult.ok) return { ...mergedWorksResult, message: "加载最近作品失败" };
-  if (!focusSubTopicsResult.ok) return focusSubTopicsResult;
-  if (!createdResult.ok) return createdResult;
-
-  const scopedWorks = applyScope(mergedWorksResult.data, scope);
-
-  const recentlyWorked = [...scopedWorks]
-    .sort((left, right) => (Date.parse(String(right.uploaded_at ?? "")) || 0) - (Date.parse(String(left.uploaded_at ?? "")) || 0))
-    .slice(0, limit);
-
-  const worksBySubTopicId = new Map<string, ScopedWorkRow[]>();
-  for (const work of scopedWorks) {
-    const subTopicId = String(work.topic_id ?? "");
-    if (!subTopicId) continue;
-    const list = worksBySubTopicId.get(subTopicId) ?? [];
-    list.push(work);
-    worksBySubTopicId.set(subTopicId, list);
-  }
-
-  const focusRows: FocusTopicInput[] = focusSubTopicsResult.data.flatMap((raw) => {
-    const item = raw as Record<string, unknown>;
-    if (typeof item.id !== "string" || typeof item.title !== "string") return [];
-    const topic = Array.isArray(item.topics) ? item.topics[0] : item.topics;
-    const group = Array.isArray(item.topic_groups) ? item.topic_groups[0] : item.topic_groups;
-    const topicRef = topic && typeof topic === "object" && typeof (topic as { id?: unknown }).id === "string" && typeof (topic as { name?: unknown }).name === "string"
-      ? { id: (topic as { id: string }).id, name: (topic as { name: string }).name }
-      : null;
-    const groupRef = group && typeof group === "object" && typeof (group as { id?: unknown }).id === "string" && typeof (group as { name?: unknown }).name === "string"
-      ? { id: (group as { id: string }).id, name: (group as { name: string }).name }
-      : null;
-    const topicWorks = (worksBySubTopicId.get(item.id) ?? []).map((work) => {
-      const snapshots = Array.isArray(work.video_metrics_snapshots)
-        ? (work.video_metrics_snapshots as Array<Record<string, unknown>>)
-        : [];
-      const latest24h = snapshots
-        .filter((snapshot) => snapshot.snapshot_type === "24h" && typeof snapshot.captured_at === "string")
-        .sort((left, right) => (Date.parse(String(right.captured_at)) || 0) - (Date.parse(String(left.captured_at)) || 0))[0];
-      return {
-        uploadedAt: typeof work.uploaded_at === "string" ? work.uploaded_at : null,
-        recentSnapshotAt: typeof latest24h?.captured_at === "string" ? latest24h.captured_at : null,
-        playCount: typeof latest24h?.play_count === "number" ? latest24h.play_count : null,
-      };
-    });
-    return [{
-      id: item.id,
-      title: item.title,
-      hook: typeof item.hook === "string" ? item.hook : null,
-      topics: topicRef,
-      topic_groups: groupRef,
-      works: topicWorks,
-    }];
-  });
-  const focusTopics = buildFocusTopics(focusRows, new Date(), 3);
-
-  const subTopicsById = new Map<string, Record<string, unknown>>();
-  for (const work of scopedWorks) {
-    const subTopic = Array.isArray(work.sub_topics) ? work.sub_topics[0] : work.sub_topics;
-    if (!subTopic || typeof (subTopic as { id?: unknown }).id !== "string") continue;
-    subTopicsById.set((subTopic as { id: string }).id, subTopic as Record<string, unknown>);
-  }
-
-  let worthRedoing: Array<Record<string, unknown>> = [];
-  try {
-    const summaries = await measureAsync("topics.active.worthRedoingSummaries", async () =>
-      summarizeScopedWorksBySubTopic(mergedWorksResult.data, scope),
-    );
-    worthRedoing = buildWorthRedoingTopics(
-      [...subTopicsById.values()].map((subTopic) => ({
-        ...subTopic,
-        summary: summaries.get(String(subTopic.id)) ?? calculateTopicWorkSummary([]),
-      })),
-    ).slice(0, limit);
-  } catch {
-    return { ok: false, status: 500, message: "加载值得再做选题失败" };
-  }
+  if (!recentWorksResult.ok) return { ...recentWorksResult, message: "加载最近作品失败" };
 
   return {
     ok: true,
     value: {
       recentlyClaimed: claimsResult.data,
-      recentlyWorked,
-      recentlyCreated: createdResult.data,
-      worthRedoing,
-      focusTopics,
+      recentlyWorked: recentWorksResult.data,
     },
   };
 }

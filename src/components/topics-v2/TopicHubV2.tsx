@@ -23,7 +23,7 @@ import {
   AlertTriangle,
   Lightbulb,
 } from "lucide-react";
-import { TodayFocusSection } from "./TodayFocusSection";
+import { TeamActivitySection } from "./TeamActivitySection";
 import { MyClaimDrawer } from "./MyClaimDrawer";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
 import { TopicComparisonMatrix } from "./TopicComparisonMatrix";
@@ -112,7 +112,7 @@ export function TopicHubV2() {
   const getErrorMessage = (error: unknown, fallback: string) =>
     error instanceof Error && error.message ? error.message : fallback;
 
-  // 1. 加载今日聚焦与团队动态
+  // 1. 加载团队动态（最新认领与最新成片）
   const fetchActiveData = useCallback(async () => {
     try {
       setActiveLoading(true);
@@ -122,7 +122,7 @@ export function TopicHubV2() {
     } catch (err) {
       if (err instanceof TopicRequestError && err.status === 401)
         setAuthError(true);
-      setActiveError(getErrorMessage(err, "今日聚焦加载失败"));
+      setActiveError(getErrorMessage(err, "团队动态加载失败"));
       if (!(err instanceof TopicRequestError && err.status === 401))
         console.error("加载今日精选失败:", err);
     } finally {
@@ -417,7 +417,7 @@ export function TopicHubV2() {
           </header>
 
           {/* 1. 团队动态：最新认领与成片关联 */}
-          <TodayFocusSection
+          <TeamActivitySection
             data={activeTopics}
             loading={activeLoading}
             error={activeError}
