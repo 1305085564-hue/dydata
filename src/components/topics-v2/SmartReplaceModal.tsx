@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { AlertTriangle, X, RefreshCw } from "lucide-react";
+import { X, RefreshCw } from "lucide-react";
 import type { TopicClaimItem } from "./types";
 
 interface SmartReplaceModalProps {
@@ -113,14 +113,14 @@ export function SmartReplaceModal({
         >
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#ECE7DE] shrink-0">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F3EE] text-[#292524] font-semibold text-xs">
-                <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="inline-flex items-center justify-center size-6 rounded-full bg-[#D97757]/10 text-[#D97757] font-semibold text-xs">
+                ✦
               </span>
               <h3
                 id="replace-modal-title"
-                className="text-base font-semibold text-[#1C1917]"
+                className="font-serif text-[15.5px] font-medium tracking-tight text-[#1C1917]"
               >
-                候选槽位已满 (5/5)，选择要替换的选题
+                候选槽位已满 (5/5) · 选择要替换的选题
               </h3>
             </div>
             <button

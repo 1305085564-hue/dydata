@@ -31,7 +31,9 @@ export default async function AIConfigPage({ searchParams }: Props) {
   return (
     <div className="max-w-5xl w-full mx-auto">
       <AdminWorkspaceLayout
-        title="AI 配置中心"
+        eyebrow="INTELLIGENCE DISPATCH · 算力札记"
+        title="智囊调度 · 算力札记"
+        description="调度大模型智囊网络，统筹模型路由、分析通道与文案重塑算力"
         indexItems={[]}
       >
         <AIConfigShell initialTab={initialTab} />

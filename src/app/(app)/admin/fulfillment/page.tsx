@@ -59,11 +59,11 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
   const range = resolveRange(params.range);
 
   return (
-    <div className="w-full min-h-screen bg-[#FBF9F5] text-[#1C1917] -mx-4 -my-6 px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors duration-200">
+    <div className="w-full min-h-screen bg-[#FBF9F5] text-[#1C1917] -mx-4 -my-6 px-4 py-3 sm:-mx-6 sm:px-6 sm:py-4 lg:-mx-8 lg:px-8 transition-colors duration-200">
       <AdminWorkspaceLayout
-        eyebrow="FULFILLMENT DISPATCH · 履约大盘"
-        title="发布与履约总览"
-        description="实时监控全员视频发布进度、处置异常缺卡、审核改判申诉。"
+        eyebrow="FULFILLMENT DISPATCH · 全员履约"
+        title="团队履约大盘 · 协同纪事"
+        description="全员作品发布沉淀与履约节奏，支持异常补录、停笔调养与协同申诉"
         indexItems={[]}
         width="wide"
       >

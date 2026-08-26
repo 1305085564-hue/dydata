@@ -18,8 +18,8 @@ import { MemberDrawer } from "./components/member-drawer";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { TableSkeleton } from "@/components/ui/table-skeleton";
 import { trackUsageEvent } from "@/lib/usage-events/client";
-import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 
 type Source = "queue" | "matrix";
 type MarkAction = Extract<
@@ -696,14 +696,7 @@ export function FulfillmentWorkbench({
   );
 
   return (
-    <div className="space-y-6">
-      {/* 卷首寄语 */}
-      <EditorialEpigraph
-        quote="并肩同行，记录团队每一次创作灵光的凝聚与沉淀。"
-        author="团队协作札记"
-        className="my-0"
-      />
-
+    <div className="space-y-4">
       {/* 筛选工具栏 */}
       <FilterBar
         year={calendarData.year}
@@ -729,25 +722,25 @@ export function FulfillmentWorkbench({
         <Tabs defaultValue="exceptions" className="w-full">
           <div className="flex items-center justify-between border-b border-[#E5E0D6] pb-2">
             <TabsList variant="line" className="gap-4">
-              <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
+              <TabsTrigger value="exceptions" className="font-serif text-[13.5px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917] data-[state=active]:font-semibold tracking-tight">
                 待处理异常
-                <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
+                <span className="ml-1.5 text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] text-[#78716C] tabular-nums">
                   {exceptionMembers.length}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
+              <TabsTrigger value="appeals" className="font-serif text-[13.5px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917] data-[state=active]:font-semibold tracking-tight">
                 待审核申诉
                 {appealsError ? (
-                  <span className="ml-1.5 rounded-full bg-[#C9604D]/10 px-1.5 py-0.5 text-[11px] text-[#C9604D] font-semibold">
+                  <span className="ml-1.5 rounded-md bg-[#C9604D]/10 border border-[#C9604D]/20 px-1.5 py-0.5 text-[11px] font-mono text-[#C9604D] font-medium">
                     !
                   </span>
                 ) : pendingAppeals.length > 0 ? (
-                  <span className="ml-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-semibold tabular-nums">
+                  <span className="ml-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] font-mono font-medium tabular-nums">
                     <span className="size-1.5 rounded-full bg-[#D97757]" />
                     {pendingAppeals.length}
                   </span>
                 ) : (
-                  <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
+                  <span className="ml-1.5 text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] text-[#78716C] tabular-nums">
                     0
                   </span>
                 )}
@@ -802,10 +795,12 @@ export function FulfillmentWorkbench({
                 </span>
               </div>
             ) : pendingAppeals.length === 0 ? (
-              <div className="rounded-xl border border-[#E5E0D6] bg-white py-12">
+              <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 py-8">
                 <EmptyState
-                  title="还没有待审核的申诉"
-                  description="所有成员的申诉请求已处理完毕"
+                  variant="zen"
+                  size={80}
+                  title="所有申诉已妥帖归档"
+                  description="当前所有协同履约申诉均已审结归卷，无待复核事项。"
                 />
               </div>
             ) : (

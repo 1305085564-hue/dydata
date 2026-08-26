@@ -14,7 +14,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -93,10 +92,12 @@ export function OperatorTab({
 
   if (operators.length === 0) {
     return (
-      <div className="py-16 text-center">
+      <div className="py-12 text-center">
         <EmptyState
-          title="本月还没有运营归属记录"
-          description="2026-07-27 起开始统计团队运营分工"
+          variant="collaboration"
+          size={88}
+          title="本月静待运营协同立卷"
+          description="当前周期尚未记录到运营分工手稿。"
         />
       </div>
     );
@@ -229,18 +230,18 @@ export function OperatorTab({
                       <div className="w-8 shrink-0" />
                     )}
                     <div className="flex-1 grid grid-cols-8 items-center gap-2">
-                      <div className="text-left font-medium flex items-center gap-1">
+                      <div className="text-left font-medium flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => onSelectPerson(op.userId)}
                           onMouseEnter={() => onPrefetchPerson?.(op.userId)}
                           onFocus={() => onPrefetchPerson?.(op.userId)}
-                          className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium"
+                          className="font-serif text-[#1C1917] hover:text-[#D97757] transition-colors font-semibold tracking-tight cursor-pointer"
                         >
                           {op.name}
                         </button>
                         {isSelfAccountOnly && (
-                          <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5 text-[11px] font-normal text-[#78716C] border border-[#E5E0D6]">
+                          <span className="rounded-md bg-[#FAF8F4] px-1.5 py-0.5 text-[10.5px] font-mono font-medium text-[#78716C] border border-[#ECE7DE]">
                             自运营
                           </span>
                         )}

@@ -35,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Sheet,
   SheetContent,
@@ -951,26 +952,26 @@ export function AdminModulesContentV3({
   return (
     <div className="mt-4 w-full space-y-5 relative">
       <main className="space-y-5">
-        {/* ── 待审批入团申请预警栏（状态色便签范式：弱底色差 + 左竖线，用完即撕） ── */}
+        {/* ── 待审批入团申请预警栏（便签装帧范式：象牙暖底 + 左边陶土橙细线） ── */}
         {pendingRequests.length > 0 && (
-          <section className="bg-[#B98A54]/10 rounded-lg border-l-2 border-[#B98A54] p-4">
+          <section className="bg-gradient-to-r from-[#FAF8F4] to-white rounded-xl border border-[#ECE7DE] border-l-4 border-l-[#D97757] p-4 shadow-2xs">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[14px] font-medium text-[#1C1917]">待审批入团申请</span>
-              <span className="text-[12px] font-medium text-[#B98A54] bg-[#B98A54]/15 px-2 py-0.5 rounded-full">
-                {pendingRequests.length}
+              <h3 className="font-serif text-[14.5px] font-semibold text-[#1C1917] tracking-tight">待审批入团申请</h3>
+              <span className="text-[11px] font-medium text-[#D97757] bg-[#D97757]/10 px-2 py-0.5 rounded-full border border-[#D97757]/20">
+                {pendingRequests.length} 篇待批
               </span>
             </div>
-            <div className="divide-y divide-[#B98A54]/20">
+            <div className="divide-y divide-[#ECE7DE]">
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
                   className="flex items-center justify-between gap-4 py-2"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="text-[13px] font-medium text-[#1C1917]">{req.applicantName}</span>
-                    <span className="mx-2 text-[#B98A54]/60">·</span>
+                    <span className="font-serif text-[13.5px] font-semibold text-[#1C1917]">{req.applicantName}</span>
+                    <span className="mx-2 text-[#78716C]/60">·</span>
                     <span className="text-[12px] text-[#292524]">{req.targetTeamName}</span>
-                    <span className="mx-2 text-[#B98A54]/60">·</span>
+                    <span className="mx-2 text-[#78716C]/60">·</span>
                     <span className="text-[12px] text-[#78716C]">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
@@ -988,9 +989,9 @@ export function AdminModulesContentV3({
                       <Button
                         onClick={() => handleReviewJoinRequest(req.id, "approve")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] bg-[#1C1917] text-white hover:bg-[#292524] rounded-md"
+                        className="h-7 px-2.5 text-[12px] bg-[#D97757] text-white hover:bg-[#C46A4D] shadow-2xs rounded-md font-medium"
                       >
-                        同意
+                        同意入团
                       </Button>
                     </div>
                   )}
@@ -1123,10 +1124,17 @@ export function AdminModulesContentV3({
 
           {/* 成员双列平铺列表 */}
           {sortedProfiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <UsersRound className="size-8 text-[#E5E0D6] mb-3" />
-              <p className="text-[13px] text-[#78716C]">没有找到成员</p>
-              <p className="text-[12px] text-[#78716C] mt-1">调整筛选或搜索条件试试</p>
+            <div className="py-12 px-4 text-center">
+              <EmptyState
+                variant="collaboration"
+                size={88}
+                title={memberView === "archived" ? "归档成员已尽数清空" : "未检索到匹配的团队成员"}
+                description={
+                  memberView === "archived"
+                    ? "当前团队组织架构整齐，没有归档或离职成员档案。"
+                    : "不妨调整搜索关键词、团队分组或成员状态筛选。"
+                }
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -1190,17 +1198,17 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
+                                <span className="font-serif text-[14px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors truncate tracking-tight">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
-                                  <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded shrink-0">
+                                  <span className="text-[11px] font-medium text-[#78716C] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.2 rounded shrink-0">
                                     我
                                   </span>
                                 )}
                               </div>
                               {member.email && (
-                                <span className="text-[12px] font-normal text-[#78716C] truncate leading-none mt-0.5">
+                                <span className="text-[11.5px] font-normal text-[#78716C] truncate leading-none mt-0.5">
                                   {member.email}
                                 </span>
                               )}
@@ -1212,35 +1220,35 @@ export function AdminModulesContentV3({
                             {/* 角色 */}
                             <div className="w-14 text-center shrink-0">
                               {isArchivedView ? (
-                                <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
+                                <span className="inline-flex items-center gap-1 text-[11.5px] text-[#78716C] font-normal">
                                   <Archive className="size-3" />
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">创始人</span>
+                                <span className="text-[11.5px] font-medium text-[#1C1917] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded">创始人</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-[#292524]">主管</span>
+                                <span className="text-[11.5px] font-medium text-[#292524] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded">主管</span>
                               ) : (
-                                <span className="text-[13px] text-[#78716C]">组员</span>
+                                <span className="text-[12px] text-[#78716C]">组员</span>
                               )}
                             </div>
 
                             {/* 发布进度 */}
                             <div className="w-24 text-right shrink-0">
                               {isArchivedView ? (
-                                <span className="text-[13px] text-[#78716C]">
+                                <span className="text-[12px] text-[#78716C]">
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
                               ) : isCurrentlyExempt ? (
-                                <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
+                                <span className="text-[12px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-1.5 py-0.5 rounded border border-[#6FAA7D]/20">已调养</span>
                               ) : required === 0 ? (
-                                <span className="text-[13px] font-normal text-[#78716C]">—</span>
+                                <span className="text-[12px] font-normal text-[#78716C]">—</span>
                               ) : (
                                 <div className="space-y-1">
                                   <div className="flex items-center justify-end gap-1 text-[12px] text-[#292524] tabular-nums">
-                                    <span className="font-medium text-[#292524]">{published}</span>
-                                    <span className="text-[#78716C]">/</span>
-                                    <span>{required}条</span>
+                                    <span className="font-semibold text-[#292524]">{published}</span>
+                                    <span className="text-[#78716C] font-normal">/</span>
+                                    <span className="text-[#78716C]">{required}条</span>
                                   </div>
                                   <div className="h-1.5 w-full bg-[#F5F3EE] rounded-full overflow-hidden">
                                     <div
@@ -1272,7 +1280,7 @@ export function AdminModulesContentV3({
                                   <RotateCcw className="size-3" />
                                 </Button>
                               ) : (
-                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[13px] font-normal transition-opacity duration-150 hover:underline">
+                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[12.5px] font-medium transition-opacity duration-150 hover:underline">
                                   编辑
                                 </span>
                               )}
@@ -1344,17 +1352,17 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-[#1C1917] truncate">
+                                <span className="font-serif text-[14px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors truncate tracking-tight">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
-                                  <span className="text-[12px] text-[#78716C] bg-[#F5F3EE] px-1.5 py-0.5 rounded shrink-0">
+                                  <span className="text-[11px] font-medium text-[#78716C] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.2 rounded shrink-0">
                                     我
                                   </span>
                                 )}
                               </div>
                               {member.email && (
-                                <span className="text-[12px] font-normal text-[#78716C] truncate leading-none mt-0.5">
+                                <span className="text-[11.5px] font-normal text-[#78716C] truncate leading-none mt-0.5">
                                   {member.email}
                                 </span>
                               )}
@@ -1366,35 +1374,35 @@ export function AdminModulesContentV3({
                             {/* 角色 */}
                             <div className="w-14 text-center shrink-0">
                               {isArchivedView ? (
-                                <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
+                                <span className="inline-flex items-center gap-1 text-[11.5px] text-[#78716C] font-normal">
                                   <Archive className="size-3" />
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">创始人</span>
+                                <span className="text-[11.5px] font-medium text-[#1C1917] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded">创始人</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-[#292524]">主管</span>
+                                <span className="text-[11.5px] font-medium text-[#292524] bg-[#FAF8F4] border border-[#ECE7DE] px-1.5 py-0.5 rounded">主管</span>
                               ) : (
-                                <span className="text-[13px] text-[#78716C]">组员</span>
+                                <span className="text-[12px] text-[#78716C]">组员</span>
                               )}
                             </div>
 
                             {/* 发布进度 */}
                             <div className="w-24 text-right shrink-0">
                               {isArchivedView ? (
-                                <span className="text-[13px] text-[#78716C]">
+                                <span className="text-[12px] text-[#78716C]">
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
                               ) : isCurrentlyExempt ? (
-                                <span className="text-[13px] font-normal text-[#DC2626]">已豁免</span>
+                                <span className="text-[12px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-1.5 py-0.5 rounded border border-[#6FAA7D]/20">已调养</span>
                               ) : required === 0 ? (
-                                <span className="text-[13px] font-normal text-[#78716C]">—</span>
+                                <span className="text-[12px] font-normal text-[#78716C]">—</span>
                               ) : (
                                 <div className="space-y-1">
                                   <div className="flex items-center justify-end gap-1 text-[12px] text-[#292524] tabular-nums">
-                                    <span className="font-medium text-[#292524]">{published}</span>
-                                    <span className="text-[#78716C]">/</span>
-                                    <span>{required}条</span>
+                                    <span className="font-semibold text-[#292524]">{published}</span>
+                                    <span className="text-[#78716C] font-normal">/</span>
+                                    <span className="text-[#78716C]">{required}条</span>
                                   </div>
                                   <div className="h-1.5 w-full bg-[#F5F3EE] rounded-full overflow-hidden">
                                     <div
@@ -1426,7 +1434,7 @@ export function AdminModulesContentV3({
                                   <RotateCcw className="size-3" />
                                 </Button>
                               ) : (
-                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[13px] font-normal transition-opacity duration-150 hover:underline">
+                                <span className="opacity-0 group-hover:opacity-100 text-[#D97757] text-[12.5px] font-medium transition-opacity duration-150 hover:underline">
                                   编辑
                                 </span>
                               )}
@@ -1524,30 +1532,30 @@ export function AdminModulesContentV3({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-lg font-semibold text-[#1C1917] truncate">
+                      <SheetTitle className="font-serif text-xl font-semibold text-[#1C1917] truncate tracking-tight">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
-                      <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
+                      <span className="text-[11.5px] px-2 py-0.5 rounded font-medium bg-[#FAF8F4] border border-[#ECE7DE] text-[#292524] shrink-0 font-mono">
                         {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "主管" : "组员"}
                       </span>
                       {activeMember.membership_status === "archived" && (
-                        <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#78716C] shrink-0">
+                        <span className="text-[11.5px] px-2 py-0.5 rounded font-medium bg-[#FAF8F4] border border-[#ECE7DE] text-[#78716C] shrink-0">
                           已归档
                         </span>
                       )}
                     </div>
-                    <SheetDescription className="text-[13px] text-[#292524] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      {activeMember.team_name && <span>{activeMember.team_name}</span>}
+                    <SheetDescription className="text-[12.5px] text-[#78716C] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      {activeMember.team_name && <span className="font-medium text-[#292524]">{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
-                          {activeMember.team_name && <span className="text-[#E5E0D6]">·</span>}
+                          {activeMember.team_name && <span className="text-[#ECE7DE]">·</span>}
                           <span className="truncate">{activeMember.email}</span>
                         </>
                       )}
                       {activeMember.last_sign_in_at && (
                         <>
-                          <span className="text-[#E5E0D6]">|</span>
-                          <span className="text-[12px] text-[#78716C]">
+                          <span className="text-[#ECE7DE]">|</span>
+                          <span className="text-[11.5px] text-[#78716C]">
                             上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
                           </span>
                         </>
@@ -1565,7 +1573,7 @@ export function AdminModulesContentV3({
                         setIsAiDialogOpen(true);
                         if (!aiSuggestion) handleFetchAiSuggestion();
                       }}
-                      className="h-7 px-2.5 text-[13px] font-medium text-[#292524] hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-md"
+                      className="h-7 px-2.5 text-[12.5px] font-medium text-[#292524] hover:text-[#D97757] hover:border-[#D97757]/40 gap-1 rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]"
                     >
                       <Sparkles className="size-3.5 text-[#D97757]" />
                       AI 诊断
@@ -1578,7 +1586,7 @@ export function AdminModulesContentV3({
                       setActiveMemberId(null);
                       setAiSuggestion(null);
                     }}
-                    className="p-1.5 text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] rounded-lg transition-colors"
+                    className="p-1.5 text-[#78716C] hover:text-[#1C1917] hover:bg-[#FAF8F4] rounded-lg transition-colors"
                   >
                     <X className="size-4" />
                   </button>
@@ -1646,7 +1654,7 @@ export function AdminModulesContentV3({
                 {/* 2. 账户与团队管理（轻量排版，去除大卡片套娃） */}
                 {activeMember.membership_status !== "archived" && (
                   <div className="pt-6 border-t border-[#ECE7DE] space-y-3">
-                    <h4 className="text-[14px] font-medium text-[#1C1917] mb-2">账户与团队管理</h4>
+                    <h4 className="font-serif text-[14px] font-semibold text-[#1C1917] tracking-tight mb-2">账户与编制管理</h4>
                     <div className="space-y-0.5">
                       {/* 所属团队 */}
                       <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
@@ -2130,7 +2138,9 @@ export function AdminModulesContentV3({
                 现有团队 ({localTeams.length})
               </span>
               {localTeams.length === 0 ? (
-                <p className="text-[13px] text-[#78716C] py-3 text-center">还没有团队记录</p>
+                <div className="py-6 text-center rounded-xl bg-[#F5F3EE]/50 border border-[#ECE7DE] text-[12.5px] text-[#78716C]">
+                  尚未创建团队分组，可在上方输入名称快速建立。
+                </div>
               ) : (
                 localTeams.map((team) => {
                   const count = localProfiles.filter((p) => p.team_id === team.id).length;

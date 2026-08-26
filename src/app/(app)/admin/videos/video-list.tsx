@@ -21,6 +21,7 @@ import {
 import { MoreHorizontal, RotateCcw, Trash2 } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { EmptyState } from "@/components/ui/empty-state";
 import { VideoDetailDialog } from "./video-detail-dialog";
 import { Patch24hDialog } from "./patch-24h-dialog";
 import { interactionRate } from "@/lib/video-metrics";
@@ -1027,15 +1028,15 @@ export function VideoList({
                       </td>
                     )}
 
-                    {/* 状态徽章（中文语义 + 状态微圆点） */}
+                    {/* 状态徽章（象牙纸面微印章 + 状态微圆点） */}
                     <td className="py-2 px-2 text-center w-20 shrink-0">
                       {view === "trash" ? (
-                        <span className="text-[11.5px] text-[#292524] truncate block max-w-[80px]">
+                        <span className="text-[11.5px] text-[#78716C] truncate block max-w-[80px]">
                           {video.trashed_by_name || "—"}
                         </span>
                       ) : (
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${statusInfo.bgColor} ${statusInfo.textColor}`}
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-mono font-medium whitespace-nowrap bg-[#FAF8F4] border border-[#ECE7DE] ${statusInfo.textColor}`}
                         >
                           <span
                             className={`size-1.5 rounded-full ${statusInfo.dotColor}`}
@@ -1051,7 +1052,7 @@ export function VideoList({
                         className="flex items-center gap-1.5 min-w-0"
                         title={`${video.video_title || video.content || "未命名视频"}${video.accounts?.name ? ` (@${video.accounts.name})` : ""}`}
                       >
-                        <span className="truncate font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
+                        <span className="truncate font-normal text-[#292524] group-hover:text-[#D97757] transition-colors">
                           {video.video_title?.trim() ||
                             video.content?.slice(0, 50) ||
                             "未命名视频"}
@@ -1066,7 +1067,7 @@ export function VideoList({
 
                     {/* 负责人 */}
                     <td className="py-2 px-2.5 text-[12px] text-[#292524] truncate w-20 2xl:w-24">
-                      {video.profiles?.name || "—"}
+                      <span className="font-serif font-medium text-[#1C1917]">{video.profiles?.name || "—"}</span>
                     </td>
 
                     {/* 发布时间 / 回收时间 */}
@@ -1187,19 +1188,27 @@ export function VideoList({
                         ? 9
                         : 8
                   }
-                  className="px-4 py-16 text-center text-[13px] text-[#78716C]"
+                  className="px-4 py-12 text-center"
                 >
-                  <div className="flex flex-col items-center justify-center gap-2.5">
-                    <span>当前筛选条件下还没有视频数据。</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleReset}
-                      className="h-7 text-[12px] text-[#292524] hover:text-[#1C1917] border-[#E5E0D6]"
-                    >
-                      重置所有筛选
-                    </Button>
-                  </div>
+                  {view === "trash" ? (
+                    <EmptyState
+                      variant="archive"
+                      size={80}
+                      title="回收站已尽数清空 · 案头净简"
+                      description="当前没有被移入废弃箱的手稿或视频记录。"
+                    />
+                  ) : (
+                    <EmptyState
+                      variant="search"
+                      size={80}
+                      title="未检索到符合条件的视频手稿"
+                      description="不妨调整负责人、发布账号、时间跨度或异常状态筛选。"
+                      action={{
+                        label: "重置所有筛选",
+                        onClick: handleReset,
+                      }}
+                    />
+                  )}
                 </td>
               </tr>
             )}

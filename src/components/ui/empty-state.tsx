@@ -1,81 +1,116 @@
-import { type LucideIcon } from "lucide-react";
+import { type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  DeskStudyIllustration,
+  ZenFinishedIllustration,
+  CompassConstellationIllustration,
+  DraftRecalibrateIllustration,
+  ManuscriptScrollIllustration,
+  SearchFilterIllustration,
+  TeamCollaborationIllustration,
+  RadarCalibrationIllustration,
+  CleanFolioArchiveIllustration,
+} from "@/components/editorial/editorial-illustrations";
+
+export type EmptyStateVariant =
+  | "study"
+  | "zen"
+  | "compass"
+  | "recalibrate"
+  | "scroll"
+  | "search"
+  | "collaboration"
+  | "radar"
+  | "archive";
 
 interface EmptyStateProps {
-  /** @deprecated Blueprint 空状态不再使用 Lucide 图标 */
-  icon?: LucideIcon;
+  /** @deprecated 已升级为矢量线描体系 */
+  icon?: unknown;
+  /** 矢量手稿插图变体或自定义插图 */
+  variant?: EmptyStateVariant;
+  customIllustration?: ReactNode;
+  size?: number;
   title: string;
   description?: string;
   action?: {
     label: string;
     onClick: () => void;
+    variant?: "default" | "outline";
   };
+  children?: ReactNode;
   className?: string;
 }
 
+const illustrationMap: Record<EmptyStateVariant, (props: { size?: number; className?: string }) => ReactNode> = {
+  study: DeskStudyIllustration,
+  zen: ZenFinishedIllustration,
+  compass: CompassConstellationIllustration,
+  recalibrate: DraftRecalibrateIllustration,
+  scroll: ManuscriptScrollIllustration,
+  search: SearchFilterIllustration,
+  collaboration: TeamCollaborationIllustration,
+  radar: RadarCalibrationIllustration,
+  archive: CleanFolioArchiveIllustration,
+};
+
 /**
- * 规范 5.1 空状态 Blueprint
- * - 底层卡尺：0.5px 虚线圆轨 + 十字辅助线
- * - 核心点：8px 暖橙径向渐变 + 4s Y轴浮动
- * - 文案保留诗意，按规范字号
+ * 出版物级空状态 (Editorial Empty State)
+ * - 纯单线蚀刻手稿插图 (Monoline Ink Sketch)
+ * - 衬线标题 + 从容发丝副标
+ * - 温润微气垫与发丝按钮
  */
-export function EmptyState({ title, description, action, className }: EmptyStateProps) {
+export function EmptyState({
+  variant = "scroll",
+  customIllustration,
+  size = 88,
+  title,
+  description,
+  action,
+  children,
+  className,
+}: EmptyStateProps) {
+  const IllustrationComponent = illustrationMap[variant] || ManuscriptScrollIllustration;
+
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-0 text-center",
+        "flex flex-col items-center justify-center text-center py-10 px-4 select-none",
         className
       )}
     >
-      {/* Blueprint 图形层：120px 容器 */}
-      <div className="relative flex h-[120px] w-[120px] items-center justify-center">
-        {/* 底层卡尺 SVG */}
-        <svg className="absolute inset-0" viewBox="0 0 120 120" aria-hidden="true">
-          {/* 虚线圆轨：直径48px，r=24 */}
-          <circle
-            cx="60"
-            cy="60"
-            r="24"
-            fill="none"
-            stroke="#E5E0D6"
-            strokeWidth="0.5"
-            strokeDasharray="3,3"
-          />
-          {/* 十字辅助线 */}
-          <line x1="60" y1="36" x2="60" y2="84" stroke="#ECE7DE" strokeWidth="0.5" />
-          <line x1="36" y1="60" x2="84" y2="60" stroke="#ECE7DE" strokeWidth="0.5" />
-          {/* 径向渐变定义 */}
-          <defs>
-            <radialGradient id="empty-state-core" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#E28D71" />
-              <stop offset="100%" stopColor="#D97757" />
-            </radialGradient>
-          </defs>
-        </svg>
-        {/* 核心点：8px 圆，径向渐变，浮动 */}
-        <div
-          className="relative h-2 w-2 rounded-full animate-float-y"
-          style={{
-            background: "radial-gradient(circle, #E28D71 0%, #D97757 100%)",
-            boxShadow: "0 2px 6px rgba(217,119,87,0.3)",
-          }}
-        />
-      </div>
-
-      {/* 文案层 */}
-      <div className="space-y-1">
-        <p className="text-[13px] font-normal text-[#292524] mt-4">{title}</p>
-        {description && (
-          <p className="max-w-[240px] text-[12px] text-[#78716C] mt-1">{description}</p>
+      {/* 纯单线蚀刻手稿插图 */}
+      <div className="flex items-center justify-center -mt-2 -mb-1">
+        {customIllustration ? (
+          customIllustration
+        ) : (
+          <IllustrationComponent size={size} />
         )}
       </div>
 
+      {/* 文人标题与发丝副标 */}
+      <div className="space-y-1.5 mt-2 max-w-sm">
+        <h3 className="font-serif text-[15px] font-medium text-[#1C1917] tracking-tight">
+          {title}
+        </h3>
+        {description && (
+          <p className="text-[12.5px] leading-relaxed text-[#78716C]">{description}</p>
+        )}
+      </div>
+
+      {children}
+
       {action && (
-        <Button variant="outline" size="sm" className="mt-3" onClick={action.onClick}>
+        <Button
+          variant={action.variant || "outline"}
+          size="sm"
+          className="mt-4 h-8 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985]"
+          onClick={action.onClick}
+        >
           {action.label}
         </Button>
       )}
     </div>
   );
 }
+

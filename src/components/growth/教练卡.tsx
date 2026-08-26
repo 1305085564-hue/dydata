@@ -1,4 +1,4 @@
-import { Lightbulb, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { 格式化为月日 } from "./断流横幅";
 import { EditorialSidenote } from "@/components/editorial/editorial-quote";
 

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserPermissions } from "@/lib/permissions";
@@ -14,7 +12,7 @@ import { QuotaConfigPanel } from "./components/quota-config-panel";
 import { ThresholdsConfigPanel } from "./components/thresholds-config-panel";
 
 export const metadata: Metadata = {
-  title: "系统维护 - DYData",
+  title: "系统偏好 - DYData",
   description: "维护 DYData 成员权限、团队分组与系统配置。",
 };
 
@@ -72,9 +70,9 @@ export default async function AdminSettingsPage() {
 
   return (
     <AdminWorkspaceLayout
-      eyebrow="系统设置"
-      title="系统维护"
-      description="负责人处理成员权限和团队分组；owner 额外管理 AI 配置与业务阈值。"
+      eyebrow="SYSTEM & TEAM PREFERENCES · 系统偏好"
+      title="团队与系统偏好 · 规则设定"
+      description="设定作品复盘阈值、团队产量目标与系统全局运行偏好"
       indexItems={[]}
     >
       <div className="space-y-8">

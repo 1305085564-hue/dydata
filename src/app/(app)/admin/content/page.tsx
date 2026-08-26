@@ -45,6 +45,9 @@ export default async function AdminContentPage({ searchParams }: Props) {
 
   return (
     <AdminWorkspaceLayout
+      eyebrow="CONTENT REVIEW · 视频复盘"
+      title="视频复盘与内容诊断 · 研磨沉淀"
+      description="审核团队视频表达质量，沉淀核心复盘结论与可复用高光案例"
       indexItems={[]}
       width="extra-wide"
     >

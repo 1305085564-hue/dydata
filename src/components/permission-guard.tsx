@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShieldAlert, ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { DraftRecalibrateIllustration } from "@/components/editorial/editorial-illustrations";
 
 interface PermissionGuardProps {
   moduleTitle: string;
@@ -45,22 +46,23 @@ export function PermissionGuard({
   };
 
   return (
-    <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200">
-      <div className="mx-auto max-w-md space-y-6 rounded-3xl border border-[#E5E0D6] bg-white/90 p-8 shadow-claude-dialog backdrop-blur-xl">
-        {/* 顶部微图标舱 */}
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F5F3EE]/80 text-[#292524] ring-1 ring-black/5">
-          <ShieldAlert className="size-7 stroke-[1.5]" />
+    <div className="flex min-h-[70vh] w-full flex-col items-center justify-center p-6 text-center animate-in fade-in zoom-in-95 duration-200 select-none">
+      <div className="mx-auto max-w-md space-y-5 rounded-3xl border border-[#E5E0D6] bg-white/95 p-8 shadow-claude-dialog backdrop-blur-xl">
+        {/* 单线蚀刻手稿插图（图以表意：重新校准罗盘与手稿） */}
+        <div className="flex justify-center -mt-2 -mb-1">
+          <DraftRecalibrateIllustration size={88} />
         </div>
 
         {/* 说明文本 */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3EE] px-3 py-1 text-[12px] font-medium text-[#292524]">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3EE] px-3 py-1 text-[12px] font-medium text-[#78716C]">
+            <span className="size-1.5 rounded-full bg-[#D97757]" />
             <span>需访问权限</span>
           </div>
-          <h2 className="text-lg font-semibold tracking-tight text-[#1C1917]">
+          <h2 className="font-serif text-[18px] font-medium tracking-tight text-[#1C1917]">
             还没有「{moduleTitle}」权限
           </h2>
-          <p className="text-[13px] leading-relaxed text-[#292524]">
+          <p className="text-[13px] leading-relaxed text-[#78716C]">
             {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系管理员开通对应权限。`}
           </p>
         </div>

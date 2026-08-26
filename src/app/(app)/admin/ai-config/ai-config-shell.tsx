@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Route, Server } from "lucide-react";
 
-import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
-
 export type AIConfigTabKey = "models" | "bindings" | "providers" | "rewrite";
 
 const TAB_ITEMS: Array<{ key: "bindings" | "models" | "providers"; label: string; icon: typeof Sparkles }> = [
@@ -42,13 +40,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
   const activeTab = initialTab === "rewrite" ? "bindings" : initialTab;
 
   return (
-    <div className="w-full space-y-5">
-      {/* 卷首寄语 */}
-      <EditorialEpigraph
-        quote="博学慎思，审问笃行。为不同创作场景调度最契合的思想模型。"
-        author="算力调度札记"
-        className="my-0"
-      />
+    <div className="w-full space-y-4">
 
       {/* 平铺 Tab 规范 */}
       <div className="flex items-center justify-between">

@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import type {
   TopicPoolItem,
   TopicOption,
@@ -178,14 +179,14 @@ export function TopicPoolExplorer({
 
         {/* 右侧：过滤、排序、搜索与行动组 (两字原则 + 对齐箭头) */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* 搜索框 (轻量通透微胶囊，无硬边框) */}
+          {/* 搜索框 (宣纸漫反射微底色) */}
           <div className="relative flex items-center">
             <input
               type="text"
               placeholder="搜索..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-white border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              className="text-xs bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
@@ -386,36 +387,25 @@ export function TopicPoolExplorer({
           </button>
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="py-16 px-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-transparent">
-          <div className="w-8 h-8 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto mb-3">
-            <Search className="w-4 h-4" />
-          </div>
+        <div className="py-8 px-4 text-center border border-[#ECE7DE] rounded-2xl bg-[#FAF8F4]/50">
           {totalCount === 0 && !searchQuery && selectedTopicIds.length === 0 ? (
-            <>
-              <h3 className="text-sm font-semibold text-[#292524] mb-1">
-                还没有选题
-              </h3>
-              <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-4 font-normal leading-relaxed">
-                还没有选题，点右上角录入第一个
-              </p>
-              <button
-                type="button"
-                onClick={onCreateClick}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>录入第一个选题</span>
-              </button>
-            </>
+            <EmptyState
+              variant="scroll"
+              size={96}
+              title="灵感手稿尚待入库"
+              description="当前选题池静谧无新卷，点击右侧开启第一份灵感选题立意。"
+              action={{
+                label: "录入首篇选题",
+                onClick: onCreateClick,
+              }}
+            />
           ) : (
-            <>
-              <h3 className="text-sm font-semibold text-[#292524] mb-1">
-                未找到符合条件的选题
-              </h3>
-              <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
-                尝试调整搜索词、母题多选或时间范围筛选条件
-              </p>
-            </>
+            <EmptyState
+              variant="recalibrate"
+              size={88}
+              title="未检索到匹配的灵感手稿"
+              description="不妨调整搜索关键词、母题多选或时间跨度筛选。"
+            />
           )}
         </div>
       ) : displayMode === "grid" ? (
@@ -447,7 +437,7 @@ export function TopicPoolExplorer({
                   <h3 className="font-serif text-[14.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5 tracking-tight">
                     {sub.title}
                   </h3>
-                  <p className="text-[12px] text-[#78716C] line-clamp-2 mb-3.5 leading-relaxed font-normal">
+                  <p className="font-serif text-[12.5px] text-[#292524] italic line-clamp-2 mb-3.5 leading-relaxed font-normal">
                     {sub.hook ? `“${sub.hook}”` : "“尚未提炼立意金句”"}
                   </p>
                 </div>
@@ -543,7 +533,7 @@ export function TopicPoolExplorer({
                       <div className="font-serif text-[13.5px] font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
                         {sub.title}
                       </div>
-                      <div className="text-[#78716C] text-xs truncate font-normal">
+                      <div className="font-serif italic text-[#78716C] text-xs truncate font-normal">
                         “{sub.hook || "尚未提炼立意金句"}”
                       </div>
                     </td>

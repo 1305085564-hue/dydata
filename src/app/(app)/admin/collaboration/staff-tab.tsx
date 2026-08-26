@@ -76,10 +76,12 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   if (rows.length === 0) {
     return (
-      <div className="py-16 text-center">
+      <div className="py-12 text-center">
         <EmptyState
-          title={`本月还没有${roleLabel}归属记录`}
-          description="2026-07-27 起开始统计团队作品分工"
+          variant="collaboration"
+          size={88}
+          title={`本月静待${roleLabel}协同立卷`}
+          description="当前周期尚未记录到该角色的作品分工手稿。"
         />
       </div>
     );
@@ -156,7 +158,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                       onClick={() => onSelectPerson(row.userId)}
                       onMouseEnter={() => onPrefetchPerson?.(row.userId)}
                       onFocus={() => onPrefetchPerson?.(row.userId)}
-                      className="text-[#1C1917] hover:text-[#D97757] hover:underline transition-colors font-medium"
+                      className="font-serif text-[#1C1917] hover:text-[#D97757] transition-colors font-semibold tracking-tight cursor-pointer"
                     >
                       {row.name}
                     </button>

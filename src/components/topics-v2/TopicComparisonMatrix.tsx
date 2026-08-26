@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BarChart2, AlertTriangle, RefreshCw, ChevronDown } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   fetchTopicJson,
   parseComparisonResponse,
@@ -174,16 +175,13 @@ export function TopicComparisonMatrix({
           </button>
         </div>
       ) : data.length === 0 ? (
-        <div className="py-16 px-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-transparent">
-          <div className="w-8 h-8 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto mb-3">
-            <BarChart2 className="w-4 h-4" />
-          </div>
-          <h3 className="text-sm font-semibold text-[#292524] mb-1">
-            还没有对比数据
-          </h3>
-          <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
-            需要至少 2 个账号有作品后才能对比
-          </p>
+        <div className="py-8 px-4 text-center border border-[#ECE7DE] rounded-2xl bg-[#FAF8F4]/50">
+          <EmptyState
+            variant="compass"
+            size={80}
+            title="横向对比静候数据沉淀"
+            description="需至少 2 个账号发布该主题作品后，此处将自动绘制横向效果对比矩阵。"
+          />
         </div>
       ) : (
         <div className="space-y-1">

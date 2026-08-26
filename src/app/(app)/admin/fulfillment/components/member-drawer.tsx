@@ -296,51 +296,51 @@ export function MemberDrawer({
         <SheetContent side="right" className="w-full max-w-[480px] bg-white">
           <SheetHeader>
             <div className="flex items-center gap-2">
-              <SheetTitle>{member.userName}</SheetTitle>
+              <SheetTitle className="font-serif text-xl font-semibold text-[#1C1917] tracking-tight">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
-            <SheetDescription>{member.teamName ?? "无团队"}</SheetDescription>
+            <SheetDescription className="text-[12.5px] text-[#78716C] pt-0.5">{member.teamName ?? "无团队"}</SheetDescription>
           </SheetHeader>
 
           <SheetBody className="space-y-6">
             {/* 当前时间段统计 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-[#78716C]">
-                当前统计
+              <h3 className="mb-3 text-[11px] font-mono font-medium tracking-wider text-[#78716C] uppercase">
+                当前统计 · 履约体征
               </h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">应发天数</p>
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3">
+                  <p className="text-[11.5px] text-[#78716C]">应发天数</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
                     {member.totalDays}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">实发天数</p>
+                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3">
+                  <p className="text-[11.5px] text-[#78716C]">实发天数</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
                     {member.publishedDays}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">发布率</p>
+                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3">
+                  <p className="text-[11.5px] text-[#78716C]">发布率</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
                     {member.fulfillmentRate}%
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">请假</p>
+                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3">
+                  <p className="text-[11.5px] text-[#78716C]">请假</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
                     {member.leaveDays}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">豁免</p>
+                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3">
+                  <p className="text-[11.5px] text-[#78716C]">豁免</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
                     {member.waivedDays}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">缺勤</p>
+                <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] p-3">
+                  <p className="text-[11.5px] text-[#78716C]">缺勤</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
                     {member.absentDays}
                   </p>

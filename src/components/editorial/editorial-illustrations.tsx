@@ -333,3 +333,341 @@ export function DraftRecalibrateIllustration({ className = "", size = 120 }: Ill
     </svg>
   );
 }
+
+/**
+ * 6. 展开的长卷手稿与墨滴 (Manuscript Scroll & Ink)
+ * 意象：徐徐展开的素雅卷轴、细密格线与研墨微印，象征虚席以待的创作篇章。
+ * 适用：各类列表空状态、未开始填报、等待立卷。
+ */
+export function ManuscriptScrollIllustration({ className = "", size = 120 }: IllustrationProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`select-none ${className}`}
+      aria-hidden="true"
+    >
+      {/* 象牙漫反射背景光晕 */}
+      <circle cx="80" cy="80" r="54" fill="#F5F3EE" fillOpacity="0.85" />
+      <circle cx="80" cy="76" r="36" fill="#FAF8F4" />
+
+      {/* 案头基准线 */}
+      <line x1="30" y1="120" x2="130" y2="120" stroke="#E5E0D6" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 卷轴主体 (展开的古籍手卷) */}
+      <g transform="translate(36, 62)">
+        {/* 左轴头 */}
+        <rect x="0" y="4" width="6" height="46" rx="2" fill="#EAE5DC" stroke="#292524" strokeWidth="1.2" />
+        {/* 展开的纸面 */}
+        <path
+          d="M6 8C24 4 64 4 82 8V46C64 42 24 42 6 46V8Z"
+          fill="#FFFFFF"
+          stroke="#292524"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        {/* 右轴卷筒 */}
+        <rect x="82" y="4" width="6" height="46" rx="2" fill="#EAE5DC" stroke="#292524" strokeWidth="1.2" />
+
+        {/* 纸上素雅排版发丝虚线 */}
+        <line x1="16" y1="16" x2="72" y2="16" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+        <line x1="16" y1="23" x2="66" y2="23" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+        <line x1="16" y1="30" x2="70" y2="30" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+        <line x1="16" y1="37" x2="52" y2="37" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+
+        {/* 陶土微印章 */}
+        <rect x="62" y="32" width="8" height="8" rx="1.5" fill="#D97757" fillOpacity="0.85" />
+        <text x="66" y="38" fill="#FFFFFF" fontSize="5" fontWeight="bold" textAnchor="middle" dominantBaseline="central">✦</text>
+      </g>
+
+      {/* 墨滴微光 */}
+      <g transform="translate(108, 48)">
+        <path d="M0 4C2 4 4 2 4 0C4 2 6 4 8 4C6 4 4 6 4 8C4 6 2 4 0 4Z" fill="#D97757" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * 7. 文人微印章 (Editorial Stamp / Colophon Badge)
+ */
+export function EditorialStamp({
+  text = "立卷",
+  variant = "terracotta",
+  className = "",
+}: {
+  text?: string;
+  variant?: "terracotta" | "storm" | "ink" | "sage";
+  className?: string;
+}) {
+  const variantStyles = {
+    terracotta: "border-[#D97757]/60 text-[#D97757] bg-[#D97757]/8",
+    storm: "border-[#43718E]/60 text-[#43718E] bg-[#43718E]/8",
+    ink: "border-[#292524]/50 text-[#292524] bg-[#292524]/5",
+    sage: "border-[#6FAA7D]/60 text-[#6FAA7D] bg-[#6FAA7D]/8",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center font-serif text-[11px] font-semibold tracking-widest px-1.5 py-0.5 rounded-[3px] border ${variantStyles[variant]} select-none ${className}`}
+      aria-hidden="true"
+    >
+      {text}
+    </span>
+  );
+}
+
+/**
+ * 8. 检索寻卷与细镜 (Search, Scroll & Lens)
+ * 意象：展开的纪事长卷、精细的单线透镜与检索微轨迹，象征在书海手稿中细致寻觅。
+ * 适用：筛选无结果、关键词未命中、换词重搜。
+ */
+export function SearchFilterIllustration({ className = "", size = 120 }: IllustrationProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`select-none ${className}`}
+      aria-hidden="true"
+    >
+      {/* 柔和背景光晕 */}
+      <circle cx="80" cy="80" r="54" fill="#F5F3EE" fillOpacity="0.85" />
+      <circle cx="76" cy="74" r="36" fill="#FAF8F4" />
+
+      {/* 案头基准线 */}
+      <line x1="30" y1="122" x2="130" y2="122" stroke="#E5E0D6" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 展开的检索卷轴 */}
+      <g transform="translate(36, 60)">
+        <rect x="0" y="4" width="5" height="42" rx="1.5" fill="#EAE5DC" stroke="#292524" strokeWidth="1.2" />
+        <path
+          d="M5 8C20 5 56 5 72 8V42C56 39 20 39 5 42V8Z"
+          fill="#FFFFFF"
+          stroke="#292524"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+        <rect x="72" y="4" width="5" height="42" rx="1.5" fill="#EAE5DC" stroke="#292524" strokeWidth="1.2" />
+
+        {/* 纸面排版虚线 */}
+        <line x1="14" y1="15" x2="62" y2="15" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+        <line x1="14" y1="22" x2="54" y2="22" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+        <line x1="14" y1="29" x2="58" y2="29" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" strokeDasharray="3 3" />
+      </g>
+
+      {/* 单线蚀刻放大镜 (Search Lens) */}
+      <g transform="translate(74, 52) rotate(18 20 20)">
+        {/* 镜片外环与高光 */}
+        <circle cx="20" cy="20" r="16" fill="#FAF8F4" fillOpacity="0.8" stroke="#292524" strokeWidth="1.3" />
+        <circle cx="20" cy="20" r="12" stroke="#E5E0D6" strokeWidth="0.8" strokeDasharray="2 2" />
+        <circle cx="20" cy="20" r="5" fill="#D97757" fillOpacity="0.15" />
+        {/* 镜柄 */}
+        <path d="M32 32L46 46" stroke="#292524" strokeWidth="2" strokeLinecap="round" />
+        <line x1="31" y1="31" x2="33" y2="33" stroke="#D97757" strokeWidth="2.5" strokeLinecap="round" />
+      </g>
+
+      {/* 检索微星芒 */}
+      <g transform="translate(44, 46)">
+        <path d="M0 4C2 4 4 2 4 0C4 2 6 4 8 4C6 4 4 6 4 8C4 6 2 4 0 4Z" fill="#D97757" />
+      </g>
+      <circle cx="118" cy="50" r="1.5" fill="#78716C" />
+    </svg>
+  );
+}
+
+/**
+ * 9. 协同天平与合卷 (Team Balance & Collaboration)
+ * 意象：精密的单线平衡秤、两端的协作成稿手卷与中心的协作星符，象征团队分工与共识。
+ * 适用：协作管理无记录、团队列表空态、成员筛选无结果。
+ */
+export function TeamCollaborationIllustration({ className = "", size = 120 }: IllustrationProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`select-none ${className}`}
+      aria-hidden="true"
+    >
+      {/* 柔和背景气垫 */}
+      <circle cx="80" cy="80" r="54" fill="#F5F3EE" fillOpacity="0.85" />
+      <circle cx="80" cy="76" r="38" fill="#FAF8F4" />
+
+      {/* 案头基准线 */}
+      <line x1="30" y1="122" x2="130" y2="122" stroke="#E5E0D6" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 协同支柱天平底座 */}
+      <path d="M72 122L77 74H83L88 122H72Z" fill="#EAE5DC" fillOpacity="0.5" />
+      <line x1="80" y1="62" x2="80" y2="122" stroke="#292524" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="80" cy="60" r="4.5" fill="#FAF8F4" stroke="#292524" strokeWidth="1.25" />
+      <circle cx="80" cy="60" r="1.5" fill="#D97757" />
+
+      {/* 平衡横梁 */}
+      <line x1="44" y1="64" x2="116" y2="64" stroke="#292524" strokeWidth="1.3" strokeLinecap="round" />
+
+      {/* 左盘：文案与创作成稿 */}
+      <g transform="translate(44, 64)">
+        <line x1="0" y1="0" x2="-10" y2="22" stroke="#78716C" strokeWidth="0.9" />
+        <line x1="0" y1="0" x2="10" y2="22" stroke="#78716C" strokeWidth="0.9" />
+        <ellipse cx="0" cy="22" rx="14" ry="3" fill="#FFFFFF" stroke="#292524" strokeWidth="1.1" />
+        {/* 左盘上方的手稿 */}
+        <rect x="-7" y="10" width="14" height="9" rx="1" fill="#FAF8F4" stroke="#292524" strokeWidth="1" />
+        <line x1="-4" y1="13" x2="4" y2="13" stroke="#A8A29E" strokeWidth="0.8" />
+        <line x1="-4" y1="16" x2="2" y2="16" stroke="#A8A29E" strokeWidth="0.8" />
+      </g>
+
+      {/* 右盘：剪辑与运营成片 */}
+      <g transform="translate(116, 64)">
+        <line x1="0" y1="0" x2="-10" y2="22" stroke="#78716C" strokeWidth="0.9" />
+        <line x1="0" y1="0" x2="10" y2="22" stroke="#78716C" strokeWidth="0.9" />
+        <ellipse cx="0" cy="22" rx="14" ry="3" fill="#FFFFFF" stroke="#292524" strokeWidth="1.1" />
+        {/* 右盘上方的成片微卷 */}
+        <rect x="-6" y="10" width="12" height="9" rx="1.5" fill="#FAF8F4" stroke="#292524" strokeWidth="1" />
+        <circle cx="0" cy="14.5" r="2" fill="#D97757" fillOpacity="0.4" />
+      </g>
+
+      {/* 协同共识星符 */}
+      <g transform="translate(76, 40)">
+        <path d="M0 4C2 4 4 2 4 0C4 2 6 4 8 4C6 4 4 6 4 8C4 6 2 4 0 4Z" fill="#6FAA7D" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * 10. 微雷达与维度校准 (Radar Calibration & Growth Telemetry)
+ * 意象：六维单线几何星座雷达、微刻度坐标环与成长萌芽，象征数据体征校准与蓄力成长。
+ * 适用：成长分析未解锁占位、雷达图数据蓄力期、体征分析空态。
+ */
+export function RadarCalibrationIllustration({ className = "", size = 120 }: IllustrationProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`select-none ${className}`}
+      aria-hidden="true"
+    >
+      {/* 柔和背景气垫 */}
+      <circle cx="80" cy="80" r="54" fill="#F5F3EE" fillOpacity="0.85" />
+
+      {/* 外圈虚线刻度环 */}
+      <circle cx="80" cy="80" r="44" stroke="#E5E0D6" strokeWidth="1" strokeDasharray="3 3" />
+      <circle cx="80" cy="80" r="28" stroke="#ECE7DE" strokeWidth="0.8" />
+
+      {/* 六维雷达基准网格 (Hexagonal Monoline Radar) */}
+      {/* 外层六边形 */}
+      <polygon
+        points="80,44 111,62 111,98 80,116 49,98 49,62"
+        fill="none"
+        stroke="#E5E0D6"
+        strokeWidth="1.1"
+      />
+      {/* 内层六边形 */}
+      <polygon
+        points="80,58 99,69 99,91 80,102 61,91 61,69"
+        fill="#FAF8F4"
+        fillOpacity="0.6"
+        stroke="#ECE7DE"
+        strokeWidth="0.9"
+      />
+
+      {/* 六维轴线 */}
+      <line x1="80" y1="44" x2="80" y2="116" stroke="#ECE7DE" strokeWidth="0.9" />
+      <line x1="49" y1="62" x2="111" y2="98" stroke="#ECE7DE" strokeWidth="0.9" />
+      <line x1="49" y1="98" x2="111" y2="62" stroke="#ECE7DE" strokeWidth="0.9" />
+
+      {/* 蓄力中的成长能力多边形 (Terracotta/Sage Accent) */}
+      <polygon
+        points="80,52 105,66 96,94 80,98 66,88 56,66"
+        fill="#D97757"
+        fillOpacity="0.12"
+        stroke="#D97757"
+        strokeWidth="1.25"
+        strokeLinejoin="round"
+      />
+
+      {/* 六维顶点微圆点 */}
+      <circle cx="80" cy="52" r="2" fill="#D97757" />
+      <circle cx="105" cy="66" r="2" fill="#D97757" />
+      <circle cx="96" cy="94" r="2" fill="#6FAA7D" />
+      <circle cx="80" cy="98" r="2" fill="#6FAA7D" />
+      <circle cx="66" cy="88" r="2" fill="#78716C" />
+      <circle cx="56" cy="66" r="2" fill="#78716C" />
+
+      {/* 中心轴微光 */}
+      <circle cx="80" cy="80" r="3" fill="#FFFFFF" stroke="#292524" strokeWidth="1" />
+      <circle cx="80" cy="80" r="1" fill="#D97757" />
+
+      {/* 右上角生长微麦穗 */}
+      <g transform="translate(112, 38)">
+        <path d="M0 24C4 16 10 10 18 6" stroke="#6FAA7D" strokeWidth="1.1" strokeLinecap="round" />
+        <path d="M6 16C6 16 11 15 12 10C8 10 6 15 6 16Z" fill="#6FAA7D" fillOpacity="0.3" stroke="#6FAA7D" strokeWidth="0.8" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * 11. 案头净简与归档匣 (Clean Folio & Archive Box)
+ * 意象：整齐收纳盖好的案头手稿木匣、明净台面与完卷火漆，象征回收站/废件已尽数清空。
+ * 适用：回收站清空状态、草稿箱清空、全量已审结。
+ */
+export function CleanFolioArchiveIllustration({ className = "", size = 120 }: IllustrationProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`select-none ${className}`}
+      aria-hidden="true"
+    >
+      {/* 柔和背景光晕 */}
+      <circle cx="80" cy="80" r="54" fill="#F5F3EE" fillOpacity="0.85" />
+      <circle cx="80" cy="76" r="38" fill="#FAF8F4" />
+
+      {/* 案头基准线 */}
+      <line x1="28" y1="120" x2="132" y2="120" stroke="#E5E0D6" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* 收纳匣身 (Archive Box) */}
+      <g transform="translate(46, 68)">
+        {/* 匣体 */}
+        <rect x="0" y="16" width="68" height="34" rx="2.5" fill="#FAF8F4" stroke="#292524" strokeWidth="1.25" />
+        {/* 匣盖 */}
+        <path
+          d="M-2 16H70L67 9H1L-2 16Z"
+          fill="#EAE5DC"
+          stroke="#292524"
+          strokeWidth="1.25"
+          strokeLinejoin="round"
+        />
+        {/* 匣前铜搭扣与微封签 */}
+        <rect x="28" y="24" width="12" height="14" rx="1.5" fill="#FFFFFF" stroke="#292524" strokeWidth="1.1" />
+        <circle cx="34" cy="30" r="2" fill="#D97757" />
+        {/* 匣体发丝纹 */}
+        <line x1="8" y1="36" x2="22" y2="36" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" />
+        <line x1="46" y1="36" x2="60" y2="36" stroke="#ECE7DE" strokeWidth="1" strokeLinecap="round" />
+      </g>
+
+      {/* 宁静微星光 */}
+      <g transform="translate(74, 44)">
+        <path d="M0 4C2 4 4 2 4 0C4 2 6 4 8 4C6 4 4 6 4 8C4 6 2 4 0 4Z" fill="#6FAA7D" />
+      </g>
+      <circle cx="118" cy="56" r="1.5" fill="#B98A54" />
+    </svg>
+  );
+}
+
+

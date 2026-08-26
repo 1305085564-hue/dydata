@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Star, Video } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import type { TalentRow } from "./types";
 import { formatBigNumber } from "./types";
 
@@ -52,14 +53,13 @@ export function TalentTab({
 
   if (talents.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <Video className="mx-auto size-8 text-[#E5E0D6]" />
-        <p className="mt-3 text-[13px] font-medium text-[#78716C]">
-          本月还没有达人数据
-        </p>
-        <p className="mt-1 text-[12px] text-[#78716C]">
-          达人 = 名下有账号的出镜成员
-        </p>
+      <div className="py-12 text-center">
+        <EmptyState
+          variant="collaboration"
+          size={88}
+          title="本月静待达人协同立卷"
+          description="名下有账号的出镜成员作品发布后，此处将汇聚达人产出与转化数据。"
+        />
       </div>
     );
   }
@@ -126,7 +126,7 @@ export function TalentTab({
                 <td className="py-2.5 pl-4 pr-2">
                   <div className="flex items-center gap-1.5">
                     <Star className="size-3.5 text-[#D99E55] fill-[#D99E55] shrink-0" />
-                    <span className="font-medium text-[#1C1917] truncate">
+                    <span className="font-serif font-semibold text-[#1C1917] truncate tracking-tight">
                       {row.name}
                     </span>
                   </div>

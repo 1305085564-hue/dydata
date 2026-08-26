@@ -38,8 +38,6 @@ test("AI 成本接口按端点收紧限制", () => {
   assert.deepEqual(resolveApiRateLimitRule("/api/ocr-screenshot").rule, { limit: 20, windowMs: 60_000 });
   assert.deepEqual(resolveApiRateLimitRule("/api/rewrite/generate").rule, { limit: 10, windowMs: 60_000 });
   assert.deepEqual(resolveApiRateLimitRule("/api/video-submit").rule, { limit: 20, windowMs: 60_000 });
-  // 批量复盘
-  assert.deepEqual(resolveApiRateLimitRule("/api/admin/next-day-review/batch").rule, { limit: 10, windowMs: 60_000 });
   // 其余 API 走兜底
   assert.deepEqual(resolveApiRateLimitRule("/api/dashboard/trend").rule, { limit: 120, windowMs: 60_000 });
 });

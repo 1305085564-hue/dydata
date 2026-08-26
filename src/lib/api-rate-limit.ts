@@ -26,8 +26,6 @@ const AI_COST_RULES: Array<{ prefix: string; rule: EndpointRule }> = [
   { prefix: "/api/ocr-screenshot", rule: { limit: 20, windowMs: 60_000 } },
   { prefix: "/api/rewrite/generate", rule: { limit: 10, windowMs: 60_000 } },
   { prefix: "/api/video-submit", rule: { limit: 20, windowMs: 60_000 } },
-  // 批量复盘入口（含 /api/admin/next-day-review/batch）
-  { prefix: "/api/admin/next-day-review", rule: { limit: 10, windowMs: 60_000 } },
 ];
 
 // 其余 API 的兜底限制（防失控循环，不影响正常页面首屏并发）
