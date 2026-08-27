@@ -103,6 +103,10 @@
     color: var(--color-text-tertiary);
   }
 
+  html[data-os="windows"][data-text-density="low"]:not(.dark) .app-shell-kicker {
+    font-weight: 500;
+  }
+
   .app-shell-title {
     font-size: 18px;
     font-weight: 500;

@@ -41,6 +41,10 @@
     color: var(--color-text-tertiary);
   }
 
+  html[data-os="windows"][data-text-density="low"]:not(.dark) .dashboard-section-kicker {
+    font-weight: 500;
+  }
+
   /* ─── metric strip compact ─── */
   .dashboard-metric-strip-compact {
     gap: 0.45rem;
@@ -63,6 +67,10 @@
     font-size: 12px;
     font-weight: 400;
     letter-spacing: 0.04em;
+  }
+
+  html[data-os="windows"][data-text-density="low"]:not(.dark) .dashboard-metric-strip-compact .app-shell-metric-label {
+    font-weight: 500;
   }
 
   .dashboard-metric-strip-compact .app-shell-metric-value {

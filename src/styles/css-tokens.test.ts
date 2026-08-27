@@ -42,3 +42,37 @@ test("Windows 低密度屏有专用中文可读性兜底", () => {
   assert.match(globals, /font-family: var\(--font-sans\)/);
   assert.match(globals, /text-\\\[13\\\.5px\\\]/);
 });
+
+test("Windows 低密度屏优先使用 YaHei UI，并只加深不透明的辅助墨", () => {
+  const globals = readSource("src/app/globals.css");
+
+  assert.match(globals, /--font-sans:[^;]*Microsoft YaHei UI/);
+  assert.match(globals, /--font-display:[^;]*Microsoft YaHei UI/);
+  assert.match(
+    globals,
+    /html\[data-os="windows"\]\[data-text-density="low"\]:not\(\.dark\)/,
+  );
+  assert.match(globals, /--color-text-tertiary:\s*#57534E/);
+  assert.match(globals, /--muted-foreground:\s*#57534E/);
+  assert.ok(globals.includes(".text-\\[\\#78716C\\]"));
+  assert.match(globals, /color:\s*#57534E/);
+  assert.doesNotMatch(globals, /placeholder[^\n]*#57534E/);
+});
+
+test("Windows 低密度屏只增强指定的工作台小标签字重", () => {
+  const appShell = readSource("src/styles/components/app-shell.css");
+  const dashboard = readSource("src/styles/components/dashboard.css");
+
+  assert.match(
+    appShell,
+    /html\[data-os="windows"\]\[data-text-density="low"\]:not\(\.dark\) \.app-shell-kicker\s*\{[^}]*font-weight:\s*500/,
+  );
+  assert.match(
+    dashboard,
+    /html\[data-os="windows"\]\[data-text-density="low"\]:not\(\.dark\) \.dashboard-section-kicker\s*\{[^}]*font-weight:\s*500/,
+  );
+  assert.match(
+    dashboard,
+    /html\[data-os="windows"\]\[data-text-density="low"\]:not\(\.dark\) \.dashboard-metric-strip-compact \.app-shell-metric-label\s*\{[^}]*font-weight:\s*500/,
+  );
+});

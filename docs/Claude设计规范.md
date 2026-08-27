@@ -41,7 +41,8 @@
 ### 2.1 字体栈
 
 - **英文/数字**：`Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto`
-- **中文**：`"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif`
+- **中文**：`"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif`
+- **Windows 低密度屏**：在不改变字号的前提下，优先命中 `Microsoft YaHei UI`；辅助墨可在该作用域内加深一档，带透明度的占位符与弱提示保持原层级。
 - **数字列与指标**：强制开启 `tabular-nums`
 
 ### 2.2 字阶与字重锁死
