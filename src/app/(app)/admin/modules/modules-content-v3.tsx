@@ -1215,7 +1215,7 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-serif tracking-tight text-[14px] font-semibold text-[#1C1917] truncate">
+                                <span className="text-[14px] font-semibold text-[#1C1917] truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
@@ -1369,7 +1369,7 @@ export function AdminModulesContentV3({
 
                             <div className="flex flex-col min-w-0 justify-center">
                               <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="font-serif tracking-tight text-[14px] font-semibold text-[#1C1917] truncate">
+                                <span className="text-[14px] font-semibold text-[#1C1917] truncate">
                                   {member.name}
                                 </span>
                                 {member.id === currentUserId && (
@@ -1549,7 +1549,7 @@ export function AdminModulesContentV3({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="font-serif tracking-tight text-lg font-semibold text-[#1C1917] truncate">
+                      <SheetTitle className="text-lg font-semibold text-[#1C1917] truncate">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
@@ -1871,7 +1871,7 @@ export function AdminModulesContentV3({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-[#D97757]" />
-                <DialogTitle className="font-serif tracking-tight text-base font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
+                <DialogTitle className="text-base font-medium text-[#1C1917]">AI 成员管理诊断</DialogTitle>
               </div>
               <Button
                 variant="ghost"
@@ -1976,7 +1976,7 @@ export function AdminModulesContentV3({
       <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[440px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">设置日报豁免与请假</DialogTitle>
+            <DialogTitle className="text-base font-semibold text-[#1C1917]">设置日报豁免与请假</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
               设置免交或请假区间，这段时间不会收到催发提醒
             </DialogDescription>
@@ -2118,7 +2118,7 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">团队架构管理</DialogTitle>
+            <DialogTitle className="text-base font-semibold text-[#1C1917]">团队架构管理</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
               新建团队或维护现有团队架构
             </DialogDescription>
@@ -2229,7 +2229,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">确认归档成员账号</DialogTitle>
+            <DialogTitle className="font-semibold text-[#1C1917]">确认归档成员账号</DialogTitle>
             <DialogDescription>
               即将归档「{archiveTarget?.name}」的账号。归档将立即封禁登录并移出团队，历史日报不受影响。
             </DialogDescription>
@@ -2279,7 +2279,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">批量归档成员账号</DialogTitle>
+            <DialogTitle className="font-semibold text-[#1C1917]">批量归档成员账号</DialogTitle>
             <DialogDescription>
               即将批量归档选中的 {selectedMemberIds.length} 位成员账号，归档后将封禁登录并移出各自团队。
             </DialogDescription>
@@ -2344,7 +2344,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">重置登录密码</DialogTitle>
+            <DialogTitle className="font-semibold text-[#1C1917]">重置登录密码</DialogTitle>
             <DialogDescription>
               为「{passwordResetTarget?.name}」设置新的临时登录密码（至少 6 位）。
             </DialogDescription>
@@ -2387,7 +2387,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight font-semibold text-[#1C1917] flex items-center gap-2">
+            <DialogTitle className="font-semibold text-[#1C1917] flex items-center gap-2">
               <AlertCircle className="size-5 text-[#D97757]" />
               确认执行 AI 管理建议动作
             </DialogTitle>

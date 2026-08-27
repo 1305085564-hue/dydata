@@ -31,3 +31,14 @@ test("--font-display 使用真实可用的系统字体栈（不再依赖已移�
   assert.match(globals, /--font-display:[^;]*'PingFang SC'/);
   assert.doesNotMatch(globals, /fonts\.googleapis|fonts\.gstatic/);
 });
+
+test("Windows 低密度屏有专用中文可读性兜底", () => {
+  const globals = readSource("src/app/globals.css");
+  const layout = readSource("src/app/layout.tsx");
+
+  assert.match(layout, /dataset\.os = "windows"/);
+  assert.match(layout, /dataset\.textDensity = "low"/);
+  assert.match(globals, /html\[data-os="windows"\]\[data-text-density="low"\] body/);
+  assert.match(globals, /font-family: var\(--font-sans\)/);
+  assert.match(globals, /text-\\\[13\\\.5px\\\]/);
+});

@@ -9,7 +9,7 @@ export function LockedChartPlaceholder({ title, description }: LockedChartPlaceh
   return (
     <section className="flex h-full flex-col rounded-xl border border-[#E5E0D6] bg-white p-4 sm:p-5">
       <div className="border-b border-[#E5E0D6] pb-3">
-        <h3 className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">{title}</h3>
+        <h3 className="text-base font-semibold text-[#1C1917]">{title}</h3>
         <p className="mt-1 text-[13px] text-[#292524]">数据不足时占位，不画假曲线。</p>
       </div>
       <div className="relative mt-4 flex min-h-[280px] flex-1 items-center justify-center sm:min-h-[320px]">

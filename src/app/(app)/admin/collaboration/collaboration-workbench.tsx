@@ -218,7 +218,7 @@ export function CollaborationWorkbench({
               </button>
             </div>
 
-            <span className="font-serif tracking-tight text-[14px] font-semibold text-[#1C1917]">
+            <span className="text-[14px] font-semibold text-[#1C1917]">
               {year} 年 {month} 月 团队协作概览
             </span>
           </div>

@@ -363,7 +363,7 @@ export function TopicHubV2() {
             <div className="flex justify-center -mt-2 -mb-2">
               <DeskStudyIllustration size={88} />
             </div>
-            <h3 className="font-serif text-lg font-medium text-[#1C1917] mb-1.5 tracking-tight">
+            <h3 className="text-lg font-medium text-[#1C1917] mb-1.5">
               翻开灵感篇章 · 请先登录
             </h3>
             <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-6 leading-relaxed">

@@ -2194,7 +2194,7 @@ export function VideoSubmitFormV2({
                 {/* 头部：状态 + 日期 */}
                 <div className="flex items-center justify-between pb-4 border-b border-[#ECE7DE]">
                   <div className="flex items-center gap-3">
-                    <h2 className="font-serif text-[15.5px] font-semibold text-[#1C1917] tracking-tight">
+                    <h2 className="text-[15.5px] font-semibold text-[#1C1917]">
                       {isBackfillMode ? `创作纪事补录 (${meta.bizDate})` : "今日创作立卷 · 表达纪事"}
                     </h2>
                     <VideoStatusSegmented

@@ -36,7 +36,7 @@ export function ScriptCaptureSection({
             <div className="absolute left-0 top-0 bottom-0 w-[2px] rounded-full bg-[#D97757]" />
 
             <div className="mb-3 flex items-center gap-2">
-              <h3 className="font-serif text-[13.5px] font-semibold text-[#1C1917] tracking-tight">
+              <h3 className="text-[13.5px] font-semibold text-[#1C1917]">
                 导粉话术 · 灵感手记
               </h3>
               <span className="text-[11px] px-1.5 py-0.5 rounded bg-[#FAF8F4] border border-[#ECE7DE] font-normal text-[#78716C]">

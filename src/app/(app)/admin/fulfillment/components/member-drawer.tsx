@@ -280,7 +280,7 @@ export function MemberDrawer({
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full max-w-[480px]">
           <SheetHeader>
-            <SheetTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">成员详情</SheetTitle>
+            <SheetTitle className="font-semibold text-[#1C1917]">成员详情</SheetTitle>
           </SheetHeader>
           <SheetBody>
             <p className="text-[13px] text-[#78716C]">未选择成员</p>
@@ -296,7 +296,7 @@ export function MemberDrawer({
         <SheetContent side="right" className="w-full max-w-[480px] bg-white">
           <SheetHeader>
             <div className="flex items-center gap-2">
-              <SheetTitle className="font-serif tracking-tight font-semibold text-[#1C1917]">{member.userName}</SheetTitle>
+              <SheetTitle className="font-semibold text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
             <SheetDescription>{member.teamName ?? "无团队"}</SheetDescription>

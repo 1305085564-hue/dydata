@@ -126,7 +126,7 @@ export function PersonalCard({
             </div>
           ) : error ? (
             <div>
-              <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#C0685C]">
+              <DialogTitle className="text-base font-semibold text-[#C0685C]">
                 加载失败
               </DialogTitle>
               <div className="text-[12px] text-[#C0685C]">{error}</div>
@@ -135,7 +135,7 @@ export function PersonalCard({
             <div className="flex items-center justify-between w-full pr-8">
               <div>
                 <div className="flex items-center gap-2">
-                  <DialogTitle className="font-serif tracking-tight text-lg font-semibold text-[#1C1917]">
+                  <DialogTitle className="text-lg font-semibold text-[#1C1917]">
                     {data.name}
                   </DialogTitle>
                   <span className="rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-normal text-[#78716C]">
@@ -328,7 +328,7 @@ export function PersonalCard({
               {/* 底部：经手作品明细 (flex-1 弹性延伸分配剩余高度) */}
               <div className="flex-1 flex flex-col min-h-0 space-y-2">
                 <div className="flex items-center justify-between shrink-0">
-                  <h4 className="font-serif text-[12px] font-semibold tracking-tight text-[#1C1917]">
+                  <h4 className="text-[12px] font-semibold text-[#1C1917]">
                     本月经手作品明细
                   </h4>
                   <span className="text-[11px] text-[#78716C]">

@@ -357,7 +357,7 @@ export function Leaderboard({
                     <div className="text-[11px] text-[#78716C]">
                       {METRICS.find((m) => m.key === sortKey)?.label ?? "播放量"}
                     </div>
-                    <div className="font-serif tracking-tight font-semibold text-[14px] text-[#1C1917] tabular-nums">
+                    <div className="font-semibold text-[14px] text-[#1C1917] tabular-nums">
                       {formatMetric(item, sortKey)}
                     </div>
                     {boardType === "progress" && (

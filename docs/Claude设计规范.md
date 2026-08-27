@@ -82,27 +82,34 @@
 
 ### 2.5 衬线标题负间距强制规则
 
-使用衬线字体的标题（H1/H2/特殊点睛场景），必须设置负字间距：
+> ✦ **字系边界**：衬线止于四立（大标立卷、主舱立名、洞察立论、归档立篇），此外皆为器用，悉数归黑。
+
+全站默认继承 Sans 黑体。仅在以下四大场景特定使用衬线体（Serif），且必须设置负字间距：
 
 | 场景 | Tailwind 类 | 实际值 | 为什么 |
 |---|---|---|---|
-| 页面大标题 (H1) | `tracking-tighter` | -0.05em | 衬线默认偏松，不收紧会显得"学术论文感" |
-| 区域标题 (H2) | `tracking-tight` | -0.025em | 保持现代出版物感 |
-| AI 洞察结论 | `tracking-tight` | -0.025em | 局部点睛用衬线 |
+| 1. 页面大标题 (H1) | `tracking-tighter` | -0.05em | 衬线默认偏松，不收紧会显得"学术论文感" |
+| 2. 核心主舱名牌 (H2/H3) | `tracking-tight` | -0.025em | 独立、低密度、非交互、16px+ 的核心舱名牌；普通 `CardTitle` 不自动成立 |
+| 3. AI 洞察结论 | `tracking-tight` | -0.025em | AI 输出的归因、诊断、建议金句；组件/弹窗标题不自动成立 |
+| 4. 归档与调养完成态 | `tracking-tight` | -0.025em | 提交完成/安心调养寄语 |
 
-**字体栈**：`"Iowan Old Style", Charter, Georgia, "Songti SC", serif`
+**字体栈**：`"Iowan Old Style", Charter, Georgia, "Songti SC", STSong, SimSun, NSimSun, serif`；回退链只放真实衬线字体，禁止混入 `Microsoft YaHei`、`PingFang SC` 等黑体。Windows 低密度屏（DPR < 1.5）下，16px 以下的衬线小字允许回 Sans，优先保证清晰度。
 
 **禁止**：
 - ❌ 衬线标题使用 `tracking-normal` 或 `tracking-wide`
-- ❌ 表格、表单、按钮、导航、数据列使用衬线
+- ❌ 表格、表单、按钮、导航、常规弹窗列表、数据列使用衬线
 - ❌ 给衬线标题加粗到 600+（会从"思想读本"变"营销海报"）
+- ❌ 在包裹表单或列表的父级容器上全局声明 `font-serif`
+- ❌ 仅因某元素是 H2/H3、`CardTitle`、DialogTitle、SheetTitle 或包含“AI”二字，就默认使用衬线
 
 **使用场景限定**：
-- ✅ 首页 Hero 大标题
-- ✅ AI 洞察/诊断结论（点睛作用）
-- ✅ 报告总结语
-- ❌ 常规页面标题（保持无衬线）
-- ❌ 数据密集页面（防止视觉冲突）
+- ✅ 全站默认：无需声明类名，一律继承 Sans 清爽黑体
+- ✅ 1. 页面级 Hero 大标题（大标立卷）
+- ✅ 2. 顶级主舱名牌（主舱立名，如首页左右核心工作舱主标、核心分析舱主标）
+- ✅ 3. AI 洞察/诊断结论（洞察立论，必须是内容结论本身）
+- ✅ 4. 归档完成与调养寄语（归档立篇）
+- ❌ 常规页面标题、弹窗抽屉标题、设置子项（保持无衬线）
+- ❌ 数据密集页面与表单录入区（防止视觉冲突与发虚）
 
 ---
 
@@ -205,7 +212,7 @@
 
 | 组件 | Tailwind 规格 | 适用场景 |
 |---|---|---|
-| **卷首寄语 (Epigraph)** | `font-serif italic text-[13.5px] text-[#292524]/90 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg` | 深度诊断、复盘报告顶部开篇 |
+| **卷首寄语 (Epigraph)** | `font-serif not-italic tracking-tight text-[13.5px] text-[#292524]/90 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg` | 仅限深度诊断、复盘报告中的 AI 洞察开篇或立意金句 |
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
 | **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
 
@@ -306,7 +313,7 @@
 ### 7.2 字体禁区
 
 - ❌ 给衬线标题加粗到 600+（会从"思想读本"变"营销海报"）
-- ❌ 用无衬线字体做首页/AI洞察的大标题（H1/H2 点睛场景必须衬线）
+- ❌ 四立场景中的页面 Hero、核心主舱名牌、AI 结论叶子、归档/调养完成态漏用衬线
 - ❌ 衬线标题使用 `tracking-normal` 或正间距（必须负间距）
 - ❌ 含中文容器使用 `font-mono`
 - ❌ 正文字号小于 13px（除豁免场景：徽章/占位符/不可用状态）

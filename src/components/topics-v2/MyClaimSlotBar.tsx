@@ -72,7 +72,7 @@ export function MyClaimSlotBar({
             <Layers className="w-3.5 h-3.5" />
           </span>
           <div>
-            <h2 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-[#1C1917] flex items-center gap-2">
               <span>我的选题槽位</span>
               <span className="text-xs tabular-nums text-[#78716C] font-normal">
                 (

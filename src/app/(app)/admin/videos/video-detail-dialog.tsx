@@ -407,7 +407,7 @@ export function VideoDetailDialog({
                         {statusBadgeConfig[video.anomaly_status]?.label ??
                           video.anomaly_status}
                       </Badge>
-                      <h2 className="font-serif text-lg font-semibold text-[#1C1917] tracking-tight leading-snug">
+                      <h2 className="text-lg font-semibold text-[#1C1917] leading-snug">
                         {video.video_title?.trim() || "未命名视频"}
                       </h2>
                     </div>

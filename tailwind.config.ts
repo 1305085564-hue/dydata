@@ -28,7 +28,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        serif: ['"Iowan Old Style"', "Charter", "Georgia", '"Songti SC"', '"Microsoft YaHei"', "serif"],
+        serif: ['"Iowan Old Style"', "Charter", "Georgia", '"Songti SC"', "STSong", "SimSun", "NSimSun", "serif"],
       },
       boxShadow: {
         "claude-float": "var(--shadow-claude-float)",

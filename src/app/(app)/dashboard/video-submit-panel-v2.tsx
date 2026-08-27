@@ -871,7 +871,7 @@ export function VideoSubmitPanelV2({
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="flex flex-col overflow-hidden sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
+            <DialogTitle className="text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
           </DialogHeader>
           <DialogBody>
           {activityError ? (
@@ -912,7 +912,7 @@ export function VideoSubmitPanelV2({
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
         <DialogContent className="flex flex-col overflow-hidden p-4 gap-3 sm:max-w-5xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
           <DialogHeader>
-            <DialogTitle className="font-serif tracking-tight text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
+            <DialogTitle className="text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
           </DialogHeader>
           {editingReport ? (
             <HistoryReportEditForm

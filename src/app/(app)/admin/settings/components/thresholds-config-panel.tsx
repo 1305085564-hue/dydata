@@ -73,7 +73,7 @@ export function ThresholdsConfigPanel({
             <Sliders className="size-5" />
           </span>
           <div>
-            <h3 className="font-serif text-[16px] font-semibold text-[#1C1917] tracking-tight">
+            <h3 className="text-[16px] font-semibold text-[#1C1917]">
               视频复盘与素材库异常警戒阈值
             </h3>
             <p className="text-[12px] text-[#78716C] mt-0.5">

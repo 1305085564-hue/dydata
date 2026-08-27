@@ -423,7 +423,7 @@ export function TopicPoolExplorer({
           </div>
           {totalCount === 0 && !searchQuery && selectedTopicIds.length === 0 ? (
             <>
-              <h3 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] mb-1">
+              <h3 className="text-sm font-semibold text-[#1C1917] mb-1">
                 还没有选题
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-4 font-normal leading-relaxed">
@@ -440,7 +440,7 @@ export function TopicPoolExplorer({
             </>
           ) : (
             <>
-              <h3 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] mb-1">
+              <h3 className="text-sm font-semibold text-[#1C1917] mb-1">
                 未找到符合条件的选题
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
@@ -475,10 +475,10 @@ export function TopicPoolExplorer({
                     </span>
                   </div>
 
-                  <h3 className="font-serif text-[14.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5 tracking-tight">
+                  <h3 className="text-[14.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5">
                     {sub.title}
                   </h3>
-                  <p className="font-serif not-italic text-[12px] text-[#292524] line-clamp-2 mb-3.5 leading-relaxed">
+                  <p className="not-italic text-[12px] text-[#292524] line-clamp-2 mb-3.5 leading-relaxed">
                     {sub.hook ? `“${sub.hook}”` : "“尚未提炼立意金句”"}
                   </p>
                 </div>
@@ -571,10 +571,10 @@ export function TopicPoolExplorer({
                     className="group hover:bg-[#FBF9F5]/80 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-3 max-w-xs">
-                      <div className="font-serif text-[13.5px] font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
+                      <div className="text-[13.5px] font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
                         {sub.title}
                       </div>
-                      <div className="font-serif not-italic text-xs text-[#292524] truncate leading-relaxed">
+                      <div className="not-italic text-xs text-[#292524] truncate leading-relaxed">
                         “{sub.hook || "尚未提炼立意金句"}”
                       </div>
                     </td>

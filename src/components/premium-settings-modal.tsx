@@ -483,7 +483,7 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="font-serif text-[14px] font-medium tracking-tight text-[#1C1917]">
+                  <h3 className="text-[14px] font-medium text-[#1C1917]">
                     个人资料设置
                   </h3>
                   <p className="text-[13px] text-[#292524] mt-1">
@@ -582,7 +582,7 @@ export function PremiumSettingsModal({
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-serif text-[14px] font-medium tracking-tight text-[#1C1917]">
+                    <h3 className="text-[14px] font-medium text-[#1C1917]">
                       账号矩阵配置
                     </h3>
                     <p className="text-[13px] text-[#292524] mt-0.5">
@@ -805,7 +805,7 @@ export function PremiumSettingsModal({
                 className="space-y-5"
               >
                 <div>
-                  <h3 className="font-serif text-[14px] font-medium tracking-tight text-[#1C1917]">
+                  <h3 className="text-[14px] font-medium text-[#1C1917]">
                     系统参数配置
                   </h3>
                   <p className="text-[13px] text-[#292524] mt-1">

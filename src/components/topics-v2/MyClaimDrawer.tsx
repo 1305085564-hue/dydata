@@ -129,7 +129,7 @@ export function MyClaimDrawer({
               <div>
                 <h4
                   id="claim-drawer-title"
-                  className="font-serif text-sm font-semibold tracking-tight text-[#1C1917]"
+                  className="text-sm font-semibold text-[#1C1917]"
                 >
                   我的选题认领
                 </h4>
@@ -230,7 +230,7 @@ export function MyClaimDrawer({
                                 候选准备
                               </span>
                             </div>
-                            <p className="font-serif not-italic text-xs text-[#292524] line-clamp-1 mb-2 leading-relaxed">
+                            <p className="not-italic text-xs text-[#292524] line-clamp-1 mb-2 leading-relaxed">
                               “{sub?.hook || "还没有 Hook"}”
                             </p>
 
@@ -298,7 +298,7 @@ export function MyClaimDrawer({
                                 脚本中
                               </span>
                             </div>
-                            <p className="font-serif not-italic text-xs text-[#292524] line-clamp-1 mb-2 leading-relaxed">
+                            <p className="not-italic text-xs text-[#292524] line-clamp-1 mb-2 leading-relaxed">
                               “{sub?.hook || "还没有 Hook"}”
                             </p>
 

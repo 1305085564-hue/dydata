@@ -59,7 +59,7 @@ export function CaseRejectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle className="font-serif text-sm font-semibold tracking-tight">
+          <DialogTitle className="text-sm font-semibold">
             {count > 1 ? `批量驳回 ${count} 条` : "驳回这条提交"}
           </DialogTitle>
           <DialogDescription>

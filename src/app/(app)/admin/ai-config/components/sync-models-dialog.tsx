@@ -151,7 +151,7 @@ export function SyncModelsDialog({
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
         <DialogHeader className="gap-1.5 pb-2 border-b border-[#ECE7DE]/70">
-          <DialogTitle className="font-serif tracking-tight text-base font-semibold text-[#1C1917] flex items-center gap-2">
+          <DialogTitle className="text-base font-semibold text-[#1C1917] flex items-center gap-2">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
               · {keyLabel}

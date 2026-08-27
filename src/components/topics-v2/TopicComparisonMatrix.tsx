@@ -196,7 +196,7 @@ export function TopicComparisonMatrix({
           <div className="w-8 h-8 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto mb-3">
             <BarChart2 className="w-4 h-4" />
           </div>
-          <h3 className="font-serif tracking-tight text-sm font-semibold text-[#1C1917] mb-1">
+          <h3 className="text-sm font-semibold text-[#1C1917] mb-1">
             还没有对比数据
           </h3>
           <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">

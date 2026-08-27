@@ -307,7 +307,7 @@ export function NavBarClient({
                 </div>
                 <div className="hidden sm:block">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-serif text-[14.5px] font-semibold tracking-tight text-[#1C1917] leading-none">
+                    <span className="text-[14.5px] font-semibold text-[#1C1917] leading-none">
                       DYData
                     </span>
                   </div>

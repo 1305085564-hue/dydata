@@ -473,7 +473,7 @@ export default function ModelsClient() {
                 <div className="p-4 px-5 bg-[#FBF9F5]/80 space-y-2.5 border-b border-[#E5E0D6]/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-serif tracking-tight font-semibold text-[14px] text-[#1C1917]">
+                      <span className="font-semibold text-[14px] text-[#1C1917]">
                         {fam.familyName}
                       </span>
                     </div>

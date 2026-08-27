@@ -83,7 +83,7 @@ export function SmartReplaceModal({
     >
       <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white/95 p-6 shadow-claude-dialog sm:max-w-lg">
         <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
-          <DialogTitle className="flex items-center gap-2 font-serif text-base font-semibold tracking-tight text-[#1C1917]">
+          <DialogTitle className="flex items-center gap-2 text-base font-semibold text-[#1C1917]">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#F5F3EE] text-[#292524] font-semibold text-xs">
                 <AlertTriangle className="w-3.5 h-3.5" />
@@ -152,7 +152,7 @@ export function SmartReplaceModal({
                         <div className="text-[13px] font-normal text-[#292524]">
                           {sub?.title || "已认领子题"}
                         </div>
-                        <div className="font-serif not-italic text-[13px] text-[#292524] line-clamp-1 mt-0.5 leading-relaxed">
+                        <div className="not-italic text-[13px] text-[#292524] line-clamp-1 mt-0.5 leading-relaxed">
                           “{sub?.hook || "还没有 Hook"}”
                         </div>
                       </div>

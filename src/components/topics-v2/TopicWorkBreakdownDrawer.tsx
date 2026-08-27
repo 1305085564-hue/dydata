@@ -273,7 +273,7 @@ export function TopicWorkBreakdownDrawer({
               </div>
               <h3
                 id="drawer-title"
-                className="font-serif text-lg font-semibold tracking-tight text-[#1C1917] leading-snug"
+                className="text-lg font-semibold text-[#1C1917] leading-snug"
               >
                 {subTopicInfo?.title || "子题详情"}
               </h3>
@@ -306,7 +306,7 @@ export function TopicWorkBreakdownDrawer({
                 <FileText className="w-3.5 h-3.5 text-[#78716C]" />
                 <span>一句话选题 Hook</span>
               </div>
-              <p className="font-serif not-italic text-sm text-[#292524] leading-relaxed">
+              <p className="not-italic text-sm text-[#292524] leading-relaxed">
                 “{subTopicInfo?.hook || "还没有 Hook"}”
               </p>
             </div>
