@@ -7,6 +7,27 @@ export type { VideoSubmissionEditDetail };
 export const SUBMISSION_ASSIGNEE_ROLES = ["script_author", "video_editor", "operator"] as const;
 export type SubmissionAssigneeRole = (typeof SUBMISSION_ASSIGNEE_ROLES)[number];
 
+const SUBMISSION_ASSIGNEE_ROLE_LABELS: Record<SubmissionAssigneeRole, string> = {
+  script_author: "文案",
+  video_editor: "剪辑",
+  operator: "运营",
+};
+
+export function getHiddenRoleRestoreLabel(
+  hiddenRoles: ReadonlySet<SubmissionAssigneeRole>,
+) {
+  const hiddenRoleLabels = SUBMISSION_ASSIGNEE_ROLES
+    .filter((role) => hiddenRoles.has(role))
+    .map((role) => SUBMISSION_ASSIGNEE_ROLE_LABELS[role]);
+
+  if (hiddenRoleLabels.length === 0) return null;
+  if (hiddenRoleLabels.length === SUBMISSION_ASSIGNEE_ROLES.length) {
+    return "+ 协同创作";
+  }
+
+  return `显示已隐藏岗位（${hiddenRoleLabels.join("、")}）`;
+}
+
 export type SubmissionRoleAssignments = {
   scriptAuthorUserId: string | null;
   videoEditorUserId: string | null;

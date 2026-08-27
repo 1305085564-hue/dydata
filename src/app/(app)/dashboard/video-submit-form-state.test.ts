@@ -14,7 +14,23 @@ import {
   buildVideoSubmissionEditRefill,
   getVideoSubmissionEditDetailError,
   shouldAutoRedirectToGrowthAfterSubmit,
+  getHiddenRoleRestoreLabel,
 } from "./video-submit-form-state";
+
+test("隐藏部分共创岗位时仍提供恢复入口，并标明可恢复的岗位", () => {
+  assert.equal(
+    getHiddenRoleRestoreLabel(new Set(["operator"])),
+    "显示已隐藏岗位（运营）",
+  );
+});
+
+test("三个岗位都隐藏时保留协同创作恢复入口，无隐藏岗位时不显示入口", () => {
+  assert.equal(
+    getHiddenRoleRestoreLabel(new Set(["script_author", "video_editor", "operator"])),
+    "+ 协同创作",
+  );
+  assert.equal(getHiddenRoleRestoreLabel(new Set()), null);
+});
 
 test("添加外协只打开待选状态，取消外协会恢复为本人", () => {
   const userId = "user-self";

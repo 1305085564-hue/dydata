@@ -94,6 +94,7 @@ import {
   normalizeOptionalText,
   removeRoleOverride as removeSubmissionRoleOverride,
   findNextScreenshotUploadRole,
+  getHiddenRoleRestoreLabel,
   resolveAssigneeDisplay,
   resolveVideoSubmitMetaFields,
   resolveVideoSubmitMode,
@@ -765,6 +766,7 @@ export function VideoSubmitFormV2({
   const isOperatorVisible = isOperatorExternal || !hiddenRoles.has("operator");
   const hasAnyVisibleRole =
     isScriptAuthorVisible || isVideoEditorVisible || isOperatorVisible;
+  const hiddenRoleRestoreLabel = getHiddenRoleRestoreLabel(hiddenRoles);
 
   const filteredModalMembers = useMemo(() => {
     if (!memberSearchQuery.trim()) return operatorMembers;
@@ -954,7 +956,6 @@ export function VideoSubmitFormV2({
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
 
-  const [isMemoryExpanded, setIsMemoryExpanded] = useState(false);
   const [isMoreSettingsExpanded, setIsMoreSettingsExpanded] = useState(false);
 
   useEffect(() => {
@@ -2269,13 +2270,13 @@ export function VideoSubmitFormV2({
                         <h3 className="text-[12.5px] font-medium text-[#292524] flex items-center gap-1.5">
                           <span>共创伙伴</span>
                         </h3>
-                        {!hasAnyVisibleRole && (
+                        {hiddenRoleRestoreLabel && (
                           <button
                             type="button"
                             onClick={showAllRoles}
                             className="text-[12px] font-medium text-[#D97757] hover:underline"
                           >
-                            + 协同创作
+                            {hiddenRoleRestoreLabel}
                           </button>
                         )}
                       </div>
@@ -2334,87 +2335,61 @@ export function VideoSubmitFormV2({
                         </div>
                       )}
 
-                      {/* 题材与形式：默认摘要，按需展开编辑 */}
-                      <div className="border-t border-[#ECE7DE] pt-2" ref={topicTagSectionRef}>
-                        {!isMemoryExpanded ? (
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-1.5">
-                              <span className="shrink-0 text-[12px] font-medium text-[#292524]">
-                                题材与形式：
-                              </span>
-                              <span className="rounded-md border border-[#E5E0D6] bg-white px-2 py-0.5 text-[11.5px] font-medium text-[#292524] shadow-2xs">
-                                {meta.topicTag || "未选"}
-                              </span>
-                              <span className="text-[10px] text-[#78716C]">·</span>
-                              <span className="rounded-md border border-[#E5E0D6] bg-white px-2 py-0.5 text-[11.5px] font-medium text-[#292524] shadow-2xs">
-                                {meta.videoForm || "未选"}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setIsMemoryExpanded(true)}
-                              className="shrink-0 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D]"
-                            >
-                              修改
-                            </button>
+                      {/* 题材与形式：内联轻量分段器 */}
+                      <div className="space-y-2 border-t border-[#ECE7DE] pt-2.5" ref={topicTagSectionRef}>
+                        {/* 题材标签 */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[12px] font-medium text-[#292524]">
+                            题材标签
+                          </span>
+                          <div className="flex items-center rounded-lg border border-[#E5E0D6]/80 bg-[#FAF8F4]/50 p-0.5">
+                            {(["干货", "复盘"] as const).map((tag) => {
+                              const isSelected = meta.topicTag === tag;
+                              return (
+                                <button
+                                  key={tag}
+                                  type="button"
+                                  onClick={() => updateMeta("topicTag", isSelected ? "" : tag)}
+                                  className={cn(
+                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all",
+                                    isSelected
+                                      ? "bg-white text-[#1C1917] shadow-2xs border border-[#E5E0D6]/60"
+                                      : "text-[#78716C] hover:text-[#292524]"
+                                  )}
+                                >
+                                  {tag}
+                                </button>
+                              );
+                            })}
                           </div>
-                        ) : (
-                          <div className="space-y-2.5 rounded-lg bg-[#F5F3EE]/70 p-2.5">
-                            <div className="space-y-1.5">
-                              <label className="block text-[12px] font-medium text-[#292524]">
-                                题材标签 <span className="text-[#DC2626]">*</span>
-                              </label>
-                              <div className="grid grid-cols-2 gap-2">
-                                {(["干货", "复盘"] as const).map((tag) => (
-                                  <button
-                                    key={tag}
-                                    type="button"
-                                    onClick={() => updateMeta("topicTag", meta.topicTag === tag ? "" : tag)}
-                                    className={cn(
-                                      "h-8 rounded-lg border text-[12px] font-medium transition-colors",
-                                      meta.topicTag === tag
-                                        ? "border-[#E5E0D6] bg-white text-[#1C1917] shadow-2xs"
-                                        : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50"
-                                    )}
-                                  >
-                                    {tag}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
+                        </div>
 
-                            <div className="space-y-1.5">
-                              <label className="block text-[12px] font-medium text-[#292524]">
-                                视频形式 <span className="text-[#DC2626]">*</span>
-                              </label>
-                              <div className="grid grid-cols-2 gap-2">
-                                {(["出镜", "图文"] as const).map((form) => (
-                                  <button
-                                    key={form}
-                                    type="button"
-                                    onClick={() => updateMeta("videoForm", form)}
-                                    className={cn(
-                                      "h-8 rounded-lg border text-[12px] font-medium transition-colors",
-                                      meta.videoForm === form
-                                        ? "border-[#E5E0D6] bg-white text-[#1C1917] shadow-2xs"
-                                        : "border-transparent text-[#292524] hover:bg-[#E5E0D6]/50"
-                                    )}
-                                  >
-                                    {form}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => setIsMemoryExpanded(false)}
-                              className="text-[12px] font-medium text-[#78716C] hover:text-[#292524]"
-                            >
-                              收起
-                            </button>
+                        {/* 视频形式 */}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[12px] font-medium text-[#292524]">
+                            视频形式
+                          </span>
+                          <div className="flex items-center rounded-lg border border-[#E5E0D6]/80 bg-[#FAF8F4]/50 p-0.5">
+                            {(["出镜", "图文"] as const).map((form) => {
+                              const isSelected = meta.videoForm === form;
+                              return (
+                                <button
+                                  key={form}
+                                  type="button"
+                                  onClick={() => updateMeta("videoForm", form)}
+                                  className={cn(
+                                    "h-6 px-3 rounded-md text-[11.5px] font-medium transition-all",
+                                    isSelected
+                                      ? "bg-white text-[#1C1917] shadow-2xs border border-[#E5E0D6]/60"
+                                      : "text-[#78716C] hover:text-[#292524]"
+                                  )}
+                                >
+                                  {form}
+                                </button>
+                              );
+                            })}
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* 异常状态补充 */}
@@ -2624,9 +2599,9 @@ export function VideoSubmitFormV2({
                   }
                 }}
               >
-                <DialogContent className="max-w-sm rounded-2xl bg-white p-4 shadow-lg">
+                <DialogContent className="max-w-sm rounded-2xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08)]">
                   <DialogHeader className="pb-3 border-b border-[#ECE7DE]">
-                    <DialogTitle className="font-serif tracking-tight text-[15px] font-semibold text-[#1C1917]">
+                    <DialogTitle className="text-[15px] font-medium text-[#1C1917]">
                       选择{selectingRole?.label}负责人
                     </DialogTitle>
                   </DialogHeader>
@@ -2639,12 +2614,12 @@ export function VideoSubmitFormV2({
                         value={memberSearchQuery}
                         onChange={(e) => setMemberSearchQuery(e.target.value)}
                         placeholder="搜索团队成员..."
-                        className="h-9 rounded-lg border-[#E5E0D6] bg-[#FAF8F4]/50 pl-9 text-[13px]"
+                        className="h-9 rounded-lg border-[#E5E0D6] bg-white pl-9 text-[13px] text-[#292524] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:border-[#78716C]"
                       />
                     </div>
 
                     {/* 成员列表 */}
-                    <div className="max-h-[240px] overflow-y-auto space-y-1">
+                    <div className="max-h-[240px] overflow-y-auto space-y-1 pr-0.5">
                       {/* 本人快捷置顶项 */}
                       {!memberSearchQuery && (
                         <button
@@ -2664,20 +2639,20 @@ export function VideoSubmitFormV2({
                             setSelectingRole(null);
                           }}
                           className={cn(
-                            "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] transition-colors",
+                            "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] transition-colors border",
                             selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
-                              ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                              : "hover:bg-[#FAF8F5] text-[#292524]"
+                              ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
+                              : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
                           )}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{selfLabel}</span>
-                            <span className="rounded bg-[#D97757]/15 px-1.5 py-0.5 text-[10px] text-[#D97757]">
+                            <span>{selfLabel}</span>
+                            <span className="rounded bg-[#ECE7DE] px-1.5 py-0.5 text-[10px] text-[#78716C] font-medium">
                               本人
                             </span>
                           </div>
                           {(selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId) && (
-                            <Check className="size-4 stroke-[2.5]" />
+                            <Check className="size-4 stroke-[2.5] text-[#D97757]" />
                           )}
                         </button>
                       )}
@@ -2703,14 +2678,14 @@ export function VideoSubmitFormV2({
                                 setSelectingRole(null);
                               }}
                               className={cn(
-                                "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] transition-colors",
+                                "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] transition-colors border",
                                 isSelected
-                                  ? "bg-[#D97757]/10 text-[#D97757] font-medium"
-                                  : "hover:bg-[#FAF8F5] text-[#292524]"
+                                  ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
+                                  : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
                               )}
                             >
                               <span>{member.display_name || member.name}</span>
-                              {isSelected && <Check className="size-4 stroke-[2.5]" />}
+                              {isSelected && <Check className="size-4 stroke-[2.5] text-[#D97757]" />}
                             </button>
                           );
                         })}
@@ -2873,26 +2848,36 @@ function RoleItemRow({
         <span>{label}</span>
       </div>
 
-      {/* 右侧人员选择 */}
-      <div className="flex items-center gap-1.5">
+      {/* 右侧人员选择 - 一体化内嵌设计 */}
+      <div
+        className={cn(
+          "group flex h-7 items-center rounded-lg border transition-all",
+          display.external
+            ? "border-[#E5E0D6] bg-[#F5F3EE] hover:border-[#D97757]/40 shadow-2xs"
+            : "border-[#E5E0D6]/80 bg-[#FAF8F4]/50 hover:bg-white hover:border-[#78716C]/40"
+        )}
+      >
         <button
           type="button"
           onClick={onOpenSelector}
           className={cn(
-            "flex h-7 items-center justify-between gap-2 rounded-lg bg-[#FBF9F5] hover:bg-white border border-[#E5E0D6]/80 hover:border-[#78716C]/40 px-2.5 text-[12px] font-medium transition-colors",
-            display.historical ? "text-[#78716C]" : "text-[#292524]",
+            "flex h-full items-center gap-1.5 px-2.5 text-[12px] font-medium transition-colors",
+            display.historical ? "text-[#78716C]" : "text-[#292524]"
           )}
         >
           <span>{display.text}</span>
-          <ChevronDown className="size-3 text-[#78716C]" />
+          {!display.external && <ChevronDown className="size-3 text-[#78716C]" />}
         </button>
 
         {display.external && (
           <button
             type="button"
-            onClick={onResetSelf}
+            onClick={(e) => {
+              e.stopPropagation();
+              onResetSelf();
+            }}
             title="恢复由我完成"
-            className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:text-[#DC2626] hover:bg-rose-50 transition-colors"
+            className="flex h-full items-center pr-2 pl-0.5 text-[#78716C] hover:text-[#D97757] transition-colors"
           >
             <X className="size-3.5 stroke-[2]" />
           </button>

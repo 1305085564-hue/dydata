@@ -25,11 +25,17 @@ test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与�
   assert.doesNotMatch(source, /lg:justify-between/);
 });
 
-test("dashboard V2 的团队分工使用摘要态，题材与形式按需展开", () => {
-  assert.match(source, /题材与形式：/);
-  assert.match(source, /!isMemoryExpanded/);
-  assert.match(source, /onClick=\{\(\) => setIsMemoryExpanded\(true\)\}/);
-  assert.match(source, /onClick=\{\(\) => setIsMemoryExpanded\(false\)\}/);
+test("dashboard V2 的团队分工使用内联分段器常态呈现题材与形式", () => {
+  assert.match(source, /题材标签/);
+  assert.match(source, /视频形式/);
+  assert.match(source, /updateMeta\("topicTag"/);
+  assert.match(source, /updateMeta\("videoForm"/);
+});
+
+test("dashboard V2 隐藏部分共创岗位后仍保留恢复入口", () => {
+  assert.match(source, /getHiddenRoleRestoreLabel\(hiddenRoles\)/);
+  assert.match(source, /hiddenRoleRestoreLabel &&/);
+  assert.match(source, /\{hiddenRoleRestoreLabel\}/);
 });
 
 test("dashboard V2 表单把新建、异常和完整编辑交给后端 mode 契约", () => {
