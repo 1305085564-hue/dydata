@@ -8,7 +8,6 @@ import {
   hydrateAdminModuleMemberEmails,
   type AdminModuleMemberHydration,
   type AdminModuleMemberProfileLike,
-  type AdminModuleMonthlyPublishRow,
   type AdminModuleMemberSummary,
 } from "@/lib/admin-modules-contract";
 import { getUserPermissions } from "@/lib/permissions";
@@ -316,49 +315,6 @@ async function loadAdminModuleProfiles(
   throw new Error(lastError?.message ?? "加载成员资料失败");
 }
 
-function getMonthBoundsForDate(date: string) {
-  const [yearPart, monthPart] = date.split("-");
-  const year = Number(yearPart);
-  const month = Number(monthPart);
-
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
-    const now = new Date();
-    const fallbackYear = now.getUTCFullYear();
-    const fallbackMonth = now.getUTCMonth() + 1;
-    const fallbackEndDay = new Date(Date.UTC(fallbackYear, fallbackMonth, 0)).getUTCDate();
-    return {
-      startDate: `${fallbackYear}-${String(fallbackMonth).padStart(2, "0")}-01`,
-      endDate: `${fallbackYear}-${String(fallbackMonth).padStart(2, "0")}-${String(fallbackEndDay).padStart(2, "0")}`,
-    };
-  }
-
-  const endDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  return {
-    startDate: `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-01`,
-    endDate: `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`,
-  };
-}
-
-async function loadAdminModuleMonthlyPublishStats(
-  supabase: AdminSupabase,
-  userIds: string[],
-  queryDate: string,
-) {
-  if (userIds.length === 0) return {};
-
-  const { startDate, endDate } = getMonthBoundsForDate(queryDate);
-  const { data, error } = await supabase.rpc("get_fulfillment_range", {
-    p_start_date: startDate,
-    p_end_date: endDate,
-    p_visible_user_ids: userIds,
-    p_team_id: null,
-    p_group_id: null,
-  });
-
-  if (error) throw new Error(error.message ?? "加载成员本月应发实发统计失败");
-  return calculateAdminModuleMonthlyPublishStats((data ?? []) as AdminModuleMonthlyPublishRow[]);
-}
-
 async function hydrateArchivedByNames(
   adminSupabase: ReturnType<typeof createAdminClient>,
   profiles: AdminModuleMemberSummary[],
@@ -571,17 +527,6 @@ export async function loadAdminModulesData({
   });
   const visibleActiveProfileIds = new Set(teamManagement.profiles.map((profile) => profile.id));
   const visibleActiveProfiles = activeProfiles.filter((profile) => visibleActiveProfileIds.has(profile.id));
-  const monthlyPublishStats = await measureAsync("admin-modules.monthlyPublishStats", () =>
-    loadAdminModuleMonthlyPublishStats(
-      supabase,
-      visibleActiveProfiles.map((profile) => profile.id),
-      context.queryDate,
-    ),
-  );
-  const visibleActiveProfilesWithMonthlyStats = applyAdminModuleMonthlyPublishStats(
-    visibleActiveProfiles,
-    monthlyPublishStats,
-  );
   const archivedProfiles = filterVisibleArchivedProfiles(await hydrateArchivedByNames(
     context.adminSupabase,
     hydratedProfiles.filter((profile) => profile.membership_status === "archived"),
@@ -598,7 +543,7 @@ export async function loadAdminModulesData({
       teamId: context.perm.teamId,
     },
     permissionManagerCapabilities: context.permissionManagerCapabilities,
-    allProfiles: visibleActiveProfilesWithMonthlyStats,
+    allProfiles: visibleActiveProfiles,
     archivedProfiles,
     teams: context.perm.groupMode ? teams : teamManagement.teams,
     teamManagement,

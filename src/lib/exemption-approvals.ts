@@ -36,6 +36,13 @@ export function collectApprovalRequestIds(
   return ids;
 }
 
+export function removeReviewedApproval<T extends ExemptionApprovalLike>(
+  items: T[],
+  requestId: string,
+): T[] {
+  return items.filter((item) => resolveApprovalRequestId(item) !== requestId);
+}
+
 export function getCommandHubDefaultTab(input: {
   todoCount: number;
   approvalCount: number;

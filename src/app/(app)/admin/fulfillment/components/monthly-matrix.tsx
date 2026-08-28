@@ -13,6 +13,7 @@ import type {
   FulfillmentStatus,
 } from "@/types/fulfillment";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface FulfillmentAppeal {
   id: string;
@@ -35,6 +36,10 @@ interface MonthlyMatrixProps {
     userId: string,
     date: string,
     action: "confirmed_published" | "leave" | "waived" | "absent",
+  ) => Promise<void>;
+  onReviewPendingExemption?: (
+    requestId: string,
+    action: "approved" | "rejected",
   ) => Promise<void>;
 }
 
@@ -89,19 +94,23 @@ function getTooltipPlacement(
   };
 }
 
-function getStatusColor(status: FulfillmentStatus | undefined): string {
-  if (!status) return "bg-[#FBF9F5] border-[#ECE7DE]";
+function getStatusColor(
+  status: FulfillmentStatus | undefined,
+  hasPendingExemption = false,
+): string {
+  if (hasPendingExemption) return "bg-[#B98A54]/20 border-[#B98A54]/60 text-[#8A6A2F]";
+  if (!status) return "border-transparent bg-transparent text-[#78716C]";
   switch (status) {
     case "published":
     case "confirmed_published":
-      return "bg-[#6FAA7D]/90 border-[#6FAA7D]/40";
+      return "bg-[#6FAA7D]/20 border-[#6FAA7D]/40 text-[#446F50]";
     case "leave":
-      return "bg-[#43718E]/85 border-[#43718E]/30";
+      return "bg-[#43718E]/20 border-[#43718E]/35 text-[#315D78]";
     case "waived":
     case "exempted":
-      return "bg-[#43718E]/25 border-[#43718E]/20";
+      return "bg-[#43718E]/10 border-[#43718E]/20 text-[#315D78]";
     case "absent":
-      return "bg-[#C9604D]/90 border-[#C9604D]/40";
+      return "bg-[#C0685C]/15 border-[#C0685C]/35 text-[#8F4B43]";
     case "unconfirmed":
       return "bg-[#F5F3EE] border-[#E5E0D6]/80";
     default:
@@ -132,10 +141,12 @@ export function MonthlyMatrix({
   onMonthChange,
   appeals = [],
   onQuickMarkCell,
+  onReviewPendingExemption,
 }: MonthlyMatrixProps) {
   const [expanded, setExpanded] = useState(true);
   const [hoveredCell, setHoveredCell] = useState<ActiveCellData | null>(null);
   const [openMenuCell, setOpenMenuCell] = useState<ActiveCellData | null>(null);
+  const [reviewingRequestId, setReviewingRequestId] = useState<string | null>(null);
 
   const daysInMonth = useMemo(() => getDaysInMonth(year, month), [year, month]);
   const dayNumbers = useMemo(
@@ -331,7 +342,11 @@ export function MonthlyMatrix({
                             : "bg-white/95 backdrop-blur-sm"
                         }`}
                       >
-                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => onCellClick(member, today)}
+                          className="flex items-center gap-1.5 whitespace-nowrap text-left"
+                        >
                           <span
                             className={`text-[13px] font-medium transition-colors ${
                               isRowHovered ? "text-[#D97757]" : "text-[#1C1917]"
@@ -344,7 +359,7 @@ export function MonthlyMatrix({
                               {member.teamName}
                             </span>
                           )}
-                        </div>
+                        </button>
                       </td>
                       {dayNumbers.map((day) => {
                         const dateKey = formatDateKey(year, month, day);
@@ -399,8 +414,9 @@ export function MonthlyMatrix({
                               onMouseLeave={() => {
                                 setHoveredCell(null);
                               }}
-                              className={`mx-auto block size-[17px] rounded-[4px] border transition-all duration-150 hover:scale-130 hover:z-10 cursor-pointer ${getStatusColor(
+                              className={`mx-auto flex h-5 min-w-5 items-center justify-center rounded-[4px] border px-0.5 text-[10px] font-medium tabular-nums transition-all duration-150 hover:scale-110 hover:z-10 cursor-pointer ${getStatusColor(
                                 status,
+                                Boolean(record?.pendingExemption),
                               )} ${
                                 isToday
                                   ? "ring-1.5 ring-[#D97757] ring-offset-1 z-10"
@@ -410,27 +426,33 @@ export function MonthlyMatrix({
                                   ? "ring-1.5 ring-[#D99E55] ring-offset-1"
                                   : ""
                               }`}
-                            />
+                            >
+                              {record?.publishedCount ? (
+                                record.publishedCount
+                              ) : !record ? (
+                                <span className="size-1.5 rounded-full bg-[#D6D0C5]" />
+                              ) : null}
+                            </button>
                           </td>
                         );
                       })}
                       <td className="sticky right-0 z-10 border-l border-[#E5E0D6] bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
                         <span
                           className={`text-[12px] tabular-nums font-semibold ${
-                            member.publishedDays >= member.totalDays
+                            member.requiredCount > 0 && member.publishedCount >= member.requiredCount
                               ? "text-[#6FAA7D]"
-                              : member.publishedDays / member.totalDays >= 0.6
+                              : member.requiredCount > 0 && member.publishedCount / member.requiredCount >= 0.6
                                 ? "text-[#1C1917]"
                                 : "text-[#C9604D]"
                           }`}
                         >
-                          {member.publishedDays}
+                          {member.publishedCount}
                         </span>
                         <span className="mx-1 text-[11px] text-[#A8A29E] font-normal">
                           /
                         </span>
                         <span className="text-[12px] tabular-nums text-[#78716C] font-normal">
-                          {member.totalDays}
+                          {member.requiredCount}
                         </span>
                       </td>
                     </tr>
@@ -443,20 +465,24 @@ export function MonthlyMatrix({
           {/* 图例（轻量微气垫条） */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3.5 py-2 text-[12px] text-[#5C564B]">
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm bg-[#6FAA7D]/90 border border-[#6FAA7D]/40" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#6FAA7D]/20 border border-[#6FAA7D]/40" />
               已发布 / 确认
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm bg-[#43718E]/85 border border-[#43718E]/30" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#43718E]/20 border border-[#43718E]/35" />
               请假
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm bg-[#43718E]/25 border border-[#43718E]/20" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#43718E]/10 border border-[#43718E]/20" />
               豁免期
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2.5 rounded-sm bg-[#C9604D]/90 border border-[#C9604D]/40" />
+              <span className="inline-block size-2.5 rounded-sm bg-[#C0685C]/15 border border-[#C0685C]/35" />
               缺勤
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block size-2.5 rounded-sm bg-[#B98A54]/20 border border-[#B98A54]/60" />
+              待审批请假
             </span>
             <span className="flex items-center gap-1.5">
               <span className="inline-block size-2.5 rounded-sm bg-[#F5F3EE] border border-[#E5E0D6]/80" />
@@ -486,10 +512,12 @@ export function MonthlyMatrix({
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span
-              className={`size-2 rounded-full ${getStatusColor(hoveredCell.status)}`}
+              className={`size-2 rounded-full ${getStatusColor(hoveredCell.status, Boolean(hoveredCell.record?.pendingExemption))}`}
             />
             <span className="font-medium text-[#1C1917]">
-              {getStatusLabel(hoveredCell.status)}
+              {hoveredCell.record?.pendingExemption
+                ? "请假待审批"
+                : getStatusLabel(hoveredCell.status)}
             </span>
             {hoveredCell.record && hoveredCell.record.publishedCount > 0 && (
               <span className="text-[#78716C] tabular-nums">
@@ -511,6 +539,17 @@ export function MonthlyMatrix({
                   — 标记人: {hoveredCell.record.markedByName}
                 </span>
               )}
+            </div>
+          )}
+
+          {hoveredCell.record?.pendingExemption && (
+            <div className="mt-1 w-full rounded-lg bg-[#B98A54]/10 p-2 text-[#292524]">
+              <span className="block text-[11px] font-medium text-[#8A6A2F]">
+                待审批请假
+              </span>
+              <p className="mt-0.5 text-[12px] leading-[1.6]">
+                {hoveredCell.record.pendingExemption.reason?.trim() || "未填写事由"}
+              </p>
             </div>
           )}
 
@@ -570,6 +609,55 @@ export function MonthlyMatrix({
             <div className="px-2 py-1 text-[11px] font-medium text-[#78716C] border-b border-[#ECE7DE] mb-1">
               快捷改判 ({openMenuCell.member.userName} · {openMenuCell.day}日)
             </div>
+            {openMenuCell.record?.pendingExemption && onReviewPendingExemption && (
+              <div className="mb-1 border-b border-[#ECE7DE] pb-1">
+                <div className="px-2 py-1 text-[11px] text-[#8A6A2F]">
+                  请假待审批 · {openMenuCell.record.pendingExemption.reason?.trim() || "未填写事由"}
+                </div>
+                <div className="grid grid-cols-2 gap-1 px-1">
+                  <button
+                    type="button"
+                    disabled={reviewingRequestId === openMenuCell.record.pendingExemption.id}
+                    onClick={async () => {
+                      const requestId = openMenuCell.record?.pendingExemption?.id;
+                      if (!requestId) return;
+                      setReviewingRequestId(requestId);
+                      try {
+                        await onReviewPendingExemption(requestId, "approved");
+                        setOpenMenuCell(null);
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "审批失败");
+                      } finally {
+                        setReviewingRequestId(null);
+                      }
+                    }}
+                    className="h-7 rounded-md bg-[#D97757] px-2 text-[12px] font-medium text-white hover:bg-[#C46A4D] disabled:opacity-50"
+                  >
+                    通过
+                  </button>
+                  <button
+                    type="button"
+                    disabled={reviewingRequestId === openMenuCell.record.pendingExemption.id}
+                    onClick={async () => {
+                      const requestId = openMenuCell.record?.pendingExemption?.id;
+                      if (!requestId) return;
+                      setReviewingRequestId(requestId);
+                      try {
+                        await onReviewPendingExemption(requestId, "rejected");
+                        setOpenMenuCell(null);
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "审批失败");
+                      } finally {
+                        setReviewingRequestId(null);
+                      }
+                    }}
+                    className="h-7 rounded-md bg-[#F5F3EE] px-2 text-[12px] font-medium text-[#292524] hover:bg-[#C0685C]/10 hover:text-[#C0685C] disabled:opacity-50"
+                  >
+                    驳回
+                  </button>
+                </div>
+              </div>
+            )}
             {onQuickMarkCell && (
               <>
                 <button

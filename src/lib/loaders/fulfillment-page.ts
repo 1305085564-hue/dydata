@@ -5,6 +5,7 @@ import type {
   FulfillmentDayRecord,
   FulfillmentDateRange,
   FulfillmentMemberSummary,
+  FulfillmentPendingExemption,
   FulfillmentScopeFilter,
   FulfillmentStatus,
   FulfillmentTeamOption,
@@ -31,6 +32,7 @@ type BuildFulfillmentCalendarInput = {
   scope?: FulfillmentScopeFilter;
   filterOptions?: FulfillmentCalendarData["filterOptions"];
   rows: FulfillmentCalendarRpcRow[];
+  pendingExemptions?: FulfillmentPendingExemption[];
   today?: string;
 };
 
@@ -158,6 +160,7 @@ function incrementMemberSummary(summary: FulfillmentMemberSummary, day: Fulfillm
   summary.totalDays += 1;
   summary.consecutiveMissing = Math.max(summary.consecutiveMissing, day.consecutiveMissing);
   summary.days[day.date] = day;
+  summary.publishedCount += day.publishedCount;
 
   if (FULFILLED_STATUSES.has(day.status)) {
     summary.publishedDays += 1;
@@ -169,6 +172,10 @@ function incrementMemberSummary(summary: FulfillmentMemberSummary, day: Fulfillm
     summary.absentDays += 1;
   } else if (day.status === "unconfirmed") {
     summary.unconfirmedDays += 1;
+  }
+
+  if (day.status !== "leave" && !WAIVED_STATUSES.has(day.status)) {
+    summary.requiredCount += 1;
   }
 }
 
@@ -186,6 +193,9 @@ function createMemberSummary(row: FulfillmentCalendarRpcRow): FulfillmentMemberS
     unconfirmedDays: 0,
     consecutiveMissing: 0,
     fulfillmentRate: 0,
+    publishedCount: 0,
+    requiredCount: 0,
+    remainingCount: 0,
     days: {},
   };
 }
@@ -225,6 +235,7 @@ export function buildFulfillmentCalendarData({
   scope,
   filterOptions,
   rows,
+  pendingExemptions = [],
   today = resolveFulfillmentTodayKey(),
 }: BuildFulfillmentCalendarInput): FulfillmentCalendarData {
   const memberMap = new Map<string, FulfillmentMemberSummary>();
@@ -235,13 +246,42 @@ export function buildFulfillmentCalendarData({
     memberMap.set(row.user_id, summary);
   }
 
+  for (const pending of pendingExemptions) {
+    const member = memberMap.get(pending.applicant_user_id);
+    const start = parseDateKey(pending.start_date);
+    const end = parseDateKey(pending.end_date ?? pending.start_date);
+    if (!member || !start || !end || end < start) continue;
+
+    for (let date = start; date <= end; date = addDays(date, 1)) {
+      const dateKey = formatDateKey(date);
+      const existing = member.days[dateKey];
+      member.days[dateKey] = existing
+        ? { ...existing, pendingExemption: pending }
+        : {
+            userId: member.userId,
+            userName: member.userName,
+            teamId: member.teamId,
+            teamName: member.teamName,
+            date: dateKey,
+            status: "unconfirmed",
+            reason: "",
+            markedAt: "",
+            markedByName: "",
+            publishedCount: 0,
+            consecutiveMissing: 0,
+            pendingExemption: pending,
+          };
+    }
+  }
+
   const members = Array.from(memberMap.values()).map((member) => ({
     ...member,
-    fulfillmentRate: toPercent(member.publishedDays, member.totalDays),
+    remainingCount: Math.max(0, member.requiredCount - member.publishedCount),
+    fulfillmentRate: toPercent(member.publishedCount, member.requiredCount),
   }));
   const todayRows = rows.filter((row) => row.record_date === today);
-  const publishedDays = members.reduce((total, member) => total + member.publishedDays, 0);
-  const totalDays = members.reduce((total, member) => total + member.totalDays, 0);
+  const publishedCount = members.reduce((total, member) => total + member.publishedCount, 0);
+  const requiredCount = members.reduce((total, member) => total + member.requiredCount, 0);
   const normalizedRange = range ?? resolveFulfillmentDateRange({ year, month }, today);
 
   return {
@@ -263,7 +303,10 @@ export function buildFulfillmentCalendarData({
       waivedToday: todayRows.filter((row) => WAIVED_STATUSES.has(row.status)).length,
       absentToday: todayRows.filter((row) => row.status === "absent").length,
       consecutiveMissingMembers: members.filter((member) => member.consecutiveMissing > 0).length,
-      periodFulfillmentRate: toPercent(publishedDays, totalDays),
+      periodFulfillmentRate: toPercent(publishedCount, requiredCount),
+      publishedCount,
+      requiredCount,
+      pendingExemptionRequests: pendingExemptions.filter((pending) => memberMap.has(pending.applicant_user_id)).length,
     },
   };
 }
@@ -298,6 +341,31 @@ async function loadFulfillmentFilterOptions(
   return {
     teams: (teamsResult.data ?? []) as FulfillmentTeamOption[],
   };
+}
+
+async function loadPendingExemptions(
+  supabase: ReturnType<typeof createAdminClient>,
+  input: {
+    startDate: string;
+    endDate: string;
+    visibleUserIds: string[];
+    teamId: string | null;
+  },
+): Promise<FulfillmentPendingExemption[]> {
+  if (input.visibleUserIds.length === 0) return [];
+
+  let query = supabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, exemption_type, start_date, end_date, reason")
+    .eq("request_status", "pending")
+    .in("applicant_user_id", input.visibleUserIds)
+    .lte("start_date", input.endDate)
+    .or(`end_date.is.null,end_date.gte.${input.startDate}`);
+
+  if (input.teamId) query = query.eq("team_id", input.teamId);
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) throw new Error(error.message || "加载待审批请假失败");
+  return (data ?? []) as FulfillmentPendingExemption[];
 }
 
 function normalizeLoadOptions(
@@ -336,17 +404,34 @@ export async function loadFulfillmentCalendar(
         endDate: options.range.endDate,
       })
     : resolveFulfillmentDateRange({ year: options.year ?? null, month: options.month ?? null });
-  const filterOptions = await loadFulfillmentFilterOptions(supabase, options.visibleUserIds);
+  const calendarBounds = getMonthBounds(
+    options.year ?? Number(range.startDate.slice(0, 4)),
+    options.month ?? Number(range.startDate.slice(5, 7)),
+  );
+  const pendingRange = {
+    startDate: formatDateKey(calendarBounds.start),
+    endDate: formatDateKey(calendarBounds.end),
+  };
   const teamId = normalizeUuid(options.teamId);
   const scope = teamId
     ? { teamId, label: "指定团队" }
     : { teamId: null, label: "全部可见范围" };
-  const { data, error } = await supabase.rpc("get_fulfillment_range", {
-    p_start_date: range.startDate,
-    p_end_date: range.endDate,
-    p_visible_user_ids: options.visibleUserIds.length > 0 ? options.visibleUserIds : null,
-    p_team_id: teamId,
-  });
+  const [filterOptions, calendarResult, pendingExemptions] = await Promise.all([
+    loadFulfillmentFilterOptions(supabase, options.visibleUserIds),
+    supabase.rpc("get_fulfillment_range", {
+      p_start_date: range.startDate,
+      p_end_date: range.endDate,
+      p_visible_user_ids: options.visibleUserIds.length > 0 ? options.visibleUserIds : null,
+      p_team_id: teamId,
+    }),
+    loadPendingExemptions(supabase, {
+      startDate: pendingRange.startDate,
+      endDate: pendingRange.endDate,
+      visibleUserIds: options.visibleUserIds,
+      teamId,
+    }),
+  ]);
+  const { data, error } = calendarResult;
 
   if (error) {
     throw new Error(error.message || "加载发布管理日历失败");
@@ -359,5 +444,6 @@ export async function loadFulfillmentCalendar(
     scope,
     filterOptions,
     rows: (data ?? []) as FulfillmentCalendarRpcRow[],
+    pendingExemptions,
   });
 }

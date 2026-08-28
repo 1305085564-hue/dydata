@@ -310,21 +310,21 @@ export function MemberDrawer({
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">应发天数</p>
+                  <p className="text-[12px] text-[#78716C]">应发作品</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
-                    {member.totalDays}
+                    {member.requiredCount}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">实发天数</p>
+                  <p className="text-[12px] text-[#78716C]">实发作品</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
-                    {member.publishedDays}
+                    {member.publishedCount}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">发布率</p>
+                  <p className="text-[12px] text-[#78716C]">还差</p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
-                    {member.fulfillmentRate}%
+                    {member.remainingCount}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
@@ -388,15 +388,22 @@ export function MemberDrawer({
                             >
                               {d.slice(5)}
                             </span>
-                            <StatusBadge status={record.status} />
+                            {record.pendingExemption ? (
+                              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#8A6A2F]">
+                                <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                                请假待审批
+                              </span>
+                            ) : (
+                              <StatusBadge status={record.status} />
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
-                            {record.reason ? (
+                            {record.pendingExemption?.reason || record.reason ? (
                               <span
                                 className="max-w-[120px] truncate text-[12px] text-[#78716C]"
-                                title={record.reason}
+                                title={record.pendingExemption?.reason ?? record.reason}
                               >
-                                {record.reason}
+                                {record.pendingExemption?.reason ?? record.reason}
                               </span>
                             ) : null}
                             {record.markedByName ? (

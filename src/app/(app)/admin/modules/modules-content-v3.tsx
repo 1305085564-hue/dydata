@@ -26,7 +26,6 @@ import {
   AlertCircle,
   ArrowRight,
   Settings,
-  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -70,8 +69,6 @@ import {
   updateMemberTeam,
   archiveMember,
   restoreMember,
-  updateExemption,
-  clearExemption,
 } from "../actions";
 
 import {
@@ -86,7 +83,6 @@ import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
 import type {
   CompanyRole,
   DataScope,
-  ExemptionCategory,
   PermissionCategory,
   PermissionKey,
   Permissions,
@@ -97,10 +93,8 @@ import {
   ALL_TEAMS_ID,
   countProfilesInTeamForView,
   filterProfilesForMemberView,
-  formatLastLoginDisplay,
   getSelectableCurrentScreenMemberIds,
   getVisibleTeamOptions,
-  isProfileExemptOnDate,
   resolveDefaultSelectedTeamId,
   retainSelectableMemberIds,
   resolveSelectedTeamAfterTeamDelete,
@@ -200,12 +194,10 @@ function normalizeUserStatus(value: string | null | undefined): UserStatus {
   return value === "exempt" ? "exempt" : "active";
 }
 
-function getProgressColor(ratio: number): string {
-  if (ratio <= 0) return "bg-[#E5E0D6]";
-  if (ratio <= 30) return "bg-[#78716C]";
-  if (ratio <= 70) return "bg-[#43718E]";
-  if (ratio < 100) return "bg-[#D97757]";
-  return "bg-[#6FAA7D]";
+function formatDataScope(scope: DataScope | null | undefined): string {
+  if (scope === "all") return "全部范围";
+  if (scope === "team") return "所属公司";
+  return "仅自己";
 }
 
 function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean }) {
@@ -219,8 +211,8 @@ function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean })
         <span>成员</span>
       </div>
       <div className="flex shrink-0 items-center gap-4">
-        <span className="w-14 text-center shrink-0">角色</span>
-        <span className="w-24 text-right shrink-0">发布</span>
+        <span className="w-20 text-center shrink-0">角色</span>
+        <span className="w-24 text-right shrink-0">数据范围</span>
         <span className="w-8 shrink-0" />
       </div>
     </div>
@@ -242,7 +234,6 @@ export function AdminModulesContentV3({
   teams: initialTeams,
   teamManagement,
   pendingRequests: initialPendingRequests,
-  defaultDate,
   focusMemberId,
 }: AdminModulesContentProps) {
   const router = useRouter();
@@ -257,7 +248,6 @@ export function AdminModulesContentV3({
   const isCompanyOwner = currentUserCompanyRole === "company_owner" || isOwner;
   const canManageCompany = isCompanyOwner || isGroupMode;
   const canManageMembers = canManageCompany || currentUserPermissions.manage_members === true;
-  const canManageFulfillment = canManageCompany || currentUserPermissions.manage_fulfillment === true;
   const canEditTeamMembers = teamManagement.access.canEditMembers || canManageMembers;
 
   // 2. Compute strictly visible teams according to user data access scope and role
@@ -285,7 +275,6 @@ export function AdminModulesContentV3({
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
   const [memberView, setMemberView] = useState<"active" | "archived">("active");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(initialSelectedTeamId);
-  const [sortOption, setSortOption] = useState<"role" | "published">("role");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [restoredFocusId, setRestoredFocusId] = useState<string | null>(null);
@@ -296,13 +285,6 @@ export function AdminModulesContentV3({
   const [draftDataScope, setDraftDataScope] = useState<DataScope>("self");
   const [isPermissionsDirty, setIsPermissionsDirty] = useState(false);
 
-  // Exemption state
-  const [isExemptionDialogOpen, setIsExemptionDialogOpen] = useState(false);
-  const [exemptionMode, setExemptionMode] = useState<"none" | "permanent" | "range">("none");
-  const [exemptionCategory, setExemptionCategory] = useState<ExemptionCategory>("leave");
-  const [exemptionStartDate, setExemptionStartDate] = useState(defaultDate);
-  const [exemptionEndDate, setExemptionEndDate] = useState(defaultDate);
-  const [exemptionReason, setExemptionReason] = useState("");
 
   // AI Suggestion state
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
@@ -393,14 +375,10 @@ export function AdminModulesContentV3({
 
   const sortedProfiles = useMemo(() => {
     const list = [...filteredProfiles];
-    if (sortOption === "published") {
-      list.sort((a, b) => (b.monthly_published_count ?? 0) - (a.monthly_published_count ?? 0));
-    } else {
-      const roleRank: Record<string, number> = { owner: 1, admin: 2, member: 3 };
-      list.sort((a, b) => (roleRank[a.role] ?? 9) - (roleRank[b.role] ?? 9));
-    }
+    const roleRank: Record<string, number> = { owner: 1, admin: 2, member: 3 };
+    list.sort((a, b) => (roleRank[a.role] ?? 9) - (roleRank[b.role] ?? 9));
     return list;
-  }, [filteredProfiles, sortOption]);
+  }, [filteredProfiles]);
 
   const selectableFilteredMemberIds = useMemo(() => {
     return getSelectableCurrentScreenMemberIds(filteredProfiles, currentUserId);
@@ -431,31 +409,9 @@ export function AdminModulesContentV3({
       setDraftDataScope(member.data_scope ?? "self");
       setIsPermissionsDirty(false);
       setAiSuggestion(null);
-      setIsExemptionDialogOpen(false);
       setIsAiDialogOpen(false);
-
-      // Populate exemption form
-      if (member.exempt_type === "permanent") {
-        setExemptionMode("permanent");
-        setExemptionCategory((member.exemption_category as ExemptionCategory) ?? "waive");
-        setExemptionReason(member.exempt_reason ?? "");
-        setExemptionStartDate(defaultDate);
-        setExemptionEndDate(defaultDate);
-      } else if (member.exempt_type === "temporary") {
-        setExemptionMode("range");
-        setExemptionCategory((member.exemption_category as ExemptionCategory) ?? "leave");
-        setExemptionReason(member.exempt_reason ?? "");
-        setExemptionStartDate(member.exempt_start_date ?? defaultDate);
-        setExemptionEndDate(member.exempt_end_date ?? defaultDate);
-      } else {
-        setExemptionMode("none");
-        setExemptionCategory("leave");
-        setExemptionReason("");
-        setExemptionStartDate(defaultDate);
-        setExemptionEndDate(defaultDate);
-      }
     },
-    [defaultDate]
+    []
   );
 
   // Focus member from URL
@@ -742,67 +698,7 @@ export function AdminModulesContentV3({
     });
   };
 
-  // 8. Save Exemption
-  const handleSaveExemption = () => {
-    if (!activeMember) return;
-    startTransition(async () => {
-      if (exemptionMode === "none") {
-        const res = await clearExemption(activeMember.id);
-        if (res.error) {
-          feedbackToast.error("清除豁免失败", { description: res.error });
-          return;
-        }
-        setLocalProfiles((prev) =>
-          prev.map((p) =>
-            p.id === activeMember.id
-              ? {
-                  ...p,
-                  exempt_type: null,
-                  exempt_start_date: null,
-                  exempt_end_date: null,
-                  exempt_reason: null,
-                  exemption_category: null,
-                }
-              : p
-          )
-        );
-        feedbackToast.success("已清除豁免状态");
-      } else {
-        const formValues = {
-          userId: activeMember.id,
-          mode: exemptionMode,
-          category: exemptionCategory,
-          reason: exemptionReason.trim() || undefined,
-          startDate: exemptionMode === "range" ? exemptionStartDate : undefined,
-          endDate: exemptionMode === "range" ? exemptionEndDate : undefined,
-          date: exemptionMode === "permanent" ? defaultDate : undefined,
-        };
-        const res = await updateExemption(formValues);
-        if (res.error) {
-          feedbackToast.error("设置豁免失败", { description: res.error });
-          return;
-        }
-        setLocalProfiles((prev) =>
-          prev.map((p) =>
-            p.id === activeMember.id
-              ? {
-                  ...p,
-                  exempt_type: exemptionMode === "permanent" ? "permanent" : "temporary",
-                  exempt_start_date: exemptionMode === "range" ? exemptionStartDate : null,
-                  exempt_end_date: exemptionMode === "range" ? exemptionEndDate : null,
-                  exempt_reason: exemptionReason.trim() || null,
-                  exemption_category: exemptionCategory,
-                }
-              : p
-          )
-        );
-        feedbackToast.success(exemptionMode === "permanent" ? "已设置永久豁免" : "已设置请假/免交区间");
-      }
-      router.refresh();
-    });
-  };
-
-  // 9. Password Reset
+  // 8. Password Reset
   const handleResetPassword = () => {
     if (!passwordResetTarget) return;
     const target = passwordResetTarget;
@@ -939,27 +835,16 @@ export function AdminModulesContentV3({
     });
   };
 
-  // Select-All toggler
-  const handleToggleSelectAll = () => {
-    const allIds = selectableFilteredMemberIds;
-    const isAllSelected = allIds.every((id) => selectedMemberIds.includes(id));
-    if (isAllSelected) {
-      setSelectedMemberIds((prev) => prev.filter((id) => !allIds.includes(id)));
-    } else {
-      setSelectedMemberIds((prev) => Array.from(new Set([...prev, ...allIds])));
-    }
-  };
-
   return (
     <div className="mt-4 w-full space-y-5 relative">
       <main className="space-y-5">
         {/* ── 待审批入团申请预警栏（状态色便签范式：弱底色差 + 左竖线，用完即撕） ── */}
         {pendingRequests.length > 0 && (
-          <section className="bg-[#B98A54]/10 rounded-lg border-l-2 border-[#B98A54] p-4">
+          <section className="rounded-lg border-l-2 border-[#B98A54] bg-[#B98A54]/10 p-4">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="text-[14px] font-medium text-[#1C1917]">待审批入团申请</span>
-              <span className="text-[12px] font-medium text-[#B98A54] bg-[#B98A54]/15 px-2 py-0.5 rounded-full">
-                {pendingRequests.length}
+              <span className="rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#8A6A2F] tabular-nums">
+                {pendingRequests.length} 位新成员
               </span>
             </div>
             <div className="divide-y divide-[#B98A54]/20">
@@ -970,10 +855,10 @@ export function AdminModulesContentV3({
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[13px] font-medium text-[#1C1917]">{req.applicantName}</span>
-                    <span className="mx-2 text-[#B98A54]/60">·</span>
-                    <span className="text-[12px] text-[#292524]">{req.targetTeamName}</span>
-                    <span className="mx-2 text-[#B98A54]/60">·</span>
-                    <span className="text-[12px] text-[#78716C]">
+                    <span className="mx-2 text-[#8A6A2F]/60">·</span>
+                    <span className="text-[12px] text-[#292524]">申请加入：{req.targetTeamName}</span>
+                    <span className="mx-2 text-[#8A6A2F]/60">·</span>
+                    <span className="text-[12px] text-[#78716C] tabular-nums">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
                   </div>
@@ -983,16 +868,16 @@ export function AdminModulesContentV3({
                         variant="ghost"
                         onClick={() => handleReviewJoinRequest(req.id, "reject")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md"
+                        className="h-7 px-2.5 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/10 hover:text-[#C9604D] rounded-md"
                       >
                         拒绝
                       </Button>
                       <Button
                         onClick={() => handleReviewJoinRequest(req.id, "approve")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] bg-[#1C1917] text-white hover:bg-[#292524] rounded-md"
+                        className="h-7 px-2.5 text-[12px] bg-[#D97757] hover:bg-[#C46A4D] text-white rounded-md shadow-2xs cursor-pointer"
                       >
-                        同意
+                        同意入团
                       </Button>
                     </div>
                   )}
@@ -1049,29 +934,6 @@ export function AdminModulesContentV3({
                       管理架构…
                     </SelectItem>
                   )}
-                </SelectContent>
-              </Select>
-
-              {/* 16px 呼吸竖线 */}
-              <span className="text-[#ECE7DE] mx-1 select-none" aria-hidden="true">|</span>
-
-              {/* 排序 */}
-              <Select
-                value={sortOption}
-                onValueChange={(val) => {
-                  if (val === "role" || val === "published") {
-                    setSortOption(val);
-                  }
-                }}
-              >
-                <SelectTrigger className="h-8 border-0 bg-transparent px-2.5 text-[13px] font-normal text-[#292524] hover:bg-[#F5F3EE] rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 data-popup-open:bg-[#F5F3EE]">
-                  <SelectValue>
-                    {sortOption === "role" ? "按职位" : "按发布"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28 py-1">
-                  <SelectItem value="role">按职位</SelectItem>
-                  <SelectItem value="published">按发布</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -1166,11 +1028,6 @@ export function AdminModulesContentV3({
                       const isCurrentMemberActive = activeMemberId === member.id;
                       const isRestoredFocus = restoredFocusId === member.id;
                       const isChecked = selectedMemberIds.includes(member.id);
-                      const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
-
-                      const published = member.monthly_published_count ?? 0;
-                      const required = member.monthly_required_count ?? 0;
-                      const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
 
                       return (
                         <div
@@ -1235,48 +1092,31 @@ export function AdminModulesContentV3({
                           {/* 右侧：角色 + 进度 + 幽灵编辑 */}
                           <div className="flex items-center gap-4 shrink-0">
                             {/* 角色 */}
-                            <div className="w-14 text-center shrink-0">
+                            <div className="w-20 text-center shrink-0">
                               {isArchivedView ? (
                                 <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
                                   <Archive className="size-3" />
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">创始人</span>
+                                <span className="text-[13px] text-[#292524]">公司所有者</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-[#292524]">主管</span>
+                                <span className="text-[13px] text-[#292524]">管理员</span>
                               ) : (
-                                <span className="text-[13px] text-[#78716C]">组员</span>
+                                <span className="text-[13px] text-[#78716C]">成员</span>
                               )}
                             </div>
 
-                            {/* 发布进度 */}
+                            {/* 数据范围 */}
                             <div className="w-24 text-right shrink-0">
                               {isArchivedView ? (
                                 <span className="text-[13px] text-[#78716C]">
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
-                              ) : isCurrentlyExempt ? (
-                                <span className="text-[11.5px] text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">已豁免</span>
-                              ) : required === 0 ? (
-                                <span className="text-[13px] font-normal text-[#78716C]">—</span>
                               ) : (
-                                <div className="space-y-1">
-                                  <div className="flex items-center justify-end gap-1 text-[12px] text-[#292524] tabular-nums">
-                                    <span className="font-medium text-[#292524]">{published}</span>
-                                    <span className="text-[#78716C]">/</span>
-                                    <span>{required}条</span>
-                                  </div>
-                                  <div className="h-1.5 w-full bg-[#F5F3EE] rounded-full overflow-hidden">
-                                    <div
-                                      className={cn(
-                                        "h-full rounded-full transition-all duration-150",
-                                        getProgressColor(fulfillRatio)
-                                      )}
-                                      style={{ width: `${fulfillRatio}%` }}
-                                    />
-                                  </div>
-                                </div>
+                                <span className="text-[13px] text-[#78716C]">
+                                  {formatDataScope(member.data_scope)}
+                                </span>
                               )}
                             </div>
 
@@ -1320,11 +1160,6 @@ export function AdminModulesContentV3({
                       const isCurrentMemberActive = activeMemberId === member.id;
                       const isRestoredFocus = restoredFocusId === member.id;
                       const isChecked = selectedMemberIds.includes(member.id);
-                      const isCurrentlyExempt = !isArchivedView && isProfileExemptOnDate(member, defaultDate);
-
-                      const published = member.monthly_published_count ?? 0;
-                      const required = member.monthly_required_count ?? 0;
-                      const fulfillRatio = required > 0 ? Math.min(100, Math.round((published / required) * 100)) : 0;
 
                       return (
                         <div
@@ -1389,48 +1224,31 @@ export function AdminModulesContentV3({
                           {/* 右侧：角色 + 进度 + 幽灵编辑 */}
                           <div className="flex items-center gap-4 shrink-0">
                             {/* 角色 */}
-                            <div className="w-14 text-center shrink-0">
+                            <div className="w-20 text-center shrink-0">
                               {isArchivedView ? (
                                 <span className="inline-flex items-center gap-1 text-[13px] text-[#78716C] font-normal">
                                   <Archive className="size-3" />
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">创始人</span>
+                                <span className="text-[13px] text-[#292524]">公司所有者</span>
                               ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-[#292524]">主管</span>
+                                <span className="text-[13px] text-[#292524]">管理员</span>
                               ) : (
-                                <span className="text-[13px] text-[#78716C]">组员</span>
+                                <span className="text-[13px] text-[#78716C]">成员</span>
                               )}
                             </div>
 
-                            {/* 发布进度 */}
+                            {/* 数据范围 */}
                             <div className="w-24 text-right shrink-0">
                               {isArchivedView ? (
                                 <span className="text-[13px] text-[#78716C]">
                                   {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
                                 </span>
-                              ) : isCurrentlyExempt ? (
-                                <span className="text-[11.5px] text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">已豁免</span>
-                              ) : required === 0 ? (
-                                <span className="text-[13px] font-normal text-[#78716C]">—</span>
                               ) : (
-                                <div className="space-y-1">
-                                  <div className="flex items-center justify-end gap-1 text-[12px] text-[#292524] tabular-nums">
-                                    <span className="font-medium text-[#292524]">{published}</span>
-                                    <span className="text-[#78716C]">/</span>
-                                    <span>{required}条</span>
-                                  </div>
-                                  <div className="h-1.5 w-full bg-[#F5F3EE] rounded-full overflow-hidden">
-                                    <div
-                                      className={cn(
-                                        "h-full rounded-full transition-all duration-150",
-                                        getProgressColor(fulfillRatio)
-                                      )}
-                                      style={{ width: `${fulfillRatio}%` }}
-                                    />
-                                  </div>
-                                </div>
+                                <span className="text-[13px] text-[#78716C]">
+                                  {formatDataScope(member.data_scope)}
+                                </span>
                               )}
                             </div>
 
@@ -1625,11 +1443,6 @@ export function AdminModulesContentV3({
                     permissions: activeMember.permissions ?? {},
                     data_scope: activeMember.data_scope,
                     status: normalizeUserStatus(activeMember.status),
-                    exempt_type: (activeMember.exempt_type as "permanent" | "temporary") || null,
-                    exempt_start_date: activeMember.exempt_start_date,
-                    exempt_end_date: activeMember.exempt_end_date,
-                    exempt_reason: activeMember.exempt_reason,
-                    exemption_category: (activeMember.exemption_category as ExemptionCategory) || null,
                   }}
                   draftPermissions={draftPermissions}
                   draftDataScope={draftDataScope}
@@ -1753,30 +1566,6 @@ export function AdminModulesContentV3({
                             className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors"
                           >
                             快捷重置
-                          </button>
-                        </div>
-                      )}
-
-                      {/* 日报豁免与请假 */}
-                      {canManageFulfillment && (
-                        <div className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-[#FBF9F5] transition-colors">
-                          <div className="flex items-center gap-2">
-                            <Clock className="size-3.5 text-[#78716C] shrink-0" />
-                            <span className="text-[13px] text-[#292524]">日报豁免与请假</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setIsExemptionDialogOpen(true)}
-                            className="text-[13px] text-[#78716C] hover:text-[#1C1917] transition-colors flex items-center gap-1"
-                          >
-                            <span>
-                              {activeMember.exempt_type === "permanent"
-                                ? "永久豁免"
-                                : activeMember.exempt_type === "temporary"
-                                ? `${activeMember.exemption_category === "leave" ? "请假中" : "免交中"}`
-                                : "未生效"}
-                            </span>
-                            <span className="text-[#E5E0D6]">›</span>
                           </button>
                         </div>
                       )}
@@ -1969,148 +1758,6 @@ export function AdminModulesContentV3({
               </div>
             )}
           </DialogBody>
-        </DialogContent>
-      </Dialog>
-
-      {/* 日报豁免与请假弹窗 */}
-      <Dialog open={isExemptionDialogOpen} onOpenChange={setIsExemptionDialogOpen}>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[440px] p-6 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#1C1917]">设置日报豁免与请假</DialogTitle>
-            <DialogDescription className="text-[13px] text-[#292524]">
-              设置免交或请假区间，这段时间不会收到催发提醒
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-2">
-            <div className="grid grid-cols-3 gap-1 bg-[#F5F3EE] p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setExemptionMode("none")}
-                className={cn(
-                  "py-1.5 text-[12px] font-medium rounded-xl transition-colors",
-                  exemptionMode === "none"
-                    ? "bg-white text-[#1C1917] shadow-xs"
-                    : "text-[#292524] hover:text-[#1C1917]"
-                )}
-              >
-                正常发布
-              </button>
-              <button
-                type="button"
-                onClick={() => setExemptionMode("range")}
-                className={cn(
-                  "py-1.5 text-[12px] font-medium rounded-xl transition-colors",
-                  exemptionMode === "range"
-                    ? "bg-white text-[#1C1917] shadow-xs"
-                    : "text-[#292524] hover:text-[#1C1917]"
-                )}
-              >
-                区间请假
-              </button>
-              <button
-                type="button"
-                onClick={() => setExemptionMode("permanent")}
-                className={cn(
-                  "py-1.5 text-[12px] font-medium rounded-xl transition-colors",
-                  exemptionMode === "permanent"
-                    ? "bg-white text-[#1C1917] shadow-xs"
-                    : "text-[#292524] hover:text-[#1C1917]"
-                )}
-              >
-                永久豁免
-              </button>
-            </div>
-
-            {exemptionMode !== "none" && (
-              <div className="space-y-3 pt-1">
-                <div>
-                  <label className="text-[13px] font-medium text-[#292524] block mb-1.5">
-                    豁免性质
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 text-[13px] text-[#292524] cursor-pointer">
-                      <input
-                        type="radio"
-                        name="dialogExemptionCategory"
-                        checked={exemptionCategory === "leave"}
-                        onChange={() => setExemptionCategory("leave")}
-                        className="text-[#D97757]"
-                      />
-                      <span>请假</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 text-[13px] text-[#292524] cursor-pointer">
-                      <input
-                        type="radio"
-                        name="dialogExemptionCategory"
-                        checked={exemptionCategory === "waive"}
-                        onChange={() => setExemptionCategory("waive")}
-                        className="text-[#D97757]"
-                      />
-                      <span>免交</span>
-                    </label>
-                  </div>
-                </div>
-
-                {exemptionMode === "range" && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[13px] text-[#292524] block mb-1">开始日期</label>
-                      <Input
-                        type="date"
-                        className="h-8.5 text-[12px]"
-                        value={exemptionStartDate}
-                        onChange={(e) => setExemptionStartDate(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[13px] text-[#292524] block mb-1">结束日期</label>
-                      <Input
-                        type="date"
-                        className="h-8.5 text-[12px]"
-                        value={exemptionEndDate}
-                        onChange={(e) => setExemptionEndDate(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-[13px] text-[#292524] block mb-1">原因说明</label>
-                  <Input
-                    type="text"
-                    placeholder="例如：事假、外出培训、设备调试"
-                    className="h-8.5 text-[12px]"
-                    value={exemptionReason}
-                    onChange={(e) => setExemptionReason(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-          </DialogBody>
-
-          <DialogFooter className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsExemptionDialogOpen(false)}
-              className="text-[12px] h-8"
-            >
-              取消
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              disabled={isPending}
-              onClick={async () => {
-                await handleSaveExemption();
-                setIsExemptionDialogOpen(false);
-              }}
-              className="bg-[#D97757] hover:bg-[#C96442] text-[12px] h-8 px-4"
-            >
-              {isPending ? "保存中..." : "保存豁免状态"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

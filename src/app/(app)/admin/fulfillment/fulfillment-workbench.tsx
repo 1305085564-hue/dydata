@@ -20,6 +20,11 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { trackUsageEvent } from "@/lib/usage-events/client";
 import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
+import {
+  dispatchFulfillmentDataChanged,
+  FULFILLMENT_DATA_CHANGED_EVENT,
+  type FulfillmentDataChangedDetail,
+} from "@/lib/fulfillment-sync";
 
 type Source = "queue" | "matrix";
 type MarkAction = Extract<
@@ -145,12 +150,19 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
   const absentToday = members.filter(
     (m) => m.days[today]?.status === "absent",
   ).length;
-  const totalDays = members.reduce((sum, m) => sum + m.totalDays, 0);
-  const publishedDays = members.reduce((sum, m) => sum + m.publishedDays, 0);
-  const periodFulfillmentRate = toPercent(publishedDays, totalDays);
   const consecutiveMissingMembers = members.filter(
     (m) => m.consecutiveMissing > 0,
   ).length;
+  const publishedCount = members.reduce((sum, member) => sum + member.publishedCount, 0);
+  const requiredCount = members.reduce((sum, member) => sum + member.requiredCount, 0);
+  const periodFulfillmentRate = toPercent(publishedCount, requiredCount);
+  const pendingRequestIds = new Set(
+    members.flatMap((member) =>
+      Object.values(member.days)
+        .map((day) => day.pendingExemption?.id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
 
   return {
     totalMembers,
@@ -161,6 +173,9 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
     absentToday,
     periodFulfillmentRate,
     consecutiveMissingMembers,
+    publishedCount,
+    requiredCount,
+    pendingExemptionRequests: pendingRequestIds.size,
   };
 }
 
@@ -352,6 +367,40 @@ export function FulfillmentWorkbench({
     [loadCalendar, range],
   );
 
+  const refreshVisibleCalendar = useCallback(async () => {
+    setIsLoadingCalendar(true);
+    try {
+      const response = await fetch(
+        `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
+        { cache: "no-store" },
+      );
+      if (!response.ok) throw new Error("日历刷新失败");
+      const payload = await response.json();
+      setCalendarData(payload.data);
+    } catch {
+      toast.error("审批已完成，但发布日历同步失败，请重试");
+    } finally {
+      setIsLoadingCalendar(false);
+    }
+  }, [calendarData.month, calendarData.year]);
+
+  useEffect(() => {
+    const handleFulfillmentDataChanged = (event: Event) => {
+      const detail = (event as CustomEvent<FulfillmentDataChangedDetail>).detail;
+      if (detail?.source === "command-hub") void refreshVisibleCalendar();
+    };
+    window.addEventListener(
+      FULFILLMENT_DATA_CHANGED_EVENT,
+      handleFulfillmentDataChanged,
+    );
+    return () => {
+      window.removeEventListener(
+        FULFILLMENT_DATA_CHANGED_EVENT,
+        handleFulfillmentDataChanged,
+      );
+    };
+  }, [refreshVisibleCalendar]);
+
   // 9. 客户端过滤与统计
   const filteredMembers = useMemo(
     () => filterMembers(calendarData.members, selectedTeam, range, today),
@@ -442,6 +491,26 @@ export function FulfillmentWorkbench({
       setSheetOpen(true);
     },
     [],
+  );
+
+  const handleReviewPendingExemption = useCallback(
+    async (requestId: string, action: "approved" | "rejected") => {
+      const response = await fetch("/api/exemptions/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: requestId, action }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({ error: "审批失败" }));
+        throw new Error(payload.error || "审批失败");
+      }
+      await refreshVisibleCalendar();
+      dispatchFulfillmentDataChanged({
+        source: "fulfillment-calendar",
+        requestIds: [requestId],
+      });
+    },
+    [refreshVisibleCalendar],
   );
 
   // 10. 操作回调
@@ -537,13 +606,19 @@ export function FulfillmentWorkbench({
           let leaveDays = 0;
           let waivedDays = 0;
           let absentDays = 0;
+          let publishedCount = 0;
+          let requiredCount = 0;
           Object.values(nextDays).forEach((d) => {
+            publishedCount += d.publishedCount;
             if (d.status === "published" || d.status === "confirmed_published")
               publishedDays++;
             else if (d.status === "leave") leaveDays++;
             else if (d.status === "waived" || d.status === "exempted")
               waivedDays++;
             else if (d.status === "absent") absentDays++;
+            if (d.status !== "leave" && d.status !== "waived" && d.status !== "exempted") {
+              requiredCount++;
+            }
           });
 
           return {
@@ -553,9 +628,12 @@ export function FulfillmentWorkbench({
             leaveDays,
             waivedDays,
             absentDays,
+            publishedCount,
+            requiredCount,
+            remainingCount: Math.max(0, requiredCount - publishedCount),
             fulfillmentRate:
-              m.totalDays > 0
-                ? Math.round((publishedDays / m.totalDays) * 100)
+              requiredCount > 0
+                ? Math.round((publishedCount / requiredCount) * 100)
                 : 0,
             days: nextDays,
           };
@@ -627,13 +705,19 @@ export function FulfillmentWorkbench({
           let leaveDays = 0;
           let waivedDays = 0;
           let absentDays = 0;
+          let publishedCount = 0;
+          let requiredCount = 0;
           Object.values(nextDays).forEach((d) => {
+            publishedCount += d.publishedCount;
             if (d.status === "published" || d.status === "confirmed_published")
               publishedDays++;
             else if (d.status === "leave") leaveDays++;
             else if (d.status === "waived" || d.status === "exempted")
               waivedDays++;
             else if (d.status === "absent") absentDays++;
+            if (d.status !== "leave" && d.status !== "waived" && d.status !== "exempted") {
+              requiredCount++;
+            }
           });
 
           return {
@@ -643,9 +727,12 @@ export function FulfillmentWorkbench({
             leaveDays,
             waivedDays,
             absentDays,
+            publishedCount,
+            requiredCount,
+            remainingCount: Math.max(0, requiredCount - publishedCount),
             fulfillmentRate:
-              m.totalDays > 0
-                ? Math.round((publishedDays / m.totalDays) * 100)
+              requiredCount > 0
+                ? Math.round((publishedCount / requiredCount) * 100)
                 : 0,
             days: nextDays,
           };
@@ -913,6 +1000,7 @@ export function FulfillmentWorkbench({
             onMonthChange={handleMonthChange}
             appeals={appeals}
             onQuickMarkCell={handleQuickMarkCell}
+            onReviewPendingExemption={handleReviewPendingExemption}
           />
         )}
       </section>

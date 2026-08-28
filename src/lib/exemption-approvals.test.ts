@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   collectApprovalRequestIds,
   getCommandHubDefaultTab,
+  removeReviewedApproval,
   resolveApprovalRequestId,
 } from "./exemption-approvals";
 
@@ -54,4 +55,17 @@ test("getCommandHubDefaultTab 按 待办 -> 审批 的顺序切换", () => {
     getCommandHubDefaultTab({ todoCount: 0, approvalCount: 5, isAdmin: false }),
     "todos",
   );
+});
+
+test("removeReviewedApproval 只移除已完成审批的申请", () => {
+  const approvals = [
+    { id: REQUEST_ID },
+    { id: FALLBACK_ID },
+    { id: "legacy-row" },
+  ];
+
+  assert.deepEqual(removeReviewedApproval(approvals, REQUEST_ID), [
+    { id: FALLBACK_ID },
+    { id: "legacy-row" },
+  ]);
 });

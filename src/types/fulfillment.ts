@@ -41,6 +41,16 @@ export interface FulfillmentDayRecord {
   markedAt?: string;
   publishedCount: number;
   consecutiveMissing: number;
+  pendingExemption?: FulfillmentPendingExemption;
+}
+
+export interface FulfillmentPendingExemption {
+  id: string;
+  applicant_user_id: string;
+  exemption_type: string;
+  start_date: string;
+  end_date: string | null;
+  reason: string | null;
 }
 
 export interface FulfillmentMemberSummary {
@@ -56,6 +66,9 @@ export interface FulfillmentMemberSummary {
   unconfirmedDays: number;
   consecutiveMissing: number;
   fulfillmentRate: number;
+  publishedCount: number;
+  requiredCount: number;
+  remainingCount: number;
   days: Record<string, FulfillmentDayRecord>;
 }
 
@@ -79,6 +92,9 @@ export interface FulfillmentCalendarData {
     absentToday: number;
     periodFulfillmentRate: number;
     consecutiveMissingMembers: number;
+    publishedCount: number;
+    requiredCount: number;
+    pendingExemptionRequests: number;
   };
 }
 

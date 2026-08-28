@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   X,
@@ -8,8 +8,6 @@ import {
   CheckCircle2,
   Circle,
   ArrowRight,
-  Trash2,
-  CalendarDays,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,8 +21,14 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   collectApprovalRequestIds,
+  removeReviewedApproval,
   resolveApprovalRequestId,
 } from "@/lib/exemption-approvals";
+import {
+  dispatchFulfillmentDataChanged,
+  FULFILLMENT_DATA_CHANGED_EVENT,
+  type FulfillmentDataChangedDetail,
+} from "@/lib/fulfillment-sync";
 
 interface ExemptionRequest {
   id: string;
@@ -128,6 +132,23 @@ export function UnifiedCommandHub({
     }
   }, [activeTab, fetchApprovals, isAdmin, onPendingCountChange, open]);
 
+  useEffect(() => {
+    const handleFulfillmentDataChanged = (event: Event) => {
+      const detail = (event as CustomEvent<FulfillmentDataChangedDetail>).detail;
+      if (detail?.source === "fulfillment-calendar") void fetchApprovals();
+    };
+    window.addEventListener(
+      FULFILLMENT_DATA_CHANGED_EVENT,
+      handleFulfillmentDataChanged,
+    );
+    return () => {
+      window.removeEventListener(
+        FULFILLMENT_DATA_CHANGED_EVENT,
+        handleFulfillmentDataChanged,
+      );
+    };
+  }, [fetchApprovals]);
+
   const handleReviewApproval = async (
     item: ExemptionRequest,
     action: "approved" | "rejected",
@@ -146,7 +167,20 @@ export function UnifiedCommandHub({
         body: JSON.stringify({ request_id: requestId, action }),
       });
       if (res.ok) {
-        await fetchApprovals();
+        setPendingApprovals((current) => {
+          const next = removeReviewedApproval(current, requestId);
+          onPendingCountChange?.(next.length);
+          return next;
+        });
+        setSelectedApprovalIds((current) => {
+          const next = new Set(current);
+          next.delete(requestId);
+          return next;
+        });
+        dispatchFulfillmentDataChanged({
+          source: "command-hub",
+          requestIds: [requestId],
+        });
       } else {
         const json = await res.json();
         toast.error("操作失败", { description: json.error || "未知原因" });
@@ -162,10 +196,8 @@ export function UnifiedCommandHub({
     if (selectedApprovalIds.size === 0) return;
     setBatchProcessing(true);
     const idsArray = Array.from(selectedApprovalIds);
-    let successCount = 0;
-    let failCount = 0;
     try {
-      await Promise.all(
+      const results = await Promise.all(
         idsArray.map(async (id) => {
           try {
             const res = await fetch("/api/exemptions/review", {
@@ -173,21 +205,37 @@ export function UnifiedCommandHub({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ request_id: id, action: "approved" }),
             });
-            if (res.ok) {
-              successCount++;
-            } else {
-              failCount++;
-            }
-          } catch (e) {
-            console.error(e);
-            failCount++;
+            return { id, ok: res.ok };
+          } catch (error) {
+            console.error(error);
+            return { id, ok: false };
           }
         }),
       );
+      const successIds = results.filter((result) => result.ok).map((result) => result.id);
+      const failedIds = results.filter((result) => !result.ok).map((result) => result.id);
+      const successCount = successIds.length;
+      const failCount = failedIds.length;
+
+      if (successIds.length > 0) {
+        setPendingApprovals((current) => {
+          const successful = new Set(successIds);
+          const next = current.filter((item) => {
+            const requestId = resolveApprovalRequestId(item);
+            return !requestId || !successful.has(requestId);
+          });
+          onPendingCountChange?.(next.length);
+          return next;
+        });
+        setSelectedApprovalIds(new Set(failedIds));
+        dispatchFulfillmentDataChanged({
+          source: "command-hub",
+          requestIds: successIds,
+        });
+      }
       if (failCount > 0) {
         toast.warning(`批量通过部分失败: 成功 ${successCount} 条，失败 ${failCount} 条`);
       }
-      await fetchApprovals();
     } catch {
       toast.error("批量操作失败，请重试");
     } finally {
@@ -235,13 +283,6 @@ export function UnifiedCommandHub({
     };
   }, [open, onOpenChange]);
 
-  // Click outside to close
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-      onOpenChange(false);
-    }
-  };
-
   // Filter dynamic lists with priority sort (P0 critical -> P1 warning -> P2 default)
   const activeTodos = useMemo(() => {
     return notifications
@@ -267,7 +308,7 @@ export function UnifiedCommandHub({
       case "success":
         return "bg-[#6FAA7D]/10 text-[#6FAA7D] border-transparent ";
       default:
-        return "bg-[#FBF9F5] text-[#292524] dark:bg-[#1C1917] dark:text-[#78716C] border-[#E5E0D6] dark:border-[#292524]";
+        return "bg-[#FBF9F5] text-[#292524] border-[#E5E0D6]";
     }
   };
 
@@ -316,7 +357,7 @@ export function UnifiedCommandHub({
     };
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
-}, [open, isAdmin, onTabChange]);
+  }, [open, isAdmin, onTabChange]);
 
   return (
     <AnimatePresence>
@@ -357,7 +398,7 @@ export function UnifiedCommandHub({
                   {activeTab === "todos" && (
                     <motion.div
                       layoutId="popoverSegmentedTab"
-                      className="absolute inset-0 rounded-lg bg-[#FAF8F4] border border-[#E5E0D6]/60 shadow-xs -z-10"
+                      className="absolute inset-0 rounded-md bg-[#FAF8F4] border border-[#E5E0D6]/80 shadow-2xs -z-10"
                       transition={{
                         type: "spring",
                         stiffness: 500,
@@ -378,7 +419,7 @@ export function UnifiedCommandHub({
                     type="button"
                     onClick={() => onTabChange("approvals")}
                     className={cn(
-                      "relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
+                      "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                       activeTab === "approvals"
                         ? "text-[#1C1917] font-semibold"
                         : "text-[#78716C] hover:text-[#292524] font-medium",
@@ -387,7 +428,7 @@ export function UnifiedCommandHub({
                     {activeTab === "approvals" && (
                       <motion.div
                         layoutId="popoverSegmentedTab"
-                        className="absolute inset-0 rounded-lg bg-white ring-1 ring-black/5 -z-10"
+                        className="absolute inset-0 rounded-md bg-[#FAF8F4] border border-[#E5E0D6]/80 shadow-2xs -z-10"
                         transition={{
                           type: "spring",
                           stiffness: 500,
