@@ -32,6 +32,35 @@ test("--font-display 使用真实可用的系统字体栈（不再依赖已移�
   assert.doesNotMatch(globals, /fonts\.googleapis|fonts\.gstatic/);
 });
 
+test("shadcn 状态变体由本地 CSS 提供，不依赖命令行工具包参与生产构建", () => {
+  const globals = readSource("src/app/globals.css");
+  const variants = readSource("src/styles/shadcn-state-variants.css");
+  const packageJson = JSON.parse(readSource("package.json")) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+
+  assert.match(globals, /@import "\.\.\/styles\/shadcn-state-variants\.css"/);
+  assert.doesNotMatch(globals, /shadcn\/tailwind\.css/);
+
+  for (const name of [
+    "data-open",
+    "data-closed",
+    "data-checked",
+    "data-unchecked",
+    "data-selected",
+    "data-disabled",
+    "data-active",
+    "data-horizontal",
+    "data-vertical",
+  ]) {
+    assert.match(variants, new RegExp(`@custom-variant ${name}\\b`));
+  }
+
+  assert.equal(packageJson.dependencies?.shadcn, undefined);
+  assert.equal(packageJson.devDependencies?.shadcn, undefined);
+});
+
 test("Windows 低密度屏有专用中文可读性兜底", () => {
   const globals = readSource("src/app/globals.css");
   const layout = readSource("src/app/layout.tsx");
