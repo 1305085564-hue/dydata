@@ -53,7 +53,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDefaultPublishedAtValue } from "@/lib/日报";
 import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 
 import { 指标分组区 } from "@/components/submission/指标分组区";
@@ -97,6 +96,7 @@ import {
   removeRoleOverride as removeSubmissionRoleOverride,
   findNextScreenshotUploadRole,
   getHiddenRoleRestoreLabel,
+  getDefaultPublishedAtForBizDate,
   resolveAssigneeDisplay,
   resolveVideoSubmitMetaFields,
   resolveVideoSubmitMode,
@@ -147,6 +147,8 @@ interface VideoSubmitFormProps {
   initialSummary: TodaySubmissionSummary | null;
   editDetail?: VideoSubmissionEditDetail | null;
   initialBizDate?: string | null;
+  initialTopicId?: string | null;
+  initialTopicTitle?: string | null;
   submittedViewActive?: boolean;
   onSubmitted: (
     video: Video,
@@ -315,14 +317,15 @@ const VISIBLE_SCREENSHOT_UPLOAD_SLOT_ORDER: ScreenshotUploadSlotRole[] = [
 ];
 
 // 保留所有辅助函数
-function createInitialMeta(today: string, userId: string): FormMetaState {
-  const publishedAt = getDefaultPublishedAtValue();
+function createInitialMeta(today: string, userId: string, bizDate = today): FormMetaState {
+  const normalizedBizDate = /^\d{4}-\d{2}-\d{2}$/.test(bizDate) ? bizDate : today;
+  const publishedAt = getDefaultPublishedAtForBizDate(normalizedBizDate, today);
 
   return {
     videoUrl: "",
     videoTitle: "",
     content: "",
-    bizDate: today,
+    bizDate: normalizedBizDate,
     publishedAt,
     publishedAtText: "",
     anomalyStatus: "normal",
@@ -662,6 +665,8 @@ export function VideoSubmitFormV2({
   initialSummary,
   editDetail = null,
   initialBizDate = null,
+  initialTopicId = null,
+  initialTopicTitle = null,
   submittedViewActive = false,
   onSubmitted,
   onCancel,
@@ -675,7 +680,7 @@ export function VideoSubmitFormV2({
   const [meta, setMeta] = useState<FormMetaState>(() =>
     editDetail
       ? createMetaFromEditDetail(editDetail, today, userId)
-      : createInitialMeta(today, userId),
+      : createInitialMeta(today, userId, initialBizDate ?? today),
   );
   const [fields, setFields] = useState<SubmissionState["fields"]>(() =>
     editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
@@ -1125,7 +1130,7 @@ export function VideoSubmitFormV2({
 
     const nextMeta = editDetail
       ? createMetaFromEditDetail(editDetail, today, userId)
-      : createInitialMeta(today, userId);
+      : createInitialMeta(today, userId, initialBizDate ?? today);
     if (initialBizDate) {
       nextMeta.bizDate = initialBizDate;
     }
@@ -1730,7 +1735,7 @@ export function VideoSubmitFormV2({
       punishType: meta.punishType ?? "",
       platformNotice: meta.platformNotice ?? "",
       appeal: meta.appeal ?? "",
-      defaultPublishedAt: getDefaultPublishedAtValue(),
+      defaultPublishedAt: getDefaultPublishedAtForBizDate(meta.bizDate, today),
     });
 
     const shouldAutoRedirectAfterSubmit = shouldAutoRedirectToGrowthAfterSubmit(
@@ -1777,7 +1782,7 @@ export function VideoSubmitFormV2({
           appeal: submitMeta.appeal,
           topic_tag: meta.topicTag || null,
           video_form: meta.videoForm || null,
-          topic_id: null,
+          topic_id: initialTopicId,
           script_author_user_id: meta.scriptAuthorUserId,
           video_editor_user_id: meta.videoEditorUserId,
           operator_user_id: meta.operatorUserId,
@@ -2157,6 +2162,21 @@ export function VideoSubmitFormV2({
             className="w-full"
           >
             <div className="mx-auto max-w-5xl space-y-6 py-0">
+              {initialTopicId ? (
+                <div
+                  data-topic-context={initialTopicId}
+                  className="rounded-lg border border-[#D8E7D9] bg-[#F4FAF4] px-3.5 py-2.5 text-[12.5px] text-[#3F7C51]"
+                >
+                  <span className="font-semibold">已带入选题上下文</span>
+                  <span className="ml-2 text-[#56745E]">
+                    {initialTopicTitle
+                      ? `《${initialTopicTitle}》`
+                      : "来自选题库的脚本中选题"}
+                    ，提交后会保留该选题关联。
+                  </span>
+                </div>
+              ) : null}
+
               {/* 草稿恢复 banner - Claude 人文微气垫设计 */}
               {showDraftBanner && (
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3.5 py-2 text-[12.5px] transition-all">

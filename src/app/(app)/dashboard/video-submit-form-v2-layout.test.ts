@@ -11,6 +11,18 @@ const panelSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/video-submit-panel-v2.tsx"),
   "utf8",
 );
+const productionSource = readFileSync(
+  resolve(process.cwd(), "src/app/(app)/dashboard/production-control-system.tsx"),
+  "utf8",
+);
+const claimDrawerSource = readFileSync(
+  resolve(process.cwd(), "src/components/topics-v2/MyClaimDrawer.tsx"),
+  "utf8",
+);
+const breakdownDrawerSource = readFileSync(
+  resolve(process.cwd(), "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"),
+  "utf8",
+);
 
 test("dashboard V2 的截图栏保持紧凑，团队卡留出呼吸间隔后与文案卡共同向下伸展", () => {
   assert.match(
@@ -46,7 +58,7 @@ test("dashboard V2 表单把新建、异常和完整编辑交给后端 mode 契�
 
 test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁免 Server Action", () => {
   assert.match(panelSource, /mergeDashboardReports\(/);
-  assert.match(panelSource, /activityReports:\s*activityData\?\.monthReports/);
+  assert.match(panelSource, /activityReports:[\s\S]*activityData\?\.monthReports/);
   assert.match(panelSource, /monthSubmittedDates/);
   assert.match(panelSource, /onSubmitRequest=/);
   assert.match(panelSource, /submitExemptionRequest\(/);
@@ -58,4 +70,18 @@ test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁�
 test("V2 截图错误文案保持 screenshot_1 互动、screenshot_2 完播", () => {
   assert.match(source, /screenshot_1:\s*"互动截图"/);
   assert.match(source, /screenshot_2:\s*"完播截图"/);
+});
+
+test("选题脚本入口把子题上下文带入工作台并交给提交接口", () => {
+  assert.match(claimDrawerSource, /buildDashboardTopicHref\(sub\?\.id, sub\?\.title\)/);
+  assert.match(breakdownDrawerSource, /buildDashboardTopicHref\(subTopicId, subTopicInfo\?\.title\)/);
+  assert.match(productionSource, /useSearchParams\(\)/);
+  assert.match(productionSource, /normalizeDashboardTopicId\(searchParams\.get\("topic_id"\)\)/);
+  assert.match(source, /data-topic-context=\{initialTopicId\}/);
+  assert.match(source, /topic_id:\s*initialTopicId/);
+});
+
+test("历史日报参与主工作台日期状态合并，跨月记录不会伪装成漏交", () => {
+  assert.match(panelSource, /activityData\?\.history/);
+  assert.match(panelSource, /initialReports:\s*\[\.\.\.monthReports, \.\.\.history\]/);
 });

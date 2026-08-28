@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Layers, X, AlertTriangle, RefreshCw } from "lucide-react";
 import type { TopicClaimItem } from "./types";
+import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
 
 interface MyClaimDrawerProps {
   claims: TopicClaimItem[];
@@ -312,7 +313,7 @@ export function MyClaimDrawer({
                               </span>
                               <div className="flex items-center gap-1.5">
                                 <a
-                                  href="/dashboard"
+                                  href={buildDashboardTopicHref(sub?.id, sub?.title)}
                                   className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#D97757] text-white hover:bg-[#C46A4D] text-xs transition-colors font-medium shadow-2xs cursor-pointer"
                                   aria-label="去工作台立卷填报"
                                 >

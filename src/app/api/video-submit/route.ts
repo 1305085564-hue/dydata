@@ -32,6 +32,7 @@ import {
   SNAPSHOT_WRITE_SELECT,
   VIDEO_SUBMIT_RESPONSE_SELECT,
 } from "./response-fields";
+import { validateTopicClaimForSubmission } from "./topic-association";
 
 type RollbackAction = () => Promise<void>;
 
@@ -279,6 +280,23 @@ export async function POST(request: NextRequest) {
   }
   if (profile?.membership_status === "archived") {
     return NextResponse.json({ error: "已归档账号不能提交视频" }, { status: 403 });
+  }
+
+  if (normalized.topic_id) {
+    const { data: topicClaim, error: topicClaimError } = await supabase
+      .from("sub_topic_claims")
+      .select("status")
+      .eq("sub_topic_id", normalized.topic_id)
+      .eq("user_id", user.id)
+      .in("status", ["candidate", "scripting"])
+      .maybeSingle();
+    if (topicClaimError) {
+      return NextResponse.json({ error: topicClaimError.message }, { status: 500 });
+    }
+    const topicAssociation = validateTopicClaimForSubmission(normalized.topic_id, topicClaim);
+    if (!topicAssociation.ok) {
+      return NextResponse.json({ error: topicAssociation.message }, { status: topicAssociation.status });
+    }
   }
 
   const submitter = profile?.name ?? "未知";

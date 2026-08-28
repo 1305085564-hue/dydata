@@ -24,6 +24,7 @@ import type {
   TopicWorksResponse,
   SubTopicItem,
 } from "./types";
+import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
 
 interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
@@ -469,7 +470,7 @@ export function TopicWorkBreakdownDrawer({
           <div className="flex items-center gap-2">
             {!action.canClaim && action.label === "脚本中" ? (
               <a
-                href="/dashboard"
+                href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
                 className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-center rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-xs transition-all shadow-xs cursor-pointer"
               >
                 去工作台立卷

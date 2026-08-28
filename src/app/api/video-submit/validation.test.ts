@@ -132,6 +132,13 @@ test("正常提交要求合法且非空的话题标签", () => {
   );
 });
 
+test("提交接口拒绝非法子题关联 ID，避免把数据库错误伪装成提交失败", () => {
+  assert.deepEqual(
+    validateVideoSubmitPayload({ ...normalPayload, topic_id: "not-a-uuid" }),
+    { ok: false, error: "topic_id 必须是合法 UUID" },
+  );
+});
+
 test("导粉大于 0 且话术为空时后端拒绝", () => {
   const result = validateVideoSubmitPayload({
     ...normalPayload,

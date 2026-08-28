@@ -15,6 +15,7 @@ import {
   getVideoSubmissionEditDetailError,
   shouldAutoRedirectToGrowthAfterSubmit,
   getHiddenRoleRestoreLabel,
+  getDefaultPublishedAtForBizDate,
 } from "./video-submit-form-state";
 
 test("隐藏部分共创岗位时仍提供恢复入口，并标明可恢复的岗位", () => {
@@ -139,6 +140,18 @@ test("选择发布时间不应改动归属日期", () => {
   assert.equal(
     preserveBizDateWhenPublishedAtChanges("2026-07-15"),
     "2026-07-15",
+  );
+});
+
+test("历史补录默认发布时间使用归属日前一天，今天仍沿用昨天 19:00", () => {
+  const now = new Date(2026, 2, 17, 9, 30, 0);
+  assert.equal(
+    getDefaultPublishedAtForBizDate("2026-03-16", "2026-03-17", now),
+    "2026-03-15T19:00",
+  );
+  assert.equal(
+    getDefaultPublishedAtForBizDate("2026-03-17", "2026-03-17", now),
+    "2026-03-16T19:00",
   );
 });
 

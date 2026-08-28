@@ -228,6 +228,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
   const scriptText = normalizeOptionalText(payload.script_text);
   const metrics = normalizeMetrics(payload.metrics);
   const topicTag = normalizeOptionalText(payload.topic_tag);
+  const topicId = normalizeVideoIdLike(payload.topic_id);
   const assetShapeError = validateSubmissionAssetShape(payload.assets);
   const assetUrlError = validateSubmissionAssetUrls(payload.assets);
   const rawMetrics = payload.metrics && typeof payload.metrics === "object" && !Array.isArray(payload.metrics)
@@ -243,6 +244,9 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
 
   if (videoId && !isUuidLike(videoId)) {
     return { ok: false, error: "video_id 必须是合法 UUID" };
+  }
+  if (topicId && !isUuidLike(topicId)) {
+    return { ok: false, error: "topic_id 必须是合法 UUID" };
   }
   if (mode === "edit" && (!videoId || !isUuidLike(videoId))) {
     return { ok: false, error: "编辑提交必须携带合法 video_id" };
@@ -328,7 +332,7 @@ export function validateVideoSubmitPayload(body: unknown): VideoSubmitValidation
       platform_notice: normalizeOptionalText(payload.platform_notice),
       appeal: normalizeOptionalText(payload.appeal),
       topic_tag: topicTag,
-      topic_id: normalizeVideoIdLike(payload.topic_id),
+      topic_id: topicId,
       script_author_user_id: scriptAuthorUserId,
       video_editor_user_id: videoEditorUserId,
       operator_user_id: operatorUserId,

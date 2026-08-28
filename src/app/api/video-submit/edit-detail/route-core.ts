@@ -7,9 +7,52 @@ export const EDIT_DETAIL_SNAPSHOT_SELECT =
   "id, video_id, snapshot_type, play_count, likes, comments, shares, favorites, follower_gain, follower_loss, follower_convert, avg_play_duration, bounce_rate_2s, completion_rate_5s, completion_rate, screenshot_urls, curve_screenshot_url, retention_screenshot_url, vs_previous";
 export const EDIT_DETAIL_REPORT_SELECT = "id, user_id, account_id, report_date";
 export const EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT = "id, name, membership_status";
+export const EDIT_DETAIL_USAGE_RECORD_SELECT =
+  "id, case:violation_cases!script_usage_records_case_id_fkey(script_text, script_format)";
 
 type QueryOutcome<T> = { data: T[] | null; error: { message: string } | null };
 type SingleOutcome<T> = { data: T | null; error: { message: string } | null };
+
+type EditDetailUsageRecord = {
+  id: string;
+  script_text: string | null;
+  script_format: string | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+export function decodeEditDetailUsageRecordRows(
+  rows: unknown,
+): QueryOutcome<EditDetailUsageRecord> {
+  if (!Array.isArray(rows)) {
+    return { data: null, error: { message: "导粉话术查询结果格式错误" } };
+  }
+
+  const decoded: EditDetailUsageRecord[] = [];
+  for (const row of rows) {
+    if (!isRecord(row) || typeof row.id !== "string" || !row.id.trim()) {
+      return { data: null, error: { message: "导粉话术使用记录格式错误" } };
+    }
+
+    const joinedCase = Array.isArray(row.case) ? row.case[0] : row.case;
+    if (!isRecord(joinedCase)) {
+      return { data: null, error: { message: "导粉话术关联案例缺失" } };
+    }
+    if (typeof joinedCase.script_text !== "string" || typeof joinedCase.script_format !== "string") {
+      return { data: null, error: { message: "导粉话术关联案例格式错误" } };
+    }
+
+    decoded.push({
+      id: row.id,
+      script_text: joinedCase.script_text,
+      script_format: joinedCase.script_format,
+    });
+  }
+
+  return { data: decoded, error: null };
+}
 
 export interface EditDetailPageDbAdapter {
   getAccountById(accountId: string): Promise<SingleOutcome<{ id: string; profile_id: string }>>;
@@ -17,7 +60,7 @@ export interface EditDetailPageDbAdapter {
   listActiveVideosByAccount(accountId: string): Promise<QueryOutcome<Record<string, unknown>>>;
   list24hSnapshotsByVideoId(videoId: string): Promise<QueryOutcome<Record<string, unknown>>>;
   listTagsByVideoId(videoId: string): Promise<QueryOutcome<{ tag_dimension: string | null; tag_value: string | null }>>;
-  listUsageRecordsByReportAndUser(reportId: string, userId: string): Promise<QueryOutcome<{ id: string; script_text: string | null; script_format: string | null }>>;
+  listUsageRecordsByReportAndUser(reportId: string, userId: string): Promise<QueryOutcome<EditDetailUsageRecord>>;
   /** 只查询原记录中精确的三个责任人 ID；由调用方在完成归属校验后提供 */
   listAssigneeProfilesByIds(userIds: string[]): Promise<QueryOutcome<{ id: string; name: string | null; membership_status: string | null }>>;
 }

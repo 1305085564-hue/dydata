@@ -3,6 +3,8 @@ import test from "node:test";
 
 import {
   EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT,
+  EDIT_DETAIL_USAGE_RECORD_SELECT,
+  decodeEditDetailUsageRecordRows,
   loadVideoSubmissionEditDetailPage,
   type EditDetailPageDbAdapter,
 } from "./route-core";
@@ -108,6 +110,38 @@ function buildAdapter(overrides: AdapterOverrides = {}) {
 
 test("历史责任人查询只使用 profiles 真实字段，不读取不存在的 display_name", () => {
   assert.equal(EDIT_DETAIL_ASSIGNEE_PROFILE_SELECT, "id, name, membership_status");
+});
+
+test("导粉话术从关联案例读取，不查询使用记录表中不存在的字段", () => {
+  assert.equal(
+    EDIT_DETAIL_USAGE_RECORD_SELECT,
+    "id, case:violation_cases!script_usage_records_case_id_fkey(script_text, script_format)",
+  );
+  assert.deepEqual(
+    decodeEditDetailUsageRecordRows([
+      {
+        id: "usage-1",
+        case: { script_text: "关注公众号领取复盘表", script_format: "mixed" },
+      },
+    ]),
+    {
+      data: [
+        {
+          id: "usage-1",
+          script_text: "关注公众号领取复盘表",
+          script_format: "mixed",
+        },
+      ],
+      error: null,
+    },
+  );
+});
+
+test("导粉话术关联案例缺失时阻断编辑，避免保存时清除原记录", () => {
+  const result = decodeEditDetailUsageRecordRows([{ id: "usage-1", case: null }]);
+
+  assert.equal(result.data, null);
+  assert.match(result.error?.message ?? "", /关联案例缺失/);
 });
 
 test("400：biz_date 格式错误直接拒绝，不触达数据库", async () => {

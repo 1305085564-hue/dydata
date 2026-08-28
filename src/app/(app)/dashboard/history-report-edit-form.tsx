@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitReport } from "./actions";
 import { getDashboardMetricGridClass, getDashboardSurfaceClass } from "./dashboard-visuals";
-import { getDefaultPublishedAtValue, normalizePublishedAtInputValue } from "@/lib/日报";
+import { getDefaultPublishedAtForBizDate, normalizePublishedAtInputValue } from "@/lib/日报";
+import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 
 export interface HistoryReportEditData {
   id: string;
@@ -99,7 +100,8 @@ export function HistoryReportEditForm({
   const [title, setTitle] = useState(report.title ?? "");
   const [content, setContent] = useState(report.content ?? "");
   const [publishedAt, setPublishedAt] = useState(
-    normalizePublishedAtInputValue(report.published_at) || getDefaultPublishedAtValue(),
+    normalizePublishedAtInputValue(report.published_at) ||
+      getDefaultPublishedAtForBizDate(report.report_date, formatShanghaiDateOnly()),
   );
 
   function updateMetric(key: MetricKey, value: string) {

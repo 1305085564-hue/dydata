@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   getDefaultPublishedAtValue,
+  getDefaultPublishedAtForBizDate,
   normalizePublishedAtInputValue,
 } from "./日报";
 
@@ -21,4 +22,15 @@ test("已有发布时间会被格式化为 datetime-local 可回填值", () => {
 
 test("没有已有发布时间时返回空字符串", () => {
   assert.equal(normalizePublishedAtInputValue(null), "");
+});
+
+test("历史日报没有发布时间时按归属日前一天默认 19:00", () => {
+  assert.equal(
+    getDefaultPublishedAtForBizDate(
+      "2026-07-30",
+      "2026-08-29",
+      new Date(2026, 7, 29, 9, 30, 0),
+    ),
+    "2026-07-29T19:00",
+  );
 });

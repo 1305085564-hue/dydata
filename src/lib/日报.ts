@@ -13,6 +13,35 @@ export function getDefaultPublishedAtValue(now: Date = new Date()) {
   return formatLocalDateTime(yesterday);
 }
 
+export function getDefaultPublishedAtForBizDate(
+  bizDate: string,
+  today: string,
+  now: Date = new Date(),
+) {
+  if (bizDate === today) return getDefaultPublishedAtValue(now);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(bizDate);
+  if (!match) return getDefaultPublishedAtValue(now);
+
+  const sourceDate = new Date(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+  );
+  if (
+    sourceDate.getFullYear() !== Number(match[1]) ||
+    sourceDate.getMonth() !== Number(match[2]) - 1 ||
+    sourceDate.getDate() !== Number(match[3])
+  ) {
+    return getDefaultPublishedAtValue(now);
+  }
+  sourceDate.setDate(sourceDate.getDate() - 1);
+  sourceDate.setHours(19, 0, 0, 0);
+  const previousDate = sourceDate;
+  return Number.isNaN(previousDate.getTime())
+    ? getDefaultPublishedAtValue(now)
+    : formatLocalDateTime(previousDate);
+}
+
 export function normalizePublishedAtInputValue(value: string | null | undefined) {
   return value ? value.slice(0, 16) : "";
 }

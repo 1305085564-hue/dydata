@@ -210,6 +210,8 @@ interface VideoSubmitPanelV2Props {
   onSelectedAccountChange?: (accountId: string) => void;
   activeBizDate?: string;
   onActiveBizDateChange?: (date: string) => void;
+  initialTopicId?: string | null;
+  initialTopicTitle?: string | null;
 }
 
 /**
@@ -233,6 +235,8 @@ export function VideoSubmitPanelV2({
   selectedAccountId: controlledSelectedAccountId,
   activeBizDate: controlledActiveBizDate,
   onActiveBizDateChange,
+  initialTopicId = null,
+  initialTopicTitle = null,
 }: VideoSubmitPanelV2Props) {
   const router = useRouter();
   const handleGoToGrowth = useCallback(() => {
@@ -318,11 +322,14 @@ export function VideoSubmitPanelV2({
   const allReportsIncludingOverrides = useMemo(
     () =>
       mergeDashboardReports({
-        initialReports: monthReports,
-        activityReports: activityData?.monthReports ?? [],
+        initialReports: [...monthReports, ...history],
+        activityReports: [
+          ...(activityData?.monthReports ?? []),
+          ...(activityData?.history ?? []),
+        ],
         overrides: Object.values(reportOverrides),
       }),
-    [activityData?.monthReports, monthReports, reportOverrides],
+    [activityData?.history, activityData?.monthReports, history, monthReports, reportOverrides],
   );
 
   const submittedDatesIncludingActivity = useMemo(
@@ -854,7 +861,7 @@ export function VideoSubmitPanelV2({
             {/* 表单区域 */}
             {shouldShowForm && selectedAccount ? (
               <VideoSubmitFormV2
-                key={`form-${selectedAccount.id}-${activeBizDate}`}
+                key={`form-${selectedAccount.id}-${activeBizDate}-${initialTopicId ?? "no-topic"}`}
                 account={selectedAccount}
                 userId={userId}
                 userDisplayName={userDisplayName}
@@ -863,6 +870,8 @@ export function VideoSubmitPanelV2({
                 initialSummary={submittedViewActive ? null : (primaryMode === "backfill" ? null : primarySummary)}
                 editDetail={editDetailLoadState.status === "ready" ? editDetailLoadState.detail : null}
                 initialBizDate={activeBizDate}
+                initialTopicId={initialTopicId}
+                initialTopicTitle={initialTopicTitle}
                 submittedViewActive={submittedViewActive}
                 onSubmitted={handleSubmitted}
                 onCancel={() => {
