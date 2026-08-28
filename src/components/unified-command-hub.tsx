@@ -155,7 +155,7 @@ export function UnifiedCommandHub({
   ) => {
     const requestId = resolveApprovalRequestId(item);
     if (!requestId) {
-      toast.error("操作失败", { description: "申请编号异常，请刷新后重试" });
+      toast.error("申请编号无效，刷新后再试");
       return;
     }
 
@@ -183,10 +183,10 @@ export function UnifiedCommandHub({
         });
       } else {
         const json = await res.json();
-        toast.error("操作失败", { description: json.error || "未知原因" });
+        toast.error("审批未能保存", { description: json.error || "请稍后重试" });
       }
     } catch {
-      toast.error("网络异常，请重试");
+      toast.error("网络连接异常，请重试");
     } finally {
       setActionProcessing(null);
     }
@@ -214,7 +214,6 @@ export function UnifiedCommandHub({
       );
       const successIds = results.filter((result) => result.ok).map((result) => result.id);
       const failedIds = results.filter((result) => !result.ok).map((result) => result.id);
-      const successCount = successIds.length;
       const failCount = failedIds.length;
 
       if (successIds.length > 0) {
@@ -234,10 +233,10 @@ export function UnifiedCommandHub({
         });
       }
       if (failCount > 0) {
-        toast.warning(`批量通过部分失败: 成功 ${successCount} 条，失败 ${failCount} 条`);
+        toast.warning(`有 ${failCount} 条审批未能保存，已保留待重试`);
       }
     } catch {
-      toast.error("批量操作失败，请重试");
+      toast.error("未能完成批量审批，请重试");
     } finally {
       setBatchProcessing(false);
     }
@@ -391,14 +390,14 @@ export function UnifiedCommandHub({
                   className={cn(
                     "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
                     activeTab === "todos"
-                      ? "text-[#1C1917] font-semibold"
+                      ? "text-[#1C1917] font-medium"
                       : "text-[#78716C] hover:text-[#292524] font-medium",
                   )}
                 >
                   {activeTab === "todos" && (
                     <motion.div
                       layoutId="popoverSegmentedTab"
-                      className="absolute inset-0 rounded-md bg-[#FAF8F4] border border-[#E5E0D6]/80 shadow-2xs -z-10"
+                      className="absolute inset-0 rounded-md bg-white border border-[#E5E0D6]/80 shadow-2xs -z-10"
                       transition={{
                         type: "spring",
                         stiffness: 500,
@@ -419,16 +418,16 @@ export function UnifiedCommandHub({
                     type="button"
                     onClick={() => onTabChange("approvals")}
                     className={cn(
-                      "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
-                      activeTab === "approvals"
-                        ? "text-[#1C1917] font-semibold"
-                        : "text-[#78716C] hover:text-[#292524] font-medium",
+                    "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
+                    activeTab === "approvals"
+                      ? "text-[#1C1917] font-medium"
+                      : "text-[#78716C] hover:text-[#292524] font-medium",
                     )}
                   >
                     {activeTab === "approvals" && (
                       <motion.div
                         layoutId="popoverSegmentedTab"
-                        className="absolute inset-0 rounded-md bg-[#FAF8F4] border border-[#E5E0D6]/80 shadow-2xs -z-10"
+                        className="absolute inset-0 rounded-md bg-white border border-[#E5E0D6]/80 shadow-2xs -z-10"
                         transition={{
                           type: "spring",
                           stiffness: 500,
@@ -649,7 +648,7 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewApproval(item, "rejected")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] transition-all hover:bg-[#DC2626]/10 hover:text-[#DC2626] active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 {isRejecting ? (
                                   <Loader2 className="size-3 animate-spin" />

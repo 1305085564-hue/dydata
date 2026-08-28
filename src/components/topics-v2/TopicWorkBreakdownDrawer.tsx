@@ -468,9 +468,12 @@ export function TopicWorkBreakdownDrawer({
         <div className="mt-6 shrink-0 space-y-2 border-t border-[#E5E0D6] pt-4">
           <div className="flex items-center gap-2">
             {!action.canClaim && action.label === "脚本中" ? (
-              <span className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-center rounded-lg border border-[#E5E0D6] bg-[#F5F3EE] text-[#292524] font-medium text-xs">
-                脚本撰写中
-              </span>
+              <a
+                href="/dashboard"
+                className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center text-center rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-xs transition-all shadow-xs cursor-pointer"
+              >
+                去工作台立卷
+              </a>
             ) : action.canStartScripting ? (
               <button
                 type="button"

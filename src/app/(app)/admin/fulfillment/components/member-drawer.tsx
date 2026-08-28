@@ -60,7 +60,7 @@ const ACTION_CONFIG: Record<MarkAction, ActionConfig> = {
   absent: {
     label: "确认缺勤",
     variant: "destructive",
-    colorClass: "rounded-xl text-[13px] bg-[#C9604D] hover:bg-[#B5503E] font-medium",
+    colorClass: "rounded-xl text-[13px] bg-[#C0685C] hover:bg-[#A8584D] font-medium",
   },
   confirmed_published: {
     label: "确认已发",
@@ -107,9 +107,9 @@ function StatusBadge({ status }: { status: string }) {
     },
     absent: {
       label: "缺勤",
-      dot: "bg-[#C9604D]",
-      border: "border-[#C9604D]/20",
-      bg: "bg-[#C9604D]/[0.04]",
+      dot: "bg-[#C0685C]",
+      border: "border-[#C0685C]/20",
+      bg: "bg-[#C0685C]/[0.04]",
     },
     unconfirmed: {
       label: "待确认",
@@ -322,9 +322,11 @@ export function MemberDrawer({
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">还差</p>
+                  <p className="text-[12px] text-[#78716C]">
+                    {member.remainingCount <= 0 ? "目标状态" : "还差"}
+                  </p>
                   <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
-                    {member.remainingCount}
+                    {member.remainingCount <= 0 ? "已达标" : member.remainingCount}
                   </p>
                 </div>
                 <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
@@ -350,9 +352,9 @@ export function MemberDrawer({
 
             {/* 连续未发 */}
             {member.consecutiveMissing > 0 && (
-              <section className="rounded-xl bg-[#C9604D]/10 p-3">
+              <section className="rounded-xl bg-[#C0685C]/10 p-3">
                 <div className="flex items-center gap-2">
-                  <span className="size-1.5 rounded-full bg-[#C9604D]" />
+                  <span className="size-1.5 rounded-full bg-[#C0685C]" />
                   <span className="text-[13px] font-medium text-[#292524]">
                     连续未发 {member.consecutiveMissing} 天
                   </span>
@@ -389,7 +391,7 @@ export function MemberDrawer({
                               {d.slice(5)}
                             </span>
                             {record.pendingExemption ? (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#8A6A2F]">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#B98A54]">
                                 <span className="size-1.5 rounded-full bg-[#B98A54]" />
                                 请假待审批
                               </span>
@@ -422,9 +424,9 @@ export function MemberDrawer({
 
             {/* 员工申诉状态 (新集成) */}
             {dateAppeal && (
-              <section className="rounded-xl bg-amber-50/40 p-4 space-y-3">
-                <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#D99E55]">
-                  <span className="size-2 rounded-full bg-[#D99E55]" />
+              <section className="rounded-xl bg-[#B98A54]/10 p-4 space-y-3 border border-[#B98A54]/20">
+                <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#B98A54]">
+                  <span className="size-2 rounded-full bg-[#B98A54]" />
                   员工发起申诉
                 </h4>
                 <div className="text-[13px] text-[#292524] bg-white/90 p-2.5 rounded-lg">
@@ -469,7 +471,7 @@ export function MemberDrawer({
                       className={
                         dateAppeal.status === "approved"
                           ? "text-[#6FAA7D]"
-                          : "text-[#C9604D]"
+                          : "text-[#C0685C]"
                       }
                     >
                       {dateAppeal.status === "approved"

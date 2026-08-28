@@ -374,11 +374,11 @@ export function FulfillmentWorkbench({
         `/api/admin/fulfillment/calendar?year=${calendarData.year}&month=${calendarData.month}`,
         { cache: "no-store" },
       );
-      if (!response.ok) throw new Error("日历刷新失败");
+      if (!response.ok) throw new Error("日历未能刷新");
       const payload = await response.json();
       setCalendarData(payload.data);
     } catch {
-      toast.error("审批已完成，但发布日历同步失败，请重试");
+      toast.error("审批已保存，日历同步稍有延迟，刷新即可查看最新状态");
     } finally {
       setIsLoadingCalendar(false);
     }
@@ -501,8 +501,8 @@ export function FulfillmentWorkbench({
         body: JSON.stringify({ request_id: requestId, action }),
       });
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({ error: "审批失败" }));
-        throw new Error(payload.error || "审批失败");
+        const payload = await response.json().catch(() => ({ error: "未能保存审批结果" }));
+        throw new Error(payload.error || "未能保存审批结果");
       }
       await refreshVisibleCalendar();
       dispatchFulfillmentDataChanged({

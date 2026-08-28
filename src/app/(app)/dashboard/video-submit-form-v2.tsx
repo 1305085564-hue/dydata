@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
+  Compass,
   XCircle,
   AlertTriangle,
   CheckCircle,
@@ -30,6 +31,7 @@ import { feedbackToast } from "@/components/ui/feedback-toast";
 import { shakeVariants } from "@/lib/animations";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
 
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -952,6 +954,9 @@ export function VideoSubmitFormV2({
   const shouldAutoRedirectAfterSubmitRef = useRef(false);
   const handleGoToGrowth = useCallback(() => {
     router.push("/growth");
+  }, [router]);
+  const handleGoToTopics = useCallback(() => {
+    router.push("/topics");
   }, [router]);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [isPastedFeedback, setIsPastedFeedback] = useState(false);
@@ -1939,89 +1944,85 @@ export function VideoSubmitFormV2({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-4 pb-2"
         >
-          {/* 提交成功页面 - 保留原有设计 */}
-          <div className="py-12 text-center select-none space-y-4">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D]">
-              <svg
-                className="size-8"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <motion.circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-                <motion.path
-                  d="m9 12 2 2 4-4"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.4, delay: 0.4, ease: "easeOut" }}
-                />
-              </svg>
+          {/* 提交成功页面 - 禅意立卷与挑选明日选题闭环 */}
+          <div className="py-8 text-center select-none space-y-4">
+            <div className="flex justify-center -mt-2 -mb-2">
+              <ZenFinishedIllustration size={96} />
             </div>
-            <h3 className="font-serif tracking-tight text-base font-semibold text-[#1C1917]">
-              数据提交成功
-            </h3>
-            <p className="mt-2 text-[13px] text-[#78716C]">
-              归属日期：{meta.bizDate}
-            </p>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setHasUserInteracted(true);
-                  setIsSubmitted(false);
-                  setSubmittedVideo(null);
-                  setQualityCheck({ data: null, loading: false });
-                  onCancel?.();
-                }}
-                className="h-9 rounded-xl border-[#E5E0D6] px-4 text-[12px] text-[#292524] hover:bg-[#FBF9F5] cursor-pointer"
-              >
-                返回
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={qualityCheck.loading}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setHasUserInteracted(true);
-                  handleQualityCheck();
-                }}
-                className="h-9 rounded-xl border-[#E5E0D6] px-4 text-[12px] text-[#292524] hover:bg-[#FBF9F5] cursor-pointer"
-              >
-                {qualityCheck.loading ? (
-                  <>AI 分析中…</>
-                ) : (
-                  <>
-                    <Sparkles className="mr-1 size-3.5" />
-                    AI 检查样本质量
-                  </>
-                )}
-              </Button>
+            <div className="space-y-1">
+              <h3 className="font-serif tracking-tight text-xl font-semibold text-[#1C1917]">
+                今日创作已成功立卷
+              </h3>
+              <p className="text-[13px] text-[#78716C]">
+                归属日期：<span className="font-mono tabular-nums text-[#1C1917]">{meta.bizDate}</span> · 记录已安全落库
+              </p>
             </div>
-            <div className="mt-4 pt-4 border-t border-[#ECE7DE] flex justify-center">
+
+            {/* 主行动：挑选明日选题闭环 */}
+            <div className="pt-2 flex flex-col items-center gap-3">
               <Button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setHasUserInteracted(true);
-                  handleGoToGrowth();
+                  handleGoToTopics();
                 }}
-                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[13px] transition-colors duration-100 flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.985] active:duration-75 cursor-pointer"
+                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[13px] transition-colors duration-100 flex items-center justify-center gap-2 shadow-xs active:scale-[0.985] active:duration-75 cursor-pointer"
               >
-                查看成长分析
+                <Compass className="size-4" />
+                <span>去选题库挑选明日选题</span>
               </Button>
+
+              {/* 辅助操作 */}
+              <div className="flex items-center gap-2.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHasUserInteracted(true);
+                    setIsSubmitted(false);
+                    setSubmittedVideo(null);
+                    setQualityCheck({ data: null, loading: false });
+                    onCancel?.();
+                  }}
+                  className="h-8 rounded-lg border-[#E5E0D6] px-3 text-[12px] text-[#292524] hover:bg-[#F5F3EE] cursor-pointer"
+                >
+                  留在工作台
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={qualityCheck.loading}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHasUserInteracted(true);
+                    handleQualityCheck();
+                  }}
+                  className="h-8 rounded-lg border-[#E5E0D6] px-3 text-[12px] text-[#292524] hover:bg-[#F5F3EE] cursor-pointer"
+                >
+                  {qualityCheck.loading ? (
+                    <>AI 分析中…</>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-1 size-3.5 text-[#D97757]" />
+                      AI 检查样本质量
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHasUserInteracted(true);
+                    handleGoToGrowth();
+                  }}
+                  className="h-8 rounded-lg px-3 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] cursor-pointer"
+                >
+                  成长复盘
+                </Button>
+              </div>
             </div>
           </div>
 

@@ -212,7 +212,7 @@ function MemberColumnHeader({ showCheckboxSlot }: { showCheckboxSlot: boolean })
       </div>
       <div className="flex shrink-0 items-center gap-4">
         <span className="w-20 text-center shrink-0">角色</span>
-        <span className="w-24 text-right shrink-0">数据范围</span>
+        <span className="w-24 text-left shrink-0">数据范围</span>
         <span className="w-8 shrink-0" />
       </div>
     </div>
@@ -672,7 +672,7 @@ export function AdminModulesContentV3({
         setLocalProfiles(prevProfiles);
         feedbackToast.error("变更角色失败", { description: res.error });
       } else {
-        feedbackToast.success(`角色已变更为「${newRole === "admin" ? "团队主管" : "普通组员"}」`);
+        feedbackToast.success(`角色已变更为「${newRole === "admin" ? "管理员" : "成员"}」`);
         router.refresh();
       }
     });
@@ -843,7 +843,7 @@ export function AdminModulesContentV3({
           <section className="rounded-lg border-l-2 border-[#B98A54] bg-[#B98A54]/10 p-4">
             <div className="flex items-center gap-2 mb-2.5">
               <span className="text-[14px] font-medium text-[#1C1917]">待审批入团申请</span>
-              <span className="rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[12px] font-medium text-[#8A6A2F] tabular-nums">
+              <span className="rounded-md bg-[#B98A54]/20 px-2 py-0.5 text-[12px] font-medium text-[#B98A54] tabular-nums">
                 {pendingRequests.length} 位新成员
               </span>
             </div>
@@ -855,9 +855,9 @@ export function AdminModulesContentV3({
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[13px] font-medium text-[#1C1917]">{req.applicantName}</span>
-                    <span className="mx-2 text-[#8A6A2F]/60">·</span>
+                    <span className="mx-2 text-[#B98A54]/60">·</span>
                     <span className="text-[12px] text-[#292524]">申请加入：{req.targetTeamName}</span>
-                    <span className="mx-2 text-[#8A6A2F]/60">·</span>
+                    <span className="mx-2 text-[#B98A54]/60">·</span>
                     <span className="text-[12px] text-[#78716C] tabular-nums">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
@@ -868,14 +868,14 @@ export function AdminModulesContentV3({
                         variant="ghost"
                         onClick={() => handleReviewJoinRequest(req.id, "reject")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/10 hover:text-[#C9604D] rounded-md"
+                        className="h-7 px-2.5 text-[12px] text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md transition-colors"
                       >
                         拒绝
                       </Button>
                       <Button
                         onClick={() => handleReviewJoinRequest(req.id, "approve")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] bg-[#D97757] hover:bg-[#C46A4D] text-white rounded-md shadow-2xs cursor-pointer"
+                        className="h-7 px-2.5 text-[12px] bg-[#1C1917] hover:bg-[#292524] text-white rounded-md shadow-sm cursor-pointer"
                       >
                         同意入团
                       </Button>
@@ -1036,7 +1036,7 @@ export function AdminModulesContentV3({
                           className={cn(
                             "group flex items-center justify-between gap-3 px-3 py-1.5 rounded-md min-h-[40px] transition-colors duration-150 cursor-pointer select-none",
                             isRestoredFocus
-                              ? "bg-amber-50 animate-pulse"
+                              ? "bg-[#F5F3EE] transition-colors duration-500"
                               : isChecked
                               ? "bg-[#FBF9F5]"
                               : isCurrentMemberActive
@@ -1108,16 +1108,12 @@ export function AdminModulesContentV3({
                             </div>
 
                             {/* 数据范围 */}
-                            <div className="w-24 text-right shrink-0">
-                              {isArchivedView ? (
-                                <span className="text-[13px] text-[#78716C]">
-                                  {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
-                                </span>
-                              ) : (
-                                <span className="text-[13px] text-[#78716C]">
-                                  {formatDataScope(member.data_scope)}
-                                </span>
-                              )}
+                            <div className="w-24 text-left shrink-0">
+                              <span className="text-[13px] text-[#78716C]">
+                                {formatDataScope(
+                                  (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
+                                )}
+                              </span>
                             </div>
 
                             {/* 幽灵操作区 */}
@@ -1168,7 +1164,7 @@ export function AdminModulesContentV3({
                           className={cn(
                             "group flex items-center justify-between gap-3 px-3 py-1.5 rounded-md min-h-[40px] transition-colors duration-150 cursor-pointer select-none",
                             isRestoredFocus
-                              ? "bg-amber-50 animate-pulse"
+                              ? "bg-[#F5F3EE] transition-colors duration-500"
                               : isChecked
                               ? "bg-[#FBF9F5]"
                               : isCurrentMemberActive
@@ -1240,16 +1236,12 @@ export function AdminModulesContentV3({
                             </div>
 
                             {/* 数据范围 */}
-                            <div className="w-24 text-right shrink-0">
-                              {isArchivedView ? (
-                                <span className="text-[13px] text-[#78716C]">
-                                  {member.archive_snapshot?.role === "admin" ? "主管" : "组员"}
-                                </span>
-                              ) : (
-                                <span className="text-[13px] text-[#78716C]">
-                                  {formatDataScope(member.data_scope)}
-                                </span>
-                              )}
+                            <div className="w-24 text-left shrink-0">
+                              <span className="text-[13px] text-[#78716C]">
+                                {formatDataScope(
+                                  (member.archive_snapshot?.data_scope as DataScope | undefined) ?? member.data_scope,
+                                )}
+                              </span>
                             </div>
 
                             {/* 幽灵操作区 */}
@@ -1371,7 +1363,7 @@ export function AdminModulesContentV3({
                         {activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
-                        {activeMember.role === "owner" ? "创始人" : activeMember.role === "admin" ? "主管" : "组员"}
+                        {activeMember.role === "owner" ? "公司所有者" : activeMember.role === "admin" ? "管理员" : "成员"}
                       </span>
                       {activeMember.membership_status === "archived" && (
                         <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#78716C] shrink-0">
@@ -1531,7 +1523,7 @@ export function AdminModulesContentV3({
                           <div className="flex items-center gap-2">
                             <Settings className="size-3.5 text-[#78716C] shrink-0" />
                             <span className="text-[13px] text-[#292524]">
-                              {activeMember.role === "admin" ? "降为普通组员" : "提升为管理员"}
+                              {activeMember.role === "admin" ? "降为成员" : "提升为管理员"}
                             </span>
                           </div>
                           {canManageMembers ? (
@@ -1544,7 +1536,7 @@ export function AdminModulesContentV3({
                             </button>
                           ) : (
                             <span className="text-[13px] text-[#78716C]">
-                              {activeMember.role === "admin" ? "管理员" : "普通组员"}
+                              {activeMember.role === "admin" ? "管理员" : "成员"}
                             </span>
                           )}
                         </div>

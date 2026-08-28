@@ -22,8 +22,8 @@ export function StatsBar({ stats }: StatsBarProps) {
                 stats.periodFulfillmentRate >= 80
                   ? "text-[#6FAA7D]"
                   : stats.periodFulfillmentRate >= 60
-                    ? "text-[#D97757]"
-                    : "text-[#C9604D]"
+                    ? "text-[#B98A54]"
+                    : "text-[#C0685C]"
               }`}
             >
               达成率 {stats.periodFulfillmentRate}%
@@ -31,7 +31,7 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-semibold tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.publishedCount}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">
@@ -54,13 +54,13 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-semibold tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.totalMembers}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">位成员</span>
             </div>
             <div className="text-right text-[13px] text-[#78716C] font-normal tabular-nums">
-              全队达成 {stats.periodFulfillmentRate}%
+              今日已发 {stats.publishedToday} 人
             </div>
           </div>
         </div>
@@ -70,11 +70,11 @@ export function StatsBar({ stats }: StatsBarProps) {
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-medium text-[#78716C]">待审批与断发</span>
             {hasPending ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#D97757]/10 px-2 py-0.5 text-[11px] font-medium text-[#D97757]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[11px] font-medium text-[#B98A54]">
                 有待处理
               </span>
             ) : stats.consecutiveMissingMembers > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#D99E55]/10 px-2 py-0.5 text-[11px] font-medium text-[#8A6A2F]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#B98A54]/10 px-2 py-0.5 text-[11px] font-medium text-[#B98A54]">
                 需沟通
               </span>
             ) : (
@@ -83,7 +83,7 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-semibold tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.consecutiveMissingMembers}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">人连续未发</span>

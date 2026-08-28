@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
+import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -237,6 +237,9 @@ export function VideoSubmitPanelV2({
   const router = useRouter();
   const handleGoToGrowth = useCallback(() => {
     router.push("/growth");
+  }, [router]);
+  const handleGoToTopics = useCallback(() => {
+    router.push("/topics");
   }, [router]);
 
   const formAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -717,23 +720,34 @@ export function VideoSubmitPanelV2({
                     </div>
 
                     {/* 操作按钮 */}
-                    <div className="flex flex-col gap-2 shrink-0 sm:w-[130px]">
+                    <div className="flex flex-col gap-2 shrink-0 sm:w-[140px]">
                       <Button
                         type="button"
-                        className="h-9 w-full rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985]"
-                        onClick={handleGoToGrowth}
+                        className="h-9 w-full rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985] inline-flex items-center justify-center gap-1.5"
+                        onClick={handleGoToTopics}
                       >
-                        成长复盘
+                        <Compass className="size-3.5" />
+                        <span>挑选明日选题</span>
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-9 rounded-lg border-[#E5E0D6] text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
-                        onClick={() => setRequestedMode("editToday")}
-                      >
-                        <PencilLine className="size-3.5 mr-1" />
-                        微调数据
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-8 flex-1 rounded-lg border-[#E5E0D6] text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
+                          onClick={() => setRequestedMode("editToday")}
+                        >
+                          <PencilLine className="size-3 mr-1" />
+                          微调
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-8 flex-1 rounded-lg text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                          onClick={handleGoToGrowth}
+                        >
+                          复盘
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -310,17 +310,26 @@ export function MyClaimDrawer({
                                     ).toLocaleDateString()
                                   : "时间未知"}
                               </span>
-                              <button
-                                type="button"
-                                disabled={operatingId === claim.subTopicId}
-                                onClick={(e) =>
-                                  handleReturn(e, claim.subTopicId)
-                                }
-                                className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal cursor-pointer"
-                                aria-label="放回选题"
-                              >
-                                放回
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <a
+                                  href="/dashboard"
+                                  className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#D97757] text-white hover:bg-[#C46A4D] text-xs transition-colors font-medium shadow-2xs cursor-pointer"
+                                  aria-label="去工作台立卷填报"
+                                >
+                                  去工作台立卷
+                                </a>
+                                <button
+                                  type="button"
+                                  disabled={operatingId === claim.subTopicId}
+                                  onClick={(e) =>
+                                    handleReturn(e, claim.subTopicId)
+                                  }
+                                  className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] text-xs transition-colors font-normal cursor-pointer"
+                                  aria-label="放回选题"
+                                >
+                                  放回
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
