@@ -4,7 +4,7 @@ import type { ScopedAdminVideoAccess } from "@/lib/admin-scoped-video";
 import { callStructuredAi } from "@/lib/ai/shared";
 import { loadContentSegments, type ContentSegmentRow } from "@/lib/content-segment-service";
 
-export const CONTENT_ANALYSIS_PROMPT_VERSION = "content-analysis-v1";
+export const CONTENT_ANALYSIS_PROMPT_VERSION = "content-analysis-v2";
 
 type SnapshotLite = {
   play_count: number | null;
@@ -52,11 +52,6 @@ export type ContentAnalysisResult = {
   key_metric_evidence: string[];
   copywriting_reason: string;
   abnormal_points: string[];
-  reusable_experience: string;
-  feedback_draft: {
-    main_issues: string;
-    improvement_feedback: string;
-  };
 };
 
 export type ContentAnalysisResponse = ContentAnalysisResult & {
@@ -105,7 +100,6 @@ function cleanStringArray(value: unknown) {
 export function normalizeContentAnalysisResult(value: unknown): ContentAnalysisResult | null {
   if (!isRecord(value)) return null;
 
-  const feedbackRaw = isRecord(value.feedback_draft) ? value.feedback_draft : {};
   const suspectedStage = (Array.isArray(value.suspected_stage) ? value.suspected_stage : [])
     .filter((stage): stage is ContentAnalysisStage =>
       typeof stage === "string" && ALLOWED_STAGES.includes(stage as ContentAnalysisStage),
@@ -118,11 +112,6 @@ export function normalizeContentAnalysisResult(value: unknown): ContentAnalysisR
     key_metric_evidence: cleanStringArray(value.key_metric_evidence),
     copywriting_reason: cleanString(value.copywriting_reason, "暂未形成明确文案归因。"),
     abnormal_points: cleanStringArray(value.abnormal_points),
-    reusable_experience: cleanString(value.reusable_experience, "暂无可复用经验。"),
-    feedback_draft: {
-      main_issues: cleanString(feedbackRaw.main_issues, ""),
-      improvement_feedback: cleanString(feedbackRaw.improvement_feedback, ""),
-    },
   };
 }
 
@@ -175,9 +164,9 @@ export function buildContentAnalysisPrompt(input: Record<string, unknown>) {
   return [
     "你是抖音内容批改台的内部分析助手。",
     "只输出 JSON，不要 Markdown。",
-    "输出字段必须严格包含：data_summary、suspected_stage、key_metric_evidence、copywriting_reason、abnormal_points、reusable_experience、feedback_draft。",
+    "输出字段必须严格包含：data_summary、suspected_stage、key_metric_evidence、copywriting_reason、abnormal_points。",
     "suspected_stage 只能从 opening、middle_content、traffic_retention、topic_mismatch、weak_interaction、weak_conversion 中选择。",
-    "feedback_draft 必须包含 main_issues 和 improvement_feedback，供管理者引用到反馈，但不要替管理者做最终结论。",
+    "仅用于管理者内部分析，不生成任何面向他人的话术、投递内容或经验沉淀。",
     "只能使用疑似、可能、倾向于、建议复核等保守措辞。",
     "禁止输出平台权重、算法判罚等绝对判断。",
     "如果所有数据只是常规齐涨齐跌，明确提示无需重点复盘。",

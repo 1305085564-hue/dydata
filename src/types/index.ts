@@ -159,15 +159,12 @@ export type VideoAssetMissingField =
   | "snapshot_24h"
   | "video_tags"
   | "content_segments";
-export type ContentFeedbackCardStatus = "draft" | "confirmed" | "sent" | "viewed";
-export type ContentFeedbackReplyStatus = "pending" | "acknowledged" | "disputed";
-export type ContentFeedbackWorkflowStatus = "not_started" | ContentFeedbackCardStatus;
 export type ContentReviewReadinessStatus =
   | "missing_snapshot"
   | "missing_content"
   | "missing_segments"
   | "ready"
-  | ContentFeedbackWorkflowStatus;
+  | "analyzed";
 
 export const TAG_ENUMS: Record<TagDimension, string[]> = {
   "题材": ["大盘复盘", "板块机会", "个股拆解", "情绪周期", "战法教学", "风险提醒", "热点追踪", "盘前预判"],
@@ -333,47 +330,6 @@ export interface ViolationTestRecord {
 export type ExemptionRequestType = "yesterday" | "range" | "permanent" | "single" | "3days" | "4days" | "5days";
 export type ExemptionRequestStatus = "pending" | "approved" | "rejected";
 
-export interface ContentFeedbackCard {
-  id: string;
-  video_id: string;
-  target_user_id: string;
-  target_account_id: string | null;
-  source_result_id: string | null;
-  card_status: ContentFeedbackCardStatus;
-  manager_note: string | null;
-  draft_payload: NextDayReviewResult | null;
-  confirmed_payload: NextDayReviewResult | null;
-  draft_generated_at: string | null;
-  confirmed_by: string | null;
-  confirmed_at: string | null;
-  sent_by: string | null;
-  sent_at: string | null;
-  viewed_at: string | null;
-  employee_reply_status?: ContentFeedbackReplyStatus | null;
-  employee_reply_text?: string | null;
-  employee_replied_at?: string | null;
-  employee_replied_by?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ContentFeedbackCardView {
-  card_id: string | null;
-  video_id: string;
-  workflow_status: ContentFeedbackWorkflowStatus;
-  workflow_label: string;
-  has_ai_draft: boolean;
-  latest_draft_at: string | null;
-  confirmed_at: string | null;
-  sent_at: string | null;
-  viewed_at: string | null;
-  employee_reply_status: ContentFeedbackReplyStatus;
-  employee_reply_status_label: string;
-  employee_reply_text: string | null;
-  employee_replied_at: string | null;
-  manager_note: string | null;
-}
-
 export interface ContentReviewReadiness {
   video_id: string;
   status: ContentReviewReadinessStatus;
@@ -382,11 +338,7 @@ export interface ContentReviewReadiness {
   has_snapshot_24h: boolean;
   has_content: boolean;
   has_segments: boolean;
-}
-
-export interface ContentFeedbackCardDetail extends ContentFeedbackCardView {
-  draft: NextDayReviewResult | null;
-  confirmed: NextDayReviewResult | null;
+  has_analysis: boolean;
 }
 
 export interface ExemptionRequest {
@@ -418,79 +370,4 @@ export interface Group {
   org_id: string | null;
   name: string;
   created_at: string;
-}
-
-// === 内容管理 + 次日复盘 v1 ===
-
-export type SampleLevel = "insufficient" | "partial" | "full";
-export type SegmentHealth = "ok" | "warning" | "problem";
-export type SegmentPriority = "primary" | "secondary";
-
-export interface SampleCredibility {
-  level: SampleLevel;
-  label: "缺少24h数据" | "样本不足" | "可初步参考" | "可正式复盘";
-  guide: string;
-}
-
-export interface NextDayReviewSummary {
-  grade: string;
-  one_line: string;
-  problem_tags: string[];
-}
-
-export interface NextDayReviewMetrics {
-  play_count: number | null;
-  bounce_rate_2s: number | null;
-  completion_rate_5s: number | null;
-  completion_rate: number | null;
-  avg_play_duration: number | null;
-}
-
-export interface NextDayReviewAccountBaseline extends NextDayReviewMetrics {
-  sample_count: number;
-}
-
-export interface NextDayReviewPeerBaseline {
-  available: boolean;
-  sample_count: number;
-  summary: string;
-}
-
-export interface NextDayReviewComparison {
-  account_baseline: NextDayReviewAccountBaseline;
-  peer_baseline: NextDayReviewPeerBaseline;
-}
-
-export interface NextDayReviewSegment {
-  segment_order: number;
-  segment_type: string;
-  segment_text: string;
-  time_range: string;
-  health: SegmentHealth;
-  judgement: string;
-  reason: string;
-  suggestion: string;
-  priority: SegmentPriority;
-}
-
-export interface NextDayReviewActions {
-  diagnosis: string;
-  instructions: string[];
-  message_for_member: string;
-}
-
-export interface NextDayReviewResult {
-  ok: true;
-  video_id: string;
-  sample_level: SampleLevel;
-  sample_status: "缺少24h数据" | "样本不足" | "可初步参考" | "可正式复盘";
-  sample_message: string;
-  review_status: "success";
-  summary: NextDayReviewSummary;
-  metrics: NextDayReviewMetrics;
-  comparison: NextDayReviewComparison;
-  anomaly_notice: string | null;
-  segments: NextDayReviewSegment[];
-  actions: NextDayReviewActions;
-  cached: boolean;
 }

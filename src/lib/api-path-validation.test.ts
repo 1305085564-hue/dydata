@@ -18,4 +18,6 @@ test("静态路由和非 UUID 业务键不被误判", () => {
   assert.equal(hasInvalidUuidPathParameter("/api/admin/ai-features/ocr_screenshot"), false);
   assert.equal(hasInvalidUuidPathParameter("/api/topics/sub-topics/suggest"), false);
   assert.equal(hasInvalidUuidPathParameter("/api/topics/sub-topics/from-recommendation"), false);
+  assert.equal(hasInvalidUuidPathParameter("/api/dashboard/content-feedback-cards/not-an-id"), false);
+  assert.equal(hasInvalidUuidPathParameter("/api/admin/content-feedback-cards/not-an-id"), false);
 });

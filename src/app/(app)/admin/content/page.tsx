@@ -10,7 +10,7 @@ import { ContentDataContainer } from "./content-data-container";
 
 export const metadata: Metadata = {
   title: "视频复盘 - DYData",
-  description: "审核团队视频内容，沉淀复盘反馈与可复用案例。",
+  description: "查看异常视频证据，定位内容问题与可能原因。",
 };
 
 type ContentView = "pending" | "all";

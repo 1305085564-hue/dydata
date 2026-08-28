@@ -2,12 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import { buildDataAccessScope, filterRowsByDataScope } from "@/lib/data-access-scope";
-import { buildContentFeedbackCardView, CONTENT_FEEDBACK_CARD_SELECT } from "@/lib/content-feedback-cards";
 import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertSupabaseQuerySucceeded } from "@/lib/supabase/query-error";
 import type { UserPermissionInfo } from "@/lib/permissions";
-import type { ContentFeedbackCard, ContentFeedbackCardView, ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
+import type { ContentReviewReadiness, Profile, Video, VideoMetricsSnapshot } from "@/types";
 
 type LoaderSupabase = SupabaseClient;
 type ScopeInput = Awaited<ReturnType<typeof buildDataAccessScope>>;
@@ -27,6 +26,7 @@ type LoadMode = "initial" | "full";
 type SegmentRow = { video_id: string };
 type PreviousVideoCandidateRow = Pick<Video, "id" | "account_id" | "published_at">;
 type PreviousSnapshotRow = Pick<VideoMetricsSnapshot, "video_id" | "play_count" | "captured_at">;
+type InsightResultRow = { result_json: Record<string, unknown> | null };
 
 const CONTENT_VIDEO_SELECT =
   "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, created_at, accounts!inner(name, profile_id), profiles!videos_user_id_fkey!inner(name)";
@@ -48,7 +48,6 @@ export interface AdminContentPageData {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
   profiles: FilterOption[];
-  feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   summary: {
     totalVideos: number;
@@ -72,6 +71,38 @@ function normalizeVideoRows(rows: RawVideoRow[]): VideoRow[] {
 
 function limitInitialVideos<T>(rows: T[], mode: LoadMode) {
   return mode === "initial" ? rows.slice(0, ADMIN_CONTENT_INITIAL_LIMIT) : rows;
+}
+
+function getAnalyzedVideoIdSet(rows: InsightResultRow[], allowedVideoIds: Set<string>) {
+  return new Set(
+    rows
+      .map((row) => row.result_json?.video_id)
+      .filter((videoId): videoId is string => typeof videoId === "string" && allowedVideoIds.has(videoId)),
+  );
+}
+
+function buildReviewReadinessMap({
+  videos,
+  snapshotVideoIds,
+  segmentedVideoIds,
+  analyzedVideoIds,
+}: {
+  videos: VideoRow[];
+  snapshotVideoIds: Set<string>;
+  segmentedVideoIds: Set<string>;
+  analyzedVideoIds: Set<string>;
+}) {
+  return Object.fromEntries(
+    videos.map((video) => [
+      video.id,
+      buildContentReviewReadiness({
+        video,
+        hasSnapshot24h: snapshotVideoIds.has(video.id),
+        hasSegments: segmentedVideoIds.has(video.id),
+        hasAnalysis: analyzedVideoIds.has(video.id),
+      }),
+    ]),
+  ) as Record<string, ContentReviewReadiness>;
 }
 
 function getVideoSortTimestamp(video: Pick<Video, "uploaded_at" | "created_at">) {
@@ -354,14 +385,14 @@ export async function loadAdminContentPageData({
     videosQuery = videosQuery.range(0, ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT - 1);
   }
 
-  const [videosResult, profilesResult, reviewedResultsResult] = await Promise.all([
+  const [videosResult, profilesResult, analysisResultsResult] = await Promise.all([
     videosQuery,
     supabase.from("profiles").select("id, name").order("name", { ascending: true }),
     mode === "full"
       ? serviceClient
           .from("ai_insight_result")
           .select("result_json")
-          .eq("insight_type", "next_day_review")
+          .eq("insight_type", "content_analysis")
           .eq("result_status", "success")
       : Promise.resolve({ data: [], error: null }),
   ]);
@@ -370,7 +401,7 @@ export async function loadAdminContentPageData({
   assertSupabaseQuerySucceeded(profilesResult.error, "加载成员列表失败");
   const videosRaw = videosResult.data;
   const profiles = profilesResult.data;
-  const reviewedResults = reviewedResultsResult?.error ? [] : (reviewedResultsResult?.data ?? []);
+  const analysisResults = analysisResultsResult?.error ? [] : (analysisResultsResult?.data ?? []);
 
   const allVideos = normalizeVideoRows((videosRaw ?? []) as unknown as RawVideoRow[]).sort(
     (left, right) => getVideoSortTimestamp(right) - getVideoSortTimestamp(left),
@@ -382,23 +413,15 @@ export async function loadAdminContentPageData({
   const scopedVideoIdSet = new Set(scopedVideoIds);
   const visibleProfileIds = new Set(resolvedScope?.visibleUserIds ?? videos.map((video) => video.accounts?.profile_id ?? video.user_id));
 
-  const reviewedVideoIds = Array.from(
-    new Set(
-      (reviewedResults ?? [])
-        .map((result) => {
-          const json = result.result_json as Record<string, unknown> | null;
-          return typeof json?.video_id === "string" ? json.video_id : null;
-        })
-        .filter((id): id is string => id !== null && scopedVideoIdSet.has(id)),
-    ),
+  const analyzedVideoIdSet = getAnalyzedVideoIdSet(
+    analysisResults as InsightResultRow[],
+    scopedVideoIdSet,
   );
-
-  const reviewedVideoIdSet = new Set(reviewedVideoIds);
-  const pendingVideos = videos.filter((video) => !reviewedVideoIdSet.has(video.id));
+  const pendingVideos = videos.filter((video) => !analyzedVideoIdSet.has(video.id));
   const visibleVideos = view === "pending" ? pendingVideos : videos;
   const initialVisibleVideos = limitInitialVideos(visibleVideos, mode);
   const visibleVideoIds = initialVisibleVideos.map((video) => video.id);
-  const [snapshots, segmentRows, feedbackCardRows] = await Promise.all([
+  const [snapshots, segmentRows] = await Promise.all([
     visibleVideoIds.length > 0
       ? selectInBatches<VideoMetricsSnapshot>(visibleVideoIds, (batch) =>
           Promise.resolve(supabase
@@ -414,14 +437,6 @@ export async function loadAdminContentPageData({
           Promise.resolve(supabase.from("video_content_segments").select("video_id").in("video_id", batch)),
         )
       : Promise.resolve([]),
-    visibleVideoIds.length > 0
-      ? selectInBatches<ContentFeedbackCard>(visibleVideoIds, (batch) =>
-          Promise.resolve(serviceClient
-            .from("content_feedback_cards")
-            .select(CONTENT_FEEDBACK_CARD_SELECT)
-            .in("video_id", batch)),
-        )
-      : Promise.resolve([]),
   ]);
   const initialVisibleVideosWithSignals = await loadPlayChangeSignals({
     supabase,
@@ -431,24 +446,12 @@ export async function loadAdminContentPageData({
   });
   const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id as string));
   const segmentedVideoIds = new Set(segmentRows.map((row) => row.video_id));
-  const feedbackCardMap = new Map<string, ContentFeedbackCard>();
-  for (const row of feedbackCardRows) {
-    feedbackCardMap.set(row.video_id, row);
-  }
-  const feedbackCards = Object.fromEntries(
-    initialVisibleVideosWithSignals.map((video) => [video.id, buildContentFeedbackCardView(video.id, feedbackCardMap.get(video.id) ?? null)]),
-  ) as Record<string, ContentFeedbackCardView>;
-  const reviewReadiness = Object.fromEntries(
-    initialVisibleVideosWithSignals.map((video) => [
-      video.id,
-      buildContentReviewReadiness({
-        video,
-        feedbackCard: feedbackCards[video.id],
-        hasSnapshot24h: snapshotVideoIds.has(video.id),
-        hasSegments: segmentedVideoIds.has(video.id),
-      }),
-    ]),
-  ) as Record<string, ContentReviewReadiness>;
+  const reviewReadiness = buildReviewReadinessMap({
+    videos: initialVisibleVideosWithSignals,
+    snapshotVideoIds,
+    segmentedVideoIds,
+    analyzedVideoIds: analyzedVideoIdSet,
+  });
 
   return {
     videos: initialVisibleVideosWithSignals,
@@ -456,7 +459,6 @@ export async function loadAdminContentPageData({
     profiles: (profiles ?? [])
       .filter((profile) => visibleProfileIds.has(profile.id))
       .map((profile) => ({ id: profile.id, name: profile.name ?? "未命名成员" })),
-    feedbackCards,
     reviewReadiness,
     summary: {
       totalVideos: videos.length,
@@ -483,9 +485,9 @@ export async function loadAdminContentInitialData(args: {
 
   const { data, error } = await args.supabase.rpc(ADMIN_CONTENT_FIRST_SCREEN_RPC, {
     p_visible_user_ids: args.scope.visibleUserIds,
-    p_view: args.view ?? "pending",
-    p_limit_rows: 500,
-    p_candidate_limit: 1000,
+    p_view: "all",
+    p_limit_rows: ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
+    p_candidate_limit: ADMIN_CONTENT_INITIAL_CANDIDATE_LIMIT,
   });
 
   if (error || !data || typeof data !== "object") {
@@ -495,13 +497,56 @@ export async function loadAdminContentInitialData(args: {
     });
   }
 
-  const initialData = data as AdminContentPageData;
+  const rawInitialData = data as {
+    videos: VideoRow[];
+    snapshots: VideoMetricsSnapshot[];
+    profiles: FilterOption[];
+    reviewReadiness?: Record<string, Pick<ContentReviewReadiness, "has_segments">>;
+    summary: AdminContentPageData["summary"];
+    isPartial?: boolean;
+  };
+  const candidateVideos = enforcePlayChangeThresholdsOnVideos(
+    rawInitialData.videos,
+    rawInitialData.snapshots as PreviousSnapshotRow[],
+  );
+  const candidateVideoIds = new Set(candidateVideos.map((video) => video.id));
+  const serviceClient = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+  const { data: analysisRows } = await serviceClient
+    .from("ai_insight_result")
+    .select("result_json")
+    .eq("insight_type", "content_analysis")
+    .eq("result_status", "success");
+  const analyzedVideoIds = getAnalyzedVideoIdSet(
+    (analysisRows ?? []) as InsightResultRow[],
+    candidateVideoIds,
+  );
+  const filteredVideos = args.view === "all"
+    ? candidateVideos
+    : candidateVideos.filter((video) => !analyzedVideoIds.has(video.id));
+  const videos = limitInitialVideos(filteredVideos, "initial");
+  const visibleVideoIds = new Set(videos.map((video) => video.id));
+  const snapshots = rawInitialData.snapshots.filter((snapshot) => visibleVideoIds.has(snapshot.video_id));
+  const snapshotVideoIds = new Set(snapshots.map((snapshot) => snapshot.video_id));
+  const segmentedVideoIds = new Set(
+    videos
+      .filter((video) => rawInitialData.reviewReadiness?.[video.id]?.has_segments)
+      .map((video) => video.id),
+  );
   return {
-    ...initialData,
-    videos: enforcePlayChangeThresholdsOnVideos(
-      initialData.videos as VideoRow[],
-      initialData.snapshots as PreviousSnapshotRow[],
-    ),
+    videos,
+    snapshots,
+    profiles: rawInitialData.profiles,
+    reviewReadiness: buildReviewReadinessMap({
+      videos,
+      snapshotVideoIds,
+      segmentedVideoIds,
+      analyzedVideoIds,
+    }),
+    summary: rawInitialData.summary,
+    isPartial: rawInitialData.isPartial || filteredVideos.length > videos.length,
   };
 }
 
@@ -534,4 +579,6 @@ export const __internal = {
   normalizeVideoRows,
   selectInBatches,
   getVideoSortTimestamp,
+  getAnalyzedVideoIdSet,
+  buildReviewReadinessMap,
 };

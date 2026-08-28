@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TablePagination } from "@/components/ui/table-pagination";
-import type { ContentFeedbackCardView, ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
+import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { Check } from "lucide-react";
 import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
@@ -19,7 +19,6 @@ import {
 interface ContentListProps {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[];
-  feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   totalCount?: number;
   view?: "pending" | "all";
@@ -119,7 +118,6 @@ function getStatusDot(video: VideoRow) {
 export function ContentList({
   videos,
   snapshots,
-  feedbackCards,
   reviewReadiness,
   view = "pending",
   hasDeferredData = false,
@@ -159,13 +157,12 @@ export function ContentList({
     return buildReviewQueue({
       videos,
       snapshots: snapshotMap,
-      feedbackCards,
       reviewReadiness,
       thresholds,
       sortMode: "priority",
-      filterMode: view === "all" ? "all" : "all",
+      filterMode: view === "all" ? "all" : "queue",
     });
-  }, [feedbackCards, reviewReadiness, snapshotMap, thresholds, videos, view]);
+  }, [reviewReadiness, snapshotMap, thresholds, videos, view]);
 
   const handleSort = useCallback((field: SortField) => {
     if (sortField === field) {
@@ -479,7 +476,7 @@ export function ContentList({
               </th>
 
               {/* 行动 */}
-              <th className="py-2 px-2 text-center w-[56px] shrink-0 whitespace-nowrap">复盘</th>
+              <th className="py-2 px-2 text-center w-[56px] shrink-0 whitespace-nowrap">分析</th>
             </tr>
           </thead>
 
@@ -493,8 +490,8 @@ export function ContentList({
                   <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#F5F3EE] text-[#292524] mb-2">
                     <Check className="size-4 text-[#6FAA7D]" />
                   </div>
-                  <p className="text-[13px] font-semibold text-[#292524]">今日待复盘已清完</p>
-                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">当前没有需要紧急复盘的异常视频</p>
+                  <p className="text-[13px] font-semibold text-[#292524]">当前没有待分析作品</p>
+                  <p className="mt-0.5 text-[11.5px] text-[#78716C]">暂无需要优先定位问题的异常视频</p>
                 </td>
               </tr>
             ) : (
@@ -579,7 +576,7 @@ export function ContentList({
                       {formatPercent(item.completionRate)}
                     </td>
 
-                    {/* 复盘按钮（唯一行动变橙） */}
+                    {/* 分析按钮（唯一行动变橙） */}
                     <td className="py-2 px-2 text-center shrink-0 whitespace-nowrap">
                       <button
                         type="button"
@@ -589,7 +586,7 @@ export function ContentList({
                         }}
                         className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.985] active:duration-75 shadow-2xs cursor-pointer"
                       >
-                        复盘 →
+                        分析 →
                       </button>
                     </td>
                   </tr>

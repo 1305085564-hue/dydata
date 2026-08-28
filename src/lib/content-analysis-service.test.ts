@@ -25,7 +25,8 @@ test("normalizeContentAnalysisResult 只保留允许的疑似阶段并补默认�
   assert.deepEqual(result?.suspected_stage, ["opening", "weak_conversion"]);
   assert.deepEqual(result?.key_metric_evidence, ["播放+186%", "评论未增长"]);
   assert.equal(result?.copywriting_reason, "暂未形成明确文案归因。");
-  assert.equal(result?.feedback_draft.main_issues, "互动承接弱");
+  assert.equal("feedback_draft" in (result ?? {}), false);
+  assert.equal("reusable_experience" in (result ?? {}), false);
 });
 
 test("parseContentAnalysisResult 拒绝非 JSON 内容", () => {
@@ -72,7 +73,7 @@ test("buildContentAnalysisPrompt 明确内部分析边界和输出结构", () =>
 
   assert.match(prompt, /内部分析助手/);
   assert.match(prompt, /只输出 JSON/);
-  assert.match(prompt, /feedback_draft/);
-  assert.match(prompt, /不要替管理者做最终结论/);
+  assert.match(prompt, /abnormal_points/);
+  assert.doesNotMatch(prompt, /feedback_draft|reusable_experience/);
   assert.match(prompt, /禁止输出平台权重/);
 });

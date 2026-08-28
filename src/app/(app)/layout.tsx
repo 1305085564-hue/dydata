@@ -7,7 +7,6 @@ import "@/styles/components/dashboard.css";
 import { NavBar } from "@/components/nav-bar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { NotificationProvider } from "@/components/notifications/notification-store";
-import { FeedbackNotificationBridge } from "@/components/notifications/feedback-notification-bridge";
 import { PageViewTracker } from "@/components/usage-events/page-view-tracker";
 import { DeferredGlobalTopicCreate } from "@/components/topics/deferred-global-topic-create";
 
@@ -48,7 +47,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Suspense>
           {children}
         </main>
-        <FeedbackNotificationBridge />
         <ScrollToTop />
         {/* 全局选题录入弹窗：任何页面都可以通过 triggerGlobalTopicCreate 触发 */}
         <DeferredGlobalTopicCreate />

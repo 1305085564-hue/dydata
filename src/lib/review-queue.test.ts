@@ -7,7 +7,7 @@ import {
   buildSnapshotMap,
   type VideoRow,
 } from "./review-queue";
-import type { ContentFeedbackCardView, ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
+import type { ContentReviewReadiness, VideoMetricsSnapshot } from "@/types";
 import { DEFAULT_VIDEO_REVIEW_THRESHOLDS } from "./video-review-thresholds";
 
 function makeVideo(partial: Partial<VideoRow> & { id: string }): VideoRow {
@@ -60,26 +60,11 @@ function makeSnapshot(partial: Partial<VideoMetricsSnapshot> & { video_id: strin
   };
 }
 
-function makeFeedbackCard(videoId: string, status: ContentFeedbackCardView["workflow_status"] = "not_started"): ContentFeedbackCardView {
-  return {
-    card_id: null,
-    video_id: videoId,
-    workflow_status: status,
-    workflow_label: status,
-    has_ai_draft: false,
-    latest_draft_at: null,
-    confirmed_at: null,
-    sent_at: null,
-    viewed_at: null,
-    employee_reply_status: "pending",
-    employee_reply_status_label: "未回复",
-    employee_reply_text: null,
-    employee_replied_at: null,
-    manager_note: null,
-  };
-}
-
-function makeReadiness(videoId: string, status: ContentReviewReadiness["status"] = "ready"): ContentReviewReadiness {
+function makeReadiness(
+  videoId: string,
+  status: ContentReviewReadiness["status"] = "ready",
+  hasAnalysis = false,
+): ContentReviewReadiness {
   return {
     video_id: videoId,
     status,
@@ -88,6 +73,7 @@ function makeReadiness(videoId: string, status: ContentReviewReadiness["status"]
     has_snapshot_24h: true,
     has_content: true,
     has_segments: true,
+    has_analysis: hasAnalysis,
   };
 }
 
@@ -133,29 +119,25 @@ test("getMetricWarningReasons 正确捕获各项低于/高于阈值的异常", (
   assert.deepEqual(getMetricWarningReasons(undefined, DEFAULT_VIDEO_REVIEW_THRESHOLDS), ["缺少 24h 快照"]);
 });
 
-test("getPriorityScore 根据删稿、限流、腰斩、未开始草稿与指标异常准确加权", () => {
+test("getPriorityScore 只根据异常、数据完整度和是否已有分析加权", () => {
   const vDeleted = makeVideo({ id: "v1", anomaly_status: "删稿" });
   const vHalved = makeVideo({ id: "v2", anomaly_status: "normal", play_change_signal: "halve" });
   const vNormal = makeVideo({ id: "v3", anomaly_status: "normal" });
 
-  const cardNotStarted = makeFeedbackCard("v1", "not_started");
-  const cardDone = makeFeedbackCard("v1", "sent");
-  const readiness = makeReadiness("v1", "ready");
+  const unanalyzed = makeReadiness("v1", "ready", false);
+  const analyzed = makeReadiness("v1", "analyzed", true);
 
-  const scoreDeleted = getPriorityScore(vDeleted, undefined, cardNotStarted, readiness);
-  const scoreHalved = getPriorityScore(vHalved, undefined, cardNotStarted, readiness);
-  const scoreNormalDone = getPriorityScore(vNormal, undefined, cardDone, readiness);
+  const scoreDeleted = getPriorityScore(vDeleted, undefined, unanalyzed);
+  const scoreHalved = getPriorityScore(vHalved, undefined, unanalyzed);
+  const scoreNormalUnanalyzed = getPriorityScore(vNormal, undefined, unanalyzed);
+  const scoreNormalAnalyzed = getPriorityScore(vNormal, undefined, analyzed);
 
-  // 删稿(1000) + 未开始(120) + 准备好(60) + 缺少快照1项异常(80) = 1260
-  assert.equal(scoreDeleted, 1260);
-  // 腰斩(800) + 未开始(120) + 准备好(60) + 缺少快照1项异常(80) = 1060
-  assert.equal(scoreHalved, 1060);
-  // normal(0) + sent(0) + 准备好(60) + 缺少快照1项异常(80) = 140
-  assert.equal(scoreNormalDone, 140);
+  assert.equal(scoreDeleted > scoreHalved, true);
+  assert.equal(scoreHalved > scoreNormalUnanalyzed, true);
+  assert.equal(scoreNormalUnanalyzed > scoreNormalAnalyzed, true);
 });
 
 test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排序", () => {
-  const today = "2026-08-09";
   const v1 = makeVideo({
     id: "v1",
     uploaded_at: "2026-08-09T01:00:00Z",
@@ -178,24 +160,17 @@ test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排�
 
   const videos = [v3, v1, v2];
   const snapshots: VideoMetricsSnapshot[] = [];
-  const feedbackCards = {
-    v1: makeFeedbackCard("v1"),
-    v2: makeFeedbackCard("v2"),
-    v3: makeFeedbackCard("v3"),
-  };
   const reviewReadiness = {
-    v1: makeReadiness("v1"),
-    v2: makeReadiness("v2"),
-    v3: makeReadiness("v3"),
+    v1: makeReadiness("v1", "analyzed", true),
+    v2: makeReadiness("v2", "missing_snapshot", false),
+    v3: makeReadiness("v3", "analyzed", true),
   };
 
   // 1. 最差优先 (priority)
   const priorityQueue = buildReviewQueue({
     videos,
     snapshots,
-    feedbackCards,
     reviewReadiness,
-    todayDateKey: today,
     sortMode: "priority",
   });
   assert.deepEqual(priorityQueue.map((v) => v.id), ["v1", "v2", "v3"]);
@@ -204,9 +179,7 @@ test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排�
   const userQueue = buildReviewQueue({
     videos,
     snapshots,
-    feedbackCards,
     reviewReadiness,
-    todayDateKey: today,
     sortMode: "user",
   });
   assert.deepEqual(userQueue.map((v) => v.id), ["v2", "v3", "v1"]); // 李四 < 王五 < 张三
@@ -215,10 +188,17 @@ test("buildReviewQueue 在 priority、user、latest 模式下产生确定性排�
   const latestQueue = buildReviewQueue({
     videos,
     snapshots,
-    feedbackCards,
     reviewReadiness,
-    todayDateKey: today,
     sortMode: "latest",
   });
   assert.deepEqual(latestQueue.map((v) => v.id), ["v2", "v3", "v1"]);
+
+  const diagnosticQueue = buildReviewQueue({
+    videos,
+    snapshots,
+    reviewReadiness,
+    sortMode: "priority",
+    filterMode: "queue",
+  });
+  assert.deepEqual(diagnosticQueue.map((v) => v.id), ["v1", "v2"]);
 });

@@ -4,15 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Loader2,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   Check,
   Plus,
-  History,
-  Copy,
   Layers,
   X,
 } from "lucide-react";
@@ -38,8 +35,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { formatAnomalyStatusText } from "@/lib/video-anomaly";
 import type {
-  ContentFeedbackCardDetail,
-  ContentFeedbackCardView,
   ContentReviewReadiness,
   Video,
   VideoMetricsSnapshot,
@@ -49,13 +44,10 @@ import type {
   MultiRefAttributionResult,
 } from "@/lib/content-attribution";
 import {
-  METRIC_MAP_INDEX,
-  RATE_METRICS,
   type MetricKey,
 } from "@/lib/content-attribution-map";
 
 export type RefKey = "self" | "team" | "top" | "user";
-import { buildContentFeedbackCopyText } from "@/lib/content-feedback-copy";
 import {
   buildReviewQueue,
   buildSnapshotMap,
@@ -70,11 +62,6 @@ import {
 interface ContentDiagnosisWorkbenchProps {
   video: VideoRow | null;
   snapshot: VideoMetricsSnapshot | null;
-  feedbackCard: ContentFeedbackCardView | null;
-  onFeedbackCardChanged: (
-    videoId: string,
-    card: ContentFeedbackCardView,
-  ) => void;
   onClose: () => void;
   canOperateLifecycle: boolean;
   onLifecycleChanged: () => void;
@@ -82,9 +69,9 @@ interface ContentDiagnosisWorkbenchProps {
   anomalyVideos?: VideoRow[];
   videos?: VideoRow[];
   snapshots?: VideoMetricsSnapshot[];
-  feedbackCards?: Record<string, ContentFeedbackCardView>;
   reviewReadiness?: Record<string, ContentReviewReadiness>;
   onVideoSelect?: (videoId: string) => void;
+  onAnalysisGenerated?: () => void;
 }
 
 type ContentAnalysisResult = {
@@ -94,20 +81,7 @@ type ContentAnalysisResult = {
   key_metric_evidence: string[];
   copywriting_reason: string;
   abnormal_points: string[];
-  reusable_experience: string;
-  feedback_draft: {
-    main_issues: string;
-    improvement_feedback: string;
-  };
 };
-
-type ExperienceType =
-  | "hot_case"
-  | "fail_case"
-  | "opening_issue"
-  | "middle_issue"
-  | "retention_issue"
-  | "conversion_issue";
 
 const statusBadgeClass: Record<Video["anomaly_status"], string> = {
   normal: "border-[#E5E0D6] bg-[#FBF9F5] text-[#6FAA7D]",
@@ -123,8 +97,6 @@ const statusBadgeClass: Record<Video["anomaly_status"], string> = {
 export function ContentDiagnosisWorkbench({
   video,
   snapshot,
-  feedbackCard,
-  onFeedbackCardChanged,
   onClose,
   canOperateLifecycle,
   onLifecycleChanged,
@@ -132,9 +104,9 @@ export function ContentDiagnosisWorkbench({
   anomalyVideos = [],
   videos,
   snapshots,
-  feedbackCards,
   reviewReadiness,
   onVideoSelect,
+  onAnalysisGenerated,
 }: ContentDiagnosisWorkbenchProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(
@@ -162,7 +134,6 @@ export function ContentDiagnosisWorkbench({
       return buildReviewQueue({
         videos,
         snapshots: snapshotMap,
-        feedbackCards: feedbackCards ?? {},
         reviewReadiness: reviewReadiness ?? {},
         thresholds,
         sortMode: "priority",
@@ -176,7 +147,6 @@ export function ContentDiagnosisWorkbench({
   }, [
     videos,
     snapshotMap,
-    feedbackCards,
     reviewReadiness,
     thresholds,
     anomalyVideos,
@@ -252,16 +222,11 @@ export function ContentDiagnosisWorkbench({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [hasNext, hasPrev, handleNext, handlePrev, isQueueOpen]);
-  const [cardDetail, setCardDetail] =
-    useState<ContentFeedbackCardDetail | null>(null);
-  const [mainIssues, setMainIssues] = useState("");
-  const [feedback, setFeedback] = useState("");
   const [analysisResult, setAnalysisResult] =
     useState<ContentAnalysisResult | null>(null);
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isTrashing, setIsTrashing] = useState(false);
 
-  const [isMarkingExperience, setIsMarkingExperience] = useState(false);
   const [highlightedSegmentIndex, setHighlightedSegmentIndex] = useState<
     number | null
   >(null);
@@ -283,21 +248,6 @@ export function ContentDiagnosisWorkbench({
   const [attributionError, setAttributionError] = useState<string | null>(null);
   const [showMoreMetrics, setShowMoreMetrics] = useState(false);
 
-  const [previousFeedback, setPreviousFeedback] = useState<{
-    has_previous: boolean;
-    previous?: {
-      card_id: string;
-      source: "draft" | "sent";
-      recorded_at: string | null;
-      one_line: string | null;
-      sent_at: string | null;
-      message_for_member?: string;
-      metrics?: Record<string, number | null>;
-    };
-  } | null>(null);
-  const [previousFeedbackLoading, setPreviousFeedbackLoading] = useState(false);
-  const [showPreviousFeedback, setShowPreviousFeedback] = useState(false);
-
   const handleTrashAction = async () => {
     if (!video) return;
     setIsTrashing(true);
@@ -318,11 +268,6 @@ export function ContentDiagnosisWorkbench({
       setIsTrashing(false);
     }
   };
-
-  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const skipNextSaveRef = useRef(true);
 
   const toggleRef = (refKey: RefKey) => {
     setSelectedRefs((prev) => {
@@ -375,64 +320,12 @@ export function ContentDiagnosisWorkbench({
     [],
   );
 
-  const fetchPreviousFeedback = useCallback((vId: string) => {
-    setPreviousFeedbackLoading(true);
-    fetch(`/api/admin/content-feedback-cards/${vId}/previous`)
-      .then((res) => res.json())
-      .then((data) => {
-        setPreviousFeedback(data);
-        setPreviousFeedbackLoading(false);
-      })
-      .catch(() => {
-        setPreviousFeedback(null);
-        setPreviousFeedbackLoading(false);
-      });
-  }, []);
-
   useEffect(() => {
-    const videoId = video?.id;
-    if (!videoId) return;
-    setMainIssues("");
-    setFeedback("");
+    if (!video?.id) return;
     setAnalysisResult(null);
-    setCardDetail(null);
-    setDraftSavedAt(null);
     setHighlightedSegmentIndex(null);
     setQuotedIndices(new Set());
-    setShowPreviousFeedback(false);
-    skipNextSaveRef.current = true;
-
-    fetch(`/api/admin/content-feedback-cards/${videoId}`)
-      .then((res) => res.json())
-      .then(
-        (data: {
-          feedback_card?: ContentFeedbackCardDetail;
-          error?: string;
-        }) => {
-          if (data.feedback_card) {
-            setCardDetail(data.feedback_card);
-            const source =
-              data.feedback_card.confirmed ?? data.feedback_card.draft;
-            if (source) {
-              setMainIssues(
-                source.summary.one_line ||
-                  source.summary.problem_tags.join(" / ") ||
-                  "",
-              );
-              setFeedback(source.actions.message_for_member || "");
-            }
-            if (data.feedback_card.latest_draft_at) {
-              setDraftSavedAt(new Date(data.feedback_card.latest_draft_at));
-            }
-          } else if (feedbackCard) {
-            setCardDetail({ ...feedbackCard, draft: null, confirmed: null });
-          }
-        },
-      )
-      .catch(() => {});
-
-    fetchPreviousFeedback(videoId);
-  }, [video?.id, feedbackCard, fetchPreviousFeedback]);
+  }, [video?.id]);
 
   useEffect(() => {
     const videoId = video?.id;
@@ -453,82 +346,6 @@ export function ContentDiagnosisWorkbench({
     );
     return () => controller.abort();
   }, [video?.id, selectedRefs, selectedRefUserId, fetchAttribution]);
-
-  const isLocked =
-    cardDetail?.workflow_status === "sent" ||
-    cardDetail?.workflow_status === "viewed";
-  const isEditable = !isLocked;
-
-  const feedbackFindings = useMemo(() => {
-    const toneRank: Record<AttributionFinding["tone"], number> = {
-      bad: 0,
-      warn: 1,
-      missing: 2,
-      good: 3,
-    };
-    if (!multiAttribution) return [];
-
-    return Array.from(selectedRefs)
-      .flatMap((refKey) => {
-        const block = multiAttribution.attributions[refKey];
-        if (!block || block.sample_status !== "ready") return [];
-        return block.findings.map((finding) => ({
-          ...finding,
-          ref_label: block.ref_label,
-        }));
-      })
-      .sort((a, b) => {
-        const toneDiff = toneRank[a.tone] - toneRank[b.tone];
-        if (toneDiff !== 0) return toneDiff;
-        return Math.abs(b.delta ?? 0) - Math.abs(a.delta ?? 0);
-      });
-  }, [multiAttribution, selectedRefs]);
-
-  useEffect(() => {
-    if (!video) return;
-    if (!isEditable) return;
-    if (skipNextSaveRef.current) {
-      skipNextSaveRef.current = false;
-      return;
-    }
-    if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
-    draftTimerRef.current = setTimeout(async () => {
-      setIsSavingDraft(true);
-      try {
-        const res = await fetch(
-          `/api/admin/content-feedback-cards/${video.id}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "save_draft",
-              summary: {
-                one_line: mainIssues.trim() || null,
-              },
-              actions: {
-                message_for_member: feedback.trim() || null,
-              },
-            }),
-          },
-        );
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          feedback_card?: ContentFeedbackCardDetail;
-        };
-        if (data.feedback_card) {
-          setCardDetail(data.feedback_card);
-          onFeedbackCardChanged(video.id, data.feedback_card);
-        }
-        setDraftSavedAt(new Date());
-      } catch {
-      } finally {
-        setIsSavingDraft(false);
-      }
-    }, 1500);
-    return () => {
-      if (draftTimerRef.current) clearTimeout(draftTimerRef.current);
-    };
-  }, [mainIssues, feedback, video, isEditable, onFeedbackCardChanged]);
 
   const screenshotItems = useMemo(() => {
     if (!snapshot) return [] as { label: string; url: string }[];
@@ -615,21 +432,6 @@ export function ContentDiagnosisWorkbench({
     ].filter((s) => s.items.length > 0);
   }, [scriptSegments]);
 
-  const feedbackEvidence = useMemo(() => {
-    const list: string[] = [];
-    for (const f of feedbackFindings) {
-      if (f.tone === "bad" || f.tone === "warn") {
-        list.push(
-          `${f.ref_label} · ${f.metric_label} ${f.value != null ? f.value.toFixed(1) : "—"}${RATE_METRICS.has(f.metric) && f.value != null ? "%" : ""} (${f.delta != null && f.delta !== 0 ? (f.delta > 0 ? "+" : "") + f.delta.toFixed(1) : ""})`,
-        );
-      }
-    }
-    if (analysisResult?.data_summary) {
-      list.push(`AI：${analysisResult.data_summary}`);
-    }
-    return list;
-  }, [feedbackFindings, analysisResult]);
-
   async function handleGenerateAnalysis() {
     if (!video) return;
     setIsGeneratingAnalysis(true);
@@ -644,6 +446,7 @@ export function ContentDiagnosisWorkbench({
       };
       if (!res.ok) throw new Error(data.error ?? "生成分析失败");
       setAnalysisResult(data);
+      onAnalysisGenerated?.();
     } catch (error) {
       feedbackToast.error(
         error instanceof Error ? error.message : "生成辅助分析失败",
@@ -653,69 +456,12 @@ export function ContentDiagnosisWorkbench({
     }
   }
 
-  function handleQuoteAnalysisToFeedback() {
-    if (!analysisResult) return;
-    skipNextSaveRef.current = true;
-    setMainIssues(analysisResult.feedback_draft.main_issues);
-    setFeedback(analysisResult.feedback_draft.improvement_feedback);
-  }
-
-  async function handleMarkExperience(
-    source: "analysis" | "feedback",
-    experienceType: ExperienceType,
-  ) {
-    if (!video) return;
-    setIsMarkingExperience(true);
-    try {
-      const res = await fetch("/api/admin/content-experience-marks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          video_id: video.id,
-          experience_type: experienceType,
-          one_line_summary: mainIssues.trim() || "优质复盘案例",
-          detail_note: feedback.trim() || "无具体描述",
-        }),
-      });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "标记经验失败");
-    } catch (error) {
-      feedbackToast.error(
-        error instanceof Error ? error.message : "标记经验失败",
-      );
-    } finally {
-      setIsMarkingExperience(false);
-    }
-  }
-
-  const handleQuoteSegment = useCallback((text: string, index: number) => {
+  const handleQuoteSegment = useCallback((_text: string, index: number) => {
     setHighlightedSegmentIndex(index);
     setQuotedIndices((prev) => {
       const next = new Set(prev);
-      const isQuoted = next.has(index);
-      if (isQuoted) {
-        next.delete(index);
-        setMainIssues((issuesPrev) => {
-          const target = ` / 文案：「${text}」`;
-          const targetStart = `文案问题：「${text}」`;
-          let result = issuesPrev.replace(target, "").trim();
-          if (result.startsWith(targetStart)) {
-            result = result.replace(targetStart, "").trim();
-            if (result.startsWith("/")) {
-              result = result.substring(1).trim();
-            }
-          }
-          return result;
-        });
-      } else {
-        next.add(index);
-        setMainIssues((issuesPrev) => {
-          const current = issuesPrev.trim();
-          if (!current) return `文案问题：「${text}」`;
-          if (current.includes(text)) return current;
-          return `${current} / 文案：「${text}」`;
-        });
-      }
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
       return next;
     });
   }, []);
@@ -750,22 +496,6 @@ export function ContentDiagnosisWorkbench({
     },
     [scriptSegments],
   );
-
-  const handleCopyFeedbackText = useCallback(async () => {
-    const text = buildContentFeedbackCopyText({
-      title: video?.video_title,
-      findings: feedbackFindings,
-      mainIssue: mainIssues,
-      suggestion: feedback,
-    });
-
-    try {
-      await navigator.clipboard.writeText(text);
-      feedbackToast.success("建议已复制，可直接粘贴到飞书");
-    } catch {
-      feedbackToast.error("复制失败，请检查浏览器剪贴板权限");
-    }
-  }, [feedbackFindings, feedback, mainIssues, video?.video_title]);
 
   const showOverlay = previewIndex !== null && screenshotItems[previewIndex];
 
@@ -938,7 +668,6 @@ export function ContentDiagnosisWorkbench({
                   {reviewQueue.map((item, idx) => {
                     const isSelected = item.id === video?.id;
                     const snap = snapshotMap.get(item.id);
-                    const card = feedbackCards?.[item.id];
                     const warnings = getMetricWarningReasons(
                       snap,
                       thresholds,
@@ -968,17 +697,11 @@ export function ContentDiagnosisWorkbench({
                           {idx + 1}
                         </span>
                         <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex items-center justify-between gap-1">
+                          <div className="flex items-center gap-1">
                             <span className="truncate text-[12px] font-medium text-[#1C1917]">
                               {item.profiles?.name || "未知"} ·{" "}
                               {item.accounts?.name || "未知"}
                             </span>
-                            {card?.workflow_status === "draft" ||
-                            card?.workflow_status === "confirmed" ? (
-                              <span className="shrink-0 rounded bg-[#D99E55]/10 px-1 py-0.2 text-[10px] font-medium text-[#C47A2B]">
-                                草稿
-                              </span>
-                            ) : null}
                           </div>
                           <div className="flex flex-wrap items-center gap-1">
                             {item.anomaly_status !== "normal" &&
@@ -1031,7 +754,6 @@ export function ContentDiagnosisWorkbench({
               {reviewQueue.map((item, idx) => {
                 const isSelected = item.id === video?.id;
                 const snap = snapshotMap.get(item.id);
-                const card = feedbackCards?.[item.id];
                 const warnings = getMetricWarningReasons(
                   snap,
                   thresholds,
@@ -1058,17 +780,11 @@ export function ContentDiagnosisWorkbench({
                       {idx + 1}
                     </span>
                     <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-center justify-between gap-1">
+                      <div className="flex items-center gap-1">
                         <span className="truncate text-[12px] font-medium text-[#1C1917]">
                           {item.profiles?.name || "未知"} ·{" "}
                           {item.accounts?.name || "未知"}
                         </span>
-                        {card?.workflow_status === "draft" ||
-                        card?.workflow_status === "confirmed" ? (
-                          <span className="shrink-0 rounded bg-[#D99E55]/10 px-1 py-0.2 text-[10px] font-medium text-[#C47A2B]">
-                            草稿
-                          </span>
-                        ) : null}
                       </div>
                       <div className="flex flex-wrap items-center gap-1">
                         {item.anomaly_status !== "normal" &&
@@ -1430,7 +1146,7 @@ export function ContentDiagnosisWorkbench({
             )}
           </div>
 
-          {/* 右侧 40% 栏：台词引用、AI诊断思路、诊断建议与下发 */}
+          {/* 右侧 40% 栏：台词引用、AI 诊断思路与问题定位 */}
           <div className="lg:col-span-4 flex flex-col bg-white overflow-y-auto p-6 pb-24 space-y-6 min-w-0">
             {scriptSections.length > 0 && (
               <div className="space-y-3">
@@ -1633,279 +1349,44 @@ export function ContentDiagnosisWorkbench({
                       </motion.div>
                     )}
                 </motion.div>
-                <div className="flex justify-end gap-2 pt-2.5 border-t border-[#ECE7DE]">
-                  <Button
-                    size="sm"
-                    onClick={() => handleMarkExperience("analysis", "hot_case")}
-                    disabled={isMarkingExperience}
-                    className="h-7 rounded-lg bg-[#F5F3EE] text-[11px] font-medium text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917] gap-1"
-                  >
-                    {isMarkingExperience && (
-                      <Loader2 className="size-3 animate-spin text-[#78716C]" />
-                    )}
-                    {isMarkingExperience ? "正在保存..." : "沉淀优秀经验"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleQuoteAnalysisToFeedback}
-                    className="h-7 rounded-lg bg-[#1C1917] hover:bg-[#292524] text-white text-[11px] font-medium transition-colors"
-                  >
-                    一键引用至反馈框
-                  </Button>
-                </div>
               </div>
             )}
             <div className="space-y-4 pt-1">
               <div className="flex items-center justify-between">
                 <h3 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#78716C]">
                   <span className="size-1.5 rounded-full bg-[#D97757]" />
-                  四、诊断建议与下发
+                  四、内部分析
                 </h3>
-                <div className="text-[11px] text-[#78716C] min-h-5 flex items-center gap-1">
-                  {isSavingDraft ? (
-                    <>
-                      <Loader2 className="size-3 animate-spin text-[#D99E55]" />
-                      <span>草稿自动保存中...</span>
-                    </>
-                  ) : draftSavedAt ? (
-                    <>
-                      <span className="size-1.5 rounded-full bg-[#6FAA7D] inline-block" />
-                      <span>已自动存为草稿</span>
-                    </>
-                  ) : null}
-                </div>
               </div>
 
               <div className="space-y-1.5 bg-[#F5F3EE]/70 rounded-lg p-3">
                 <span className="text-[11px] font-semibold text-[#78716C] block">
-                  诊断证据 (自动汇总偏离/异常指标)：
+                  分析边界：
                 </span>
-                {feedbackEvidence.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {feedbackEvidence.map((ev, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white text-[#C9604D] text-[11px] font-medium shadow-2xs"
-                      >
-                        {ev}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-[11px] text-[#78716C]">
-                    没有指标偏离证据，这个视频表现良好。
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1 text-left">
-                  <label className="text-[11.5px] font-medium text-[#292524]">
-                    主要问题一句话总结：
-                  </label>
-                  <input
-                    type="text"
-                    value={mainIssues}
-                    onChange={(e) => setMainIssues(e.target.value)}
-                    disabled={!isEditable}
-                    placeholder="例如：开头前5s钩子不够吸引人，完播偏低..."
-                    className="w-full h-9 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs px-3 text-[12px] text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1 text-left">
-                  <label className="text-[11.5px] font-medium text-[#292524]">
-                    改进具体建议 (关于台词改写、情绪、节奏的具体方向)：
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={feedback}
-                    onChange={(e) => setFeedback(e.target.value)}
-                    disabled={!isEditable}
-                    placeholder="输入具体优化台词的话术改写方向或操作建议..."
-                    className="w-full rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/50 shadow-2xs p-3 text-[12px] leading-relaxed text-[#292524] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:bg-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
-                  />
-                </div>
+                <span className="text-[11px] text-[#78716C]">
+                  只生成内部诊断，结合指标、截图、拆段与对比证据定位问题。
+                </span>
               </div>
 
               <div className="flex items-center justify-between border-t border-[#E5E0D6]/60 pt-3.5">
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={handleGenerateAnalysis}
-                    disabled={isGeneratingAnalysis || !isEditable}
-                    className="h-8 rounded-lg bg-[#F5F3EE] font-medium text-[12px] gap-1.5 text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917]"
-                  >
-                    <Sparkles className="size-3.5 text-[#78716C]" />
-                    {isGeneratingAnalysis ? "分析中..." : "获取 AI 诊断思路"}
-                  </Button>
-
-                  {previousFeedbackLoading ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled
-                      className="h-8 rounded-lg border-[#E5E0D6] text-[12px] font-medium text-[#78716C] gap-1.5"
-                    >
-                      <Loader2 className="size-3.5 animate-spin" />
-                      正在获取上次反馈...
-                    </Button>
-                  ) : previousFeedback?.has_previous ? (
-                    <Button
-                      size="sm"
-                      onClick={() => setShowPreviousFeedback((prev) => !prev)}
-                      className="h-8 rounded-lg bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917] gap-1.5"
-                    >
-                      <History className="size-3.5 text-[#43718E]" />
-                      {showPreviousFeedback
-                        ? "关闭上次反馈对比"
-                        : "对比上次反馈意见"}
-                    </Button>
-                  ) : null}
-                </div>
-
-                {isEditable ? (
-                  <Button
-                    size="sm"
-                    onClick={handleCopyFeedbackText}
-                    disabled={isSavingDraft}
-                    className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-4 gap-1.5 shadow-2xs transition-all active:scale-[0.985] active:duration-75"
-                  >
-                    <Copy className="size-3.5" />
-                    复制建议
-                  </Button>
-                ) : (
-                  <span className="text-[12px] text-[#78716C] font-medium bg-[#F5F3EE]/70 px-3 py-1.5 rounded-lg">
-                    历史站内记录仅查看
-                  </span>
-                )}
+                <span className="text-[11px] text-[#78716C]">
+                  分析结果只供管理端定位问题与复核证据。
+                </span>
+                <Button
+                  size="sm"
+                  onClick={handleGenerateAnalysis}
+                  disabled={isGeneratingAnalysis}
+                  className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-4 gap-1.5 shadow-2xs transition-all active:scale-[0.985] active:duration-75"
+                >
+                  <Sparkles className="size-3.5" />
+                  {isGeneratingAnalysis ? "分析中..." : "生成内部诊断"}
+                </Button>
               </div>
 
               <p className="text-[11px] text-[#78716C] text-left">
-                * 提示：AI
-                辅助诊断思路仅供思路参考，复盘的最终判断与改进意见审定权 100%
-                在您手中。
+                * 提示：AI 辅助诊断只提供证据整理和疑似原因，不替代管理者判断。
               </p>
 
-              {/* 如需网站内留档可展开（折叠降级） */}
-              <details className="group rounded-xl border border-[#E5E0D6] bg-white p-3 text-[12px] transition-all">
-                <summary className="flex cursor-pointer items-center justify-between font-medium text-[#78716C] hover:text-[#292524] select-none">
-                  <span className="flex items-center gap-1.5 text-[11.5px]">
-                    <span className="size-1.5 rounded-full bg-[#78716C]" />
-                    如需网站内留档可展开
-                  </span>
-                  <ChevronDown className="size-3.5 text-[#78716C] transition-transform group-open:rotate-180" />
-                </summary>
-                <div className="mt-3 pt-3 border-t border-[#ECE7DE] space-y-2 text-[11px] text-[#78716C]">
-                  <p className="text-[#78716C]">
-                    草稿已随输入自动保存。如需在后台标记工作流确认状态，历史记录将自动保留。
-                  </p>
-                  <div className="flex items-center justify-between pt-1">
-                    <span>
-                      当前状态：
-                      <span className="font-medium text-[#292524]">
-                        {cardDetail?.workflow_status === "confirmed"
-                          ? "已确认"
-                          : cardDetail?.workflow_status === "sent"
-                            ? "已下发"
-                            : cardDetail?.workflow_status === "draft"
-                              ? "草稿"
-                              : "未开始"}
-                      </span>
-                    </span>
-                    {draftSavedAt && (
-                      <span className="text-[#78716C]">
-                        最近保存：
-                        {draftSavedAt.toLocaleTimeString("zh-CN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </details>
-
-              {showPreviousFeedback && previousFeedback?.previous && (
-                <div className="border-l-2 border-[#43718E] pl-4 space-y-3.5 relative animate-fade-in bg-[#F5F3EE]/60 rounded-r-xl p-3.5">
-                  <div className="flex items-center justify-between pb-1">
-                    <div className="flex items-center gap-1.5 text-[#43718E]">
-                      <History className="size-4" />
-                      <span className="text-[11.5px] font-medium tracking-wider uppercase">
-                        上次复盘诊断对比
-                        {previousFeedback.previous.source === "draft"
-                          ? "（草稿）"
-                          : "（历史下发）"}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPreviousFeedback(false)}
-                      className="text-[#78716C] hover:text-[#292524] text-[11px] font-medium transition-colors cursor-pointer"
-                    >
-                      收起
-                    </button>
-                  </div>
-                  <div className="space-y-2.5 text-[12px] text-[#292524]">
-                    <div>
-                      <span className="text-[11px] text-[#78716C] block">
-                        上次核心问题：
-                      </span>
-                      <p className="font-medium text-[#1C1917] text-[12.5px]">
-                        {previousFeedback.previous.one_line}
-                      </p>
-                    </div>
-                    {previousFeedback.previous.message_for_member && (
-                      <div>
-                        <span className="text-[11px] text-[#78716C] block">
-                          上次改进建议：
-                        </span>
-                        <p className="leading-relaxed text-[#292524] bg-white/90 p-2.5 rounded-lg">
-                          {previousFeedback.previous.message_for_member}
-                        </p>
-                      </div>
-                    )}
-                    {previousFeedback.previous.metrics && (
-                      <div>
-                        <span className="text-[11px] text-[#78716C] block mb-1.5">
-                          上次核心指标快照：
-                        </span>
-                        <div className="grid grid-cols-2 gap-2">
-                          {Object.entries(
-                            previousFeedback.previous.metrics,
-                          ).map(([key, val]) => {
-                            const entry = METRIC_MAP_INDEX.get(
-                              key as MetricKey,
-                            );
-                            if (!entry) return null;
-                            const formatted =
-                              val != null
-                                ? RATE_METRICS.has(key as MetricKey)
-                                  ? `${val.toFixed(1)}%`
-                                  : key === "avg_play_duration"
-                                    ? `${val.toFixed(1)}s`
-                                    : val.toLocaleString()
-                                : "—";
-                            return (
-                              <div
-                                key={key}
-                                className="flex justify-between border-b border-[#E5E0D6]/50 py-1 text-[11px] leading-normal"
-                              >
-                                <span className="text-[#78716C]">
-                                  {entry.label}
-                                </span>
-                                <span className="font-semibold text-[#292524] tabular-nums">
-                                  {formatted}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

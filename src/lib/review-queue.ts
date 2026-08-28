@@ -1,5 +1,4 @@
-import { getShanghaiDateString } from "@/lib/remind-submission";
-import type { ContentFeedbackCardView, ContentReviewReadiness, Video, VideoMetricsSnapshot } from "@/types";
+import type { ContentReviewReadiness, Video, VideoMetricsSnapshot } from "@/types";
 import {
   DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   type VideoReviewThresholds,
@@ -47,17 +46,6 @@ export function formatDateTime(value: string | null) {
   }).format(date);
 }
 
-export function toShanghaiDateKey(value: string | null | undefined) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return getShanghaiDateString(date);
-}
-
-export function getVideoUploadDateKey(video: VideoRow) {
-  return toShanghaiDateKey(video.uploaded_at ?? video.published_at ?? video.created_at);
-}
-
 export function getVideoUploadTimestamp(video: VideoRow) {
   const raw = video.uploaded_at ?? video.published_at ?? video.created_at;
   if (!raw) return 0;
@@ -92,7 +80,6 @@ export function getMetricWarningReasons(
 export function getPriorityScore(
   video: VideoRow,
   snapshot: VideoMetricsSnapshot | undefined,
-  card: ContentFeedbackCardView | undefined,
   readiness: ContentReviewReadiness | undefined,
   thresholds: VideoReviewThresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
 ): number {
@@ -101,8 +88,12 @@ export function getPriorityScore(
   if (video.play_change_signal === "halve") score += 800;
   if (video.play_change_signal === "surge") score += 400;
   if (video.anomaly_status === "投流" || video.anomaly_status === "活动干预") score += 200;
-  if ((card?.workflow_status ?? "not_started") === "not_started") score += 120;
-  if (readiness?.status === "ready") score += 60;
+  if (!readiness?.has_analysis) score += 120;
+  if (
+    readiness?.status === "missing_snapshot" ||
+    readiness?.status === "missing_content" ||
+    readiness?.status === "missing_segments"
+  ) score += 20;
   score += getMetricWarningReasons(snapshot, thresholds).length * 80;
   return score;
 }
@@ -122,35 +113,35 @@ export function buildSnapshotMap(snapshots: VideoMetricsSnapshot[]): Map<string,
 export interface BuildReviewQueueOptions {
   videos: VideoRow[];
   snapshots: VideoMetricsSnapshot[] | Map<string, VideoMetricsSnapshot>;
-  feedbackCards: Record<string, ContentFeedbackCardView>;
   reviewReadiness: Record<string, ContentReviewReadiness>;
   thresholds?: VideoReviewThresholds;
   sortMode?: QueueSortMode;
-  todayDateKey?: string;
   filterMode?: "queue" | "all";
 }
 
 export function buildReviewQueue({
   videos,
   snapshots,
-  feedbackCards,
   reviewReadiness,
   thresholds = DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   sortMode = "priority",
-  todayDateKey,
   filterMode = "all",
 }: BuildReviewQueueOptions): VideoRow[] {
   const snapshotMap = snapshots instanceof Map ? snapshots : buildSnapshotMap(snapshots);
-  const today = todayDateKey ?? getShanghaiDateString();
   const rows = filterMode === "queue"
     ? videos.filter((video) => {
-        const cardStatus = feedbackCards[video.id]?.workflow_status ?? "not_started";
-        const isToday = getVideoUploadDateKey(video) === today;
-        const hasStrongSignal =
-          video.anomaly_status === "删稿" ||
-          video.anomaly_status === "限流" ||
-          video.play_change_signal === "halve";
-        return isToday || hasStrongSignal || cardStatus === "not_started";
+        const readiness = reviewReadiness[video.id];
+        const hasAnomaly =
+          video.anomaly_status !== "normal" &&
+          video.anomaly_status !== "正常" ||
+          video.play_change_signal === "halve" ||
+          video.play_change_signal === "surge";
+        const hasIncompleteData =
+          !readiness ||
+          readiness.status === "missing_snapshot" ||
+          readiness.status === "missing_content" ||
+          readiness.status === "missing_segments";
+        return hasAnomaly || hasIncompleteData || !readiness.has_analysis;
       })
     : videos;
 
@@ -166,14 +157,12 @@ export function buildReviewQueue({
     const leftScore = getPriorityScore(
       left,
       snapshotMap.get(left.id),
-      feedbackCards[left.id],
       reviewReadiness[left.id],
       thresholds,
     );
     const rightScore = getPriorityScore(
       right,
       snapshotMap.get(right.id),
-      feedbackCards[right.id],
       reviewReadiness[right.id],
       thresholds,
     );

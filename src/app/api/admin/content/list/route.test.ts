@@ -14,22 +14,10 @@ function buildContentPayload() {
     snapshots: [],
     profiles: [],
     accounts: [],
-    reviewedVideoIds: [],
-    feedbackCards: {},
     reviewReadiness: {},
     summary: {
       totalVideos: 0,
-      reviewedCount: 0,
-      snapshotCount: 0,
       pendingReviewCount: 0,
-    },
-    workflowSummary: {
-      notStarted: 0,
-      draft: 0,
-      confirmed: 0,
-      sent: 0,
-      viewed: 0,
-      pendingDelivery: 0,
     },
   };
 }

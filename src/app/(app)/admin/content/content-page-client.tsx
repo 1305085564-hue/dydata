@@ -9,8 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
-import { buildContentReviewReadiness } from "@/lib/content-review-readiness";
-import type { ContentFeedbackCardView } from "@/types";
 
 const ContentDiagnosisWorkbench = dynamic(
   () => import("./content-diagnosis-workbench").then((module) => module.ContentDiagnosisWorkbench),
@@ -88,13 +86,10 @@ export function ContentPageClient({
         const score = calculatePriorityScore(video);
         return { video, score };
       })
-      .filter((item) => {
-        const status = data?.feedbackCards?.[item.video.id]?.workflow_status ?? "not_started";
-        return item.score >= 200 && status !== "sent" && status !== "viewed";
-      })
+      .filter((item) => item.score >= 200)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.video);
-  }, [data?.videos, data?.feedbackCards]);
+  }, [data?.videos]);
 
   const loadData = useCallback(async (
     nextView: ContentView,
@@ -148,24 +143,6 @@ export function ContentPageClient({
     await loadData(view, "team", nextTeamId);
   }, [loadData, teamId, view]);
 
-  const handleFeedbackCardChanged = useCallback((videoId: string, nextCard: ContentFeedbackCardView) => {
-    setData((prev) => {
-      const nextFeedbackCards = { ...prev.feedbackCards, [videoId]: nextCard };
-      const nextReadiness = { ...prev.reviewReadiness };
-      const video = prev.videos.find((item) => item.id === videoId);
-      const currentReadiness = prev.reviewReadiness[videoId];
-      if (video && currentReadiness) {
-        nextReadiness[videoId] = buildContentReviewReadiness({
-          video,
-          feedbackCard: nextCard,
-          hasSnapshot24h: currentReadiness.has_snapshot_24h,
-          hasSegments: true,
-        });
-      }
-      return { ...prev, feedbackCards: nextFeedbackCards, reviewReadiness: nextReadiness };
-    });
-  }, []);
-
   // Compute anomaly counts for narrow alert bar
   const { deletedCount, limitedCount, halvedCount } = useMemo(() => {
     let deleted = 0;
@@ -191,41 +168,33 @@ export function ContentPageClient({
   const handleDirectReview = useCallback(() => {
     const targetVideo = data.videos.find((v) => {
       const isAnomaly = v.anomaly_status === "删稿" || v.play_change_signal === "halve";
-      const card = data.feedbackCards[v.id];
-      const status = card?.workflow_status ?? "not_started";
-      return isAnomaly && status !== "sent" && status !== "viewed";
+      return isAnomaly && !data.reviewReadiness[v.id]?.has_analysis;
     });
-    const fallbackVideo = targetVideo || data.videos.find((v) => {
-      const card = data.feedbackCards[v.id];
-      const status = card?.workflow_status ?? "not_started";
-      return status !== "sent" && status !== "viewed";
-    });
+    const fallbackVideo = targetVideo || data.videos.find((v) => !data.reviewReadiness[v.id]?.has_analysis);
     if (fallbackVideo) {
       setSelectedVideoId(fallbackVideo.id);
     } else {
-      toast.info("今日待复盘视频已全部完成");
+      toast.info("当前列表暂无待分析作品");
     }
-  }, [data.videos, data.feedbackCards]);
+  }, [data.videos, data.reviewReadiness]);
 
   if (selectedVideoId) {
     const selectedVideo = data?.videos?.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = data?.snapshots?.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
-    const selectedFeedbackCard = data?.feedbackCards?.[selectedVideoId] ?? null;
-
     return (
       <ContentDiagnosisWorkbench
         video={selectedVideo}
         snapshot={selectedSnapshot}
-        feedbackCard={selectedFeedbackCard}
-        onFeedbackCardChanged={handleFeedbackCardChanged}
         onClose={() => setSelectedVideoId(null)}
         profiles={data.profiles}
         anomalyVideos={anomalyVideos}
         videos={data.videos}
         snapshots={data.snapshots}
-        feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
         onVideoSelect={setSelectedVideoId}
+        onAnalysisGenerated={() => {
+          void loadData(view, perspective, teamId, { background: true });
+        }}
         canOperateLifecycle={permissionInfo.permissions.manage_videos === true}
         onLifecycleChanged={() => {
           setSelectedVideoId(null);
@@ -243,7 +212,7 @@ export function ContentPageClient({
       {/* 整合单排顶栏控制舱：Sticky 纸感与环境融合 */}
       <div className="sticky top-[calc(var(--app-top-offset,64px)+0.5rem)] z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/85 px-3.5 py-2.5 backdrop-blur-md transition-all duration-200 shadow-2xs">
         <div className="flex flex-wrap items-center gap-3">
-          {/* 视角切换 Tab：待复盘 VS 全部 */}
+          {/* 视角切换 Tab：待分析 VS 全部 */}
           <div className="flex items-center gap-1">
             <button
               type="button"
@@ -254,7 +223,7 @@ export function ContentPageClient({
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
               }`}
             >
-              待复盘 ({data.summary.pendingReviewCount})
+              待分析 ({data.summary.pendingReviewCount})
             </button>
             <button
               type="button"
@@ -353,7 +322,6 @@ export function ContentPageClient({
       <ContentList
         videos={data.videos}
         snapshots={data.snapshots}
-        feedbackCards={data.feedbackCards}
         reviewReadiness={data.reviewReadiness}
         totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}
         view={view}
