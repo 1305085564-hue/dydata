@@ -46,6 +46,24 @@ import { cn } from "@/lib/utils";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { formatShanghaiDateTime } from "@/lib/日报";
 import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
+import {
+  isTeamMembershipRequiredError,
+  TopicRequestError,
+} from "@/lib/topics/v2-client-contract";
+
+async function readTopicResponse(response: Response, fallback: string) {
+  const payload: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = typeof payload === "object" && payload !== null && "error" in payload && typeof payload.error === "string"
+      ? payload.error
+      : fallback;
+    const code = typeof payload === "object" && payload !== null && "code" in payload && typeof payload.code === "string"
+      ? payload.code
+      : undefined;
+    throw new TopicRequestError(message, response.status, code);
+  }
+  return payload;
+}
 
 interface ClaimInfo {
   userId: string;
@@ -85,6 +103,7 @@ export default function SubTopicDetailPage({
 
   const [detail, setDetail] = useState<SubTopicDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
+  const [membershipRequired, setMembershipRequired] = useState(false);
 
   // 撞车动态
   const [claimsData, setClaimsData] = useState<ClaimsApiResponse>({
@@ -133,6 +152,10 @@ export default function SubTopicDetailPage({
   const [selectedReturnId, setSelectedReturnId] = useState<string | null>(null);
   const [isReplacing, setIsReplacing] = useState(false);
 
+  const markMembershipRequired = (error: unknown) => {
+    if (isTeamMembershipRequiredError(error)) setMembershipRequired(true);
+  };
+
   // 获取当前登录用户 ID
   useEffect(() => {
     const getUserId = async () => {
@@ -152,13 +175,10 @@ export default function SubTopicDetailPage({
     setMyClaimsError(null);
     try {
       const res = await fetch("/api/topics/pool?view=my_claims");
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "获取我的认领状态失败");
-      }
-      const data = await res.json();
-      setMyClaims(data.items || []);
+      const data = await readTopicResponse(res, "获取我的认领状态失败") as { items?: unknown[] };
+      setMyClaims((data.items ?? []) as MyClaimSubTopicItem[]);
     } catch (err) {
+      markMembershipRequired(err);
       console.error("加载我的认领状态失败:", err);
       setMyClaimsError(
         err instanceof Error ? err.message : "获取我的认领状态失败",
@@ -174,8 +194,7 @@ export default function SubTopicDetailPage({
         const res = await fetch(
           `/api/topics/sub-topics/${subTopicId}/works?page=${page}&page_size=${DETAIL_PAGE_SIZE}&sort=${sort}`,
         );
-        if (!res.ok) throw new Error("获取作品失败");
-        const data = await res.json();
+        const data = await readTopicResponse(res, "获取作品失败");
         const parsed = parseSubTopicWorksResponse(data);
         setWorks(parsed.items);
         setSimilarReferences(parsed.similarReferences);
@@ -183,6 +202,7 @@ export default function SubTopicDetailPage({
         setWorksPage(parsed.page);
         setWorksPageSize(parsed.pageSize);
       } catch (err) {
+        markMembershipRequired(err);
         console.error("加载作品数据失败:", err);
       } finally {
         setLoadingWorks(false);
@@ -196,8 +216,7 @@ export default function SubTopicDetailPage({
     setLoadingDetail(true);
     try {
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}`);
-      if (!res.ok) throw new Error("选题不存在或已被删除");
-      const data = await res.json();
+      const data = await readTopicResponse(res, "选题不存在或已被删除");
 
       const parsed = parseSubTopicDetailResponse(data);
       setDetail(parsed.subTopic);
@@ -217,6 +236,7 @@ export default function SubTopicDetailPage({
         }
       }
     } catch (err) {
+      markMembershipRequired(err);
       feedbackToast.error("加载详情失败", {
         details: err instanceof Error ? err.message : String(err),
       });
@@ -231,17 +251,14 @@ export default function SubTopicDetailPage({
     setClaimsError(null);
     try {
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claims`);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "获取撞车动态失败");
-      }
-      const data = await res.json();
+      const data = await readTopicResponse(res, "获取撞车动态失败") as Partial<ClaimsApiResponse>;
       setClaimsData({
         claims: Array.isArray(data.claims) ? data.claims : [],
         candidateCount: data.candidateCount ?? 0,
         scriptingCount: data.scriptingCount ?? 0,
       });
     } catch (err) {
+      markMembershipRequired(err);
       console.error("加载撞车动态失败:", err);
       setClaimsError(err instanceof Error ? err.message : "获取撞车动态失败");
     }
@@ -293,7 +310,7 @@ export default function SubTopicDetailPage({
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
         method: "POST",
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.status === 409) {
         setSelectedReturnId(activeCandidateItems[0]?.id || null);
@@ -301,7 +318,15 @@ export default function SubTopicDetailPage({
         return;
       }
 
-      if (!res.ok) throw new Error(data.error || "认领失败");
+      if (!res.ok) {
+        const error = new TopicRequestError(
+          typeof data.error === "string" ? data.error : "认领失败",
+          res.status,
+          typeof data.code === "string" ? data.code : undefined,
+        );
+        markMembershipRequired(error);
+        throw error;
+      }
 
       await loadAllData();
     } catch (err) {
@@ -326,7 +351,13 @@ export default function SubTopicDetailPage({
       );
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "标记脚本中失败");
+        const error = new TopicRequestError(
+          typeof errData.error === "string" ? errData.error : "标记脚本中失败",
+          res.status,
+          typeof errData.code === "string" ? errData.code : undefined,
+        );
+        markMembershipRequired(error);
+        throw error;
       }
       await loadAllData();
     } catch (err) {
@@ -349,7 +380,13 @@ export default function SubTopicDetailPage({
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "放回选题池失败");
+        const error = new TopicRequestError(
+          typeof errData.error === "string" ? errData.error : "放回选题池失败",
+          res.status,
+          typeof errData.code === "string" ? errData.code : undefined,
+        );
+        markMembershipRequired(error);
+        throw error;
       }
       await loadAllData();
     } catch (err) {
@@ -375,7 +412,16 @@ export default function SubTopicDetailPage({
           target_sub_topic_id: subTopicId,
         }),
       });
-      if (!replaceRes.ok) throw new Error("替换认领失败");
+      if (!replaceRes.ok) {
+        const data = await replaceRes.json().catch(() => ({}));
+        const error = new TopicRequestError(
+          typeof data.error === "string" ? data.error : "替换认领失败",
+          replaceRes.status,
+          typeof data.code === "string" ? data.code : undefined,
+        );
+        markMembershipRequired(error);
+        throw error;
+      }
 
       setReplaceDialogOpen(false);
       await loadAllData();
@@ -410,7 +456,15 @@ export default function SubTopicDetailPage({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "修改失败");
+      if (!res.ok) {
+        const error = new TopicRequestError(
+          typeof data.error === "string" ? data.error : "修改失败",
+          res.status,
+          typeof data.code === "string" ? data.code : undefined,
+        );
+        markMembershipRequired(error);
+        throw error;
+      }
       setEditDialogOpen(false);
       await loadAllData();
     } catch (err) {
@@ -440,7 +494,15 @@ export default function SubTopicDetailPage({
         );
         return;
       }
-      if (!res.ok) throw new Error(data.error || "删除失败");
+      if (!res.ok) {
+        const error = new TopicRequestError(
+          typeof data.error === "string" ? data.error : "删除失败",
+          res.status,
+          typeof data.code === "string" ? data.code : undefined,
+        );
+        markMembershipRequired(error);
+        throw error;
+      }
 
       router.push("/topics");
     } catch (err) {
@@ -461,6 +523,22 @@ export default function SubTopicDetailPage({
   const handlePageChange = (newPage: number) => {
     void fetchWorks(newPage, worksSort);
   };
+
+  if (membershipRequired) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-12 text-center">
+        <h1 className="text-lg font-medium text-[#1C1917]">请先申请加入团队</h1>
+        <p className="max-w-md text-sm leading-relaxed text-[#78716C]">
+          当前账号还没有有效团队归属，选题详情和认领协作暂不可用。
+        </p>
+        <Link href="/topics">
+          <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0">
+            返回选题库申请加入
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (loadingDetail) {
     return (

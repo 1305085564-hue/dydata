@@ -14,6 +14,7 @@ import {
   parseActiveTopicsResponse,
   parseTopicOptionsResponse,
   parseTopicPoolResponse,
+  isTeamMembershipRequiredError,
   TopicRequestError,
 } from "@/lib/topics/v2-client-contract";
 import {
@@ -88,6 +89,7 @@ export function TopicHubV2() {
   } | null>(null);
 
   const [authError, setAuthError] = useState(false);
+  const [membershipRequired, setMembershipRequired] = useState(false);
   const poolRequestId = useRef(0);
 
   useEffect(() => {
@@ -121,6 +123,7 @@ export function TopicHubV2() {
     } catch (err) {
       if (err instanceof TopicRequestError && err.status === 401)
         setAuthError(true);
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       setActiveError(getErrorMessage(err, "团队动态加载失败"));
       if (!(err instanceof TopicRequestError && err.status === 401))
         console.error("加载今日精选失败:", err);
@@ -137,6 +140,7 @@ export function TopicHubV2() {
     } catch (err) {
       if (err instanceof TopicRequestError && err.status === 401)
         setAuthError(true);
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       setTopicsOptionsError(getErrorMessage(err, "母题列表加载失败"));
     }
   }, []);
@@ -166,6 +170,7 @@ export function TopicHubV2() {
     } catch (err) {
       if (err instanceof TopicRequestError && err.status === 401)
         setAuthError(true);
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       setPoolError(getErrorMessage(err, "选题池加载失败"));
       if (!(err instanceof TopicRequestError && err.status === 401))
         console.error("加载选题池列表失败:", err);
@@ -206,6 +211,7 @@ export function TopicHubV2() {
     } catch (err) {
       if (err instanceof TopicRequestError && err.status === 401)
         setAuthError(true);
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       setClaimsError(getErrorMessage(err, "我的认领加载失败"));
       if (!(err instanceof TopicRequestError && err.status === 401))
         console.error("加载我的认领失败:", err);
@@ -271,6 +277,7 @@ export function TopicHubV2() {
       showToast("已认领到候选", "success");
       refreshAll();
     } catch (err) {
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "认领请求失败"), "error");
     }
   };
@@ -294,6 +301,7 @@ export function TopicHubV2() {
       refreshAll();
       return true;
     } catch (err) {
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "替换请求异常"), "error");
       return false;
     }
@@ -309,6 +317,7 @@ export function TopicHubV2() {
       showToast("选题状态已更新为: 脚本撰写中", "success");
       refreshAll();
     } catch (err) {
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "切换状态失败"), "error");
     }
   };
@@ -322,6 +331,7 @@ export function TopicHubV2() {
       showToast("已释放该选题，槽位已空出", "success");
       refreshAll();
     } catch (err) {
+      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "归还请求失败"), "error");
     }
   };
@@ -333,6 +343,25 @@ export function TopicHubV2() {
       .getElementById("topic-pool-explorer")
       ?.scrollIntoView({ behavior: "smooth" });
   };
+
+  if (membershipRequired) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-8 text-center shadow-claude-dialog">
+          <h3 className="mb-2 text-lg font-medium text-[#1C1917]">请先申请加入团队</h3>
+          <p className="mb-6 text-sm leading-relaxed text-[#78716C]">
+            当前账号还没有有效团队归属，选题池和认领协作暂不可用。
+          </p>
+          <a
+            href="/dashboard"
+            className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#D97757] px-5 py-2.5 text-xs font-semibold text-white"
+          >
+            去工作台申请加入团队
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] text-[#292524] px-0 py-1 sm:p-6 lg:p-8 font-sans antialiased">

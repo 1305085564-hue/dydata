@@ -12,13 +12,27 @@ import {
   parseTopicPoolResponse,
   parseSubTopicDetailResponse,
   parseSuggestedSubTopicsResponse,
-  parseTopicWorksResponse,
+  isTeamMembershipRequiredError,
 } from "./v2-client-contract";
 
 test("fetchTopicJson 在非 2xx 响应时抛出后端错误", async () => {
   await assert.rejects(
     () => fetchTopicJson("/api/topics/pool", undefined, async () => new Response(JSON.stringify({ error: "服务暂不可用" }), { status: 503 })),
     /服务暂不可用/,
+  );
+});
+
+test("fetchTopicJson 保留未入团 403 的稳定错误码，前端不会把它当空数据", async () => {
+  await assert.rejects(
+    () => fetchTopicJson(
+      "/api/topics/pool",
+      undefined,
+      async () => new Response(JSON.stringify({ error: "请先申请加入团队", code: "TEAM_MEMBERSHIP_REQUIRED" }), { status: 403 }),
+    ),
+    (error: unknown) => {
+      assert.equal(isTeamMembershipRequiredError(error), true);
+      return true;
+    },
   );
 });
 

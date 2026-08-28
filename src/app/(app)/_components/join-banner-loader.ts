@@ -23,7 +23,7 @@ export async function loadJoinBanner(): Promise<JoinBannerData> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("team_id")
+    .select("team_id, membership_status")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -31,7 +31,7 @@ export async function loadJoinBanner(): Promise<JoinBannerData> {
     return { shouldRender: false };
   }
 
-  if (profile.team_id) {
+  if (profile.membership_status === "archived" || profile.team_id) {
     return { shouldRender: false };
   }
 

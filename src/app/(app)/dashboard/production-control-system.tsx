@@ -107,12 +107,6 @@ export function ProductionControlSystem({
       window.removeEventListener("dydata-dashboard-action", handleExternalAction);
   }, [accounts, selectedAccountId, activeBizDate, today]);
 
-  function openDashboardTool(key: string) {
-    window.dispatchEvent(
-      new CustomEvent("dydata-dashboard-action", { detail: { key } }),
-    );
-  }
-
   return (
     <div className="antialiased max-w-5xl mx-auto">
       <VideoSubmitPanelV2

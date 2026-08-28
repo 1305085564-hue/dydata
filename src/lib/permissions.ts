@@ -109,7 +109,13 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
     dataScope,
     teamId: profile.team_id ?? null,
     companyRole,
-    membershipStatus: profile.membership_status === "archived" ? "archived" : "active",
+    // 未知/缺失状态不能被默认为 active；需要当前操作的入口自行按 active 明确放行。
+    membershipStatus:
+      profile.membership_status === "active"
+        ? "active"
+        : profile.membership_status === "archived"
+          ? "archived"
+          : undefined,
     groupMode,
     groupModeTokenHash: groupModeState.tokenHash ?? undefined,
     hasGroupOwnerQualification,

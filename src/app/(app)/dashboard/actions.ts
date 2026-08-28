@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { getTeamMeta } from "@/lib/teams";
+import {
+  isActiveTeamMembership,
+  TEAM_MEMBERSHIP_REQUIRED_MESSAGE,
+} from "@/app/api/topics/_shared";
 import { normalizePublishedAtForStorage } from "@/lib/日报";
 import {
   buildRequestDraft,
@@ -11,7 +14,6 @@ import {
   isMissingExemptionRequestCategoryError,
   type GrantMode,
 } from "@/lib/豁免流程";
-import { loadApplicantTeamId } from "@/lib/豁免";
 import type { ExemptionCategory } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { sendFeishuWebhook } from "@/lib/飞书webhook";
@@ -231,16 +233,18 @@ export async function submitExemptionRequestWithClient(
     }
 
     const today = options.today ?? formatShanghaiDateOnly();
-    const teamId = await loadApplicantTeamId(
-      supabase,
-      user.id,
-      getTeamMeta(user.user_metadata).teamId,
-    );
+    const { data: applicantProfile, error: applicantProfileError } = await supabase
+      .from("profiles")
+      .select("team_id, membership_status")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    if (!teamId) {
+    if (applicantProfileError || !applicantProfile || !isActiveTeamMembership(applicantProfile)) {
       console.error("[exemptions] missing team_id for user", user.id);
-      return { error: "账号未分配团队，请联系管理员" };
+      return { error: TEAM_MEMBERSHIP_REQUIRED_MESSAGE };
     }
+
+    const teamId = applicantProfile.team_id;
 
     let drafts;
     try {

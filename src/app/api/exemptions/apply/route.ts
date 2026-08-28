@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 import {
+  isActiveTeamMembership,
+  teamMembershipRequiredResponse,
+} from "@/app/api/topics/_shared";
+
+import {
   isRecord,
   isValidDate,
   readJsonBody,
@@ -53,18 +58,12 @@ export async function buildApplyExemptionResponse(
   request: Request,
   deps: { requireSignedInUser: typeof requireSignedInUser } = { requireSignedInUser },
 ) {
-  const body = await readJsonBody(request);
-  if ("response" in body) return body.response;
-
-  const payload = parseApplyExemptionPayload(body.data);
-  if ("response" in payload) return payload.response;
-
   const auth = await deps.requireSignedInUser();
   if ("response" in auth) return auth.response;
 
   const { data: profile, error: profileError } = await auth.supabase
     .from("profiles")
-    .select("id, team_id")
+    .select("id, team_id, membership_status")
     .eq("id", auth.user.id)
     .single();
 
@@ -72,6 +71,16 @@ export async function buildApplyExemptionResponse(
     if (profileError) console.error("[exemptions] failed to load applicant profile", profileError);
     return NextResponse.json({ error: "用户信息不存在" }, { status: 403 });
   }
+
+  if (!isActiveTeamMembership(profile)) {
+    return teamMembershipRequiredResponse();
+  }
+
+  const body = await readJsonBody(request);
+  if ("response" in body) return body.response;
+
+  const payload = parseApplyExemptionPayload(body.data);
+  if ("response" in payload) return payload.response;
 
   // 防重：仅拦截完全相同（申请人+团队+类型+起止日期）且仍处于 pending 的申请，不影响不同日期/类型的新申请，也不影响已处理过的历史申请
   let duplicateQuery = auth.supabase

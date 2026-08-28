@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { loadActiveTopics } from "@/lib/topics/service";
-import { jsonResult, requireTopicsContext } from "../_shared";
+import { jsonResult, requireActiveTeamContext } from "../_shared";
 
 export async function GET(request: NextRequest) {
-  const auth = await requireTopicsContext();
+  const auth = await requireActiveTeamContext();
   if (!auth.ok) return auth.response;
 
   const rawLimit = Number(request.nextUrl.searchParams.get("limit") ?? 8);

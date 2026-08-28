@@ -1,10 +1,18 @@
 export type TopicRequest = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 
+export const TEAM_MEMBERSHIP_REQUIRED_CODE = "TEAM_MEMBERSHIP_REQUIRED" as const;
+
 export class TopicRequestError extends Error {
-  constructor(message: string, readonly status: number) {
+  constructor(message: string, readonly status: number, readonly code?: string) {
     super(message);
     this.name = "TopicRequestError";
   }
+}
+
+export function isTeamMembershipRequiredError(error: unknown): error is TopicRequestError {
+  return error instanceof TopicRequestError
+    && error.status === 403
+    && error.code === TEAM_MEMBERSHIP_REQUIRED_CODE;
 }
 
 export type TopicClaimStatus = "candidate" | "scripting";
@@ -216,7 +224,8 @@ export async function fetchTopicJson<T = unknown>(
     const message = isRecord(payload) && typeof payload.error === "string"
       ? payload.error
       : `选题接口请求失败（${response.status}）`;
-    throw new TopicRequestError(message, response.status);
+    const code = isRecord(payload) && typeof payload.code === "string" ? payload.code : undefined;
+    throw new TopicRequestError(message, response.status, code);
   }
   return payload as T;
 }

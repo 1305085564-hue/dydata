@@ -9,6 +9,7 @@ function createSupabaseStub(options: {
   pendingRows?: RequestRow[];
   pendingError?: { message: string } | null;
   insertError?: { message: string } | null;
+  profile?: { team_id: string | null; membership_status: "active" | "archived" };
 }) {
   const insertedRows: RequestRow[][] = [];
   const pendingRows = options.pendingRows ?? [];
@@ -37,7 +38,10 @@ function createSupabaseStub(options: {
       return this;
     },
     maybeSingle() {
-      return Promise.resolve({ data: { team_id: "team-1" }, error: null });
+      return Promise.resolve({
+        data: options.profile ?? { team_id: "team-1", membership_status: "active" },
+        error: null,
+      });
     },
   };
 
@@ -105,4 +109,19 @@ test("豁免申请写入失败返回前端可显示的错误", async () => {
   );
 
   assert.equal(result.error, "提交豁免申请失败");
+});
+
+test("未入团 active 成员的 dashboard 豁免申请与 REST API 使用同一文案", async () => {
+  const stub = createSupabaseStub({
+    profile: { team_id: null, membership_status: "active" },
+  });
+
+  const result = await submitExemptionRequestWithClient(
+    baseInput,
+    { supabase: stub.supabase, user: { id: "user-1", user_metadata: {} } },
+    { today: "2026-08-25" },
+  );
+
+  assert.equal(result.error, "请先申请加入团队");
+  assert.equal(stub.insertedRows.length, 0);
 });

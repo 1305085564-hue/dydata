@@ -26,7 +26,14 @@ function assertResponse<T>(r: T | undefined): T {
   return r;
 }
 
-function mockSupabase(rows: ExemptionRow[]) {
+function mockSupabase(
+  rows: ExemptionRow[],
+  profile: { id: string; team_id: string | null; membership_status: "active" | "archived" } = {
+    id: "user-1",
+    team_id: "team-1",
+    membership_status: "active",
+  },
+) {
   const filters: Array<{ col: string; op: string; value: unknown }> = [];
 
   function applyFilters() {
@@ -94,7 +101,7 @@ function mockSupabase(rows: ExemptionRow[]) {
             return this;
           },
           async single() {
-            return { data: { id: "user-1", team_id: "team-1" }, error: null };
+            return { data: profile, error: null };
           },
         };
       }
@@ -104,8 +111,12 @@ function mockSupabase(rows: ExemptionRow[]) {
   };
 }
 
-function deps(rows: ExemptionRow[], userId = "user-1") {
-  const supabase = mockSupabase(rows);
+function deps(
+  rows: ExemptionRow[],
+  userId = "user-1",
+  profile?: { id: string; team_id: string | null; membership_status: "active" | "archived" },
+) {
+  const supabase = mockSupabase(rows, profile);
   return {
     requireSignedInUser: async () => ({ supabase: supabase as never, user: { id: userId } as never }),
   };
@@ -231,4 +242,20 @@ test("end_date 为区间时使用 is/eq 正确比较，不同 end_date 不会互
   const res = assertResponse(await buildApplyExemptionResponse(request(rangePayload), deps(rows)));
 
   assert.equal(res.status, 201);
+});
+
+test("未入团 active 成员申请豁免时拒绝且不新增申请行", async () => {
+  const rows: ExemptionRow[] = [];
+  const res = assertResponse(await buildApplyExemptionResponse(
+    request(basePayload),
+    deps(rows, "user-1", { id: "user-1", team_id: null, membership_status: "active" }),
+  ));
+  const body = await res.json();
+
+  assert.equal(res.status, 403);
+  assert.deepEqual(body, {
+    error: "请先申请加入团队",
+    code: "TEAM_MEMBERSHIP_REQUIRED",
+  });
+  assert.equal(rows.length, 0);
 });

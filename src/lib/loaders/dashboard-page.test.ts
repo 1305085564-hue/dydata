@@ -46,6 +46,8 @@ function createSupabaseMock(
     if (call.table === "profiles") {
       return {
         data: {
+          team_id: "team-1",
+          membership_status: "active",
           name: "测试成员",
           status: "active",
           exempt_type: null,
@@ -249,6 +251,34 @@ test("loadDashboardPageData 首屏只查一次 profiles 且不再拉 team review
   assert.equal("userRole" in result, false);
   assert.equal(result.userDisplayName, "测试成员");
   assert.equal("teamReviewRequests" in result, false);
+  assert.equal(result.hasActiveTeamMembership, true);
+});
+
+test("未入团 active 成员的 dashboard 数据不触发默认账号创建", async () => {
+  const supabase = createSupabaseMock({
+    profiles: {
+      data: {
+        team_id: null,
+        membership_status: "active",
+        name: "未入团成员",
+        status: "active",
+        exempt_type: null,
+        exempt_start_date: null,
+        exempt_end_date: null,
+        exempt_reason: null,
+        exemption_category: null,
+      },
+      error: null,
+    },
+  });
+
+  const result = await loadDashboardPageData({
+    supabase: supabase as never,
+    userId: "user-1",
+  });
+
+  assert.equal(result.hasActiveTeamMembership, false);
+  assert.equal(supabase.calls.filter((call) => call.table === "accounts").length, 1);
 });
 
 test("loadDashboardPageData 会返回本月已提交日期并去重", async () => {

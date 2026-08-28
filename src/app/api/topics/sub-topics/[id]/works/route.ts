@@ -1,13 +1,13 @@
 import type { NextRequest } from "next/server";
 import { buildWorksQueryOptions, loadSubTopicWorks } from "@/lib/topics/service";
-import { jsonResult, requireTopicsContext } from "../../../_shared";
+import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
 export async function GET(request: NextRequest, context: RouteContext) {
-  const auth = await requireTopicsContext();
+  const auth = await requireActiveTeamContext();
   if (!auth.ok) return auth.response;
 
   const parsed = buildWorksQueryOptions(request.nextUrl.searchParams);

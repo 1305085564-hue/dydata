@@ -41,6 +41,8 @@ async function loadDashboardAccounts(
 }
 
 type ProfileWithExemptionRow = {
+  team_id: string | null;
+  membership_status: "active" | "archived" | string | null;
   name: string | null;
   status: string | null;
   exempt_type: "permanent" | "temporary" | null;
@@ -74,9 +76,9 @@ export type UserExemptionReviewNotice = {
 };
 
 const DASHBOARD_PROFILE_SELECT =
-  "name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
+  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason, exemption_category";
 const DASHBOARD_PROFILE_SELECT_FALLBACK =
-  "name, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
+  "name, team_id, membership_status, status, exempt_type, exempt_start_date, exempt_end_date, exempt_reason";
 
 let profileExemptionCategoryAvailable: boolean | null = null;
 let exemptionGrantTableAvailable: boolean | null = null;
@@ -269,6 +271,7 @@ export interface DashboardPageData {
   monthReports: DashboardActivityReport[];
   userId: string;
   userDisplayName: string;
+  hasActiveTeamMembership: boolean;
   accounts: Array<DashboardAccountRow & { display_name: string }>;
   accountIds: string[];
   accountDisplayNameMap: Record<string, string>;
@@ -294,8 +297,9 @@ export async function loadDashboardPageData({
 
   let accounts = initialAccounts;
   const userDisplayName = profile?.name?.trim() || "当前用户";
+  const hasActiveTeamMembership = profile?.membership_status === "active" && Boolean(profile.team_id);
 
-  if (accounts.length === 0) {
+  if (hasActiveTeamMembership && accounts.length === 0) {
     let shouldReloadAccounts = false;
     try {
       const provisioning = await ensureDefaultDashboardAccount({
@@ -389,6 +393,7 @@ export async function loadDashboardPageData({
     monthReports,
     userId,
     userDisplayName,
+    hasActiveTeamMembership,
     accounts: displayAccounts,
     accountIds,
     accountDisplayNameMap,

@@ -15,6 +15,7 @@ interface DashboardContentProps {
   userDisplayName: string;
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
   userId: string;
+  hasActiveTeamMembership: boolean;
   todayReports: TodaySubmissionReportLike[];
   monthSubmittedDates: string[];
   monthReports: MonthReport[];
@@ -28,5 +29,9 @@ interface DashboardContentProps {
 }
 
 export function DashboardContent(props: DashboardContentProps) {
+  if (!props.hasActiveTeamMembership) {
+    return null;
+  }
+
   return <ProductionControlSystem {...props} />;
 }

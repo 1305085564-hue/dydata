@@ -1,13 +1,13 @@
 import type { NextRequest } from "next/server";
 import { deleteSubTopic, loadSubTopicDetail, updateSubTopic } from "@/lib/topics/service";
-import { jsonResult, requireTopicsContext } from "../../_shared";
+import { jsonResult, requireActiveTeamContext } from "../../_shared";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
 export async function GET(_request: NextRequest, context: RouteContext) {
-  const auth = await requireTopicsContext();
+  const auth = await requireActiveTeamContext();
   if (!auth.ok) return auth.response;
 
   const { id } = await context.params;
@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  const auth = await requireTopicsContext();
+  const auth = await requireActiveTeamContext();
   if (!auth.ok) return auth.response;
 
   let body: unknown;
@@ -37,7 +37,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
-  const auth = await requireTopicsContext();
+  const auth = await requireActiveTeamContext();
   if (!auth.ok) return auth.response;
 
   const { id } = await context.params;

@@ -26,13 +26,14 @@ import {
   validateEditSubmissionBinding,
 } from "./edit-binding";
 import { getOwnedSubmissionScreenshotPaths } from "@/lib/submission-screenshot-access";
-import { filterActiveMemberships, isMissingMembershipStatusError, loadWithMembershipFallback } from "@/lib/member-lifecycle";
+import { filterActiveMemberships, loadWithMembershipFallback } from "@/lib/member-lifecycle";
 import {
   DAILY_REPORT_WRITE_SELECT,
   SNAPSHOT_WRITE_SELECT,
   VIDEO_SUBMIT_RESPONSE_SELECT,
 } from "./response-fields";
 import { validateTopicClaimForSubmission } from "./topic-association";
+import { resolveVideoSubmitMembershipResponse } from "./membership";
 
 type RollbackAction = () => Promise<void>;
 
@@ -170,6 +171,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("name, team_id, membership_status")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500 });
+  }
+
+  const membershipResponse = resolveVideoSubmitMembershipResponse(profile);
+  if (membershipResponse) return membershipResponse;
+
+  const typedProfile = profile as {
+    name: string | null;
+    team_id: string | null;
+    membership_status: string | null;
+  };
+
   let body: unknown;
 
   try {
@@ -256,32 +276,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: screenshotAccess.error }, { status: screenshotAccess.status });
   }
 
-  const profileResult = await supabase
-    .from("profiles")
-    .select("name, team_id, membership_status")
-    .eq("id", user.id)
-    .single();
-  const fallbackProfileResult = profileResult.error && isMissingMembershipStatusError(profileResult.error)
-    ? await supabase
-      .from("profiles")
-      .select("name, team_id")
-      .eq("id", user.id)
-      .single()
-    : null;
-  const profile = (fallbackProfileResult?.data ?? profileResult.data) as {
-    name: string | null;
-    team_id: string | null;
-    membership_status?: string | null;
-  } | null;
-  const profileError = fallbackProfileResult?.error ?? profileResult.error;
-
-  if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 500 });
-  }
-  if (profile?.membership_status === "archived") {
-    return NextResponse.json({ error: "已归档账号不能提交视频" }, { status: 403 });
-  }
-
   if (normalized.topic_id) {
     const { data: topicClaim, error: topicClaimError } = await supabase
       .from("sub_topic_claims")
@@ -299,7 +293,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const submitter = profile?.name ?? "未知";
+  const submitter = typedProfile.name ?? "未知";
   const roleUserIds = editContract
     ? {
         scriptAuthorUserId: editContract.assignees.script_author_user_id,
@@ -338,7 +332,7 @@ export async function POST(request: NextRequest) {
     const validAssigneeIds = new Set(
       assigneeProfiles
         .filter((assignee) => {
-          return profile?.team_id ? assignee.team_id === profile.team_id : false;
+          return typedProfile.team_id ? assignee.team_id === typedProfile.team_id : false;
         })
         .map((assignee) => assignee.id),
     );
