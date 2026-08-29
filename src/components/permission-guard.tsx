@@ -15,7 +15,7 @@ interface PermissionGuardProps {
 
 export function PermissionGuard({
   moduleTitle,
-  requiredRoleLabel = "团队管理员或组长",
+  requiredRoleLabel = "组长 · 管理",
   description,
 }: PermissionGuardProps) {
   const pathname = usePathname();
@@ -35,10 +35,10 @@ export function PermissionGuard({
       if (payload.warning) {
         feedbackToast.error(payload.warning);
       } else {
-        feedbackToast.success("已通知管理员，等待处理中。");
+        feedbackToast.success("已通知公司管理方，等待处理中。");
       }
     } catch {
-      feedbackToast.error("申请发送失败，请联系管理员。");
+      feedbackToast.error("申请发送失败，请联系公司所有者或组长。");
     } finally {
       setIsApplying(false);
     }
@@ -61,7 +61,7 @@ export function PermissionGuard({
             还没有「{moduleTitle}」权限
           </h2>
           <p className="text-[13px] leading-relaxed text-[#292524]">
-            {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系管理员开通对应权限。`}
+            {description || `该功能属于系统受控模块，当前仅对${requiredRoleLabel}开放。如有业务需要，请联系公司所有者或组长开通对应权限。`}
           </p>
         </div>
 

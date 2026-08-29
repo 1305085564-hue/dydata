@@ -14,6 +14,7 @@ import {
 } from "@/app/(app)/dashboard/actions";
 import { signOut } from "@/app/actions/auth";
 import { setDashboardAccount } from "@/lib/dashboard-store";
+import { getRoleLabel } from "@/lib/role-label";
 
 interface Account {
   id: string;
@@ -28,6 +29,7 @@ interface PremiumSettingsModalProps {
   onOpenChange: (open: boolean) => void;
   profileName: string;
   profileRole: string;
+  companyRole?: string | null;
   canEnterGroupMode?: boolean;
   groupModeActive?: boolean;
   accounts: Account[];
@@ -111,17 +113,12 @@ export function GroupModeSettingsControl({
   );
 }
 
-function roleLabel(role: string) {
-  if (role === "owner" || role === "company_owner") return "公司所有者";
-  if (role === "admin") return "管理员";
-  return "成员";
-}
-
 export function PremiumSettingsModal({
   open,
   onOpenChange,
   profileName,
   profileRole,
+  companyRole,
   canEnterGroupMode = false,
   groupModeActive = false,
   accounts,
@@ -557,15 +554,11 @@ export function PremiumSettingsModal({
                           {editingName}
                         </p>
                         <p className="text-[12px] text-[#78716C] mt-0.5 leading-none">
-                          {profileRole === "owner" || profileRole === "company_owner"
-                            ? "公司所有者"
-                            : profileRole === "admin"
-                              ? "团队管理员"
-                              : "团队成员"}
+                          {getRoleLabel(profileRole, { companyRole })}
                         </p>
                       </div>
                       <span className="shrink-0 rounded-full border border-[#E5E0D6] bg-white px-2.5 py-0.5 text-[12px] font-medium text-[#292524]">
-                        {roleLabel(profileRole)}
+                        {getRoleLabel(profileRole, { companyRole })}
                       </span>
                     </div>
                   </div>

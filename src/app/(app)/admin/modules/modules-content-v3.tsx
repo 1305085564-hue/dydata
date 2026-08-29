@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { cn } from "@/lib/utils";
+import { getRoleLabel } from "@/lib/role-label";
 
 import {
   createTeam,
@@ -663,7 +664,7 @@ export function AdminModulesContentV3({
       setSearchQuery("");
       setRestoredFocusId(target.id);
       setTimeout(() => setRestoredFocusId(null), 3000);
-      feedbackToast.success(`已恢复「${target.name}」为在职普通成员`);
+      feedbackToast.success(`已恢复「${target.name}」为在职组员`);
       router.refresh();
     });
   };
@@ -686,7 +687,7 @@ export function AdminModulesContentV3({
         setLocalProfiles(prevProfiles);
         feedbackToast.error("变更角色失败", { description: res.error });
       } else {
-        feedbackToast.success(`角色已变更为「${newRole === "admin" ? "管理员" : "成员"}」`);
+        feedbackToast.success(`角色已变更为「${getRoleLabel(newRole)}」`);
         router.refresh();
       }
     });
@@ -741,7 +742,7 @@ export function AdminModulesContentV3({
 
     startTransition(async () => {
       const actionFn = action === "approve" ? approveJoinRequestAction : rejectJoinRequestAction;
-      const res = await actionFn(requestId, "通过管理员工作台一键审批");
+      const res = await actionFn(requestId, "通过管理工作台一键审批");
       if (!res.ok) {
         setPendingRequests((prev) => [...prev, targetRequest]);
         feedbackToast.error(action === "approve" ? "审批通过失败" : "驳回申请失败", {
@@ -1234,11 +1235,11 @@ export function AdminModulesContentV3({
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">公司所有者</span>
-                              ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-[#292524]">管理员</span>
+                                <span className="text-[13px] text-[#292524]">{getRoleLabel(member.role, { membershipStatus: member.membership_status })}</span>
                               ) : (
-                                <span className="text-[13px] text-[#78716C]">成员</span>
+                                <span className={cn("text-[13px]", member.role === "member" ? "text-[#78716C]" : "text-[#292524]")}>
+                                  {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
+                                </span>
                               )}
                             </div>
 
@@ -1362,11 +1363,11 @@ export function AdminModulesContentV3({
                                   已归档
                                 </span>
                               ) : member.role === "owner" ? (
-                                <span className="text-[13px] text-[#292524]">公司所有者</span>
-                              ) : member.role === "admin" ? (
-                                <span className="text-[13px] text-[#292524]">管理员</span>
+                                <span className="text-[13px] text-[#292524]">{getRoleLabel(member.role, { membershipStatus: member.membership_status })}</span>
                               ) : (
-                                <span className="text-[13px] text-[#78716C]">成员</span>
+                                <span className={cn("text-[13px]", member.role === "member" ? "text-[#78716C]" : "text-[#292524]")}>
+                                  {getRoleLabel(member.role, { membershipStatus: member.membership_status })}
+                                </span>
                               )}
                             </div>
 
@@ -1498,7 +1499,7 @@ export function AdminModulesContentV3({
                         {activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
-                        {activeMember.role === "owner" ? "公司所有者" : activeMember.role === "admin" ? "管理员" : "成员"}
+                        {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
                       </span>
                       {activeMember.membership_status === "archived" && (
                         <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#78716C] shrink-0">
@@ -1658,7 +1659,7 @@ export function AdminModulesContentV3({
                           <div className="flex items-center gap-2">
                             <Settings className="size-3.5 text-[#78716C] shrink-0" />
                             <span className="text-[13px] text-[#292524]">
-                              {activeMember.role === "admin" ? "降为成员" : "提升为管理员"}
+                              {activeMember.role === "admin" ? "降为组员" : "提升为组长 · 管理"}
                             </span>
                           </div>
                           {canManageMembers ? (
@@ -1671,7 +1672,7 @@ export function AdminModulesContentV3({
                             </button>
                           ) : (
                             <span className="text-[13px] text-[#78716C]">
-                              {activeMember.role === "admin" ? "管理员" : "成员"}
+                              {getRoleLabel(activeMember.role, { membershipStatus: activeMember.membership_status })}
                             </span>
                           )}
                         </div>
@@ -2096,7 +2097,7 @@ export function AdminModulesContentV3({
         open={restoreTarget !== null}
         title="恢复成员账号"
         description={
-          restoreTarget ? `确认恢复 ${restoreTarget.name}？恢复后将解除封禁，成为未分配团队的在职普通成员。` : ""
+          restoreTarget ? `确认恢复 ${restoreTarget.name}？恢复后将解除封禁，成为未分配团队的在职组员。` : ""
         }
         confirmText="确认恢复"
         loading={isPending}

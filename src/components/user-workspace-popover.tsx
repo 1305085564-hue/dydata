@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { setDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
+import { getRoleLabel } from "@/lib/role-label";
 
 interface Account {
   id: string;
@@ -22,6 +23,7 @@ interface Account {
 interface UserWorkspacePopoverProps {
   name: string;
   role: string;
+  companyRole?: string | null;
   canAccessTeamManagement?: boolean;
   accounts: Account[];
   selectedAccountId: string;
@@ -31,6 +33,7 @@ interface UserWorkspacePopoverProps {
 export function UserWorkspacePopover({
   name,
   role,
+  companyRole,
   canAccessTeamManagement = false,
   accounts = [],
   selectedAccountId,
@@ -124,7 +127,7 @@ export function UserWorkspacePopover({
             {selectedAccount?.display_name || name.split(" ")[0]}
           </span>
           <span className="truncate text-[11px] font-normal leading-none text-[#78716C] mt-0.5 max-w-[115px] tracking-tight">
-            {role === "owner" || role === "company_owner" ? "公司所有者" : role === "admin" ? "管理员" : "成员"}
+            {getRoleLabel(role, { companyRole })}
           </span>
         </div>
 

@@ -83,6 +83,7 @@ export async function NavBar() {
     <NavBarClient
       name={profile?.name ?? user.email ?? ""}
       role={role}
+      companyRole={permissionInfo?.companyRole}
       permissions={permissions}
       showAdmin={navigation.showAdmin}
       showAiCopywriting={showAiCopywriting}

@@ -23,6 +23,7 @@ import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
 import { setDashboardAccount } from "@/lib/dashboard-store";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { getRoleLabel } from "@/lib/role-label";
 
 interface Account {
   id: string;
@@ -36,6 +37,7 @@ interface MobileMoreDrawerProps {
   onOpenChange: (open: boolean) => void;
   name: string;
   role: string;
+  companyRole?: string | null;
   navGroups: NavGroup[];
   accounts?: Account[];
   selectedAccountId?: string;
@@ -49,6 +51,7 @@ export function MobileMoreDrawer({
   onOpenChange,
   name,
   role,
+  companyRole,
   navGroups,
   accounts = [],
   selectedAccountId,
@@ -75,12 +78,6 @@ export function MobileMoreDrawer({
     window.location.href = "/login";
   };
 
-  const roleLabelMap: Record<string, string> = {
-    owner: "团队主理人",
-    admin: "管理员",
-    member: "创作成员",
-  };
-
   return (
     <AdaptiveSheet open={open} onOpenChange={onOpenChange}>
       <AdaptiveSheetContent
@@ -99,7 +96,7 @@ export function MobileMoreDrawer({
                   {name || "用户"}
                 </AdaptiveSheetTitle>
                 <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E5E0D6]">
-                  {roleLabelMap[role] || "成员"}
+                  {getRoleLabel(role, { companyRole })}
                 </span>
               </div>
               <AdaptiveSheetDescription className="text-[12px] text-[#78716C]">

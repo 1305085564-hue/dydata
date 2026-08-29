@@ -65,7 +65,7 @@ test("高风险修改会保留确认链路并输出影响范围", () => {
     },
   });
 
-  assert.match(presentation.answer, /角色改成管理员/);
+  assert.match(presentation.answer, /角色改成组长 · 管理/);
   assert.ok(
     presentation.details?.sections.some((section) => section.title === "为什么要确认"),
   );
@@ -236,8 +236,8 @@ test("历史标题：角色变更显示 from → to", () => {
       beforeSnapshot: { id: "u1", role: "member" },
     },
   });
-  assert.match(presentation.historyTitle, /成员/);
-  assert.match(presentation.historyTitle, /管理员/);
+  assert.match(presentation.historyTitle, /组员/);
+  assert.match(presentation.historyTitle, /组长 · 管理/);
 });
 
 test("历史标题：超过 24 字自动截断加省略号", () => {

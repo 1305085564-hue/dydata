@@ -57,6 +57,7 @@ interface Account {
 interface NavBarClientProps {
   name: string;
   role: string;
+  companyRole?: string | null;
   permissions?: Permissions | null;
   showAdmin: boolean;
   showAiCopywriting?: boolean;
@@ -72,6 +73,7 @@ interface NavBarClientProps {
 export function NavBarClient({
   name,
   role,
+  companyRole,
   permissions,
   showAdmin,
   showAiCopywriting = true,
@@ -525,6 +527,7 @@ export function NavBarClient({
               <UserWorkspacePopover
                 name={name}
                 role={role}
+                companyRole={companyRole}
                 canAccessTeamManagement={canAccessTeamManagement}
                 accounts={accounts}
                 selectedAccountId={selectedAccountId}
@@ -554,6 +557,7 @@ export function NavBarClient({
           }}
           name={name}
           role={role}
+          companyRole={companyRole}
           navGroups={navGroups}
           accounts={accounts}
           selectedAccountId={selectedAccountId}
@@ -569,6 +573,7 @@ export function NavBarClient({
           onOpenChange={setSettingsOpen}
           profileName={name}
           profileRole={role}
+          companyRole={companyRole}
           canEnterGroupMode={canEnterGroupMode}
           groupModeActive={groupModeActive}
           accounts={accounts}

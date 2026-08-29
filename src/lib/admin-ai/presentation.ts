@@ -1,5 +1,6 @@
 import type { AdminAiToolName } from "./core";
 import type { ToolExecutionResult } from "@/lib/admin-tools";
+import { getRoleLabel } from "@/lib/role-label";
 
 export type AssistantFieldItem = {
   label: string;
@@ -91,19 +92,6 @@ function table(title: string, columns: string[], rows: string[][]): AssistantDet
 
 function compactSections(sections: Array<AssistantDetailSection | null>) {
   return sections.filter((section): section is AssistantDetailSection => Boolean(section));
-}
-
-function roleLabel(role: unknown) {
-  switch (role) {
-    case "owner":
-      return "Owner";
-    case "admin":
-      return "管理员";
-    case "member":
-      return "成员";
-    default:
-      return toDisplayText(role);
-  }
 }
 
 function statusLabel(status: unknown) {
@@ -290,13 +278,13 @@ function buildUserInfoPresentation(result: ToolExecutionResult): AssistantPresen
   const userName = toDisplayText(user.name);
 
   return {
-    answer: `${userName} 当前是${roleLabel(user.role)}，账号状态${statusLabel(user.status)}。`,
+    answer: `${userName} 当前是${getRoleLabel(user.role)}，账号状态${statusLabel(user.status)}。`,
     historyTitle: truncateTitle(userName !== "-" ? `${userName} 的用户信息` : "用户信息查询"),
     details: {
       sections: compactSections([
         fields("用户概况", [
           { label: "姓名", value: userName },
-          { label: "角色", value: roleLabel(user.role) },
+          { label: "角色", value: getRoleLabel(user.role) },
           { label: "状态", value: statusLabel(user.status) },
           { label: "权限", value: permissionSummary(user.permissions) },
         ]),
@@ -486,9 +474,9 @@ function buildChangeRoleConfirmation(
   result: ToolExecutionResult,
 ): AssistantPresentation {
   const copy = HIGH_RISK_CONFIRMATION_COPY.changeUserRole;
-  const newRole = roleLabel(params.newRole);
+  const newRole = getRoleLabel(params.newRole);
   const before = (result.beforeSnapshot ?? {}) as Record<string, unknown>;
-  const currentRole = roleLabel(before.role);
+  const currentRole = getRoleLabel(before.role);
   const permissionText = permissionSummary(before.permissions);
   const userName = firstString(
     before.name,
@@ -573,7 +561,7 @@ function buildKickUserConfirmation(result: ToolExecutionResult): AssistantPresen
         buildRiskSection(copy),
         fields(copy.impactTitle, [
           { label: "用户", value: userName },
-          { label: "角色", value: roleLabel(user.role) },
+          { label: "角色", value: getRoleLabel(user.role) },
           { label: "保留的填报记录", value: `${toDisplayText(affectedData.metricsCount)} 条` },
           { label: "保留的豁免记录", value: `${toDisplayText(affectedData.exemptionsCount)} 条` },
           { label: "生效时机", value: "执行后该账号立即失去登录权限" },
@@ -889,8 +877,8 @@ function buildMutationSuccessPresentation(
   switch (toolName) {
     case "changeUserRole":
       return {
-        answer: `角色已改成${roleLabel(params.newRole)}。`,
-        historyTitle: truncateTitle(`角色已改为${roleLabel(params.newRole)}`),
+        answer: `角色已改成${getRoleLabel(params.newRole)}。`,
+        historyTitle: truncateTitle(`角色已改为${getRoleLabel(params.newRole)}`),
       };
     case "updateUserPermissions":
       return {
