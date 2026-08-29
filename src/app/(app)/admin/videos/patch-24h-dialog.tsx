@@ -141,6 +141,17 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
         }
       }
 
+      // Topics V3：24h 数据补全后触发干货自动入库评估（幂等，失败不影响本次补录结果）
+      try {
+        await fetch("/api/admin/topics-library/evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: video.id }),
+        });
+      } catch {
+        // 评估失败仅意味着入库延迟，补录数据本身已保存成功
+      }
+
       const savedSnapshot: VideoMetricsSnapshot = {
         id: snapshot?.id ?? `temp-${video.id}`,
         ...snapshotPayload,

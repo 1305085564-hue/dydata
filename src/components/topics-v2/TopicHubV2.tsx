@@ -11,6 +11,8 @@ import type {
   TopicTimeRange,
   TopicMoreFiltersState,
   SubTopicItem,
+  BatchImportParsedRow,
+  BatchImportSummary,
 } from "./types";
 import { DEFAULT_MORE_FILTERS } from "./types";
 import {
@@ -58,7 +60,7 @@ const TopicCreateModal = dynamic(
   { ssr: false },
 );
 
-export function TopicHubV2() {
+export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLibrary?: boolean }) {
   // Toast 轻反馈
   const [toastMsg, setToastMsg] = useState<{
     text: string;
@@ -296,6 +298,61 @@ export function TopicHubV2() {
     }
   };
 
+  // 管理员通道：外部干货批量导入（真实解析与导入接口）
+  const handleParseImportFile = useCallback(async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/admin/topics-library/import/parse", {
+      method: "POST",
+      body: formData,
+    });
+    const payload = (await res.json().catch(() => null)) as
+      | { error?: string; rows?: unknown; summary?: unknown }
+      | null;
+    if (!res.ok || !payload) {
+      throw new Error(payload?.error || "文件解析失败，请稍后重试");
+    }
+    const rows = (payload.rows ?? []) as Array<Record<string, unknown>>;
+    return {
+      rows: rows.map((row) => ({
+        rowNumber: Number(row.rowNumber ?? 0),
+        topicName: String(row.topicName ?? ""),
+        title: String(row.title ?? ""),
+        durationText: typeof row.durationText === "string" ? row.durationText : undefined,
+        historyPlay: (row.historyPlay as number | null) ?? null,
+        historyLikes: (row.historyLikes as number | null) ?? null,
+        hook: (row.hook as string | null) ?? null,
+        outline: (row.outline as string | null) ?? null,
+        status: (row.status as BatchImportParsedRow["status"]) ?? "error",
+        validationMessage: String(row.message ?? row.validationMessage ?? ""),
+      })) as BatchImportParsedRow[],
+      summary: payload.summary as BatchImportSummary,
+    };
+  }, []);
+
+  const handleConfirmImport = useCallback(async (rows: BatchImportParsedRow[]) => {
+    const res = await fetch("/api/admin/topics-library/import/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows }),
+    });
+    const payload = (await res.json().catch(() => null)) as
+      | { error?: string; successCount?: number; skippedCount?: number; failedCount?: number; errors?: Array<{ rowNumber: number; title: string; reason: string }> }
+      | null;
+    if (!res.ok || !payload) {
+      throw new Error(payload?.error || "导入执行失败，请稍后重试");
+    }
+    if ((payload.successCount ?? 0) > 0) {
+      refreshAll();
+    }
+    return {
+      successCount: payload.successCount ?? 0,
+      skippedCount: payload.skippedCount ?? 0,
+      failedCount: payload.failedCount ?? 0,
+      errors: payload.errors ?? [],
+    };
+  }, []);
+
   if (membershipRequired) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-4">
@@ -385,7 +442,10 @@ export function TopicHubV2() {
           selectedTopicIds={selectedTopicIds}
           moreFilters={moreFilters}
           sortBy={sortBy}
-          isAdmin={false}
+          isAdmin={canManageTopicLibrary}
+          onBatchImportClick={
+            canManageTopicLibrary ? () => setIsBatchImportModalOpen(true) : undefined
+          }
           onPageChange={(p) => setPoolPage(p)}
           onViewChange={(v) => setPoolView(v)}
           onTimeRangeChange={(t) => setPoolTimeRange(t)}
@@ -447,12 +507,14 @@ export function TopicHubV2() {
         />
       )}
 
-      {/* 动态懒加载：外部干货批量导入 Modal (管理端入口备用) */}
-      {isBatchImportModalOpen && (
+      {/* 动态懒加载：外部干货批量导入 Modal（仅真实管理员可进入） */}
+      {isBatchImportModalOpen && canManageTopicLibrary && (
         <TopicBatchImportModal
           isOpen={isBatchImportModalOpen}
           topics={topicsOptions}
           onClose={() => setIsBatchImportModalOpen(false)}
+          onParseFile={handleParseImportFile}
+          onConfirmImport={handleConfirmImport}
         />
       )}
 

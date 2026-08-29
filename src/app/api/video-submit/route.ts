@@ -35,6 +35,7 @@ import {
 import { validateTopicClaimForSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { resolveCreateSubmissionConflict } from "./create-conflict";
+import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
 
 type RollbackAction = () => Promise<void>;
 
@@ -796,6 +797,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // 24h 数据与话题标签已落库后，尝试干货自动沉淀入库（幂等；失败不影响本次提交本身）
+  let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
+  try {
+    topicLibraryEntry = await ensureInternalLibraryEntry(createAdminClient(), persistedVideo.id);
+  } catch (libraryError) {
+    console.error("[video-submit] topic library auto entry failed", libraryError);
+  }
+
   return NextResponse.json({
     ok: true,
     video_id: persistedVideo.id,
@@ -803,5 +812,6 @@ export async function POST(request: NextRequest) {
     video: persistedVideo,
     ai_tags: aiTags,
     idempotent_video_id: submissionVideoId,
+    topic_library_entry: topicLibraryEntry,
   });
 }

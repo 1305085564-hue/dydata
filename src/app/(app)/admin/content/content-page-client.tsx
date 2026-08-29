@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useRef, useState, startTransition, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, startTransition, useMemo } from "react";
 import type { AdminDataPerspective } from "@/lib/admin-data-perspective";
 import type { TeamOption } from "@/lib/teams";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,7 @@ const ContentDiagnosisWorkbench = dynamic(
 
 type ContentView = "pending" | "all";
 type AdminContentVideo = AdminContentPageData["videos"][number];
+type TopicLibraryStatusInfo = { status: string; subTopicId: string | null };
 
 import type { UserPermissionInfo } from "@/lib/permissions";
 
@@ -65,8 +66,40 @@ export function ContentPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [isDeferredLoading, setIsDeferredLoading] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>({});
   const requestSeq = useRef(0);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
+
+  // Topics V3：选题库入库状态来自服务端真实字段（话题标签 + 24h 快照 + 选题入库状态）
+  const loadTopicLibraryStatuses = useCallback(async (videos: AdminContentVideo[]) => {
+    const ids = videos.map((video) => video.id).filter(Boolean);
+    if (!ids.length) {
+      setTopicLibraryStatuses({});
+      return;
+    }
+    try {
+      const params = new URLSearchParams({ videoIds: ids.slice(0, 400).join(",") });
+      const res = await fetch(`/api/admin/content/topic-library-status?${params.toString()}`);
+      if (!res.ok) return;
+      const payload = (await res.json()) as { statuses?: Record<string, TopicLibraryStatusInfo> };
+      setTopicLibraryStatuses(payload.statuses ?? {});
+    } catch {
+      // 状态加载失败时保持未知态，不伪造入库状态
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTopicLibraryStatuses(data.videos);
+  }, [data.videos, loadTopicLibraryStatuses]);
+
+  const videosWithLibraryStatus = useMemo(
+    () => data.videos.map((video) => ({
+      ...video,
+      topic_library_status: topicLibraryStatuses[video.id]?.status ?? null,
+      topic_library_sub_topic_id: topicLibraryStatuses[video.id]?.subTopicId ?? null,
+    })),
+    [data.videos, topicLibraryStatuses],
+  );
 
   function calculatePriorityScore(v: AdminContentVideo) {
     let score = 0;
@@ -80,8 +113,8 @@ export function ContentPageClient({
 
 
   const anomalyVideos = useMemo(() => {
-    if (!data?.videos) return [];
-    return data.videos
+    if (!videosWithLibraryStatus.length) return [];
+    return videosWithLibraryStatus
       .map((video) => {
         const score = calculatePriorityScore(video);
         return { video, score };
@@ -89,7 +122,7 @@ export function ContentPageClient({
       .filter((item) => item.score >= 200)
       .sort((a, b) => b.score - a.score)
       .map((item) => item.video);
-  }, [data?.videos]);
+  }, [videosWithLibraryStatus]);
 
   const loadData = useCallback(async (
     nextView: ContentView,
@@ -130,6 +163,24 @@ export function ContentPageClient({
       setIsDeferredLoading(false);
     }
   }, [data.isPartial, isDeferredLoading, isLoading, loadData, perspective, teamId, view]);
+
+  const handleToggleTopicLibrary = useCallback(async (videoId: string, action: "remove" | "restore") => {
+    const subTopicId = topicLibraryStatuses[videoId]?.subTopicId ?? null;
+    if (!subTopicId) {
+      throw new Error("未找到该视频对应的选题记录，无法操作");
+    }
+    const res = await fetch("/api/admin/topics-library/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subTopicId, action }),
+    });
+    if (!res.ok) {
+      const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(payload?.error || "操作失败，请重试");
+    }
+    // 成功后刷新真实列表与状态；失败时上方抛错，页面保留原状态
+    await loadData(view, perspective, teamId, { background: true });
+  }, [topicLibraryStatuses, loadData, view, perspective, teamId]);
 
   const switchPerspective = useCallback(async (nextPerspective: AdminDataPerspective) => {
     if (nextPerspective === perspective) return;
@@ -179,7 +230,7 @@ export function ContentPageClient({
   }, [data.videos, data.reviewReadiness]);
 
   if (selectedVideoId) {
-    const selectedVideo = data?.videos?.find((v) => v.id === selectedVideoId) ?? null;
+    const selectedVideo = videosWithLibraryStatus.find((v) => v.id === selectedVideoId) ?? null;
     const selectedSnapshot = data?.snapshots?.find((s) => s.video_id === selectedVideoId && s.snapshot_type === "24h") ?? null;
     return (
       <ContentDiagnosisWorkbench
@@ -188,7 +239,7 @@ export function ContentPageClient({
         onClose={() => setSelectedVideoId(null)}
         profiles={data.profiles}
         anomalyVideos={anomalyVideos}
-        videos={data.videos}
+        videos={videosWithLibraryStatus}
         snapshots={data.snapshots}
         reviewReadiness={data.reviewReadiness}
         onVideoSelect={setSelectedVideoId}
@@ -200,6 +251,7 @@ export function ContentPageClient({
           setSelectedVideoId(null);
           void loadData(view, perspective, teamId);
         }}
+        onToggleTopicLibrary={handleToggleTopicLibrary}
       />
     );
   }
@@ -320,7 +372,7 @@ export function ContentPageClient({
       </div>
 
       <ContentList
-        videos={data.videos}
+        videos={videosWithLibraryStatus}
         snapshots={data.snapshots}
         reviewReadiness={data.reviewReadiness}
         totalCount={view === "all" ? data.summary.totalVideos : data.summary.pendingReviewCount}

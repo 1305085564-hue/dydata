@@ -12,8 +12,9 @@ test("topics 入口在服务端确认 active team membership 后才挂载 TopicH
   assert.match(pageSource, /membership_status/);
   assert.match(pageSource, /team_id/);
   assert.match(pageSource, /<JoinBanner \/>/);
-  assert.match(pageSource, /return <TopicHubV2 \/>/);
-  assert.ok(pageSource.indexOf("if (profile?.membership_status !== \"active\" || !profile.team_id)") < pageSource.indexOf("return <TopicHubV2 />"));
+  assert.match(pageSource, /<TopicHubV2 canManageTopicLibrary=\{canManageTopicLibrary\} \/>/);
+  assert.match(pageSource, /hasCompanyPermission\(permissionContext\.permissionInfo\.companyRole, "review_content"\)/);
+  assert.ok(pageSource.indexOf("if (profile?.membership_status !== \"active\" || !profile.team_id)") < pageSource.indexOf("return <TopicHubV2 canManageTopicLibrary={canManageTopicLibrary} />"));
 });
 
 test("topics 详情页由服务端 layout 拦截未入团访问并回到申请入口", () => {

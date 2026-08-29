@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 import { measureAsync } from "@/lib/perf";
+import { buildExternalMetrics, computeInternalMetrics, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
 
 export const TOPIC_POOL_VIEWS = [
   "all",
@@ -59,6 +60,9 @@ export interface TopicWorkSummary {
   bestPlayCount: number | null;
   bestCopy: string | null;
   latestCopy: string | null;
+  // V3：内部成绩（团队实拍）与外部成绩（导入参考）严格分开
+  internalMetrics?: TopicInternalMetrics | null;
+  externalMetrics?: TopicExternalMetrics | null;
 }
 
 export interface TopicPoolQueryOptions {
@@ -858,6 +862,7 @@ function buildTopicPoolItem(
     claimCount: activeVisibleClaims.length,
     candidateCount: activeVisibleClaims.filter((claim) => claim.status === "candidate").length,
     scriptingCount: activeVisibleClaims.filter((claim) => claim.status === "scripting").length,
+    externalMetrics: buildExternalMetrics(item),
     ...extra,
   };
 }
@@ -872,6 +877,7 @@ async function loadScoredTopicPool(
   let subTopicsQuery = supabase
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)")
+    .eq("library_status", "in_library")
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
 
@@ -1011,6 +1017,7 @@ async function loadNeverWorkedTopics(
   let subTopicsQuery = supabase
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)")
+    .eq("library_status", "in_library")
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
 
@@ -1085,6 +1092,9 @@ export async function loadSubTopicDetail(
     .maybeSingle();
   if (error) return { ok: false, status: 500, message: error.message };
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
+  if ((subTopic as { library_status?: string }).library_status === "removed") {
+    return { ok: false, status: 404, message: "该选题已被管理员移出选题库" };
+  }
 
   // 认领状态由前端经 /api/topics/pool?view=my_claims 判定，详情不再重复查 claims（2026-08-26）
 
@@ -1114,6 +1124,7 @@ export async function loadTopicPool(
   let query = supabase
     .from("sub_topics")
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)", { count: "exact" })
+    .eq("library_status", "in_library")
     .order("created_at", { ascending: false });
 
   // my_claims 视图：直接查 sub_topic_claims 获取用户的有效认领，不依赖 join 关联
@@ -1251,9 +1262,18 @@ function summarizeScopedWorksBySubTopic(rows: ScopedWorkRow[], scope: DataAccess
 
   const summaryMap = new Map<string, TopicWorkSummary>();
   for (const [subTopicId, workRows] of rowsBySubTopic) {
-    summaryMap.set(subTopicId, calculateTopicWorkSummary(workRows));
+    const summary = calculateTopicWorkSummary(workRows);
+    summary.internalMetrics = computeInternalMetrics(workRows);
+    summaryMap.set(subTopicId, summary);
   }
   return summaryMap;
+}
+
+function filterRemovedSubTopicRows(rows: unknown[]) {
+  return (rows as Array<Record<string, unknown>>).filter((row) => {
+    const subTopic = Array.isArray(row.sub_topics) ? row.sub_topics[0] : row.sub_topics;
+    return (subTopic as { library_status?: string } | null)?.library_status !== "removed";
+  });
 }
 
 // 只服务选题库顶部的「团队动态」条：最新认领 + 最新成片。
@@ -1269,20 +1289,20 @@ export async function loadActiveTopics(
   const claimsTask = measureAsync("topics.active.claims", async (): Promise<TaskResult<unknown[]>> => {
     let claimsQuery = supabase
       .from("sub_topic_claims")
-      .select("id, sub_topic_id, user_id, status, claimed_at, profiles(name), sub_topics(id, title)")
+      .select("id, sub_topic_id, user_id, status, claimed_at, profiles(name), sub_topics(id, title, library_status)")
       .neq("status", "returned")
       .order("claimed_at", { ascending: false })
       .limit(limit);
     if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
     const { data, error } = await claimsQuery;
     if (error) return { ok: false, status: 500, message: error.message };
-    return { ok: true, data: data ?? [] };
+    return { ok: true, data: filterRemovedSubTopicRows(data ?? []) };
   });
 
   const recentWorksTask = measureAsync("topics.active.recentWorks", async (): Promise<TaskResult<unknown[]>> => {
     let worksQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics(id, title)")
+      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics(id, title, library_status)")
       .eq("lifecycle_state", "active")
       .not("topic_id", "is", null)
       .order("uploaded_at", { ascending: false })
@@ -1290,7 +1310,7 @@ export async function loadActiveTopics(
     if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
     const { data, error } = await worksQuery;
     if (error) return { ok: false, status: 500, message: error.message };
-    return { ok: true, data: data ?? [] };
+    return { ok: true, data: filterRemovedSubTopicRows(data ?? []) };
   });
 
   const [claimsResult, recentWorksResult] = await Promise.all([claimsTask, recentWorksTask]);
@@ -1396,11 +1416,14 @@ export async function loadSubTopicWorks(
   const to = from + options.pageSize - 1;
   const { data: subTopic, error: subTopicError } = await supabase
     .from("sub_topics")
-    .select("id, topic_id, group_id")
+    .select("id, topic_id, group_id, library_status")
     .eq("id", id)
     .maybeSingle();
   if (subTopicError) return { ok: false, status: 500, message: subTopicError.message };
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
+  if ((subTopic as { library_status?: string }).library_status === "removed") {
+    return { ok: false, status: 404, message: "该选题已被管理员移出选题库" };
+  }
 
   let directQuery = supabase
       .from("videos")
@@ -1482,6 +1505,7 @@ export async function suggestSubTopics(
   const { data, error } = await supabase
     .from("sub_topics")
     .select("id, title, hook, topics(name), topic_groups(name)")
+    .eq("library_status", "in_library")
     .order("created_at", { ascending: false })
     .limit(200);
   if (error) return { ok: false, status: 500, message: error.message };

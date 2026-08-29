@@ -537,6 +537,7 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
         title: "很早创建但仍在认领的选题",
         sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
         summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
+        externalMetrics: null,
         claimCount: 1,
         candidateCount: 1,
         scriptingCount: 0,

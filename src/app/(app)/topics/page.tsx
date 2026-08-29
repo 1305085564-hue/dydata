@@ -2,6 +2,8 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { TopicHubV2 } from "@/components/topics-v2/TopicHubV2";
 import { getCurrentUserContext } from "@/lib/current-user-context";
+import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { hasCompanyPermission } from "@/lib/permission-utils";
 import { JoinBanner } from "../_components/join-banner";
 
 export const metadata = {
@@ -25,5 +27,11 @@ export default async function TopicsV2Page() {
     return <JoinBanner />;
   }
 
-  return <TopicHubV2 />;
+  // 管理端入口（外部干货批量导入等）由服务端真实权限判定，不做页面隐藏式授权
+  const permissionContext = await getCurrentPermissionContext();
+  const canManageTopicLibrary = permissionContext
+    ? hasCompanyPermission(permissionContext.permissionInfo.companyRole, "review_content")
+    : false;
+
+  return <TopicHubV2 canManageTopicLibrary={canManageTopicLibrary} />;
 }
