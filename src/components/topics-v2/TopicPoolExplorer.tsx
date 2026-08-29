@@ -634,7 +634,7 @@ export function TopicPoolExplorer({
               <div
                 key={item.id}
                 onClick={() => onSelectTopic(item.id)}
-                className="group relative bg-white border border-[#E5E0D6] rounded-2xl p-4.5 hover:border-[#D97757]/40 hover:shadow-claude-float transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-white border border-[#E5E0D6] rounded-2xl p-4 hover:border-[#D97757]/40 hover:shadow-claude-float transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div>
                   {/* 顶栏：母题与分组印章 */}
@@ -657,58 +657,59 @@ export function TopicPoolExplorer({
                   </div>
 
                   {/* 标题：饱满清晰 */}
-                  <h3 className="text-[15.5px] font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-2">
+                  <h3 className="text-[15px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-1.5">
                     {item.title}
                   </h3>
 
-                  {/* 核心证明：真实历史数据证明 (消灭纸内套娃，发丝线与字阶自然呼吸) */}
-                  <div className="py-2.5 my-1.5 border-y border-[#ECE7DE]/70 flex items-center justify-between">
-                    <div>
-                      <div className="text-[11px] text-[#78716C] font-normal tracking-tight">
-                        历史最高播放
-                      </div>
-                      <div className="text-[15.5px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
-                        {bestPlay !== null
-                          ? bestPlay >= 10000
-                            ? `${(bestPlay / 10000).toFixed(1)}万`
-                            : bestPlay.toLocaleString()
-                          : "—"}
-                      </div>
-                    </div>
-
-                    <div className="h-6 w-px bg-[#ECE7DE]" aria-hidden="true" />
-
-                    <div className="text-right">
-                      <div className="text-[11px] text-[#78716C] font-normal tracking-tight">
-                        达标优质作品
-                      </div>
-                      <div className="text-[15.5px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
-                        {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
-                      </div>
-                    </div>
-                  </div>
-
                   {/* 一句话 Hook / 立意观点 (学者边注感，端庄正体) */}
                   {item.hook && (
-                    <div className="mt-2 pt-1.5 border-t border-[#ECE7DE]/40">
-                      <p className="text-[12px] font-serif not-italic text-[#57534E] line-clamp-2 leading-relaxed tracking-tight">
-                        “{item.hook}”
-                      </p>
-                    </div>
+                    <p className="text-[12px] font-serif not-italic text-[#57534E] line-clamp-2 leading-relaxed tracking-tight mb-2">
+                      “{item.hook}”
+                    </p>
                   )}
                 </div>
 
-                {/* 底栏：近 7 天参与热度 + 去飞书创作主行动 */}
-                <div className="pt-3 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto">
-                  <div className="text-[11.5px] text-[#78716C] truncate">
-                    <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
-                    {(inProgressCount ?? 0) > 0 && (
-                      <span className="text-[#43718E] ml-1">
-                        · {inProgressCount}人在写
+                {/* 底栏：单行内联全部数据（最高播放 · 达标作品 · 7天热度）+ 创作行动 */}
+                <div className="pt-2.5 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto text-[11.5px]">
+                  {/* 左侧：数据证明与热度内联 */}
+                  <div className="text-[#78716C] tabular-nums truncate flex items-center gap-1 font-normal min-w-0">
+                    {bestPlay !== null && (
+                      <span className="text-[#292524] font-medium shrink-0">
+                        最高 {bestPlay >= 10000 ? `${(bestPlay / 10000).toFixed(1)}万` : bestPlay.toLocaleString()}
                       </span>
+                    )}
+
+                    {bestPlay !== null && qualifiedCount !== null && (
+                      <span className="text-[#E5E0D6] select-none">·</span>
+                    )}
+
+                    {qualifiedCount !== null && (
+                      <span className="text-[#292524] shrink-0">
+                        {qualifiedCount > 0 ? `${qualifiedCount}条优质` : "尚未达标"}
+                      </span>
+                    )}
+
+                    {(bestPlay !== null || qualifiedCount !== null) && participants7d !== null && (
+                      <span className="text-[#E5E0D6] select-none">·</span>
+                    )}
+
+                    {participants7d !== null ? (
+                      <span className="shrink-0">{participants7d}人参与</span>
+                    ) : null}
+
+                    {(inProgressCount ?? 0) > 0 && (
+                      <>
+                        <span className="text-[#E5E0D6] select-none">·</span>
+                        <span className="text-[#43718E] font-medium shrink-0">{inProgressCount}人在写</span>
+                      </>
+                    )}
+
+                    {bestPlay === null && qualifiedCount === null && participants7d === null && (
+                      <span className="text-[#A8A29E]">暂无数据</span>
                     )}
                   </div>
 
+                  {/* 右侧：主行动按钮 (常态安静，Hover 优雅浮现) */}
                   <div className="shrink-0">
                     <button
                       type="button"
@@ -716,7 +717,7 @@ export function TopicPoolExplorer({
                         e.stopPropagation();
                         onOpenFeishuModal(item);
                       }}
-                      className={`inline-flex items-center gap-1 px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 min-h-[44px] sm:min-h-0 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                         isWriting
                           ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
                           : "bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
