@@ -1421,7 +1421,7 @@ export async function loadActiveTopics(
   const recentWorksTask = measureAsync("topics.active.recentWorks", async (): Promise<TaskResult<unknown[]>> => {
     let worksQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics(id, title, library_status)")
+      .select("id, topic_id, user_id, video_title, uploaded_at, sub_topics!videos_topic_id_fkey(id, title, library_status)")
       .eq("lifecycle_state", "active")
       .not("topic_id", "is", null)
       .order("uploaded_at", { ascending: false })

@@ -12,6 +12,7 @@ import {
   cancelWritingClaim,
   deleteSubTopic,
   filterTopicClaimsByScope,
+  loadActiveTopics,
   loadTopicPool,
   loadTopicOptions,
   matchTopicGroup,
@@ -274,6 +275,46 @@ function createScope(kind: DataAccessScope["kind"] = "all", visibleUserIds = ["u
     visibleUserIds,
   } as DataAccessScope;
 }
+
+test("团队动态的最近成片明确使用视频 topic_id 关系，避免 Supabase 关系歧义", async () => {
+  const selectCalls: Array<{ table: string; columns: string }> = [];
+  const client = {
+    from(table: string) {
+      const result = table === "sub_topic_claims"
+        ? { data: [], error: null }
+        : { data: [{ id: "video-1", topic_id: "sub-1", user_id: "user-1", video_title: "成片一", uploaded_at: "2026-08-30T00:00:00.000Z", sub_topics: { id: "sub-1", title: "选题一", library_status: "in_library" } }], error: null };
+      const query = {
+        select(columns: string) {
+          selectCalls.push({ table, columns });
+          if (table === "videos" && columns.includes("sub_topics(") && !columns.includes("sub_topics!videos_topic_id_fkey(")) {
+            return {
+              eq: () => query,
+              not: () => query,
+              order: () => query,
+              limit: () => query,
+              then: (resolve: (value: { data: null; error: { message: string } }) => unknown) => Promise.resolve({
+                data: null,
+                error: { message: "Could not embed because more than one relationship was found for 'videos' and 'sub_topics'" },
+              }).then(resolve),
+            };
+          }
+          return query;
+        },
+        eq: () => query,
+        not: () => query,
+        order: () => query,
+        limit: () => query,
+        then: (resolve: (value: typeof result) => unknown) => Promise.resolve(result).then(resolve),
+      };
+      return query;
+    },
+  };
+
+  const result = await loadActiveTopics(client as never, "user-1", createScope(), 8);
+
+  assert.equal(result.ok, true);
+  assert.equal(selectCalls.find((call) => call.table === "videos")?.columns.includes("sub_topics!videos_topic_id_fkey("), true);
+});
 
 test("myClaim 只选择当前用户的有效认领，不从团队第一条认领猜测", () => {
   const rows = [
