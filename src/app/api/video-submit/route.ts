@@ -34,6 +34,7 @@ import {
 } from "./response-fields";
 import { validateTopicClaimForSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
+import { resolveCreateSubmissionConflict } from "./create-conflict";
 
 type RollbackAction = () => Promise<void>;
 
@@ -204,6 +205,7 @@ export async function POST(request: NextRequest) {
   }
 
   const normalized = validationResult.normalized;
+  const submissionVideoId = buildSubmissionRecordId(normalized);
 
   let editContract: EditSubmissionContract | null = null;
   if (normalized.mode === "edit") {
@@ -222,6 +224,35 @@ export async function POST(request: NextRequest) {
 
   if (accountError || !account || account.profile_id !== user.id) {
     return NextResponse.json({ error: "账号不存在或无权限提交" }, { status: 403 });
+  }
+
+  if (normalized.mode !== "edit") {
+    const [existingReportResult, existingVideoResult] = await Promise.all([
+      supabase
+        .from("daily_reports")
+        .select("id")
+        .eq("account_id", normalized.account_id)
+        .eq("report_date", normalized.biz_date)
+        .limit(1),
+      createAdminClient()
+        .from("videos")
+        .select("id")
+        .eq("id", submissionVideoId)
+        .limit(1),
+    ]);
+
+    if (existingReportResult.error || existingVideoResult.error) {
+      return NextResponse.json({ error: "核对重复提交状态失败" }, { status: 500 });
+    }
+
+    const duplicateResponse = resolveCreateSubmissionConflict({
+      mode: normalized.mode,
+      existingReport: (existingReportResult.data ?? []).length > 0,
+      existingVideo: (existingVideoResult.data ?? []).length > 0,
+    });
+    if (duplicateResponse) {
+      return NextResponse.json({ error: duplicateResponse.error }, { status: duplicateResponse.status });
+    }
   }
 
   // 编辑模式独立安全边界：在任何写入前重新核对原视频、日期、日报与快照绑定
@@ -341,7 +372,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const submissionVideoId = buildSubmissionRecordId(normalized);
   const nowIso = new Date().toISOString();
   const rollbackActions: RollbackAction[] = [];
 
