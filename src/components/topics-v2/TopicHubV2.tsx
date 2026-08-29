@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
+import { CompassConstellationIllustration } from "@/components/editorial/editorial-illustrations";
 import { TeamActivitySection } from "./TeamActivitySection";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
 
@@ -422,36 +423,40 @@ export function TopicHubV2({
       )}
 
       <div className="max-w-[1560px] mx-auto space-y-6">
-        {/* 页头区 (双字协同：大标立卷，骨相衬线 + 清爽正文) */}
-        <header className="space-y-1">
-          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
-            <div>
-              <h1 className="font-serif tracking-tighter text-2xl sm:text-3xl font-medium text-[#1C1917]">
-                干货选题库
+        {/* 全局顶栏：黄金大标题 Header (原版人文手稿装帧) */}
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 pt-1">
+          <div className="flex items-center gap-3">
+            <div className="size-9.5 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
+              <CompassConstellationIllustration size={22} />
+            </div>
+            <div className="space-y-1">
+              <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
+                灵感手稿 · 选题库
               </h1>
-              <p className="font-sans text-xs sm:text-sm text-[#78716C] mt-1 font-normal leading-relaxed">
-                数据验证过的干货母本 · 自由挑选并前往飞书创作
+              <p className="text-[12.5px] text-[#78716C] font-normal leading-relaxed">
+                时代痛点与敏锐立意 · 协同认领与创作复盘
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F5F3EE] text-[11.5px] font-medium text-[#57534E]">
-                <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
-                <span>八大母题体系</span>
-              </span>
-              <button
-                type="button"
-                onClick={refreshAll}
-                title="刷新大盘数据"
-                className="p-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
-                aria-label="刷新大盘数据"
-              >
-                <RefreshCw
-                  className={`size-3.5 ${
-                    activeLoading || poolLoading ? "animate-spin text-[#D97757]" : ""
-                  }`}
-                />
-              </button>
-            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F5F3EE] text-[11.5px] font-medium text-[#57534E]">
+              <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+              <span>八大母题体系</span>
+            </span>
+            <button
+              type="button"
+              onClick={refreshAll}
+              title="刷新大盘数据"
+              className="p-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+              aria-label="刷新大盘数据"
+            >
+              <RefreshCw
+                className={`size-3.5 ${
+                  activeLoading || poolLoading ? "animate-spin text-[#D97757]" : ""
+                }`}
+              />
+            </button>
           </div>
         </header>
 
