@@ -101,6 +101,8 @@ async function ModulesDataContainer({
     teams: data.teams,
     teamManagement: data.teamManagement,
     pendingRequests: pendingJoinRequests,
+    orphanExemptionRequests: data.orphanExemptionRequests,
+    orphanExemptionCount: data.orphanExemptionCount,
     defaultDate: data.queryDate,
     focusMemberId: focusMemberId,
   };

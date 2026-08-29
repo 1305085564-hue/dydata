@@ -4,6 +4,9 @@ import { getCurrentUserContext } from "@/lib/current-user-context";
 import { hasPermission } from "@/lib/permission-utils";
 import { getUserPermissions } from "@/lib/permissions";
 import { getSafeAccountDisplayName } from "@/lib/loaders/shared";
+import { buildDataAccessScope } from "@/lib/data-access-scope";
+import { loadOrphanExemptionCount } from "@/lib/exemption-orphan";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NavBarClient } from "./nav-bar-client";
 
 export async function NavBar() {
@@ -33,6 +36,34 @@ export async function NavBar() {
   const showSystemSettings = hasPermission(role, permissions, "manage_system");
   const canAccessTeamManagement = canAccessAdminPath("/admin/modules", role, permissions);
 
+  let orphanExemptionCount = 0;
+  if (navigation.showAdmin && permissionInfo) {
+    try {
+      const adminSupabase = createAdminClient();
+      const scope = await buildDataAccessScope(adminSupabase, user.id, {
+        profile: {
+          id: permissionInfo.userId,
+          role: permissionInfo.role,
+          permissions: permissionInfo.permissions,
+          data_scope: permissionInfo.dataScope,
+          team_id: permissionInfo.teamId,
+          company_role: permissionInfo.companyRole,
+          group_mode: permissionInfo.groupMode,
+          group_mode_token_hash: permissionInfo.groupModeTokenHash,
+          membership_status: permissionInfo.membershipStatus,
+        },
+      });
+      if (scope) {
+        orphanExemptionCount = await loadOrphanExemptionCount({
+          supabase: adminSupabase,
+          scope,
+        });
+      }
+    } catch {
+      console.error("[nav] failed to load orphan exemption count");
+    }
+  }
+
   const displayAccounts = (accounts ?? []).map((account, index, list) => ({
     id: account.id,
     name: account.name,
@@ -59,6 +90,10 @@ export async function NavBar() {
       canAccessTeamManagement={canAccessTeamManagement}
       canEnterGroupMode={permissionInfo?.hasGroupOwnerQualification === true}
       groupModeActive={permissionInfo?.groupMode === true}
+      canViewOrphanDetails={
+        permissionInfo?.companyRole === "company_owner" || role === "owner"
+      }
+      orphanExemptionCount={orphanExemptionCount}
       accounts={displayAccounts}
     />
   );

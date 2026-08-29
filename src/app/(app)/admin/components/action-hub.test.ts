@@ -16,5 +16,5 @@ test("豁免提醒在没有待处理申请时隐藏数量并展示完成态文�
 
   assert.equal(meta.title, "豁免申请");
   assert.equal(meta.badge, null);
-  assert.match(meta.description, /已处理完毕/);
+  assert.match(meta.description, /当前范围内没有待审批/);
 });

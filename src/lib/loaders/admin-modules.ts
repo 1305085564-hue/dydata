@@ -20,7 +20,12 @@ import {
   type TeamManagementAccess,
   type TeamManagementProfile,
 } from "@/lib/team-management";
-import { inferDataScope } from "@/lib/data-access-scope";
+import { buildDataAccessScope, inferDataScope } from "@/lib/data-access-scope";
+import {
+  isCompanyOwnerActor,
+  loadOrphanExemptionRequests,
+  type OrphanExemptionRequest,
+} from "@/lib/exemption-orphan";
 import { measureAsync } from "@/lib/perf";
 import { getTeamOptions } from "@/lib/teams";
 import type { CompanyRole, Permissions, UserRole } from "@/types";
@@ -100,6 +105,8 @@ export interface AdminModulesData {
     profiles: TeamManagementProfile[];
     leaderCandidates: TeamManagementProfile[];
   };
+  orphanExemptionRequests: OrphanExemptionRequest[];
+  orphanExemptionCount: number;
 }
 
 export type AdminModulesTeamManagementData = AdminModulesData["teamManagement"];
@@ -242,12 +249,29 @@ async function loadAdminModulesBaseContext({
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  const adminSupabase = createAdminClient();
+  const scope = await buildDataAccessScope(adminSupabase, user.id, {
+    profile: {
+      id: user.id,
+      role: perm.role,
+      permissions: perm.permissions,
+      data_scope: perm.dataScope,
+      team_id: perm.teamId ?? null,
+      company_role: perm.companyRole,
+      group_mode: perm.groupMode,
+      group_mode_token_hash: perm.groupModeTokenHash,
+      membership_status: perm.membershipStatus,
+    },
+  });
+  if (!scope) return null;
+
   return {
     perm,
     user,
     queryDate: searchDate || new Date().toISOString().split("T")[0],
     permissionManagerCapabilities: getPermissionManagerCapabilities(perm.role, perm.permissions),
-    adminSupabase: createAdminClient(),
+    adminSupabase,
+    scope,
   };
 }
 
@@ -531,6 +555,14 @@ export async function loadAdminModulesData({
     context.adminSupabase,
     hydratedProfiles.filter((profile) => profile.membership_status === "archived"),
   ), teamManagement.access);
+  const orphanExemptionResult = await loadOrphanExemptionRequests({
+    supabase: context.adminSupabase,
+    scope: context.scope,
+  });
+  const canViewOrphanDetails = isCompanyOwnerActor({
+    companyRole: context.perm.companyRole,
+    role: context.perm.role,
+  });
 
   return {
     currentUserId: context.user.id,
@@ -547,5 +579,7 @@ export async function loadAdminModulesData({
     archivedProfiles,
     teams: context.perm.groupMode ? teams : teamManagement.teams,
     teamManagement,
+    orphanExemptionRequests: canViewOrphanDetails ? orphanExemptionResult.data : [],
+    orphanExemptionCount: orphanExemptionResult.count,
   };
 }

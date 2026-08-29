@@ -65,6 +65,23 @@ interface UnifiedCommandHubProps {
   isAdmin: boolean;
   pendingApprovalsCount?: number;
   onPendingCountChange?: (count: number) => void;
+  canViewOrphanDetails?: boolean;
+  orphanExemptionCount?: number;
+}
+
+export function getOrphanExemptionReminderMeta(
+  count: number,
+  canViewDetails: boolean,
+) {
+  if (count <= 0) return null;
+
+  return {
+    title: canViewDetails ? "待归属申请" : "归属异常",
+    badge: `${count} 条`,
+    description: canViewDetails
+      ? "请前往成员管理处理归属异常申请。"
+      : "有待公司所有者处理的归属异常。",
+  };
 }
 
 export function UnifiedCommandHub({
@@ -75,6 +92,8 @@ export function UnifiedCommandHub({
   isAdmin,
   pendingApprovalsCount = 0,
   onPendingCountChange,
+  canViewOrphanDetails = false,
+  orphanExemptionCount = 0,
 }: UnifiedCommandHubProps) {
   const { notifications, loading, markRead, markAllRead, markDone } =
     useNotifications();
@@ -258,6 +277,10 @@ export function UnifiedCommandHub({
   const allSelected =
     allApprovalIds.length > 0 &&
     allApprovalIds.every((id) => selectedApprovalIds.has(id));
+  const orphanReminder = getOrphanExemptionReminderMeta(
+    orphanExemptionCount,
+    canViewOrphanDetails,
+  );
 
   // Track recently completed todo IDs in the current session for smooth animations
   const [completedSessionIds, setCompletedSessionIds] = useState<string[]>([]);
@@ -463,6 +486,29 @@ export function UnifiedCommandHub({
               {/* APPROVALS TAB */}
               {activeTab === "approvals" && isAdmin && (
                 <div className="space-y-3">
+                  {orphanReminder ? (
+                    <Link
+                      href="/admin/modules"
+                      onClick={() => onOpenChange(false)}
+                      className="flex items-start justify-between gap-3 rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/[0.04] p-3 transition-colors hover:bg-[#C0685C]/[0.08]"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-semibold text-[#1C1917]">
+                            {orphanReminder.title}
+                          </span>
+                          <span className="inline-flex items-center rounded-full bg-[#C0685C]/15 px-2 py-0.5 text-[11px] font-medium text-[#C0685C] tabular-nums">
+                            {orphanReminder.badge}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[12px] leading-relaxed text-[#78716C]">
+                          {orphanReminder.description}
+                        </p>
+                      </div>
+                      <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-[#C0685C]" />
+                    </Link>
+                  ) : null}
+
                   {/* Header Flat Toolbar */}
                   <div className="flex items-center justify-between pb-1 px-0.5">
                     <div className="flex items-center gap-2">
@@ -536,7 +582,7 @@ export function UnifiedCommandHub({
                         还没有待审的豁免
                       </h3>
                       <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-[#78716C]">
-                        当前没有新的豁免申请，审批队列已经清空。
+                        当前范围内没有待审批。
                       </p>
                     </div>
                   ) : (

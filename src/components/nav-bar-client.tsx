@@ -64,6 +64,8 @@ interface NavBarClientProps {
   canAccessTeamManagement?: boolean;
   canEnterGroupMode?: boolean;
   groupModeActive?: boolean;
+  canViewOrphanDetails?: boolean;
+  orphanExemptionCount?: number;
   accounts?: Account[];
 }
 
@@ -77,6 +79,8 @@ export function NavBarClient({
   canAccessTeamManagement = false,
   canEnterGroupMode = false,
   groupModeActive = false,
+  canViewOrphanDetails = false,
+  orphanExemptionCount = 0,
   accounts = [],
 }: NavBarClientProps) {
   const pathname = usePathname();
@@ -511,6 +515,8 @@ export function NavBarClient({
                     isAdmin={isAdmin}
                     pendingApprovalsCount={approvalBadgeCount}
                     onPendingCountChange={setPendingApprovalsCount}
+                    canViewOrphanDetails={canViewOrphanDetails}
+                    orphanExemptionCount={orphanExemptionCount}
                   />
                 )}
               </div>

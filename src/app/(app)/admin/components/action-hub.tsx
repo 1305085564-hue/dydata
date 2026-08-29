@@ -35,7 +35,7 @@ export function getExemptionReminderMeta(pendingRequestCount: number) {
   return {
     title: "豁免申请",
     badge: null,
-    description: "当前待处理豁免申请已处理完毕，点击可查看最近待办窗口。",
+    description: "当前范围内没有待审批，点击可查看最近待办窗口。",
   };
 }
 

@@ -26,6 +26,13 @@ import {
   clearExemptionGrantAtomically,
   reviewExemptionRequestAtomically,
 } from "@/lib/exemption-review";
+import {
+  buildOrphanRejectionAuditEntry,
+  isCompanyOwnerActor,
+  isMissingReviewNoteColumnError,
+  ORPHAN_EXEMPTION_REVIEW_NOTE,
+  resolveOrphanMutationPreflight,
+} from "@/lib/exemption-orphan";
 import type { DataScope, Permissions, UserRole } from "@/types";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { buildCompanyRoleProfilePatch } from "@/lib/company-permissions";
@@ -72,6 +79,119 @@ async function writeAuditLog(
     target,
     detail: detail ?? null,
   }).then(() => {}, () => {});
+}
+
+type OrphanMutationContext = {
+  perm: NonNullable<Awaited<ReturnType<typeof getUserPermissions>>>;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  adminSupabase: ReturnType<typeof createAdminClient>;
+  scope: NonNullable<Awaited<ReturnType<typeof buildDataAccessScope>>>;
+  request: {
+    id: string;
+    applicant_user_id: string | null;
+    team_id: string | null;
+    request_status: string | null;
+  };
+  applicant: {
+    id: string;
+    team_id: string | null;
+    membership_status: string | null;
+  } | null;
+};
+
+async function loadOrphanMutationContext(
+  requestId: string,
+): Promise<{ context: OrphanMutationContext } | { error: string }> {
+  const perm = await getUserPermissions();
+  if (!perm) return { error: "未登录" };
+  if (!isCompanyOwnerActor({ companyRole: perm.companyRole, role: perm.role })) {
+    return { error: "无权限" };
+  }
+
+  const supabase = await createClient();
+  const adminSupabase = createAdminClient();
+  const scope = await buildDataAccessScope(adminSupabase, perm.userId, {
+    profile: {
+      id: perm.userId,
+      role: perm.role,
+      permissions: perm.permissions,
+      data_scope: perm.dataScope,
+      team_id: perm.teamId ?? null,
+      company_role: perm.companyRole,
+      group_mode: perm.groupMode,
+      group_mode_token_hash: perm.groupModeTokenHash,
+      membership_status: perm.membershipStatus,
+    },
+  });
+  if (!scope) return { error: "用户信息不存在" };
+
+  const requestResult = await adminSupabase
+    .from("exemption_request")
+    .select("id, applicant_user_id, team_id, request_status")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (requestResult.error) return { error: "读取归属异常申请失败" };
+  if (!requestResult.data) return { error: "豁免申请不存在" };
+
+  const applicantId = requestResult.data.applicant_user_id as string | null;
+  const applicantResult = applicantId
+    ? await adminSupabase
+      .from("profiles")
+      .select("id, team_id, membership_status")
+      .eq("id", applicantId)
+      .maybeSingle()
+    : { data: null, error: null };
+  if (applicantResult.error) return { error: "读取申请人状态失败" };
+
+  return {
+    context: {
+      perm,
+      supabase,
+      adminSupabase,
+      scope,
+      request: requestResult.data as OrphanMutationContext["request"],
+      applicant: (applicantResult.data as OrphanMutationContext["applicant"]) ?? null,
+    },
+  };
+}
+
+async function markOrphanRequestRejected(
+  adminSupabase: ReturnType<typeof createAdminClient>,
+  requestId: string,
+  reviewerId: string,
+) {
+  const reviewedAt = new Date().toISOString();
+  const commonPatch = {
+    request_status: "rejected",
+    reviewed_by: reviewerId,
+    reviewed_at: reviewedAt,
+  };
+
+  const withNote = await adminSupabase
+    .from("exemption_request")
+    .update({ ...commonPatch, review_note: ORPHAN_EXEMPTION_REVIEW_NOTE } as Record<string, unknown>)
+    .eq("id", requestId)
+    .eq("request_status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (!withNote.error && withNote.data) {
+    return { ok: true as const, storedReviewNote: true as const };
+  }
+  if (withNote.error && !isMissingReviewNoteColumnError(withNote.error)) {
+    return { ok: false as const, error: "拒绝归属异常申请失败" };
+  }
+
+  const fallback = await adminSupabase
+    .from("exemption_request")
+    .update(commonPatch)
+    .eq("id", requestId)
+    .eq("request_status", "pending")
+    .select("id")
+    .maybeSingle();
+  if (fallback.error) return { ok: false as const, error: "拒绝归属异常申请失败" };
+  if (!fallback.data) return { ok: false as const, error: "该申请已处理" };
+  return { ok: true as const, storedReviewNote: false as const };
 }
 
 async function getProfileTeamId(
@@ -537,6 +657,7 @@ function formatTeamName(teamId: string | null, teamNames: Map<string, string>) {
 export async function updateMemberTeam(
   targetUserId: string,
   newTeamId: string | null,
+  options?: { expectedCurrentTeamId?: string | null },
 ): Promise<{ error?: string }> {
   const perm = await getUserPermissions();
   if (!perm) return { error: "未登录" };
@@ -553,6 +674,13 @@ export async function updateMemberTeam(
   const actor = profileRows?.find((profile) => profile.id === perm.userId);
   const target = profileRows?.find((profile) => profile.id === targetUserId);
   if (!target) return { error: "用户不存在" };
+  if (
+    options &&
+    Object.prototype.hasOwnProperty.call(options, "expectedCurrentTeamId") &&
+    (target.team_id ?? null) !== (options.expectedCurrentTeamId ?? null)
+  ) {
+    return { error: "成员归属已变化，请刷新后重试" };
+  }
 
   const decision = resolveMemberTeamTransfer({
     actorRole: perm.role,
@@ -630,6 +758,131 @@ export async function updateMemberTeam(
 
   revalidatePath("/admin");
   revalidatePath("/admin/modules");
+  return {};
+}
+
+function normalizeOrphanActionValue(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export async function assignOrphanExemptionMember(
+  requestId: string,
+  applicantUserId: string,
+  newTeamId: string,
+): Promise<{ error?: string }> {
+  const normalizedRequestId = normalizeOrphanActionValue(requestId);
+  const normalizedApplicantId = normalizeOrphanActionValue(applicantUserId);
+  const normalizedTeamId = normalizeOrphanActionValue(newTeamId);
+  if (!normalizedRequestId || !normalizedApplicantId || !normalizedTeamId) {
+    return { error: "归属异常申请参数不完整" };
+  }
+
+  const loaded = await loadOrphanMutationContext(normalizedRequestId);
+  if ("error" in loaded) return loaded;
+  const { context } = loaded;
+  const preflight = resolveOrphanMutationPreflight({
+    action: "assign",
+    request: context.request,
+    applicant: context.applicant,
+    actorScope: context.scope,
+    requestedApplicantId: normalizedApplicantId,
+  });
+  if (!preflight.ok) return { error: preflight.error };
+
+  if (context.scope.kind !== "all" && context.scope.teamId !== normalizedTeamId) {
+    return { error: "不能将成员分配到当前管理范围外的团队" };
+  }
+
+  const teamResult = await context.adminSupabase
+    .from("teams")
+    .select("id")
+    .eq("id", normalizedTeamId)
+    .maybeSingle();
+  if (teamResult.error) return { error: "读取目标团队失败" };
+  if (!teamResult.data) return { error: "目标团队不存在" };
+
+  // updateMemberTeam 内部会再次读取目标 profile；expectedCurrentTeamId
+  // 防止页面打开后成员先被其他管理员归属，再被旧卡片覆盖。
+  const assignment = await updateMemberTeam(normalizedApplicantId, normalizedTeamId, {
+    expectedCurrentTeamId: null,
+  });
+  if (assignment.error) return assignment;
+
+  // 旧申请不能继续占住 dashboard 的 pending 防重闸门；分配完成后结束
+  // 旧快照申请，员工才可以用新团队快照重新提交。
+  const rejection = await markOrphanRequestRejected(
+    context.adminSupabase,
+    context.request.id,
+    context.perm.userId,
+  );
+  if (!rejection.ok) {
+    return { error: "成员已分配，但原申请未能结束，请刷新后处理" };
+  }
+
+  const rejectionAudit = buildOrphanRejectionAuditEntry({
+      requestId: context.request.id,
+      applicantUserId: context.request.applicant_user_id,
+      applicantMembershipStatus: context.applicant?.membership_status ?? null,
+      snapshotTeamId: context.request.team_id,
+  });
+  await writeAuditLog(
+    context.supabase,
+    context.perm.userId,
+    rejectionAudit.action,
+    rejectionAudit.target,
+    rejectionAudit.detail,
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/modules");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function rejectOrphanExemptionRequest(
+  requestId: string,
+  applicantUserId?: string,
+): Promise<{ error?: string }> {
+  const normalizedRequestId = normalizeOrphanActionValue(requestId);
+  const normalizedApplicantId = normalizeOrphanActionValue(applicantUserId);
+  if (!normalizedRequestId) return { error: "归属异常申请参数不完整" };
+
+  const loaded = await loadOrphanMutationContext(normalizedRequestId);
+  if ("error" in loaded) return loaded;
+  const { context } = loaded;
+  const preflight = resolveOrphanMutationPreflight({
+    action: "reject",
+    request: context.request,
+    applicant: context.applicant,
+    actorScope: context.scope,
+    requestedApplicantId: normalizedApplicantId || undefined,
+  });
+  if (!preflight.ok) return { error: preflight.error };
+
+  const result = await markOrphanRequestRejected(
+    context.adminSupabase,
+    context.request.id,
+    context.perm.userId,
+  );
+  if (!result.ok) return { error: result.error };
+
+  const rejectionAudit = buildOrphanRejectionAuditEntry({
+      requestId: context.request.id,
+      applicantUserId: context.request.applicant_user_id,
+      applicantMembershipStatus: context.applicant?.membership_status ?? null,
+      snapshotTeamId: context.request.team_id,
+  });
+  await writeAuditLog(
+    context.supabase,
+    context.perm.userId,
+    rejectionAudit.action,
+    rejectionAudit.target,
+    rejectionAudit.detail,
+  );
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/modules");
+  revalidatePath("/dashboard");
   return {};
 }
 

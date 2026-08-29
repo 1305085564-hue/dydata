@@ -76,6 +76,25 @@ test("审核 RPC 只接收申请 id 和决定，申请人、团队与授予字�
   }]);
 });
 
+test("申请人重新归属后，旧申请继续批准会被 RPC 以 409 拦截", async () => {
+  const { client } = createRpcClient({
+    data: null,
+    error: { code: "P0001", message: "申请人与团队不一致" },
+  });
+
+  const result = await reviewExemptionRequestAtomically({
+    supabase: client as never,
+    requestId: "request-after-transfer",
+    decision: "approved",
+  });
+
+  assert.deepEqual(result, {
+    ok: false,
+    status: 409,
+    message: "申请信息已失效，请重新提交",
+  });
+});
+
 test("清除豁免通过单个 RPC 原子更新 grant 与 profile", async () => {
   const { client, calls } = createRpcClient();
   const result = await clearExemptionGrantAtomically({

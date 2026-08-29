@@ -67,6 +67,8 @@ import {
   changeRole,
   resetMemberPassword,
   updateMemberTeam,
+  assignOrphanExemptionMember,
+  rejectOrphanExemptionRequest,
   archiveMember,
   restoreMember,
 } from "../actions";
@@ -78,6 +80,7 @@ import {
 
 import { findFocusMember } from "@/lib/admin/find-focus-member";
 import { MemberPermissionEditor } from "../components/member-permission-editor";
+import type { OrphanExemptionRequest } from "@/lib/exemption-orphan";
 
 import { PERMISSION_CATEGORIES, PERMISSION_KEYS } from "@/types";
 import type {
@@ -170,6 +173,8 @@ export interface AdminModulesContentProps {
     profiles: unknown[];
   };
   pendingRequests: PendingRequest[];
+  orphanExemptionRequests: OrphanExemptionRequest[];
+  orphanExemptionCount: number;
   defaultDate: string;
   focusMemberId?: string;
 }
@@ -234,6 +239,8 @@ export function AdminModulesContentV3({
   teams: initialTeams,
   teamManagement,
   pendingRequests: initialPendingRequests,
+  orphanExemptionRequests: initialOrphanExemptionRequests,
+  orphanExemptionCount: initialOrphanExemptionCount,
   focusMemberId,
 }: AdminModulesContentProps) {
   const router = useRouter();
@@ -273,6 +280,8 @@ export function AdminModulesContentV3({
   const [localProfiles, setLocalProfiles] = useState<ProfileSummary[]>(allProfiles);
   const [localArchivedProfiles, setLocalArchivedProfiles] = useState<ProfileSummary[]>(initialArchivedProfiles);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>(initialPendingRequests);
+  const [orphanExemptionRequests, setOrphanExemptionRequests] = useState<OrphanExemptionRequest[]>(initialOrphanExemptionRequests);
+  const [orphanExemptionCount, setOrphanExemptionCount] = useState(initialOrphanExemptionCount);
   const [memberView, setMemberView] = useState<"active" | "archived">("active");
   const [selectedTeamId, setSelectedTeamId] = useState<string>(initialSelectedTeamId);
   const [searchQuery, setSearchQuery] = useState("");
@@ -328,6 +337,11 @@ export function AdminModulesContentV3({
   useEffect(() => {
     setPendingRequests(initialPendingRequests);
   }, [initialPendingRequests]);
+
+  useEffect(() => {
+    setOrphanExemptionRequests(initialOrphanExemptionRequests);
+    setOrphanExemptionCount(initialOrphanExemptionCount);
+  }, [initialOrphanExemptionRequests, initialOrphanExemptionCount]);
 
   useEffect(() => {
     if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((t) => t.id === selectedTeamId)) {
@@ -740,6 +754,51 @@ export function AdminModulesContentV3({
     });
   };
 
+  const handleAssignOrphanMember = (request: OrphanExemptionRequest, teamId: string) => {
+    if (!teamId || request.applicant_membership_status === "archived" || request.applicant_membership_status === null) {
+      return;
+    }
+
+    const previousRequests = orphanExemptionRequests;
+    const previousCount = orphanExemptionCount;
+    const team = localTeams.find((item) => item.id === teamId);
+    setOrphanExemptionRequests((current) => current.filter((item) => item.id !== request.id));
+    setOrphanExemptionCount((current) => Math.max(0, current - 1));
+
+    startTransition(async () => {
+      const result = await assignOrphanExemptionMember(request.id, request.applicant_user_id, teamId);
+      if (result.error) {
+        setOrphanExemptionRequests(previousRequests);
+        setOrphanExemptionCount(previousCount);
+        feedbackToast.error("分配团队失败", { description: result.error });
+        return;
+      }
+
+      feedbackToast.success(`已将「${request.applicant_name}」分配至${team?.name ?? "目标团队"}，原申请已结束，请让成员重新提交`);
+      router.refresh();
+    });
+  };
+
+  const handleRejectOrphanRequest = (request: OrphanExemptionRequest) => {
+    const previousRequests = orphanExemptionRequests;
+    const previousCount = orphanExemptionCount;
+    setOrphanExemptionRequests((current) => current.filter((item) => item.id !== request.id));
+    setOrphanExemptionCount((current) => Math.max(0, current - 1));
+
+    startTransition(async () => {
+      const result = await rejectOrphanExemptionRequest(request.id, request.applicant_user_id);
+      if (result.error) {
+        setOrphanExemptionRequests(previousRequests);
+        setOrphanExemptionCount(previousCount);
+        feedbackToast.error("拒绝归属异常申请失败", { description: result.error });
+        return;
+      }
+
+      feedbackToast.success("原申请已拒绝并留痕，请让成员重新提交");
+      router.refresh();
+    });
+  };
+
   // 11. AI Suggestions Loader
   const handleFetchAiSuggestion = async () => {
     if (!activeMemberId) return;
@@ -884,6 +943,82 @@ export function AdminModulesContentV3({
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {orphanExemptionCount > 0 && (
+          <section className="rounded-lg border-l-2 border-[#C0685C] bg-[#C0685C]/10 p-4">
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[14px] font-medium text-[#1C1917]">待归属申请</span>
+              <span className="rounded-md bg-[#C0685C]/15 px-2 py-0.5 text-[12px] font-medium text-[#C0685C] tabular-nums">
+                {orphanExemptionCount} 条
+              </span>
+            </div>
+
+            {isCompanyOwner ? (
+              <div className="divide-y divide-[#C0685C]/20">
+                {orphanExemptionRequests.map((request) => {
+                  const isArchivedOrDeleted =
+                    request.applicant_membership_status === "archived" ||
+                    request.applicant_membership_status === null;
+
+                  return (
+                    <div key={request.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span className="text-[13px] font-medium text-[#1C1917]">
+                            {request.applicant_name}
+                          </span>
+                          <span className="text-[12px] text-[#C0685C]">
+                            {isArchivedOrDeleted
+                              ? request.applicant_membership_status === "archived" ? "已归档" : "已注销或资料缺失"
+                              : "当前未分配团队"}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[12px] leading-[1.7] text-[#78716C]">
+                          快照团队：{request.snapshot_team_name ?? "未记录"} · {request.exemption_category ?? "waive"} / {request.exemption_type} · {request.start_date}
+                          {request.end_date ? ` 至 ${request.end_date}` : ""} · 提交于 {new Date(request.created_at).toLocaleDateString("zh-CN")}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        {!isArchivedOrDeleted && (
+                          <select
+                            defaultValue=""
+                            onChange={(event) => {
+                              if (event.target.value) {
+                                handleAssignOrphanMember(request, event.target.value);
+                                event.target.value = "";
+                              }
+                            }}
+                            disabled={isPending}
+                            className="h-7 rounded-md border border-[#E5E0D6] bg-white px-2 text-[12px] text-[#292524] outline-none"
+                            aria-label={`为${request.applicant_name}分配团队`}
+                          >
+                            <option value="" disabled>分配至团队…</option>
+                            {localTeams.map((team) => (
+                              <option key={team.id} value={team.id}>{team.name}</option>
+                            ))}
+                          </select>
+                        )}
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleRejectOrphanRequest(request)}
+                          disabled={isPending}
+                          className="h-7 px-2.5 text-[12px] text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md"
+                        >
+                          拒绝并留痕
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-[13px] leading-[1.7] text-[#78716C]">
+                有待公司所有者处理的归属异常
+              </p>
+            )}
           </section>
         )}
 
