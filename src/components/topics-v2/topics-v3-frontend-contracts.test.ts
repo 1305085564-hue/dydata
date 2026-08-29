@@ -172,12 +172,26 @@ test("更多筛选是真实可操作项，取值与服务端契约一致", () =>
   assert.doesNotMatch(drawer, /待后端接入|待 Codex 接入后端/);
 });
 
-test("选题库只保留约定的两条进货入口，移除成员手动录入入口", () => {
+test("选题库保留三条进货入口，手动录入走真实创建接口", () => {
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
   const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
-  assert.doesNotMatch(hub, /TopicCreateModal|isCreateModalOpen|onCreateClick/);
-  assert.doesNotMatch(explorer, /录入选题|onCreateClick/);
+  const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
+  assert.match(hub, /TopicCreateModal/);
+  assert.match(hub, /isCreateModalOpen/);
+  assert.match(hub, /setIsCreateModalOpen\(true\)/);
+  assert.match(explorer, /onCreateClick/);
+  assert.match(explorer, /录入选题/);
+  assert.match(createModal, /\/api\/topics\/sub-topics/);
+  assert.match(createModal, /method: "POST"/);
+  assert.match(createModal, /parseCreatedSubTopicResponse/);
   assert.match(hub, /TopicBatchImportModal/);
+});
+
+test("选题库顶部视角使用业务约定文案", () => {
+  const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  assert.match(explorer, /我的选题/);
+  assert.match(explorer, /在写选题/);
+  assert.doesNotMatch(explorer, /我录入的|我在写的/);
 });
 
 test("团队动态使用写作语义，点击动态打开对应选题详情", () => {

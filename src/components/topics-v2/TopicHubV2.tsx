@@ -57,6 +57,11 @@ const TopicBatchImportModal = dynamic(
   { ssr: false },
 );
 
+const TopicCreateModal = dynamic(
+  () => import("./TopicCreateModal").then((mod) => mod.TopicCreateModal),
+  { ssr: false },
+);
+
 export function TopicHubV2({
   canManageTopicLibrary = false,
   feishuWorkspaceUrl = null,
@@ -96,7 +101,7 @@ export function TopicHubV2({
   const [poolTotalCount, setPoolTotalCount] = useState(0);
 
   const [topicsOptions, setTopicsOptions] = useState<TopicOption[]>([]);
-  const [, setTopicsOptionsError] = useState<string | null>(null);
+  const [topicsOptionsError, setTopicsOptionsError] = useState<string | null>(null);
 
   // 选题池 Query & 排序筛选选项
   const [poolView, setPoolView] = useState<TopicPoolView>("all");
@@ -112,6 +117,7 @@ export function TopicHubV2({
 
   // 抽屉与 Modal 控制
   const [inspectTopicId, setInspectTopicId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isBatchImportModalOpen, setIsBatchImportModalOpen] = useState(false);
 
   // 飞书创作弹窗控制
@@ -154,6 +160,7 @@ export function TopicHubV2({
       const data = await fetchTopicJson("/api/topics/options");
       const parsed = parseTopicOptionsResponse(data);
       setTopicsOptions(parsed);
+      setTopicsOptionsError(null);
     } catch (err) {
       if (isTeamMembershipRequiredError(err)) {
         setMembershipRequired(true);
@@ -487,6 +494,7 @@ export function TopicHubV2({
           onBatchImportClick={
             canManageTopicLibrary ? () => setIsBatchImportModalOpen(true) : undefined
           }
+          onCreateClick={() => setIsCreateModalOpen(true)}
           onPageChange={(p) => setPoolPage(p)}
           onViewChange={(v) => setPoolView(v)}
           onTimeRangeChange={(t) => setPoolTimeRange(t)}
@@ -558,6 +566,20 @@ export function TopicHubV2({
           onClose={() => setIsBatchImportModalOpen(false)}
           onParseFile={handleParseImportFile}
           onConfirmImport={handleConfirmImport}
+        />
+      )}
+
+      {/* 动态懒加载：页面内手动录入选题 Modal */}
+      {isCreateModalOpen && (
+        <TopicCreateModal
+          isOpen={isCreateModalOpen}
+          topics={topicsOptions}
+          topicsError={topicsOptionsError}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={async () => {
+            await refreshAll();
+            showToast("选题录入成功", "success");
+          }}
         />
       )}
 

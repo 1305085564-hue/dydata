@@ -13,6 +13,7 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Filter,
+  Plus,
 } from "lucide-react";
 import {
   Select,
@@ -61,6 +62,7 @@ export interface TopicPoolExplorerProps {
   onOpenFeishuModal: (topic: TopicPoolItem) => void;
   onSelectTopic: (subTopicId: string) => void;
   onBatchImportClick?: () => void;
+  onCreateClick?: () => void;
 }
 
 export function TopicPoolExplorer({
@@ -88,6 +90,7 @@ export function TopicPoolExplorer({
   onOpenFeishuModal,
   onSelectTopic,
   onBatchImportClick,
+  onCreateClick,
 }: TopicPoolExplorerProps) {
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
   const [isTopicFilterOpen, setIsTopicFilterOpen] = useState(false);
@@ -193,17 +196,6 @@ export function TopicPoolExplorer({
           </button>
           <button
             type="button"
-            onClick={() => onViewChange("my_claims")}
-            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
-              currentView === "my_claims"
-                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
-            }`}
-          >
-            我在写的
-          </button>
-          <button
-            type="button"
             onClick={() => onViewChange("my_created")}
             className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
               currentView === "my_created"
@@ -211,7 +203,18 @@ export function TopicPoolExplorer({
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
             }`}
           >
-            我录入的
+            我的选题
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewChange("my_claims")}
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
+              currentView === "my_claims"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+            }`}
+          >
+            在写选题
           </button>
         </div>
 
@@ -423,6 +426,19 @@ export function TopicPoolExplorer({
             </button>
           )}
 
+          {/* 8. 手动录入 */}
+          {onCreateClick && (
+            <button
+              type="button"
+              onClick={onCreateClick}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#D97757] px-3.5 py-1.5 text-xs font-semibold text-white shadow-2xs transition-all hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 min-h-[44px] sm:min-h-0 cursor-pointer shrink-0"
+              aria-label="录入选题"
+            >
+              <Plus className="size-3.5 stroke-[2.5]" />
+              <span>录入选题</span>
+            </button>
+          )}
+
         </div>
       </div>
 
@@ -595,7 +611,7 @@ export function TopicPoolExplorer({
                 干货选题库暂无内容
               </h3>
               <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
-                内部达到 3 万播放的干货视频将自动入库，或由管理员批量导入外部干货
+                内部达到 3 万播放的干货视频将自动入库，也可以批量导入或手动录入
               </p>
             </div>
           )}
