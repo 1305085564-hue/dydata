@@ -70,6 +70,7 @@ wrangler.jsonc.*.bak
 output/
 .claude/
 .workbuddy/
+.commandcode/
 supabase/.temp/
 
 # 测试账号（含明文密码，不进 git）

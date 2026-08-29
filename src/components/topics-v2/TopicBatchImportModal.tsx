@@ -8,10 +8,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  Download,
   RotateCcw,
   ArrowRight,
   Info,
+  Loader2,
 } from "lucide-react";
 import type {
   TopicOption,
@@ -19,10 +19,14 @@ import type {
   BatchImportSummary,
 } from "./types";
 
-interface TopicBatchImportModalProps {
+export interface TopicBatchImportModalProps {
   isOpen: boolean;
   topics: TopicOption[];
   onClose: () => void;
+  onParseFile?: (file: File) => Promise<{
+    rows: BatchImportParsedRow[];
+    summary: BatchImportSummary;
+  }>;
   onConfirmImport?: (rows: BatchImportParsedRow[]) => Promise<{
     successCount: number;
     skippedCount: number;
@@ -34,143 +38,11 @@ interface TopicBatchImportModalProps {
 type ImportStep = "upload" | "preview" | "result";
 type PreviewFilterTab = "all" | "valid" | "warning" | "error";
 
-// 示例解析数据生成器（模拟解析 Excel/CSV 真实表格，确保零假数据伪装，展示清晰校验状态）
-function parseSampleImportData(
-  fileName: string,
-  topics: TopicOption[],
-): {
-  rows: BatchImportParsedRow[];
-  summary: BatchImportSummary;
-} {
-  const topicNames = topics.map((t) => t.name);
-
-  // 典型导入行样例库（包含正常、警告与错误）
-  const rawSampleRows = [
-    {
-      rowNumber: 2,
-      topicName: topicNames[0] || "认知破局",
-      title: "游资操盘底层逻辑：为什么散户总在牛市亏大钱？",
-      durationText: "4分20秒",
-      historyPlay: 382000,
-      historyLikes: 14500,
-      hook: "90%的人以为牛市好赚钱，其实牛市才是散户真正的绞肉机。",
-      outline: "1. 散户追高心理机制\n2. 游资主力换手特征\n3. 破局止损三原则",
-    },
-    {
-      rowNumber: 3,
-      topicName: topicNames[1] || "实战技法",
-      title: "分时图看盘绝技：一眼识破早盘诱多陷阱",
-      durationText: "3分15秒",
-      historyPlay: 125000,
-      historyLikes: 8200,
-      hook: "开盘前 15 分钟出现这种量价背离，千万别急着挂单追涨。",
-      outline: "1. 集合竞价猫腻\n2. 9:45 黄金观察点\n3. 假突破真出货特征",
-    },
-    {
-      rowNumber: 4,
-      topicName: "未知分类", // 无法匹配母题 -> 警告
-      title: "复利思维在资产配置中的真实威力",
-      durationText: "2分40秒",
-      historyPlay: 94000,
-      historyLikes: 5300,
-      hook: "很多人知道复利公式，但只有 1% 的人体会过拐点来临的震撼。",
-      outline: "1. 复利拐点数学证明\n2. 耐心与回撤控制",
-    },
-    {
-      rowNumber: 5,
-      topicName: topicNames[2] || "情绪心理",
-      title: "", // 缺少标题 -> 错误
-      durationText: "1分50秒",
-      historyPlay: 45000,
-      historyLikes: 2100,
-      hook: "克服贪婪与恐惧的三个心理锚点",
-      outline: "1. 情绪记账法",
-    },
-    {
-      rowNumber: 6,
-      topicName: topicNames[3] || "案例复盘",
-      title: "妖股成妖前夜的三个极端异动信号",
-      durationText: "5分10秒",
-      historyPlay: 520000,
-      historyLikes: 26000,
-      hook: "翻倍黑马启动前，龙虎榜和换手率一定会露出这三个破绽。",
-      outline: "1. 底部地量异动\n2. 板块共振启动\n3. 龙一龙二接力法",
-    },
-    {
-      rowNumber: 7,
-      topicName: topicNames[0] || "认知破局",
-      title: "游资操盘底层逻辑：为什么散户总在牛市亏大钱？", // 重复选题 -> 警告
-      durationText: "4分20秒",
-      historyPlay: 382000,
-      historyLikes: 14500,
-      hook: "90%的人以为牛市好赚钱",
-      outline: "重复数据项",
-    },
-  ];
-
-  const seenTitles = new Set<string>();
-  const parsedRows: BatchImportParsedRow[] = [];
-  const errors: Array<{ rowNumber: number; title: string; reason: string }> = [];
-
-  let validCount = 0;
-  let warningCount = 0;
-  let errorCount = 0;
-
-  for (const raw of rawSampleRows) {
-    let status: "valid" | "warning" | "error" = "valid";
-    let message = "数据完整，可正常导入";
-
-    if (!raw.title.trim()) {
-      status = "error";
-      message = "缺少必填的选题标题";
-      errorCount++;
-      errors.push({ rowNumber: raw.rowNumber, title: "（空标题）", reason: message });
-    } else if (!topicNames.includes(raw.topicName)) {
-      status = "warning";
-      message = `母题「${raw.topicName}」无法自动匹配，导入后将归为常规母题`;
-      warningCount++;
-    } else if (seenTitles.has(raw.title)) {
-      status = "warning";
-      message = "检测到库中或文件中存在同名选题，导入将更新参考数据";
-      warningCount++;
-    } else {
-      validCount++;
-    }
-
-    if (raw.title.trim()) {
-      seenTitles.add(raw.title);
-    }
-
-    parsedRows.push({
-      rowNumber: raw.rowNumber,
-      topicName: raw.topicName,
-      title: raw.title,
-      durationText: raw.durationText,
-      historyPlay: raw.historyPlay,
-      historyLikes: raw.historyLikes,
-      hook: raw.hook,
-      outline: raw.outline,
-      status,
-      validationMessage: message,
-    });
-  }
-
-  return {
-    rows: parsedRows,
-    summary: {
-      totalCount: parsedRows.length,
-      validCount,
-      warningCount,
-      errorCount,
-      errors,
-    },
-  };
-}
-
 export function TopicBatchImportModal({
   isOpen,
-  topics,
+  topics: _topics,
   onClose,
+  onParseFile,
   onConfirmImport,
 }: TopicBatchImportModalProps) {
   const [step, setStep] = useState<ImportStep>("upload");
@@ -182,7 +54,10 @@ export function TopicBatchImportModal({
   const [summary, setSummary] = useState<BatchImportSummary | null>(null);
   const [activeFilterTab, setActiveFilterTab] =
     useState<PreviewFilterTab>("all");
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<{
     successCount: number;
     skippedCount: number;
@@ -192,68 +67,80 @@ export function TopicBatchImportModal({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleClose = () => {
+  const handleClose = React.useCallback(() => {
     setStep("upload");
     setFileInfo(null);
     setParsedRows([]);
     setSummary(null);
     setActiveFilterTab("all");
+    setIsParsing(false);
+    setParseError(null);
     setIsSubmitting(false);
+    setSubmitError(null);
     setImportResult(null);
     onClose();
-  };
+  }, [onClose]);
 
   // Esc 监听
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen && !isSubmitting) {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isSubmitting, onClose]);
+  }, [isOpen, isSubmitting, handleClose]);
 
   if (!isOpen) return null;
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setFileInfo({ name: file.name, size: file.size });
-    const { rows, summary: parsedSummary } = parseSampleImportData(
-      file.name,
-      topics,
-    );
-    setParsedRows(rows);
-    setSummary(parsedSummary);
-    setStep("preview");
+    setParseError(null);
+
+    if (!onParseFile) {
+      // 未接入后端真实解析能力时，明确提示待接入，绝不伪造行数据
+      setStep("preview");
+      setParsedRows([]);
+      setSummary(null);
+      return;
+    }
+
+    try {
+      setIsParsing(true);
+      const res = await onParseFile(file);
+      setParsedRows(res.rows);
+      setSummary(res.summary);
+      setStep("preview");
+    } catch (err) {
+      setParseError(err instanceof Error ? err.message : "文件解析失败");
+      setStep("preview");
+    } finally {
+      setIsParsing(false);
+    }
   };
 
   const handleConfirm = async () => {
     if (!parsedRows.length || isSubmitting) return;
 
-    setIsSubmitting(true);
-    try {
-      if (onConfirmImport) {
-        const res = await onConfirmImport(
-          parsedRows.filter((r) => r.status !== "error"),
-        );
-        setImportResult(res);
-      } else {
-        // 前端待接入状态：展现清晰的导入模拟交接边界，绝不冒充真实入库
-        const valid = parsedRows.filter((r) => r.status === "valid").length;
-        const warning = parsedRows.filter((r) => r.status === "warning").length;
-        const error = parsedRows.filter((r) => r.status === "error").length;
+    if (!onConfirmImport) {
+      setSubmitError("导入接口待后端接入");
+      return;
+    }
 
-        setImportResult({
-          successCount: valid + warning,
-          skippedCount: 0,
-          failedCount: error,
-          errors: summary?.errors,
-        });
-      }
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await onConfirmImport(
+        parsedRows.filter((r) => r.status !== "error"),
+      );
+      setImportResult(res);
       setStep("result");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "导入提交失败");
     } finally {
       setIsSubmitting(false);
     }
@@ -300,7 +187,7 @@ export function TopicBatchImportModal({
                 批量导入外部干货选题
               </h3>
               <p className="text-xs text-[#78716C]">
-                支持 Excel (.xlsx, .xls) 与 CSV 格式，导入前自动校验
+                管理员通道 · 支持 Excel (.xlsx, .xls) 与 CSV 格式
               </p>
             </div>
           </div>
@@ -341,39 +228,30 @@ export function TopicBatchImportModal({
                 </p>
               </div>
 
-              {/* 导入规范与模板下载 */}
+              {/* 导入规范说明 */}
               <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-[#1C1917] flex items-center gap-1.5">
                     <Info className="size-3.5 text-[#78716C]" />
                     <span>表格字段填写规范</span>
                   </span>
-                  <a
-                    href="#download-sample-template"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // 下载示例模板提示
-                      alert("已生成《外部干货选题导入标准模板.xlsx》规范，包含母题、标题、时长、历史播放等必填与选填列。");
-                    }}
-                    className="inline-flex items-center gap-1 text-xs text-[#D97757] hover:underline font-medium"
-                  >
-                    <Download className="size-3" />
-                    <span>下载填写示例模板</span>
-                  </a>
+                  <span className="text-[11.5px] text-[#78716C]">
+                    导入模板由管理员配置
+                  </span>
                 </div>
                 <ul className="text-[#78716C] space-y-1 pl-4 list-disc font-normal leading-relaxed">
                   <li><strong>必填项</strong>：选题标题（请勿留空）</li>
-                  <li><strong>匹配项</strong>：母题（若与八大母题不符，将自动归入常规母题并在预览提示）</li>
+                  <li><strong>匹配项</strong>：母题（若与八大母题不符，将提示待确认）</li>
                   <li><strong>验证项</strong>：历史播放量、历史点赞数（用于建立选题历史成绩证明）</li>
-                  <li><strong>补充项</strong>：一句话 Hook、内容提纲、预估时长（支持富文本/多行提纲）</li>
+                  <li><strong>补充项</strong>：一句话 Hook、内容提纲、预估时长</li>
                 </ul>
               </div>
             </div>
           )}
 
-          {step === "preview" && summary && (
+          {step === "preview" && (
             <div className="space-y-4">
-              {/* 文件信息与概览三联 */}
+              {/* 文件信息 */}
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3.5 text-xs">
                 <div className="flex items-center gap-2">
                   <FileSpreadsheet className="size-4 text-[#D97757]" />
@@ -384,163 +262,194 @@ export function TopicBatchImportModal({
                     ({fileInfo ? formatFileSize(fileInfo.size) : ""})
                   </span>
                 </div>
-                <div className="flex items-center gap-3 font-medium">
-                  <span className="text-[#292524]">
-                    共读取 <strong className="tabular-nums">{summary.totalCount}</strong> 行
-                  </span>
-                  <span className="text-[#6FAA7D] flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5" />
-                    <strong className="tabular-nums">{summary.validCount}</strong> 可导入
-                  </span>
-                  {summary.warningCount > 0 && (
-                    <span className="text-[#D99E55] flex items-center gap-1">
-                      <AlertTriangle className="size-3.5" />
-                      <strong className="tabular-nums">{summary.warningCount}</strong> 需确认
+
+                {summary ? (
+                  <div className="flex items-center gap-3 font-medium">
+                    <span className="text-[#292524]">
+                      共读取 <strong className="tabular-nums">{summary.totalCount}</strong> 行
                     </span>
-                  )}
-                  {summary.errorCount > 0 && (
-                    <span className="text-[#DC2626] flex items-center gap-1">
-                      <XCircle className="size-3.5" />
-                      <strong className="tabular-nums">{summary.errorCount}</strong> 不可导入
+                    <span className="text-[#6FAA7D] flex items-center gap-1">
+                      <CheckCircle2 className="size-3.5" />
+                      <strong className="tabular-nums">{summary.validCount}</strong> 可导入
                     </span>
-                  )}
-                </div>
+                    {summary.warningCount > 0 && (
+                      <span className="text-[#D99E55] flex items-center gap-1">
+                        <AlertTriangle className="size-3.5" />
+                        <strong className="tabular-nums">{summary.warningCount}</strong> 需确认
+                      </span>
+                    )}
+                    {summary.errorCount > 0 && (
+                      <span className="text-[#DC2626] flex items-center gap-1">
+                        <XCircle className="size-3.5" />
+                        <strong className="tabular-nums">{summary.errorCount}</strong> 错误项
+                      </span>
+                    )}
+                  </div>
+                ) : null}
               </div>
 
-              {/* 过滤切换 Tab */}
-              <div className="flex items-center justify-between">
-                <div className="inline-flex items-center gap-1 bg-[#F5F3EE] p-0.5 rounded-lg text-xs font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setActiveFilterTab("all")}
-                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      activeFilterTab === "all"
-                        ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
-                        : "text-[#78716C] hover:text-[#1C1917]"
-                    }`}
-                  >
-                    全部 ({summary.totalCount})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveFilterTab("valid")}
-                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      activeFilterTab === "valid"
-                        ? "bg-white text-[#6FAA7D] shadow-2xs font-semibold"
-                        : "text-[#78716C] hover:text-[#1C1917]"
-                    }`}
-                  >
-                    可导入 ({summary.validCount})
-                  </button>
-                  {summary.warningCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveFilterTab("warning")}
-                      className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                        activeFilterTab === "warning"
-                          ? "bg-white text-[#D99E55] shadow-2xs font-semibold"
-                          : "text-[#78716C] hover:text-[#1C1917]"
-                      }`}
-                    >
-                      需确认 ({summary.warningCount})
-                    </button>
-                  )}
-                  {summary.errorCount > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveFilterTab("error")}
-                      className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                        activeFilterTab === "error"
-                          ? "bg-white text-[#DC2626] shadow-2xs font-semibold"
-                          : "text-[#78716C] hover:text-[#1C1917]"
-                      }`}
-                    >
-                      错误项 ({summary.errorCount})
-                    </button>
-                  )}
+              {isParsing ? (
+                <div className="py-16 text-center text-xs text-[#78716C]">
+                  <Loader2 className="size-5 animate-spin text-[#D97757] mx-auto mb-2" />
+                  <span>正在解析文件表格...</span>
                 </div>
-
-                <span className="text-[11.5px] text-[#78716C]">
-                  错误项将自动跳过，有效项将批量入库为外部干货
-                </span>
-              </div>
-
-              {/* 预览表格 */}
-              <div className="overflow-x-auto border border-[#ECE7DE] rounded-xl max-h-72">
-                <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-                  <thead className="sticky top-0 bg-[#FAF8F4] border-b border-[#ECE7DE] text-[11px] font-semibold text-[#78716C] select-none">
-                    <tr>
-                      <th className="py-2.5 px-3 w-12 text-center">行号</th>
-                      <th className="py-2.5 px-3 w-24">母题</th>
-                      <th className="py-2.5 px-3 min-w-[200px]">选题标题 / Hook</th>
-                      <th className="py-2.5 px-3 w-20 text-right">历史播放</th>
-                      <th className="py-2.5 px-3 w-20">时长</th>
-                      <th className="py-2.5 px-3 min-w-[150px]">校验结果</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#ECE7DE] bg-white">
-                    {filteredRows.map((row) => (
-                      <tr
-                        key={row.rowNumber}
-                        className={`hover:bg-[#FBF9F5]/70 transition-colors ${
-                          row.status === "error"
-                            ? "bg-[#DC2626]/5"
-                            : row.status === "warning"
-                              ? "bg-[#D99E55]/5"
-                              : ""
+              ) : parseError ? (
+                <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-center text-xs space-y-1">
+                  <AlertTriangle className="size-5 text-[#DC2626] mx-auto mb-1" />
+                  <p className="font-semibold text-[#DC2626]">解析失败</p>
+                  <p className="text-[#78716C]">{parseError}</p>
+                </div>
+              ) : !onParseFile ? (
+                /* 后端解析接口未接入时的真实提示 */
+                <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-[#FAF8F4]/50 p-8 text-center text-xs space-y-2">
+                  <Info className="size-6 text-[#78716C] mx-auto text-[#D97757]" />
+                  <p className="font-semibold text-[#1C1917]">
+                    导入解析能力待后端接入
+                  </p>
+                  <p className="text-[#78716C] max-w-md mx-auto leading-relaxed">
+                    已选择文件《{fileInfo?.name}》。文件解析与数据校验由后端批量导入接口统一处理，待 Codex 接入真实接口后即可启用预览与入库。
+                  </p>
+                </div>
+              ) : summary && parsedRows.length > 0 ? (
+                <>
+                  {/* 过滤切换 Tab */}
+                  <div className="flex items-center justify-between">
+                    <div className="inline-flex items-center gap-1 bg-[#F5F3EE] p-0.5 rounded-lg text-xs font-medium">
+                      <button
+                        type="button"
+                        onClick={() => setActiveFilterTab("all")}
+                        className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                          activeFilterTab === "all"
+                            ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                            : "text-[#78716C] hover:text-[#1C1917]"
                         }`}
                       >
-                        <td className="py-2.5 px-3 text-center text-[#78716C] tabular-nums font-mono">
-                          {row.rowNumber}
-                        </td>
-                        <td className="py-2.5 px-3 text-[#292524] font-medium">
-                          {row.topicName || "—"}
-                        </td>
-                        <td className="py-2.5 px-3 space-y-0.5">
-                          <div className="font-semibold text-[#1C1917] line-clamp-1">
-                            {row.title || <span className="text-[#DC2626]">（标题为空）</span>}
-                          </div>
-                          {row.hook && (
-                            <div className="text-[11px] text-[#78716C] line-clamp-1">
-                              “{row.hook}”
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-right tabular-nums text-[#292524] font-medium">
-                          {row.historyPlay
-                            ? row.historyPlay >= 10000
-                              ? `${(row.historyPlay / 10000).toFixed(1)}万`
-                              : row.historyPlay.toLocaleString()
-                            : "—"}
-                        </td>
-                        <td className="py-2.5 px-3 text-[#78716C] text-[11.5px]">
-                          {row.durationText || "—"}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium ${
-                              row.status === "valid"
-                                ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                        全部 ({summary.totalCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveFilterTab("valid")}
+                        className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                          activeFilterTab === "valid"
+                            ? "bg-white text-[#6FAA7D] shadow-2xs font-semibold"
+                            : "text-[#78716C] hover:text-[#1C1917]"
+                        }`}
+                      >
+                        可导入 ({summary.validCount})
+                      </button>
+                      {summary.warningCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveFilterTab("warning")}
+                          className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                            activeFilterTab === "warning"
+                              ? "bg-white text-[#D99E55] shadow-2xs font-semibold"
+                              : "text-[#78716C] hover:text-[#1C1917]"
+                          }`}
+                        >
+                          需确认 ({summary.warningCount})
+                        </button>
+                      )}
+                      {summary.errorCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setActiveFilterTab("error")}
+                          className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                            activeFilterTab === "error"
+                              ? "bg-white text-[#DC2626] shadow-2xs font-semibold"
+                              : "text-[#78716C] hover:text-[#1C1917]"
+                          }`}
+                        >
+                          错误项 ({summary.errorCount})
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 预览表格 */}
+                  <div className="overflow-x-auto border border-[#ECE7DE] rounded-xl max-h-72">
+                    <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+                      <thead className="sticky top-0 bg-[#FAF8F4] border-b border-[#ECE7DE] text-[11px] font-semibold text-[#78716C] select-none">
+                        <tr>
+                          <th className="py-2.5 px-3 w-12 text-center">行号</th>
+                          <th className="py-2.5 px-3 w-24">母题</th>
+                          <th className="py-2.5 px-3 min-w-[200px]">选题标题 / Hook</th>
+                          <th className="py-2.5 px-3 w-20 text-right">历史播放</th>
+                          <th className="py-2.5 px-3 w-20">时长</th>
+                          <th className="py-2.5 px-3 min-w-[150px]">校验结果</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#ECE7DE] bg-white">
+                        {filteredRows.map((row) => (
+                          <tr
+                            key={row.rowNumber}
+                            className={`hover:bg-[#FBF9F5]/70 transition-colors ${
+                              row.status === "error"
+                                ? "bg-[#DC2626]/5"
                                 : row.status === "warning"
-                                  ? "bg-[#D99E55]/10 text-[#C47A2B]"
-                                  : "bg-[#DC2626]/10 text-[#DC2626]"
+                                  ? "bg-[#D99E55]/5"
+                                  : ""
                             }`}
                           >
-                            {row.status === "valid" ? (
-                              <CheckCircle2 className="size-3" />
-                            ) : row.status === "warning" ? (
-                              <AlertTriangle className="size-3" />
-                            ) : (
-                              <XCircle className="size-3" />
-                            )}
-                            <span>{row.validationMessage}</span>
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            <td className="py-2.5 px-3 text-center text-[#78716C] tabular-nums font-mono">
+                              {row.rowNumber}
+                            </td>
+                            <td className="py-2.5 px-3 text-[#292524] font-medium">
+                              {row.topicName || "—"}
+                            </td>
+                            <td className="py-2.5 px-3 space-y-0.5">
+                              <div className="font-semibold text-[#1C1917] line-clamp-1">
+                                {row.title || <span className="text-[#DC2626]">（标题为空）</span>}
+                              </div>
+                              {row.hook && (
+                                <div className="text-[11px] text-[#78716C] line-clamp-1">
+                                  “{row.hook}”
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-right tabular-nums text-[#292524] font-medium">
+                              {row.historyPlay
+                                ? row.historyPlay >= 10000
+                                  ? `${(row.historyPlay / 10000).toFixed(1)}万`
+                                  : row.historyPlay.toLocaleString()
+                                : "—"}
+                            </td>
+                            <td className="py-2.5 px-3 text-[#78716C] text-[11.5px]">
+                              {row.durationText || "—"}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span
+                                className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium ${
+                                  row.status === "valid"
+                                    ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                                    : row.status === "warning"
+                                      ? "bg-[#D99E55]/10 text-[#C47A2B]"
+                                      : "bg-[#DC2626]/10 text-[#DC2626]"
+                                }`}
+                              >
+                                {row.status === "valid" ? (
+                                  <CheckCircle2 className="size-3" />
+                                ) : row.status === "warning" ? (
+                                  <AlertTriangle className="size-3" />
+                                ) : (
+                                  <XCircle className="size-3" />
+                                )}
+                                <span>{row.validationMessage}</span>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              ) : null}
+
+              {submitError && (
+                <div className="rounded-lg bg-red-50 p-3 text-xs text-[#DC2626]">
+                  {submitError}
+                </div>
+              )}
             </div>
           )}
 
@@ -551,10 +460,10 @@ export function TopicBatchImportModal({
               </div>
               <div className="space-y-1">
                 <h4 className="text-lg font-semibold text-[#1C1917]">
-                  批量导入解析与确认完成
+                  导入处理完成
                 </h4>
                 <p className="text-xs text-[#78716C] leading-relaxed">
-                  前端数据校验与导入准备完毕，已交接给后端入库通道
+                  导入结果已同步至数据库
                 </p>
               </div>
 
@@ -573,7 +482,7 @@ export function TopicBatchImportModal({
                   </div>
                 </div>
                 <div>
-                  <div className="text-[#78716C]">校验失败</div>
+                  <div className="text-[#78716C]">失败数量</div>
                   <div className="text-lg font-semibold text-[#DC2626] tabular-nums mt-0.5">
                     {importResult.failedCount}
                   </div>
@@ -585,7 +494,7 @@ export function TopicBatchImportModal({
                 <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-3 text-left text-xs space-y-1.5">
                   <div className="font-semibold text-[#DC2626] flex items-center gap-1.5">
                     <AlertTriangle className="size-3.5" />
-                    <span>未导入行明细</span>
+                    <span>失败明细</span>
                   </div>
                   <div className="space-y-1 max-h-32 overflow-y-auto pr-1 text-[#292524]">
                     {importResult.errors.map((err, i) => (
@@ -627,14 +536,16 @@ export function TopicBatchImportModal({
 
               <button
                 type="button"
-                disabled={isSubmitting || summary?.validCount === 0 && summary?.warningCount === 0}
+                disabled={isSubmitting || !parsedRows.length || !onConfirmImport}
                 onClick={handleConfirm}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-6 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs disabled:opacity-50 transition-all cursor-pointer"
+                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-6 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
                 <span>
                   {isSubmitting
                     ? "正在导入..."
-                    : `确认导入 ${(summary?.validCount || 0) + (summary?.warningCount || 0)} 条选题`}
+                    : onConfirmImport && parsedRows.length > 0
+                      ? `确认导入 ${parsedRows.filter((r) => r.status !== "error").length} 条选题`
+                      : "待接入导入接口"}
                 </span>
                 <ArrowRight className="size-3.5" />
               </button>

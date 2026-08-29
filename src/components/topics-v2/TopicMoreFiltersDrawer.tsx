@@ -3,20 +3,19 @@
 import React, { useState, useEffect } from "react";
 import {
   X,
-  Check,
   RotateCcw,
   Flame,
   Clock,
   Trophy,
   Database,
+  Info,
 } from "lucide-react";
 import type { TopicMoreFiltersState } from "./types";
-import { DEFAULT_MORE_FILTERS } from "./types";
 
-interface TopicMoreFiltersDrawerProps {
+export interface TopicMoreFiltersDrawerProps {
   isOpen: boolean;
-  filters: TopicMoreFiltersState;
-  onChange: (filters: TopicMoreFiltersState) => void;
+  filters?: TopicMoreFiltersState;
+  onChange?: (filters: TopicMoreFiltersState) => void;
   onClose: () => void;
 }
 
@@ -35,19 +34,10 @@ const CATEGORIES: Array<{
 
 export function TopicMoreFiltersDrawer({
   isOpen,
-  filters,
-  onChange,
   onClose,
 }: TopicMoreFiltersDrawerProps) {
   const [activeCategory, setActiveCategory] =
     useState<FilterCategoryKey>("source");
-  const [draftFilters, setDraftFilters] =
-    useState<TopicMoreFiltersState>(filters);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraftFilters(filters);
-  }, [filters, isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -61,34 +51,8 @@ export function TopicMoreFiltersDrawer({
 
   if (!isOpen) return null;
 
-  const isCategoryActive = (key: FilterCategoryKey) => {
-    switch (key) {
-      case "source":
-        return draftFilters.sourceType !== "all";
-      case "heat":
-        return draftFilters.recentHeat !== "all";
-      case "duration":
-        return draftFilters.durationRange !== "all";
-      case "performance":
-        return draftFilters.performanceTier !== "all";
-      default:
-        return false;
-    }
-  };
-
-  const activeFilterCount =
-    (draftFilters.sourceType !== "all" ? 1 : 0) +
-    (draftFilters.recentHeat !== "all" ? 1 : 0) +
-    (draftFilters.durationRange !== "all" ? 1 : 0) +
-    (draftFilters.performanceTier !== "all" ? 1 : 0);
-
   const handleResetAll = () => {
-    setDraftFilters(DEFAULT_MORE_FILTERS);
-  };
-
-  const handleApply = () => {
-    onChange(draftFilters);
-    onClose();
+    // 待后端接入后重置生效
   };
 
   return (
@@ -111,23 +75,19 @@ export function TopicMoreFiltersDrawer({
         <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-white px-5 py-3.5 shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-[#1C1917]">更多筛选</h3>
-            {activeFilterCount > 0 && (
-              <span className="rounded-full bg-[#D97757]/10 px-2 py-0.5 text-xs font-semibold text-[#D97757] tabular-nums">
-                已选 {activeFilterCount}
-              </span>
-            )}
+            <span className="rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#78716C]">
+              待后端接入
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={handleResetAll}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-normal text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
-              >
-                <RotateCcw className="size-3" />
-                <span>重置</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleResetAll}
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-normal text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+            >
+              <RotateCcw className="size-3" />
+              <span>重置</span>
+            </button>
             <button
               type="button"
               onClick={onClose}
@@ -137,6 +97,14 @@ export function TopicMoreFiltersDrawer({
               <X className="size-5" />
             </button>
           </div>
+        </div>
+
+        {/* 待接入提示横幅 */}
+        <div className="bg-[#FAF8F4] border-b border-[#ECE7DE] px-5 py-3 text-xs text-[#78716C] flex items-start gap-2">
+          <Info className="size-4 text-[#D97757] shrink-0 mt-0.5" />
+          <p className="leading-relaxed font-normal">
+            来源、热度、时长与历史成绩的级联高级筛选接口正在等待 Codex 后端接入。在接口打通前，条件保持待接入状态，暂不伪装生效。
+          </p>
         </div>
 
         {/* 主体左右分栏布局 */}
@@ -149,7 +117,6 @@ export function TopicMoreFiltersDrawer({
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               const isSelected = activeCategory === cat.key;
-              const hasActiveBadge = isCategoryActive(cat.key);
 
               return (
                 <button
@@ -172,9 +139,6 @@ export function TopicMoreFiltersDrawer({
                     />
                     <span className="truncate">{cat.label}</span>
                   </div>
-                  {hasActiveBadge && (
-                    <span className="size-1.5 rounded-full bg-[#D97757] shrink-0" />
-                  )}
                 </button>
               );
             })}
@@ -195,42 +159,23 @@ export function TopicMoreFiltersDrawer({
                 <div className="space-y-1.5 pt-1">
                   {[
                     { value: "all", label: "全部来源", desc: "包含内部与外部所有有效干货选题" },
-                    { value: "internal", label: "团队内部", desc: "来自团队日报与复盘中 24h 播放 ≥ 3 万的验证选题" },
-                    { value: "external", label: "外部收集", desc: "来自管理端通过 Excel/CSV 批量导入的外部爆款干货" },
-                  ].map((opt) => {
-                    const isChecked = draftFilters.sourceType === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() =>
-                          setDraftFilters((prev) => ({
-                            ...prev,
-                            sourceType: opt.value as TopicMoreFiltersState["sourceType"],
-                          }))
-                        }
-                        className={`flex min-h-[44px] w-full items-start justify-between rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                          isChecked
-                            ? "border-[#D97757]/40 bg-[#FAF8F4] text-[#1C1917]"
-                            : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#FBF9F5]"
-                        }`}
-                      >
-                        <div className="space-y-0.5 pr-2">
-                          <div className="text-xs font-semibold">
-                            {opt.label}
-                          </div>
-                          <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
-                            {opt.desc}
-                          </div>
+                    { value: "internal", label: "团队内部（待接入）", desc: "来自团队日报与复盘中 24h 播放 ≥ 3 万的验证选题" },
+                    { value: "external", label: "外部收集（待接入）", desc: "来自管理端通过 Excel/CSV 批量导入的外部爆款干货" },
+                  ].map((opt) => (
+                    <div
+                      key={opt.value}
+                      className="flex min-h-[44px] w-full items-start justify-between rounded-xl border border-[#ECE7DE] bg-white p-3 text-left opacity-70"
+                    >
+                      <div className="space-y-0.5 pr-2">
+                        <div className="text-xs font-medium text-[#292524]">
+                          {opt.label}
                         </div>
-                        {isChecked && (
-                          <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#D97757] text-white mt-0.5">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
+                          {opt.desc}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -248,44 +193,24 @@ export function TopicMoreFiltersDrawer({
                 <div className="space-y-1.5 pt-1">
                   {[
                     { value: "all", label: "全部热度", desc: "不限参与状态" },
-                    { value: "has_participants", label: "有人参与", desc: "近 7 天内至少有 1 位团队成员参与创作" },
-                    { value: "has_completed", label: "有人已经写完", desc: "近 7 天内已有成员完成脚本并发布作品" },
-                    { value: "has_in_progress", label: "当前有人在写", desc: "当前有成员正在进行飞书脚本写作" },
-                    { value: "no_participants", label: "暂时无人参与", desc: "近 7 天未被开采的优质冷门好题" },
-                  ].map((opt) => {
-                    const isChecked = draftFilters.recentHeat === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() =>
-                          setDraftFilters((prev) => ({
-                            ...prev,
-                            recentHeat: opt.value as TopicMoreFiltersState["recentHeat"],
-                          }))
-                        }
-                        className={`flex min-h-[44px] w-full items-start justify-between rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                          isChecked
-                            ? "border-[#D97757]/40 bg-[#FAF8F4] text-[#1C1917]"
-                            : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#FBF9F5]"
-                        }`}
-                      >
-                        <div className="space-y-0.5 pr-2">
-                          <div className="text-xs font-semibold">
-                            {opt.label}
-                          </div>
-                          <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
-                            {opt.desc}
-                          </div>
+                    { value: "active", label: "有人参与（待接入）", desc: "近 7 天内有成员正在写或已写成片" },
+                    { value: "in_progress", label: "当前有人在写（待接入）", desc: "当前有组员在飞书文档立卷创作中" },
+                    { value: "unclaimed", label: "暂无参与（待接入）", desc: "近 7 天内无人选写，适合抢占首发" },
+                  ].map((opt) => (
+                    <div
+                      key={opt.value}
+                      className="flex min-h-[44px] w-full items-start justify-between rounded-xl border border-[#ECE7DE] bg-white p-3 text-left opacity-70"
+                    >
+                      <div className="space-y-0.5 pr-2">
+                        <div className="text-xs font-medium text-[#292524]">
+                          {opt.label}
                         </div>
-                        {isChecked && (
-                          <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#D97757] text-white mt-0.5">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
+                          {opt.desc}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -294,52 +219,33 @@ export function TopicMoreFiltersDrawer({
               <div className="space-y-3">
                 <div>
                   <h4 className="text-xs font-semibold text-[#1C1917] mb-1">
-                    视频时长
+                    预估视频时长
                   </h4>
                   <p className="text-[11.5px] text-[#78716C] leading-relaxed">
-                    根据期望的内容体量与结构密度进行筛选
+                    按成片目标时长区间筛选
                   </p>
                 </div>
                 <div className="space-y-1.5 pt-1">
                   {[
-                    { value: "all", label: "全部时长", desc: "不限制视频预估时长" },
-                    { value: "under_2m", label: "2 分钟以内", desc: "短平快爆点，适合紧凑单点干货" },
-                    { value: "2_5m", label: "3–5 分钟", desc: "标准深度解析，适合系统框架与案例拆解" },
-                    { value: "over_5m", label: "5 分钟以上", desc: "长篇透彻长视频，适合大体量复盘与干货合辑" },
-                  ].map((opt) => {
-                    const isChecked = draftFilters.durationRange === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() =>
-                          setDraftFilters((prev) => ({
-                            ...prev,
-                            durationRange: opt.value as TopicMoreFiltersState["durationRange"],
-                          }))
-                        }
-                        className={`flex min-h-[44px] w-full items-start justify-between rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                          isChecked
-                            ? "border-[#D97757]/40 bg-[#FAF8F4] text-[#1C1917]"
-                            : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#FBF9F5]"
-                        }`}
-                      >
-                        <div className="space-y-0.5 pr-2">
-                          <div className="text-xs font-semibold">
-                            {opt.label}
-                          </div>
-                          <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
-                            {opt.desc}
-                          </div>
+                    { value: "all", label: "全部时长", desc: "不限视频长度" },
+                    { value: "under_2m", label: "2 分钟以内（待接入）", desc: "短平快干货，适合高密度观点" },
+                    { value: "2_5m", label: "3–5 分钟（待接入）", desc: "标准深度实战教程" },
+                    { value: "over_5m", label: "5 分钟以上（待接入）", desc: "长篇深度大课式拆解" },
+                  ].map((opt) => (
+                    <div
+                      key={opt.value}
+                      className="flex min-h-[44px] w-full items-start justify-between rounded-xl border border-[#ECE7DE] bg-white p-3 text-left opacity-70"
+                    >
+                      <div className="space-y-0.5 pr-2">
+                        <div className="text-xs font-medium text-[#292524]">
+                          {opt.label}
                         </div>
-                        {isChecked && (
-                          <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#D97757] text-white mt-0.5">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
+                          {opt.desc}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -348,74 +254,50 @@ export function TopicMoreFiltersDrawer({
               <div className="space-y-3">
                 <div>
                   <h4 className="text-xs font-semibold text-[#1C1917] mb-1">
-                    历史成绩
+                    历史成绩证明
                   </h4>
                   <p className="text-[11.5px] text-[#78716C] leading-relaxed">
-                    以真实跑出过的历史成绩为第一证明进行筛选
+                    按已被数据验证的爆款表现维度排序或筛选
                   </p>
                 </div>
                 <div className="space-y-1.5 pt-1">
                   {[
-                    { value: "all", label: "全部成绩", desc: "默认全部已达标入库的选题" },
-                    { value: "high_best_play", label: "历史最高播放优先", desc: "曾跑出过 10万+ 或全库巅峰表现的明星选题" },
-                    { value: "high_qualified", label: "优质作品数量多", desc: "已被多条合格作品验证过高胜率的母本" },
-                    { value: "high_avg_play", label: "平均播放表现稳健", desc: "多轮重做均保持高均播表现的常青选题" },
-                  ].map((opt) => {
-                    const isChecked = draftFilters.performanceTier === opt.value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() =>
-                          setDraftFilters((prev) => ({
-                            ...prev,
-                            performanceTier: opt.value as TopicMoreFiltersState["performanceTier"],
-                          }))
-                        }
-                        className={`flex min-h-[44px] w-full items-start justify-between rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                          isChecked
-                            ? "border-[#D97757]/40 bg-[#FAF8F4] text-[#1C1917]"
-                            : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#FBF9F5]"
-                        }`}
-                      >
-                        <div className="space-y-0.5 pr-2">
-                          <div className="text-xs font-semibold">
-                            {opt.label}
-                          </div>
-                          <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
-                            {opt.desc}
-                          </div>
+                    { value: "all", label: "默认排序", desc: "综合推荐权重排序" },
+                    { value: "best_play", label: "历史最高播放优先（待接入）", desc: "优先展示单条成片播放量极高的爆款" },
+                    { value: "qualified_count", label: "达标优质作品最多（待接入）", desc: "优先展示被多次验证跑出优质结果的母题" },
+                  ].map((opt) => (
+                    <div
+                      key={opt.value}
+                      className="flex min-h-[44px] w-full items-start justify-between rounded-xl border border-[#ECE7DE] bg-white p-3 text-left opacity-70"
+                    >
+                      <div className="space-y-0.5 pr-2">
+                        <div className="text-xs font-medium text-[#292524]">
+                          {opt.label}
                         </div>
-                        {isChecked && (
-                          <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#D97757] text-white mt-0.5">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <div className="text-[11.5px] text-[#78716C] leading-normal font-normal">
+                          {opt.desc}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* 底栏应用操作区 */}
+        {/* 底栏 */}
         <div className="flex items-center justify-between border-t border-[#ECE7DE] bg-[#FAF8F4] px-5 py-3.5 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="min-h-[44px] sm:min-h-0 rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
           >
-            取消
+            关闭
           </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            className="min-h-[44px] sm:min-h-0 rounded-xl bg-[#D97757] px-6 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer"
-          >
-            应用筛选
-          </button>
+          <span className="text-xs text-[#78716C]">
+            待 Codex 接入后端后启用
+          </span>
         </div>
       </div>
     </>

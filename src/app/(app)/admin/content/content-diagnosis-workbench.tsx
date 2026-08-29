@@ -47,7 +47,6 @@ import {
   type MetricKey,
 } from "@/lib/content-attribution-map";
 
-export type RefKey = "self" | "team" | "top" | "user";
 import {
   buildReviewQueue,
   buildSnapshotMap,
@@ -61,7 +60,7 @@ import {
 
 interface ContentDiagnosisWorkbenchProps {
   video: VideoRow | null;
-  snapshot: VideoMetricsSnapshot | null;
+  snapshot?: VideoMetricsSnapshot | null;
   onClose: () => void;
   canOperateLifecycle: boolean;
   onLifecycleChanged: () => void;
@@ -72,6 +71,10 @@ interface ContentDiagnosisWorkbenchProps {
   reviewReadiness?: Record<string, ContentReviewReadiness>;
   onVideoSelect?: (videoId: string) => void;
   onAnalysisGenerated?: () => void;
+  onToggleTopicLibrary?: (
+    videoId: string,
+    action: "remove" | "restore",
+  ) => Promise<void>;
 }
 
 type ContentAnalysisResult = {
@@ -94,24 +97,25 @@ const statusBadgeClass: Record<Video["anomaly_status"], string> = {
   未满24h: "border-[#E5E0D6] bg-[#F5F3EE] text-[#78716C]",
 };
 
+export type RefKey = "self" | "team" | "top" | "user";
+
 export function ContentDiagnosisWorkbench({
   video,
-  snapshot,
+  snapshot = null,
   onClose,
-  canOperateLifecycle,
+  canOperateLifecycle = false,
   onLifecycleChanged,
   profiles = [],
   anomalyVideos = [],
-  videos,
-  snapshots,
-  reviewReadiness,
+  videos = [],
+  snapshots = [],
+  reviewReadiness = {},
   onVideoSelect,
   onAnalysisGenerated,
+  onToggleTopicLibrary,
 }: ContentDiagnosisWorkbenchProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const [removedFromTopicIds, setRemovedFromTopicIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [isTogglingTopicLibrary, setIsTogglingTopicLibrary] = useState(false);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(
     DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   );
@@ -605,16 +609,12 @@ export function ContentDiagnosisWorkbench({
             </p>
           </div>
 
-          {/* 选题库入库管理与状态 (Topics V3) */}
+          {/* 选题库入库管理与状态 (Topics V3: 由后端真实字段驱动) */}
           {video && (() => {
-            const isReview =
-              (video.video_title || "").includes("复盘") ||
-              (video.content || "").includes("复盘");
-            const isRemoved = removedFromTopicIds.has(video.id);
-            const playCount = snapshot?.play_count || 0;
-            const isEligible = playCount >= 30000;
+            const status = (video as { topic_library_status?: string })
+              .topic_library_status;
 
-            if (isReview) {
+            if (status === "review_excluded") {
               return (
                 <span
                   title="复盘类型视频无论数据多高，均不进入干货选题库"
@@ -625,63 +625,85 @@ export function ContentDiagnosisWorkbench({
               );
             }
 
-            if (isRemoved) {
+            if (status === "removed") {
               return (
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#F5F3EE] px-2 py-1 text-[11px] text-[#78716C] font-normal">
                     已从题库移出
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRemovedFromTopicIds((prev) => {
-                        const next = new Set(prev);
-                        next.delete(video.id);
-                        return next;
-                      });
-                      feedbackToast.success("已恢复至干货选题库，员工已重新可见");
-                    }}
-                    className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#292524] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs"
-                  >
-                    恢复入库
-                  </button>
+                  {onToggleTopicLibrary && (
+                    <button
+                      type="button"
+                      disabled={isTogglingTopicLibrary}
+                      onClick={async () => {
+                        try {
+                          setIsTogglingTopicLibrary(true);
+                          await onToggleTopicLibrary(video.id, "restore");
+                          feedbackToast.success("已恢复至干货选题库，员工已重新可见");
+                        } catch (err) {
+                          feedbackToast.error("恢复入库失败", {
+                            details:
+                              err instanceof Error ? err.message : String(err),
+                          });
+                        } finally {
+                          setIsTogglingTopicLibrary(false);
+                        }
+                      }}
+                      className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#292524] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs disabled:opacity-40"
+                    >
+                      {isTogglingTopicLibrary ? "处理中..." : "恢复入库"}
+                    </button>
+                  )}
                 </div>
               );
             }
 
-            if (isEligible) {
+            if (status === "in_library") {
               return (
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center rounded-lg border border-[#6FAA7D]/20 bg-[#6FAA7D]/10 px-2 py-1 text-[11px] text-[#6FAA7D] font-medium">
                     已自动入选题库
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRemovedFromTopicIds((prev) => {
-                        const next = new Set(prev);
-                        next.add(video.id);
-                        return next;
-                      });
-                      feedbackToast.success("已从选题库移出，历史数据已完整保留");
-                    }}
-                    title="移出后仅对员工停止展示，不删除历史数据"
-                    className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#78716C] hover:text-[#C9604D] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs"
-                  >
-                    移出题库
-                  </button>
+                  {onToggleTopicLibrary && (
+                    <button
+                      type="button"
+                      disabled={isTogglingTopicLibrary}
+                      onClick={async () => {
+                        try {
+                          setIsTogglingTopicLibrary(true);
+                          await onToggleTopicLibrary(video.id, "remove");
+                          feedbackToast.success("已从选题库移出，历史数据已完整保留");
+                        } catch (err) {
+                          feedbackToast.error("移出题库失败", {
+                            details:
+                              err instanceof Error ? err.message : String(err),
+                          });
+                        } finally {
+                          setIsTogglingTopicLibrary(false);
+                        }
+                      }}
+                      title="移出后仅对员工停止展示，不删除历史数据"
+                      className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#78716C] hover:text-[#C9604D] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs disabled:opacity-40"
+                    >
+                      {isTogglingTopicLibrary ? "处理中..." : "移出题库"}
+                    </button>
+                  )}
                 </div>
               );
             }
 
-            return (
-              <span
-                title="干货视频 24h 播放满 3 万将自动进入干货选题库"
-                className="hidden lg:inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] px-2 py-1 text-[11px] text-[#78716C] font-normal"
-              >
-                暂未达入库标准 (满3万自动进入)
-              </span>
-            );
+            if (status === "ineligible") {
+              return (
+                <span
+                  title="干货视频 24h 播放满 3 万将自动进入干货选题库"
+                  className="hidden lg:inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] px-2 py-1 text-[11px] text-[#78716C] font-normal"
+                >
+                  暂未达入库标准 (满3万自动进入)
+                </span>
+              );
+            }
+
+            return null;
           })()}
 
           {video &&

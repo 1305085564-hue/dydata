@@ -12,6 +12,7 @@ import {
   Trophy,
   Building2,
   Globe2,
+  Loader2,
 } from "lucide-react";
 import {
   fetchTopicJson,
@@ -29,7 +30,7 @@ import type {
 
 const emptySubscribe = () => () => {};
 
-interface TopicWorkBreakdownDrawerProps {
+export interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
   onClose: () => void;
   onOpenFeishuModal?: (topic: SubTopicItem) => void;
@@ -48,6 +49,7 @@ export function TopicWorkBreakdownDrawer({
     () => true,
     () => false,
   );
+  const [isLoading, setIsLoading] = useState(false);
   const [subTopicInfo, setSubTopicInfo] = useState<SubTopicItem | null>(null);
   const [worksData, setWorksData] = useState<TopicWorksResponse | null>(null);
   const [claimsData, setClaimsData] =
@@ -111,7 +113,7 @@ export function TopicWorkBreakdownDrawer({
   const loadData = useCallback(async () => {
     if (!subTopicId) return;
     const requestId = ++loadRequestId.current;
-    setLoading(true);
+    setIsLoading(true);
     setSubTopicInfo(null);
     setWorksData(null);
     setClaimsData(null);
@@ -188,6 +190,7 @@ export function TopicWorkBreakdownDrawer({
           : "参与动态加载失败",
       );
     }
+    setIsLoading(false);
   }, [subTopicId]);
 
   useEffect(() => {
@@ -207,21 +210,20 @@ export function TopicWorkBreakdownDrawer({
     subTopicInfo?.myClaim?.status === "candidate" ||
     subTopicInfo?.myClaim?.status === "scripting";
 
-  // 计算近 7 天参与去重人数
+  // 计算近 7 天参与去重人数（有真实值才计算，杜绝猜数或补造数据）
   const scriptingCount = claimsData?.scriptingCount ?? 0;
   const completedCount = worksData?.pagination.totalItems ?? 0;
   const total7dParticipants =
-    (claimsData?.claims.length ?? 0) > 0
-      ? claimsData?.claims.length
-      : scriptingCount + Math.min(completedCount, 3) || 1;
+    claimsData?.claims && claimsData.claims.length > 0
+      ? claimsData.claims.length
+      : scriptingCount > 0
+        ? scriptingCount
+        : 0;
 
-  const bestPlay =
-    worksData?.summary?.bestPlayCount ??
-    (worksData?.summary?.averagePlayCount
-      ? worksData.summary.averagePlayCount * 1.5
-      : null);
+  // 历史指标严格读取真实字段，不存在则统一显示 null / "—"
+  const bestPlay = worksData?.summary?.bestPlayCount ?? null;
   const avgPlay = worksData?.summary?.averagePlayCount ?? null;
-  const qualifiedCount = worksData?.summary?.qualifiedWorkCount ?? completedCount;
+  const qualifiedCount = worksData?.summary?.qualifiedWorkCount ?? null;
 
   return createPortal(
     <>
@@ -243,102 +245,89 @@ export function TopicWorkBreakdownDrawer({
         <div className="shrink-0">
           <div className="flex items-start justify-between pb-3.5 border-b border-[#ECE7DE] mb-4 pt-1">
             <div className="min-w-0 pr-3 space-y-1">
-              <div className="flex items-center gap-2 text-xs font-normal text-[#78716C] truncate">
-                <span className="bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 rounded-md font-medium text-[#57534E]">
-                  {subTopicInfo?.topics?.name || "常规母题"}
-                  {subTopicInfo?.topic_groups?.name
-                    ? ` · ${subTopicInfo.topic_groups.name}`
-                    : ""}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">
+                  {subTopicInfo?.topics?.name || "干货选题"}
                 </span>
-                {subTopicInfo?.emotion_tag && (
-                  <span className="bg-[#F5F3EE] px-1.5 py-0.5 rounded text-xs text-[#292524]">
-                    #{subTopicInfo.emotion_tag}
+                {subTopicInfo?.source_type === "external" && (
+                  <span className="text-xs text-[#43718E] bg-[#43718E]/10 px-2 py-0.5 rounded-md font-medium">
+                    外部收集干货
                   </span>
                 )}
-                <span className="text-[#78716C] text-[11px]">
-                  {subTopicInfo?.source_type === "external"
-                    ? "外部收集干货"
-                    : "内部验证干货"}
-                </span>
               </div>
               <h3
                 id="drawer-title"
-                className="text-lg font-semibold text-[#1C1917] leading-snug"
+                className="text-lg font-semibold text-[#1C1917] leading-snug line-clamp-2"
               >
                 {subTopicInfo?.title || "选题详情"}
               </h3>
             </div>
             <button
               ref={closeBtnRef}
-              type="button"
               onClick={handleClose}
-              className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all shrink-0 cursor-pointer"
-              title="关闭详情"
-              aria-label="关闭详情"
+              className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+              aria-label="关闭抽屉"
             >
-              <X className="w-5 h-5" />
+              <X className="size-5" />
             </button>
           </div>
         </div>
 
-        {/* 滚动内容区 */}
+        {/* 抽屉滚动内容 */}
         <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-5">
-          {detailError ? (
-            <div className="py-8 text-center text-[#292524] bg-red-50/50 rounded-xl p-4">
-              <AlertTriangle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
-              <p className="text-sm font-semibold">详情加载失败</p>
-              <p className="text-xs text-[#DC2626] mt-1">{detailError}</p>
+          {isLoading ? (
+            <div className="py-20 text-center">
+              <Loader2 className="size-6 text-[#D97757] animate-spin mx-auto mb-2" />
+              <p className="text-xs text-[#78716C]">正在加载选题详情...</p>
+            </div>
+          ) : detailError ? (
+            <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-xs text-[#DC2626] space-y-1">
+              <div className="font-semibold flex items-center gap-1.5">
+                <AlertTriangle className="size-4" />
+                <span>详情加载失败</span>
+              </div>
+              <p className="text-[#78716C]">{detailError}</p>
             </div>
           ) : (
             <>
-              {/* 1. 一句话 Hook (暖墨凹槽 Inset) */}
-              <div className="rounded-2xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 space-y-1.5 shadow-2xs">
-                <div className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
-                  <Sparkles className="size-3.5 text-[#D97757]" />
-                  <span>一句话立意 Hook</span>
-                </div>
-                <p className="text-xs text-[#292524] leading-relaxed">
-                  “{subTopicInfo?.hook || "暂无 Hook 说明，可根据母题立意直接发挥"}”
-                </p>
-              </div>
-
-              {/* 内容提纲与目标受众 */}
-              {(subTopicInfo?.audience || subTopicInfo?.outline) && (
-                <div className="rounded-xl border border-[#ECE7DE] bg-white p-4 text-xs space-y-2">
-                  {subTopicInfo.audience && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#78716C]">目标受众:</span>
-                      <strong className="text-[#1C1917] font-medium">
-                        {subTopicInfo.audience}
-                      </strong>
-                    </div>
-                  )}
-                  {subTopicInfo.outline && (
-                    <div className="space-y-1 pt-1 border-t border-[#ECE7DE]/60">
-                      <span className="text-[#78716C] block font-medium">
-                        内容提纲建议:
-                      </span>
-                      <p className="text-[#292524] whitespace-pre-line leading-relaxed pl-1 font-normal">
-                        {typeof subTopicInfo.outline === "string"
-                          ? subTopicInfo.outline
-                          : Array.isArray(subTopicInfo.outline)
-                            ? subTopicInfo.outline.map((p, i) => `${i + 1}. ${p}`).join("\n")
-                            : ""}
+              {/* 1. 一句话 Hook & 内容提纲 */}
+              {(subTopicInfo?.hook || subTopicInfo?.outline) && (
+                <section className="space-y-3">
+                  {subTopicInfo?.hook && (
+                    <div className="rounded-xl border border-[#D97757]/20 bg-[#FAF8F4] p-3.5 space-y-1">
+                      <div className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
+                        <Sparkles className="size-3.5 text-[#D97757]" />
+                        <span>一句话立意 Hook</span>
+                      </div>
+                      <p className="text-xs text-[#292524] leading-relaxed">
+                        “{subTopicInfo.hook}”
                       </p>
                     </div>
                   )}
-                </div>
+
+                  {subTopicInfo?.outline && (
+                    <div className="rounded-xl border border-[#ECE7DE] bg-white p-3.5 space-y-1.5">
+                      <div className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
+                        <FileText className="size-3.5 text-[#78716C]" />
+                        <span>内容提纲</span>
+                      </div>
+                      <p className="text-xs text-[#57534E] leading-relaxed whitespace-pre-line font-normal">
+                        {subTopicInfo.outline}
+                      </p>
+                    </div>
+                  )}
+                </section>
               )}
 
-              {/* 2. 历史验证数据双轨 (清晰区分内部与外部) */}
-              <section className="space-y-2.5">
+              {/* 2. 历史数据双轨证明 */}
+              <section className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
                     <Trophy className="size-3.5 text-[#D97757]" />
-                    <span>历史验证表现</span>
+                    <span>历史数据证明</span>
                   </h4>
                   <span className="text-[11px] text-[#78716C]">
-                    真实数据证明 · 非主观推测
+                    真实数据证明 · 严禁主观推测
                   </span>
                 </div>
 
@@ -350,7 +339,7 @@ export function TopicWorkBreakdownDrawer({
                       <span>团队内部实测成绩</span>
                     </span>
                     <span className="text-[#6FAA7D] font-medium">
-                      达标优质作品 {qualifiedCount} 条
+                      达标优质作品 {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                     </span>
                   </div>
 
@@ -358,18 +347,18 @@ export function TopicWorkBreakdownDrawer({
                     <div>
                       <div className="text-[11px] text-[#78716C]">最高播放</div>
                       <div className="text-base font-semibold text-[#D97757] tabular-nums mt-0.5">
-                        {bestPlay
+                        {bestPlay !== null
                           ? bestPlay >= 10000
                             ? `${(bestPlay / 10000).toFixed(1)}万`
                             : bestPlay.toLocaleString()
-                          : "3.0万+"}
+                          : "—"}
                       </div>
                     </div>
 
                     <div>
                       <div className="text-[11px] text-[#78716C]">平均播放</div>
                       <div className="text-base font-semibold text-[#1C1917] tabular-nums mt-0.5">
-                        {avgPlay
+                        {avgPlay !== null
                           ? avgPlay >= 10000
                             ? `${(avgPlay / 10000).toFixed(1)}万`
                             : avgPlay.toLocaleString()
@@ -380,7 +369,7 @@ export function TopicWorkBreakdownDrawer({
                     <div>
                       <div className="text-[11px] text-[#78716C]">优质作品数</div>
                       <div className="text-base font-semibold text-[#1C1917] tabular-nums mt-0.5">
-                        {qualifiedCount} 条
+                        {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                       </div>
                     </div>
                   </div>
@@ -388,15 +377,15 @@ export function TopicWorkBreakdownDrawer({
 
                 {/* 外部干货收集基准 (若有外部数据独立展示，绝不混合伪装) */}
                 {subTopicInfo?.source_type === "external" && (
-                  <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between text-[11.5px]">
-                      <span className="font-semibold text-[#57534E] flex items-center gap-1">
-                        <Globe2 className="size-3.5 text-[#78716C]" />
-                        <span>外部大盘参考样本</span>
+                  <div className="rounded-2xl border border-[#43718E]/20 bg-[#43718E]/5 p-3.5 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-[#43718E]">
+                      <span className="flex items-center gap-1.5">
+                        <Globe2 className="size-3.5" />
+                        <span>外部干货收集基准</span>
                       </span>
-                      <span className="text-[#78716C]">管理员批量导入</span>
+                      <span>已验证爆款</span>
                     </div>
-                    <p className="text-[11.5px] text-[#78716C] leading-relaxed">
+                    <p className="text-xs text-[#78716C] leading-relaxed">
                       该题来源于外部优质干货样本，外部实测播放已达标。团队内完成首条创作后将自动沉淀内部专属数据。
                     </p>
                   </div>
@@ -447,13 +436,15 @@ export function TopicWorkBreakdownDrawer({
                           {claim.displayName}
                         </span>
                         <span
-                          className={`text-[11px] px-1.5 py-0.5 rounded font-normal ${
+                          className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
                             claim.status === "scripting"
                               ? "bg-[#43718E]/10 text-[#43718E]"
                               : "bg-[#F5F3EE] text-[#78716C]"
                           }`}
                         >
-                          {claim.status === "scripting" ? "正在写作" : "已选该题"}
+                          {claim.status === "scripting"
+                            ? "正在飞书写作"
+                            : "已选该题"}
                         </span>
                       </div>
                     ))}
@@ -461,58 +452,51 @@ export function TopicWorkBreakdownDrawer({
                 )}
               </section>
 
-              {/* 4. 历史关联作品 (不展示视频播放器与封面) */}
+              {/* 4. 历史关联作品记录 (纯数据展示，不展示原视频封面或播放器) */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
                     <FileText className="size-3.5 text-[#78716C]" />
-                    <span>历史作品记录</span>
+                    <span>历史关联作品</span>
                   </h4>
-                  <span className="text-[11px] text-[#78716C] tabular-nums">
-                    共 {worksData?.pagination.totalItems ?? 0} 条
+                  <span className="text-xs text-[#78716C] tabular-nums">
+                    共 {worksData?.pagination.totalItems ?? 0} 条作品
                   </span>
                 </div>
 
                 {worksError ? (
-                  <div className="text-xs text-[#DC2626] bg-red-50/50 rounded-lg p-3">
-                    作品记录加载失败：{worksError}
+                  <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-3 text-xs text-[#DC2626]">
+                    作品列表加载失败：{worksError}
                   </div>
-                ) : worksData?.items.length === 0 ? (
-                  <div className="text-xs text-[#78716C] py-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-transparent font-normal">
-                    暂无团队内历史作品，欢迎成为首发作者
-                  </div>
-                ) : (
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    {(worksData?.items ?? []).map((item: TopicWorkItem) => (
+                ) : worksData?.items && worksData.items.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {worksData.items.map((work: TopicWorkItem) => (
                       <div
-                        key={item.id}
-                        className="p-3 bg-white border border-[#ECE7DE] rounded-xl text-xs flex justify-between items-center gap-2 hover:bg-[#FAF8F4] transition-colors"
+                        key={work.id}
+                        className="rounded-xl border border-[#ECE7DE] bg-white p-3 space-y-1.5 shadow-2xs hover:border-[#D97757]/30 transition-colors"
                       >
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-[#1C1917] truncate">
-                            《{item.videoTitle || "未命名作品"}》
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="text-xs font-semibold text-[#1C1917] line-clamp-1">
+                            {work.videoTitle || work.content || "未命名作品"}
                           </div>
-                          <div className="text-[11px] text-[#78716C] mt-0.5 flex items-center gap-2 tabular-nums">
-                            {item.displayName && <span>作者: {item.displayName}</span>}
-                            {item.uploadedAt && (
-                              <span>
-                                发布: {new Date(item.uploadedAt).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-semibold text-[#1C1917] tabular-nums text-sm">
-                            {item.playCount
-                              ? item.playCount >= 10000
-                                ? `${(item.playCount / 10000).toFixed(1)}万`
-                                : item.playCount.toLocaleString()
+                          <span className="text-xs font-semibold text-[#D97757] tabular-nums shrink-0">
+                            {work.playCount !== null
+                              ? work.playCount >= 10000
+                                ? `${(work.playCount / 10000).toFixed(1)}万 播放`
+                                : `${work.playCount.toLocaleString()} 播放`
                               : "—"}
-                          </div>
-                          <div className="text-[10.5px] text-[#78716C]">播放量</div>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-[#78716C]">
+                          <span>{work.displayName || "未知作者"}</span>
+                          <span>{work.uploadedAt?.slice(0, 10) || "—"}</span>
                         </div>
                       </div>
                     ))}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-[#ECE7DE] p-6 text-center text-xs text-[#78716C]">
+                    暂无关联作品记录
                   </div>
                 )}
               </section>
@@ -520,53 +504,46 @@ export function TopicWorkBreakdownDrawer({
           )}
         </div>
 
-        {/* 底部主要行动栏 */}
-        <div className="mt-4 shrink-0 space-y-2 border-t border-[#E5E0D6] pt-4">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (subTopicInfo && onOpenFeishuModal) {
-                  onOpenFeishuModal(subTopicInfo);
-                }
-              }}
-              className="flex-1 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
-            >
-              <span>{isMyWriting ? "去飞书创作" : "我要写 · 去飞书创作"}</span>
-            </button>
+        {/* 底栏固定主行动：去飞书创作 */}
+        <div className="shrink-0 border-t border-[#E5E0D6] pt-4 mt-2 bg-[#FBF9F5] flex items-center justify-between gap-3">
+          <a
+            href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
+            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
+          >
+            <span>打开独立详情页</span>
+            <ExternalLink className="size-3" />
+          </a>
 
+          <div className="flex items-center gap-2">
             {isMyWriting && onCancelWriting && (
               <button
                 type="button"
-                onClick={async () => {
-                  if (subTopicId) {
-                    await onCancelWriting(subTopicId);
-                    await loadData();
-                  }
-                }}
-                className="px-4 py-2.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-xl border border-[#E5E0D6] bg-white hover:bg-[#FAF8F4] text-[#78716C] hover:text-[#C9604D] font-medium text-xs transition-colors cursor-pointer"
+                onClick={() => onCancelWriting(subTopicId)}
+                className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-xl border border-[#ECE7DE] bg-white px-3 py-2 text-xs font-medium text-[#78716C] hover:bg-[#FAF8F4] hover:text-[#DC2626] transition-colors cursor-pointer"
               >
                 取消写作
               </button>
             )}
-          </div>
 
-          <div className="flex items-center justify-between text-xs text-[#78716C] pt-1">
-            <a
-              href={`/topics/${subTopicId}`}
-              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 hover:text-[#1C1917] font-normal py-1 transition-colors cursor-pointer"
+            <button
+              type="button"
+              onClick={() => {
+                if (subTopicInfo && onOpenFeishuModal) {
+                  onOpenFeishuModal({
+                    id: subTopicInfo.id,
+                    title: subTopicInfo.title,
+                    hook: subTopicInfo.hook,
+                    outline: subTopicInfo.outline,
+                    topic_id: subTopicInfo.topic_id,
+                    topics: subTopicInfo.topics,
+                    source_type: subTopicInfo.source_type,
+                  } as unknown as SubTopicItem);
+                }
+              }}
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-2xs transition-all cursor-pointer"
             >
-              <span>打开独立详情页</span>
-              <ExternalLink className="size-3" />
-            </a>
-
-            <a
-              href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
-              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 hover:text-[#D97757] font-normal py-1 transition-colors cursor-pointer"
-            >
-              <span>去工作台关联提交</span>
-              <ExternalLink className="size-3" />
-            </a>
+              <span>{isMyWriting ? "去飞书创作" : "我要写（去飞书）"}</span>
+            </button>
           </div>
         </div>
       </div>

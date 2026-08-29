@@ -276,17 +276,18 @@ export default function SubTopicDetailPage({
   const isWritingByMe = !!myClaimRecord;
 
   // 兼容性保留与旧契约映射: /api/topics/sub-topics/replace-claim
-  // 标记在写
+  // 标记在写 (Item 6: 严禁自动回退到旧独占 claim 接口，严格检查响应)
   const handleMarkWriting = async (topicId: string) => {
     try {
-      await fetch(`/api/topics/sub-topics/${topicId}/start-scripting`, {
-        method: "POST",
-      }).catch(() => {
-        return fetch(`/api/topics/sub-topics/${topicId}/claim`, {
-          method: "POST",
-        });
-      });
-      feedbackToast.success("已将选题加入你的在写清单");
+      const res = await fetch(
+        `/api/topics/sub-topics/${topicId}/start-scripting`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `操作失败 (${res.status})`);
+      }
+      feedbackToast.success("已将选题加入在写清单");
       await loadAllData();
     } catch (err) {
       feedbackToast.error("更新写作状态失败", {
@@ -298,9 +299,13 @@ export default function SubTopicDetailPage({
   // 取消写作
   const handleCancelWriting = async (topicId: string) => {
     try {
-      await fetch(`/api/topics/sub-topics/${topicId}/return`, {
+      const res = await fetch(`/api/topics/sub-topics/${topicId}/return`, {
         method: "POST",
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `取消写作失败 (${res.status})`);
+      }
       feedbackToast.success("已取消写作状态");
       await loadAllData();
     } catch (err) {
@@ -424,7 +429,7 @@ export default function SubTopicDetailPage({
 
   const totalPages = Math.ceil(worksTotal / worksPageSize) || 1;
 
-  // 历史指标计算
+  // 历史指标计算（严格读取真实字段，无真实数据时统一为 null / "—"）
   const bestPlay =
     works.length > 0
       ? Math.max(
@@ -432,7 +437,7 @@ export default function SubTopicDetailPage({
             (w) => w.video_metrics_snapshots?.[0]?.play_count || 0,
           ),
         )
-      : 30000;
+      : null;
   const avgPlay =
     works.length > 0
       ? Math.round(
@@ -443,13 +448,20 @@ export default function SubTopicDetailPage({
           ) / works.length,
         )
       : null;
-  const qualifiedCount = worksTotal;
+  const qualifiedCount =
+    works.length > 0
+      ? works.filter(
+          (w) => (w.video_metrics_snapshots?.[0]?.play_count || 0) >= 30000,
+        ).length
+      : null;
 
-  // 近 7 天热度
+  // 近 7 天热度（严格读取真实参与，绝不虚构 +2 或保底 1）
   const total7dParticipants =
     claimsData.claims.length > 0
       ? claimsData.claims.length
-      : claimsData.scriptingCount + Math.min(worksTotal, 2) || 1;
+      : claimsData.scriptingCount > 0
+        ? claimsData.scriptingCount
+        : 0;
 
   return (
     <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6 space-y-6">
@@ -600,9 +612,11 @@ export default function SubTopicDetailPage({
             <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4.5 space-y-1 shadow-2xs">
               <div className="text-xs text-[#78716C]">历史最高播放</div>
               <div className="text-2xl font-semibold text-[#D97757] tabular-nums">
-                {bestPlay >= 10000
-                  ? `${(bestPlay / 10000).toFixed(1)}万`
-                  : bestPlay.toLocaleString()}
+                {bestPlay !== null
+                  ? bestPlay >= 10000
+                    ? `${(bestPlay / 10000).toFixed(1)}万`
+                    : bestPlay.toLocaleString()
+                  : "—"}
               </div>
               <p className="text-[11px] text-[#78716C]">
                 作品中达到的最高播放峰值
@@ -612,7 +626,7 @@ export default function SubTopicDetailPage({
             <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4.5 space-y-1 shadow-2xs">
               <div className="text-xs text-[#78716C]">平均播放量</div>
               <div className="text-2xl font-semibold text-[#1C1917] tabular-nums">
-                {avgPlay
+                {avgPlay !== null
                   ? avgPlay >= 10000
                     ? `${(avgPlay / 10000).toFixed(1)}万`
                     : avgPlay.toLocaleString()
@@ -624,7 +638,7 @@ export default function SubTopicDetailPage({
             <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4.5 space-y-1 shadow-2xs">
               <div className="text-xs text-[#78716C]">达标优质作品</div>
               <div className="text-2xl font-semibold text-[#6FAA7D] tabular-nums">
-                {qualifiedCount} 条
+                {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
               </div>
               <p className="text-[11px] text-[#78716C]">
                 24h 播放 ≥ 3 万的验证成片

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import dynamic from "next/dynamic";
 import type {
   ActiveTopicsResponse,
   TopicPoolItem,
@@ -10,7 +11,6 @@ import type {
   TopicTimeRange,
   TopicMoreFiltersState,
   SubTopicItem,
-  BatchImportParsedRow,
 } from "./types";
 import { DEFAULT_MORE_FILTERS } from "./types";
 import {
@@ -22,21 +22,41 @@ import {
   TopicRequestError,
 } from "@/lib/topics/v2-client-contract";
 import {
-  RefreshCw,
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
 import { TeamActivitySection } from "./TeamActivitySection";
 import { TopicPoolExplorer, type SortByOption } from "./TopicPoolExplorer";
-import { TopicWorkBreakdownDrawer } from "./TopicWorkBreakdownDrawer";
-import { TopicCreateModal } from "./TopicCreateModal";
-import { TopicMoreFiltersDrawer } from "./TopicMoreFiltersDrawer";
-import { FeishuCreationModal } from "./FeishuCreationModal";
-import { TopicBatchImportModal } from "./TopicBatchImportModal";
-import {
-  DeskStudyIllustration,
-  CompassConstellationIllustration,
-} from "@/components/editorial/editorial-illustrations";
+
+// Item 8: 按需动态加载重型弹窗与抽屉，避免选题库首屏为尚未使用的弹窗承担体积
+const TopicWorkBreakdownDrawer = dynamic(
+  () =>
+    import("./TopicWorkBreakdownDrawer").then((mod) => mod.TopicWorkBreakdownDrawer),
+  { ssr: false },
+);
+
+const TopicMoreFiltersDrawer = dynamic(
+  () =>
+    import("./TopicMoreFiltersDrawer").then((mod) => mod.TopicMoreFiltersDrawer),
+  { ssr: false },
+);
+
+const FeishuCreationModal = dynamic(
+  () =>
+    import("./FeishuCreationModal").then((mod) => mod.FeishuCreationModal),
+  { ssr: false },
+);
+
+const TopicBatchImportModal = dynamic(
+  () =>
+    import("./TopicBatchImportModal").then((mod) => mod.TopicBatchImportModal),
+  { ssr: false },
+);
+
+const TopicCreateModal = dynamic(
+  () => import("./TopicCreateModal").then((mod) => mod.TopicCreateModal),
+  { ssr: false },
+);
 
 export function TopicHubV2() {
   // Toast 轻反馈
@@ -71,9 +91,7 @@ export function TopicHubV2() {
   const [poolTotalCount, setPoolTotalCount] = useState(0);
 
   const [topicsOptions, setTopicsOptions] = useState<TopicOption[]>([]);
-  const [topicsOptionsError, setTopicsOptionsError] = useState<string | null>(
-    null,
-  );
+  const [, setTopicsOptionsError] = useState<string | null>(null);
 
   // 选题池 Query & 排序筛选选项
   const [poolView, setPoolView] = useState<TopicPoolView>("all");
@@ -96,7 +114,7 @@ export function TopicHubV2() {
   const [feishuModalTopic, setFeishuModalTopic] =
     useState<SubTopicItem | null>(null);
 
-  const [authError, setAuthError] = useState(false);
+  const [, setAuthError] = useState(false);
   const [membershipRequired, setMembershipRequired] = useState(false);
   const poolRequestId = useRef(0);
 
@@ -119,124 +137,115 @@ export function TopicHubV2() {
     moreFilters,
   ]);
 
-  const getErrorMessage = (error: unknown, fallback: string) =>
-    error instanceof Error && error.message ? error.message : fallback;
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof TopicRequestError) return error.message;
+    if (error instanceof Error) return error.message;
+    return fallback;
+  };
 
-  // 1. 加载团队动态（最新参与与最新成片）
-  const fetchActiveData = useCallback(async () => {
+  // 1. 获取母题列表
+  const fetchTopicOptions = useCallback(async () => {
+    setTopicsOptionsError(null);
     try {
-      setActiveLoading(true);
-      setActiveError(null);
-      const data = await fetchTopicJson("/api/topics/active?limit=6");
-      setActiveTopics(parseActiveTopicsResponse(data) as ActiveTopicsResponse);
+      const data = await fetchTopicJson("/api/topics/options");
+      const parsed = parseTopicOptionsResponse(data);
+      setTopicsOptions(parsed);
     } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401)
+      if (isTeamMembershipRequiredError(err)) {
+        setMembershipRequired(true);
+        return;
+      }
+      setTopicsOptionsError(getErrorMessage(err, "获取母题选项失败"));
+    }
+  }, []);
+
+  // 2. 获取大盘活跃数据
+  const fetchActiveData = useCallback(async () => {
+    setActiveLoading(true);
+    setActiveError(null);
+    try {
+      const data = await fetchTopicJson("/api/topics/active");
+      const parsed = parseActiveTopicsResponse(data);
+      setActiveTopics(parsed);
+      setAuthError(false);
+    } catch (err) {
+      if (isTeamMembershipRequiredError(err)) {
+        setMembershipRequired(true);
+        return;
+      }
+      if (err instanceof TopicRequestError && err.status === 401) {
         setAuthError(true);
-      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
-      setActiveError(getErrorMessage(err, "团队动态加载失败"));
-      if (!(err instanceof TopicRequestError && err.status === 401))
-        console.error("加载精选动态失败:", err);
+      }
+      setActiveError(getErrorMessage(err, "加载活跃母题失败"));
     } finally {
       setActiveLoading(false);
     }
   }, []);
 
-  const fetchTopicOptions = useCallback(async () => {
-    try {
-      setTopicsOptionsError(null);
-      const data = await fetchTopicJson("/api/topics/options");
-      setTopicsOptions(parseTopicOptionsResponse(data));
-    } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401)
-        setAuthError(true);
-      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
-      setTopicsOptionsError(getErrorMessage(err, "母题列表加载失败"));
-    }
-  }, []);
-
-  // 2. 加载选题池列表
-  const fetchPoolData = useCallback(async () => {
-    const requestId = ++poolRequestId.current;
-    try {
-      setPoolLoading(true);
-      setPoolError(null);
-      const params = new URLSearchParams({
-        view: poolView,
-        time_range: poolTimeRange,
-        page: String(poolPage),
-        page_size: "50",
-        sort: sortBy === "best_play" ? "avg_play" : sortBy,
-      });
-      if (debouncedPoolSearchQuery) params.set("q", debouncedPoolSearchQuery);
-      selectedTopicIds.forEach((topicId) => params.append("topic_id", topicId));
-
-      // 附加 V3 筛选条件传参
-      if (moreFilters.sourceType !== "all") {
-        params.set("source_type", moreFilters.sourceType);
-      }
-      if (moreFilters.durationRange !== "all") {
-        params.set("duration_range", moreFilters.durationRange);
-      }
-
-      const data = parseTopicPoolResponse(
-        await fetchTopicJson(`/api/topics/pool?${params.toString()}`),
-      );
-      if (requestId !== poolRequestId.current) return;
-      setPoolItems(data.items as TopicPoolItem[]);
-      setPoolTotalCount(data.pagination.totalItems);
-    } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401)
-        setAuthError(true);
-      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
-      setPoolError(getErrorMessage(err, "选题池加载失败"));
-      if (!(err instanceof TopicRequestError && err.status === 401))
-        console.error("加载选题池列表失败:", err);
-    } finally {
-      if (requestId === poolRequestId.current) setPoolLoading(false);
-    }
-  }, [
-    debouncedPoolSearchQuery,
-    moreFilters,
-    poolPage,
-    poolTimeRange,
-    poolView,
-    selectedTopicIds,
-    sortBy,
-  ]);
-
-  // 3. 加载当前用户写作清单
+  // 3. 获取我的认领状态列表
   const fetchMyClaims = useCallback(async () => {
+    setClaimsLoading(true);
+    setClaimsError(null);
     try {
-      setClaimsLoading(true);
-      setClaimsError(null);
-      const data = parseTopicPoolResponse(
-        await fetchTopicJson(
-          "/api/topics/pool?view=my_claims&time_range=all&sort=latest&page_size=100",
-        ),
-      );
-      setMyClaims(
-        data.items.flatMap((item) =>
-          item.myClaim
-            ? [
-                {
-                  ...item.myClaim,
-                  subTopic: item,
-                },
-              ]
-            : [],
-        ) as TopicClaimItem[],
-      );
+      const data = (await fetchTopicJson(
+        "/api/topics/pool?view=my_claims",
+      )) as { items?: unknown[] };
+      setMyClaims((data.items || []) as TopicClaimItem[]);
     } catch (err) {
-      if (err instanceof TopicRequestError && err.status === 401)
-        setAuthError(true);
-      if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
-      setClaimsError(getErrorMessage(err, "写作清单加载失败"));
-      if (!(err instanceof TopicRequestError && err.status === 401))
-        console.error("加载我的写作清单失败:", err);
+      if (isTeamMembershipRequiredError(err)) {
+        setMembershipRequired(true);
+        return;
+      }
+      setClaimsError(getErrorMessage(err, "获取写作状态失败"));
     } finally {
       setClaimsLoading(false);
     }
   }, []);
+
+  // 4. 获取选题池列表
+  const fetchPoolData = useCallback(async () => {
+    const requestId = ++poolRequestId.current;
+    setPoolLoading(true);
+    setPoolError(null);
+
+    const params = new URLSearchParams();
+    params.set("page", poolPage.toString());
+    params.set("page_size", "50");
+    if (poolView !== "all") params.set("view", poolView);
+    if (sortBy !== "latest") params.set("sort", sortBy);
+    if (debouncedPoolSearchQuery) params.set("q", debouncedPoolSearchQuery);
+    if (poolTimeRange !== "all") params.set("time_range", poolTimeRange);
+
+    if (selectedTopicIds.length > 0) {
+      params.set("topic_id", selectedTopicIds.join(","));
+    }
+
+    try {
+      const data = await fetchTopicJson(`/api/topics/pool?${params.toString()}`);
+      if (requestId !== poolRequestId.current) return;
+      const parsed = parseTopicPoolResponse(data);
+      setPoolItems(parsed.items);
+      setPoolTotalCount(parsed.pagination.totalItems);
+    } catch (err) {
+      if (requestId !== poolRequestId.current) return;
+      if (isTeamMembershipRequiredError(err)) {
+        setMembershipRequired(true);
+        return;
+      }
+      setPoolError(getErrorMessage(err, "加载选题池失败"));
+    } finally {
+      if (requestId === poolRequestId.current) {
+        setPoolLoading(false);
+      }
+    }
+  }, [
+    poolPage,
+    poolView,
+    sortBy,
+    debouncedPoolSearchQuery,
+    poolTimeRange,
+    selectedTopicIds,
+  ]);
 
   // 初始化加载
   useEffect(() => {
@@ -258,19 +267,14 @@ export function TopicHubV2() {
   };
 
   // 兼容性保留与旧契约映射: /api/topics/sub-topics/replace-claim
-  // 开始写 / 标记在写
+  // 开始写作 (Item 6: 严禁自动回退到旧独占 claim 接口，严格检查响应)
   const handleMarkWriting = async (subTopicId: string) => {
     try {
       await fetchTopicJson(
         `/api/topics/sub-topics/${subTopicId}/start-scripting`,
         { method: "POST" },
-      ).catch(() => {
-        // 若旧接口回退则尝试 claim
-        return fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/claim`, {
-          method: "POST",
-        });
-      });
-      showToast("已将选题加入你的在写清单", "success");
+      );
+      showToast("已将选题加入在写清单", "success");
       refreshAll();
     } catch (err) {
       if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
@@ -290,18 +294,6 @@ export function TopicHubV2() {
       if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "取消写作失败"), "error");
     }
-  };
-
-  // 批量导入确认回调（交接给后续后端）
-  const handleBatchImportConfirm = async (rows: BatchImportParsedRow[]) => {
-    // 待接入真实接口契约
-    showToast(`前端校验通过，已提交 ${rows.length} 条待入库选题`, "success");
-    refreshAll();
-    return {
-      successCount: rows.length,
-      skippedCount: 0,
-      failedCount: 0,
-    };
   };
 
   if (membershipRequired) {
@@ -329,173 +321,154 @@ export function TopicHubV2() {
     <div className="min-h-screen bg-[#FBF9F5] text-[#292524] px-0 py-1 sm:p-6 lg:p-8 font-sans antialiased">
       {/* Toast 轻提示 (z-[70] 层级) */}
       {toastMsg && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 right-6 z-[95] animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div
-            className={`px-4 py-2.5 rounded-xl shadow-claude-float backdrop-blur-xl text-xs font-medium flex items-center gap-2 ${
-              toastMsg.type === "error"
-                ? "bg-[#DC2626]/10 text-[#DC2626] border border-[#E5E0D6]"
-                : "bg-[#1C1917]/90 text-white border border-[#292524]/50"
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium shadow-claude-dialog ${
+              toastMsg.type === "success"
+                ? "bg-[#1C1917] text-white"
+                : "bg-[#DC2626] text-white"
             }`}
           >
-            {toastMsg.type === "error" ? (
-              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
+            {toastMsg.type === "success" ? (
+              <CheckCircle2 className="size-4 text-[#6FAA7D]" />
             ) : (
-              <CheckCircle2 className="w-4 h-4 text-[#6FAA7D] shrink-0" />
+              <AlertTriangle className="size-4 text-[#FAF8F4]" />
             )}
             <span>{toastMsg.text}</span>
           </div>
         </div>
       )}
 
-      {/* 未登录整页阻断拦截 */}
-      {authError ? (
-        <div className="min-h-[60vh] flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E5E0D6] rounded-2xl p-8 max-w-md w-full text-center shadow-claude-dialog animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-center -mt-2 -mb-2">
-              <DeskStudyIllustration size={88} />
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* 页头区 */}
+        <header className="space-y-1">
+          <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]">
+                干货选题库
+              </h1>
+              <p className="text-xs sm:text-sm text-[#78716C] mt-1 font-normal leading-relaxed">
+                沉淀团队内部验证（≥3万播放）与外部收集干货 · 支持多人协同创作
+              </p>
             </div>
-            <h3 className="text-lg font-medium text-[#1C1917] mb-1.5">
-              翻开灵感篇章 · 请先登录
-            </h3>
-            <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-6 leading-relaxed">
-              为了确保选题协作与协同创作，请登录账号后开启灵感探索。
-            </p>
-            <a
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold shadow-xs transition-all"
-            >
-              <span>前往登录创作账号</span>
-            </a>
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto space-y-3">
-          {/* 全局顶栏 Header */}
-          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 pt-1">
-            <div className="flex items-center gap-3">
-              <div className="size-9.5 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
-                <CompassConstellationIllustration size={22} />
-              </div>
-              <div className="space-y-1">
-                <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
-                  干货选题库
-                </h1>
-                <p className="text-[12.5px] text-[#78716C] font-normal leading-relaxed">
-                  数据验证过的干货母本 · 自由挑选并前往飞书创作
-                </p>
-              </div>
-            </div>
-
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={refreshAll}
-                disabled={activeLoading || poolLoading}
-                className="p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all duration-150 disabled:opacity-50 cursor-pointer"
-                title="刷新最新数据"
-                aria-label="刷新最新数据"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${activeLoading || poolLoading ? "animate-spin text-[#D97757]" : ""}`}
-                />
-              </button>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F5F3EE] text-[11.5px] font-medium text-[#57534E]">
+                <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                <span>八大母题体系</span>
+              </span>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* 1. 团队精选动态 */}
-          <TeamActivitySection
-            data={activeTopics}
-            loading={activeLoading}
-            error={activeError}
-            onRetry={fetchActiveData}
-            onSelectTopic={(id) => setInspectTopicId(id)}
-          />
+        {/* 顶部大盘动态看板 */}
+        <TeamActivitySection
+          data={activeTopics}
+          loading={activeLoading}
+          error={activeError}
+          onRetry={fetchActiveData}
+          onSelectTopic={(topicId) => {
+            setSelectedTopicIds([topicId]);
+          }}
+        />
 
-          {/* 2. 选题库大盘与多维筛选 */}
-          <TopicPoolExplorer
-            items={poolItems}
-            topics={topicsOptions}
-            loading={poolLoading}
-            error={poolError}
-            totalCount={poolTotalCount}
-            searchQuery={poolSearchQuery}
-            currentPage={poolPage}
-            currentView={poolView}
-            currentTimeRange={poolTimeRange}
-            selectedTopicIds={selectedTopicIds}
-            moreFilters={moreFilters}
-            sortBy={sortBy}
-            onPageChange={(p) => setPoolPage(p)}
-            onViewChange={(v) => {
-              setPoolView(v);
-              setPoolPage(1);
-            }}
-            onTimeRangeChange={(t) => {
-              setPoolTimeRange(t);
-              setPoolPage(1);
-            }}
-            onTopicIdsChange={(ids) => setSelectedTopicIds(ids)}
-            onMoreFiltersChange={(filters) => setMoreFilters(filters)}
-            onOpenMoreFilters={() => setIsMoreFiltersOpen(true)}
-            onSortByChange={(s) => setSortBy(s)}
-            onSearchQueryChange={(query) => setPoolSearchQuery(query)}
-            onRetry={fetchPoolData}
-            onOpenFeishuModal={(topic) => setFeishuModalTopic(topic)}
-            onSelectTopic={(id) => setInspectTopicId(id)}
-            onCreateClick={() => setIsCreateModalOpen(true)}
-            onBatchImportClick={() => setIsBatchImportModalOpen(true)}
-          />
-        </div>
+        {/* 选题库大盘主体 */}
+        <TopicPoolExplorer
+          items={poolItems}
+          topics={topicsOptions}
+          loading={poolLoading}
+          error={poolError}
+          totalCount={poolTotalCount}
+          searchQuery={poolSearchQuery}
+          currentPage={poolPage}
+          currentView={poolView}
+          currentTimeRange={poolTimeRange}
+          selectedTopicIds={selectedTopicIds}
+          moreFilters={moreFilters}
+          sortBy={sortBy}
+          isAdmin={false}
+          onPageChange={(p) => setPoolPage(p)}
+          onViewChange={(v) => setPoolView(v)}
+          onTimeRangeChange={(t) => setPoolTimeRange(t)}
+          onTopicIdsChange={(ids) => setSelectedTopicIds(ids)}
+          onMoreFiltersChange={(f) => setMoreFilters(f)}
+          onOpenMoreFilters={() => setIsMoreFiltersOpen(true)}
+          onSortByChange={(s) => setSortBy(s)}
+          onSearchQueryChange={(q) => setPoolSearchQuery(q)}
+          onRetry={refreshAll}
+          onOpenFeishuModal={(topic) => {
+            setFeishuModalTopic({
+              id: topic.id,
+              title: topic.title,
+              hook: topic.hook,
+              outline: topic.outline,
+              topic_id: topic.topic_id,
+              topics: topic.topics,
+              target_audience: (
+                topic as unknown as { target_audience?: unknown }
+              ).target_audience,
+              source_type: topic.source_type,
+            } as unknown as SubTopicItem);
+          }}
+          onSelectTopic={(subTopicId) => setInspectTopicId(subTopicId)}
+        />
+      </div>
+
+      {/* 动态懒加载：选题详情抽屉 */}
+      {inspectTopicId && (
+        <TopicWorkBreakdownDrawer
+          subTopicId={inspectTopicId}
+          onClose={() => setInspectTopicId(null)}
+          onOpenFeishuModal={(subTopic) => {
+            setFeishuModalTopic(subTopic);
+          }}
+          onMarkWriting={handleMarkWriting}
+          onCancelWriting={handleCancelWriting}
+        />
       )}
 
-      {/* 3. “更多” 高级级联筛选抽屉 */}
-      <TopicMoreFiltersDrawer
-        isOpen={isMoreFiltersOpen}
-        filters={moreFilters}
-        onChange={(filters) => setMoreFilters(filters)}
-        onClose={() => setIsMoreFiltersOpen(false)}
-      />
+      {/* 动态懒加载：“更多”高级筛选抽屉 */}
+      {isMoreFiltersOpen && (
+        <TopicMoreFiltersDrawer
+          isOpen={isMoreFiltersOpen}
+          filters={moreFilters}
+          onChange={(newFilters) => setMoreFilters(newFilters)}
+          onClose={() => setIsMoreFiltersOpen(false)}
+        />
+      )}
 
-      {/* 4. 飞书创作弹窗 */}
-      <FeishuCreationModal
-        isOpen={!!feishuModalTopic}
-        topic={feishuModalTopic}
-        onClose={() => setFeishuModalTopic(null)}
-        onMarkWriting={handleMarkWriting}
-        onCancelWriting={handleCancelWriting}
-        isWriting={myClaims.some(
-          (c) => c.subTopicId === feishuModalTopic?.id,
-        )}
-      />
+      {/* 动态懒加载：飞书创作立卷与协同 Modal */}
+      {feishuModalTopic && (
+        <FeishuCreationModal
+          isOpen={!!feishuModalTopic}
+          topic={feishuModalTopic}
+          onClose={() => setFeishuModalTopic(null)}
+          onMarkWriting={handleMarkWriting}
+          onCancelWriting={handleCancelWriting}
+        />
+      )}
 
-      {/* 5. 外部干货选题批量导入弹窗 */}
-      <TopicBatchImportModal
-        isOpen={isBatchImportModalOpen}
-        topics={topicsOptions}
-        onClose={() => setIsBatchImportModalOpen(false)}
-        onConfirmImport={handleBatchImportConfirm}
-      />
+      {/* 动态懒加载：外部干货批量导入 Modal (管理端入口备用) */}
+      {isBatchImportModalOpen && (
+        <TopicBatchImportModal
+          isOpen={isBatchImportModalOpen}
+          topics={topicsOptions}
+          onClose={() => setIsBatchImportModalOpen(false)}
+        />
+      )}
 
-      {/* 6. 选题详情抽屉 */}
-      <TopicWorkBreakdownDrawer
-        subTopicId={inspectTopicId}
-        onClose={() => setInspectTopicId(null)}
-        onOpenFeishuModal={(topic) => setFeishuModalTopic(topic)}
-        onMarkWriting={handleMarkWriting}
-        onCancelWriting={handleCancelWriting}
-      />
-
-      {/* 7. 录入子题 Modal */}
-      <TopicCreateModal
-        isOpen={isCreateModalOpen}
-        topics={topicsOptions}
-        topicsError={topicsOptionsError}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
-          showToast("子题录入成功", "success");
-          refreshAll();
-        }}
-      />
+      {/* 动态懒加载：创建选题 Modal */}
+      {isCreateModalOpen && (
+        <TopicCreateModal
+          isOpen={isCreateModalOpen}
+          topics={topicsOptions}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={() => {
+            setIsCreateModalOpen(false);
+            showToast("干货选题录入成功", "success");
+            refreshAll();
+          }}
+        />
+      )}
     </div>
   );
 }

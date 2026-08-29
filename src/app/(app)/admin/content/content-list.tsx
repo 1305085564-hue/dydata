@@ -127,7 +127,6 @@ export function ContentList({
 }: ContentListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("interaction");
   const [topicStatusFilter, setTopicStatusFilter] = useState<"all" | "in_library" | "removed">("all");
-  const [removedVideoIds, setRemovedVideoIds] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -216,15 +215,13 @@ export function ContentList({
 
     const filteredByTopic = rowsWithMetrics.filter((item) => {
       if (topicStatusFilter === "all") return true;
-      const isReview = (item.video.video_title || "").includes("复盘") || (item.video.content || "").includes("复盘");
-      if (isReview) return false;
-      const isRemoved = removedVideoIds.has(item.video.id);
-      const isEligible = (item.playCount || 0) >= 30000;
+      const status = (item.video as { topic_library_status?: string })
+        .topic_library_status;
       if (topicStatusFilter === "in_library") {
-        return isEligible && !isRemoved;
+        return status === "in_library";
       }
       if (topicStatusFilter === "removed") {
-        return isRemoved;
+        return status === "removed";
       }
       return true;
     });
@@ -293,7 +290,7 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [queueRows, snapshotMap, topicStatusFilter, removedVideoIds, sortField, sortDir]);
+  }, [queueRows, snapshotMap, topicStatusFilter, sortField, sortDir]);
 
   const visibleRows = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -594,22 +591,19 @@ export function ContentList({
                           </span>
                         ) : null}
 
-                        {/* 选题库入库状态徽章（复盘视频不展示） */}
+                        {/* 选题库入库状态徽章（由后端明确字段提供） */}
                         {(() => {
-                          const isReview =
-                            (video.video_title || "").includes("复盘") ||
-                            (video.content || "").includes("复盘");
-                          if (isReview) return null;
-                          const isRemoved = removedVideoIds.has(video.id);
-                          const isEligible = (item.playCount || 0) >= 30000;
-                          if (isRemoved) {
+                          const status = (
+                            video as { topic_library_status?: string }
+                          ).topic_library_status;
+                          if (status === "removed") {
                             return (
                               <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#F5F3EE] text-[#78716C] border border-[#ECE7DE]">
                                 已移出
                               </span>
                             );
                           }
-                          if (isEligible) {
+                          if (status === "in_library") {
                             return (
                               <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">
                                 已入选题库
