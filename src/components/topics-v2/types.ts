@@ -20,7 +20,10 @@ export interface SubTopicItem {
   group_id?: string | null;
   emotion_tag?: string | null;
   source?: string | null;
+  source_type?: "internal" | "external" | null;
+  duration_range?: "under_2m" | "2_5m" | "over_5m" | null;
   audience?: string | null;
+  outline?: string[] | string | null;
   created_by?: string | null;
   created_at?: string | null;
   topics?: TopicOption | null;
@@ -34,6 +37,19 @@ export interface TopicWorkSummary {
   bestPlayCount: number | null;
   bestCopy: string | null;
   latestCopy: string | null;
+  // V3 细分内部与外部历史指标
+  internalMetrics?: {
+    bestPlayCount: number | null;
+    averagePlayCount: number | null;
+    qualifiedWorkCount: number;
+    workCount: number;
+  } | null;
+  externalMetrics?: {
+    bestPlayCount: number | null;
+    averagePlayCount: number | null;
+    likesCount: number | null;
+    sampleCount?: number;
+  } | null;
 }
 
 export type TopicClaimStatus = "candidate" | "scripting" | "returned";
@@ -58,6 +74,11 @@ export interface TopicPoolItem extends SubTopicItem {
   summary: TopicWorkSummary | null;
   score?: number | null;
   daysSinceLastWork?: number | null;
+  // V3 7 天真实参与热度
+  recent7dParticipants?: number;
+  recent7dCompletedCount?: number;
+  recent7dInProgressCount?: number;
+  isWritingByMe?: boolean;
 }
 
 export interface TopicWorkItem {
@@ -87,6 +108,12 @@ export interface TopicClaimsDetailResponse {
     status: "candidate" | "scripting";
     claimedAt: string | null;
   }>;
+  // V3 7 天参与去重统计
+  recent7dSummary?: {
+    totalParticipants: number;
+    completedCount: number;
+    inProgressCount: number;
+  };
 }
 
 export interface ActiveTopicsResponse {
@@ -111,3 +138,45 @@ export interface TopicComparisonItem {
   bestPlayCount: number;
   lowConfidence: boolean;
 }
+
+// V3 高级筛选状态
+export interface TopicMoreFiltersState {
+  sourceType: "all" | "internal" | "external";
+  recentHeat: "all" | "has_participants" | "has_completed" | "has_in_progress" | "no_participants";
+  durationRange: "all" | "under_2m" | "2_5m" | "over_5m";
+  performanceTier: "all" | "high_best_play" | "high_qualified" | "high_avg_play";
+}
+
+export const DEFAULT_MORE_FILTERS: TopicMoreFiltersState = {
+  sourceType: "all",
+  recentHeat: "all",
+  durationRange: "all",
+  performanceTier: "all",
+};
+
+// V3 外部干货批量导入预览与校验契约
+export interface BatchImportParsedRow {
+  rowNumber: number;
+  topicName: string;
+  title: string;
+  durationText?: string;
+  historyPlay: number | null;
+  historyLikes: number | null;
+  hook?: string | null;
+  outline?: string | null;
+  status: "valid" | "warning" | "error";
+  validationMessage: string;
+}
+
+export interface BatchImportSummary {
+  totalCount: number;
+  validCount: number;
+  warningCount: number;
+  errorCount: number;
+  errors: Array<{
+    rowNumber: number;
+    title: string;
+    reason: string;
+  }>;
+}
+

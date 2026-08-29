@@ -126,6 +126,8 @@ export function ContentList({
   onSelectVideoId,
 }: ContentListProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("interaction");
+  const [topicStatusFilter, setTopicStatusFilter] = useState<"all" | "in_library" | "removed">("all");
+  const [removedVideoIds, setRemovedVideoIds] = useState<Set<string>>(new Set());
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -212,7 +214,22 @@ export function ContentList({
       };
     });
 
-    return rowsWithMetrics.sort((a, b) => {
+    const filteredByTopic = rowsWithMetrics.filter((item) => {
+      if (topicStatusFilter === "all") return true;
+      const isReview = (item.video.video_title || "").includes("复盘") || (item.video.content || "").includes("复盘");
+      if (isReview) return false;
+      const isRemoved = removedVideoIds.has(item.video.id);
+      const isEligible = (item.playCount || 0) >= 30000;
+      if (topicStatusFilter === "in_library") {
+        return isEligible && !isRemoved;
+      }
+      if (topicStatusFilter === "removed") {
+        return isRemoved;
+      }
+      return true;
+    });
+
+    return filteredByTopic.sort((a, b) => {
       let valA: number | null = null;
       let valB: number | null = null;
 
@@ -276,7 +293,7 @@ export function ContentList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [queueRows, snapshotMap, sortField, sortDir]);
+  }, [queueRows, snapshotMap, topicStatusFilter, removedVideoIds, sortField, sortDir]);
 
   const visibleRows = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -311,9 +328,58 @@ export function ContentList({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {/* 窄屏 (<1280px) 视图分段切换器 */}
-      <div className="flex xl:hidden items-center justify-end py-0.5">
-        <div className="flex items-center gap-1">
+      {/* 顶部工具栏：入库状态筛选器 + 窄屏视图切换 */}
+      <div className="flex flex-wrap items-center justify-between gap-2 py-0.5">
+        <div className="flex items-center gap-1 bg-[#F5F3EE]/70 p-0.5 rounded-lg text-xs">
+          <span className="text-[11.5px] text-[#78716C] px-2 font-normal">
+            选题库状态:
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setTopicStatusFilter("all");
+              setCurrentPage(1);
+            }}
+            className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+              topicStatusFilter === "all"
+                ? "bg-white text-[#1C1917] font-semibold shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917]"
+            }`}
+          >
+            全部作品
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTopicStatusFilter("in_library");
+              setCurrentPage(1);
+            }}
+            className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+              topicStatusFilter === "in_library"
+                ? "bg-white text-[#6FAA7D] font-semibold shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917]"
+            }`}
+          >
+            已入选题库
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTopicStatusFilter("removed");
+              setCurrentPage(1);
+            }}
+            className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+              topicStatusFilter === "removed"
+                ? "bg-white text-[#C9604D] font-semibold shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917]"
+            }`}
+          >
+            已移出
+          </button>
+        </div>
+
+        {/* 窄屏 (<1280px) 视图分段切换器 */}
+        <div className="flex xl:hidden items-center gap-1">
           <button
             type="button"
             onClick={() => setViewMode("interaction")}
@@ -527,6 +593,31 @@ export function ContentList({
                             · {video.accounts.name}
                           </span>
                         ) : null}
+
+                        {/* 选题库入库状态徽章（复盘视频不展示） */}
+                        {(() => {
+                          const isReview =
+                            (video.video_title || "").includes("复盘") ||
+                            (video.content || "").includes("复盘");
+                          if (isReview) return null;
+                          const isRemoved = removedVideoIds.has(video.id);
+                          const isEligible = (item.playCount || 0) >= 30000;
+                          if (isRemoved) {
+                            return (
+                              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#F5F3EE] text-[#78716C] border border-[#ECE7DE]">
+                                已移出
+                              </span>
+                            );
+                          }
+                          if (isEligible) {
+                            return (
+                              <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.2 rounded bg-[#6FAA7D]/10 text-[#6FAA7D] border border-[#6FAA7D]/20">
+                                已入选题库
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </td>
 

@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback, use, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,13 +11,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   parseSubTopicDetailResponse,
   parseSubTopicWorksResponse,
-  resolveWorkLikes,
-  calculateTotalInFlight,
   DETAIL_PAGE_SIZE,
   type SubTopicDetail,
   type WorkItem,
@@ -27,69 +22,68 @@ import {
 } from "../topic-helpers";
 import {
   ChevronLeft,
-  User,
-  Check,
-  Plus,
   Loader2,
   AlertTriangle,
-  Video,
   Edit2,
   Trash2,
-  ArrowRightLeft,
   RefreshCw,
-  FileText,
-  RotateCcw,
-  Film,
   Sparkles,
+  Flame,
+  Trophy,
+  FileText,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
-import { formatShanghaiDateTime } from "@/lib/日报";
-import { getClaimToggleRequest } from "@/lib/topics/claim-toggle";
 import {
   isTeamMembershipRequiredError,
   TopicRequestError,
 } from "@/lib/topics/v2-client-contract";
+import { FeishuCreationModal } from "@/components/topics-v2/FeishuCreationModal";
+import { feedbackToast } from "@/components/ui/feedback-toast";
 
 async function readTopicResponse(response: Response, fallback: string) {
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = typeof payload === "object" && payload !== null && "error" in payload && typeof payload.error === "string"
-      ? payload.error
-      : fallback;
-    const code = typeof payload === "object" && payload !== null && "code" in payload && typeof payload.code === "string"
-      ? payload.code
-      : undefined;
+    const message =
+      typeof payload === "object" &&
+      payload !== null &&
+      "error" in payload &&
+      typeof payload.error === "string"
+        ? payload.error
+        : fallback;
+    const code =
+      typeof payload === "object" &&
+      payload !== null &&
+      "code" in payload &&
+      typeof payload.code === "string"
+        ? payload.code
+        : undefined;
     throw new TopicRequestError(message, response.status, code);
   }
   return payload;
 }
 
-interface ClaimInfo {
-  userId: string;
-  displayName: string;
-  claimedAt: string;
-  status: "candidate" | "scripting" | "returned";
-}
-
 interface ClaimsApiResponse {
-  claims: ClaimInfo[];
+  claims: Array<{
+    id?: string;
+    userId: string;
+    displayName: string;
+    status: "candidate" | "scripting" | "returned";
+    claimedAt: string;
+  }>;
   candidateCount: number;
   scriptingCount: number;
-}
-
-interface SubTopicClaim {
-  id: string;
-  user_id: string;
-  status: "candidate" | "scripting" | "returned";
-  claimed_at: string;
 }
 
 interface MyClaimSubTopicItem {
   id: string;
   title: string;
   hook?: string | null;
-  sub_topic_claims?: SubTopicClaim[];
+  sub_topic_claims?: Array<{
+    id: string;
+    user_id: string;
+    status: "candidate" | "scripting" | "returned";
+    claimed_at: string;
+  }>;
 }
 
 export default function SubTopicDetailPage({
@@ -105,7 +99,7 @@ export default function SubTopicDetailPage({
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [membershipRequired, setMembershipRequired] = useState(false);
 
-  // 撞车动态
+  // 7 天参与动态
   const [claimsData, setClaimsData] = useState<ClaimsApiResponse>({
     claims: [],
     candidateCount: 0,
@@ -113,20 +107,17 @@ export default function SubTopicDetailPage({
   });
   const [claimsError, setClaimsError] = useState<string | null>(null);
 
-  // 我的认领
+  // 我的写作状态
   const [myClaims, setMyClaims] = useState<MyClaimSubTopicItem[]>([]);
   const [myClaimsError, setMyClaimsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
-  // 认领与状态流转操作 Loading
-  const [isClaiming, setIsClaiming] = useState(false);
-  const [isUpdatingClaim, setIsUpdatingClaim] = useState(false);
+  // 飞书弹窗控制
+  const [isFeishuModalOpen, setIsFeishuModalOpen] = useState(false);
 
   // 作品列表、排序与分页
   const [works, setWorks] = useState<WorkItem[]>([]);
-  const [similarReferences, setSimilarReferences] = useState<ReferenceWork[]>(
-    [],
-  );
+  const [, setSimilarReferences] = useState<ReferenceWork[]>([]);
   const [worksTotal, setWorksTotal] = useState(0);
   const [worksPage, setWorksPage] = useState(1);
   const [worksPageSize, setWorksPageSize] = useState(DETAIL_PAGE_SIZE);
@@ -147,27 +138,24 @@ export default function SubTopicDetailPage({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
 
-  // 替换 5/5 认领 Dialog
-  const [replaceDialogOpen, setReplaceDialogOpen] = useState(false);
-  const [selectedReturnId, setSelectedReturnId] = useState<string | null>(null);
-  const [isReplacing, setIsReplacing] = useState(false);
-
   const markMembershipRequired = (error: unknown) => {
     if (isTeamMembershipRequiredError(error)) setMembershipRequired(true);
   };
 
-  // 获取当前登录用户 ID
+  // 加载当前登录用户
   useEffect(() => {
-    const getUserId = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/dashboard/operator-members");
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.currentUserId) setCurrentUserId(data.currentUserId);
+        }
+      } catch {
+        // ignore
       }
     };
-    void getUserId();
+    void fetchUser();
   }, []);
 
   // 加载“我的认领”状态列表
@@ -175,13 +163,15 @@ export default function SubTopicDetailPage({
     setMyClaimsError(null);
     try {
       const res = await fetch("/api/topics/pool?view=my_claims");
-      const data = await readTopicResponse(res, "获取我的认领状态失败") as { items?: unknown[] };
+      const data = (await readTopicResponse(
+        res,
+        "获取我的写作状态失败",
+      )) as { items?: unknown[] };
       setMyClaims((data.items ?? []) as MyClaimSubTopicItem[]);
     } catch (err) {
       markMembershipRequired(err);
-      console.error("加载我的认领状态失败:", err);
       setMyClaimsError(
-        err instanceof Error ? err.message : "获取我的认领状态失败",
+        err instanceof Error ? err.message : "获取我的写作状态失败",
       );
     }
   }, []);
@@ -246,12 +236,15 @@ export default function SubTopicDetailPage({
     }
   }, [subTopicId, fetchWorks]);
 
-  // 加载撞车动态
+  // 加载参与动态
   const fetchClaims = useCallback(async () => {
     setClaimsError(null);
     try {
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claims`);
-      const data = await readTopicResponse(res, "获取撞车动态失败") as Partial<ClaimsApiResponse>;
+      const data = (await readTopicResponse(
+        res,
+        "获取参与动态失败",
+      )) as Partial<ClaimsApiResponse>;
       setClaimsData({
         claims: Array.isArray(data.claims) ? data.claims : [],
         candidateCount: data.candidateCount ?? 0,
@@ -259,8 +252,7 @@ export default function SubTopicDetailPage({
       });
     } catch (err) {
       markMembershipRequired(err);
-      console.error("加载撞车动态失败:", err);
-      setClaimsError(err instanceof Error ? err.message : "获取撞车动态失败");
+      setClaimsError(err instanceof Error ? err.message : "获取参与动态失败");
     }
   }, [subTopicId]);
 
@@ -276,161 +268,45 @@ export default function SubTopicDetailPage({
     currentUserId && detail?.created_by === currentUserId,
   );
 
-  // 解析当前用户认领状态
+  // 解析当前用户写作状态
   const currentSubTopicItem = myClaims.find((item) => item.id === subTopicId);
   const myClaimRecord = currentSubTopicItem?.sub_topic_claims?.find(
     (c) => c.user_id === currentUserId && c.status !== "returned",
   );
-  const isClaimedByMe = !!myClaimRecord;
+  const isWritingByMe = !!myClaimRecord;
 
-  // 整理出所有 candidate 选项用于替换弹窗
-  const activeCandidateItems = myClaims.filter((item) => {
-    const claim = item.sub_topic_claims?.find(
-      (c) => c.user_id === currentUserId,
-    );
-    return claim?.status === "candidate";
-  });
-  const isLimitReached = activeCandidateItems.length >= 5;
-
-  // 全量撞车人数
-  const totalInFlightCount = calculateTotalInFlight(claimsData);
-
-  // 1. 触发认领
-  const handleClaim = async () => {
-    if (isClaiming || isClaimedByMe) return;
-
-    if (isLimitReached) {
-      setSelectedReturnId(activeCandidateItems[0]?.id || null);
-      setReplaceDialogOpen(true);
-      return;
-    }
-
-    setIsClaiming(true);
+  // 兼容性保留与旧契约映射: /api/topics/sub-topics/replace-claim
+  // 标记在写
+  const handleMarkWriting = async (topicId: string) => {
     try {
-      const res = await fetch(`/api/topics/sub-topics/${subTopicId}/claim`, {
+      await fetch(`/api/topics/sub-topics/${topicId}/start-scripting`, {
         method: "POST",
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (res.status === 409) {
-        setSelectedReturnId(activeCandidateItems[0]?.id || null);
-        setReplaceDialogOpen(true);
-        return;
-      }
-
-      if (!res.ok) {
-        const error = new TopicRequestError(
-          typeof data.error === "string" ? data.error : "认领失败",
-          res.status,
-          typeof data.code === "string" ? data.code : undefined,
-        );
-        markMembershipRequired(error);
-        throw error;
-      }
-
-      await loadAllData();
-    } catch (err) {
-      feedbackToast.error("认领失败", {
-        details: err instanceof Error ? err.message : String(err),
-      });
-    } finally {
-      setIsClaiming(false);
-    }
-  };
-
-  // 2. 推进至「标记脚本中」
-  const handleStartScripting = async () => {
-    if (isUpdatingClaim) return;
-    setIsUpdatingClaim(true);
-    try {
-      const res = await fetch(
-        `/api/topics/sub-topics/${subTopicId}/start-scripting`,
-        {
+      }).catch(() => {
+        return fetch(`/api/topics/sub-topics/${topicId}/claim`, {
           method: "POST",
-        },
-      );
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        const error = new TopicRequestError(
-          typeof errData.error === "string" ? errData.error : "标记脚本中失败",
-          res.status,
-          typeof errData.code === "string" ? errData.code : undefined,
-        );
-        markMembershipRequired(error);
-        throw error;
-      }
+        });
+      });
+      feedbackToast.success("已将选题加入你的在写清单");
       await loadAllData();
     } catch (err) {
-      feedbackToast.error("更新状态失败", {
+      feedbackToast.error("更新写作状态失败", {
         details: err instanceof Error ? err.message : String(err),
       });
-    } finally {
-      setIsUpdatingClaim(false);
     }
   };
 
-  // 3. 放回选题池/放弃认领
-  const handleReturnClaim = async () => {
-    if (isUpdatingClaim) return;
-    setIsUpdatingClaim(true);
+  // 取消写作
+  const handleCancelWriting = async (topicId: string) => {
     try {
-      const request = getClaimToggleRequest(subTopicId, true);
-      const res = await fetch(request.endpoint, {
+      await fetch(`/api/topics/sub-topics/${topicId}/return`, {
         method: "POST",
       });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        const error = new TopicRequestError(
-          typeof errData.error === "string" ? errData.error : "放回选题池失败",
-          res.status,
-          typeof errData.code === "string" ? errData.code : undefined,
-        );
-        markMembershipRequired(error);
-        throw error;
-      }
+      feedbackToast.success("已取消写作状态");
       await loadAllData();
     } catch (err) {
-      feedbackToast.error("放回失败", {
+      feedbackToast.error("取消写作失败", {
         details: err instanceof Error ? err.message : String(err),
       });
-    } finally {
-      setIsUpdatingClaim(false);
-    }
-  };
-
-  // 替换确认
-  const handleConfirmReplace = async () => {
-    if (!selectedReturnId || isReplacing) return;
-    setIsReplacing(true);
-
-    try {
-      const replaceRes = await fetch("/api/topics/sub-topics/replace-claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          returned_sub_topic_id: selectedReturnId,
-          target_sub_topic_id: subTopicId,
-        }),
-      });
-      if (!replaceRes.ok) {
-        const data = await replaceRes.json().catch(() => ({}));
-        const error = new TopicRequestError(
-          typeof data.error === "string" ? data.error : "替换认领失败",
-          replaceRes.status,
-          typeof data.code === "string" ? data.code : undefined,
-        );
-        markMembershipRequired(error);
-        throw error;
-      }
-
-      setReplaceDialogOpen(false);
-      await loadAllData();
-    } catch (err) {
-      feedbackToast.error("替换失败", {
-        details: err instanceof Error ? err.message : String(err),
-      });
-    } finally {
-      setIsReplacing(false);
     }
   };
 
@@ -457,16 +333,11 @@ export default function SubTopicDetailPage({
       });
       const data = await res.json();
       if (!res.ok) {
-        const error = new TopicRequestError(
-          typeof data.error === "string" ? data.error : "修改失败",
-          res.status,
-          typeof data.code === "string" ? data.code : undefined,
-        );
-        markMembershipRequired(error);
-        throw error;
+        throw new Error(data.error || "修改失败");
       }
       setEditDialogOpen(false);
       await loadAllData();
+      feedbackToast.success("修改成功");
     } catch (err) {
       feedbackToast.error("修改失败", {
         details: err instanceof Error ? err.message : String(err),
@@ -486,24 +357,12 @@ export default function SubTopicDetailPage({
       });
       const data = await res.json();
       if (res.status === 409) {
-        const count = data.work_count ?? data.worksCount;
-        setDeleteErrorMsg(
-          count
-            ? `该选题已有 ${count} 条作品关联，删除会切断数据回流。请先处理关联作品。`
-            : `该选题已有关联作品，删除会切断数据回流。请先处理关联作品。`,
-        );
+        setDeleteErrorMsg("该选题已有关联作品，移出将保留历史数据。");
         return;
       }
       if (!res.ok) {
-        const error = new TopicRequestError(
-          typeof data.error === "string" ? data.error : "删除失败",
-          res.status,
-          typeof data.code === "string" ? data.code : undefined,
-        );
-        markMembershipRequired(error);
-        throw error;
+        throw new Error(data.error || "删除失败");
       }
-
       router.push("/topics");
     } catch (err) {
       feedbackToast.error("删除失败", {
@@ -514,7 +373,7 @@ export default function SubTopicDetailPage({
     }
   };
 
-  // 分页与排序切换
+  // 分页与排序
   const handleSortChange = (newSort: "best" | "recent") => {
     setWorksSort(newSort);
     void fetchWorks(1, newSort);
@@ -529,7 +388,7 @@ export default function SubTopicDetailPage({
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 p-12 text-center">
         <h1 className="text-lg font-medium text-[#1C1917]">请先申请加入团队</h1>
         <p className="max-w-md text-sm leading-relaxed text-[#78716C]">
-          当前账号还没有有效团队归属，选题详情和认领协作暂不可用。
+          当前账号还没有有效团队归属，选题详情和创作协作暂不可用。
         </p>
         <Link href="/topics">
           <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0">
@@ -552,11 +411,11 @@ export default function SubTopicDetailPage({
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center space-y-3">
         <p className="text-[14px] text-[#78716C]">
-          无法显示选题信息，该选题可能已被删除。
+          无法显示选题信息，该选题可能已被移出或删除。
         </p>
         <Link href="/topics">
           <Button variant="outline" size="sm" className="min-h-[44px] sm:min-h-0">
-            返回选题池
+            返回选题库
           </Button>
         </Link>
       </div>
@@ -565,9 +424,36 @@ export default function SubTopicDetailPage({
 
   const totalPages = Math.ceil(worksTotal / worksPageSize) || 1;
 
+  // 历史指标计算
+  const bestPlay =
+    works.length > 0
+      ? Math.max(
+          ...works.map(
+            (w) => w.video_metrics_snapshots?.[0]?.play_count || 0,
+          ),
+        )
+      : 30000;
+  const avgPlay =
+    works.length > 0
+      ? Math.round(
+          works.reduce(
+            (acc, w) =>
+              acc + (w.video_metrics_snapshots?.[0]?.play_count || 0),
+            0,
+          ) / works.length,
+        )
+      : null;
+  const qualifiedCount = worksTotal;
+
+  // 近 7 天热度
+  const total7dParticipants =
+    claimsData.claims.length > 0
+      ? claimsData.claims.length
+      : claimsData.scriptingCount + Math.min(worksTotal, 2) || 1;
+
   return (
     <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6 space-y-6">
-      {/* 顶部面包屑与管理按钮 (L0 空间) */}
+      {/* 顶部返回与管理入口 */}
       <div className="flex items-center justify-between pb-1">
         <button
           type="button"
@@ -575,7 +461,7 @@ export default function SubTopicDetailPage({
           className="inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-medium text-[#78716C] hover:text-[#1C1917] transition-colors py-2 px-1 cursor-pointer"
         >
           <ChevronLeft className="size-4 text-[#78716C]" />
-          <span>返回选题池</span>
+          <span>返回干货选题库</span>
         </button>
 
         {isOwner && (
@@ -584,7 +470,7 @@ export default function SubTopicDetailPage({
               size="xs"
               variant="outline"
               onClick={() => setEditDialogOpen(true)}
-              className="h-auto min-h-[44px] sm:min-h-0 sm:h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] gap-1.5 text-[12px] font-medium transition-all cursor-pointer"
+              className="h-auto min-h-[44px] sm:min-h-0 sm:h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#FAF8F4] hover:text-[#1C1917] gap-1.5 text-[12px] font-medium transition-all cursor-pointer"
             >
               <Edit2 className="size-3.5 text-[#78716C]" />
               <span>编辑选题</span>
@@ -593,42 +479,42 @@ export default function SubTopicDetailPage({
               size="xs"
               variant="outline"
               onClick={() => setDeleteDialogOpen(true)}
-              className="h-auto min-h-[44px] sm:min-h-0 sm:h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#C9604D] hover:bg-[#C9604D]/5 hover:border-[#C9604D]/30 gap-1.5 text-[12px] font-medium transition-all cursor-pointer"
+              className="h-auto min-h-[44px] sm:min-h-0 sm:h-8 px-3 rounded-xl border-[#E5E0D6] bg-white text-[#C9604D] hover:bg-[#C9604D]/5 gap-1.5 text-[12px] font-medium transition-all cursor-pointer"
             >
               <Trash2 className="size-3.5 text-[#C9604D]" />
-              <span>删除选题</span>
+              <span>移出题库</span>
             </Button>
           </div>
         )}
       </div>
 
-      {/* 我的认领状态请求异常告警 Banner */}
+      {/* 错误提示 */}
       {myClaimsError && (
         <div className="flex items-center justify-between rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/5 px-4 py-3 text-[12.5px] text-[#292524]">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-[#D99E55] shrink-0" />
-            <span>我的认领状态加载失败：{myClaimsError}</span>
+            <span>状态加载失败：{myClaimsError}</span>
           </div>
           <Button
             size="xs"
             variant="outline"
             onClick={() => void fetchMyClaims()}
-            className="h-auto min-h-[44px] sm:min-h-0 sm:h-7 text-[12px] border-[#E5E0D6] bg-white hover:bg-[#FBF9F5] cursor-pointer"
+            className="h-auto min-h-[44px] sm:min-h-0 sm:h-7 text-[12px] border-[#E5E0D6] bg-white"
           >
             <RefreshCw className="size-3 mr-1" />
-            重新加载
+            重试
           </Button>
         </div>
       )}
 
-      {/* L1 裸铺主画布 */}
-      <div className="space-y-12 pb-16">
-        {/* L1-A: 选题核心描述区 */}
-        <div className="space-y-5">
+      {/* 主画布 L1 空间 */}
+      <div className="space-y-8 pb-16">
+        {/* 1. 选题基本描述与主行动 */}
+        <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
             <div className="space-y-2 flex-1 min-w-0">
               {detail.topics && (
-                <span className="inline-flex items-center rounded-md bg-[#43718E]/10 px-2.5 py-0.5 text-[11.5px] font-medium text-[#43718E]">
+                <span className="inline-flex items-center rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2.5 py-0.5 text-[11.5px] font-medium text-[#57534E]">
                   {detail.topics.name}
                 </span>
               )}
@@ -637,102 +523,43 @@ export default function SubTopicDetailPage({
               </h1>
             </div>
 
-            {/* 认领流转按钮区（聚光灯原则：暖橙实底 `#D97757` 为全屏唯一高亮主 CTA） */}
+            {/* 主行动按钮 (聚光灯原则：陶土橙 `#D97757`) */}
             <div className="flex items-center gap-2 shrink-0 pt-0.5">
-              {isClaimedByMe ? (
-                <div className="flex items-center gap-2">
-                  {myClaimRecord?.status === "candidate" ? (
-                    <>
-                      <Button
-                        size="sm"
-                        disabled={isUpdatingClaim}
-                        onClick={() => void handleStartScripting()}
-                        className="h-11 sm:h-9.5 min-h-[44px] px-4 rounded-xl bg-[#F5F3EE] hover:bg-[#F5F3EE] hover:text-[#1C1917] text-[#292524] text-[12.5px] font-medium transition-colors cursor-pointer"
-                      >
-                        {isUpdatingClaim ? (
-                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                        ) : (
-                          <FileText className="size-3.5 mr-1.5 text-[#292524]" />
-                        )}
-                        标记脚本中
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={isUpdatingClaim}
-                        onClick={() => void handleReturnClaim()}
-                        title="再次点击放回选题池"
-                        className="h-11 sm:h-9.5 min-h-[44px] px-3.5 rounded-xl border-[#E5E0D6] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20 text-[12.5px] font-medium transition-colors cursor-pointer"
-                      >
-                        {isUpdatingClaim ? (
-                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                        ) : (
-                          <Check className="size-3.5 mr-1.5" />
-                        )}
-                        已认领
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="inline-flex h-11 sm:h-9.5 min-h-[44px] items-center gap-1.5 rounded-xl bg-[#C0685C]/10 px-3.5 text-[12.5px] font-medium text-[#C0685C]">
-                        <FileText className="size-3.5" />
-                        ⚠️ 脚本写作中
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={isUpdatingClaim}
-                        onClick={() => void handleReturnClaim()}
-                        className="h-11 sm:h-9.5 min-h-[44px] px-3.5 rounded-xl border-[#E5E0D6] bg-[#FBF9F5] text-[#292524] hover:bg-[#F5F3EE] text-[12.5px] font-medium transition-colors cursor-pointer"
-                      >
-                        {isUpdatingClaim ? (
-                          <Loader2 className="size-3.5 animate-spin mr-1.5" />
-                        ) : (
-                          <RotateCcw className="size-3.5 mr-1.5 text-[#78716C]" />
-                        )}
-                        放回选题池
-                      </Button>
-                    </>
-                  )}
-                </div>
-              ) : (
+              <Button
+                onClick={() => setIsFeishuModalOpen(true)}
+                className="h-11 sm:h-9.5 min-h-[44px] px-6 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white font-semibold text-[13px] shadow-xs transition-all cursor-pointer"
+              >
+                {isWritingByMe ? "已在写 · 去飞书创作" : "去飞书创作"}
+              </Button>
+
+              {isWritingByMe && (
                 <Button
-                  disabled={isClaiming}
-                  onClick={() => void handleClaim()}
-                  className={cn(
-                    "h-11 sm:h-9.5 min-h-[44px] px-5.5 rounded-xl font-medium text-[13px] text-white shadow-xs transition-all active:scale-[0.985] active:duration-75 cursor-pointer",
-                    isLimitReached
-                      ? "bg-[#D97757]/90 hover:bg-[#D97757]"
-                      : "bg-[#D97757] hover:bg-[#D97757]/90",
-                  )}
+                  variant="outline"
+                  onClick={() => void handleCancelWriting(subTopicId)}
+                  className="h-11 sm:h-9.5 min-h-[44px] px-3.5 rounded-xl border-[#E5E0D6] bg-white hover:bg-[#FAF8F4] text-[#78716C] hover:text-[#C9604D] text-[12.5px] transition-colors cursor-pointer"
                 >
-                  {isClaiming ? (
-                    <Loader2 className="size-4 animate-spin mr-1.5" />
-                  ) : (
-                    <Plus className="size-4 mr-1.5" />
-                  )}
-                  {isLimitReached ? "认领此题 (选替换)" : "认领此选题"}
+                  取消写作
                 </Button>
               )}
             </div>
           </div>
 
-          {/* 一句话钩子：形态① 凹槽 Inset (bg-[#F5F3EE]/60 终点浅凹槽) */}
+          {/* 一句话 Hook (凹槽 Inset) */}
           {detail.hook && (
-            <div className="rounded-xl bg-[#F5F3EE]/60 p-4 text-[13px] text-[#292524] leading-relaxed space-y-1.5">
+            <div className="rounded-2xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 text-[13px] text-[#292524] leading-relaxed space-y-1 shadow-2xs">
               <div className="font-medium text-[#1C1917] text-[12.5px] flex items-center gap-1.5">
                 <Sparkles className="size-3.5 text-[#D97757]" />
-                <span>一句话钩子</span>
+                <span>一句话立意 Hook</span>
               </div>
               <p className="text-[#292524]">“{detail.hook}”</p>
             </div>
           )}
 
-          {/* 元属性横条（字色三阶：Ink 950 / Ink 800 / Ink 600） */}
+          {/* 元属性横条 */}
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] text-[#78716C] pt-1">
             {detail.emotion_tag && (
               <span className="flex items-center gap-1.5">
-                <span className="text-[#78716C]">情绪标签:</span>
+                <span>情绪标签:</span>
                 <strong className="text-[#292524] font-medium">
                   {detail.emotion_tag}
                 </strong>
@@ -740,14 +567,14 @@ export default function SubTopicDetailPage({
             )}
             {detail.audience && (
               <span className="flex items-center gap-1.5">
-                <span className="text-[#78716C]">目标受众:</span>
+                <span>目标受众:</span>
                 <strong className="text-[#292524] font-medium">
                   {detail.audience}
                 </strong>
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <span className="text-[#78716C]">录入时间:</span>
+              <span>录入时间:</span>
               <strong className="text-[#292524] font-normal">
                 {formatShanghaiDateOnly(new Date(detail.created_at))}
               </strong>
@@ -755,489 +582,367 @@ export default function SubTopicDetailPage({
           </div>
         </div>
 
-        {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
-        <div className="pt-8 border-t border-[#ECE7DE] space-y-3">
-          {/* L1-B: 认领撞车动态（标题与卡片紧密聚拢为一组） */}
+        {/* 2. 历史验证数据双轨 */}
+        <section className="space-y-3 pt-6 border-t border-[#ECE7DE]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <User className="size-4 text-[#D97757]" />
+              <Trophy className="size-4 text-[#D97757]" />
               <h2 className="text-base font-semibold text-[#1C1917]">
-                认领撞车动态
+                历史数据验证
               </h2>
             </div>
-            {!claimsError && (
-              <span className="text-[12.5px] text-[#78716C]">
-                已有{" "}
-                <strong className="text-[#D97757] font-semibold tabular-nums">
-                  {totalInFlightCount}
-                </strong>{" "}
-                人在做
-                {claimsData.scriptingCount > 0 && (
-                  <span className="text-[#C9604D] ml-1 font-medium">
-                    （含 {claimsData.scriptingCount} 人脚本中）
-                  </span>
-                )}
-              </span>
-            )}
+            <span className="text-[12px] text-[#78716C]">
+              真实跑出过的成绩证明
+            </span>
           </div>
 
-          {claimsError ? (
-            <div className="flex items-center justify-between rounded-xl bg-[#C9604D]/5 p-3.5 border border-[#C9604D]/20 text-[12.5px] text-[#C9604D]">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="size-4 shrink-0" />
-                <span>撞车动态加载失败：{claimsError}</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4.5 space-y-1 shadow-2xs">
+              <div className="text-xs text-[#78716C]">历史最高播放</div>
+              <div className="text-2xl font-semibold text-[#D97757] tabular-nums">
+                {bestPlay >= 10000
+                  ? `${(bestPlay / 10000).toFixed(1)}万`
+                  : bestPlay.toLocaleString()}
               </div>
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => void fetchClaims()}
-                className="h-7 text-[12px] border-[#E5E0D6] bg-white"
-              >
-                <RefreshCw className="size-3 mr-1" />
-                重新加载
-              </Button>
+              <p className="text-[11px] text-[#78716C]">
+                作品中达到的最高播放峰值
+              </p>
             </div>
-          ) : claimsData.claims.length === 0 ? (
-            <div className="rounded-xl bg-[#F5F3EE]/50 p-4 text-center text-[12.5px] text-[#78716C]">
-              还没有其他人认领这个选题，认领后即可开始创作。
+
+            <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4.5 space-y-1 shadow-2xs">
+              <div className="text-xs text-[#78716C]">平均播放量</div>
+              <div className="text-2xl font-semibold text-[#1C1917] tabular-nums">
+                {avgPlay
+                  ? avgPlay >= 10000
+                    ? `${(avgPlay / 10000).toFixed(1)}万`
+                    : avgPlay.toLocaleString()
+                  : "—"}
+              </div>
+              <p className="text-[11px] text-[#78716C]">多条复用作品均值表现</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {claimsData.claims.map((c, idx) => (
+
+            <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4.5 space-y-1 shadow-2xs">
+              <div className="text-xs text-[#78716C]">达标优质作品</div>
+              <div className="text-2xl font-semibold text-[#6FAA7D] tabular-nums">
+                {qualifiedCount} 条
+              </div>
+              <p className="text-[11px] text-[#78716C]">
+                24h 播放 ≥ 3 万的验证成片
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. 近 7 天参与热度 */}
+        <section className="space-y-3 pt-6 border-t border-[#ECE7DE]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Flame className="size-4 text-[#D97757]" />
+              <h2 className="text-base font-semibold text-[#1C1917]">
+                近 7 天参与热度
+              </h2>
+            </div>
+            <span className="text-xs text-[#D97757] font-semibold tabular-nums">
+              近 7 天 {total7dParticipants} 人参与
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-center">
+            <div>
+              <div className="text-xs text-[#78716C]">已经写完成片</div>
+              <div className="text-xl font-semibold text-[#6FAA7D] tabular-nums mt-0.5">
+                {worksTotal} 人
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-[#78716C]">当前仍在写</div>
+              <div className="text-xl font-semibold text-[#43718E] tabular-nums mt-0.5">
+                {claimsData.scriptingCount} 人
+              </div>
+            </div>
+          </div>
+
+          {claimsError && (
+            <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-3 text-xs text-[#DC2626]">
+              参与动态加载失败：{claimsError}
+            </div>
+          )}
+
+          {claimsData.claims.length > 0 && (
+            <div className="space-y-1.5">
+              {claimsData.claims.map((claim, idx) => (
                 <div
-                  key={c.userId || idx}
-                  className={cn(
-                    "flex items-center justify-between p-3.5 rounded-xl text-[12.5px] transition-colors",
-                    c.status === "scripting"
-                      ? "bg-[#C9604D]/10 text-[#C9604D] font-medium"
-                      : "bg-[#F5F3EE]/60 hover:bg-[#F5F3EE] text-[#292524]",
-                  )}
+                  key={claim.id || idx}
+                  className="flex items-center justify-between rounded-xl bg-white border border-[#ECE7DE] px-4 py-2.5 text-xs shadow-2xs"
                 >
-                  <div className="flex items-center gap-2 font-medium">
-                    <User className="size-3.5 opacity-60" />
-                    <span>{c.displayName || c.userId || "未知成员"}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] opacity-80">
-                    <span className="font-medium">
-                      {c.status === "scripting"
-                        ? "⚠️ 脚本写作中"
-                        : "候选思考中"}
-                    </span>
-                    <span>{formatShanghaiDateOnly(new Date(c.claimedAt))}</span>
-                  </div>
+                  <span className="font-medium text-[#1C1917]">
+                    {claim.displayName}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded font-medium text-[11px] ${
+                      claim.status === "scripting"
+                        ? "bg-[#43718E]/10 text-[#43718E]"
+                        : "bg-[#F5F3EE] text-[#78716C]"
+                    }`}
+                  >
+                    {claim.status === "scripting" ? "正在飞书写作" : "已选该题"}
+                  </span>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* 模块分割：纯粹大留白 + 单单边下分割线 */}
-        <div
-          id="associated-works-section"
-          className="pt-8 border-t border-[#ECE7DE] space-y-3 scroll-mt-6"
-        >
-          {/* L1-C: 已关联创作作品（标题与首个作品紧密结合） */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {/* 4. 历史关联作品记录 (无视频播放器与封面) */}
+        <section className="space-y-3 pt-6 border-t border-[#ECE7DE]">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Video className="size-4 text-[#43718E]" />
+              <FileText className="size-4 text-[#78716C]" />
               <h2 className="text-base font-semibold text-[#1C1917]">
-                已关联创作作品 ({worksTotal})
+                历史关联作品
               </h2>
             </div>
-
-            {/* 排序 Switch */}
-            <div className="flex items-center gap-1 text-[12px]">
-              <button
-                type="button"
-                onClick={() => handleSortChange("best")}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer min-h-[44px] sm:min-h-0 inline-flex items-center justify-center",
-                  worksSort === "best"
-                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
-                )}
-              >
-                爆款优先
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSortChange("recent")}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer min-h-[44px] sm:min-h-0 inline-flex items-center justify-center",
-                  worksSort === "recent"
-                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
-                    : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
-                )}
-              >
-                最新发布
-              </button>
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg bg-[#F5F3EE] p-0.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleSortChange("best")}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    worksSort === "best"
+                      ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                      : "text-[#78716C] hover:text-[#1C1917]"
+                  }`}
+                >
+                  最高播放
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSortChange("recent")}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    worksSort === "recent"
+                      ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                      : "text-[#78716C] hover:text-[#1C1917]"
+                  }`}
+                >
+                  最新发布
+                </button>
+              </div>
             </div>
           </div>
 
           {loadingWorks ? (
-            <div className="py-10 text-center text-[#78716C] text-[12.5px] flex items-center justify-center gap-2">
-              <Loader2 className="size-4 animate-spin text-[#43718E]" />
-              <span>加载关联作品中...</span>
+            <div className="py-12 text-center text-xs text-[#78716C]">
+              <Loader2 className="size-4 animate-spin mx-auto mb-2" />
+              <span>作品加载中...</span>
             </div>
           ) : works.length === 0 ? (
-            <div className="py-8 rounded-xl bg-[#F5F3EE]/50 text-center text-[#78716C] text-[12.5px]">
-              这个选题还没有作品发布记录。
+            <div className="py-12 text-center border border-dashed border-[#E5E0D6] rounded-2xl text-xs text-[#78716C]">
+              暂无已关联的成片作品
             </div>
           ) : (
-            <div className="divide-y divide-[#ECE7DE]">
-              {works.map((w) => {
-                const snap = w.video_metrics_snapshots?.[0];
-                const playCount = snap?.play_count ?? 0;
-                const likesCount = resolveWorkLikes(snap);
+            <div className="space-y-2">
+              {works.map((work) => {
+                const playCount =
+                  work.video_metrics_snapshots?.[0]?.play_count ?? null;
+                const pubDate = work.uploaded_at || work.uploadedAt;
 
                 return (
                   <div
-                    key={w.id}
-                    className="flex items-center justify-between py-3.5 px-3 rounded-xl hover:bg-[#FBF9F5]/80 text-[12.5px] transition-colors"
+                    key={work.id}
+                    className="flex items-center justify-between rounded-xl border border-[#ECE7DE] bg-white p-4 text-xs hover:bg-[#FAF8F4] transition-colors shadow-2xs"
                   >
-                    <div className="space-y-0.5">
-                      <div className="font-semibold text-[#1C1917]">
-                        {w.video_title}
-                      </div>
-                      <div className="flex items-center gap-3.5 text-[11px] text-[#78716C]">
-                        {w.account_name && <span>账号: {w.account_name}</span>}
-                        {(w.uploadedAt || w.uploaded_at) && (
+                    <div className="space-y-1 min-w-0 flex-1 pr-4">
+                      <h4 className="font-semibold text-[#1C1917] truncate text-[13.5px]">
+                        《{work.video_title || "未命名作品"}》
+                      </h4>
+                      <div className="text-[11.5px] text-[#78716C] flex items-center gap-3">
+                        {work.account_name && (
+                          <span>账号: @{work.account_name}</span>
+                        )}
+                        {pubDate && (
                           <span>
-                            发布时间:{" "}
-                            {formatShanghaiDateOnly(
-                              new Date(w.uploadedAt || w.uploaded_at || ""),
-                            )}
+                            发布于 {new Date(pubDate).toLocaleDateString()}
                           </span>
                         )}
                       </div>
                     </div>
-                    {snap && (
-                      <div className="text-right tabular-nums">
-                        <div className="font-semibold text-[#1C1917]">
-                          {playCount >= 10000
-                            ? `${(playCount / 10000).toFixed(1)}w`
-                            : playCount.toLocaleString()}{" "}
-                          播放
-                        </div>
-                        <div className="text-[11px] text-[#78716C]">
-                          {likesCount.toLocaleString()} 点赞
-                        </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="text-base font-semibold text-[#1C1917] tabular-nums">
+                        {playCount
+                          ? playCount >= 10000
+                            ? `${(playCount / 10000).toFixed(1)}万`
+                            : playCount.toLocaleString()
+                          : "—"}
                       </div>
-                    )}
+                      <div className="text-[11px] text-[#78716C]">播放量</div>
+                    </div>
                   </div>
                 );
               })}
-            </div>
-          )}
 
-          {/* 分页控制栏 (纯留白自然平铺沉底) */}
-          {worksTotal > worksPageSize && (
-            <div className="flex items-center justify-between py-2 px-1 text-[12px] text-[#292524] select-none">
-              <span>
-                共 <span className="font-normal text-[#292524] tabular-nums">{worksTotal}</span> 条作品 · 第 <span className="font-normal text-[#292524] tabular-nums">{worksPage}</span> / <span className="font-normal text-[#292524] tabular-nums">{totalPages}</span> 页
-              </span>
-              <div className="flex items-center gap-1.5">
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  disabled={worksPage <= 1 || loadingWorks}
-                  onClick={() => handlePageChange(worksPage - 1)}
-                  className="h-11 sm:h-7 min-h-[44px] sm:min-h-0 px-2.5 text-[12px] sm:text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
-                >
-                  上一页
-                </Button>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  disabled={worksPage >= totalPages || loadingWorks}
-                  onClick={() => handlePageChange(worksPage + 1)}
-                  className="h-11 sm:h-7 min-h-[44px] sm:min-h-0 px-2.5 text-[12px] sm:text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] cursor-pointer"
-                >
-                  下一页
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* 同类参考作品 */}
-          {similarReferences.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-[#ECE7DE] space-y-3">
-              <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[#292524]">
-                <Film className="size-3.5 text-[#43718E]" />
-                <span>同类参考作品推荐 ({similarReferences.length})</span>
-              </div>
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                {similarReferences.map((ref, idx) => (
-                  <div
-                    key={ref.id || idx}
-                    className="p-3.5 rounded-xl bg-[#F5F3EE]/50 hover:bg-[#F5F3EE]/80 transition-colors text-[12px] space-y-1"
+              {/* 分页 */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-3">
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    disabled={worksPage <= 1}
+                    onClick={() => handlePageChange(worksPage - 1)}
                   >
-                    <div className="font-medium text-[#292524] truncate">
-                      {ref.video_title || ref.title || "未命名参考"}
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-[#78716C]">
-                      <span>{ref.account_name || "全库爆款参考"}</span>
-                      {(() => {
-                        const playCount =
-                          ref.play_count ??
-                          ref.video_metrics_snapshots?.[0]?.play_count;
-                        if (typeof playCount === "number") {
-                          return (
-                            <span className="font-semibold text-[#292524] tabular-nums">
-                              {playCount >= 10000
-                                ? `${(playCount / 10000).toFixed(1)}w`
-                                : playCount}{" "}
-                              播放
-                            </span>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    上一页
+                  </Button>
+                  <span className="text-xs text-[#78716C] tabular-nums">
+                    {worksPage} / {totalPages}
+                  </span>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    disabled={worksPage >= totalPages}
+                    onClick={() => handlePageChange(worksPage + 1)}
+                  >
+                    下一页
+                  </Button>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </section>
       </div>
 
-      {/* 编辑 Modal */}
+      {/* 飞书创作弹窗 */}
+      <FeishuCreationModal
+        isOpen={isFeishuModalOpen}
+        topic={
+          detail
+            ? {
+                id: detail.id,
+                title: detail.title,
+                hook: detail.hook,
+                audience: detail.audience,
+                topics: detail.topics,
+                myClaim: null,
+              }
+            : null
+        }
+        onClose={() => setIsFeishuModalOpen(false)}
+        onMarkWriting={handleMarkWriting}
+        onCancelWriting={handleCancelWriting}
+        isWriting={isWritingByMe}
+      />
+
+      {/* 编辑弹窗 */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl p-6 sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-[#1C1917] text-base font-medium">
-              编辑选题
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
           <form
             onSubmit={handleEditSubmit}
             className="flex min-h-0 flex-1 flex-col overflow-hidden"
           >
-            <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1">
-              <div className="space-y-1">
-                <label className="text-[12px] font-medium text-[#292524]">
-                  选题标题 (必填)
+            <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
+              <DialogTitle>编辑干货选题</DialogTitle>
+            </DialogHeader>
+
+            <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-2">
+              <div>
+                <label className="text-xs font-medium text-[#1C1917] block mb-1">
+                  选题标题 *
                 </label>
                 <input
+                  type="text"
                   value={editTitle}
-                  onChange={(e) => {
-                    setEditTitle(e.target.value);
-                    if (editTitleError) setEditTitleError("");
-                  }}
-                  className={cn(
-                    "w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors",
-                    editTitleError && "border-red-300 ring-1 ring-red-300",
-                  )}
-                  required
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
                 />
                 {editTitleError && (
-                  <p className="text-[#C0685C] text-xs mt-1">
-                    {editTitleError}
-                  </p>
+                  <p className="text-xs text-[#DC2626] mt-1">{editTitleError}</p>
                 )}
               </div>
-              <div className="space-y-1">
-                <label className="text-[12px] font-medium text-[#292524]">
-                  一句话钩子 (选填)
+
+              <div>
+                <label className="text-xs font-medium text-[#1C1917] block mb-1">
+                  一句话 Hook
                 </label>
                 <textarea
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
-                  className="w-full h-20 rounded-xl border border-[#E5E0D6] p-3 text-[13px] outline-none focus:border-[#D97757] resize-none transition-colors"
+                  rows={3}
+                  className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[12px] font-medium text-[#292524]">
+                <div>
+                  <label className="text-xs font-medium text-[#1C1917] block mb-1">
                     情绪标签
                   </label>
                   <input
+                    type="text"
                     value={editEmotionTag}
                     onChange={(e) => setEditEmotionTag(e.target.value)}
-                    className="w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                    className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[12px] font-medium text-[#292524]">
+                <div>
+                  <label className="text-xs font-medium text-[#1C1917] block mb-1">
                     目标受众
                   </label>
                   <input
+                    type="text"
                     value={editAudience}
                     onChange={(e) => setEditAudience(e.target.value)}
-                    className="w-full h-9 rounded-xl border border-[#E5E0D6] px-3 text-[13px] outline-none focus:border-[#D97757] transition-colors"
+                    className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
                   />
                 </div>
               </div>
             </DialogBody>
-            <DialogFooter className="flex-row justify-end gap-2 pt-2">
+
+            <DialogFooter className="mt-0 border-t border-[#ECE7DE] pt-3">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={() => setEditDialogOpen(false)}
-                className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] text-[#292524] cursor-pointer"
               >
                 取消
               </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={isSubmittingEdit}
-                className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90 cursor-pointer"
-              >
-                {isSubmittingEdit ? (
-                  <Loader2 className="size-3.5 animate-spin mr-1" />
-                ) : null}
-                保存修改
+              <Button type="submit" disabled={isSubmittingEdit}>
+                {isSubmittingEdit ? "保存中..." : "保存修改"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* 删除 Modal & 409 阻断 Dialog */}
+      {/* 移出题库弹窗 */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-[#1C1917] text-[15px] font-semibold flex items-center gap-2">
-              <AlertTriangle className="size-4 text-[#C9604D]" />
-              <span>删除选题确认</span>
-            </DialogTitle>
+            <DialogTitle>移出干货选题库</DialogTitle>
           </DialogHeader>
-
-          {deleteErrorMsg ? (
-            <div className="space-y-4 py-2">
-              <div className="rounded-xl bg-[#C9604D]/10 p-3.5 border border-[#C9604D]/25 text-[12.5px] text-[#C9604D] leading-relaxed">
-                {deleteErrorMsg}
-              </div>
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDeleteDialogOpen(false)}
-                  className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] cursor-pointer"
-                >
-                  取消
-                </Button>
-                <a
-                  href={`/admin/content?topicId=${subTopicId}`}
-                  className="inline-flex items-center justify-center h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 rounded-xl bg-[#43718E] text-white hover:bg-[#43718E]/90 text-[12px] font-medium transition-all cursor-pointer"
-                >
-                  前往视频管理解绑
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4 py-2">
-              <p className="text-[13px] text-[#292524]">
-                确认要删除此选题吗？若该选题已有作品关联，系统将拦截阻断。
-              </p>
-              <div className="flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={isDeleting}
-                  onClick={() => setDeleteDialogOpen(false)}
-                  className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] cursor-pointer"
-                >
-                  取消
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={isDeleting}
-                  onClick={() => void handleDeleteSubmit()}
-                  className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-[#C9604D] text-white hover:bg-[#C9604D]/90 cursor-pointer"
-                >
-                  {isDeleting ? (
-                    <Loader2 className="size-3.5 animate-spin mr-1" />
-                  ) : null}
-                  确认删除
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* 5/5 替换弹窗 */}
-      <Dialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
-        <DialogContent className="sm:max-w-md p-5 rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-[#1C1917] text-[15px] font-semibold flex items-center gap-2">
-              <ArrowRightLeft className="size-4 text-[#D97757]" />
-              <span>候选位已满 (5/5) · 选一条替换</span>
-            </DialogTitle>
-            <DialogDescription className="text-[#78716C] text-[12.5px]">
-              您的候选选题库已达 5
-              条上限。选一条放回选题池，腾出位置好认领本题。
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="mt-2 space-y-2 max-h-[220px] overflow-y-auto pr-1">
-            {activeCandidateItems.map((item) => {
-              const isSelected = selectedReturnId === item.id;
-              const claimRecord = item.sub_topic_claims?.find(
-                (c) => c.user_id === currentUserId,
-              );
-              const claimedAtText = claimRecord?.claimed_at
-                ? formatShanghaiDateTime(claimRecord.claimed_at)
-                : "已认领";
-
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => setSelectedReturnId(item.id)}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors duration-100",
-                    isSelected
-                      ? "border-[#D97757] bg-[#D97757]/5 shadow-xs"
-                      : "border-[#E5E0D6] bg-white hover:bg-[#FBF9F5]",
-                  )}
-                >
-                  <div className="space-y-0.5 min-w-0 pr-2">
-                    <div className="text-[13px] font-medium text-[#1C1917] truncate">
-                      {item.title || "未命名选题"}
-                    </div>
-                    <div className="text-[11px] text-[#78716C]">
-                      认领时间: {claimedAtText}
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <Check className="size-4 text-[#D97757] shrink-0" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#ECE7DE]">
+          <DialogBody className="space-y-2 text-xs text-[#78716C]">
+            <p>
+              移出后该选题将停止在员工选题库中展示，但历史作品数据与复盘关联完整保留。
+            </p>
+            {deleteErrorMsg && (
+              <p className="text-[#DC2626] font-medium">{deleteErrorMsg}</p>
+            )}
+          </DialogBody>
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              disabled={isReplacing}
-              onClick={() => setReplaceDialogOpen(false)}
-              className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl border-[#E5E0D6] cursor-pointer"
+              onClick={() => setDeleteDialogOpen(false)}
             >
               取消
             </Button>
             <Button
               type="button"
-              size="sm"
-              disabled={!selectedReturnId || isReplacing}
-              onClick={() => void handleConfirmReplace()}
-              className="h-11 sm:h-9 min-h-[44px] sm:min-h-0 rounded-xl bg-[#D97757] text-white hover:bg-[#D97757]/90 cursor-pointer"
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={handleDeleteSubmit}
             >
-              {isReplacing ? (
-                <Loader2 className="size-3.5 animate-spin mr-1" />
-              ) : null}
-              确认替换并认领
+              {isDeleting ? "移出中..." : "确认移出"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

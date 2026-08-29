@@ -109,6 +109,9 @@ export function ContentDiagnosisWorkbench({
   onAnalysisGenerated,
 }: ContentDiagnosisWorkbenchProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [removedFromTopicIds, setRemovedFromTopicIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(
     DEFAULT_VIDEO_REVIEW_THRESHOLDS,
   );
@@ -601,6 +604,85 @@ export function ContentDiagnosisWorkbench({
               {video?.accounts?.name || "未知"}
             </p>
           </div>
+
+          {/* 选题库入库管理与状态 (Topics V3) */}
+          {video && (() => {
+            const isReview =
+              (video.video_title || "").includes("复盘") ||
+              (video.content || "").includes("复盘");
+            const isRemoved = removedFromTopicIds.has(video.id);
+            const playCount = snapshot?.play_count || 0;
+            const isEligible = playCount >= 30000;
+
+            if (isReview) {
+              return (
+                <span
+                  title="复盘类型视频无论数据多高，均不进入干货选题库"
+                  className="hidden md:inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] px-2 py-1 text-[11px] text-[#78716C] font-normal"
+                >
+                  复盘内容不入选题库
+                </span>
+              );
+            }
+
+            if (isRemoved) {
+              return (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#F5F3EE] px-2 py-1 text-[11px] text-[#78716C] font-normal">
+                    已从题库移出
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRemovedFromTopicIds((prev) => {
+                        const next = new Set(prev);
+                        next.delete(video.id);
+                        return next;
+                      });
+                      feedbackToast.success("已恢复至干货选题库，员工已重新可见");
+                    }}
+                    className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#292524] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs"
+                  >
+                    恢复入库
+                  </button>
+                </div>
+              );
+            }
+
+            if (isEligible) {
+              return (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center rounded-lg border border-[#6FAA7D]/20 bg-[#6FAA7D]/10 px-2 py-1 text-[11px] text-[#6FAA7D] font-medium">
+                    已自动入选题库
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRemovedFromTopicIds((prev) => {
+                        const next = new Set(prev);
+                        next.add(video.id);
+                        return next;
+                      });
+                      feedbackToast.success("已从选题库移出，历史数据已完整保留");
+                    }}
+                    title="移出后仅对员工停止展示，不删除历史数据"
+                    className="inline-flex h-6.5 items-center justify-center rounded-lg border border-[#ECE7DE] bg-white px-2 text-[11px] font-medium text-[#78716C] hover:text-[#C9604D] hover:bg-[#FAF8F4] transition-colors cursor-pointer shadow-2xs"
+                  >
+                    移出题库
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <span
+                title="干货视频 24h 播放满 3 万将自动进入干货选题库"
+                className="hidden lg:inline-flex items-center rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] px-2 py-1 text-[11px] text-[#78716C] font-normal"
+              >
+                暂未达入库标准 (满3万自动进入)
+              </span>
+            );
+          })()}
 
           {video &&
             canOperateLifecycle &&

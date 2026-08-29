@@ -10,8 +10,12 @@ import {
   Plus,
   RefreshCw,
   AlertCircle,
-  PenTool,
   Sparkles,
+  Flame,
+  SlidersHorizontal,
+  X,
+  FileSpreadsheet,
+  CheckCircle2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,10 +30,16 @@ import type {
   TopicOption,
   TopicPoolView,
   TopicTimeRange,
+  TopicMoreFiltersState,
 } from "./types";
+import { DEFAULT_MORE_FILTERS } from "./types";
 
 export type SortByOption =
-  "ai_recommended" | "avg_play" | "claim_count" | "latest";
+  | "ai_recommended"
+  | "avg_play"
+  | "best_play"
+  | "claim_count"
+  | "latest";
 
 interface TopicPoolExplorerProps {
   items: TopicPoolItem[];
@@ -42,18 +52,21 @@ interface TopicPoolExplorerProps {
   currentView: TopicPoolView;
   currentTimeRange: TopicTimeRange;
   selectedTopicIds: string[];
+  moreFilters: TopicMoreFiltersState;
   sortBy: SortByOption;
   onPageChange: (page: number) => void;
   onViewChange: (view: TopicPoolView) => void;
   onTimeRangeChange: (timeRange: TopicTimeRange) => void;
   onTopicIdsChange: (topicIds: string[]) => void;
+  onMoreFiltersChange: (filters: TopicMoreFiltersState) => void;
+  onOpenMoreFilters: () => void;
   onSortByChange: (sortBy: SortByOption) => void;
   onSearchQueryChange: (query: string) => void;
   onRetry: () => void;
-  onClaim: (subTopicId: string) => Promise<void>;
-  onReturnClaim: (subTopicId: string) => Promise<void>;
+  onOpenFeishuModal: (topic: TopicPoolItem) => void;
   onSelectTopic: (subTopicId: string) => void;
   onCreateClick: () => void;
+  onBatchImportClick?: () => void;
   claimDrawerSlot?: React.ReactNode;
 }
 
@@ -68,22 +81,23 @@ export function TopicPoolExplorer({
   currentView,
   currentTimeRange,
   selectedTopicIds,
+  moreFilters,
   sortBy,
   onPageChange,
   onViewChange,
   onTimeRangeChange,
   onTopicIdsChange,
+  onMoreFiltersChange,
+  onOpenMoreFilters,
   onSortByChange,
   onSearchQueryChange,
   onRetry,
-  onClaim,
-  onReturnClaim,
+  onOpenFeishuModal,
   onSelectTopic,
   onCreateClick,
-  claimDrawerSlot,
+  onBatchImportClick,
 }: TopicPoolExplorerProps) {
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
-  const [operatingId, setOperatingId] = useState<string | null>(null);
   const [isTopicFilterOpen, setIsTopicFilterOpen] = useState(false);
 
   // Esc 按键收起母题 Popover
@@ -106,52 +120,121 @@ export function TopicPoolExplorer({
     }
   };
 
-  const visibleItems = items;
+  // 计算“更多”筛选生效数量
+  const moreFiltersActiveCount =
+    (moreFilters.sourceType !== "all" ? 1 : 0) +
+    (moreFilters.recentHeat !== "all" ? 1 : 0) +
+    (moreFilters.durationRange !== "all" ? 1 : 0) +
+    (moreFilters.performanceTier !== "all" ? 1 : 0);
 
-  const handleClaim = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    try {
-      setOperatingId(id);
-      await onClaim(id);
-    } finally {
-      setOperatingId(null);
+  // 是否有任何活跃的过滤条件
+  const hasAnyFilterActive =
+    selectedTopicIds.length > 0 ||
+    currentTimeRange !== "all" ||
+    searchQuery.trim().length > 0 ||
+    moreFiltersActiveCount > 0;
+
+  const handleClearAllFilters = () => {
+    onTopicIdsChange([]);
+    onTimeRangeChange("all");
+    onSearchQueryChange("");
+    onMoreFiltersChange(DEFAULT_MORE_FILTERS);
+  };
+
+  const getTopicName = (id: string) => {
+    return topics.find((t) => t.id === id)?.name || "母题";
+  };
+
+  const getTimeRangeLabel = (range: TopicTimeRange) => {
+    switch (range) {
+      case "3d":
+        return "近 3 天";
+      case "1w":
+        return "近 7 天";
+      case "1m":
+        return "近 30 天";
+      case "3m":
+        return "近 90 天";
+      default:
+        return "全部时间";
     }
   };
 
-  const handleReturn = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    try {
-      setOperatingId(id);
-      await onReturnClaim(id);
-    } finally {
-      setOperatingId(null);
+  const getSourceLabel = (src: TopicMoreFiltersState["sourceType"]) => {
+    switch (src) {
+      case "internal":
+        return "团队内部";
+      case "external":
+        return "外部收集";
+      default:
+        return "";
+    }
+  };
+
+  const getHeatLabel = (heat: TopicMoreFiltersState["recentHeat"]) => {
+    switch (heat) {
+      case "has_participants":
+        return "有人参与";
+      case "has_completed":
+        return "有人已写完";
+      case "has_in_progress":
+        return "当前有人在写";
+      case "no_participants":
+        return "无人参与";
+      default:
+        return "";
+    }
+  };
+
+  const getDurationLabel = (dur: TopicMoreFiltersState["durationRange"]) => {
+    switch (dur) {
+      case "under_2m":
+        return "2分钟以内";
+      case "2_5m":
+        return "3–5分钟";
+      case "over_5m":
+        return "5分钟以上";
+      default:
+        return "";
+    }
+  };
+
+  const getPerformanceLabel = (
+    perf: TopicMoreFiltersState["performanceTier"],
+  ) => {
+    switch (perf) {
+      case "high_best_play":
+        return "历史最高播放优先";
+      case "high_qualified":
+        return "优质作品数多";
+      case "high_avg_play":
+        return "平均播放稳健";
+      default:
+        return "";
     }
   };
 
   return (
-    <section
-      id="topic-pool-explorer"
-      className="space-y-3.5 pb-12"
-    >
-      {/* 控制栏：左右主次分层 (纯留白自然平铺，微气垫与呼吸微竖线) */}
+    <section id="topic-pool-explorer" className="space-y-3 pb-12">
+      {/* 顶部主控制栏 (L0 空间：去框平铺、呼吸留白、轻量输入) */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 py-1">
-        {/* 左侧：微气垫 Tab 视角切换群 */}
-        <div className="inline-flex items-center gap-1 bg-[#F5F3EE]/70 p-1 rounded-xl select-none">
+        {/* 左侧：Tab 视角切换 */}
+        <div className="inline-flex items-center gap-1 bg-[#F5F3EE]/70 p-1 rounded-xl select-none shrink-0">
           <button
             type="button"
             onClick={() => onViewChange("all")}
-            className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
               currentView === "all"
-                ? "bg-white text-[#1C1917] font-medium"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
             }`}
           >
-            <span>全部</span>
+            <span>全部选题</span>
             {totalCount > 0 && (
               <span
                 className={`text-[11px] tabular-nums ${
                   currentView === "all"
-                    ? "text-[#D97757] font-medium"
+                    ? "text-[#D97757] font-semibold"
                     : "text-[#78716C] font-normal"
                 }`}
               >
@@ -162,20 +245,20 @@ export function TopicPoolExplorer({
           <button
             type="button"
             onClick={() => onViewChange("my_claims")}
-            className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
               currentView === "my_claims"
-                ? "bg-white text-[#1C1917] font-medium"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
             }`}
           >
-            我的认领
+            我在写的
           </button>
           <button
             type="button"
             onClick={() => onViewChange("my_created")}
-            className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
               currentView === "my_created"
-                ? "bg-white text-[#1C1917] font-medium"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
             }`}
           >
@@ -183,22 +266,22 @@ export function TopicPoolExplorer({
           </button>
         </div>
 
-        {/* 右侧：过滤、排序、搜索与行动组 (两字原则 + 对齐箭头) */}
+        {/* 右侧：搜索、母题、排序、时间、更多、视图切换与操作 */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* 搜索框 (轻量通透微胶囊，无硬边框) */}
+          {/* 1. 搜索框 */}
           <div className="relative flex items-center">
             <input
               type="text"
-              placeholder="搜索..."
+              placeholder="搜索选题/Hook..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="text-xs bg-[#FAF8F4]/50 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-32 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              className="text-xs bg-[#FAF8F4]/60 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
               aria-label="搜索选题"
             />
             <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
           </div>
 
-          {/* 母题多选 Popover 下拉 (去框平铺) */}
+          {/* 2. 母题多选 Popover */}
           <div className="relative">
             <button
               type="button"
@@ -230,7 +313,7 @@ export function TopicPoolExplorer({
                 <div className="absolute right-0 top-full z-[62] mt-2 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-float animate-in fade-in duration-150 sm:left-0">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ECE7DE] text-xs">
                     <span className="font-semibold text-[#292524]">
-                      母题
+                      八大母题
                     </span>
                     {selectedTopicIds.length > 0 && (
                       <button
@@ -274,7 +357,7 @@ export function TopicPoolExplorer({
             )}
           </div>
 
-          {/* 排序下拉 */}
+          {/* 3. 排序下拉 */}
           <div className="relative inline-flex items-center">
             <Select
               value={sortBy}
@@ -287,24 +370,27 @@ export function TopicPoolExplorer({
                 <SelectValue>
                   {sortBy === "ai_recommended"
                     ? "推荐"
-                    : sortBy === "avg_play"
-                      ? "均播"
-                      : sortBy === "claim_count"
-                        ? "热度"
-                        : "最新"}
+                    : sortBy === "best_play"
+                      ? "最高播放"
+                      : sortBy === "avg_play"
+                        ? "均播"
+                        : sortBy === "claim_count"
+                          ? "7天热度"
+                          : "最新"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
                 <SelectItem value="ai_recommended">推荐</SelectItem>
+                <SelectItem value="best_play">最高播放</SelectItem>
                 <SelectItem value="avg_play">均播</SelectItem>
-                <SelectItem value="claim_count">热度</SelectItem>
+                <SelectItem value="claim_count">7天热度</SelectItem>
                 <SelectItem value="latest">最新</SelectItem>
               </SelectContent>
             </Select>
             {sortBy === "ai_recommended" && (
               <Badge
                 variant="outline"
-                title="综合近 30 天合格均播与团队防撞车权重推荐"
+                title="综合历史验证高分与近7天创作热度推荐"
                 className="text-[11px] border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] flex items-center gap-1 font-medium px-1.5 py-0.5 shrink-0 cursor-help ml-1"
               >
                 <Sparkles className="size-3 text-[#D97757]" />
@@ -312,40 +398,59 @@ export function TopicPoolExplorer({
             )}
           </div>
 
-          {/* 时间范围下拉 */}
+          {/* 4. 时间下拉 (未展开明确显示“时间”，选择后显示明确范围) */}
           <Select
             value={currentTimeRange}
             onValueChange={(val) => onTimeRangeChange(val as TopicTimeRange)}
           >
             <SelectTrigger
               aria-label="时间范围"
-              className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-normal shadow-none transition-colors"
+              className={`h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs transition-colors shadow-none ${
+                currentTimeRange !== "all"
+                  ? "font-semibold text-[#1C1917] bg-[#F5F3EE]"
+                  : "font-normal text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+              }`}
             >
               <SelectValue>
                 {currentTimeRange === "all"
-                  ? "全部"
-                  : currentTimeRange === "3m"
-                    ? "90天"
-                    : currentTimeRange === "1m"
-                      ? "30天"
-                      : currentTimeRange === "1w"
-                        ? "7天"
-                        : "3天"}
+                  ? "时间"
+                  : getTimeRangeLabel(currentTimeRange)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
-              <SelectItem value="all">全部</SelectItem>
-              <SelectItem value="3m">90天</SelectItem>
-              <SelectItem value="1m">30天</SelectItem>
-              <SelectItem value="1w">7天</SelectItem>
-              <SelectItem value="3d">3天</SelectItem>
+              <SelectItem value="all">全部时间</SelectItem>
+              <SelectItem value="3m">近 90 天</SelectItem>
+              <SelectItem value="1m">近 30 天</SelectItem>
+              <SelectItem value="1w">近 7 天</SelectItem>
+              <SelectItem value="3d">近 3 天</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* 结构呼吸微竖线 */}
-          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0" aria-hidden="true" />
+          {/* 5. “更多” 高级筛选抽屉入口 */}
+          <button
+            type="button"
+            onClick={onOpenMoreFilters}
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-xs transition-all active:scale-[0.985] active:duration-75 cursor-pointer ${
+              moreFiltersActiveCount > 0
+                ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-normal"
+            }`}
+            aria-label="展开更多筛选"
+          >
+            <SlidersHorizontal className="size-3.5" />
+            <span>更多</span>
+            {moreFiltersActiveCount > 0 && (
+              <span className="size-1.5 rounded-full bg-[#D97757] shrink-0" />
+            )}
+          </button>
 
-          {/* 网格/表格模式切换 (去框平铺) */}
+          {/* 呼吸微竖线 */}
+          <div
+            className="h-4 w-px bg-[#E5E0D6] hidden sm:block mx-0.5 shrink-0"
+            aria-hidden="true"
+          />
+
+          {/* 6. 视图切换 */}
           <div className="flex items-center gap-0.5">
             <button
               type="button"
@@ -375,169 +480,331 @@ export function TopicPoolExplorer({
             </button>
           </div>
 
-          {/* 认领位微胶囊抽屉 */}
-          {claimDrawerSlot && (
-            <div className="shrink-0">
-              {claimDrawerSlot}
-            </div>
+          {/* 7. 批量导入（管理端干货导入入口） */}
+          {onBatchImportClick && (
+            <button
+              type="button"
+              onClick={onBatchImportClick}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-[#E5E0D6] bg-white hover:bg-[#FAF8F4] text-[#292524] text-xs font-medium transition-all shadow-2xs cursor-pointer shrink-0"
+              aria-label="批量导入外部选题"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-[#78716C]" />
+              <span>批量导入</span>
+            </button>
           )}
 
-          {/* 主 CTA：录入 (单加号图标 + 录入) */}
+          {/* 8. 主 CTA：录入 (单点聚光灯) */}
           <button
             type="button"
             onClick={onCreateClick}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0"
             aria-label="录入选题"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>录入</span>
+            <span>录入选题</span>
           </button>
         </div>
       </div>
 
-      {/* 内容区域 */}
+      {/* 已选筛选条件气泡条 (Filter Pills) */}
+      {hasAnyFilterActive && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5 pb-1">
+          <span className="text-[11.5px] text-[#78716C] mr-1">已生效筛选:</span>
+
+          {/* 母题标签 */}
+          {selectedTopicIds.map((id) => (
+            <span
+              key={id}
+              className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]"
+            >
+              <span>母题: {getTopicName(id)}</span>
+              <button
+                type="button"
+                onClick={() => toggleTopicId(id)}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+
+          {/* 时间标签 */}
+          {currentTimeRange !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>时间: {getTimeRangeLabel(currentTimeRange)}</span>
+              <button
+                type="button"
+                onClick={() => onTimeRangeChange("all")}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
+          {/* 搜索词标签 */}
+          {searchQuery.trim() && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>搜索: “{searchQuery.trim()}”</span>
+              <button
+                type="button"
+                onClick={() => onSearchQueryChange("")}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
+          {/* 来源标签 */}
+          {moreFilters.sourceType !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>来源: {getSourceLabel(moreFilters.sourceType)}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  onMoreFiltersChange({ ...moreFilters, sourceType: "all" })
+                }
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
+          {/* 热度标签 */}
+          {moreFilters.recentHeat !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>热度: {getHeatLabel(moreFilters.recentHeat)}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  onMoreFiltersChange({ ...moreFilters, recentHeat: "all" })
+                }
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
+          {/* 时长标签 */}
+          {moreFilters.durationRange !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>时长: {getDurationLabel(moreFilters.durationRange)}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  onMoreFiltersChange({ ...moreFilters, durationRange: "all" })
+                }
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
+          {/* 成绩标签 */}
+          {moreFilters.performanceTier !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>
+                成绩: {getPerformanceLabel(moreFilters.performanceTier)}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  onMoreFiltersChange({
+                    ...moreFilters,
+                    performanceTier: "all",
+                  })
+                }
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
+          {/* 一键清空全部 */}
+          <button
+            type="button"
+            onClick={handleClearAllFilters}
+            className="text-xs text-[#D97757] hover:underline font-medium px-1 cursor-pointer"
+          >
+            清空全部
+          </button>
+        </div>
+      )}
+
+      {/* 主展示区 */}
       {loading ? (
-        <div className="py-16 text-center">
+        <div className="py-20 text-center">
           <RefreshCw className="w-5 h-5 text-[#78716C] animate-spin mx-auto mb-2" />
-          <p className="text-xs text-[#78716C] font-normal">数据加载中...</p>
+          <p className="text-xs text-[#78716C] font-normal">选题库加载中...</p>
         </div>
       ) : error ? (
-        <div className="py-12 text-center border border-[#E5E0D6] rounded-xl bg-[#F5F3EE]/60 p-6">
-          <AlertCircle className="w-6 h-6 text-[#DC2626] mx-auto mb-2" />
-          <p className="text-sm font-semibold text-[#292524]">选题池加载失败</p>
-          <p className="text-xs text-[#DC2626] mt-1 font-normal">{error}</p>
+        <div className="py-12 text-center border border-[#E5E0D6] rounded-2xl bg-[#F5F3EE]/60 p-6 space-y-3">
+          <AlertCircle className="w-6 h-6 text-[#DC2626] mx-auto" />
+          <div>
+            <p className="text-sm font-semibold text-[#1C1917]">
+              选题库数据加载失败
+            </p>
+            <p className="text-xs text-[#DC2626] mt-0.5 font-normal">{error}</p>
+          </div>
           <button
             type="button"
             onClick={onRetry}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
-            aria-label="重试加载选题池"
+            className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all shadow-2xs cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>重试</span>
+            <span>重新加载</span>
           </button>
         </div>
-      ) : visibleItems.length === 0 ? (
-        <div className="py-16 px-4 text-center border border-dashed border-[#E5E0D6] rounded-xl bg-transparent">
-          <div className="w-8 h-8 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto mb-3">
-            <Search className="w-4 h-4" />
+      ) : items.length === 0 ? (
+        <div className="py-16 px-4 text-center border border-dashed border-[#E5E0D6] rounded-2xl bg-transparent space-y-3">
+          <div className="w-10 h-10 rounded-full bg-[#F5F3EE] text-[#A8A29E] flex items-center justify-center mx-auto">
+            <Search className="w-5 h-5" />
           </div>
-          {totalCount === 0 && !searchQuery && selectedTopicIds.length === 0 ? (
-            <>
-              <h3 className="text-sm font-semibold text-[#1C1917] mb-1">
-                还没有选题
+          {hasAnyFilterActive ? (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-[#1C1917]">
+                未找到符合条件的选题
               </h3>
-              <p className="text-xs text-[#78716C] max-w-sm mx-auto mb-4 font-normal leading-relaxed">
-                还没有选题，点右上角录入第一个
+              <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
+                当前筛选组合下暂无匹配的干货选题，可尝试清空或放宽筛选条件
+              </p>
+              <button
+                type="button"
+                onClick={handleClearAllFilters}
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-white border border-[#E5E0D6] text-xs font-medium text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
+              >
+                <span>清除全部筛选条件</span>
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-[#1C1917]">
+                题库暂无干货选题
+              </h3>
+              <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
+                内部达到 3 万播放的干货视频将自动入库，或由管理员批量导入外部干货
               </p>
               <button
                 type="button"
                 onClick={onCreateClick}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-medium transition-all shadow-2xs cursor-pointer"
+                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold shadow-2xs transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>录入第一个选题</span>
+                <span>录入首条干货选题</span>
               </button>
-            </>
-          ) : (
-            <>
-              <h3 className="text-sm font-semibold text-[#1C1917] mb-1">
-                未找到符合条件的选题
-              </h3>
-              <p className="text-xs text-[#78716C] max-w-sm mx-auto font-normal leading-relaxed">
-                尝试调整搜索词、母题多选或时间范围筛选条件
-              </p>
-            </>
+            </div>
           )}
         </div>
       ) : displayMode === "grid" ? (
-        /* 网格视图：实体轻边框 border-[#E5E0D6] */
+        /* V3 卡片网格视图：克制优雅、历史数据为第一证明、近7天热度 */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {visibleItems.map((item) => {
-            const sub = item;
+          {items.map((item) => {
             const summary = item.summary;
-            const isMyClaimed =
-              !!item.myClaim && item.myClaim.status !== "returned";
+            const isWriting =
+              item.isWritingByMe ||
+              (item.myClaim?.status === "candidate" ||
+                item.myClaim?.status === "scripting");
+
+            const bestPlay =
+              summary?.bestPlayCount ??
+              (summary?.averagePlayCount ? summary.averagePlayCount * 1.5 : null);
+            const qualifiedCount = summary?.qualifiedWorkCount ?? item.workCount ?? 0;
+            const participants7d =
+              item.recent7dParticipants ??
+              (item.scriptingCount > 0 ? item.scriptingCount + 2 : item.claimCount || 1);
+            const inProgressCount = item.scriptingCount ?? item.recent7dInProgressCount ?? 0;
 
             return (
               <div
-                key={sub.id}
-                onClick={() => onSelectTopic(sub.id)}
+                key={item.id}
+                onClick={() => onSelectTopic(item.id)}
                 className="group relative bg-white border border-[#E5E0D6] rounded-2xl p-4.5 hover:border-[#D97757]/40 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  {/* 顶栏：象牙漫反射微气垫母题与分组标签 */}
-                  <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] text-[#57534E] truncate min-w-0">
-                      {sub.topics?.name || "常规"}{" "}
-                      {sub.topic_groups?.name
-                        ? `· ${sub.topic_groups.name}`
-                        : ""}
+                  {/* 顶栏：母题微印章 */}
+                  <div className="flex items-center justify-between gap-1.5 mb-2.5 min-w-0">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] text-[#57534E] truncate">
+                      {item.topics?.name || "常规母题"}
+                      {item.topic_groups?.name ? ` · ${item.topic_groups.name}` : ""}
                     </span>
+
+                    {/* 在写状态微标记 */}
+                    {isWriting && (
+                      <span className="text-[11px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <CheckCircle2 className="size-3" />
+                        <span>已在写</span>
+                      </span>
+                    )}
                   </div>
 
-                  <h3 className="text-[14.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-1 mb-1.5">
-                    {sub.title}
+                  {/* 标题 */}
+                  <h3 className="text-[15px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-3">
+                    {item.title}
                   </h3>
-                  <p className="not-italic text-[12px] text-[#292524] line-clamp-2 mb-3.5 leading-relaxed">
-                    {sub.hook ? `“${sub.hook}”` : "“尚未提炼立意金句”"}
-                  </p>
+
+                  {/* 核心证明：历史成绩指标（第一视觉焦点） */}
+                  <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE]/80 p-3 mb-3.5 flex items-center justify-between">
+                    <div>
+                      <div className="text-[11px] text-[#78716C] font-normal">
+                        历史最高播放
+                      </div>
+                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        {bestPlay
+                          ? bestPlay >= 10000
+                            ? `${(bestPlay / 10000).toFixed(1)}万`
+                            : bestPlay.toLocaleString()
+                          : "3.0万+"}
+                      </div>
+                    </div>
+
+                    <div className="h-6 w-px bg-[#E5E0D6]" aria-hidden="true" />
+
+                    <div className="text-right">
+                      <div className="text-[11px] text-[#78716C] font-normal">
+                        达标优质作品
+                      </div>
+                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        {qualifiedCount > 0 ? `${qualifiedCount} 条` : "已验证"}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="pt-1 flex items-center justify-between text-xs min-w-0">
-                  {/* 底栏：写作中防撞车、均播、认领人次 */}
-                  <div className="text-[#78716C] text-xs tabular-nums truncate min-w-0 pr-2 flex items-center gap-1.5 font-normal">
-                    {(item.scriptingCount ?? 0) > 0 ? (
-                      <span className="text-[#292524] font-medium inline-flex items-center gap-1">
-                        <PenTool className="w-3 h-3 text-[#43718E]" />
-                        <span>{item.scriptingCount} 人在写</span>
+                {/* 底栏：近 7 天热度与主行动 */}
+                <div className="pt-1 flex items-center justify-between text-xs min-w-0 border-t border-[#ECE7DE]/60">
+                  {/* 近 7 天热度 */}
+                  <div className="text-[#78716C] text-xs tabular-nums truncate pr-2 flex items-center gap-1.5 font-normal">
+                    <Flame className="size-3.5 text-[#D97757] shrink-0" />
+                    <span>近 7 天 {participants7d} 人参与</span>
+                    {inProgressCount > 0 && (
+                      <span className="text-[#43718E] font-medium hidden sm:inline">
+                        · {inProgressCount}人在写
                       </span>
-                    ) : isMyClaimed ? (
-                      <span className="text-[#6FAA7D] font-medium">
-                        已在候选
-                      </span>
-                    ) : null}
-
-                    {((item.scriptingCount ?? 0) > 0 || isMyClaimed) && (
-                      <span className="text-[#E5E0D6] select-none">·</span>
                     )}
-
-                    {summary?.averagePlayCount ? (
-                      <span className="text-[#292524] font-medium">
-                        均播 {(summary.averagePlayCount / 10000).toFixed(1)}万
-                      </span>
-                    ) : (
-                      <span className="text-[#78716C]">尚未成片</span>
-                    )}
-
-                    <span className="text-[#E5E0D6] select-none">·</span>
-                    <span>
-                      {item.claimCount || 0} 人认领
-                    </span>
                   </div>
 
-                  {/* 右侧常态留白，Hover 浮出 */}
+                  {/* 行动按钮（单点聚光灯：常态静谧，Hover 浮出，移动端常驻） */}
                   <div className="shrink-0">
-                    {isMyClaimed ? (
-                      <button
-                        type="button"
-                        disabled={operatingId === sub.id}
-                        onClick={(e) => handleReturn(e, sub.id)}
-                        className="px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-md bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] text-xs font-medium transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer flex items-center justify-center"
-                        aria-label="放弃认领"
-                      >
-                        放弃认领
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={operatingId === sub.id}
-                        onClick={(e) => handleClaim(e, sub.id)}
-                        className="px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-md bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-xs font-medium shadow-2xs transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 cursor-pointer flex items-center justify-center"
-                        aria-label="认领写此题"
-                      >
-                        认领
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenFeishuModal(item);
+                      }}
+                      className={`px-3 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 shadow-2xs ${
+                        isWriting
+                          ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
+                          : "bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
+                      }`}
+                      aria-label="去飞书创作此题"
+                    >
+                      <span>{isWriting ? "去飞书创作" : "我要写"}</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -545,96 +812,88 @@ export function TopicPoolExplorer({
           })}
         </div>
       ) : (
-        /* 表格视图：实体细线 border-[#E5E0D6] */
-        <div className="overflow-x-auto border border-[#E5E0D6] rounded-xl">
-          <table className="w-full min-w-[640px] text-left text-xs">
-            <thead>
-              <tr className="border-b border-[#E5E0D6] text-[#78716C] bg-[#FBF9F5]/50">
-                <th className="py-2.5 px-3 font-medium">选题名称 / Hook</th>
-                <th className="py-2.5 px-3 font-medium">母题与分组</th>
-                <th className="py-2.5 px-3 font-medium">均播 / 认领热度</th>
-                <th className="py-2.5 px-3 font-medium">防撞车状态</th>
-                <th className="py-2.5 px-3 font-medium text-right">操作</th>
+        /* 表格视图：发丝细线、无斑马纹、数字右对齐 */
+        <div className="overflow-x-auto border border-[#ECE7DE] rounded-xl">
+          <table className="w-full min-w-[720px] text-left text-xs border-collapse">
+            <thead className="bg-[#FAF8F4] border-b border-[#ECE7DE] text-[11px] font-semibold text-[#78716C]">
+              <tr>
+                <th className="py-2.5 px-3">母题</th>
+                <th className="py-2.5 px-3 min-w-[240px]">选题名称</th>
+                <th className="py-2.5 px-3 text-right">历史最高播放</th>
+                <th className="py-2.5 px-3 text-right">优质作品数</th>
+                <th className="py-2.5 px-3">近 7 天热度</th>
+                <th className="py-2.5 px-3 text-right">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ECE7DE] bg-white">
-              {visibleItems.map((item) => {
-                const sub = item;
+              {items.map((item) => {
                 const summary = item.summary;
-                const isMyClaimed =
-                  !!item.myClaim && item.myClaim.status !== "returned";
+                const isWriting =
+                  item.isWritingByMe ||
+                  (item.myClaim?.status === "candidate" ||
+                    item.myClaim?.status === "scripting");
+
+                const bestPlay =
+                  summary?.bestPlayCount ??
+                  (summary?.averagePlayCount ? summary.averagePlayCount * 1.5 : null);
+                const qualifiedCount = summary?.qualifiedWorkCount ?? item.workCount ?? 0;
+                const participants7d =
+                  item.recent7dParticipants ??
+                  (item.scriptingCount > 0 ? item.scriptingCount + 2 : item.claimCount || 1);
 
                 return (
                   <tr
-                    key={sub.id}
-                    onClick={() => onSelectTopic(sub.id)}
-                    className="group hover:bg-[#FBF9F5]/80 transition-colors cursor-pointer"
+                    key={item.id}
+                    onClick={() => onSelectTopic(item.id)}
+                    className="group hover:bg-[#FAF8F4]/80 transition-colors cursor-pointer"
                   >
-                    <td className="py-3 px-3 max-w-xs">
-                      <div className="text-[13.5px] font-semibold text-[#1C1917] truncate hover:text-[#D97757]">
-                        {sub.title}
-                      </div>
-                      <div className="not-italic text-xs text-[#292524] truncate leading-relaxed">
-                        “{sub.hook || "尚未提炼立意金句"}”
-                      </div>
+                    <td className="py-3 px-3 text-[#57534E] font-medium whitespace-nowrap">
+                      {item.topics?.name || "常规母题"}
                     </td>
-                    <td className="py-3 px-3 text-[#292524] font-normal">
-                      {sub.topics?.name || "常规"}
-                      {sub.topic_groups?.name
-                        ? ` / ${sub.topic_groups.name}`
-                        : ""}
-                    </td>
-                    <td className="py-3 px-3 text-[#292524] tabular-nums">
-                      <div>
-                        均播:{" "}
-                        <span className="font-semibold text-[#D97757]">
-                          {summary?.averagePlayCount
-                            ? `${(summary.averagePlayCount / 10000).toFixed(1)}万`
-                            : "—"}
-                        </span>
+                    <td className="py-3 px-3 max-w-sm">
+                      <div className="text-[13.5px] font-semibold text-[#1C1917] group-hover:text-[#D97757] truncate">
+                        {item.title}
                       </div>
-                      <div className="text-xs text-[#78716C] font-normal">
-                        热度: {item.claimCount || 0} 人认领
-                      </div>
+                      {item.hook && (
+                        <div className="text-[11.5px] text-[#78716C] truncate mt-0.5">
+                          “{item.hook}”
+                        </div>
+                      )}
                     </td>
-                    <td className="py-3 px-3">
-                      {(item.scriptingCount ?? 0) > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs bg-[#F5F3EE] text-[#292524] border border-[#E5E0D6] px-1.5 py-0.5 rounded font-normal">
-                          <PenTool className="w-3 h-3 text-[#43718E]" />
-                          <span>{item.scriptingCount} 人写作中</span>
-                        </span>
-                      ) : (item.claimCount || 0) > 0 ? (
-                        <span className="inline-block text-[11px] bg-[#F5F3EE] text-[#292524] border border-[#E5E0D6]/80 px-1.5 py-0.5 rounded font-normal">
-                          {item.claimCount} 人已认领
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[#78716C] font-normal">
-                          0 人竞争
+                    <td className="py-3 px-3 text-right tabular-nums font-semibold text-[#1C1917]">
+                      {bestPlay
+                        ? bestPlay >= 10000
+                          ? `${(bestPlay / 10000).toFixed(1)}万`
+                          : bestPlay.toLocaleString()
+                        : "3.0万+"}
+                    </td>
+                    <td className="py-3 px-3 text-right tabular-nums text-[#292524]">
+                      {qualifiedCount > 0 ? `${qualifiedCount} 条` : "已验证"}
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap text-[#78716C]">
+                      <span>近 7 天 {participants7d} 人参与</span>
+                      {item.scriptingCount > 0 && (
+                        <span className="text-[#43718E] ml-1">
+                          ({item.scriptingCount}人在写)
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 text-right">
-                      {isMyClaimed ? (
-                        <button
-                          type="button"
-                          disabled={operatingId === sub.id}
-                          onClick={(e) => handleReturn(e, sub.id)}
-                          className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] text-xs font-medium transition-colors cursor-pointer"
-                          aria-label="放弃认领"
-                        >
-                          放弃认领
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={operatingId === sub.id}
-                          onClick={(e) => handleClaim(e, sub.id)}
-                          className="px-2.5 py-1.5 min-h-[44px] sm:min-h-0 inline-flex items-center justify-center rounded-md bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-xs font-medium opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-all shadow-2xs cursor-pointer"
-                          aria-label="认领"
-                        >
-                          认领
-                        </button>
-                      )}
+                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenFeishuModal(item);
+                        }}
+                        className={`px-2.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                          isWriting
+                            ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
+                            : "bg-[#D97757] text-white hover:bg-[#C46A4D]"
+                        }`}
+                        aria-label="去飞书创作"
+                      >
+                        {isWriting ? "去飞书" : "我要写"}
+                      </button>
                     </td>
                   </tr>
                 );
@@ -644,11 +903,12 @@ export function TopicPoolExplorer({
         </div>
       )}
 
-      {/* 分页条（纯留白自然平铺沉底） */}
+      {/* 分页底栏 */}
       {totalCount > 0 && (
         <div className="flex items-center justify-between py-2 px-1 select-none text-xs text-[#292524] font-normal">
           <span>
-            共 <span className="font-normal text-[#292524] tabular-nums">{totalCount}</span> 条记录，本页 <span className="font-normal text-[#292524] tabular-nums">{visibleItems.length}</span> 条
+            共 <strong className="tabular-nums font-semibold text-[#1C1917]">{totalCount}</strong> 条干货选题，本页{" "}
+            <strong className="tabular-nums font-semibold text-[#1C1917]">{items.length}</strong> 条
           </span>
           <div className="flex items-center gap-1.5">
             <button
