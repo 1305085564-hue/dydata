@@ -8,104 +8,162 @@ import {
   buildTopicComparisonQueryOptions,
   buildTopicComparisonRows,
   buildPoolQueryOptions,
+  computeRecent7dHeat,
   sortTopicPoolItems,
   calculateTopicWorkSummary,
+  cancelWritingClaim,
   deleteSubTopic,
   filterTopicClaimsByScope,
   loadTopicPool,
   loadTopicOptions,
   matchTopicGroup,
   rankSuggestedSubTopics,
-  replaceSubTopicClaim,
+  startWritingClaim,
   validateRecommendationSubTopicInput,
-  validateCandidateClaimLimit,
   validateSubTopicInput,
   type ApiFailure,
 } from "./service";
 
-test("替换认领时新认领失败，原认领保持不变", async () => {
-  const oldClaim = { id: "claim-old", status: "candidate" };
-  const client = {
-    from(table: string) {
-      assert.equal(table, "sub_topic_claims");
-      return {
-        select(_columns: string, options?: { head?: boolean }) {
-          let target = "";
-          const query = {
-            eq(column: string, value: string) {
-              if (column === "sub_topic_id") target = value;
-              return query;
-            },
-            in() { return query; },
-            maybeSingle: async () => target === "old" ? { data: oldClaim, error: null } : { data: null, error: null },
-            then(resolve: (value: { count: number; error: null }) => unknown) {
-              return Promise.resolve({ count: options?.head ? 1 : 0, error: null }).then(resolve);
-            },
-          };
-          return query;
-        },
-        insert() {
-          return { select() { return { single: async () => ({ data: null, error: { message: "claim failed" } }) }; } };
-        },
-      };
-    },
-  };
+type FakeRow = Record<string, unknown>;
 
-  const result = await replaceSubTopicClaim(client as never, "user-1", "old", "new");
-  assert.equal(result.ok, false);
-  assert.equal(oldClaim.status, "candidate");
+function createWritingFake(db: Record<string, FakeRow[]>) {
+  function filterChain(rows: FakeRow[]) {
+    const query: Record<string, unknown> = {
+      eq(col: string, val: unknown) {
+        return filterChain(rows.filter((row) => row[col] === val));
+      },
+      in(col: string, vals: unknown[]) {
+        return filterChain(rows.filter((row) => vals.includes(row[col])));
+      },
+      maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
+      single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
+      select(_columns?: string) {
+        return {
+          maybeSingle: async () => ({ data: rows[0] ?? null, error: null }),
+          single: async () => ({ data: rows[0] ?? null, error: rows[0] ? null : { message: "not found" } }),
+        };
+      },
+      then(resolve: (value: { data: FakeRow[]; error: null }) => unknown) {
+        return Promise.resolve({ data: rows, error: null }).then(resolve);
+      },
+    };
+    return query;
+  }
+
+  return {
+    client: {
+      from(table: string) {
+        const rows = db[table] ?? (db[table] = []);
+        return {
+          select(_columns?: string) {
+            return filterChain([...rows]);
+          },
+          insert(payload: FakeRow) {
+            const inserted = { id: "claim-new", ...payload };
+            return {
+              select(_columns?: string) {
+                return {
+                  single: async () => {
+                    rows.push(inserted);
+                    return { data: inserted, error: null };
+                  },
+                };
+              },
+            };
+          },
+          update(patch: FakeRow) {
+            function updateChain(current: FakeRow[]): Record<string, unknown> {
+              return {
+                eq(col: string, val: unknown) {
+                  return updateChain(current.filter((row) => row[col] === val));
+                },
+                select(_columns?: string) {
+                  return {
+                    maybeSingle: async () => {
+                      if (current[0]) Object.assign(current[0], patch);
+                      return { data: current[0] ?? null, error: null };
+                    },
+                  };
+                },
+              };
+            }
+            return updateChain([...rows]);
+          },
+        };
+      },
+    } as never,
+  };
+}
+
+test("开始写作幂等：已有在写记录时直接返回，不新建", async () => {
+  const db: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-1", library_status: "in_library" }],
+    sub_topic_claims: [{ id: "claim-1", sub_topic_id: "sub-1", user_id: "user-1", status: "writing" }],
+  };
+  const { client } = createWritingFake(db);
+
+  const first = await startWritingClaim(client, "user-1", "sub-1");
+  const second = await startWritingClaim(client, "user-1", "sub-1");
+  assert.equal(first.ok, true);
+  assert.equal(second.ok, true);
+  assert.equal(db.sub_topic_claims.length, 1);
 });
 
-test("替换认领成功时先创建新认领，再放回原认领", async () => {
-  const claims = [
-    { id: "claim-old", sub_topic_id: "old", user_id: "user-1", status: "candidate" },
-  ];
-  const client = {
-    from(table: string) {
-      assert.equal(table, "sub_topic_claims");
-      return {
-        select(_columns: string, options?: { head?: boolean }) {
-          let target = "";
-          const query = {
-            eq(column: string, value: string) { if (column === "sub_topic_id") target = value; return query; },
-            in() { return query; },
-            maybeSingle: async () => ({ data: claims.find((claim) => claim.sub_topic_id === target && claim.status !== "returned") ?? null, error: null }),
-            then(resolve: (value: { count: number; error: null }) => unknown) {
-              return Promise.resolve({ count: options?.head ? claims.filter((claim) => claim.status === "candidate").length : 0, error: null }).then(resolve);
-            },
-          };
-          return query;
-        },
-        insert(payload: { sub_topic_id: string; user_id: string; status: string }) {
-          const inserted = { id: "claim-new", ...payload };
-          claims.push(inserted);
-          return { select() { return { single: async () => ({ data: inserted, error: null }) }; } };
-        },
-        update(payload: { status: string }) {
-          let target = "";
-          const query = {
-            eq(column: string, value: string) { if (column === "sub_topic_id") target = value; return query; },
-            in() { return query; },
-            select() {
-              return { maybeSingle: async () => {
-                const claim = claims.find((item) => item.sub_topic_id === target);
-                if (claim) claim.status = payload.status;
-                return { data: claim ?? null, error: null };
-              } };
-            },
-          };
-          return query;
-        },
-      };
-    },
+test("已移出选题不能开始写作；新成员开始写作正常落库", async () => {
+  const removed: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-1", library_status: "removed" }],
+    sub_topic_claims: [],
   };
+  const removedResult = await startWritingClaim(createWritingFake(removed).client, "user-1", "sub-1");
+  assert.equal(removedResult.ok, false);
+  if (!removedResult.ok) assert.equal(removedResult.status, 409);
 
-  const result = await replaceSubTopicClaim(client as never, "user-1", "old", "new");
-  assert.equal(result.ok, true);
-  assert.deepEqual(claims.map(({ sub_topic_id, status }) => ({ sub_topic_id, status })), [
-    { sub_topic_id: "old", status: "returned" },
-    { sub_topic_id: "new", status: "candidate" },
-  ]);
+  const fresh: Record<string, FakeRow[]> = {
+    sub_topics: [{ id: "sub-2", library_status: "in_library" }],
+    sub_topic_claims: [],
+  };
+  const created = await startWritingClaim(createWritingFake(fresh).client, "user-1", "sub-2");
+  assert.equal(created.ok, true);
+  assert.equal(fresh.sub_topic_claims.length, 1);
+  assert.equal((fresh.sub_topic_claims[0] as FakeRow).status, "writing");
+});
+
+test("取消写作：只有 writing 能取消，cancelled/无记录时返回 404", async () => {
+  const db: Record<string, FakeRow[]> = {
+    sub_topic_claims: [
+      { id: "claim-1", sub_topic_id: "sub-1", user_id: "user-1", status: "writing" },
+      { id: "claim-2", sub_topic_id: "sub-2", user_id: "user-1", status: "cancelled" },
+    ],
+  };
+  const { client } = createWritingFake(db);
+
+  const ok = await cancelWritingClaim(client, "user-1", "sub-1");
+  assert.equal(ok.ok, true);
+  assert.equal((db.sub_topic_claims[0] as FakeRow).status, "cancelled");
+
+  const missing = await cancelWritingClaim(client, "user-1", "sub-2");
+  assert.equal(missing.ok, false);
+  if (!missing.ok) assert.equal(missing.status, 404);
+});
+
+test("七天热度口径：完成与在写分别计数，同一人并集去重", () => {
+  const heat = computeRecent7dHeat(
+    [
+      { subTopicId: "sub-1", userId: "user-1" },
+      { subTopicId: "sub-1", userId: "user-2" },
+      { subTopicId: "sub-1", userId: "user-1" },
+    ],
+    [
+      { subTopicId: "sub-1", userId: "user-2" },
+      { subTopicId: "sub-1", userId: "user-3" },
+    ],
+  );
+  assert.deepEqual(heat.get("sub-1"), {
+    completedCount: 2,
+    inProgressCount: 2,
+    participants: 3,
+  });
+  assert.equal(heat.get("sub-none"), undefined);
 });
 
 test("选题认领信息只返回当前业务可见成员", () => {
@@ -201,30 +259,16 @@ function createScope(kind: DataAccessScope["kind"] = "all", visibleUserIds = ["u
   } as DataAccessScope;
 }
 
-test("候选上限最多允许 5 条，已有同一候选时保持幂等", () => {
-  assert.deepEqual(validateCandidateClaimLimit({ currentCandidateCount: 4, alreadyCandidate: false }), {
-    ok: true,
-  });
-  assert.deepEqual(validateCandidateClaimLimit({ currentCandidateCount: 5, alreadyCandidate: true }), {
-    ok: true,
-  });
-  assert.deepEqual(validateCandidateClaimLimit({ currentCandidateCount: 5, alreadyCandidate: false }), {
-    ok: false,
-    status: 409,
-    message: "候选选题最多保留 5 条，请先放回一个选题",
-  });
-});
-
 test("myClaim 只选择当前用户的有效认领，不从团队第一条认领猜测", () => {
   const rows = [
-    { id: "claim-other", sub_topic_id: "sub-1", user_id: "user-2", status: "scripting", claimed_at: "2026-08-01T00:00:00.000Z" },
-    { id: "claim-me", sub_topic_id: "sub-1", user_id: "user-1", status: "candidate", claimed_at: null },
+    { id: "claim-other", sub_topic_id: "sub-1", user_id: "user-2", status: "writing", claimed_at: "2026-08-01T00:00:00.000Z" },
+    { id: "claim-me", sub_topic_id: "sub-1", user_id: "user-1", status: "writing", claimed_at: null },
   ];
 
   assert.deepEqual(buildMyClaim(rows, "user-1", "sub-1"), {
     id: "claim-me",
     subTopicId: "sub-1",
-    status: "candidate",
+    status: "writing",
     claimedAt: null,
   });
   assert.equal(buildMyClaim(rows, "user-3", "sub-1"), null);
@@ -232,13 +276,14 @@ test("myClaim 只选择当前用户的有效认领，不从团队第一条认领
 
 test("选题池排序作用于完整结果集且空 Hook 不会让搜索崩溃", () => {
   const items = [
-    { id: "old", title: "旧选题", hook: null, created_at: "2026-07-01T00:00:00.000Z", claimCount: 5, summary: { averagePlayCount: 1000 } },
-    { id: "new", title: "新选题", hook: "突破信号", created_at: "2026-08-01T00:00:00.000Z", claimCount: 1, summary: { averagePlayCount: 2000 } },
+    { id: "old", title: "旧选题", hook: null, created_at: "2026-07-01T00:00:00.000Z", claimCount: 5, recent7dParticipants: 5, summary: { averagePlayCount: 1000 } },
+    { id: "new", title: "新选题", hook: "突破信号", created_at: "2026-08-01T00:00:00.000Z", claimCount: 1, recent7dParticipants: 1, summary: { averagePlayCount: 2000, bestPlayCount: 50000 } },
   ];
 
   assert.deepEqual(sortTopicPoolItems(items, "latest").map((item) => item.id), ["new", "old"]);
   assert.deepEqual(sortTopicPoolItems(items, "avg_play").map((item) => item.id), ["new", "old"]);
-  assert.deepEqual(sortTopicPoolItems(items, "claim_count").map((item) => item.id), ["old", "new"]);
+  assert.deepEqual(sortTopicPoolItems(items, "best_play").map((item) => item.id), ["new", "old"]);
+  assert.deepEqual(sortTopicPoolItems(items, "recent_heat").map((item) => item.id), ["old", "new"]);
 });
 
 test("母题 options 按 sort_order 返回完整列表", async () => {
@@ -264,29 +309,6 @@ test("母题 options 按 sort_order 返回完整列表", async () => {
     },
   });
   assert.deepEqual(fake.queries[0]?.calls.find((call) => call.method === "order")?.args, ["sort_order", { ascending: true }]);
-});
-
-test("替换不允许把 scripting 认领当成可替换候选", async () => {
-  const client = {
-    from() {
-      return {
-        select() {
-          return {
-            eq() { return this; },
-            in() { return this; },
-            maybeSingle: async () => ({ data: { id: "claim-1", status: "scripting" }, error: null }),
-          };
-        },
-      };
-    },
-  };
-
-  const result = await replaceSubTopicClaim(client as never, "user-1", "old", "new");
-  assert.deepEqual(result, {
-    ok: false,
-    status: 409,
-    message: "脚本中的选题不能替换，请先放回或完成脚本",
-  });
 });
 
 test("手动录入选题允许不填写钩子", () => {
@@ -394,7 +416,9 @@ test("近期高热只保留 30 天内作品，按综合分排序并沿用分类�
         { id: "sub-old", topic_id: topicId, title: "三十天外", sub_topic_claims: [] },
       ],
     }],
+    sub_topic_claims: [{ data: [] }],
     videos: [
+      { data: [] },
       { data: [
         { topic_id: "sub-hot", user_id: "user-1", uploaded_at: daysAgo(2), video_metrics_snapshots: [{ play_count: 200_000 }] },
         { topic_id: "sub-warm", user_id: "user-1", uploaded_at: daysAgo(6), video_metrics_snapshots: [{ play_count: 50_000 }] },
@@ -419,9 +443,12 @@ test("近期高热只保留 30 天内作品，按综合分排序并沿用分类�
   assert.deepEqual(value.pagination, { page: 1, pageSize: 20, totalItems: 2 });
 
   const subTopicsQuery = fake.queries.find((query) => query.table === "sub_topics");
-  const worksQuery = fake.queries.find((query) => query.table === "videos");
+  const worksIn = fake.queries
+    .filter((query) => query.table === "videos")
+    .flatMap((query) => query.calls)
+    .find((call) => call.method === "in" && call.args[0] === "user_id");
   assert.deepEqual(subTopicsQuery?.calls.find((call) => call.method === "in")?.args, ["topic_id", [topicId]]);
-  assert.deepEqual(worksQuery?.calls.find((call) => call.method === "in" && call.args[0] === "user_id")?.args, ["user_id", ["user-1"]]);
+  assert.deepEqual(worksIn?.args, ["user_id", ["user-1"]]);
 });
 
 test("高潜待挖只保留 30 天外作品，同等播放量时沉睡越久越靠前", async () => {
@@ -435,7 +462,9 @@ test("高潜待挖只保留 30 天外作品，同等播放量时沉睡越久越�
         { id: "sub-recent", title: "刚做过", sub_topic_claims: [] },
       ],
     }],
+    sub_topic_claims: [{ data: [] }],
     videos: [
+      { data: [] },
       { data: [
         { topic_id: "sub-40", user_id: "user-1", uploaded_at: daysAgo(40), video_metrics_snapshots: [{ play_count: 100_000 }] },
         { topic_id: "sub-70", user_id: "user-1", uploaded_at: daysAgo(70), video_metrics_snapshots: [{ play_count: 100_000 }] },
@@ -462,7 +491,8 @@ test("高潜待挖只保留 30 天外作品，同等播放量时沉睡越久越�
 
 test("从未做过按当前可见范围排除已有作品，并在过滤后分页", async () => {
   const fake = createFakeSupabase({
-    videos: [{ data: [{ topic_id: "sub-worked", user_id: "user-1" }] }],
+    sub_topic_claims: [{ data: [] }],
+    videos: [{ data: [] }, { data: [{ topic_id: "sub-worked", user_id: "user-1" }] }],
     sub_topics: [{
       data: [
         { id: "sub-worked", title: "已经做过", created_at: "2026-07-30T03:00:00.000Z", sub_topic_claims: [] },
@@ -487,8 +517,11 @@ test("从未做过按当前可见范围排除已有作品，并在过滤后分�
   assert.equal(value.items[0]?._avgPlayCount, null);
   assert.deepEqual(value.pagination, { page: 2, pageSize: 1, totalItems: 2 });
 
-  const worksQuery = fake.queries.find((query) => query.table === "videos");
-  assert.deepEqual(worksQuery?.calls.find((call) => call.method === "in" && call.args[0] === "user_id")?.args, ["user_id", ["user-1"]]);
+  const worksIn = fake.queries
+    .filter((query) => query.table === "videos")
+    .flatMap((query) => query.calls)
+    .find((call) => call.method === "in" && call.args[0] === "user_id");
+  assert.deepEqual(worksIn?.args, ["user_id", ["user-1"]]);
 });
 
 test("我的认领视图按有效认领 id 在数据库层过滤，不按子题创建时间过滤", async () => {
@@ -499,14 +532,17 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
           {
             id: "sub-old",
             title: "很早创建但仍在认领的选题",
-            sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
+            sub_topic_claims: [{ id: "claim-1", sub_topic_id: "sub-old", user_id: "user-1", status: "writing", claimed_at: "2026-01-01T00:00:00.000Z" }],
           },
         ],
         count: 1,
       },
     ],
-    sub_topic_claims: [{ data: [{ id: "claim-1", sub_topic_id: "sub-old", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }] }],
-    videos: [{ data: [] }],
+    sub_topic_claims: [
+      { data: [{ id: "claim-1", sub_topic_id: "sub-old", user_id: "user-1", status: "writing", claimed_at: "2026-01-01T00:00:00.000Z" }] },
+      { data: [] },
+    ],
+    videos: [{ data: [] }, { data: [] }],
   });
 
   const result = await loadTopicPool(
@@ -535,16 +571,21 @@ test("我的认领视图按有效认领 id 在数据库层过滤，不按子题�
       {
         id: "sub-old",
         title: "很早创建但仍在认领的选题",
-        sub_topic_claims: [{ id: "claim-1", user_id: "user-1", status: "candidate", claimed_at: "2026-01-01T00:00:00.000Z" }],
+        sub_topic_claims: [{ id: "claim-1", sub_topic_id: "sub-old", user_id: "user-1", status: "writing", claimed_at: "2026-01-01T00:00:00.000Z" }],
         summary: { qualifiedWorkCount: 0, averagePlayCount: null, bestPlayCount: null, bestCopy: null, latestCopy: null },
         externalMetrics: null,
         claimCount: 1,
         candidateCount: 1,
-        scriptingCount: 0,
+        scriptingCount: 1,
+        inProgressCount: 1,
+        isWritingByMe: true,
+        recent7dCompletedCount: 0,
+        recent7dInProgressCount: 0,
+        recent7dParticipants: 0,
         myClaim: {
           id: "claim-1",
           subTopicId: "sub-old",
-          status: "candidate",
+          status: "writing",
           claimedAt: "2026-01-01T00:00:00.000Z",
         },
       },
@@ -567,21 +608,23 @@ test("子题汇总只统计播放量不低于 3 万的作品", () => {
   assert.equal(summary.latestCopy, "更好文案");
 });
 
-test("认领动态隐藏范围外身份但保留全量撞车计数和写稿优先排序", () => {
+test("写作动态只统计 writing 并隐藏范围外身份，旧键统一为在写人数", () => {
   const result = buildClaimActivity(
     [
-      { user_id: "user-1", status: "candidate", claimed_at: "2026-07-20T08:00:00.000Z", profiles: { name: "小王" } },
-      { user_id: "user-2", status: "scripting", claimed_at: "2026-07-21T08:00:00.000Z", profiles: { name: "小李" } },
-      { user_id: "user-3", status: "candidate", claimed_at: "2026-07-22T08:00:00.000Z", profiles: { name: "小周" } },
+      { user_id: "user-1", status: "writing", claimed_at: "2026-07-20T08:00:00.000Z", profiles: { name: "小王" } },
+      { user_id: "user-2", status: "writing", claimed_at: "2026-07-21T08:00:00.000Z", profiles: { name: "小李" } },
+      { user_id: "user-3", status: "writing", claimed_at: "2026-07-22T08:00:00.000Z", profiles: { name: "小周" } },
+      { user_id: "user-4", status: "cancelled", claimed_at: "2026-07-23T08:00:00.000Z", profiles: { name: "小钱" } },
     ],
     { kind: "self", visibleUserIds: ["user-1", "user-2"] } as DataAccessScope,
   );
 
-  assert.equal(result.candidateCount, 2);
-  assert.equal(result.scriptingCount, 1);
+  assert.equal(result.inProgressCount, 3);
+  assert.equal(result.candidateCount, 3);
+  assert.equal(result.scriptingCount, 3);
   assert.deepEqual(result.claims, [
-    { userId: "user-2", displayName: "小李", status: "scripting", claimedAt: "2026-07-21T08:00:00.000Z" },
-    { userId: "user-1", displayName: "小王", status: "candidate", claimedAt: "2026-07-20T08:00:00.000Z" },
+    { userId: "user-2", displayName: "小李", status: "writing", claimedAt: "2026-07-21T08:00:00.000Z" },
+    { userId: "user-1", displayName: "小王", status: "writing", claimedAt: "2026-07-20T08:00:00.000Z" },
   ]);
 });
 

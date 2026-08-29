@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { changeClaimStatus } from "@/lib/topics/service";
+import { startWritingClaim } from "@/lib/topics/service";
 import { jsonResult, requireActiveTeamContext } from "../../../_shared";
 
 type RouteContext = {
@@ -11,6 +11,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
   if (!auth.ok) return auth.response;
 
   const { id } = await context.params;
-  const result = await changeClaimStatus(auth.context.supabase, auth.context.userId, id, "scripting");
+  // V3：开始写作（幂等，允许多人同时写同一题），端点名保留以兼容前端调用
+  const result = await startWritingClaim(auth.context.supabase, auth.context.userId, id);
   return jsonResult(result);
 }

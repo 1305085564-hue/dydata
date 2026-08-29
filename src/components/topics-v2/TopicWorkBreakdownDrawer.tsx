@@ -34,7 +34,7 @@ export interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
   onClose: () => void;
   onOpenFeishuModal?: (topic: SubTopicItem) => void;
-  onMarkWriting?: (subTopicId: string) => Promise<void>;
+  onMarkWriting?: (subTopicId: string) => Promise<boolean | void> | boolean | void;
   onCancelWriting?: (subTopicId: string) => Promise<void>;
 }
 
@@ -206,9 +206,7 @@ export function TopicWorkBreakdownDrawer({
   )
     return null;
 
-  const isMyWriting =
-    subTopicInfo?.myClaim?.status === "candidate" ||
-    subTopicInfo?.myClaim?.status === "scripting";
+  const isMyWriting = subTopicInfo?.myClaim?.status === "writing";
 
   // 计算近 7 天参与去重人数（有真实值才计算，杜绝猜数或补造数据）
   const scriptingCount = claimsData?.scriptingCount ?? 0;
@@ -435,16 +433,8 @@ export function TopicWorkBreakdownDrawer({
                         <span className="font-medium text-[#292524]">
                           {claim.displayName}
                         </span>
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${
-                            claim.status === "scripting"
-                              ? "bg-[#43718E]/10 text-[#43718E]"
-                              : "bg-[#F5F3EE] text-[#78716C]"
-                          }`}
-                        >
-                          {claim.status === "scripting"
-                            ? "正在飞书写作"
-                            : "已选该题"}
+                        <span className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-[#43718E]/10 text-[#43718E]">
+                          正在写
                         </span>
                       </div>
                     ))}

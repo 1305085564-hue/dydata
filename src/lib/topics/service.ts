@@ -12,9 +12,9 @@ export const TOPIC_POOL_VIEWS = [
   "never_worked",
 ] as const;
 export const TOPIC_TIME_RANGES = ["3d", "1w", "1m", "3m", "all"] as const;
-export const TOPIC_CLAIM_STATUSES = ["candidate", "scripting", "returned"] as const;
+export const TOPIC_CLAIM_STATUSES = ["writing", "cancelled", "completed"] as const;
 export const TOPIC_WORK_SORTS = ["best", "recent"] as const;
-export const TOPIC_POOL_SORTS = ["latest", "avg_play", "claim_count"] as const;
+export const TOPIC_POOL_SORTS = ["latest", "avg_play", "best_play", "recent_heat"] as const;
 export const TOPIC_COMPARISON_DIMENSIONS = ["topic", "account"] as const;
 
 export type TopicPoolView = (typeof TOPIC_POOL_VIEWS)[number];
@@ -103,7 +103,6 @@ export type ApiSuccess<T> = {
 
 export type ApiResult<T> = ApiSuccess<T> | ApiFailure;
 
-const MAX_CANDIDATE_CLAIMS = 5;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 100;
 
@@ -237,7 +236,7 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
 
   const sortParam = searchParams.get("sort") ?? undefined;
   if (sortParam && !isOneOf(TOPIC_POOL_SORTS, sortParam)) {
-    return { ok: false, status: 400, message: "sort 只能是 latest、avg_play 或 claim_count" };
+    return { ok: false, status: 400, message: "sort 只能是 latest、avg_play、best_play 或 recent_heat" };
   }
   const sort: TopicPoolSort | undefined = sortParam ? sortParam as TopicPoolSort : undefined;
 
@@ -309,18 +308,6 @@ export function buildTopicComparisonQueryOptions(searchParams: URLSearchParams):
   return { ok: true, options: { dimension, days, topicId } };
 }
 
-export function validateCandidateClaimLimit(input: { currentCandidateCount: number; alreadyCandidate: boolean }) {
-  if (input.alreadyCandidate || input.currentCandidateCount < MAX_CANDIDATE_CLAIMS) {
-    return { ok: true as const };
-  }
-
-  return {
-    ok: false as const,
-    status: 409,
-    message: "候选选题最多保留 5 条，请先放回一个选题",
-  };
-}
-
 export function matchTopicGroup(groups: TopicGroupOption[], title: string, hook: string) {
   const haystack = `${title} ${hook}`.toLowerCase();
   let best: { groupId: string; score: number } | null = null;
@@ -376,10 +363,9 @@ export function buildClaimActivity(
   rows: Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>,
   scope: DataAccessScope,
 ) {
-  const candidateCount = rows.filter((row) => row.status === "candidate").length;
-  const scriptingCount = rows.filter((row) => row.status === "scripting").length;
-  const claims = applyScope(rows, scope)
-    .filter((row) => row.status === "candidate" || row.status === "scripting")
+  const writingRows = rows.filter((row) => row.status === "writing");
+  const inProgressCount = writingRows.length;
+  const claims = applyScope(writingRows, scope)
     .map((row) => {
       const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
       const displayName = typeof (profile as { name?: unknown } | null)?.name === "string"
@@ -388,17 +374,14 @@ export function buildClaimActivity(
       return {
         userId: String(row.user_id),
         displayName,
-        status: row.status as Extract<TopicClaimStatus, "candidate" | "scripting">,
+        status: "writing" as Extract<TopicClaimStatus, "writing">,
         claimedAt: typeof row.claimed_at === "string" ? row.claimed_at : null,
       };
     })
-    .sort((a, b) => {
-      const statusOrder = Number(b.status === "scripting") - Number(a.status === "scripting");
-      if (statusOrder !== 0) return statusOrder;
-      return (Date.parse(b.claimedAt ?? "") || 0) - (Date.parse(a.claimedAt ?? "") || 0);
-    });
+    .sort((a, b) => (Date.parse(b.claimedAt ?? "") || 0) - (Date.parse(a.claimedAt ?? "") || 0));
 
-  return { claims, candidateCount, scriptingCount };
+  // candidateCount / scriptingCount 为旧契约兼容键，语义已统一为「正在写人数」
+  return { claims, inProgressCount, candidateCount: inProgressCount, scriptingCount: inProgressCount };
 }
 
 export function buildTopicComparisonRows(rows: TopicComparisonInputRow[], dimension: TopicComparisonDimension) {
@@ -642,97 +625,87 @@ export async function deleteSubTopic(supabase: TopicSupabase, userId: string, id
   return { ok: true, value: { deleted: true } };
 }
 
-export async function claimSubTopic(supabase: TopicSupabase, userId: string, subTopicId: string): Promise<ApiResult<unknown>> {
+/**
+ * V3 多人写作：同一选题允许多人同时写；同一成员对同一选题只有一个有效写作状态，
+ * 重复点击保持幂等；不设旧候选上限，不做撞车阻断。
+ */
+export async function startWritingClaim(supabase: TopicSupabase, userId: string, subTopicId: string): Promise<ApiResult<unknown>> {
+  const { data: topic, error: topicError } = await supabase
+    .from("sub_topics")
+    .select("id, library_status")
+    .eq("id", subTopicId)
+    .maybeSingle();
+  if (topicError) return { ok: false, status: 500, message: topicError.message };
+  if (!topic) return { ok: false, status: 404, message: "选题不存在" };
+  if ((topic as { library_status?: string }).library_status === "removed") {
+    return { ok: false, status: 409, message: "该选题已被移出选题库，不能开始写作" };
+  }
+
   const { data: existing, error: existingError } = await supabase
     .from("sub_topic_claims")
     .select("*")
     .eq("sub_topic_id", subTopicId)
     .eq("user_id", userId)
-    .in("status", ["candidate", "scripting"])
+    .eq("status", "writing")
     .maybeSingle();
   if (existingError) return { ok: false, status: 500, message: existingError.message };
-
-  const status = (existing as { status?: string } | null)?.status;
-  const { count, error: countError } = await supabase
-    .from("sub_topic_claims")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("status", "candidate");
-  if (countError) return { ok: false, status: 500, message: countError.message };
-
-  const limit = validateCandidateClaimLimit({
-    currentCandidateCount: count ?? 0,
-    alreadyCandidate: status === "candidate",
-  });
-  if (!limit.ok) return limit;
   if (existing) return { ok: true, value: existing };
 
   const { data, error } = await supabase
     .from("sub_topic_claims")
-    .insert({ sub_topic_id: subTopicId, user_id: userId, status: "candidate" })
+    .insert({ sub_topic_id: subTopicId, user_id: userId, status: "writing" })
     .select("*")
     .single();
-  if (error) return { ok: false, status: 500, message: error.message };
+  if (error) {
+    // 唯一索引兜底：并发重复点击时回读现有写作状态
+    if (error.message.includes("sub_topic_claims_one_writing_per_user_topic")) {
+      const { data: raced } = await supabase
+        .from("sub_topic_claims")
+        .select("*")
+        .eq("sub_topic_id", subTopicId)
+        .eq("user_id", userId)
+        .eq("status", "writing")
+        .maybeSingle();
+      if (raced) return { ok: true, value: raced };
+    }
+    return { ok: false, status: 500, message: error.message };
+  }
   return { ok: true, value: data };
 }
 
-export async function replaceSubTopicClaim(
-  supabase: TopicSupabase,
-  userId: string,
-  returnedSubTopicId: string,
-  targetSubTopicId: string,
-): Promise<ApiResult<unknown>> {
-  if (!returnedSubTopicId || !targetSubTopicId || returnedSubTopicId === targetSubTopicId) {
-    return { ok: false, status: 400, message: "替换选题参数不合法" };
-  }
-  const { data: oldClaim, error: oldError } = await supabase.from("sub_topic_claims")
-    .select("id, status").eq("sub_topic_id", returnedSubTopicId).eq("user_id", userId)
-    .in("status", ["candidate", "scripting"]).maybeSingle();
-  if (oldError) return { ok: false, status: 500, message: oldError.message };
-  if (!oldClaim) return { ok: false, status: 404, message: "未找到可替换的原认领" };
-  if ((oldClaim as { status?: string }).status !== "candidate") {
-    return { ok: false, status: 409, message: "脚本中的选题不能替换，请先放回或完成脚本" };
-  }
-  const { data: targetClaim, error: targetError } = await supabase.from("sub_topic_claims")
-    .select("id").eq("sub_topic_id", targetSubTopicId).eq("user_id", userId)
-    .in("status", ["candidate", "scripting"]).maybeSingle();
-  if (targetError) return { ok: false, status: 500, message: targetError.message };
-  if (targetClaim) return { ok: false, status: 409, message: "目标选题已被认领" };
-  const { count, error: countError } = await supabase.from("sub_topic_claims")
-    .select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "candidate");
-  if (countError) return { ok: false, status: 500, message: countError.message };
-  const effectiveCount = Math.max(0, (count ?? 0) - ((oldClaim as { status: string }).status === "candidate" ? 1 : 0));
-  const limit = validateCandidateClaimLimit({ currentCandidateCount: effectiveCount, alreadyCandidate: false });
-  if (!limit.ok) return limit;
-  const { data: inserted, error: insertError } = await supabase.from("sub_topic_claims")
-    .insert({ sub_topic_id: targetSubTopicId, user_id: userId, status: "candidate" }).select("*").single();
-  if (insertError || !inserted) return { ok: false, status: 409, message: insertError?.message || "认领新选题失败" };
-  const { data: returned, error: returnError } = await supabase.from("sub_topic_claims")
-    .update({ status: "returned", returned_at: new Date().toISOString() })
-    .eq("sub_topic_id", returnedSubTopicId).eq("user_id", userId).in("status", ["candidate", "scripting"]).select("*").maybeSingle();
-  if (!returnError && returned) return { ok: true, value: { claim: inserted, returned } };
-  await supabase.from("sub_topic_claims").delete().eq("id", (inserted as { id: string }).id);
-  return { ok: false, status: 409, message: "放回原选题失败，已撤销新认领" };
-}
-
-export async function changeClaimStatus(
-  supabase: TopicSupabase,
-  userId: string,
-  subTopicId: string,
-  status: Extract<TopicClaimStatus, "scripting" | "returned">,
-): Promise<ApiResult<unknown>> {
-  const patch = status === "returned" ? { status, returned_at: new Date().toISOString() } : { status, returned_at: null };
+/** 手动取消写作：只有正在写的记录能取消，幂等。 */
+export async function cancelWritingClaim(supabase: TopicSupabase, userId: string, subTopicId: string): Promise<ApiResult<unknown>> {
   const { data, error } = await supabase
     .from("sub_topic_claims")
-    .update(patch)
+    .update({ status: "cancelled", ended_at: new Date().toISOString() })
     .eq("sub_topic_id", subTopicId)
     .eq("user_id", userId)
-    .neq("status", "returned")
+    .eq("status", "writing")
     .select("*")
     .maybeSingle();
 
   if (error) return { ok: false, status: 500, message: error.message };
-  if (!data) return { ok: false, status: 404, message: "未找到可流转的认领记录" };
+  if (!data) return { ok: false, status: 404, message: "未找到正在写的记录" };
+  return { ok: true, value: data };
+}
+
+/** 提交关联作品成功后结束正在写；幂等，无在写记录时静默跳过。 */
+export async function completeWritingClaim(
+  supabase: TopicSupabase,
+  userId: string,
+  subTopicId: string,
+  videoId: string,
+): Promise<ApiResult<unknown>> {
+  const { data, error } = await supabase
+    .from("sub_topic_claims")
+    .update({ status: "completed", ended_at: new Date().toISOString(), completed_video_id: videoId })
+    .eq("sub_topic_id", subTopicId)
+    .eq("user_id", userId)
+    .eq("status", "writing")
+    .select("*")
+    .maybeSingle();
+
+  if (error) return { ok: false, status: 500, message: error.message };
   return { ok: true, value: data };
 }
 
@@ -751,7 +724,7 @@ export function filterTopicClaimsByScope<T extends { user_id?: string | null }>(
 export interface CurrentUserClaim {
   id: string;
   subTopicId: string;
-  status: Extract<TopicClaimStatus, "candidate" | "scripting">;
+  status: Extract<TopicClaimStatus, "writing">;
   claimedAt: string | null;
 }
 
@@ -764,20 +737,16 @@ export function buildMyClaim(
     .filter((row) => (
       row.user_id === userId &&
       row.sub_topic_id === subTopicId &&
-      (row.status === "candidate" || row.status === "scripting") &&
+      row.status === "writing" &&
       typeof row.id === "string"
     ))
-    .sort((left, right) => {
-      const statusOrder = Number(right.status === "scripting") - Number(left.status === "scripting");
-      if (statusOrder !== 0) return statusOrder;
-      return (Date.parse(String(right.claimed_at ?? "")) || 0) - (Date.parse(String(left.claimed_at ?? "")) || 0);
-    })[0];
+    .sort((left, right) => (Date.parse(String(right.claimed_at ?? "")) || 0) - (Date.parse(String(left.claimed_at ?? "")) || 0))[0];
 
-  if (!match || typeof match.id !== "string" || typeof match.status !== "string") return null;
+  if (!match || typeof match.id !== "string") return null;
   return {
     id: match.id,
     subTopicId,
-    status: match.status as Extract<TopicClaimStatus, "candidate" | "scripting">,
+    status: "writing",
     claimedAt: typeof match.claimed_at === "string" ? match.claimed_at : null,
   };
 }
@@ -788,7 +757,8 @@ type SortableTopicPoolItem = {
   title?: string | null;
   hook?: string | null;
   claimCount?: number;
-  summary?: { averagePlayCount?: number | null } | null;
+  summary?: { averagePlayCount?: number | null; bestPlayCount?: number | null } | null;
+  recent7dParticipants?: number;
 };
 
 export function sortTopicPoolItems<T extends SortableTopicPoolItem>(items: T[], sort: TopicPoolSort): T[] {
@@ -796,8 +766,11 @@ export function sortTopicPoolItems<T extends SortableTopicPoolItem>(items: T[], 
     if (sort === "avg_play") {
       const difference = (right.summary?.averagePlayCount ?? 0) - (left.summary?.averagePlayCount ?? 0);
       if (difference !== 0) return difference;
-    } else if (sort === "claim_count") {
-      const difference = (right.claimCount ?? 0) - (left.claimCount ?? 0);
+    } else if (sort === "best_play") {
+      const difference = (right.summary?.bestPlayCount ?? 0) - (left.summary?.bestPlayCount ?? 0);
+      if (difference !== 0) return difference;
+    } else if (sort === "recent_heat") {
+      const difference = (right.recent7dParticipants ?? 0) - (left.recent7dParticipants ?? 0);
       if (difference !== 0) return difference;
     } else {
       const difference = (Date.parse(String(right.created_at ?? "")) || 0) - (Date.parse(String(left.created_at ?? "")) || 0);
@@ -852,16 +825,20 @@ function buildTopicPoolItem(
     ? item.sub_topic_claims as Array<{ id?: unknown; sub_topic_id?: unknown; user_id?: string | null; status?: string; claimed_at?: unknown }>
     : [];
   const visibleClaims = filterTopicClaimsByScope(rawClaims, scope);
-  const activeVisibleClaims = visibleClaims.filter((claim) => claim.status === "candidate" || claim.status === "scripting");
+  const activeVisibleClaims = visibleClaims.filter((claim) => claim.status === "writing");
+  const myClaim = buildMyClaim(rawClaims, userId, String(item.id));
   return {
     ...item,
     id: String(item.id ?? ""),
     sub_topic_claims: visibleClaims,
     summary,
-    myClaim: buildMyClaim(rawClaims, userId, String(item.id)),
+    myClaim,
     claimCount: activeVisibleClaims.length,
-    candidateCount: activeVisibleClaims.filter((claim) => claim.status === "candidate").length,
-    scriptingCount: activeVisibleClaims.filter((claim) => claim.status === "scripting").length,
+    // 旧契约兼容键：V3 中所有有效写作状态统一为 writing（C 包清理）
+    candidateCount: activeVisibleClaims.length,
+    scriptingCount: activeVisibleClaims.length,
+    inProgressCount: activeVisibleClaims.length,
+    isWritingByMe: myClaim?.status === "writing",
     externalMetrics: buildExternalMetrics(item),
     ...extra,
   };
@@ -891,6 +868,13 @@ async function loadScoredTopicPool(
       ok: true,
       value: { items: [], pagination: { page: options.page, pageSize: options.pageSize, totalItems: 0 } },
     };
+  }
+
+  let heat: Map<string, Recent7dHeat>;
+  try {
+    heat = await measureAsync("topics.pool.scored.heat", () => loadRecent7dHeat(supabase, subTopicIds));
+  } catch (error) {
+    return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
   }
 
   // content 一并取出，让汇总统计直接复用这次结果，省掉一次同表全量扫描
@@ -966,14 +950,13 @@ async function loadScoredTopicPool(
     if (options.sort === "avg_play") {
       return (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) || String(left.item.id).localeCompare(String(right.item.id));
     }
-    if (options.sort === "claim_count") {
-      const leftClaims = Array.isArray(left.item.sub_topic_claims)
-        ? (left.item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>).filter((claim) => claim.status === "candidate" || claim.status === "scripting")
-        : [];
-      const rightClaims = Array.isArray(right.item.sub_topic_claims)
-        ? (right.item.sub_topic_claims as Array<{ user_id?: string | null; status?: string }>).filter((claim) => claim.status === "candidate" || claim.status === "scripting")
-        : [];
-      return rightClaims.length - leftClaims.length || String(left.item.id).localeCompare(String(right.item.id));
+    if (options.sort === "best_play") {
+      return (right.bestPlayCount ?? 0) - (left.bestPlayCount ?? 0) || String(left.item.id).localeCompare(String(right.item.id));
+    }
+    if (options.sort === "recent_heat") {
+      const leftHeat = heat.get(String(left.item.id))?.participants ?? 0;
+      const rightHeat = heat.get(String(right.item.id))?.participants ?? 0;
+      return rightHeat - leftHeat || String(left.item.id).localeCompare(String(right.item.id));
     }
     if (options.sort === "latest") {
       return (Date.parse(String(right.item.created_at ?? "")) || 0) - (Date.parse(String(left.item.created_at ?? "")) || 0) || String(left.item.id).localeCompare(String(right.item.id));
@@ -1000,6 +983,7 @@ async function loadScoredTopicPool(
             _daysSinceLastWork: daysSinceLastWork,
             _avgPlayCount: avgPlayCount,
             _bestPlayCount: bestPlayCount,
+            ...recent7dHeatExtra(heat, String(item.id)),
           },
         ),
       ),
@@ -1033,6 +1017,13 @@ async function loadNeverWorkedTopics(
     };
   }
 
+  let heat: Map<string, Recent7dHeat>;
+  try {
+    heat = await measureAsync("topics.pool.neverWorked.heat", () => loadRecent7dHeat(supabase, subTopicIds));
+  } catch (error) {
+    return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+  }
+
   let worksQuery = supabase
     .from("videos")
     .select("topic_id, user_id")
@@ -1058,6 +1049,7 @@ async function loadNeverWorkedTopics(
     buildTopicPoolItem(item, userId, scope, calculateTopicWorkSummary([]), {
       _daysSinceLastWork: null,
       _avgPlayCount: null,
+      ...recent7dHeatExtra(heat, String(item.id)),
     }),
   );
   const sortedItems = options.sort
@@ -1134,7 +1126,7 @@ export async function loadTopicPool(
       .from("sub_topic_claims")
       .select("id, sub_topic_id, status, claimed_at")
       .eq("user_id", userId)
-      .neq("status", "returned");
+      .eq("status", "writing");
     if (myClaimsError) return { ok: false, status: 500, message: myClaimsError.message };
 
     myClaimsDirectMap = new Map();
@@ -1142,16 +1134,14 @@ export async function loadTopicPool(
     for (const row of (myClaimsRows ?? []) as Array<{ id?: unknown; sub_topic_id?: unknown; status?: unknown; claimed_at?: unknown }>) {
       const subTopicId = typeof row.sub_topic_id === "string" ? row.sub_topic_id : null;
       const claimId = typeof row.id === "string" ? row.id : null;
-      const status = row.status === "candidate" || row.status === "scripting" ? row.status : null;
-      if (!subTopicId || !claimId || !status) continue;
+      if (!subTopicId || !claimId || row.status !== "writing") continue;
       claimedIds.push(subTopicId);
-      // 同一子题保留优先级最高的（scripting > candidate，时间最新）
       const existing = myClaimsDirectMap.get(subTopicId);
-      if (!existing || (status === "scripting" && existing.status !== "scripting")) {
+      if (!existing) {
         myClaimsDirectMap.set(subTopicId, {
           id: claimId,
           subTopicId,
-          status,
+          status: "writing",
           claimedAt: typeof row.claimed_at === "string" ? row.claimed_at : null,
         });
       }
@@ -1181,6 +1171,13 @@ export async function loadTopicPool(
   const items = ((data ?? []) as Array<Record<string, unknown>>)
     .filter((item) => matchesTopicPoolQuery(item, options.q));
 
+  let heat: Map<string, Recent7dHeat>;
+  try {
+    heat = await measureAsync("topics.pool.heat", () => loadRecent7dHeat(supabase, items.map((item) => String(item.id))));
+  } catch (error) {
+    return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+  }
+
   let summaries: Map<string, TopicWorkSummary>;
   try {
     summaries = await measureAsync("topics.pool.summaries", () =>
@@ -1194,6 +1191,7 @@ export async function loadTopicPool(
     userId,
     scope,
     summaries.get(String(item.id)) ?? calculateTopicWorkSummary([]),
+    recent7dHeatExtra(heat, String(item.id)),
   ));
 
   // my_claims 视图：用直接查到的 claim 数据覆盖 join 关联的结果
@@ -1276,6 +1274,93 @@ function filterRemovedSubTopicRows(rows: unknown[]) {
   });
 }
 
+export interface Recent7dHeat {
+  completedCount: number;
+  inProgressCount: number;
+  participants: number;
+}
+
+/**
+ * 七天热度唯一口径（纯函数）：
+ * - completedCount：近 7 天内提交过该选题关联作品的去重成员数；
+ * - inProgressCount：近 7 天内开始写且目前仍在写的去重成员数；
+ * - participants：两者并集去重（同一成员同时命中只算 1 人）。
+ */
+export function computeRecent7dHeat(
+  works: Array<{ subTopicId: string; userId: string | null }>,
+  writings: Array<{ subTopicId: string; userId: string | null }>,
+): Map<string, Recent7dHeat> {
+  const completed = new Map<string, Set<string>>();
+  for (const work of works) {
+    if (!work.subTopicId || !work.userId) continue;
+    const set = completed.get(work.subTopicId) ?? new Set<string>();
+    set.add(work.userId);
+    completed.set(work.subTopicId, set);
+  }
+  const writing = new Map<string, Set<string>>();
+  for (const row of writings) {
+    if (!row.subTopicId || !row.userId) continue;
+    const set = writing.get(row.subTopicId) ?? new Set<string>();
+    set.add(row.userId);
+    writing.set(row.subTopicId, set);
+  }
+
+  const heat = new Map<string, Recent7dHeat>();
+  const ids = new Set([...completed.keys(), ...writing.keys()]);
+  for (const id of ids) {
+    const completedSet = completed.get(id) ?? new Set<string>();
+    const writingSet = writing.get(id) ?? new Set<string>();
+    heat.set(id, {
+      completedCount: completedSet.size,
+      inProgressCount: writingSet.size,
+      participants: new Set([...completedSet, ...writingSet]).size,
+    });
+  }
+  return heat;
+}
+
+/** 七天热度数据源：作品按全量成员统计（身份仍受 scope 控制在认领明细里），写作按真实 writing 记录统计。 */
+export async function loadRecent7dHeat(supabase: TopicSupabase, subTopicIds: string[]): Promise<Map<string, Recent7dHeat>> {
+  if (!subTopicIds.length) return new Map();
+  const sinceIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const [worksResult, writingsResult] = await Promise.all([
+    supabase
+      .from("videos")
+      .select("topic_id, user_id")
+      .eq("lifecycle_state", "active")
+      .gte("uploaded_at", sinceIso)
+      .in("topic_id", subTopicIds),
+    supabase
+      .from("sub_topic_claims")
+      .select("sub_topic_id, user_id")
+      .eq("status", "writing")
+      .gte("claimed_at", sinceIso)
+      .in("sub_topic_id", subTopicIds),
+  ]);
+  if (worksResult.error) throw new Error(worksResult.error.message);
+  if (writingsResult.error) throw new Error(writingsResult.error.message);
+
+  return computeRecent7dHeat(
+    ((worksResult.data ?? []) as Array<{ topic_id?: string | null; user_id?: string | null }>).map((row) => ({
+      subTopicId: typeof row.topic_id === "string" ? row.topic_id : "",
+      userId: typeof row.user_id === "string" ? row.user_id : null,
+    })),
+    ((writingsResult.data ?? []) as Array<{ sub_topic_id?: string | null; user_id?: string | null }>).map((row) => ({
+      subTopicId: typeof row.sub_topic_id === "string" ? row.sub_topic_id : "",
+      userId: typeof row.user_id === "string" ? row.user_id : null,
+    })),
+  );
+}
+
+function recent7dHeatExtra(heat: Map<string, Recent7dHeat>, subTopicId: string) {
+  const entry = heat.get(subTopicId);
+  return {
+    recent7dCompletedCount: entry?.completedCount ?? 0,
+    recent7dInProgressCount: entry?.inProgressCount ?? 0,
+    recent7dParticipants: entry?.participants ?? 0,
+  };
+}
+
 // 只服务选题库顶部的「团队动态」条：最新认领 + 最新成片。
 // 旧的 focusTopics / worthRedoing / recentlyCreated 已随「今日聚焦」卡片下线一并删除，不要复活。
 export async function loadActiveTopics(
@@ -1290,7 +1375,7 @@ export async function loadActiveTopics(
     let claimsQuery = supabase
       .from("sub_topic_claims")
       .select("id, sub_topic_id, user_id, status, claimed_at, profiles(name), sub_topics(id, title, library_status)")
-      .neq("status", "returned")
+      .eq("status", "writing")
       .order("claimed_at", { ascending: false })
       .limit(limit);
     if (scope.kind !== "all") claimsQuery = claimsQuery.in("user_id", scope.visibleUserIds);
@@ -1335,12 +1420,24 @@ export async function loadSubTopicClaimActivity(
     .from("sub_topic_claims")
     .select("user_id, status, claimed_at, profiles(name)")
     .eq("sub_topic_id", subTopicId)
-    .neq("status", "returned");
-  if (error) return { ok: false, status: 500, message: "加载认领动态失败" };
+    .eq("status", "writing");
+  if (error) return { ok: false, status: 500, message: "加载写作动态失败" };
+
+  // 详情页的 7 天热度三值由服务端按唯一口径计算，前端不做本地推算
+  let recent7dSummary: Recent7dHeat | null = null;
+  try {
+    const heat = await loadRecent7dHeat(supabase, [subTopicId]);
+    recent7dSummary = heat.get(subTopicId) ?? { completedCount: 0, inProgressCount: 0, participants: 0 };
+  } catch {
+    recent7dSummary = null;
+  }
 
   return {
     ok: true,
-    value: buildClaimActivity((data ?? []) as Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>, scope),
+    value: {
+      ...(buildClaimActivity((data ?? []) as Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>, scope)),
+      recent7dSummary,
+    },
   };
 }
 

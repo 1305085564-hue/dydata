@@ -23,7 +23,6 @@ const ROUTE_FILES = [
   "sub-topics/[id]/start-scripting/route.ts",
   "sub-topics/[id]/return/route.ts",
   "sub-topics/[id]/works/route.ts",
-  "sub-topics/replace-claim/route.ts",
 ] as const;
 
 function responseFor(error: string, code?: string, status = 403) {

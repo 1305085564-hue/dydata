@@ -4,6 +4,7 @@ import { TopicHubV2 } from "@/components/topics-v2/TopicHubV2";
 import { getCurrentUserContext } from "@/lib/current-user-context";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { hasCompanyPermission } from "@/lib/permission-utils";
+import { loadFeishuWorkspaceUrl } from "@/lib/topics/feishu-workspace";
 import { JoinBanner } from "../_components/join-banner";
 
 export const metadata = {
@@ -33,5 +34,8 @@ export default async function TopicsV2Page() {
     ? hasCompanyPermission(permissionContext.permissionInfo.companyRole, "review_content")
     : false;
 
-  return <TopicHubV2 canManageTopicLibrary={canManageTopicLibrary} />;
+  // 团队固定飞书空间地址：服务端读取，非法配置不下发（前端按未配置处理）
+  const feishuWorkspaceUrl = await loadFeishuWorkspaceUrl(supabase);
+
+  return <TopicHubV2 canManageTopicLibrary={canManageTopicLibrary} feishuWorkspaceUrl={feishuWorkspaceUrl} />;
 }

@@ -8,17 +8,14 @@ const readSource = (path: string) =>
 
 test("选题复杂弹窗在低矮视口下固定标题和操作区", () => {
   const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
-  const replaceModal = readSource("src/components/topics-v2/SmartReplaceModal.tsx");
   const workDrawer = readSource(
     "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
   );
 
-  for (const source of [createModal, replaceModal]) {
-    assert.match(source, /<Dialog[\s\n]+open=\{/);
-    assert.match(source, /max-h-\[calc\(100dvh-2rem\)\]/);
-    assert.match(source, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
-    assert.doesNotMatch(source, /fixed inset-0 bg-\[#1C1917\]/);
-  }
+  assert.match(createModal, /<Dialog[\s\n]+open=\{/);
+  assert.match(createModal, /max-h-\[calc\(100dvh-2rem\)\]/);
+  assert.match(createModal, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
+  assert.doesNotMatch(createModal, /fixed inset-0 bg-\[#1C1917\]/);
 
   assert.match(workDrawer, /max-h-\[calc\(100dvh-var\(--app-top-offset,64px\)\)\]/);
   assert.match(workDrawer, /flex min-h-0[\s\S]*flex-col overflow-hidden/);
@@ -105,14 +102,11 @@ test("成员管理复杂弹窗和详情抽屉保留头部与操作区", () => {
 });
 
 test("选题筛选浮层和 AI 模型下拉在窄屏内收缩", () => {
-  const claimDrawer = readSource("src/components/topics-v2/MyClaimDrawer.tsx");
   const topicFilter = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
   const bindings = readSource(
     "src/app/(app)/admin/ai-config/components/bindings-client.tsx",
   );
 
-  assert.match(claimDrawer, /max-h-\[calc\(100dvh-/);
-  assert.match(claimDrawer, /min-h-0 flex-1 overflow-y-auto/);
   assert.match(topicFilter, /max-h-\[calc\(100dvh-/);
   assert.match(topicFilter, /overflow-y-auto/);
   assert.match(bindings, /w-\[min\(260px,calc\(100vw-2rem\)\)\]/);

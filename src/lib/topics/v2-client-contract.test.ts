@@ -88,7 +88,7 @@ test("V2 契约解析选题池统计、当前认领和真实分页", () => {
   });
 
   assert.equal(pool.items[0]?.hook, null);
-  assert.equal(pool.items[0]?.myClaim?.status, "scripting");
+  assert.equal(pool.items[0]?.myClaim?.status, "writing");
   assert.equal(pool.items[0]?.scriptingCount, 1);
   assert.deepEqual(pool.pagination, { page: 2, pageSize: 20, totalItems: 41 });
 });
@@ -133,7 +133,7 @@ test("V2 契约解析详情、作品播放量和撞车字段", () => {
     },
   });
   assert.equal(detail.subTopic?.hook, null);
-  assert.equal(detail.subTopic?.myClaim?.status, "candidate");
+  assert.equal(detail.subTopic?.myClaim?.status, "writing");
   assert.equal(detail.works.items[0]?.playCount, 4567);
 
   const claims = parseClaimsResponse({
@@ -145,28 +145,17 @@ test("V2 契约解析详情、作品播放量和撞车字段", () => {
     id: "claim-1",
     userId: "user-1",
     displayName: "小王",
-    status: "scripting",
+    status: "writing",
     claimedAt: null,
   });
 });
 
-test("详情动作严格遵守未认领、候选和脚本中三态", () => {
+test("详情动作严格遵守未在写与在写两态（V3 无候选）", () => {
   assert.deepEqual(getTopicActionState(null), {
     canClaim: true,
     canStartScripting: false,
     canReturn: false,
-    label: "认领到候选",
+    label: "我要写",
   });
-  assert.deepEqual(getTopicActionState({ id: "c", subTopicId: "s", status: "candidate", claimedAt: null }), {
-    canClaim: false,
-    canStartScripting: true,
-    canReturn: true,
-    label: "开始写脚本",
-  });
-  assert.deepEqual(getTopicActionState({ id: "c", subTopicId: "s", status: "scripting", claimedAt: null }), {
-    canClaim: false,
-    canStartScripting: false,
-    canReturn: true,
-    label: "脚本中",
-  });
+
 });

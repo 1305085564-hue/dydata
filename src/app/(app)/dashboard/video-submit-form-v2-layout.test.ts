@@ -15,10 +15,6 @@ const productionSource = readFileSync(
   resolve(process.cwd(), "src/app/(app)/dashboard/production-control-system.tsx"),
   "utf8",
 );
-const claimDrawerSource = readFileSync(
-  resolve(process.cwd(), "src/components/topics-v2/MyClaimDrawer.tsx"),
-  "utf8",
-);
 const breakdownDrawerSource = readFileSync(
   resolve(process.cwd(), "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx"),
   "utf8",
@@ -73,7 +69,6 @@ test("V2 截图错误文案保持 screenshot_1 互动、screenshot_2 完播", ()
 });
 
 test("选题脚本入口把子题上下文带入工作台并交给提交接口", () => {
-  assert.match(claimDrawerSource, /buildDashboardTopicHref\(sub\?\.id, sub\?\.title\)/);
   assert.match(breakdownDrawerSource, /buildDashboardTopicHref\(subTopicId, subTopicInfo\?\.title\)/);
   assert.match(productionSource, /useSearchParams\(\)/);
   assert.match(productionSource, /normalizeDashboardTopicId\(searchParams\.get\("topic_id"\)\)/);

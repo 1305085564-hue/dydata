@@ -15,7 +15,8 @@ export function isTeamMembershipRequiredError(error: unknown): error is TopicReq
     && error.code === TEAM_MEMBERSHIP_REQUIRED_CODE;
 }
 
-export type TopicClaimStatus = "candidate" | "scripting";
+// V3 写作状态：多人可同时写同一题，服务端统一返回 writing
+export type TopicClaimStatus = "writing";
 
 export interface V2Claim {
   id: string;
@@ -183,7 +184,11 @@ function parseClaim(value: unknown, fallbackSubTopicId?: string): V2Claim | null
   if (!isRecord(value)) return null;
   const id = nullableString(value.id);
   const subTopicId = nullableString(value.subTopicId) ?? nullableString(value.sub_topic_id) ?? fallbackSubTopicId;
-  const status = value.status === "candidate" || value.status === "scripting" ? value.status : null;
+  // V3 只有 writing 是有效在写状态；candidate/scripting 是迁移前的旧值，等价映射为 writing
+  const rawStatus = value.status;
+  const status = rawStatus === "writing" || rawStatus === "candidate" || rawStatus === "scripting"
+    ? "writing"
+    : null;
   if (!id || !subTopicId || !status) return null;
   return {
     id,
@@ -341,7 +346,10 @@ function parseActivityClaim(value: unknown): V2ActivityClaim | null {
     : null;
   const userId = nullableString(value.userId) ?? nullableString(value.user_id);
   const subTopicId = nullableString(value.subTopicId) ?? nullableString(value.sub_topic_id) ?? subTopic?.id;
-  const status = value.status === "candidate" || value.status === "scripting" ? value.status : null;
+  // V3：只有 writing 是有效在写状态；candidate/scripting 是迁移前旧值，等价映射
+  const status = value.status === "writing" || value.status === "candidate" || value.status === "scripting"
+    ? "writing" as const
+    : null;
   if (!userId || !subTopicId || !status) return null;
   const profile = Array.isArray(value.profiles) ? value.profiles[0] : value.profiles;
   const profileName = isRecord(profile) ? nullableString(profile.name) : null;
@@ -409,21 +417,26 @@ export function parseClaimsResponse(value: unknown): V2ClaimsResponse {
         if (!isRecord(claim)) return [];
         const id = nullableString(claim.id);
         const userId = nullableString(claim.userId);
-        const status = claim.status === "candidate" || claim.status === "scripting" ? claim.status : null;
+        const rawStatus = claim.status;
+        const status = rawStatus === "writing" || rawStatus === "candidate" || rawStatus === "scripting"
+          ? "writing" as const
+          : null;
         if (!userId || !status) return [];
         return [{
           ...(id ? { id } : {}),
           userId,
           displayName: nullableString(claim.displayName) ?? "未命名成员",
-          status: status as TopicClaimStatus,
+          status,
           claimedAt: nullableString(claim.claimedAt),
         }];
       })
     : [];
+  // 旧键 candidateCount/scriptingCount 兼容；服务端已统一返回正在写人数
+  const inProgress = numberOr(value.inProgressCount, 0);
   return {
     claims,
-    candidateCount: numberOr(value.candidateCount, 0),
-    scriptingCount: numberOr(value.scriptingCount, 0),
+    candidateCount: numberOr(value.candidateCount, inProgress),
+    scriptingCount: numberOr(value.scriptingCount, inProgress),
   };
 }
 
@@ -457,11 +470,9 @@ export function parseComparisonResponse(value: unknown): V2ComparisonResponse {
 }
 
 export function getTopicActionState(claim: V2Claim | null) {
-  if (!claim) {
-    return { canClaim: true, canStartScripting: false, canReturn: false, label: "认领到候选" } as const;
+  // V3：不再有「认领到候选」与候选位；同一个选题允许多人同时写
+  if (claim?.status === "writing") {
+    return { canClaim: false, canStartScripting: false, canReturn: true, label: "正在写" } as const;
   }
-  if (claim.status === "candidate") {
-    return { canClaim: false, canStartScripting: true, canReturn: true, label: "开始写脚本" } as const;
-  }
-  return { canClaim: false, canStartScripting: false, canReturn: true, label: "脚本中" } as const;
+  return { canClaim: true, canStartScripting: false, canReturn: false, label: "我要写" } as const;
 }

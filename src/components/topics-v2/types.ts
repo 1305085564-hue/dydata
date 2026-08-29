@@ -29,6 +29,8 @@ export interface SubTopicItem {
   topics?: TopicOption | null;
   topic_groups?: GroupOption | null;
   myClaim: TopicClaimItem | null;
+  isWritingByMe?: boolean;
+  summary?: TopicWorkSummary | null;
 }
 
 export interface TopicWorkSummary {
@@ -52,7 +54,8 @@ export interface TopicWorkSummary {
   } | null;
 }
 
-export type TopicClaimStatus = "candidate" | "scripting" | "returned";
+// V3 写作状态：多人可同时写同一题；提交关联作品后自动结束
+export type TopicClaimStatus = "writing" | "cancelled" | "completed";
 
 export interface TopicClaimItem {
   id: string;
@@ -105,7 +108,7 @@ export interface TopicClaimsDetailResponse {
     id: string;
     userId: string;
     displayName: string;
-    status: "candidate" | "scripting";
+    status: "writing";
     claimedAt: string | null;
   }>;
   // V3 7 天参与去重统计

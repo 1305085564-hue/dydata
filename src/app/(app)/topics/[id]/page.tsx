@@ -67,11 +67,16 @@ interface ClaimsApiResponse {
     id?: string;
     userId: string;
     displayName: string;
-    status: "candidate" | "scripting" | "returned";
+    status: "writing";
     claimedAt: string;
   }>;
   candidateCount: number;
   scriptingCount: number;
+  recent7dSummary?: {
+    totalParticipants: number;
+    completedCount: number;
+    inProgressCount: number;
+  } | null;
 }
 
 interface MyClaimSubTopicItem {
@@ -81,7 +86,7 @@ interface MyClaimSubTopicItem {
   sub_topic_claims?: Array<{
     id: string;
     user_id: string;
-    status: "candidate" | "scripting" | "returned";
+    status: "writing";
     claimed_at: string;
   }>;
 }
@@ -106,6 +111,23 @@ export default function SubTopicDetailPage({
     scriptingCount: 0,
   });
   const [claimsError, setClaimsError] = useState<string | null>(null);
+
+  // 团队固定飞书空间地址（服务端配置，非法地址不下发）
+  const [feishuWorkspaceUrl, setFeishuWorkspaceUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/topics/feishu-workspace");
+        if (!res.ok) return;
+        const data = (await res.json()) as { url?: string | null };
+        if (!cancelled) setFeishuWorkspaceUrl(typeof data.url === "string" && data.url ? data.url : null);
+      } catch {
+        // 未拿到配置时按未配置处理，不伪造地址
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // 我的写作状态
   const [myClaims, setMyClaims] = useState<MyClaimSubTopicItem[]>([]);
@@ -249,6 +271,7 @@ export default function SubTopicDetailPage({
         claims: Array.isArray(data.claims) ? data.claims : [],
         candidateCount: data.candidateCount ?? 0,
         scriptingCount: data.scriptingCount ?? 0,
+        recent7dSummary: data.recent7dSummary ?? null,
       });
     } catch (err) {
       markMembershipRequired(err);
@@ -271,12 +294,11 @@ export default function SubTopicDetailPage({
   // 解析当前用户写作状态
   const currentSubTopicItem = myClaims.find((item) => item.id === subTopicId);
   const myClaimRecord = currentSubTopicItem?.sub_topic_claims?.find(
-    (c) => c.user_id === currentUserId && c.status !== "returned",
+    (c) => c.user_id === currentUserId && c.status === "writing",
   );
   const isWritingByMe = !!myClaimRecord;
 
-  // 兼容性保留与旧契约映射: /api/topics/sub-topics/replace-claim
-  // 标记在写 (Item 6: 严禁自动回退到旧独占 claim 接口，严格检查响应)
+  // V3：开始写作（幂等，允许多人同时写同一题），严格检查响应
   const handleMarkWriting = async (topicId: string) => {
     try {
       const res = await fetch(
@@ -455,13 +477,11 @@ export default function SubTopicDetailPage({
         ).length
       : null;
 
-  // 近 7 天热度（严格读取真实参与，绝不虚构 +2 或保底 1）
+  // 近 7 天热度：只使用服务端唯一口径的三值，缺失显示未知态，绝不回退旧累计数据
   const total7dParticipants =
-    claimsData.claims.length > 0
-      ? claimsData.claims.length
-      : claimsData.scriptingCount > 0
-        ? claimsData.scriptingCount
-        : 0;
+    typeof claimsData.recent7dSummary?.totalParticipants === "number"
+      ? claimsData.recent7dSummary.totalParticipants
+      : null;
 
   return (
     <div className="max-w-5xl mx-auto pb-16 px-4 sm:px-6 space-y-6">
@@ -657,21 +677,21 @@ export default function SubTopicDetailPage({
               </h2>
             </div>
             <span className="text-xs text-[#D97757] font-semibold tabular-nums">
-              近 7 天 {total7dParticipants} 人参与
+              近 7 天 {total7dParticipants !== null ? `${total7dParticipants} 人参与` : "—"}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-center">
             <div>
-              <div className="text-xs text-[#78716C]">已经写完成片</div>
+              <div className="text-xs text-[#78716C]">近 7 天已写完</div>
               <div className="text-xl font-semibold text-[#6FAA7D] tabular-nums mt-0.5">
-                {worksTotal} 人
+                {claimsData.recent7dSummary ? `${claimsData.recent7dSummary.completedCount} 人` : "—"}
               </div>
             </div>
             <div>
-              <div className="text-xs text-[#78716C]">当前仍在写</div>
+              <div className="text-xs text-[#78716C]">近 7 天仍在写</div>
               <div className="text-xl font-semibold text-[#43718E] tabular-nums mt-0.5">
-                {claimsData.scriptingCount} 人
+                {claimsData.recent7dSummary ? `${claimsData.recent7dSummary.inProgressCount} 人` : "—"}
               </div>
             </div>
           </div>
@@ -692,14 +712,8 @@ export default function SubTopicDetailPage({
                   <span className="font-medium text-[#1C1917]">
                     {claim.displayName}
                   </span>
-                  <span
-                    className={`px-2 py-0.5 rounded font-medium text-[11px] ${
-                      claim.status === "scripting"
-                        ? "bg-[#43718E]/10 text-[#43718E]"
-                        : "bg-[#F5F3EE] text-[#78716C]"
-                    }`}
-                  >
-                    {claim.status === "scripting" ? "正在飞书写作" : "已选该题"}
+                  <span className="px-2 py-0.5 rounded font-medium text-[11px] bg-[#43718E]/10 text-[#43718E]">
+                    正在写
                   </span>
                 </div>
               ))}
@@ -843,6 +857,7 @@ export default function SubTopicDetailPage({
         onMarkWriting={handleMarkWriting}
         onCancelWriting={handleCancelWriting}
         isWriting={isWritingByMe}
+        feishuWorkspaceUrl={feishuWorkspaceUrl}
       />
 
       {/* 编辑弹窗 */}

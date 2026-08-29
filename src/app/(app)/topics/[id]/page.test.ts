@@ -77,9 +77,10 @@ test("resolveWorkLikes 兼容 likes 与 like_count 双重备选字段", () => {
   assert.equal(resolveWorkLikes({}), 0);
 });
 
-test("calculateTotalInFlight 包含 candidateCount 与 scriptingCount 总计", () => {
-  const total = calculateTotalInFlight({ candidateCount: 4, scriptingCount: 2 });
-  assert.equal(total, 6);
+test("calculateTotalInFlight 优先使用服务端 inProgressCount，旧键仅在缺失时兜底", () => {
+  assert.equal(calculateTotalInFlight({ inProgressCount: 3 }), 3);
+  assert.equal(calculateTotalInFlight({ candidateCount: 4 }), 4);
+  assert.equal(calculateTotalInFlight({}), 0);
 });
 
 test("getRecommendationKey 能稳定计算推荐项 Key，受 angle 区分但不受 index 影响", () => {

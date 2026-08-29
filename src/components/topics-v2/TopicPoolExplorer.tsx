@@ -8,13 +8,11 @@ import {
   List,
   RefreshCw,
   AlertCircle,
-  Sparkles,
   SlidersHorizontal,
   X,
   FileSpreadsheet,
   CheckCircle2,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -31,11 +29,10 @@ import type {
 } from "./types";
 
 export type SortByOption =
-  | "ai_recommended"
+  | "latest"
   | "avg_play"
   | "best_play"
-  | "claim_count"
-  | "latest";
+  | "recent_heat";
 
 export interface TopicPoolExplorerProps {
   items: TopicPoolItem[];
@@ -266,34 +263,22 @@ export function TopicPoolExplorer({
                 className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs font-normal text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors shadow-none"
               >
                 <SelectValue placeholder="排序">
-                  {sortBy === "ai_recommended"
-                    ? "推荐"
-                    : sortBy === "best_play"
-                      ? "最高播放"
-                      : sortBy === "avg_play"
-                        ? "均播"
-                        : sortBy === "claim_count"
-                          ? "7天热度"
-                          : "最新"}
+                  {sortBy === "best_play"
+                    ? "最高播放"
+                    : sortBy === "avg_play"
+                      ? "均播"
+                      : sortBy === "recent_heat"
+                        ? "7天热度"
+                        : "最新"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
-                <SelectItem value="ai_recommended">推荐</SelectItem>
                 <SelectItem value="best_play">最高播放</SelectItem>
                 <SelectItem value="avg_play">均播</SelectItem>
-                <SelectItem value="claim_count">7天热度</SelectItem>
+                <SelectItem value="recent_heat">7天热度</SelectItem>
                 <SelectItem value="latest">最新</SelectItem>
               </SelectContent>
             </Select>
-            {sortBy === "ai_recommended" && (
-              <Badge
-                variant="outline"
-                title="综合历史验证高分与近7天创作热度推荐"
-                className="text-[11px] border-[#D97757]/30 bg-[#D97757]/10 text-[#D97757] flex items-center gap-1 font-medium px-1.5 py-0.5 shrink-0 cursor-help ml-1"
-              >
-                <Sparkles className="size-3 text-[#D97757]" />
-              </Badge>
-            )}
           </div>
 
           {/* 3. 时间下拉 (未展开明确显示“时间”，选择后显示明确范围) */}
@@ -511,16 +496,13 @@ export function TopicPoolExplorer({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((item) => {
             const summary = item.summary;
-            const isWriting =
-              item.isWritingByMe ||
-              (item.myClaim?.status === "candidate" ||
-                item.myClaim?.status === "scripting");
+            const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
 
             // 真实历史数据证明（严禁补造假数据）
             const bestPlay = summary?.bestPlayCount ?? null;
             const qualifiedCount = summary?.qualifiedWorkCount ?? null;
-            const participants7d = item.recent7dParticipants ?? item.claimCount ?? null;
-            const inProgressCount = item.recent7dInProgressCount ?? (item.scriptingCount > 0 ? item.scriptingCount : 0);
+            const participants7d = item.recent7dParticipants ?? null;
+            const inProgressCount = item.recent7dInProgressCount ?? null;
 
             return (
               <div
@@ -591,7 +573,7 @@ export function TopicPoolExplorer({
                 <div className="pt-2 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto">
                   <div className="text-[11.5px] text-[#78716C] truncate">
                     <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "0 人参与"}</span>
-                    {inProgressCount > 0 && (
+                    {(inProgressCount ?? 0) > 0 && (
                       <span className="text-[#43718E] ml-1">
                         · {inProgressCount}人在写
                       </span>
@@ -637,14 +619,11 @@ export function TopicPoolExplorer({
             <tbody className="divide-y divide-[#ECE7DE] bg-white">
               {items.map((item) => {
                 const summary = item.summary;
-                const isWriting =
-                  item.isWritingByMe ||
-                  (item.myClaim?.status === "candidate" ||
-                    item.myClaim?.status === "scripting");
+                const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";
 
                 const bestPlay = summary?.bestPlayCount ?? null;
                 const qualifiedCount = summary?.qualifiedWorkCount ?? null;
-                const participants7d = item.recent7dParticipants ?? item.claimCount ?? null;
+                const participants7d = item.recent7dParticipants ?? null;
 
                 return (
                   <tr
@@ -676,10 +655,10 @@ export function TopicPoolExplorer({
                       {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                     </td>
                     <td className="py-3 px-3 whitespace-nowrap text-[#78716C]">
-                      <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "0 人参与"}</span>
-                      {item.scriptingCount > 0 && (
+                      <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
+                      {(item.recent7dInProgressCount ?? 0) > 0 && (
                         <span className="text-[#43718E] ml-1">
-                          ({item.scriptingCount}人在写)
+                          ({item.recent7dInProgressCount}人在写)
                         </span>
                       )}
                     </td>

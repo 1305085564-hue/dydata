@@ -60,7 +60,13 @@ const TopicCreateModal = dynamic(
   { ssr: false },
 );
 
-export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLibrary?: boolean }) {
+export function TopicHubV2({
+  canManageTopicLibrary = false,
+  feishuWorkspaceUrl = null,
+}: {
+  canManageTopicLibrary?: boolean;
+  feishuWorkspaceUrl?: string | null;
+}) {
   // Toast 轻反馈
   const [toastMsg, setToastMsg] = useState<{
     text: string;
@@ -268,9 +274,9 @@ export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLi
     fetchPoolData();
   };
 
-  // 兼容性保留与旧契约映射: /api/topics/sub-topics/replace-claim
-  // 开始写作 (Item 6: 严禁自动回退到旧独占 claim 接口，严格检查响应)
-  const handleMarkWriting = async (subTopicId: string) => {
+  // 兼容性保留与旧契约映射已废除：V3 不再有 replace-claim / 候选位 / 撞车阻断
+  // 开始写作（幂等；等待结果，失败返回 false，不显示成功）
+  const handleMarkWriting = async (subTopicId: string): Promise<boolean> => {
     try {
       await fetchTopicJson(
         `/api/topics/sub-topics/${subTopicId}/start-scripting`,
@@ -278,9 +284,11 @@ export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLi
       );
       showToast("已将选题加入在写清单", "success");
       refreshAll();
+      return true;
     } catch (err) {
       if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "更新写作状态失败"), "error");
+      return false;
     }
   };
 
@@ -297,6 +305,15 @@ export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLi
       showToast(getErrorMessage(err, "取消写作失败"), "error");
     }
   };
+
+  // 当前弹窗选题的真实「我在写」状态（来自 my_claims 服务端数据，不做本地伪装）
+  const isWritingSelected = feishuModalTopic
+    ? myClaims.some((item) => {
+      const claim = (item as { myClaim?: { status?: string; subTopicId?: string } }).myClaim;
+      const subTopicId = claim?.subTopicId ?? (item as { id?: string }).id ?? (item as { subTopicId?: string }).subTopicId;
+      return subTopicId === feishuModalTopic.id && claim?.status === "writing";
+    })
+    : false;
 
   // 管理员通道：外部干货批量导入（真实解析与导入接口）
   const handleParseImportFile = useCallback(async (file: File) => {
@@ -467,6 +484,8 @@ export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLi
                 topic as unknown as { target_audience?: unknown }
               ).target_audience,
               source_type: topic.source_type,
+              isWritingByMe: (topic as { isWritingByMe?: boolean }).isWritingByMe,
+              summary: (topic as { summary?: SubTopicItem["summary"] }).summary ?? null,
             } as unknown as SubTopicItem);
           }}
           onSelectTopic={(subTopicId) => setInspectTopicId(subTopicId)}
@@ -501,6 +520,8 @@ export function TopicHubV2({ canManageTopicLibrary = false }: { canManageTopicLi
         <FeishuCreationModal
           isOpen={!!feishuModalTopic}
           topic={feishuModalTopic}
+          feishuWorkspaceUrl={feishuWorkspaceUrl}
+          isWriting={feishuModalTopic.isWritingByMe === true || isWritingSelected}
           onClose={() => setFeishuModalTopic(null)}
           onMarkWriting={handleMarkWriting}
           onCancelWriting={handleCancelWriting}

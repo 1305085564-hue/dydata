@@ -18,7 +18,7 @@ interface FeishuCreationModalProps {
   topic: SubTopicItem | null;
   feishuWorkspaceUrl?: string | null; // e.g. team space url
   onClose: () => void;
-  onMarkWriting?: (topicId: string) => void;
+  onMarkWriting?: (topicId: string) => Promise<boolean | void> | boolean | void;
   onCancelWriting?: (topicId: string) => void;
   isWriting?: boolean;
 }
@@ -34,9 +34,25 @@ export function FeishuCreationModal({
 }: FeishuCreationModalProps) {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
+  const [isMarking, setIsMarking] = useState(false);
+  const [markError, setMarkError] = useState<string | null>(null);
 
   const getFormattedContent = useCallback(() => {
     if (!topic) return "";
+    const proofLines: string[] = [];
+    const summary = topic.summary;
+    if (summary) {
+      if (typeof summary.bestPlayCount === "number") {
+        proofLines.push(`团队最高播放 ${summary.bestPlayCount.toLocaleString()}`);
+      }
+      if (summary.internalMetrics?.qualifiedWorkCount) {
+        proofLines.push(`达标作品（≥3万播放）${summary.internalMetrics.qualifiedWorkCount} 条`);
+      }
+      if (typeof summary.externalMetrics?.bestPlayCount === "number") {
+        proofLines.push(`外部历史播放 ${summary.externalMetrics.bestPlayCount.toLocaleString()}`);
+      }
+    }
+
     const lines: string[] = [
       `【选题名称】：${topic.title}`,
       topic.topics?.name ? `【所属母题】：${topic.topics.name}` : "",
@@ -49,6 +65,7 @@ export function FeishuCreationModal({
             ? `【内容提纲】：\n${topic.outline.map((p, i) => `${i + 1}. ${p}`).join("\n")}`
             : ""
         : "",
+      proofLines.length ? `【数据证明】：\n${proofLines.map((line) => `- ${line}`).join("\n")}` : "",
       `【来源】：${topic.source_type === "external" ? "外部收集干货" : "团队内部已验证"}`,
     ].filter(Boolean);
 
@@ -96,12 +113,49 @@ export function FeishuCreationModal({
 
   const contentText = getFormattedContent();
 
-  const handleOpenFeishu = () => {
-    if (topic && onMarkWriting && !isWriting) {
-      onMarkWriting(topic.id);
+  // V3：先等服务端标记「正在写」成功，再打开飞书；失败明确提示，绝不显示成功
+  const handleGoToFeishu = async () => {
+    if (!topic) return;
+    if (onMarkWriting && !isWriting) {
+      setIsMarking(true);
+      setMarkError(null);
+      try {
+        const result = await onMarkWriting(topic.id);
+        if (result === false) {
+          setMarkError("标记「正在写」失败，请重试；选题内容仍可复制使用");
+          return;
+        }
+      } catch (err) {
+        setMarkError(
+          `${err instanceof Error ? err.message : "标记「正在写」失败"}；选题内容仍可复制使用`,
+        );
+        return;
+      } finally {
+        setIsMarking(false);
+      }
     }
     if (feishuWorkspaceUrl) {
       window.open(feishuWorkspaceUrl, "_blank", "noopener,noreferrer");
+    } else {
+      onClose();
+    }
+  };
+
+  const handleMarkOnly = async () => {
+    if (!topic) return;
+    setIsMarking(true);
+    setMarkError(null);
+    try {
+      const result = onMarkWriting ? await onMarkWriting(topic.id) : false;
+      if (result === false) {
+        setMarkError("标记「正在写」失败，请重试；选题内容仍可复制使用");
+        return;
+      }
+      onClose();
+    } catch (err) {
+      setMarkError(err instanceof Error ? err.message : "标记「正在写」失败");
+    } finally {
+      setIsMarking(false);
     }
   };
 
@@ -239,6 +293,14 @@ export function FeishuCreationModal({
               </button>
             )}
           </div>
+
+          {/* 标记失败：明确报错，不伪装成功 */}
+          {markError && (
+            <div className="flex items-start gap-2 rounded-xl bg-[#DC2626]/5 border border-[#DC2626]/20 p-3 text-xs text-[#DC2626]">
+              <AlertCircle className="size-4 shrink-0 mt-0.5" />
+              <span className="flex-1">{markError}</span>
+            </div>
+          )}
         </div>
 
         {/* 底栏操作 */}
@@ -255,24 +317,21 @@ export function FeishuCreationModal({
             {feishuWorkspaceUrl ? (
               <button
                 type="button"
-                onClick={handleOpenFeishu}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer"
+                onClick={() => void handleGoToFeishu()}
+                disabled={isMarking}
+                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>前往团队飞书空间</span>
+                <span>{isMarking ? "正在标记..." : isWriting ? "前往团队飞书空间" : "标记在写并前往飞书"}</span>
                 <ExternalLink className="size-3.5" />
               </button>
             ) : (
               <button
                 type="button"
-                onClick={() => {
-                  if (topic && onMarkWriting && !isWriting) {
-                    onMarkWriting(topic.id);
-                  }
-                  onClose();
-                }}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer"
+                onClick={() => void handleMarkOnly()}
+                disabled={isMarking}
+                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>标记在写并关闭</span>
+                <span>{isMarking ? "正在标记..." : isWriting ? "完成并关闭" : "标记在写并关闭"}</span>
               </button>
             )}
           </div>

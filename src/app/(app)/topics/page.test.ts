@@ -9,11 +9,11 @@ import {
   type ComparisonRow
 } from "./topic-helpers";
 
-test("候选槽位只计算 candidate，不把 scripting 算入 5 条上限", () => {
+test("在写状态只统计 writing 记录，不把已取消/已完成算进当前在写", () => {
   assert.equal(countMyCandidates([
-    { sub_topic_claims: [{ user_id: "user-1", status: "candidate" }] },
-    { sub_topic_claims: [{ user_id: "user-1", status: "scripting" }] },
-    { sub_topic_claims: [{ user_id: "user-2", status: "candidate" }] },
+    { sub_topic_claims: [{ user_id: "user-1", status: "writing" }] },
+    { sub_topic_claims: [{ user_id: "user-1", status: "cancelled" }] },
+    { sub_topic_claims: [{ user_id: "user-2", status: "writing" }] },
   ] as never, "user-1"), 1);
 });
 

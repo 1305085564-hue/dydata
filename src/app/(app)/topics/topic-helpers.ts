@@ -5,7 +5,7 @@ export function countMyCandidates(
   currentUserId: string,
 ) {
   return items.filter((item) => item.sub_topic_claims?.some(
-    (claim) => claim.user_id === currentUserId && claim.status === "candidate",
+    (claim) => claim.user_id === currentUserId && claim.status === "writing",
   )).length;
 }
 
@@ -122,10 +122,13 @@ export function resolveWorkLikes(
 }
 
 export function calculateTotalInFlight(claims: {
+  inProgressCount?: number;
   candidateCount?: number;
   scriptingCount?: number;
 }): number {
-  return (claims.candidateCount ?? 0) + (claims.scriptingCount ?? 0);
+  // V3：服务端统一返回正在写人数；旧键仅在缺失时兜底
+  if (typeof claims.inProgressCount === "number") return claims.inProgressCount;
+  return (claims.candidateCount ?? 0) || (claims.scriptingCount ?? 0);
 }
 
 export function parseSubTopicDetailResponse(data: unknown) {

@@ -32,7 +32,7 @@ import {
   SNAPSHOT_WRITE_SELECT,
   VIDEO_SUBMIT_RESPONSE_SELECT,
 } from "./response-fields";
-import { validateTopicClaimForSubmission } from "./topic-association";
+import { validateTopicForSubmission, completeWritingOnSubmission } from "./topic-association";
 import { resolveVideoSubmitMembershipResponse } from "./membership";
 import { resolveCreateSubmissionConflict } from "./create-conflict";
 import { ensureInternalLibraryEntry, type TopicLibraryEntryOutcome } from "@/lib/topics/library";
@@ -309,17 +309,8 @@ export async function POST(request: NextRequest) {
   }
 
   if (normalized.topic_id) {
-    const { data: topicClaim, error: topicClaimError } = await supabase
-      .from("sub_topic_claims")
-      .select("status")
-      .eq("sub_topic_id", normalized.topic_id)
-      .eq("user_id", user.id)
-      .in("status", ["candidate", "scripting"])
-      .maybeSingle();
-    if (topicClaimError) {
-      return NextResponse.json({ error: topicClaimError.message }, { status: 500 });
-    }
-    const topicAssociation = validateTopicClaimForSubmission(normalized.topic_id, topicClaim);
+    // V3：只校验选题真实存在且在库；排他认领已废除，允许多人同时写同一题
+    const topicAssociation = await validateTopicForSubmission(createAdminClient(), normalized.topic_id);
     if (!topicAssociation.ok) {
       return NextResponse.json({ error: topicAssociation.message }, { status: topicAssociation.status });
     }
@@ -797,8 +788,23 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 24h 数据与话题标签已落库后，尝试干货自动沉淀入库（幂等；失败不影响本次提交本身）
+  // 24h 数据与话题标签已落库后，收尾两件 V3 事项（都不影响本次提交本身）：
+  // 1) 结束该用户对此选题的正在写状态（提交失败不会走到这里，不会提前结束）；
+  // 2) 干货自动沉淀入库（幂等）。
   let topicLibraryEntry: TopicLibraryEntryOutcome | null = null;
+  try {
+    const writingEnd = await completeWritingOnSubmission(
+      createAdminClient(),
+      user.id,
+      persistedVideo.topic_id ?? normalized.topic_id ?? null,
+      persistedVideo.id,
+    );
+    if (writingEnd.ended) {
+      console.log("[video-submit] writing state completed for topic", normalized.topic_id);
+    }
+  } catch (writingError) {
+    console.error("[video-submit] complete writing state failed", writingError);
+  }
   try {
     topicLibraryEntry = await ensureInternalLibraryEntry(createAdminClient(), persistedVideo.id);
   } catch (libraryError) {
