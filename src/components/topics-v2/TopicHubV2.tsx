@@ -525,6 +525,7 @@ export function TopicHubV2({
           subTopicId={inspectTopicId}
           onClose={() => setInspectTopicId(null)}
           onOpenFeishuModal={(subTopic) => {
+            setInspectTopicId(null);
             setFeishuModalTopic(subTopic);
           }}
           onMarkWriting={handleMarkWriting}

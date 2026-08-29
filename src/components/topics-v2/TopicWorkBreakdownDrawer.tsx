@@ -498,15 +498,25 @@ export function TopicWorkBreakdownDrawer({
           )}
         </div>
 
-        {/* 底栏固定主行动：去飞书创作 */}
-        <div className="shrink-0 border-t border-[#E5E0D6] pt-4 mt-2 bg-[#FBF9F5] flex items-center justify-between gap-3">
-          <a
-            href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
-            className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
-          >
-            <span>打开独立详情页</span>
-            <ExternalLink className="size-3" />
-          </a>
+        {/* 底栏固定主行动：去飞书创作与详情/工作台入口 */}
+        <div className="shrink-0 border-t border-[#E5E0D6] pt-4 mt-2 bg-[#FBF9F5] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <a
+              href={`/topics/${encodeURIComponent(subTopicId)}`}
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
+            >
+              <span>完整详情页</span>
+              <ExternalLink className="size-3" />
+            </a>
+            <span className="text-[#E5E0D6] select-none">·</span>
+            <a
+              href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
+              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
+              title="去工作台提交日报并带入选题上下文"
+            >
+              <span>去工作台填报</span>
+            </a>
+          </div>
 
           <div className="flex items-center gap-2">
             {isMyWriting && onCancelWriting && (
