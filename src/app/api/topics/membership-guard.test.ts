@@ -12,6 +12,7 @@ import {
 
 const ROUTE_FILES = [
   "active/route.ts",
+  "bootstrap/route.ts",
   "options/route.ts",
   "pool/route.ts",
   "sub-topics/route.ts",

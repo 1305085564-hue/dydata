@@ -13,6 +13,7 @@ import {
   deleteSubTopic,
   filterTopicClaimsByScope,
   loadActiveTopics,
+  loadTopicLibraryBootstrap,
   loadTopicPool,
   loadTopicOptions,
   matchTopicGroup,
@@ -314,6 +315,50 @@ test("团队动态的最近成片明确使用视频 topic_id 关系，避免 Sup
 
   assert.equal(result.ok, true);
   assert.equal(selectCalls.find((call) => call.table === "videos")?.columns.includes("sub_topics!videos_topic_id_fkey("), true);
+});
+
+test("选题库首屏聚合读取返回动态、母题、选题池和当前在写题目 ID", async () => {
+  const calls: string[] = [];
+  const fake = {
+    from(table: string) {
+      calls.push(table);
+      const query = {
+        select() { return query; },
+        eq() { return query; },
+        not() { return query; },
+        order() { return query; },
+        limit() { return query; },
+        in() { return query; },
+        gte() { return query; },
+        then<TResult1 = { data: unknown[]; error: null }>(
+          onfulfilled?: ((value: { data: unknown[]; error: null }) => TResult1 | PromiseLike<TResult1>) | null,
+        ) {
+          return Promise.resolve({ data: [], error: null }).then(onfulfilled);
+        },
+      };
+      return query;
+    },
+  };
+
+  const result = await loadTopicLibraryBootstrap(
+    fake as never,
+    "user-1",
+    createScope(),
+  );
+
+  assert.deepEqual(result, {
+    ok: true,
+    value: {
+      active: { recentlyClaimed: [], recentlyWorked: [] },
+      options: { topics: [] },
+      pool: { items: [], pagination: { page: 1, pageSize: 50, totalItems: 0 } },
+      myWritingTopicIds: [],
+    },
+  });
+  assert.ok(calls.includes("topics"));
+  assert.ok(calls.includes("sub_topics"));
+  assert.ok(calls.filter((table) => table === "videos").length >= 1);
+  assert.ok(calls.filter((table) => table === "sub_topic_claims").length >= 2);
 });
 
 test("myClaim 只选择当前用户的有效认领，不从团队第一条认领猜测", () => {

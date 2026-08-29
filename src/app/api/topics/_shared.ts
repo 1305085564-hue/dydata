@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
+import { getCurrentUserContext } from "@/lib/current-user-context";
+import { measureAsync } from "@/lib/perf";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import type { CurrentPermissionContext } from "@/lib/current-permission-context";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -37,16 +38,21 @@ export type TopicsApiContext = {
 export async function requireTopicsContext(): Promise<
   { ok: true; context: TopicsApiContext } | { ok: false; response: NextResponse }
 > {
-  const userClient = await createClient();
-  const {
-    data: { user },
-  } = await userClient.auth.getUser();
+  // 与 getCurrentPermissionContext 复用同一个请求级用户上下文，避免每个 topics
+  // 接口重复创建客户端并再次调用 auth.getUser。
+  const { user, authError } = await measureAsync(
+    "topics.auth.userContext",
+    () => getCurrentUserContext(),
+  );
 
-  if (!user) {
+  if (authError || !user) {
     return { ok: false, response: NextResponse.json({ error: "未登录" }, { status: 401 }) };
   }
 
-  const permissionContext = await getCurrentPermissionContext();
+  const permissionContext = await measureAsync(
+    "topics.auth.permissionContext",
+    () => getCurrentPermissionContext(),
+  );
   if (!permissionContext) {
     return { ok: false, response: NextResponse.json({ error: "用户权限范围加载失败" }, { status: 403 }) };
   }

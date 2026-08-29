@@ -7,7 +7,11 @@ import { formatFeishuTopicContent } from "@/lib/topics/feishu-content";
 import { validateFeishuWorkspaceUrl } from "@/lib/topics/feishu-workspace";
 import { buildExternalMetrics, computeInternalMetrics } from "@/lib/topics/metrics";
 import { buildPoolQueryOptions, matchesTopicPoolQuery } from "@/lib/topics/service";
-import { parseClaimsResponse, parseTopicPoolResponse } from "@/lib/topics/v2-client-contract";
+import {
+  parseClaimsResponse,
+  parseTopicLibraryBootstrapResponse,
+  parseTopicPoolResponse,
+} from "@/lib/topics/v2-client-contract";
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -110,6 +114,23 @@ test("V3 真实字段在客户端解析层被完整保留，不再被丢弃", ()
   assert.deepEqual(item?.summary?.externalMetrics, { bestPlayCount: 120000, likesCount: 8000, sampleCount: 1 });
 });
 
+test("首屏聚合响应同时解析动态、母题、选题池和当前在写题目", () => {
+  const parsed = parseTopicLibraryBootstrapResponse({
+    active: { recentlyClaimed: [], recentlyWorked: [] },
+    options: { topics: [{ id: "topic-1", name: "母题一" }] },
+    pool: {
+      items: [{ id: "sub-1", title: "首屏选题" }],
+      pagination: { page: 1, pageSize: 50, totalItems: 1 },
+    },
+    myWritingTopicIds: ["sub-1", "sub-1", "", 42],
+  });
+
+  assert.equal(parsed.active.recentlyWorked.length, 0);
+  assert.deepEqual(parsed.options, [{ id: "topic-1", name: "母题一" }]);
+  assert.equal(parsed.pool.items[0]?.title, "首屏选题");
+  assert.deepEqual(parsed.myWritingTopicIds, ["sub-1"]);
+});
+
 test("多母题筛选：多个 topic_id 参数全部通过服务端校验", () => {
   const idA = "123e4567-e89b-12d3-a456-426614174001";
   const idB = "123e4567-e89b-12d3-a456-426614174002";
@@ -152,6 +173,12 @@ test("批量导入与移出/恢复只挂真实后端回调，不存在本地假�
   assert.match(importModal, /fileInfo\?\.name/);
   const contentPage = readSource("src/app/(app)/admin/content/content-page-client.tsx");
   assert.match(contentPage, /\/api\/admin\/topics-library\/toggle/);
+});
+
+test("选题库首屏使用聚合读取，不再挂载单独的 my_claims 首屏请求", () => {
+  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  assert.match(hub, /\/api\/topics\/bootstrap/);
+  assert.doesNotMatch(hub, /fetchTopicJson\(\s*["']\/api\/topics\/pool\?view=my_claims/);
 });
 
 test("更多筛选是真实可操作项，取值与服务端契约一致", () => {

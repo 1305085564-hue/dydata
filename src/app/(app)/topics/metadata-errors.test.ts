@@ -7,5 +7,5 @@ test("正式选题库入口使用 V2 组件并保留页面 metadata", () => {
 
   assert.match(source, /import \{ TopicHubV2 \} from "@\/components\/topics-v2\/TopicHubV2";/);
   assert.match(source, /title: "选题库 - DYData"/);
-  assert.match(source, /return <TopicHubV2 canManageTopicLibrary=\{canManageTopicLibrary\}( feishuWorkspaceUrl=\{feishuWorkspaceUrl\})? \/>;/);
+  assert.match(source, /<TopicHubV2[\s\S]*initialBootstrapData=\{initialBootstrapData\}[\s\S]*\/>/);
 });

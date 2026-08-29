@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import type {
   ActiveTopicsResponse,
   TopicPoolItem,
-  TopicClaimItem,
   TopicOption,
   TopicPoolView,
   TopicTimeRange,
@@ -18,10 +17,11 @@ import { DEFAULT_MORE_FILTERS } from "./types";
 import {
   fetchTopicJson,
   parseActiveTopicsResponse,
-  parseTopicOptionsResponse,
+  parseTopicLibraryBootstrapResponse,
   parseTopicPoolResponse,
   isTeamMembershipRequiredError,
   TopicRequestError,
+  type V2TopicLibraryBootstrap,
 } from "@/lib/topics/v2-client-contract";
 import {
   CheckCircle2,
@@ -65,9 +65,11 @@ const TopicCreateModal = dynamic(
 export function TopicHubV2({
   canManageTopicLibrary = false,
   feishuWorkspaceUrl = null,
+  initialBootstrapData = null,
 }: {
   canManageTopicLibrary?: boolean;
   feishuWorkspaceUrl?: string | null;
+  initialBootstrapData?: V2TopicLibraryBootstrap | null;
 }) {
   // Toast 轻反馈
   const [toastMsg, setToastMsg] = useState<{
@@ -86,21 +88,23 @@ export function TopicHubV2({
 
   // 全局数据状态
   const [activeTopics, setActiveTopics] = useState<ActiveTopicsResponse | null>(
-    null,
+    () => (initialBootstrapData?.active as unknown as ActiveTopicsResponse | undefined) ?? null,
   );
-  const [activeLoading, setActiveLoading] = useState(true);
+  const [activeLoading, setActiveLoading] = useState(!initialBootstrapData);
   const [activeError, setActiveError] = useState<string | null>(null);
 
-  const [myClaims, setMyClaims] = useState<TopicClaimItem[]>([]);
-  const [, setClaimsLoading] = useState(true);
-  const [, setClaimsError] = useState<string | null>(null);
-
-  const [poolItems, setPoolItems] = useState<TopicPoolItem[]>([]);
-  const [poolLoading, setPoolLoading] = useState(true);
+  const [poolItems, setPoolItems] = useState<TopicPoolItem[]>(
+    () => (initialBootstrapData?.pool.items as unknown as TopicPoolItem[] | undefined) ?? [],
+  );
+  const [poolLoading, setPoolLoading] = useState(!initialBootstrapData);
   const [poolError, setPoolError] = useState<string | null>(null);
-  const [poolTotalCount, setPoolTotalCount] = useState(0);
+  const [poolTotalCount, setPoolTotalCount] = useState(
+    () => initialBootstrapData?.pool.pagination.totalItems ?? 0,
+  );
 
-  const [topicsOptions, setTopicsOptions] = useState<TopicOption[]>([]);
+  const [topicsOptions, setTopicsOptions] = useState<TopicOption[]>(
+    () => (initialBootstrapData?.options as unknown as TopicOption[] | undefined) ?? [],
+  );
   const [topicsOptionsError, setTopicsOptionsError] = useState<string | null>(null);
 
   // 选题池 Query & 排序筛选选项
@@ -127,6 +131,11 @@ export function TopicHubV2({
   const [, setAuthError] = useState(false);
   const [membershipRequired, setMembershipRequired] = useState(false);
   const poolRequestId = useRef(0);
+  const [writingTopicIds, setWritingTopicIds] = useState<Set<string>>(
+    () => new Set(initialBootstrapData?.myWritingTopicIds ?? []),
+  );
+  const bootstrapRequestRef = useRef<Promise<void> | null>(null);
+  const previousPoolQueryKey = useRef<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(
@@ -153,24 +162,57 @@ export function TopicHubV2({
     return fallback;
   };
 
-  // 1. 获取母题列表
-  const fetchTopicOptions = useCallback(async () => {
-    setTopicsOptionsError(null);
-    try {
-      const data = await fetchTopicJson("/api/topics/options");
-      const parsed = parseTopicOptionsResponse(data);
-      setTopicsOptions(parsed);
+  // 首屏聚合读取：服务端一次确认身份并并行返回首屏所需数据。
+  const fetchBootstrapData = useCallback(() => {
+    if (bootstrapRequestRef.current) return bootstrapRequestRef.current;
+
+    const request = (async () => {
+      setActiveLoading(true);
+      setPoolLoading(true);
+      setActiveError(null);
+      setPoolError(null);
       setTopicsOptionsError(null);
-    } catch (err) {
-      if (isTeamMembershipRequiredError(err)) {
-        setMembershipRequired(true);
-        return;
+
+      try {
+        const parsed = parseTopicLibraryBootstrapResponse(
+          await fetchTopicJson("/api/topics/bootstrap"),
+        );
+        setActiveTopics(parsed.active);
+        setTopicsOptions(parsed.options);
+        setPoolItems(parsed.pool.items);
+        setPoolTotalCount(parsed.pool.pagination.totalItems);
+        setWritingTopicIds(new Set(parsed.myWritingTopicIds));
+        setAuthError(false);
+      } catch (err) {
+        if (isTeamMembershipRequiredError(err)) {
+          setMembershipRequired(true);
+        }
+        if (err instanceof TopicRequestError && err.status === 401) {
+          setAuthError(true);
+        }
+        const message = getErrorMessage(err, "加载选题库失败");
+        setActiveError(message);
+        setPoolError(message);
+        setTopicsOptionsError(message);
+      } finally {
+        setActiveLoading(false);
+        setPoolLoading(false);
       }
-      setTopicsOptionsError(getErrorMessage(err, "获取母题选项失败"));
-    }
+    })();
+
+    bootstrapRequestRef.current = request;
+    void request.then(
+      () => {
+        if (bootstrapRequestRef.current === request) bootstrapRequestRef.current = null;
+      },
+      () => {
+        if (bootstrapRequestRef.current === request) bootstrapRequestRef.current = null;
+      },
+    );
+    return request;
   }, []);
 
-  // 2. 获取大盘活跃数据
+  // 筛选/刷新后的大盘活跃数据
   const fetchActiveData = useCallback(async () => {
     setActiveLoading(true);
     setActiveError(null);
@@ -193,27 +235,7 @@ export function TopicHubV2({
     }
   }, []);
 
-  // 3. 获取我的认领状态列表
-  const fetchMyClaims = useCallback(async () => {
-    setClaimsLoading(true);
-    setClaimsError(null);
-    try {
-      const data = (await fetchTopicJson(
-        "/api/topics/pool?view=my_claims",
-      )) as { items?: unknown[] };
-      setMyClaims((data.items || []) as TopicClaimItem[]);
-    } catch (err) {
-      if (isTeamMembershipRequiredError(err)) {
-        setMembershipRequired(true);
-        return;
-      }
-      setClaimsError(getErrorMessage(err, "获取写作状态失败"));
-    } finally {
-      setClaimsLoading(false);
-    }
-  }, []);
-
-  // 4. 获取选题池列表
+  // 获取筛选后的选题池列表；首次进入由 bootstrap 提供，避免重复请求。
   const fetchPoolData = useCallback(async () => {
     const requestId = ++poolRequestId.current;
     setPoolLoading(true);
@@ -265,26 +287,42 @@ export function TopicHubV2({
     moreFilters,
   ]);
 
-  // 初始化加载
+  const poolQueryKey = [
+    poolPage,
+    poolView,
+    sortBy,
+    debouncedPoolSearchQuery,
+    poolTimeRange,
+    selectedTopicIds.join(","),
+    moreFilters.sourceType,
+    moreFilters.recentHeat,
+    moreFilters.durationRange,
+    moreFilters.performanceTier,
+  ].join("|");
+
+  // 初始化只走 bootstrap；筛选条件真正变化后才请求普通 pool 接口。
   useEffect(() => {
-    fetchActiveData();
-    fetchMyClaims();
-    fetchTopicOptions();
-  }, [fetchActiveData, fetchMyClaims, fetchTopicOptions]);
+    if (initialBootstrapData) return;
+    void fetchBootstrapData();
+  }, [fetchBootstrapData, initialBootstrapData]);
 
   useEffect(() => {
-    fetchPoolData();
-  }, [fetchPoolData]);
+    if (previousPoolQueryKey.current === null) {
+      previousPoolQueryKey.current = poolQueryKey;
+      return;
+    }
+    if (previousPoolQueryKey.current === poolQueryKey) return;
+    previousPoolQueryKey.current = poolQueryKey;
+    void fetchPoolData();
+  }, [fetchPoolData, poolQueryKey]);
 
-  // 刷新全量数据
+  // 刷新会变化的动态与选题列表；母题选项只在首屏读取，写入动作不会改变它。
   const refreshAll = useCallback(async () => {
     await Promise.all([
       fetchActiveData(),
-      fetchMyClaims(),
-      fetchTopicOptions(),
       fetchPoolData(),
     ]);
-  }, [fetchActiveData, fetchMyClaims, fetchTopicOptions, fetchPoolData]);
+  }, [fetchActiveData, fetchPoolData]);
 
   // 兼容性保留与旧契约映射已废除：V3 不再有 replace-claim / 候选位 / 撞车阻断
   // 开始写作（幂等；等待结果，失败返回 false，不显示成功）
@@ -294,6 +332,11 @@ export function TopicHubV2({
         `/api/topics/sub-topics/${subTopicId}/start-scripting`,
         { method: "POST" },
       );
+      setWritingTopicIds((current) => {
+        const next = new Set(current);
+        next.add(subTopicId);
+        return next;
+      });
       showToast("已将选题加入在写清单", "success");
       await refreshAll();
       return true;
@@ -310,6 +353,11 @@ export function TopicHubV2({
       await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/return`, {
         method: "POST",
       });
+      setWritingTopicIds((current) => {
+        const next = new Set(current);
+        next.delete(subTopicId);
+        return next;
+      });
       showToast("已取消写作状态", "success");
       await refreshAll();
     } catch (err) {
@@ -318,13 +366,11 @@ export function TopicHubV2({
     }
   };
 
-  // 当前弹窗选题的真实「我在写」状态（来自 my_claims 服务端数据，不做本地伪装）
+  // 当前弹窗选题的真实「我在写」状态：首屏快照 + 成功写作动作共同维护。
   const isWritingSelected = feishuModalTopic
-    ? myClaims.some((item) => {
-      const claim = (item as { myClaim?: { status?: string; subTopicId?: string } }).myClaim;
-      const subTopicId = claim?.subTopicId ?? (item as { id?: string }).id ?? (item as { subTopicId?: string }).subTopicId;
-      return subTopicId === feishuModalTopic.id && claim?.status === "writing";
-    })
+    ? feishuModalTopic.isWritingByMe === true
+      || feishuModalTopic.myClaim?.status === "writing"
+      || writingTopicIds.has(feishuModalTopic.id)
     : false;
 
   // 管理员通道：外部干货批量导入（真实解析与导入接口）

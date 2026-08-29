@@ -155,6 +155,13 @@ export interface V2TopicOption {
   name: string;
 }
 
+export interface V2TopicLibraryBootstrap {
+  active: V2ActiveTopicsResponse;
+  options: V2TopicOption[];
+  pool: V2PoolResponse;
+  myWritingTopicIds: string[];
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -286,6 +293,21 @@ export function parseTopicOptionsResponse(value: unknown): V2TopicOption[] {
     const name = nullableString(topic.name);
     return id && name ? [{ id, name }] : [];
   });
+}
+
+export function parseTopicLibraryBootstrapResponse(value: unknown): V2TopicLibraryBootstrap {
+  if (!isRecord(value)) throw new Error("选题库首屏接口返回结构无效");
+  const rawWritingIds = Array.isArray(value.myWritingTopicIds)
+    ? value.myWritingTopicIds
+    : [];
+  return {
+    active: parseActiveTopicsResponse(value.active),
+    options: parseTopicOptionsResponse(value.options),
+    pool: parseTopicPoolResponse(value.pool),
+    myWritingTopicIds: Array.from(new Set(
+      rawWritingIds.filter((id): id is string => typeof id === "string" && Boolean(id.trim())),
+    )),
+  };
 }
 
 function parseSummary(value: unknown): V2WorkSummary | null {
