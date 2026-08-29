@@ -296,12 +296,12 @@ export function TopicWorkBreakdownDrawer({
               {(subTopicInfo?.hook || subTopicInfo?.outline) && (
                 <section className="space-y-3">
                   {subTopicInfo?.hook && (
-                    <div className="rounded-xl border border-[#D97757]/20 bg-[#FAF8F4] p-3.5 space-y-1">
-                      <div className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
-                        <Sparkles className="size-3.5 text-[#D97757]" />
+                    <div className="border-l-2 border-[#D97757]/60 pl-3.5 py-1 bg-gradient-to-r from-[#F5F3EE]/70 to-transparent rounded-r-xl space-y-1">
+                      <div className="text-[11px] font-medium text-[#78716C] flex items-center gap-1.5">
+                        <Sparkles className="size-3 text-[#D97757]" />
                         <span>一句话立意 Hook</span>
                       </div>
-                      <p className="text-xs text-[#292524] leading-relaxed">
+                      <p className="text-[13px] font-serif not-italic text-[#292524] leading-relaxed tracking-tight">
                         “{subTopicInfo.hook}”
                       </p>
                     </div>
@@ -348,7 +348,7 @@ export function TopicWorkBreakdownDrawer({
                   <div className="grid grid-cols-3 gap-3 text-center text-xs">
                     <div>
                       <div className="text-[11px] text-[#78716C]">最高播放</div>
-                      <div className="text-base font-semibold text-[#D97757] tabular-nums mt-0.5">
+                      <div className="text-base font-semibold text-[#1C1917] tabular-nums mt-0.5">
                         {bestPlay !== null
                           ? bestPlay >= 10000
                             ? `${(bestPlay / 10000).toFixed(1)}万`

@@ -249,7 +249,7 @@ export function FeishuCreationModal({
                 readOnly
                 value={contentText}
                 rows={6}
-                className="w-full rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/70 p-3 text-xs leading-relaxed text-[#292524] font-mono focus:bg-white focus:outline-none focus:border-[#78716C] select-all resize-none shadow-2xs"
+                className="w-full rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/70 p-3 text-xs leading-relaxed text-[#292524] font-sans focus:bg-white focus:outline-none focus:border-[#78716C] select-all resize-none shadow-2xs"
               />
             </div>
           </div>
