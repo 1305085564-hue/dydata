@@ -27,6 +27,7 @@ import type {
   TopicTimeRange,
   TopicMoreFiltersState,
 } from "./types";
+import { DEFAULT_MORE_FILTERS } from "./types";
 
 export type SortByOption =
   | "latest"
@@ -59,9 +60,7 @@ export interface TopicPoolExplorerProps {
   onRetry: () => void;
   onOpenFeishuModal: (topic: TopicPoolItem) => void;
   onSelectTopic: (subTopicId: string) => void;
-  onCreateClick?: () => void;
   onBatchImportClick?: () => void;
-  claimDrawerSlot?: React.ReactNode;
 }
 
 export function TopicPoolExplorer({
@@ -75,21 +74,20 @@ export function TopicPoolExplorer({
   currentView: _currentView,
   currentTimeRange,
   selectedTopicIds,
-  moreFilters: _moreFilters,
+  moreFilters,
   sortBy,
   isAdmin = false,
   onPageChange,
   onViewChange: _onViewChange,
   onTimeRangeChange,
   onTopicIdsChange,
-  onMoreFiltersChange: _onMoreFiltersChange,
+  onMoreFiltersChange,
   onOpenMoreFilters,
   onSortByChange,
   onSearchQueryChange,
   onRetry,
   onOpenFeishuModal,
   onSelectTopic,
-  onCreateClick: _onCreateClick,
   onBatchImportClick,
 }: TopicPoolExplorerProps) {
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
@@ -136,17 +134,31 @@ export function TopicPoolExplorer({
     }
   };
 
-  // 仅在有真实支持的筛选被激活时显示已选标签条 (母题、时间范围、搜索词)
+  // 仅在有真实支持的筛选被激活时显示已选标签条 (母题、时间、搜索、来源、近7天热度、时长、历史成绩)
   const hasRealActiveFilters =
     selectedTopicIds.length > 0 ||
     currentTimeRange !== "all" ||
-    searchQuery.trim().length > 0;
+    searchQuery.trim().length > 0 ||
+    moreFilters.sourceType !== "all" ||
+    moreFilters.recentHeat !== "all" ||
+    moreFilters.durationRange !== "all" ||
+    moreFilters.performanceTier !== "all";
 
   const handleClearAllFilters = () => {
     onTopicIdsChange([]);
     onTimeRangeChange("all");
     onSearchQueryChange("");
+    onMoreFiltersChange({ ...DEFAULT_MORE_FILTERS });
   };
+
+  const sourceTypeLabel = (v: TopicMoreFiltersState["sourceType"]) =>
+    v === "internal" ? "内部来源" : v === "external" ? "外部来源" : "";
+  const recentHeatLabel = (v: TopicMoreFiltersState["recentHeat"]) =>
+    v === "has_participants" ? "近7天有参与" : v === "has_completed" ? "近7天有完成" : v === "has_in_progress" ? "近7天有在写" : v === "no_participants" ? "近7天暂无参与" : "";
+  const durationLabel = (v: TopicMoreFiltersState["durationRange"]) =>
+    v === "under_2m" ? "2分钟内" : v === "2_5m" ? "2-5分钟" : v === "over_5m" ? "5分钟以上" : "";
+  const performanceLabel = (v: TopicMoreFiltersState["performanceTier"]) =>
+    v === "high_best_play" ? "最高播放≥10万" : v === "high_qualified" ? "有达标作品" : v === "high_avg_play" ? "均播≥3万" : "";
 
   return (
     <section
@@ -424,6 +436,60 @@ export function TopicPoolExplorer({
             </span>
           )}
 
+          {/* 「更多」高级筛选标签 */}
+          {moreFilters.sourceType !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>{sourceTypeLabel(moreFilters.sourceType)}</span>
+              <button
+                type="button"
+                onClick={() => onMoreFiltersChange({ ...moreFilters, sourceType: "all" })}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                aria-label="移除来源筛选"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+          {moreFilters.recentHeat !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>{recentHeatLabel(moreFilters.recentHeat)}</span>
+              <button
+                type="button"
+                onClick={() => onMoreFiltersChange({ ...moreFilters, recentHeat: "all" })}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                aria-label="移除近7天热度筛选"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+          {moreFilters.durationRange !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>{durationLabel(moreFilters.durationRange)}</span>
+              <button
+                type="button"
+                onClick={() => onMoreFiltersChange({ ...moreFilters, durationRange: "all" })}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                aria-label="移除时长筛选"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+          {moreFilters.performanceTier !== "all" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] px-2 py-0.5 text-xs text-[#292524]">
+              <span>{performanceLabel(moreFilters.performanceTier)}</span>
+              <button
+                type="button"
+                onClick={() => onMoreFiltersChange({ ...moreFilters, performanceTier: "all" })}
+                className="text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                aria-label="移除历史成绩筛选"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          )}
+
           {/* 一键清空全部 */}
           <button
             type="button"
@@ -572,7 +638,7 @@ export function TopicPoolExplorer({
                 {/* 底栏：近 7 天参与热度 + 去飞书创作主行动 */}
                 <div className="pt-2 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto">
                   <div className="text-[11.5px] text-[#78716C] truncate">
-                    <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "0 人参与"}</span>
+                    <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
                     {(inProgressCount ?? 0) > 0 && (
                       <span className="text-[#43718E] ml-1">
                         · {inProgressCount}人在写

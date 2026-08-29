@@ -5,8 +5,6 @@ import type { DataAccessScope } from "../data-access-scope";
 import {
   buildClaimActivity,
   buildMyClaim,
-  buildTopicComparisonQueryOptions,
-  buildTopicComparisonRows,
   buildPoolQueryOptions,
   computeRecent7dHeat,
   sortTopicPoolItems,
@@ -17,6 +15,7 @@ import {
   loadTopicPool,
   loadTopicOptions,
   matchTopicGroup,
+  matchesPostFilters,
   rankSuggestedSubTopics,
   startWritingClaim,
   validateRecommendationSubTopicInput,
@@ -144,6 +143,23 @@ test("取消写作：只有 writing 能取消，cancelled/无记录时返回 404
   const missing = await cancelWritingClaim(client, "user-1", "sub-2");
   assert.equal(missing.ok, false);
   if (!missing.ok) assert.equal(missing.status, 404);
+});
+
+test("「更多」后置过滤：近 7 天热度与历史成绩基于真实计算值执行", () => {
+  const item = {
+    recent7dParticipants: 0,
+    recent7dCompletedCount: 0,
+    recent7dInProgressCount: 0,
+    summary: { bestPlayCount: 50000, qualifiedWorkCount: 1, averagePlayCount: 20000 },
+  };
+  assert.equal(matchesPostFilters(item, { recentHeat: "has_participants" }), false);
+  assert.equal(matchesPostFilters(item, { recentHeat: "no_participants" }), true);
+  assert.equal(matchesPostFilters(item, { performance: "high_qualified" }), true);
+  assert.equal(matchesPostFilters(item, { performance: "high_best_play" }), false);
+  assert.equal(matchesPostFilters(item, { performance: "high_avg_play" }), false);
+  const hot = { ...item, recent7dParticipants: 3, recent7dCompletedCount: 2 };
+  assert.equal(matchesPostFilters(hot, { recentHeat: "has_completed" }), true);
+  assert.equal(matchesPostFilters(hot, { recentHeat: "has_in_progress" }), false);
 });
 
 test("七天热度口径：完成与在写分别计数，同一人并集去重", () => {
@@ -628,73 +644,7 @@ test("写作动态只统计 writing 并隐藏范围外身份，旧键统一为�
   ]);
 });
 
-test("横向对比按账号和母题聚合，按达标率排序并标记小样本", () => {
-  const rows = buildTopicComparisonRows(
-    [
-      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 30000 },
-      { topicId: "topic-1", topicName: "美妆", accountId: "account-1", accountName: "A号", playCount: 50000 },
-      { topicId: "topic-1", topicName: "美妆", accountId: "account-2", accountName: "B号", playCount: 29999 },
-      { topicId: "topic-2", topicName: "穿搭", accountId: "account-1", accountName: "A号", playCount: 35000 },
-    ],
-    "account",
-  );
 
-  assert.deepEqual(rows, [
-    {
-      topicId: "topic-1",
-      topicName: "美妆",
-      accountId: "account-1",
-      accountName: "A号",
-      workCount: 2,
-      qualifiedCount: 2,
-      qualifiedRate: 1,
-      avgPlayCount: 40000,
-      bestPlayCount: 50000,
-      lowConfidence: true,
-    },
-    {
-      topicId: "topic-2",
-      topicName: "穿搭",
-      accountId: "account-1",
-      accountName: "A号",
-      workCount: 1,
-      qualifiedCount: 1,
-      qualifiedRate: 1,
-      avgPlayCount: 35000,
-      bestPlayCount: 35000,
-      lowConfidence: true,
-    },
-    {
-      topicId: "topic-1",
-      topicName: "美妆",
-      accountId: "account-2",
-      accountName: "B号",
-      workCount: 1,
-      qualifiedCount: 0,
-      qualifiedRate: 0,
-      avgPlayCount: 29999,
-      bestPlayCount: 29999,
-      lowConfidence: true,
-    },
-  ]);
-});
-
-test("横向对比参数只接受两种维度、有效天数和合法母题 ID", () => {
-  assert.deepEqual(buildTopicComparisonQueryOptions(new URLSearchParams()), {
-    ok: true,
-    options: { dimension: "topic", days: 30, topicId: null },
-  });
-  assert.deepEqual(buildTopicComparisonQueryOptions(new URLSearchParams("dimension=video")), {
-    ok: false,
-    status: 400,
-    message: "dimension 只能是 topic 或 account",
-  });
-  assert.deepEqual(buildTopicComparisonQueryOptions(new URLSearchParams("days=0")), {
-    ok: false,
-    status: 400,
-    message: "days 必须是 1 到 90 之间的整数",
-  });
-});
 
 test("采纳 AI 建议要求标题和切入角度，并保留可选分类和标签", () => {
   assert.deepEqual(validateRecommendationSubTopicInput({ title: "AI 选题", angle: "从反差切入", category: "常规母题", emotion_tag: "紧迫", audience: "新手" }), {

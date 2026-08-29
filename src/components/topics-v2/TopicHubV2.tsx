@@ -224,9 +224,15 @@ export function TopicHubV2({
     if (debouncedPoolSearchQuery) params.set("q", debouncedPoolSearchQuery);
     if (poolTimeRange !== "all") params.set("time_range", poolTimeRange);
 
-    if (selectedTopicIds.length > 0) {
-      params.set("topic_id", selectedTopicIds.join(","));
+    // 多母题筛选：逐个 topic_id 参数发送，与服务端 getAll("topic_id") 契约一致
+    for (const topicId of selectedTopicIds) {
+      params.append("topic_id", topicId);
     }
+    // 「更多」高级筛选：全部真实进入请求并由服务端执行
+    if (moreFilters.sourceType !== "all") params.set("source_type", moreFilters.sourceType);
+    if (moreFilters.recentHeat !== "all") params.set("recent_heat", moreFilters.recentHeat);
+    if (moreFilters.durationRange !== "all") params.set("duration_range", moreFilters.durationRange);
+    if (moreFilters.performanceTier !== "all") params.set("performance", moreFilters.performanceTier);
 
     try {
       const data = await fetchTopicJson(`/api/topics/pool?${params.toString()}`);
@@ -253,6 +259,7 @@ export function TopicHubV2({
     debouncedPoolSearchQuery,
     poolTimeRange,
     selectedTopicIds,
+    moreFilters,
   ]);
 
   // 初始化加载

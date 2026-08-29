@@ -33,9 +33,14 @@ export interface V2SubTopic {
   group_id?: string | null;
   emotion_tag?: string | null;
   source?: string | null;
+  source_type?: "internal" | "external" | null;
+  duration_seconds?: number | null;
+  duration_range?: "under_2m" | "2_5m" | "over_5m" | null;
   audience?: string | null;
+  outline?: string | string[] | null;
   created_by?: string | null;
   created_at?: string | null;
+  library_status?: "in_library" | "removed" | null;
   topics?: { id: string; name: string } | null;
   topic_groups?: { id: string; name: string } | null;
   myClaim: V2Claim | null;
@@ -45,27 +50,19 @@ export interface V2TopicPoolItem extends V2SubTopic {
   claimCount: number;
   candidateCount: number;
   scriptingCount: number;
+  inProgressCount: number;
   workCount: number;
   summary: V2WorkSummary | null;
   score?: number | null;
   daysSinceLastWork?: number | null;
+  isWritingByMe?: boolean;
+  recent7dParticipants?: number;
+  recent7dCompletedCount?: number;
+  recent7dInProgressCount?: number;
 }
 
 export interface V2Suggestion extends V2SubTopic {
   score?: number;
-}
-
-export interface V2ComparisonRow {
-  topicId?: string;
-  topicName?: string;
-  accountId?: string | null;
-  accountName?: string | null;
-  workCount: number;
-  qualifiedCount: number;
-  qualifiedRate: number;
-  avgPlayCount: number;
-  bestPlayCount: number;
-  lowConfidence: boolean;
 }
 
 export interface V2WorkItem {
@@ -84,6 +81,17 @@ export interface V2WorkSummary {
   bestPlayCount: number | null;
   bestCopy: string | null;
   latestCopy: string | null;
+  internalMetrics?: {
+    bestPlayCount: number | null;
+    averagePlayCount: number | null;
+    qualifiedWorkCount: number;
+    workCount: number;
+  } | null;
+  externalMetrics?: {
+    bestPlayCount: number | null;
+    likesCount: number | null;
+    sampleCount: number | null;
+  } | null;
 }
 
 export interface V2WorksResponse {
@@ -130,13 +138,6 @@ export interface V2RecentlyWorked {
 export interface V2ActiveTopicsResponse {
   recentlyClaimed: V2ActivityClaim[];
   recentlyWorked: V2RecentlyWorked[];
-}
-
-export interface V2ComparisonResponse {
-  dimension: "topic" | "account";
-  windowDays: number;
-  rows: V2ComparisonRow[];
-  sampleTotal: number;
 }
 
 export interface V2PoolResponse {
@@ -198,9 +199,26 @@ function parseClaim(value: unknown, fallbackSubTopicId?: string): V2Claim | null
   };
 }
 
+function parseOutline(value: unknown): string | string[] | null {
+  if (typeof value === "string" && value.trim()) return value;
+  if (Array.isArray(value)) {
+    const parts = value.filter((item): item is string => typeof item === "string" && Boolean(item.trim()));
+    return parts.length ? parts : null;
+  }
+  return null;
+}
+
+function parseDurationRange(seconds: number | null): "under_2m" | "2_5m" | "over_5m" | null {
+  if (seconds === null) return null;
+  if (seconds < 120) return "under_2m";
+  if (seconds <= 300) return "2_5m";
+  return "over_5m";
+}
+
 export function parseSubTopicResponse(value: unknown): V2SubTopic {
   if (!isRecord(value)) throw new Error("选题接口返回的子题结构无效");
   const id = requiredString(value.id, "id");
+  const durationSeconds = nullableNumber(value.duration_seconds);
   return {
     id,
     title: requiredString(value.title, "title"),
@@ -209,9 +227,14 @@ export function parseSubTopicResponse(value: unknown): V2SubTopic {
     group_id: nullableString(value.group_id),
     emotion_tag: nullableString(value.emotion_tag),
     source: nullableString(value.source),
+    source_type: value.source_type === "external" ? "external" : value.source_type === "internal" ? "internal" : null,
+    duration_seconds: durationSeconds,
+    duration_range: parseDurationRange(durationSeconds),
     audience: nullableString(value.audience),
+    outline: parseOutline(value.outline),
     created_by: nullableString(value.created_by),
     created_at: nullableString(value.created_at),
+    library_status: value.library_status === "removed" ? "removed" : value.library_status === "in_library" ? "in_library" : null,
     topics: parseTopicReference(value.topics),
     topic_groups: parseTopicReference(value.topic_groups),
     myClaim: parseClaim(value.myClaim, id),
@@ -262,12 +285,29 @@ export function parseTopicOptionsResponse(value: unknown): V2TopicOption[] {
 
 function parseSummary(value: unknown): V2WorkSummary | null {
   if (!isRecord(value)) return null;
+  const internalMetrics = isRecord(value.internalMetrics)
+    ? {
+        bestPlayCount: nullableNumber(value.internalMetrics.bestPlayCount),
+        averagePlayCount: nullableNumber(value.internalMetrics.averagePlayCount),
+        qualifiedWorkCount: numberOr(value.internalMetrics.qualifiedWorkCount, 0),
+        workCount: numberOr(value.internalMetrics.workCount, 0),
+      }
+    : null;
+  const externalMetrics = isRecord(value.externalMetrics)
+    ? {
+        bestPlayCount: nullableNumber(value.externalMetrics.bestPlayCount),
+        likesCount: nullableNumber(value.externalMetrics.likesCount),
+        sampleCount: nullableNumber(value.externalMetrics.sampleCount),
+      }
+    : null;
   return {
     qualifiedWorkCount: numberOr(value.qualifiedWorkCount, 0),
     averagePlayCount: nullableNumber(value.averagePlayCount),
     bestPlayCount: nullableNumber(value.bestPlayCount),
     bestCopy: nullableString(value.bestCopy),
     latestCopy: nullableString(value.latestCopy),
+    internalMetrics,
+    externalMetrics,
   };
 }
 
@@ -320,10 +360,15 @@ export function parseTopicPoolResponse(value: unknown): V2PoolResponse {
           claimCount: numberOr(item.claimCount, 0),
           candidateCount: numberOr(item.candidateCount, 0),
           scriptingCount: numberOr(item.scriptingCount, 0),
+          inProgressCount: numberOr(item.inProgressCount, 0),
           workCount: numberOr(item.workCount, 0),
           summary: parseSummary(item.summary),
           score: nullableNumber(item._score),
           daysSinceLastWork: nullableNumber(item._daysSinceLastWork),
+          isWritingByMe: item.isWritingByMe === true,
+          recent7dParticipants: numberOr(item.recent7dParticipants, 0),
+          recent7dCompletedCount: numberOr(item.recent7dCompletedCount, 0),
+          recent7dInProgressCount: numberOr(item.recent7dInProgressCount, 0),
         }];
       })
     : [];
@@ -437,35 +482,6 @@ export function parseClaimsResponse(value: unknown): V2ClaimsResponse {
     claims,
     candidateCount: numberOr(value.candidateCount, inProgress),
     scriptingCount: numberOr(value.scriptingCount, inProgress),
-  };
-}
-
-export function parseComparisonResponse(value: unknown): V2ComparisonResponse {
-  if (!isRecord(value) || (value.dimension !== "topic" && value.dimension !== "account")) {
-    throw new Error("横向对比接口返回结构无效");
-  }
-  const rows = Array.isArray(value.rows)
-    ? value.rows.flatMap((row) => {
-        if (!isRecord(row)) return [];
-        return [{
-          topicId: nullableString(row.topicId) ?? undefined,
-          topicName: nullableString(row.topicName) ?? undefined,
-          accountId: nullableString(row.accountId),
-          accountName: nullableString(row.accountName),
-          workCount: numberOr(row.workCount, 0),
-          qualifiedCount: numberOr(row.qualifiedCount, 0),
-          qualifiedRate: numberOr(row.qualifiedRate, 0),
-          avgPlayCount: numberOr(row.avgPlayCount, 0),
-          bestPlayCount: numberOr(row.bestPlayCount, 0),
-          lowConfidence: row.lowConfidence === true,
-        }];
-      })
-    : [];
-  return {
-    dimension: value.dimension,
-    windowDays: numberOr(value.windowDays, 30),
-    rows,
-    sampleTotal: numberOr(value.sampleTotal, 0),
   };
 }
 

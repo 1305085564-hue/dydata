@@ -12,6 +12,7 @@ import {
   Info,
 } from "lucide-react";
 import type { SubTopicItem } from "./types";
+import { formatFeishuTopicContent } from "@/lib/topics/feishu-content";
 
 interface FeishuCreationModalProps {
   isOpen: boolean;
@@ -39,37 +40,15 @@ export function FeishuCreationModal({
 
   const getFormattedContent = useCallback(() => {
     if (!topic) return "";
-    const proofLines: string[] = [];
-    const summary = topic.summary;
-    if (summary) {
-      if (typeof summary.bestPlayCount === "number") {
-        proofLines.push(`团队最高播放 ${summary.bestPlayCount.toLocaleString()}`);
-      }
-      if (summary.internalMetrics?.qualifiedWorkCount) {
-        proofLines.push(`达标作品（≥3万播放）${summary.internalMetrics.qualifiedWorkCount} 条`);
-      }
-      if (typeof summary.externalMetrics?.bestPlayCount === "number") {
-        proofLines.push(`外部历史播放 ${summary.externalMetrics.bestPlayCount.toLocaleString()}`);
-      }
-    }
-
-    const lines: string[] = [
-      `【选题名称】：${topic.title}`,
-      topic.topics?.name ? `【所属母题】：${topic.topics.name}` : "",
-      topic.hook ? `【一句话钩子】：${topic.hook}` : "",
-      topic.audience ? `【目标受众】：${topic.audience}` : "",
-      topic.outline
-        ? typeof topic.outline === "string"
-          ? `【内容提纲】：\n${topic.outline}`
-          : Array.isArray(topic.outline)
-            ? `【内容提纲】：\n${topic.outline.map((p, i) => `${i + 1}. ${p}`).join("\n")}`
-            : ""
-        : "",
-      proofLines.length ? `【数据证明】：\n${proofLines.map((line) => `- ${line}`).join("\n")}` : "",
-      `【来源】：${topic.source_type === "external" ? "外部收集干货" : "团队内部已验证"}`,
-    ].filter(Boolean);
-
-    return lines.join("\n\n");
+    return formatFeishuTopicContent({
+      title: topic.title,
+      hook: topic.hook,
+      topicName: topic.topics?.name,
+      audience: topic.audience,
+      outline: topic.outline,
+      sourceType: topic.source_type ?? null,
+      summary: topic.summary ?? null,
+    });
   }, [topic]);
 
   const copyToClipboard = useCallback(async () => {

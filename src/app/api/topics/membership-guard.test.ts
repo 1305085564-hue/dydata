@@ -12,7 +12,6 @@ import {
 
 const ROUTE_FILES = [
   "active/route.ts",
-  "comparison/route.ts",
   "options/route.ts",
   "pool/route.ts",
   "sub-topics/route.ts",
@@ -43,7 +42,7 @@ function contextFor(membershipStatus: unknown, teamId: string | null) {
   };
 }
 
-test("13 个 topics 路由统一接入 active team membership 守卫", async () => {
+test("12 个 topics 路由统一接入 active team membership 守卫", async () => {
   const identities = [
     {
       label: "未登录",

@@ -208,15 +208,19 @@ export function TopicWorkBreakdownDrawer({
 
   const isMyWriting = subTopicInfo?.myClaim?.status === "writing";
 
-  // 计算近 7 天参与去重人数（有真实值才计算，杜绝猜数或补造数据）
-  const scriptingCount = claimsData?.scriptingCount ?? 0;
-  const completedCount = worksData?.pagination.totalItems ?? 0;
+  // 近 7 天热度三值：只使用服务端唯一口径数据，缺失显示未知态，不回退累计认领或全部作品数
   const total7dParticipants =
-    claimsData?.claims && claimsData.claims.length > 0
-      ? claimsData.claims.length
-      : scriptingCount > 0
-        ? scriptingCount
-        : 0;
+    typeof claimsData?.recent7dSummary?.totalParticipants === "number"
+      ? claimsData.recent7dSummary.totalParticipants
+      : null;
+  const completed7dCount =
+    typeof claimsData?.recent7dSummary?.completedCount === "number"
+      ? claimsData.recent7dSummary.completedCount
+      : null;
+  const inProgress7dCount =
+    typeof claimsData?.recent7dSummary?.inProgressCount === "number"
+      ? claimsData.recent7dSummary.inProgressCount
+      : null;
 
   // 历史指标严格读取真实字段，不存在则统一显示 null / "—"
   const bestPlay = worksData?.summary?.bestPlayCount ?? null;
@@ -398,21 +402,21 @@ export function TopicWorkBreakdownDrawer({
                     <span>近 7 天参与热度</span>
                   </h4>
                   <span className="text-xs text-[#D97757] font-semibold tabular-nums">
-                    近 7 天 {total7dParticipants} 人参与
+                    近 7 天 {total7dParticipants !== null ? `${total7dParticipants} 人参与` : "—"}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#ECE7DE] bg-white p-3.5 text-xs text-center">
                   <div className="border-r border-[#ECE7DE]">
-                    <div className="text-[11px] text-[#78716C]">已写完成片</div>
+                    <div className="text-[11px] text-[#78716C]">近 7 天已写完</div>
                     <div className="text-base font-semibold text-[#6FAA7D] tabular-nums mt-0.5">
-                      {completedCount} 人
+                      {completed7dCount !== null ? `${completed7dCount} 人` : "—"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-[#78716C]">当前仍在写</div>
+                    <div className="text-[11px] text-[#78716C]">近 7 天仍在写</div>
                     <div className="text-base font-semibold text-[#43718E] tabular-nums mt-0.5">
-                      {scriptingCount} 人
+                      {inProgress7dCount !== null ? `${inProgress7dCount} 人` : "—"}
                     </div>
                   </div>
                 </div>

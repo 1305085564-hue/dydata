@@ -1,6 +1,5 @@
 export type TopicPoolView = "all" | "my_claims" | "my_created";
 export type TopicTimeRange = "3d" | "1w" | "1m" | "3m" | "all";
-export type TopicComparisonDimension = "topic" | "account";
 
 export interface TopicOption {
   id: string;
@@ -48,9 +47,8 @@ export interface TopicWorkSummary {
   } | null;
   externalMetrics?: {
     bestPlayCount: number | null;
-    averagePlayCount: number | null;
     likesCount: number | null;
-    sampleCount?: number;
+    sampleCount: number | null;
   } | null;
 }
 
@@ -127,19 +125,6 @@ export interface ActiveTopicsResponse {
     uploadedAt: string | null;
     subTopic: SubTopicItem | null;
   }>;
-}
-
-export interface TopicComparisonItem {
-  topicId?: string;
-  topicName?: string;
-  accountId?: string | null;
-  accountName?: string | null;
-  workCount: number;
-  qualifiedCount: number;
-  qualifiedRate: number;
-  avgPlayCount: number;
-  bestPlayCount: number;
-  lowConfidence: boolean;
 }
 
 // V3 高级筛选状态

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DataAccessScope } from "@/lib/data-access-scope";
 import { measureAsync } from "@/lib/perf";
-import { buildExternalMetrics, computeInternalMetrics, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
+import { buildExternalMetrics, computeInternalMetrics, TOPIC_LIBRARY_QUALIFY_PLAY_COUNT, type TopicInternalMetrics, type TopicExternalMetrics } from "./metrics";
 
 export const TOPIC_POOL_VIEWS = [
   "all",
@@ -15,14 +15,12 @@ export const TOPIC_TIME_RANGES = ["3d", "1w", "1m", "3m", "all"] as const;
 export const TOPIC_CLAIM_STATUSES = ["writing", "cancelled", "completed"] as const;
 export const TOPIC_WORK_SORTS = ["best", "recent"] as const;
 export const TOPIC_POOL_SORTS = ["latest", "avg_play", "best_play", "recent_heat"] as const;
-export const TOPIC_COMPARISON_DIMENSIONS = ["topic", "account"] as const;
 
 export type TopicPoolView = (typeof TOPIC_POOL_VIEWS)[number];
 export type TopicTimeRange = (typeof TOPIC_TIME_RANGES)[number];
 export type TopicClaimStatus = (typeof TOPIC_CLAIM_STATUSES)[number];
 export type TopicWorkSort = (typeof TOPIC_WORK_SORTS)[number];
 export type TopicPoolSort = (typeof TOPIC_POOL_SORTS)[number];
-export type TopicComparisonDimension = (typeof TOPIC_COMPARISON_DIMENSIONS)[number];
 
 type TopicSupabase = SupabaseClient;
 
@@ -65,6 +63,21 @@ export interface TopicWorkSummary {
   externalMetrics?: TopicExternalMetrics | null;
 }
 
+export const TOPIC_SOURCE_TYPES = ["internal", "external"] as const;
+export const TOPIC_DURATION_RANGES = ["under_2m", "2_5m", "over_5m"] as const;
+export const TOPIC_RECENT_HEAT_FILTERS = [
+  "has_participants",
+  "has_completed",
+  "has_in_progress",
+  "no_participants",
+] as const;
+export const TOPIC_PERFORMANCE_TIERS = ["high_best_play", "high_qualified", "high_avg_play"] as const;
+
+export type TopicSourceType = (typeof TOPIC_SOURCE_TYPES)[number];
+export type TopicDurationRange = (typeof TOPIC_DURATION_RANGES)[number];
+export type TopicRecentHeatFilter = (typeof TOPIC_RECENT_HEAT_FILTERS)[number];
+export type TopicPerformanceTier = (typeof TOPIC_PERFORMANCE_TIERS)[number];
+
 export interface TopicPoolQueryOptions {
   view: TopicPoolView;
   timeRange: TopicTimeRange;
@@ -73,20 +86,10 @@ export interface TopicPoolQueryOptions {
   pageSize: number;
   q?: string | null;
   sort?: TopicPoolSort;
-}
-
-export interface TopicComparisonQueryOptions {
-  dimension: TopicComparisonDimension;
-  days: number;
-  topicId: string | null;
-}
-
-export interface TopicComparisonInputRow {
-  topicId: string;
-  topicName: string;
-  accountId: string | null;
-  accountName: string | null;
-  playCount: number;
+  sourceType?: TopicSourceType;
+  recentHeat?: TopicRecentHeatFilter;
+  durationRange?: TopicDurationRange;
+  performance?: TopicPerformanceTier;
 }
 
 export type ApiFailure = {
@@ -254,6 +257,27 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
 
   const query = normalizeText(searchParams.get("q"), 100);
 
+  const sourceType = searchParams.get("source_type") ?? undefined;
+  if (sourceType && !isOneOf(TOPIC_SOURCE_TYPES, sourceType)) {
+    return { ok: false, status: 400, message: "source_type 只能是 internal 或 external" };
+  }
+  const recentHeat = searchParams.get("recent_heat") ?? undefined;
+  if (recentHeat && !isOneOf(TOPIC_RECENT_HEAT_FILTERS, recentHeat)) {
+    return {
+      ok: false,
+      status: 400,
+      message: "recent_heat 只能是 has_participants、has_completed、has_in_progress 或 no_participants",
+    };
+  }
+  const durationRange = searchParams.get("duration_range") ?? undefined;
+  if (durationRange && !isOneOf(TOPIC_DURATION_RANGES, durationRange)) {
+    return { ok: false, status: 400, message: "duration_range 只能是 under_2m、2_5m 或 over_5m" };
+  }
+  const performance = searchParams.get("performance") ?? undefined;
+  if (performance && !isOneOf(TOPIC_PERFORMANCE_TIERS, performance)) {
+    return { ok: false, status: 400, message: "performance 只能是 high_best_play、high_qualified 或 high_avg_play" };
+  }
+
   return {
     ok: true,
     options: {
@@ -264,8 +288,45 @@ export function buildPoolQueryOptions(searchParams: URLSearchParams):
       pageSize: normalizePositiveInteger(searchParams.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
       ...(query ? { q: query } : {}),
       ...(sort ? { sort } : {}),
+      ...(sourceType ? { sourceType: sourceType as TopicSourceType } : {}),
+      ...(recentHeat ? { recentHeat: recentHeat as TopicRecentHeatFilter } : {}),
+      ...(durationRange ? { durationRange: durationRange as TopicDurationRange } : {}),
+      ...(performance ? { performance: performance as TopicPerformanceTier } : {}),
     },
   };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFilterBuilder = { lt: (col: string, val: number) => any; gte: (col: string, val: number) => any; lte: (col: string, val: number) => any; gt: (col: string, val: number) => any };
+
+/** 视频时长区间过滤（真实秒数，无时长数据不归入任何区间）。 */
+function applyDurationRangeFilter<T extends AnyFilterBuilder>(query: T, durationRange: TopicDurationRange): T {
+  if (durationRange === "under_2m") return query.lt("duration_seconds", 120);
+  if (durationRange === "2_5m") return query.gte("duration_seconds", 120).lte("duration_seconds", 300);
+  return query.gt("duration_seconds", 300);
+}
+
+/** 近 7 天热度与历史成绩过滤：基于服务端计算的真实值做后置过滤。 */
+export function matchesPostFilters(
+  item: { recent7dParticipants?: number; recent7dCompletedCount?: number; recent7dInProgressCount?: number; summary?: { bestPlayCount?: number | null; qualifiedWorkCount?: number; averagePlayCount?: number | null } | null },
+  options: Pick<TopicPoolQueryOptions, "recentHeat" | "performance">,
+) {
+  if (options.recentHeat) {
+    const participants = item.recent7dParticipants ?? 0;
+    const completed = item.recent7dCompletedCount ?? 0;
+    const inProgress = item.recent7dInProgressCount ?? 0;
+    if (options.recentHeat === "has_participants" && participants <= 0) return false;
+    if (options.recentHeat === "has_completed" && completed <= 0) return false;
+    if (options.recentHeat === "has_in_progress" && inProgress <= 0) return false;
+    if (options.recentHeat === "no_participants" && participants !== 0) return false;
+  }
+  if (options.performance) {
+    const summary = item.summary;
+    if (options.performance === "high_best_play" && (summary?.bestPlayCount ?? 0) < 100_000) return false;
+    if (options.performance === "high_qualified" && (summary?.qualifiedWorkCount ?? 0) < 1) return false;
+    if (options.performance === "high_avg_play" && (summary?.averagePlayCount ?? 0) < TOPIC_LIBRARY_QUALIFY_PLAY_COUNT) return false;
+  }
+  return true;
 }
 
 export function buildWorksQueryOptions(searchParams: URLSearchParams):
@@ -284,28 +345,6 @@ export function buildWorksQueryOptions(searchParams: URLSearchParams):
       pageSize: normalizePositiveInteger(searchParams.get("page_size"), DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE),
     },
   };
-}
-
-export function buildTopicComparisonQueryOptions(searchParams: URLSearchParams):
-  | { ok: true; options: TopicComparisonQueryOptions }
-  | ApiFailure {
-  const dimension = searchParams.get("dimension") ?? "topic";
-  if (!isOneOf(TOPIC_COMPARISON_DIMENSIONS, dimension)) {
-    return { ok: false, status: 400, message: "dimension 只能是 topic 或 account" };
-  }
-
-  const rawDays = searchParams.get("days");
-  const days = rawDays === null ? 30 : Number(rawDays);
-  if (!Number.isInteger(days) || days < 1 || days > 90) {
-    return { ok: false, status: 400, message: "days 必须是 1 到 90 之间的整数" };
-  }
-
-  const topicId = searchParams.get("topicId")?.trim() || null;
-  if (topicId && !isUuidLike(topicId)) {
-    return { ok: false, status: 400, message: "topicId 格式不正确" };
-  }
-
-  return { ok: true, options: { dimension, days, topicId } };
 }
 
 export function matchTopicGroup(groups: TopicGroupOption[], title: string, hook: string) {
@@ -382,44 +421,6 @@ export function buildClaimActivity(
 
   // candidateCount / scriptingCount 为旧契约兼容键，语义已统一为「正在写人数」
   return { claims, inProgressCount, candidateCount: inProgressCount, scriptingCount: inProgressCount };
-}
-
-export function buildTopicComparisonRows(rows: TopicComparisonInputRow[], dimension: TopicComparisonDimension) {
-  const aggregates = new Map<string, TopicComparisonInputRow[]>();
-  for (const row of rows) {
-    const key = dimension === "topic" ? row.topicId : `${row.topicId}:${row.accountId ?? "unassigned"}`;
-    const current = aggregates.get(key) ?? [];
-    current.push(row);
-    aggregates.set(key, current);
-  }
-
-  return [...aggregates.values()]
-    .map((items) => {
-      const first = items[0]!;
-      const workCount = items.length;
-      const qualifiedCount = items.filter((item) => item.playCount >= 30_000).length;
-      const totalPlayCount = items.reduce((total, item) => total + item.playCount, 0);
-      const base = {
-        topicId: first.topicId,
-        topicName: first.topicName,
-        workCount,
-        qualifiedCount,
-        qualifiedRate: workCount ? qualifiedCount / workCount : 0,
-        avgPlayCount: workCount ? Math.round(totalPlayCount / workCount) : 0,
-        bestPlayCount: Math.max(...items.map((item) => item.playCount)),
-        lowConfidence: workCount < 3,
-      };
-      return dimension === "account"
-        ? { ...base, accountId: first.accountId, accountName: first.accountName }
-        : base;
-    })
-    .sort(
-      (a, b) =>
-        b.qualifiedRate - a.qualifiedRate ||
-        b.avgPlayCount - a.avgPlayCount ||
-        b.workCount - a.workCount ||
-        a.topicName.localeCompare(b.topicName, "zh-Hans-CN"),
-    );
 }
 
 export function validateRecommendationSubTopicInput(body: unknown) {
@@ -857,6 +858,8 @@ async function loadScoredTopicPool(
     .eq("library_status", "in_library")
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
+  if (options.sourceType) subTopicsQuery = subTopicsQuery.eq("source_type", options.sourceType);
+  if (options.durationRange) subTopicsQuery = applyDurationRangeFilter(subTopicsQuery, options.durationRange);
 
   const { data: subTopics, error: subTopicsError } = await measureAsync("topics.pool.scored.subTopics", () => subTopicsQuery);
   if (subTopicsError) return { ok: false, status: 500, message: subTopicsError.message };
@@ -921,6 +924,10 @@ async function loadScoredTopicPool(
     daysSinceLastWork: number;
     avgPlayCount: number | null;
     bestPlayCount: number | null;
+    qualifiedCount: number;
+    recent7dParticipants: number;
+    recent7dCompletedCount: number;
+    recent7dInProgressCount: number;
   }> = [];
   for (const item of allSubTopics) {
     const aggregate = worksBySubTopic.get(String(item.id));
@@ -937,16 +944,34 @@ async function loadScoredTopicPool(
     if (mode === "high_potential" && daysSinceLastWork <= 30) continue;
     if (!matchesTopicPoolQuery(item, options.q)) continue;
     const maxPlayCount = qualifiedPlayCounts.length ? Math.max(...qualifiedPlayCounts) : null;
+    const heatEntry = heat.get(String(item.id));
     scored.push({
       item,
       score: calcTopicScore(avgPlayCount, daysSinceLastWork, mode),
       daysSinceLastWork,
       avgPlayCount,
       bestPlayCount: maxPlayCount,
+      qualifiedCount: qualifiedPlayCounts.length,
+      recent7dParticipants: heatEntry?.participants ?? 0,
+      recent7dCompletedCount: heatEntry?.completedCount ?? 0,
+      recent7dInProgressCount: heatEntry?.inProgressCount ?? 0,
     });
   }
 
-  scored.sort((left, right) => {
+  const filteredScored = options.recentHeat || options.performance
+    ? scored.filter((entry) => matchesPostFilters(
+        {
+          recent7dParticipants: entry.recent7dParticipants,
+          recent7dCompletedCount: entry.recent7dCompletedCount,
+          recent7dInProgressCount: entry.recent7dInProgressCount,
+          summary: { bestPlayCount: entry.bestPlayCount, qualifiedWorkCount: entry.qualifiedCount, averagePlayCount: entry.avgPlayCount },
+        },
+        options,
+      ))
+    : scored;
+  void scored;
+
+  filteredScored.sort((left, right) => {
     if (options.sort === "avg_play") {
       return (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) || String(left.item.id).localeCompare(String(right.item.id));
     }
@@ -964,9 +989,9 @@ async function loadScoredTopicPool(
     return right.score - left.score || (right.avgPlayCount ?? 0) - (left.avgPlayCount ?? 0) || String(left.item.id).localeCompare(String(right.item.id));
   });
 
-  const totalItems = scored.length;
+  const totalItems = filteredScored.length;
   const from = (options.page - 1) * options.pageSize;
-  const pageItems = scored.slice(from, from + options.pageSize);
+  const pageItems = filteredScored.slice(from, from + options.pageSize);
   const summaries = summarizeScopedWorksBySubTopic((works ?? []) as ScopedWorkRow[], scope);
 
   return {
@@ -1004,6 +1029,8 @@ async function loadNeverWorkedTopics(
     .eq("library_status", "in_library")
     .order("created_at", { ascending: false });
   if (options.topicIds.length > 0) subTopicsQuery = subTopicsQuery.in("topic_id", options.topicIds);
+  if (options.sourceType) subTopicsQuery = subTopicsQuery.eq("source_type", options.sourceType);
+  if (options.durationRange) subTopicsQuery = applyDurationRangeFilter(subTopicsQuery, options.durationRange);
 
   const { data: subTopics, error: subTopicsError } = await subTopicsQuery;
   if (subTopicsError) return { ok: false, status: 500, message: subTopicsError.message };
@@ -1118,6 +1145,8 @@ export async function loadTopicPool(
     .select("*, topics(id, name, sort_order), topic_groups(id, name, sort_order), sub_topic_claims(id, user_id, status, claimed_at)", { count: "exact" })
     .eq("library_status", "in_library")
     .order("created_at", { ascending: false });
+  if (options.sourceType) query = query.eq("source_type", options.sourceType);
+  if (options.durationRange) query = applyDurationRangeFilter(query, options.durationRange);
 
   // my_claims 视图：直接查 sub_topic_claims 获取用户的有效认领，不依赖 join 关联
   let myClaimsDirectMap: Map<string, CurrentUserClaim> | null = null;
@@ -1194,9 +1223,14 @@ export async function loadTopicPool(
     recent7dHeatExtra(heat, String(item.id)),
   ));
 
+  // 更多筛选中的近 7 天热度与历史成绩基于真实计算值后置过滤
+  const visibleItems = options.recentHeat || options.performance
+    ? builtItems.filter((item) => matchesPostFilters(item as Record<string, unknown>, options))
+    : builtItems;
+
   // my_claims 视图：用直接查到的 claim 数据覆盖 join 关联的结果
   if (myClaimsDirectMap) {
-    for (const item of builtItems) {
+    for (const item of visibleItems) {
       const directClaim = myClaimsDirectMap.get(String((item as Record<string, unknown>).id));
       if (directClaim) {
         (item as Record<string, unknown>).myClaim = directClaim;
@@ -1204,8 +1238,8 @@ export async function loadTopicPool(
     }
   }
   const sortedItems = options.sort
-    ? sortTopicPoolItems(builtItems as Array<SortableTopicPoolItem & Record<string, unknown>>, options.sort)
-    : builtItems;
+    ? sortTopicPoolItems(visibleItems as Array<SortableTopicPoolItem & Record<string, unknown>>, options.sort)
+    : visibleItems;
   const pageItems = sortedItems.slice(from, from + options.pageSize);
 
   return {
@@ -1438,68 +1472,6 @@ export async function loadSubTopicClaimActivity(
       ...(buildClaimActivity((data ?? []) as Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>, scope)),
       recent7dSummary,
     },
-  };
-}
-
-export async function loadTopicComparison(
-  supabase: TopicSupabase,
-  scope: DataAccessScope,
-  options: TopicComparisonQueryOptions,
-): Promise<ApiResult<unknown>> {
-  const since = new Date(Date.now() - options.days * 24 * 60 * 60 * 1000).toISOString();
-  let videosQuery = supabase
-    .from("videos")
-    .select("id, user_id, account_id, sub_topics!inner(topic_id, topics!inner(id, name)), accounts(id, name)")
-    .eq("lifecycle_state", "active")
-    .not("topic_id", "is", null)
-    .gte("uploaded_at", since);
-  if (scope.kind !== "all") videosQuery = videosQuery.in("user_id", scope.visibleUserIds);
-  if (options.topicId) videosQuery = videosQuery.eq("sub_topics.topic_id", options.topicId);
-
-  const { data: videos, error: videosError } = await measureAsync("topics.comparison.videos", () => videosQuery);
-  if (videosError) return { ok: false, status: 500, message: "加载对比作品失败" };
-  const videoRows = (videos ?? []) as Array<Record<string, unknown>>;
-  const videoIds = videoRows.map((row) => String(row.id)).filter(Boolean);
-  if (!videoIds.length) {
-    return { ok: true, value: { dimension: options.dimension, windowDays: options.days, rows: [], sampleTotal: 0 } };
-  }
-
-  const { data: snapshots, error: snapshotsError } = await measureAsync("topics.comparison.snapshots", () => supabase
-    .from("video_metrics_snapshots")
-    .select("video_id, play_count, captured_at")
-    .in("video_id", videoIds)
-    .eq("snapshot_type", "24h")
-    .order("captured_at", { ascending: false }));
-  if (snapshotsError) return { ok: false, status: 500, message: "加载播放数据失败" };
-
-  const playCountByVideoId = new Map<string, number>();
-  for (const snapshot of (snapshots ?? []) as Array<{ video_id?: string | null; play_count?: number | null }>) {
-    if (!snapshot.video_id || playCountByVideoId.has(snapshot.video_id)) continue;
-    playCountByVideoId.set(snapshot.video_id, Number(snapshot.play_count ?? 0));
-  }
-
-  const comparisonInputs: TopicComparisonInputRow[] = [];
-  for (const video of videoRows) {
-    const subTopic = Array.isArray(video.sub_topics) ? video.sub_topics[0] : video.sub_topics;
-    const topic = Array.isArray((subTopic as { topics?: unknown } | null)?.topics)
-      ? ((subTopic as { topics: Array<Record<string, unknown>> }).topics[0] ?? null)
-      : (subTopic as { topics?: Record<string, unknown> | null } | null)?.topics ?? null;
-    const account = Array.isArray(video.accounts) ? video.accounts[0] : video.accounts;
-    const playCount = playCountByVideoId.get(String(video.id));
-    if (!topic || playCount === undefined) continue;
-    comparisonInputs.push({
-      topicId: String((topic as { id?: string }).id ?? ""),
-      topicName: String((topic as { name?: string }).name ?? "未分类"),
-      accountId: typeof (account as { id?: unknown } | null)?.id === "string" ? (account as { id: string }).id : null,
-      accountName: typeof (account as { name?: unknown } | null)?.name === "string" ? (account as { name: string }).name : null,
-      playCount,
-    });
-  }
-
-  const rows = buildTopicComparisonRows(comparisonInputs, options.dimension);
-  return {
-    ok: true,
-    value: { dimension: options.dimension, windowDays: options.days, rows, sampleTotal: comparisonInputs.length },
   };
 }
 

@@ -5,7 +5,6 @@ import {
   fetchTopicJson,
   getTopicActionState,
   parseClaimsResponse,
-  parseComparisonResponse,
   parseCreatedSubTopicResponse,
   parseActiveTopicsResponse,
   parseTopicOptionsResponse,
@@ -36,7 +35,7 @@ test("fetchTopicJson 保留未入团 403 的稳定错误码，前端不会把它
   );
 });
 
-test("V2 契约解析创建、查重和横向对比的真实业务 JSON", () => {
+test("V2 契约解析创建与查重的真实业务 JSON", () => {
   const created = parseCreatedSubTopicResponse({ id: "sub-1", title: "新选题", hook: null });
   assert.equal(created.id, "sub-1");
   assert.equal(created.hook, null);
@@ -46,17 +45,6 @@ test("V2 契约解析创建、查重和横向对比的真实业务 JSON", () => 
   ]);
   assert.equal(suggestions[0]?.title, "相似题");
   assert.equal(suggestions[0]?.hook, null);
-
-  const comparison = parseComparisonResponse({
-    dimension: "topic",
-    windowDays: 30,
-    rows: [{ topicId: "topic-1", topicName: "母题", qualifiedCount: 1, qualifiedRate: 0.5, avgPlayCount: 1200, bestPlayCount: 3000 }],
-    sampleTotal: 2,
-  });
-  assert.equal(comparison.rows[0]?.qualifiedRate, 0.5);
-  assert.equal(comparison.rows[0]?.qualifiedCount, 1);
-  assert.equal(comparison.rows[0]?.avgPlayCount, 1200);
-  assert.equal(comparison.rows[0]?.bestPlayCount, 3000);
 });
 
 test("V2 契约解析完整母题 options", () => {
