@@ -634,37 +634,40 @@ export function TopicPoolExplorer({
               <div
                 key={item.id}
                 onClick={() => onSelectTopic(item.id)}
-                className="group relative bg-white border border-[#E5E0D6] rounded-2xl p-4.5 hover:border-[#D97757]/40 hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                className="group relative bg-white border border-[#E5E0D6] rounded-2xl p-4.5 hover:border-[#D97757]/40 hover:shadow-claude-float transition-all duration-200 cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  {/* 顶栏：母题微印章 */}
-                  <div className="flex items-center justify-between gap-1.5 mb-2.5 min-w-0">
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-[#FAF8F4] border border-[#ECE7DE] text-[#57534E] truncate">
-                      {item.topics?.name || "常规母题"}
-                      {item.topic_groups?.name ? ` · ${item.topic_groups.name}` : ""}
+                  {/* 顶栏：母题与分组印章 */}
+                  <div className="flex items-center justify-between gap-1.5 mb-2 min-w-0">
+                    <span className="text-[11.5px] font-medium text-[#78716C] tracking-wide flex items-center gap-1.5 truncate">
+                      <span className="size-1.5 rounded-full bg-[#D97757]/70 shrink-0" />
+                      <span className="truncate">
+                        {item.topics?.name || "常规母题"}
+                        {item.topic_groups?.name ? ` · ${item.topic_groups.name}` : ""}
+                      </span>
                     </span>
 
                     {/* 在写状态微标记 */}
                     {isWriting && (
-                      <span className="text-[11px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                      <span className="text-[11px] font-medium text-[#6FAA7D] bg-[#6FAA7D]/10 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                         <CheckCircle2 className="size-3" />
                         <span>已在写</span>
                       </span>
                     )}
                   </div>
 
-                  {/* 标题 */}
-                  <h3 className="text-[15px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-3">
+                  {/* 标题：饱满清晰 */}
+                  <h3 className="text-[15.5px] font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-2">
                     {item.title}
                   </h3>
 
-                  {/* 核心证明：历史成绩指标（第一视觉焦点） */}
-                  <div className="rounded-xl bg-[#FAF8F4] border border-[#ECE7DE]/80 p-3 mb-3.5 flex items-center justify-between">
+                  {/* 核心证明：真实历史数据证明 (消灭纸内套娃，发丝线与字阶自然呼吸) */}
+                  <div className="py-2.5 my-1.5 border-y border-[#ECE7DE]/70 flex items-center justify-between">
                     <div>
-                      <div className="text-[11px] text-[#78716C] font-normal">
+                      <div className="text-[11px] text-[#78716C] font-normal tracking-tight">
                         历史最高播放
                       </div>
-                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[15.5px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
                         {bestPlay !== null
                           ? bestPlay >= 10000
                             ? `${(bestPlay / 10000).toFixed(1)}万`
@@ -673,22 +676,22 @@ export function TopicPoolExplorer({
                       </div>
                     </div>
 
-                    <div className="h-6 w-px bg-[#E5E0D6]" aria-hidden="true" />
+                    <div className="h-6 w-px bg-[#ECE7DE]" aria-hidden="true" />
 
                     <div className="text-right">
-                      <div className="text-[11px] text-[#78716C] font-normal">
+                      <div className="text-[11px] text-[#78716C] font-normal tracking-tight">
                         达标优质作品
                       </div>
-                      <div className="text-[15px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-[15.5px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
                         {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                       </div>
                     </div>
                   </div>
 
-                  {/* 一句话 Hook 凹槽 */}
+                  {/* 一句话 Hook / 立意观点 (学者边注感，端庄正体) */}
                   {item.hook && (
-                    <div className="rounded-lg bg-[#FBF9F5] border border-[#ECE7DE]/60 px-2.5 py-1.5 mb-3">
-                      <p className="text-[11.5px] text-[#57534E] line-clamp-2 italic">
+                    <div className="mt-2 pt-1.5 border-t border-[#ECE7DE]/40">
+                      <p className="text-[12px] font-serif not-italic text-[#57534E] line-clamp-2 leading-relaxed tracking-tight">
                         “{item.hook}”
                       </p>
                     </div>
@@ -696,7 +699,7 @@ export function TopicPoolExplorer({
                 </div>
 
                 {/* 底栏：近 7 天参与热度 + 去飞书创作主行动 */}
-                <div className="pt-2 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto">
+                <div className="pt-3 border-t border-[#ECE7DE]/60 flex items-center justify-between gap-2 mt-auto">
                   <div className="text-[11.5px] text-[#78716C] truncate">
                     <span>近 7 天 {participants7d !== null ? `${participants7d} 人参与` : "—"}</span>
                     {(inProgressCount ?? 0) > 0 && (
