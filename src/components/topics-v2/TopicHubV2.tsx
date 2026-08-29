@@ -470,6 +470,7 @@ export function TopicHubV2({
           onBatchImportClick={
             canManageTopicLibrary ? () => setIsBatchImportModalOpen(true) : undefined
           }
+          onCreateClick={() => setIsCreateModalOpen(true)}
           onPageChange={(p) => setPoolPage(p)}
           onViewChange={(v) => setPoolView(v)}
           onTimeRangeChange={(t) => setPoolTimeRange(t)}

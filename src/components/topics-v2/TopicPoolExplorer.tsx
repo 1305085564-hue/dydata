@@ -12,6 +12,8 @@ import {
   X,
   FileSpreadsheet,
   CheckCircle2,
+  Filter,
+  Plus,
 } from "lucide-react";
 import {
   Select,
@@ -61,6 +63,7 @@ export interface TopicPoolExplorerProps {
   onOpenFeishuModal: (topic: TopicPoolItem) => void;
   onSelectTopic: (subTopicId: string) => void;
   onBatchImportClick?: () => void;
+  onCreateClick?: () => void;
 }
 
 export function TopicPoolExplorer({
@@ -71,14 +74,14 @@ export function TopicPoolExplorer({
   totalCount,
   searchQuery,
   currentPage,
-  currentView: _currentView,
+  currentView,
   currentTimeRange,
   selectedTopicIds,
   moreFilters,
   sortBy,
   isAdmin = false,
   onPageChange,
-  onViewChange: _onViewChange,
+  onViewChange,
   onTimeRangeChange,
   onTopicIdsChange,
   onMoreFiltersChange,
@@ -89,6 +92,7 @@ export function TopicPoolExplorer({
   onOpenFeishuModal,
   onSelectTopic,
   onBatchImportClick,
+  onCreateClick,
 }: TopicPoolExplorerProps) {
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
   const [isTopicFilterOpen, setIsTopicFilterOpen] = useState(false);
@@ -167,91 +171,134 @@ export function TopicPoolExplorer({
       aria-label="干货选题大盘"
     >
       {/* 顶栏控制中枢 */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-2xl border border-[#E5E0D6] shadow-2xs">
-        {/* 左侧：搜索输入框 */}
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#78716C]" />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            placeholder="搜索选题标题、核心观点或一句话立意 Hook..."
-            className="w-full pl-9 pr-8 py-2 min-h-[44px] sm:min-h-0 text-xs rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#D97757] focus:border-[#D97757] transition-all placeholder:text-[#A8A29E] text-[#1C1917]"
-            aria-label="搜索干货选题"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => onSearchQueryChange("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#78716C] hover:text-[#1C1917] transition-colors cursor-pointer"
-              aria-label="清除搜索词"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-2.5 sm:p-3 rounded-2xl border border-[#E5E0D6] shadow-2xs">
+        {/* 左侧：Tab 视角切换 */}
+        <div className="inline-flex items-center gap-1 bg-[#F5F3EE]/70 p-1 rounded-xl select-none shrink-0">
+          <button
+            type="button"
+            onClick={() => onViewChange("all")}
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+              currentView === "all"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+            }`}
+          >
+            <span>全部选题</span>
+            {totalCount > 0 && (
+              <span
+                className={`text-[11px] tabular-nums ${
+                  currentView === "all"
+                    ? "text-[#D97757] font-semibold"
+                    : "text-[#78716C] font-normal"
+                }`}
+              >
+                {totalCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewChange("my_claims")}
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
+              currentView === "my_claims"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+            }`}
+          >
+            我在写的
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewChange("my_created")}
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center ${
+              currentView === "my_created"
+                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+            }`}
+          >
+            我录入的
+          </button>
         </div>
 
-        {/* 右侧：母题、排序、时间、更多、视图切换 */}
+        {/* 右侧：搜索、母题、排序、时间、更多、视图切换与操作 */}
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {/* 1. 母题多选触发器 */}
+          {/* 1. 搜索框 */}
+          <div className="relative flex items-center">
+            <input
+              type="text"
+              placeholder="搜索选题/Hook..."
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              className="text-xs bg-[#FAF8F4]/80 border border-[#E5E0D6] shadow-2xs hover:border-[#78716C]/40 focus-visible:bg-white focus-visible:border-[#78716C] rounded-lg pl-7 pr-2.5 py-1.5 min-h-[44px] sm:min-h-0 w-28 focus-visible:w-44 sm:w-36 sm:focus-visible:w-48 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 text-[#292524] placeholder:text-[#78716C]/60 font-normal transition-all"
+              aria-label="搜索选题"
+            />
+            <Search className="w-3.5 h-3.5 text-[#78716C] absolute left-2 pointer-events-none" />
+          </div>
+
+          {/* 2. 母题多选 Popover */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setIsTopicFilterOpen(!isTopicFilterOpen)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-xs transition-all active:scale-[0.985] active:duration-75 cursor-pointer ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-xs font-medium transition-all active:scale-[0.985] active:duration-75 cursor-pointer ${
                 selectedTopicIds.length > 0
-                  ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                  ? "bg-[#43718E]/10 text-[#43718E] font-semibold"
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-normal"
               }`}
               aria-expanded={isTopicFilterOpen}
-              aria-label="按母题分类筛选"
+              aria-label="母题筛选"
             >
+              <Filter className="w-3.5 h-3.5 text-[#78716C]" />
               <span>
-                {selectedTopicIds.length === 0
-                  ? "母题"
-                  : `母题 (${selectedTopicIds.length})`}
+                {selectedTopicIds.length > 0
+                  ? `母题 (${selectedTopicIds.length})`
+                  : "母题"}
               </span>
               <ChevronDown className="size-3.5 opacity-60" />
             </button>
 
-            {/* 母题多选下拉浮层 */}
             {isTopicFilterOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-30"
+                  className="fixed inset-0 z-[61]"
                   onClick={() => setIsTopicFilterOpen(false)}
+                  aria-hidden="true"
                 />
-                <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1.5 z-40 w-64 rounded-2xl border border-[#E5E0D6] bg-white p-3 shadow-claude-dialog space-y-2 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="flex items-center justify-between pb-1.5 border-b border-[#ECE7DE] text-xs">
-                    <span className="font-semibold text-[#1C1917]">
+                <div className="absolute right-0 top-full z-[62] mt-2 max-h-[calc(100dvh-var(--app-top-offset,64px)-1rem)] w-56 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-xl border border-[#E5E0D6] bg-white p-3 shadow-claude-float animate-in fade-in duration-150 sm:left-0">
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#ECE7DE] text-xs">
+                    <span className="font-semibold text-[#292524]">
                       八大母题
                     </span>
                     {selectedTopicIds.length > 0 && (
                       <button
                         type="button"
                         onClick={() => onTopicIdsChange([])}
-                        className="text-[11px] text-[#D97757] hover:underline cursor-pointer"
+                        className="text-xs text-[#78716C] hover:text-[#292524] font-normal cursor-pointer"
                       >
-                        清空已选
+                        清空
                       </button>
                     )}
                   </div>
-                  <div className="max-h-[calc(100dvh-16rem)] overflow-y-auto space-y-1 pr-1">
+                  <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
                     {topics.map((t) => {
                       const isChecked = selectedTopicIds.includes(t.id);
                       return (
                         <label
                           key={t.id}
-                          className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#FAF8F4] text-xs text-[#292524] cursor-pointer select-none transition-colors"
+                          className="flex items-center gap-2 p-1.5 hover:bg-[#FBF9F5] rounded-md text-xs font-normal cursor-pointer text-[#292524]"
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => toggleTopicId(t.id)}
-                            className="rounded border-[#E5E0D6] text-[#D97757] focus:ring-[#D97757] size-3.5 cursor-pointer accent-[#D97757]"
+                            className="rounded text-[#D97757] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 cursor-pointer"
                           />
                           <span
-                            className={isChecked ? "font-medium text-[#1C1917]" : ""}
+                            className={
+                              isChecked
+                                ? "font-semibold text-[#1C1917]"
+                                : "text-[#292524]"
+                            }
                           >
                             {t.name}
                           </span>
@@ -264,17 +311,17 @@ export function TopicPoolExplorer({
             )}
           </div>
 
-          {/* 2. 排序下拉 */}
-          <div className="flex items-center">
+          {/* 3. 排序下拉 */}
+          <div className="relative inline-flex items-center">
             <Select
               value={sortBy}
               onValueChange={(val) => onSortByChange(val as SortByOption)}
             >
               <SelectTrigger
-                aria-label="排序方式"
-                className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs font-normal text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors shadow-none"
+                aria-label="排序依据"
+                className="h-7.5 rounded-lg border-0 bg-transparent px-2 text-xs text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-normal shadow-none transition-colors"
               >
-                <SelectValue placeholder="排序">
+                <SelectValue>
                   {sortBy === "best_play"
                     ? "最高播放"
                     : sortBy === "avg_play"
@@ -285,15 +332,15 @@ export function TopicPoolExplorer({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-[#E5E0D6] bg-[#FAF8F4] shadow-claude-float min-w-28">
+                <SelectItem value="latest">最新</SelectItem>
                 <SelectItem value="best_play">最高播放</SelectItem>
                 <SelectItem value="avg_play">均播</SelectItem>
                 <SelectItem value="recent_heat">7天热度</SelectItem>
-                <SelectItem value="latest">最新</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* 3. 时间下拉 (未展开明确显示“时间”，选择后显示明确范围) */}
+          {/* 4. 时间下拉 */}
           <Select
             value={currentTimeRange}
             onValueChange={(val) => onTimeRangeChange(val as TopicTimeRange)}
@@ -321,14 +368,14 @@ export function TopicPoolExplorer({
             </SelectContent>
           </Select>
 
-          {/* 4. “更多” 高级筛选抽屉入口 */}
+          {/* 5. 更多筛选 */}
           <button
             type="button"
             onClick={onOpenMoreFilters}
-            className="inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-xs text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-normal transition-all active:scale-[0.985] active:duration-75 cursor-pointer"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg text-xs text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] font-normal transition-all cursor-pointer"
             aria-label="展开更多筛选"
           >
-            <SlidersHorizontal className="size-3.5" />
+            <SlidersHorizontal className="size-3.5 text-[#78716C]" />
             <span>更多</span>
           </button>
 
@@ -338,12 +385,12 @@ export function TopicPoolExplorer({
             aria-hidden="true"
           />
 
-          {/* 5. 视图切换 */}
+          {/* 6. 视图切换 */}
           <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={() => setDisplayMode("grid")}
-              className={`p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg transition-all cursor-pointer ${
+              className={`p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                 displayMode === "grid"
                   ? "bg-[#F5F3EE] text-[#1C1917] font-medium"
                   : "text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]/60"
@@ -356,7 +403,7 @@ export function TopicPoolExplorer({
             <button
               type="button"
               onClick={() => setDisplayMode("table")}
-              className={`p-2 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg transition-all cursor-pointer ${
+              className={`p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 inline-flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                 displayMode === "table"
                   ? "bg-[#F5F3EE] text-[#1C1917] font-medium"
                   : "text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE]/60"
@@ -368,8 +415,8 @@ export function TopicPoolExplorer({
             </button>
           </div>
 
-          {/* 6. 管理员专属：批量导入入口 */}
-          {isAdmin && onBatchImportClick && (
+          {/* 7. 批量导入 */}
+          {onBatchImportClick && (
             <button
               type="button"
               onClick={onBatchImportClick}
@@ -378,6 +425,19 @@ export function TopicPoolExplorer({
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-[#78716C]" />
               <span>批量导入</span>
+            </button>
+          )}
+
+          {/* 8. 录入选题 */}
+          {onCreateClick && (
+            <button
+              type="button"
+              onClick={onCreateClick}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0"
+              aria-label="录入选题"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>录入选题</span>
             </button>
           )}
         </div>
