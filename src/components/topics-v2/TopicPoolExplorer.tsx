@@ -558,8 +558,8 @@ export function TopicPoolExplorer({
           )}
         </div>
       ) : displayMode === "grid" ? (
-        /* V3 卡片网格视图：克制优雅、真实数据为证明、近7天热度 */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        /* V3 卡片网格视图：每行四张卡片 (响应式: 1列 -> 2列 -> 3列 -> 4列) */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((item) => {
             const summary = item.summary;
             const isWriting = item.isWritingByMe === true || item.myClaim?.status === "writing";

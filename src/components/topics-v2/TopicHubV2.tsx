@@ -420,7 +420,7 @@ export function TopicHubV2({
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-[1560px] mx-auto space-y-6">
         {/* 页头区 */}
         <header className="space-y-1">
           <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
