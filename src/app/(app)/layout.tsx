@@ -8,7 +8,6 @@ import { NavBar } from "@/components/nav-bar";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { NotificationProvider } from "@/components/notifications/notification-store";
 import { PageViewTracker } from "@/components/usage-events/page-view-tracker";
-import { DeferredGlobalTopicCreate } from "@/components/topics/deferred-global-topic-create";
 
 import { JoinBanner } from "./_components/join-banner";
 import { NetworkStatusBar } from "@/components/network-status-bar";
@@ -48,8 +47,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         <ScrollToTop />
-        {/* 全局选题录入弹窗：任何页面都可以通过 triggerGlobalTopicCreate 触发 */}
-        <DeferredGlobalTopicCreate />
       </div>
     </NotificationProvider>
   );

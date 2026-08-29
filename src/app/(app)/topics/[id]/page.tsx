@@ -19,6 +19,7 @@ import {
   type SubTopicDetail,
   type WorkItem,
   type ReferenceWork,
+  type TopicWorksSummary,
 } from "../topic-helpers";
 import {
   ChevronLeft,
@@ -73,7 +74,7 @@ interface ClaimsApiResponse {
   candidateCount: number;
   scriptingCount: number;
   recent7dSummary?: {
-    totalParticipants: number;
+    participants: number;
     completedCount: number;
     inProgressCount: number;
   } | null;
@@ -139,6 +140,7 @@ export default function SubTopicDetailPage({
 
   // 作品列表、排序与分页
   const [works, setWorks] = useState<WorkItem[]>([]);
+  const [worksSummary, setWorksSummary] = useState<TopicWorksSummary | null>(null);
   const [, setSimilarReferences] = useState<ReferenceWork[]>([]);
   const [worksTotal, setWorksTotal] = useState(0);
   const [worksPage, setWorksPage] = useState(1);
@@ -210,6 +212,7 @@ export default function SubTopicDetailPage({
         const parsed = parseSubTopicWorksResponse(data);
         setWorks(parsed.items);
         setSimilarReferences(parsed.similarReferences);
+        setWorksSummary(parsed.summary);
         setWorksTotal(parsed.total);
         setWorksPage(parsed.page);
         setWorksPageSize(parsed.pageSize);
@@ -236,6 +239,7 @@ export default function SubTopicDetailPage({
       setEditHook(parsed.subTopic?.hook || "");
       setEditEmotionTag(parsed.subTopic?.emotion_tag || "");
       setEditAudience(parsed.subTopic?.audience || "");
+      setWorksSummary(parsed.worksSummary);
 
       if (!hasLoadedWorksRef.current) {
         if (parsed.worksItems && parsed.worksItems.length > 0) {
@@ -271,7 +275,13 @@ export default function SubTopicDetailPage({
         claims: Array.isArray(data.claims) ? data.claims : [],
         candidateCount: data.candidateCount ?? 0,
         scriptingCount: data.scriptingCount ?? 0,
-        recent7dSummary: data.recent7dSummary ?? null,
+        recent7dSummary: data.recent7dSummary && typeof data.recent7dSummary.participants === "number"
+          ? {
+              participants: data.recent7dSummary.participants,
+              completedCount: data.recent7dSummary.completedCount ?? 0,
+              inProgressCount: data.recent7dSummary.inProgressCount ?? 0,
+            }
+          : null,
       });
     } catch (err) {
       markMembershipRequired(err);
@@ -306,12 +316,12 @@ export default function SubTopicDetailPage({
         { method: "POST" },
       );
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `操作失败 (${res.status})`);
+        await readTopicResponse(res, `操作失败 (${res.status})`);
       }
       feedbackToast.success("已将选题加入在写清单");
       await loadAllData();
     } catch (err) {
+      markMembershipRequired(err);
       feedbackToast.error("更新写作状态失败", {
         details: err instanceof Error ? err.message : String(err),
       });
@@ -325,12 +335,12 @@ export default function SubTopicDetailPage({
         method: "POST",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `取消写作失败 (${res.status})`);
+        await readTopicResponse(res, `取消写作失败 (${res.status})`);
       }
       feedbackToast.success("已取消写作状态");
       await loadAllData();
     } catch (err) {
+      markMembershipRequired(err);
       feedbackToast.error("取消写作失败", {
         details: err instanceof Error ? err.message : String(err),
       });
@@ -358,14 +368,12 @@ export default function SubTopicDetailPage({
           audience: editAudience.trim() || null,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "修改失败");
-      }
+      await readTopicResponse(res, "修改失败");
       setEditDialogOpen(false);
       await loadAllData();
       feedbackToast.success("修改成功");
     } catch (err) {
+      markMembershipRequired(err);
       feedbackToast.error("修改失败", {
         details: err instanceof Error ? err.message : String(err),
       });
@@ -382,16 +390,14 @@ export default function SubTopicDetailPage({
       const res = await fetch(`/api/topics/sub-topics/${subTopicId}`, {
         method: "DELETE",
       });
-      const data = await res.json();
       if (res.status === 409) {
         setDeleteErrorMsg("该选题已有关联作品，移出将保留历史数据。");
         return;
       }
-      if (!res.ok) {
-        throw new Error(data.error || "删除失败");
-      }
+      await readTopicResponse(res, "删除失败");
       router.push("/topics");
     } catch (err) {
+      markMembershipRequired(err);
       feedbackToast.error("删除失败", {
         details: err instanceof Error ? err.message : String(err),
       });
@@ -451,36 +457,15 @@ export default function SubTopicDetailPage({
 
   const totalPages = Math.ceil(worksTotal / worksPageSize) || 1;
 
-  // 历史指标计算（严格读取真实字段，无真实数据时统一为 null / "—"）
-  const bestPlay =
-    works.length > 0
-      ? Math.max(
-          ...works.map(
-            (w) => w.video_metrics_snapshots?.[0]?.play_count || 0,
-          ),
-        )
-      : null;
-  const avgPlay =
-    works.length > 0
-      ? Math.round(
-          works.reduce(
-            (acc, w) =>
-              acc + (w.video_metrics_snapshots?.[0]?.play_count || 0),
-            0,
-          ) / works.length,
-        )
-      : null;
-  const qualifiedCount =
-    works.length > 0
-      ? works.filter(
-          (w) => (w.video_metrics_snapshots?.[0]?.play_count || 0) >= 30000,
-        ).length
-      : null;
+  // 历史指标读取服务端对全部作品计算的摘要，不用当前分页的 20 条冒充全量结果。
+  const bestPlay = worksSummary?.bestPlayCount ?? null;
+  const avgPlay = worksSummary?.averagePlayCount ?? null;
+  const qualifiedCount = worksSummary?.qualifiedWorkCount ?? null;
 
   // 近 7 天热度：只使用服务端唯一口径的三值，缺失显示未知态，绝不回退旧累计数据
   const total7dParticipants =
-    typeof claimsData.recent7dSummary?.totalParticipants === "number"
-      ? claimsData.recent7dSummary.totalParticipants
+    typeof claimsData.recent7dSummary?.participants === "number"
+      ? claimsData.recent7dSummary.participants
       : null;
 
   return (

@@ -13,7 +13,6 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Filter,
-  Plus,
 } from "lucide-react";
 import {
   Select,
@@ -50,7 +49,6 @@ export interface TopicPoolExplorerProps {
   selectedTopicIds: string[];
   moreFilters: TopicMoreFiltersState;
   sortBy: SortByOption;
-  isAdmin?: boolean;
   onPageChange: (page: number) => void;
   onViewChange: (view: TopicPoolView) => void;
   onTimeRangeChange: (timeRange: TopicTimeRange) => void;
@@ -63,7 +61,6 @@ export interface TopicPoolExplorerProps {
   onOpenFeishuModal: (topic: TopicPoolItem) => void;
   onSelectTopic: (subTopicId: string) => void;
   onBatchImportClick?: () => void;
-  onCreateClick?: () => void;
 }
 
 export function TopicPoolExplorer({
@@ -79,7 +76,6 @@ export function TopicPoolExplorer({
   selectedTopicIds,
   moreFilters,
   sortBy,
-  isAdmin = false,
   onPageChange,
   onViewChange,
   onTimeRangeChange,
@@ -92,7 +88,6 @@ export function TopicPoolExplorer({
   onOpenFeishuModal,
   onSelectTopic,
   onBatchImportClick,
-  onCreateClick,
 }: TopicPoolExplorerProps) {
   const [displayMode, setDisplayMode] = useState<"grid" | "table">("grid");
   const [isTopicFilterOpen, setIsTopicFilterOpen] = useState(false);
@@ -428,18 +423,6 @@ export function TopicPoolExplorer({
             </button>
           )}
 
-          {/* 8. 录入选题 */}
-          {onCreateClick && (
-            <button
-              type="button"
-              onClick={onCreateClick}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 text-white text-xs font-semibold transition-all shadow-2xs cursor-pointer shrink-0"
-              aria-label="录入选题"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>录入选题</span>
-            </button>
-          )}
         </div>
       </div>
 

@@ -14,20 +14,18 @@ import {
   Loader2,
 } from "lucide-react";
 import type {
-  TopicOption,
   BatchImportParsedRow,
   BatchImportSummary,
 } from "./types";
 
 export interface TopicBatchImportModalProps {
   isOpen: boolean;
-  topics: TopicOption[];
   onClose: () => void;
   onParseFile?: (file: File) => Promise<{
     rows: BatchImportParsedRow[];
     summary: BatchImportSummary;
   }>;
-  onConfirmImport?: (rows: BatchImportParsedRow[]) => Promise<{
+  onConfirmImport?: (rows: BatchImportParsedRow[], fileName?: string | null) => Promise<{
     successCount: number;
     skippedCount: number;
     failedCount: number;
@@ -40,7 +38,6 @@ type PreviewFilterTab = "all" | "valid" | "warning" | "error";
 
 export function TopicBatchImportModal({
   isOpen,
-  topics: _topics,
   onClose,
   onParseFile,
   onConfirmImport,
@@ -50,6 +47,7 @@ export function TopicBatchImportModal({
     name: string;
     size: number;
   } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [parsedRows, setParsedRows] = useState<BatchImportParsedRow[]>([]);
   const [summary, setSummary] = useState<BatchImportSummary | null>(null);
   const [activeFilterTab, setActiveFilterTab] =
@@ -70,6 +68,7 @@ export function TopicBatchImportModal({
   const handleClose = React.useCallback(() => {
     setStep("upload");
     setFileInfo(null);
+    setIsDragging(false);
     setParsedRows([]);
     setSummary(null);
     setActiveFilterTab("all");
@@ -94,15 +93,14 @@ export function TopicBatchImportModal({
 
   if (!isOpen) return null;
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFile = async (file: File) => {
     if (!file) return;
 
     setFileInfo({ name: file.name, size: file.size });
     setParseError(null);
 
     if (!onParseFile) {
-      // 未接入后端真实解析能力时，明确提示待接入，绝不伪造行数据
+      // 没有真实解析回调时不伪造预览数据，明确提示当前不可用。
       setStep("preview");
       setParsedRows([]);
       setSummary(null);
@@ -123,11 +121,23 @@ export function TopicBatchImportModal({
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) void handleFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void handleFile(file);
+  };
+
   const handleConfirm = async () => {
     if (!parsedRows.length || isSubmitting) return;
 
     if (!onConfirmImport) {
-      setSubmitError("导入接口待后端接入");
+      setSubmitError("导入服务当前不可用，请刷新页面后重试");
       return;
     }
 
@@ -136,6 +146,7 @@ export function TopicBatchImportModal({
     try {
       const res = await onConfirmImport(
         parsedRows.filter((r) => r.status !== "error"),
+        fileInfo?.name ?? null,
       );
       setImportResult(res);
       setStep("result");
@@ -208,7 +219,17 @@ export function TopicBatchImportModal({
               {/* 上传拖拽箱 */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#E5E0D6] bg-[#FAF8F4]/50 p-10 text-center hover:border-[#D97757]/60 hover:bg-[#FAF8F4] transition-all cursor-pointer"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                className={`group flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-all cursor-pointer ${
+                  isDragging
+                    ? "border-[#D97757]/70 bg-[#D97757]/5"
+                    : "border-[#E5E0D6] bg-[#FAF8F4]/50 hover:border-[#D97757]/60 hover:bg-[#FAF8F4]"
+                }`}
               >
                 <input
                   ref={fileInputRef}
@@ -224,7 +245,7 @@ export function TopicBatchImportModal({
                   点击选择或将文件拖拽至此处
                 </p>
                 <p className="text-xs text-[#78716C] font-normal max-w-xs leading-relaxed">
-                  支持 .xlsx、.xls、.csv 格式，单文件上限 10MB
+                  支持 .xlsx、.xls、.csv 格式，单文件上限 2MB
                 </p>
               </div>
 
@@ -300,14 +321,14 @@ export function TopicBatchImportModal({
                   <p className="text-[#78716C]">{parseError}</p>
                 </div>
               ) : !onParseFile ? (
-                /* 后端解析接口未接入时的真实提示 */
+                /* 没有真实解析回调时的明确提示 */
                 <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-[#FAF8F4]/50 p-8 text-center text-xs space-y-2">
                   <Info className="size-6 text-[#78716C] mx-auto text-[#D97757]" />
                   <p className="font-semibold text-[#1C1917]">
-                    导入解析能力待后端接入
+                    当前无法解析文件
                   </p>
                   <p className="text-[#78716C] max-w-md mx-auto leading-relaxed">
-                    已选择文件《{fileInfo?.name}》。文件解析与数据校验由后端批量导入接口统一处理，待 Codex 接入真实接口后即可启用预览与入库。
+                    已选择文件《{fileInfo?.name}》，但当前没有可用的解析服务，请刷新页面后重试。
                   </p>
                 </div>
               ) : summary && parsedRows.length > 0 ? (
@@ -545,7 +566,7 @@ export function TopicBatchImportModal({
                     ? "正在导入..."
                     : onConfirmImport && parsedRows.length > 0
                       ? `确认导入 ${parsedRows.filter((r) => r.status !== "error").length} 条选题`
-                      : "待接入导入接口"}
+                      : "当前无法导入"}
                 </span>
                 <ArrowRight className="size-3.5" />
               </button>

@@ -58,6 +58,12 @@ export interface WorkItem {
   }>;
 }
 
+export interface TopicWorksSummary {
+  qualifiedWorkCount: number;
+  averagePlayCount: number | null;
+  bestPlayCount: number | null;
+}
+
 export interface ReferenceWork {
   id: string;
   video_title?: string;
@@ -132,7 +138,14 @@ export function calculateTotalInFlight(claims: {
 }
 
 export function parseSubTopicDetailResponse(data: unknown) {
-  if (!data || typeof data !== "object") return { subTopic: null, worksItems: [] as WorkItem[], worksTotal: 0 };
+  if (!data || typeof data !== "object") {
+    return {
+      subTopic: null,
+      worksItems: [] as WorkItem[],
+      worksTotal: 0,
+      worksSummary: null as TopicWorksSummary | null,
+    };
+  }
   const root = (data as Record<string, unknown>).value || data;
   const obj = root as Record<string, unknown>;
   const subTopic = (obj.subTopic || obj) as SubTopicDetail;
@@ -140,17 +153,36 @@ export function parseSubTopicDetailResponse(data: unknown) {
   return {
     subTopic,
     worksItems: worksPayload.items,
-    worksTotal: worksPayload.total
+    worksTotal: worksPayload.total,
+    worksSummary: worksPayload.summary,
   };
 }
 
 export function parseSubTopicWorksResponse(data: unknown) {
   if (!data || typeof data !== "object") {
-    return { items: [] as WorkItem[], similarReferences: [] as ReferenceWork[], total: 0, page: 1, pageSize: DETAIL_PAGE_SIZE };
+    return {
+      items: [] as WorkItem[],
+      similarReferences: [] as ReferenceWork[],
+      summary: null as TopicWorksSummary | null,
+      total: 0,
+      page: 1,
+      pageSize: DETAIL_PAGE_SIZE,
+    };
   }
   const root = ((data as Record<string, unknown>).value || data) as Record<string, unknown>;
   const items = Array.isArray(root.items) ? (root.items as WorkItem[]) : [];
   const similarReferences = Array.isArray(root.similarReferences) ? (root.similarReferences as ReferenceWork[]) : [];
+  const summaryValue = root.summary;
+  const summary = summaryValue && typeof summaryValue === "object"
+    ? (summaryValue as Record<string, unknown>)
+    : null;
+  const parsedSummary: TopicWorksSummary | null = summary
+    ? {
+        qualifiedWorkCount: typeof summary.qualifiedWorkCount === "number" ? summary.qualifiedWorkCount : 0,
+        averagePlayCount: typeof summary.averagePlayCount === "number" ? summary.averagePlayCount : null,
+        bestPlayCount: typeof summary.bestPlayCount === "number" ? summary.bestPlayCount : null,
+      }
+    : null;
   const paginationObj = root.pagination as Record<string, unknown> | undefined;
   const total = typeof paginationObj?.totalItems === "number"
     ? paginationObj.totalItems
@@ -159,5 +191,5 @@ export function parseSubTopicWorksResponse(data: unknown) {
     : items.length;
   const page = typeof paginationObj?.page === "number" ? paginationObj.page : 1;
   const pageSize = typeof paginationObj?.pageSize === "number" ? paginationObj.pageSize : DETAIL_PAGE_SIZE;
-  return { items, similarReferences, total, page, pageSize };
+  return { items, similarReferences, summary: parsedSummary, total, page, pageSize };
 }

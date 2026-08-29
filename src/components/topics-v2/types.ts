@@ -111,10 +111,10 @@ export interface TopicClaimsDetailResponse {
   }>;
   // V3 7 天参与去重统计
   recent7dSummary?: {
-    totalParticipants: number;
+    participants: number;
     completedCount: number;
     inProgressCount: number;
-  };
+  } | null;
 }
 
 export interface ActiveTopicsResponse {
@@ -167,4 +167,3 @@ export interface BatchImportSummary {
     reason: string;
   }>;
 }
-

@@ -7,7 +7,7 @@ import { formatFeishuTopicContent } from "@/lib/topics/feishu-content";
 import { validateFeishuWorkspaceUrl } from "@/lib/topics/feishu-workspace";
 import { buildExternalMetrics, computeInternalMetrics } from "@/lib/topics/metrics";
 import { buildPoolQueryOptions, matchesTopicPoolQuery } from "@/lib/topics/service";
-import { parseTopicPoolResponse } from "@/lib/topics/v2-client-contract";
+import { parseClaimsResponse, parseTopicPoolResponse } from "@/lib/topics/v2-client-contract";
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
@@ -143,9 +143,70 @@ test("搜索匹配对空 Hook 不崩溃，标题或 Hook 命中即返回", () =>
 
 test("批量导入与移出/恢复只挂真实后端回调，不存在本地假成功路径", () => {
   const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const importModal = readSource("src/components/topics-v2/TopicBatchImportModal.tsx");
   assert.match(hub, /\/api\/admin\/topics-library\/import\/parse/);
   assert.match(hub, /\/api\/admin\/topics-library\/import\/confirm/);
+  assert.match(hub, /fileName/);
   assert.doesNotMatch(hub, /setIsBatchImportModalOpen\(true\)(?![\s\S]*canManageTopicLibrary)/);
+  assert.match(importModal, /onDrop={handleDrop}/);
+  assert.match(importModal, /fileInfo\?\.name/);
   const contentPage = readSource("src/app/(app)/admin/content/content-page-client.tsx");
   assert.match(contentPage, /\/api\/admin\/topics-library\/toggle/);
+});
+
+test("更多筛选是真实可操作项，取值与服务端契约一致", () => {
+  const drawer = readSource("src/components/topics-v2/TopicMoreFiltersDrawer.tsx");
+  assert.match(drawer, /filters/);
+  assert.match(drawer, /onChange/);
+  assert.match(drawer, /aria-pressed/);
+  assert.match(drawer, /has_participants/);
+  assert.match(drawer, /has_completed/);
+  assert.match(drawer, /has_in_progress/);
+  assert.match(drawer, /no_participants/);
+  assert.match(drawer, /under_2m/);
+  assert.match(drawer, /2_5m/);
+  assert.match(drawer, /over_5m/);
+  assert.match(drawer, /high_best_play/);
+  assert.match(drawer, /high_qualified/);
+  assert.match(drawer, /high_avg_play/);
+  assert.doesNotMatch(drawer, /待后端接入|待 Codex 接入后端/);
+});
+
+test("选题库只保留约定的两条进货入口，移除成员手动录入入口", () => {
+  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  const explorer = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
+  assert.doesNotMatch(hub, /TopicCreateModal|isCreateModalOpen|onCreateClick/);
+  assert.doesNotMatch(explorer, /录入选题|onCreateClick/);
+  assert.match(hub, /TopicBatchImportModal/);
+});
+
+test("团队动态使用写作语义，点击动态打开对应选题详情", () => {
+  const activity = readSource("src/components/topics-v2/TeamActivitySection.tsx");
+  const hub = readSource("src/components/topics-v2/TopicHubV2.tsx");
+  assert.doesNotMatch(activity, /最新认领|往期认领|认领选题/);
+  assert.match(activity, /最新在写|写作记录/);
+  assert.match(hub, /setInspectTopicId\(topicId\)/);
+});
+
+test("近 7 天写作摘要从服务端返回并保留，不把累计认领数当热度", () => {
+  const parsed = parseClaimsResponse({
+    claims: [],
+    candidateCount: 0,
+    scriptingCount: 0,
+    recent7dSummary: { participants: 4, completedCount: 2, inProgressCount: 2 },
+  });
+  assert.deepEqual(parsed.recent7dSummary, {
+    participants: 4,
+    completedCount: 2,
+    inProgressCount: 2,
+  });
+});
+
+test("详情页依赖的当前用户与批量导入字段已接入真实接口", () => {
+  const operatorRoute = readSource("src/app/api/dashboard/operator-members/route.ts");
+  const importRoute = readSource("src/app/api/admin/topics-library/import/confirm/route.ts");
+  assert.match(operatorRoute, /currentUserId:\s*user\.id/);
+  assert.match(importRoute, /historyPlay/);
+  assert.match(importRoute, /historyLikes/);
+  assert.doesNotMatch(importRoute, /historyPlay:\s*null[\s\S]*historyLikes:\s*null/);
 });

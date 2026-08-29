@@ -162,7 +162,7 @@ export function parseDurationSeconds(input: string): { ok: true; seconds: number
   return { ok: false };
 }
 
-function parseMetricValue(input: string): { ok: boolean; value: number | null } {
+export function parseMetricValue(input: string): { ok: boolean; value: number | null } {
   const text = input.trim().replace(/[,，\s]/g, "");
   if (!text) return { ok: true, value: null };
   if (!/^\d+$/.test(text)) return { ok: false, value: null };

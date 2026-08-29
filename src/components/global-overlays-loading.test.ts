@@ -5,10 +5,10 @@ import test from "node:test";
 
 const readSource = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
-test("全局布局不在首屏静态引入选题录入器", () => {
+test("全局布局不再挂载已下线的手动选题录入器", () => {
   const layout = readSource("src/app/(app)/layout.tsx");
 
-  assert.match(layout, /DeferredGlobalTopicCreate/);
+  assert.doesNotMatch(layout, /DeferredGlobalTopicCreate|GlobalTopicCreate/);
   assert.doesNotMatch(layout, /import \{ GlobalTopicCreate \}/);
 });
 

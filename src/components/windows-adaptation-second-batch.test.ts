@@ -6,16 +6,10 @@ import test from "node:test";
 const readSource = (path: string) =>
   readFileSync(resolve(process.cwd(), path), "utf8");
 
-test("选题复杂弹窗在低矮视口下固定标题和操作区", () => {
-  const createModal = readSource("src/components/topics-v2/TopicCreateModal.tsx");
+test("选题详情抽屉在低矮视口下固定标题和操作区", () => {
   const workDrawer = readSource(
     "src/components/topics-v2/TopicWorkBreakdownDrawer.tsx",
   );
-
-  assert.match(createModal, /<Dialog[\s\n]+open=\{/);
-  assert.match(createModal, /max-h-\[calc\(100dvh-2rem\)\]/);
-  assert.match(createModal, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
-  assert.doesNotMatch(createModal, /fixed inset-0 bg-\[#1C1917\]/);
 
   assert.match(workDrawer, /max-h-\[calc\(100dvh-var\(--app-top-offset,64px\)\)\]/);
   assert.match(workDrawer, /flex min-h-0[\s\S]*flex-col overflow-hidden/);

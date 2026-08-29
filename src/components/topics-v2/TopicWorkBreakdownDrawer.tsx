@@ -19,6 +19,7 @@ import {
   parseClaimsResponse,
   parseSubTopicDetailResponse,
   parseTopicWorksResponse,
+  isTeamMembershipRequiredError,
 } from "@/lib/topics/v2-client-contract";
 import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
 import type {
@@ -57,6 +58,7 @@ export function TopicWorkBreakdownDrawer({
   const [detailError, setDetailError] = useState<string | null>(null);
   const [worksError, setWorksError] = useState<string | null>(null);
   const [claimsError, setClaimsError] = useState<string | null>(null);
+  const [membershipRequired, setMembershipRequired] = useState(false);
   const loadRequestId = useRef(0);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -120,6 +122,7 @@ export function TopicWorkBreakdownDrawer({
     setDetailError(null);
     setWorksError(null);
     setClaimsError(null);
+    setMembershipRequired(false);
 
     const [detailResult, worksResult, claimsResult] = await Promise.allSettled([
       fetchTopicJson(`/api/topics/sub-topics/${subTopicId}`),
@@ -130,6 +133,14 @@ export function TopicWorkBreakdownDrawer({
     ]);
 
     if (requestId !== loadRequestId.current) return;
+
+    if ([detailResult, worksResult, claimsResult].some(
+      (result) => result.status === "rejected" && isTeamMembershipRequiredError(result.reason),
+    )) {
+      setMembershipRequired(true);
+      setIsLoading(false);
+      return;
+    }
 
     if (detailResult.status === "fulfilled") {
       try {
@@ -177,6 +188,7 @@ export function TopicWorkBreakdownDrawer({
             status: claim.status,
             claimedAt: claim.claimedAt,
           })),
+          recent7dSummary: parsed.recent7dSummary,
         });
       } catch (error) {
         setClaimsError(
@@ -210,8 +222,8 @@ export function TopicWorkBreakdownDrawer({
 
   // 近 7 天热度三值：只使用服务端唯一口径数据，缺失显示未知态，不回退累计认领或全部作品数
   const total7dParticipants =
-    typeof claimsData?.recent7dSummary?.totalParticipants === "number"
-      ? claimsData.recent7dSummary.totalParticipants
+    typeof claimsData?.recent7dSummary?.participants === "number"
+      ? claimsData.recent7dSummary.participants
       : null;
   const completed7dCount =
     typeof claimsData?.recent7dSummary?.completedCount === "number"
@@ -281,6 +293,20 @@ export function TopicWorkBreakdownDrawer({
             <div className="py-20 text-center">
               <Loader2 className="size-6 text-[#D97757] animate-spin mx-auto mb-2" />
               <p className="text-xs text-[#78716C]">正在加载选题详情...</p>
+            </div>
+          ) : membershipRequired ? (
+            <div className="rounded-xl border border-[#E5E0D6] bg-white p-5 text-center text-xs">
+              <p className="font-semibold text-[#1C1917]">请先申请加入团队</p>
+              <p className="mt-1 leading-relaxed text-[#78716C]">
+                当前账号没有有效团队归属，选题详情暂不可用。
+              </p>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#ECE7DE] px-4 py-2 font-medium text-[#292524] sm:min-h-0"
+              >
+                关闭
+              </button>
             </div>
           ) : detailError ? (
             <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-xs text-[#DC2626] space-y-1">
@@ -540,6 +566,7 @@ export function TopicWorkBreakdownDrawer({
                     outline: subTopicInfo.outline,
                     topic_id: subTopicInfo.topic_id,
                     topics: subTopicInfo.topics,
+                    audience: subTopicInfo.audience,
                     source_type: subTopicInfo.source_type,
                   } as unknown as SubTopicItem);
                 }

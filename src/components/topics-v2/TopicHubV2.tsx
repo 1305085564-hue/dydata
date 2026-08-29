@@ -57,11 +57,6 @@ const TopicBatchImportModal = dynamic(
   { ssr: false },
 );
 
-const TopicCreateModal = dynamic(
-  () => import("./TopicCreateModal").then((mod) => mod.TopicCreateModal),
-  { ssr: false },
-);
-
 export function TopicHubV2({
   canManageTopicLibrary = false,
   feishuWorkspaceUrl = null,
@@ -117,7 +112,6 @@ export function TopicHubV2({
 
   // 抽屉与 Modal 控制
   const [inspectTopicId, setInspectTopicId] = useState<string | null>(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isBatchImportModalOpen, setIsBatchImportModalOpen] = useState(false);
 
   // 飞书创作弹窗控制
@@ -276,12 +270,14 @@ export function TopicHubV2({
   }, [fetchPoolData]);
 
   // 刷新全量数据
-  const refreshAll = () => {
-    fetchActiveData();
-    fetchMyClaims();
-    fetchTopicOptions();
-    fetchPoolData();
-  };
+  const refreshAll = useCallback(async () => {
+    await Promise.all([
+      fetchActiveData(),
+      fetchMyClaims(),
+      fetchTopicOptions(),
+      fetchPoolData(),
+    ]);
+  }, [fetchActiveData, fetchMyClaims, fetchTopicOptions, fetchPoolData]);
 
   // 兼容性保留与旧契约映射已废除：V3 不再有 replace-claim / 候选位 / 撞车阻断
   // 开始写作（幂等；等待结果，失败返回 false，不显示成功）
@@ -292,7 +288,7 @@ export function TopicHubV2({
         { method: "POST" },
       );
       showToast("已将选题加入在写清单", "success");
-      refreshAll();
+      await refreshAll();
       return true;
     } catch (err) {
       if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
@@ -308,7 +304,7 @@ export function TopicHubV2({
         method: "POST",
       });
       showToast("已取消写作状态", "success");
-      refreshAll();
+      await refreshAll();
     } catch (err) {
       if (isTeamMembershipRequiredError(err)) setMembershipRequired(true);
       showToast(getErrorMessage(err, "取消写作失败"), "error");
@@ -356,11 +352,14 @@ export function TopicHubV2({
     };
   }, []);
 
-  const handleConfirmImport = useCallback(async (rows: BatchImportParsedRow[]) => {
+  const handleConfirmImport = useCallback(async (
+    rows: BatchImportParsedRow[],
+    fileName?: string | null,
+  ) => {
     const res = await fetch("/api/admin/topics-library/import/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rows }),
+      body: JSON.stringify({ rows, fileName: fileName ?? null }),
     });
     const payload = (await res.json().catch(() => null)) as
       | { error?: string; successCount?: number; skippedCount?: number; failedCount?: number; errors?: Array<{ rowNumber: number; title: string; reason: string }> }
@@ -369,7 +368,7 @@ export function TopicHubV2({
       throw new Error(payload?.error || "导入执行失败，请稍后重试");
     }
     if ((payload.successCount ?? 0) > 0) {
-      refreshAll();
+      await refreshAll();
     }
     return {
       successCount: payload.successCount ?? 0,
@@ -377,7 +376,7 @@ export function TopicHubV2({
       failedCount: payload.failedCount ?? 0,
       errors: payload.errors ?? [],
     };
-  }, []);
+  }, [refreshAll]);
 
   if (membershipRequired) {
     return (
@@ -434,7 +433,7 @@ export function TopicHubV2({
                 灵感手稿 · 选题库
               </h1>
               <p className="text-[12.5px] text-[#78716C] font-normal leading-relaxed">
-                时代痛点与敏锐立意 · 协同认领与创作复盘
+                数据验证过的干货选题 · 选定后去飞书创作
               </p>
             </div>
           </div>
@@ -446,7 +445,7 @@ export function TopicHubV2({
             </span>
             <button
               type="button"
-              onClick={refreshAll}
+              onClick={() => void refreshAll()}
               title="刷新大盘数据"
               className="p-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
               aria-label="刷新大盘数据"
@@ -467,7 +466,7 @@ export function TopicHubV2({
           error={activeError}
           onRetry={fetchActiveData}
           onSelectTopic={(topicId) => {
-            setSelectedTopicIds([topicId]);
+            setInspectTopicId(topicId);
           }}
         />
 
@@ -485,11 +484,9 @@ export function TopicHubV2({
           selectedTopicIds={selectedTopicIds}
           moreFilters={moreFilters}
           sortBy={sortBy}
-          isAdmin={canManageTopicLibrary}
           onBatchImportClick={
             canManageTopicLibrary ? () => setIsBatchImportModalOpen(true) : undefined
           }
-          onCreateClick={() => setIsCreateModalOpen(true)}
           onPageChange={(p) => setPoolPage(p)}
           onViewChange={(v) => setPoolView(v)}
           onTimeRangeChange={(t) => setPoolTimeRange(t)}
@@ -498,7 +495,7 @@ export function TopicHubV2({
           onOpenMoreFilters={() => setIsMoreFiltersOpen(true)}
           onSortByChange={(s) => setSortBy(s)}
           onSearchQueryChange={(q) => setPoolSearchQuery(q)}
-          onRetry={refreshAll}
+          onRetry={() => void refreshAll()}
           onOpenFeishuModal={(topic) => {
             setFeishuModalTopic({
               id: topic.id,
@@ -507,9 +504,7 @@ export function TopicHubV2({
               outline: topic.outline,
               topic_id: topic.topic_id,
               topics: topic.topics,
-              target_audience: (
-                topic as unknown as { target_audience?: unknown }
-              ).target_audience,
+              audience: topic.audience,
               source_type: topic.source_type,
               isWritingByMe: (topic as { isWritingByMe?: boolean }).isWritingByMe,
               summary: (topic as { summary?: SubTopicItem["summary"] }).summary ?? null,
@@ -560,26 +555,12 @@ export function TopicHubV2({
       {isBatchImportModalOpen && canManageTopicLibrary && (
         <TopicBatchImportModal
           isOpen={isBatchImportModalOpen}
-          topics={topicsOptions}
           onClose={() => setIsBatchImportModalOpen(false)}
           onParseFile={handleParseImportFile}
           onConfirmImport={handleConfirmImport}
         />
       )}
 
-      {/* 动态懒加载：创建选题 Modal */}
-      {isCreateModalOpen && (
-        <TopicCreateModal
-          isOpen={isCreateModalOpen}
-          topics={topicsOptions}
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={() => {
-            setIsCreateModalOpen(false);
-            showToast("干货选题录入成功", "success");
-            refreshAll();
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -82,5 +82,8 @@ export async function GET() {
     return NextResponse.json({ error: "加载责任人组织信息失败" }, { status: 500 });
   }
 
-  return NextResponse.json({ members: buildOperatorMemberOptions((members ?? []) as OperatorMemberRow[], teams ?? []) });
+  return NextResponse.json({
+    currentUserId: user.id,
+    members: buildOperatorMemberOptions((members ?? []) as OperatorMemberRow[], teams ?? []),
+  });
 }

@@ -116,6 +116,11 @@ export interface V2ClaimsResponse {
     status: TopicClaimStatus;
     claimedAt: string | null;
   }>;
+  recent7dSummary: {
+    participants: number;
+    completedCount: number;
+    inProgressCount: number;
+  } | null;
 }
 
 export interface V2ActivityClaim {
@@ -456,7 +461,7 @@ export function parseSubTopicDetailResponse(value: unknown): V2DetailResponse {
 }
 
 export function parseClaimsResponse(value: unknown): V2ClaimsResponse {
-  if (!isRecord(value)) throw new Error("撞车接口返回结构无效");
+  if (!isRecord(value)) throw new Error("写作动态接口返回结构无效");
   const claims = Array.isArray(value.claims)
     ? value.claims.flatMap((claim) => {
         if (!isRecord(claim)) return [];
@@ -478,10 +483,18 @@ export function parseClaimsResponse(value: unknown): V2ClaimsResponse {
     : [];
   // 旧键 candidateCount/scriptingCount 兼容；服务端已统一返回正在写人数
   const inProgress = numberOr(value.inProgressCount, 0);
+  const summary = isRecord(value.recent7dSummary)
+    ? {
+        participants: numberOr(value.recent7dSummary.participants, 0),
+        completedCount: numberOr(value.recent7dSummary.completedCount, 0),
+        inProgressCount: numberOr(value.recent7dSummary.inProgressCount, 0),
+      }
+    : null;
   return {
     claims,
     candidateCount: numberOr(value.candidateCount, inProgress),
     scriptingCount: numberOr(value.scriptingCount, inProgress),
+    recent7dSummary: summary,
   };
 }
 

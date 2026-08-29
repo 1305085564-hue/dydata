@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminActor } from "@/app/api/admin/auth-helper";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { executeTopicImport, TOPIC_IMPORT_MAX_ROWS, type TopicImportParsedRow } from "@/lib/topics/import";
+import {
+  executeTopicImport,
+  parseMetricValue,
+  TOPIC_IMPORT_MAX_ROWS,
+  type TopicImportParsedRow,
+} from "@/lib/topics/import";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +16,11 @@ function toText(value: unknown) {
   if (typeof value === "string") return value;
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
   return "";
+}
+
+function parseMetricField(value: unknown) {
+  const parsed = parseMetricValue(toText(value));
+  return parsed;
 }
 
 export async function POST(request: NextRequest) {
@@ -32,17 +42,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `单次最多导入 ${TOPIC_IMPORT_MAX_ROWS} 行` }, { status: 400 });
   }
 
-  // 只接收允许的字段，服务端会在 executeTopicImport 中完整重新校验
+  // 只接收允许的字段，服务端会在 executeTopicImport 中完整重新校验。
+  // 指标不能静默丢失，否则预览显示的成绩会和最终落库不一致。
+  const metricRows = rawRows.map((raw, index) => {
+    const row = (raw ?? {}) as Record<string, unknown>;
+    return {
+      rowNumber: typeof row.rowNumber === "number" ? row.rowNumber : index + 2,
+      historyPlay: parseMetricField(row.historyPlay),
+      historyLikes: parseMetricField(row.historyLikes),
+    };
+  });
+  const invalidMetric = metricRows.find((row) => !row.historyPlay.ok || !row.historyLikes.ok);
+  if (invalidMetric) {
+    return NextResponse.json(
+      { error: `第 ${invalidMetric.rowNumber} 行的历史播放或点赞不是有效数字` },
+      { status: 400 },
+    );
+  }
+
   const rows: TopicImportParsedRow[] = rawRows.map((raw, index) => {
     const row = (raw ?? {}) as Record<string, unknown>;
+    const metricRow = metricRows[index];
     return {
       rowNumber: typeof row.rowNumber === "number" ? row.rowNumber : index + 2,
       topicName: toText(row.topicName),
       title: toText(row.title),
       durationText: toText(row.durationText),
       durationSeconds: null,
-      historyPlay: null,
-      historyLikes: null,
+      historyPlay: metricRow?.historyPlay.value ?? null,
+      historyLikes: metricRow?.historyLikes.value ?? null,
       hook: toText(row.hook) || null,
       outline: toText(row.outline) || null,
       status: "valid",

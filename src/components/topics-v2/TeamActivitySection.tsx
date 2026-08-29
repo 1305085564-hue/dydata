@@ -6,7 +6,6 @@ import {
   Video,
   RefreshCw,
   AlertCircle,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -81,7 +80,7 @@ export function TeamActivitySection({
     return (
       <section className="my-2 sm:my-3.5">
         <div className="rounded-xl bg-[#FBF9F5]/70 px-3.5 py-2 text-xs text-[#78716C]">
-          还没有团队动态，认领选题或产出成片后会自动出现在这里。
+          还没有团队写作动态，开始写题或产出成片后会自动出现在这里。
         </div>
       </section>
     );
@@ -96,12 +95,12 @@ export function TeamActivitySection({
       {/* 单行极简状态条 (Ticker) */}
       <div className="bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] rounded-xl px-3.5 py-2 flex flex-wrap items-center justify-between gap-3 text-xs transition-colors">
         <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
-          {/* 最新认领 */}
+          {/* 最新写作 */}
           {latestClaim ? (
             <div className="flex items-center gap-1.5 truncate max-w-full sm:max-w-[48%]">
               <span className="inline-flex items-center gap-1 text-[#43718E] font-medium shrink-0">
                 <UserCheck className="w-3.5 h-3.5" />
-                <span>最新认领:</span>
+                <span>最新在写:</span>
               </span>
               <button
                 type="button"
@@ -177,12 +176,12 @@ export function TeamActivitySection({
       {/* 展开的往期历史动态面板（从第 2 条开始展示，上下绝不重复） */}
       {isExpanded && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 bg-white border border-[#E5E0D6]/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-1 duration-150">
-          {/* 往期认领列表 */}
+          {/* 往期写作列表 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#ECE7DE] text-xs">
               <span className="font-semibold text-[#292524] flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-[#43718E]" />
-                往期认领记录
+                往期写作记录
               </span>
               <span className="text-[11px] text-[#78716C] tabular-nums">
                 {pastClaims.length} 条
@@ -190,7 +189,7 @@ export function TeamActivitySection({
             </div>
             {pastClaims.length === 0 ? (
               <div className="text-xs text-[#78716C] py-3 text-center">
-                没有更多往期认领了
+                没有更多往期写作记录
               </div>
             ) : (
               pastClaims.map((claim: TopicClaimItem) => (
@@ -205,7 +204,7 @@ export function TeamActivitySection({
                       {claim.displayName || "团队成员"}
                     </span>
                     <span className="text-[#78716C] ml-1.5">
-                      认领<span>《{claim.subTopic?.title || "未命名选题"}》</span>
+                      正在写<span>《{claim.subTopic?.title || "未命名选题"}》</span>
                     </span>
                   </div>
                   <span className="text-[11px] text-[#78716C] shrink-0 font-normal tabular-nums">
@@ -255,15 +254,6 @@ export function TeamActivitySection({
                     )}
                   </button>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <a
-                      href="/admin/content"
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-0.5 text-[#E5E0D6] hover:text-[#D97757] transition-colors rounded hover:bg-[#F5F3EE]"
-                      title="前往视频复盘查看成片"
-                      aria-label="前往视频复盘查看成片"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
                     <span className="text-[11px] text-[#78716C] font-normal tabular-nums">
                       {formatDateCompact(work.uploadedAt)}
                     </span>

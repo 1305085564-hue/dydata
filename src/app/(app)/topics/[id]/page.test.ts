@@ -64,6 +64,26 @@ test("parseSubTopicWorksResponse 解析后端 pagination、items 和 similarRefe
   assert.equal(parsed.pageSize, 10);
 });
 
+test("作品摘要使用服务端全量统计，不被当前分页结果覆盖", () => {
+  const parsed = parseSubTopicWorksResponse({
+    value: {
+      items: [{ id: "w-1", video_title: "当前页作品" }],
+      summary: {
+        qualifiedWorkCount: 7,
+        averagePlayCount: 42000,
+        bestPlayCount: 180000,
+      },
+      pagination: { page: 2, pageSize: 20, totalItems: 41 },
+    },
+  });
+
+  assert.deepEqual(parsed.summary, {
+    qualifiedWorkCount: 7,
+    averagePlayCount: 42000,
+    bestPlayCount: 180000,
+  });
+});
+
 test("parseSubTopicWorksResponse 默认应用 DETAIL_PAGE_SIZE=20 分页契约", () => {
   const parsed = parseSubTopicWorksResponse({ ok: true, value: { items: [], total: 0 } });
   assert.equal(parsed.pageSize, 20);
