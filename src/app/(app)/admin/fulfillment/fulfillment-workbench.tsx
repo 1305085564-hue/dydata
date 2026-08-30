@@ -784,13 +784,6 @@ export function FulfillmentWorkbench({
 
   return (
     <div className="space-y-6">
-      {/* 卷首寄语 */}
-      <EditorialEpigraph
-        quote="并肩同行，记录团队每一次创作灵光的凝聚与沉淀。"
-        author="团队协作札记"
-        className="my-0"
-      />
-
       {/* 筛选工具栏 */}
       <FilterBar
         year={calendarData.year}

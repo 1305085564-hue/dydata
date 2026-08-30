@@ -43,13 +43,6 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
 
   return (
     <div className="w-full space-y-5">
-      {/* 卷首寄语 */}
-      <EditorialEpigraph
-        quote="博学慎思，审问笃行。为不同创作场景调度最契合的思想模型。"
-        author="算力调度札记"
-        className="my-0"
-      />
-
       {/* 平铺 Tab 规范 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
