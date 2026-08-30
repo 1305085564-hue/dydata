@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { TrendingDown, TrendingUp, X } from "lucide-react";
 import { formatBigNumber, type PersonDetailData } from "./types";
 import {
+  loadPersonData,
   readPersonDataCache,
   writePersonDataCache,
 } from "./person-data";
@@ -73,16 +74,8 @@ export function PersonalCard({
     setLoading(true);
     setError(null);
 
-    fetch(
-      `/api/admin/collaboration/person?userId=${userId}&year=${year}&month=${month}`,
-    )
-      .then(async (res) => {
-        const json = await res.json();
-        if (!res.ok) {
-          throw new Error(json.error || "加载个人协作数据失败");
-        }
-        return json as PersonDetailData;
-      })
+    // 与 hover 预取共享同一个进行中的请求，避免同一人卡重复发两次
+    loadPersonData(userId, year, month)
       .then((resData) => {
         if (isMounted) {
           writePersonDataCache(key, resData);

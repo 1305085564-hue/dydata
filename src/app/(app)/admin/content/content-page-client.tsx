@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ContentList } from "./content-list";
 import { toast } from "sonner";
 import type { AdminContentPageData } from "@/lib/loaders/admin-content-page";
+import { buildTopicLibraryStatusRequest } from "./topic-library-status-request";
 
 const ContentDiagnosisWorkbench = dynamic(
   () => import("./content-diagnosis-workbench").then((module) => module.ContentDiagnosisWorkbench),
@@ -68,23 +69,37 @@ export function ContentPageClient({
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [topicLibraryStatuses, setTopicLibraryStatuses] = useState<Record<string, TopicLibraryStatusInfo>>({});
   const requestSeq = useRef(0);
+  // 已成功加载状态的视频 ID 签名；相同签名不重复请求，切换视角/入库操作后置空强制刷新
+  const topicStatusKeyRef = useRef<string | null>(null);
+  const topicStatusAbortRef = useRef<AbortController | null>(null);
   const selectedTeamName = teams.find((team) => team.id === teamId)?.name;
 
   // Topics V3：选题库入库状态来自服务端真实字段（话题标签 + 24h 快照 + 选题入库状态）
   const loadTopicLibraryStatuses = useCallback(async (videos: AdminContentVideo[]) => {
     const ids = videos.map((video) => video.id).filter(Boolean);
+    const signature = [...ids].sort().join(",");
+    if (signature === topicStatusKeyRef.current) return;
     if (!ids.length) {
+      topicStatusKeyRef.current = signature;
       setTopicLibraryStatuses({});
       return;
     }
+    // 新请求发起时取消仍在途的旧请求，避免过期结果覆盖新列表状态
+    topicStatusAbortRef.current?.abort();
+    const controller = new AbortController();
+    topicStatusAbortRef.current = controller;
     try {
-      const params = new URLSearchParams({ videoIds: ids.slice(0, 400).join(",") });
-      const res = await fetch(`/api/admin/content/topic-library-status?${params.toString()}`);
-      if (!res.ok) return;
+      const request = buildTopicLibraryStatusRequest(ids);
+      const res = await fetch(request.url, { ...request.init, signal: controller.signal });
+      if (!res.ok) throw new Error("选题库状态加载失败");
       const payload = (await res.json()) as { statuses?: Record<string, TopicLibraryStatusInfo> };
+      if (controller.signal.aborted) return;
+      topicStatusKeyRef.current = signature;
       setTopicLibraryStatuses(payload.statuses ?? {});
     } catch {
-      // 状态加载失败时保持未知态，不伪造入库状态
+      if (controller.signal.aborted) return;
+      // 状态加载失败时保持未知态，不伪造入库状态；签名不记录，下次数据变化时重试
+      toast.error("选题库状态加载失败，请稍后重试");
     }
   }, []);
 
@@ -178,7 +193,8 @@ export function ContentPageClient({
       const payload = (await res.json().catch(() => null)) as { error?: string } | null;
       throw new Error(payload?.error || "操作失败，请重试");
     }
-    // 成功后刷新真实列表与状态；失败时上方抛错，页面保留原状态
+    // 入库状态已在服务端变更，置空签名让列表刷新后强制重算该列表状态
+    topicStatusKeyRef.current = null;
     await loadData(view, perspective, teamId, { background: true });
   }, [topicLibraryStatuses, loadData, view, perspective, teamId]);
 

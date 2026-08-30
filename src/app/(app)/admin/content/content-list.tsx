@@ -133,7 +133,6 @@ export function ContentList({
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [thresholds, setThresholds] = useState<VideoReviewThresholds>(DEFAULT_VIDEO_REVIEW_THRESHOLDS);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const hasTriggeredDeferredRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/admin/settings/thresholds")
@@ -143,14 +142,6 @@ export function ContentList({
       })
       .catch(() => {});
   }, []);
-
-  // 仅在首次需要时安全触发一次背景全量加载，杜绝循环重刷
-  useEffect(() => {
-    if (hasDeferredData && onLoadDeferredData && !isDeferredDataLoading && !hasTriggeredDeferredRef.current) {
-      hasTriggeredDeferredRef.current = true;
-      void onLoadDeferredData();
-    }
-  }, [hasDeferredData, onLoadDeferredData, isDeferredDataLoading]);
 
   const snapshotMap = useMemo(() => buildSnapshotMap(snapshots), [snapshots]);
 
@@ -401,6 +392,23 @@ export function ContentList({
           </button>
         </div>
       </div>
+
+      {/* 全量列表按需加载：首屏只含服务端注入的待盘队列，用户需要时再拉全量 */}
+      {hasDeferredData && onLoadDeferredData ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
+          <span>
+            当前显示首屏待盘队列 {videos.length} 条，全量作品列表未加载。
+          </span>
+          <button
+            type="button"
+            onClick={() => void onLoadDeferredData()}
+            disabled={isDeferredDataLoading}
+            className="rounded-lg border border-[#E5E0D6] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+          >
+            {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量列表"}
+          </button>
+        </div>
+      ) : null}
 
       {/* 对比表格容器 */}
       <div

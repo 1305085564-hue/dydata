@@ -18,7 +18,6 @@ import {
   fetchTopicJson,
   parseClaimsResponse,
   parseSubTopicDetailResponse,
-  parseTopicWorksResponse,
   isTeamMembershipRequiredError,
 } from "@/lib/topics/v2-client-contract";
 import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
@@ -56,7 +55,6 @@ export function TopicWorkBreakdownDrawer({
   const [claimsData, setClaimsData] =
     useState<TopicClaimsDetailResponse | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [worksError, setWorksError] = useState<string | null>(null);
   const [claimsError, setClaimsError] = useState<string | null>(null);
   const [membershipRequired, setMembershipRequired] = useState(false);
   const loadRequestId = useRef(0);
@@ -120,21 +118,19 @@ export function TopicWorkBreakdownDrawer({
     setWorksData(null);
     setClaimsData(null);
     setDetailError(null);
-    setWorksError(null);
     setClaimsError(null);
     setMembershipRequired(false);
 
-    const [detailResult, worksResult, claimsResult] = await Promise.allSettled([
+    // detail 接口内部已用相同参数（sort=best, page=1, pageSize=20）查询 works 并随详情返回，
+    // 不再单独请求 /works，避免同一份作品查两次
+    const [detailResult, claimsResult] = await Promise.allSettled([
       fetchTopicJson(`/api/topics/sub-topics/${subTopicId}`),
-      fetchTopicJson(
-        `/api/topics/sub-topics/${subTopicId}/works?sort=best&page=1&page_size=20`,
-      ),
       fetchTopicJson(`/api/topics/sub-topics/${subTopicId}/claims`),
     ]);
 
     if (requestId !== loadRequestId.current) return;
 
-    if ([detailResult, worksResult, claimsResult].some(
+    if ([detailResult, claimsResult].some(
       (result) => result.status === "rejected" && isTeamMembershipRequiredError(result.reason),
     )) {
       setMembershipRequired(true);
@@ -144,10 +140,9 @@ export function TopicWorkBreakdownDrawer({
 
     if (detailResult.status === "fulfilled") {
       try {
-        setSubTopicInfo(
-          parseSubTopicDetailResponse(detailResult.value)
-            .subTopic as SubTopicItem,
-        );
+        const parsedDetail = parseSubTopicDetailResponse(detailResult.value);
+        setSubTopicInfo(parsedDetail.subTopic as SubTopicItem);
+        setWorksData(parsedDetail.works);
       } catch (error) {
         setDetailError(error instanceof Error ? error.message : "详情结构无效");
       }
@@ -156,22 +151,6 @@ export function TopicWorkBreakdownDrawer({
         detailResult.reason instanceof Error
           ? detailResult.reason.message
           : "详情加载失败",
-      );
-    }
-
-    if (worksResult.status === "fulfilled") {
-      try {
-        setWorksData(
-          parseTopicWorksResponse(worksResult.value) as TopicWorksResponse,
-        );
-      } catch (error) {
-        setWorksError(error instanceof Error ? error.message : "作品结构无效");
-      }
-    } else {
-      setWorksError(
-        worksResult.reason instanceof Error
-          ? worksResult.reason.message
-          : "作品加载失败",
       );
     }
 
@@ -484,11 +463,7 @@ export function TopicWorkBreakdownDrawer({
                   </span>
                 </div>
 
-                {worksError ? (
-                  <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-3 text-xs text-[#DC2626]">
-                    作品列表加载失败：{worksError}
-                  </div>
-                ) : worksData?.items && worksData.items.length > 0 ? (
+                {worksData?.items && worksData.items.length > 0 ? (
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                     {worksData.items.map((work: TopicWorkItem) => (
                       <div

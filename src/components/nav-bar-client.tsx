@@ -46,6 +46,11 @@ const PremiumSettingsModal = dynamic(
   { ssr: false },
 );
 
+// 豁免审批角标计数：跨路由的模块级缓存，避免每次硬加载都为一个小角标拉全量待审批列表
+const PENDING_APPROVALS_COUNT_TTL_MS = 60_000;
+let pendingApprovalsCountCache: { count: number; fetchedAt: number } | null =
+  null;
+
 interface Account {
   id: string;
   name: string;
@@ -161,20 +166,36 @@ export function NavBarClient({
 
   const isAdmin = showAdmin;
 
-  const loadPendingApprovalsCount = useCallback(async () => {
-    if (!isAdmin) return 0;
-    try {
-      const res = await fetch("/api/exemptions/pending", { cache: "no-store" });
-      if (!res.ok) return null;
-      const json = await res.json();
-      return typeof json.count === "number"
-        ? json.count
-        : (json.data?.length ?? 0);
-    } catch (err) {
-      console.error("Failed to fetch pending count:", err);
-      return null;
-    }
-  }, [isAdmin]);
+  const loadPendingApprovalsCount = useCallback(
+    async (options: { maxAgeMs?: number } = {}) => {
+      if (!isAdmin) return 0;
+      const maxAgeMs = options.maxAgeMs ?? PENDING_APPROVALS_COUNT_TTL_MS;
+      const cached = pendingApprovalsCountCache;
+      if (cached && Date.now() - cached.fetchedAt < maxAgeMs) {
+        return cached.count;
+      }
+      try {
+        const res = await fetch("/api/exemptions/pending", {
+          cache: "no-store",
+        });
+        if (!res.ok) return null;
+        const json = await res.json();
+        const nextCount =
+          typeof json.count === "number"
+            ? json.count
+            : (json.data?.length ?? 0);
+        pendingApprovalsCountCache = {
+          count: nextCount,
+          fetchedAt: Date.now(),
+        };
+        return nextCount;
+      } catch (err) {
+        console.error("Failed to fetch pending count:", err);
+        return null;
+      }
+    },
+    [isAdmin],
+  );
 
   // Monitor scroll for header shrink effect
   useEffect(() => {
@@ -203,18 +224,20 @@ export function NavBarClient({
     }
   }, [accounts]);
 
-  // Fetch pending approvals count on mount (if admin)
+  // 管理员角标计数延后到页面首屏请求之后拉取，不与页面首屏争抢带宽
   useEffect(() => {
     if (!isAdmin) return;
     let cancelled = false;
-    void (async () => {
-      const nextCount = await loadPendingApprovalsCount();
-      if (!cancelled && typeof nextCount === "number") {
-        setPendingApprovalsCount(nextCount);
-      }
-    })();
+    const timer = window.setTimeout(() => {
+      void loadPendingApprovalsCount().then((nextCount) => {
+        if (!cancelled && typeof nextCount === "number") {
+          setPendingApprovalsCount(nextCount);
+        }
+      });
+    }, 2500);
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [isAdmin, loadPendingApprovalsCount]);
 
@@ -258,7 +281,9 @@ export function NavBarClient({
     }
 
     if (nextTodoCount === 0 && isAdmin) {
-      const latestApprovalCount = await loadPendingApprovalsCount();
+      const latestApprovalCount = await loadPendingApprovalsCount({
+        maxAgeMs: 0,
+      });
       if (typeof latestApprovalCount === "number") {
         nextApprovalCount = latestApprovalCount;
         setPendingApprovalsCount(latestApprovalCount);
@@ -286,6 +311,11 @@ export function NavBarClient({
   const handleSettingsOpen = useCallback(() => {
     setSettingsLoaded(true);
     setSettingsOpen(true);
+  }, []);
+
+  const handleHubPendingCountChange = useCallback((count: number) => {
+    setPendingApprovalsCount(count);
+    pendingApprovalsCountCache = { count, fetchedAt: Date.now() };
   }, []);
 
   return (
@@ -516,7 +546,7 @@ export function NavBarClient({
                     onTabChange={setCommandHubTab}
                     isAdmin={isAdmin}
                     pendingApprovalsCount={approvalBadgeCount}
-                    onPendingCountChange={setPendingApprovalsCount}
+                    onPendingCountChange={handleHubPendingCountChange}
                     canViewOrphanDetails={canViewOrphanDetails}
                     orphanExemptionCount={orphanExemptionCount}
                   />
