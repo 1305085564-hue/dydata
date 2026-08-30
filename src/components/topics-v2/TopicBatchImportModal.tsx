@@ -300,7 +300,7 @@ export function TopicBatchImportModal({
                       </span>
                     )}
                     {summary.errorCount > 0 && (
-                      <span className="text-[#DC2626] flex items-center gap-1">
+                      <span className="text-[#C0685C] flex items-center gap-1">
                         <XCircle className="size-3.5" />
                         <strong className="tabular-nums">{summary.errorCount}</strong> 错误项
                       </span>
@@ -315,9 +315,9 @@ export function TopicBatchImportModal({
                   <span>正在解析文件表格...</span>
                 </div>
               ) : parseError ? (
-                <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-center text-xs space-y-1">
-                  <AlertTriangle className="size-5 text-[#DC2626] mx-auto mb-1" />
-                  <p className="font-semibold text-[#DC2626]">解析失败</p>
+                <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-4 text-center text-xs space-y-1">
+                  <AlertTriangle className="size-5 text-[#C0685C] mx-auto mb-1" />
+                  <p className="font-semibold text-[#C0685C]">解析失败</p>
                   <p className="text-[#78716C]">{parseError}</p>
                 </div>
               ) : !onParseFile ? (

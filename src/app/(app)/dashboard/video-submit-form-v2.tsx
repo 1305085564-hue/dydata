@@ -1953,7 +1953,7 @@ export function VideoSubmitFormV2({
               <ZenFinishedIllustration size={96} />
             </div>
             <div className="space-y-1">
-              <h3 className="font-serif tracking-tight text-xl font-semibold text-[#1C1917]">
+              <h3 className="font-serif tracking-tight text-xl font-medium text-[#1C1917]">
                 今日创作已成功立卷
               </h3>
               <p className="text-[13px] text-[#78716C]">
@@ -2039,7 +2039,7 @@ export function VideoSubmitFormV2({
                       ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                       : qualityCheck.data.overallStatus === "warning"
                         ? "bg-[#D99E55]/10 text-[#8A6A2F]"
-                        : "bg-[#DC2626]/10 text-[#DC2626]",
+                        : "bg-[#C0685C]/10 text-[#C0685C]",
                   )}
                 >
                   {qualityCheck.data.overallStatus === "pass"
@@ -2532,13 +2532,13 @@ export function VideoSubmitFormV2({
                         hasAttemptedSubmit &&
                           meta.anomalyStatus !== "abnormal" &&
                           issueSummary.missingRequiredMeta.includes("videoTitle") &&
-                          "border border-[#DC2626]/40 bg-rose-50/40"
+                          "border border-[#C0685C]/30 bg-[#C0685C]/5"
                       )}
                     >
                       <Label htmlFor="video_title" className="text-[13px] font-medium text-[#292524]">
                         视频标题{" "}
                         {meta.anomalyStatus !== "abnormal" && (
-                          <span className="text-[#DC2626]">*</span>
+                          <span className="text-[#C0685C]">*</span>
                         )}
                       </Label>
                       <Input
@@ -2563,12 +2563,12 @@ export function VideoSubmitFormV2({
                         "flex flex-1 flex-col min-h-0 rounded-xl p-4 bg-white border border-[#E5E0D6] shadow-sm transition-colors",
                         hasAttemptedSubmit &&
                           issueSummary.missingRequiredMeta.includes("content") &&
-                          "border-[#DC2626]/40 bg-rose-50/40"
+                          "border-[#C0685C]/30 bg-[#C0685C]/5"
                       )}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <Label htmlFor="content" className="text-[13px] font-medium text-[#292524]">
-                          文案 <span className="text-[#DC2626]">*</span>
+                          文案 <span className="text-[#C0685C]">*</span>
                         </Label>
                         <button
                           type="button"

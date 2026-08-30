@@ -682,7 +682,7 @@ export default function SubTopicDetailPage({
           </div>
 
           {claimsError && (
-            <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-3 text-xs text-[#DC2626]">
+            <div className="rounded-xl border border-[#C0685C]/20 bg-[#C0685C]/5 p-3 text-xs text-[#C0685C]">
               参与动态加载失败：{claimsError}
             </div>
           )}
@@ -868,7 +868,7 @@ export default function SubTopicDetailPage({
                   className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
                 />
                 {editTitleError && (
-                  <p className="text-xs text-[#DC2626] mt-1">{editTitleError}</p>
+                  <p className="text-xs text-[#C0685C] mt-1">{editTitleError}</p>
                 )}
               </div>
 
@@ -937,7 +937,7 @@ export default function SubTopicDetailPage({
               移出后该选题将停止在员工选题库中展示，但历史作品数据与复盘关联完整保留。
             </p>
             {deleteErrorMsg && (
-              <p className="text-[#DC2626] font-medium">{deleteErrorMsg}</p>
+              <p className="text-[#C0685C] font-medium">{deleteErrorMsg}</p>
             )}
           </DialogBody>
           <DialogFooter>

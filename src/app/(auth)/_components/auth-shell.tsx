@@ -18,15 +18,12 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         initial={{ opacity: 0, y: 12, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.215, 0.610, 0.355, 1.000] }}
-        className="relative w-full max-w-[440px] overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white px-8 py-9 shadow-claude-float hover:shadow-claude-dialog hover:-translate-y-[1px] transition-all duration-150"
+        className="relative w-full max-w-[440px] overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white px-8 py-9 shadow-claude-float"
       >
-        {/* 顶部微陶土呼吸状态点 */}
-        <div className="absolute right-7 top-7 opacity-80 flex items-center justify-center size-3">
+        {/* 顶部静谧陶土微徽印（遵循系统减少动效偏好） */}
+        <div className="absolute right-7 top-7 flex items-center justify-center size-2.5">
           <span className="absolute inline-flex h-full w-full rounded-full bg-[#D97757]/20 motion-safe:animate-ping opacity-75" />
-          <div
-            className="relative h-[6px] w-[6px] rounded-full bg-[#D97757] motion-safe:animate-pulse"
-            style={{ boxShadow: "0 0 16px 3px rgba(217, 119, 87, 0.6)" }}
-          />
+          <div className="relative h-1.5 w-1.5 rounded-full bg-[#D97757]" />
         </div>
 
         {/* 案头手稿线描插图 */}

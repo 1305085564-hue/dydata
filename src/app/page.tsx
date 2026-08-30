@@ -92,15 +92,15 @@ export default function HomePage() {
             <div className="border-t border-[#ECE7DE] pt-6">
               <div className="grid grid-cols-3 gap-4 text-left">
                 <div>
-                  <p className="font-serif text-lg font-semibold tabular-nums text-[#1C1917]">T+0 / T+1</p>
+                  <p className="text-base font-medium tabular-nums text-[#1C1917]">T+0 / T+1</p>
                   <p className="text-[12px] text-[#78716C]">自然日裁剪与防漏对账</p>
                 </div>
                 <div>
-                  <p className="font-serif text-lg font-semibold text-[#1C1917]">0 撞题</p>
+                  <p className="text-base font-medium text-[#1C1917]">0 撞题</p>
                   <p className="text-[12px] text-[#78716C]">团队认领状态透明闭环</p>
                 </div>
                 <div>
-                  <p className="font-serif text-lg font-semibold text-[#1C1917]">指标级</p>
+                  <p className="text-base font-medium text-[#1C1917]">指标级</p>
                   <p className="text-[12px] text-[#78716C]">作品异常归因与证据链</p>
                 </div>
               </div>
@@ -135,15 +135,15 @@ export default function HomePage() {
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#ECE7DE]/60 pt-3">
                     <div>
                       <p className="text-[11px] text-[#78716C]">完播率</p>
-                      <p className="font-semibold tabular-nums text-[#1C1917]">24.8%</p>
+                      <p className="font-medium tabular-nums text-[#1C1917]">24.8%</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-[#78716C]">点赞转化</p>
-                      <p className="font-semibold tabular-nums text-[#1C1917]">6.2%</p>
+                      <p className="font-medium tabular-nums text-[#1C1917]">6.2%</p>
                     </div>
                     <div>
                       <p className="text-[11px] text-[#78716C]">5秒停留</p>
-                      <p className="font-semibold tabular-nums text-[#1C1917]">68.5%</p>
+                      <p className="font-medium tabular-nums text-[#1C1917]">68.5%</p>
                     </div>
                   </div>
                 </div>
@@ -187,7 +187,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#D97757]">
                   <CalendarCheck className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="font-serif text-base font-semibold text-[#1C1917]">
+                <h3 className="text-base font-medium text-[#1C1917]">
                   精确日报立卷
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
@@ -205,7 +205,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#D97757]">
                   <Compass className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="font-serif text-base font-semibold text-[#1C1917]">
+                <h3 className="text-base font-medium text-[#1C1917]">
                   团队选题防撞
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">
@@ -223,7 +223,7 @@ export default function HomePage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F5F3EE] text-[#D97757]">
                   <BarChart3 className="size-5 stroke-[1.75]" />
                 </div>
-                <h3 className="font-serif text-base font-semibold text-[#1C1917]">
+                <h3 className="text-base font-medium text-[#1C1917]">
                   作品异常归因
                 </h3>
                 <p className="text-[13px] leading-[1.7] text-[#78716C]">

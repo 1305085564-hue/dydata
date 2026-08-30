@@ -149,9 +149,9 @@ function getVideoStatusInfo(
   const isHalve = playChangeSignal === "halve";
   if (status === "deleted" || status === "删稿") {
     return {
-      dotColor: "bg-[#DC2626]",
-      textColor: "text-[#DC2626]",
-      bgColor: "bg-[#F5F3EE]",
+      dotColor: "bg-[#C0685C]",
+      textColor: "text-[#C0685C]",
+      bgColor: "bg-[#C0685C]/10",
       label: "删稿",
     };
   }
@@ -162,9 +162,9 @@ function getVideoStatusInfo(
     status === "异常"
   ) {
     return {
-      dotColor: "bg-[#DC2626]",
-      textColor: "text-[#DC2626]",
-      bgColor: "bg-[#F5F3EE]",
+      dotColor: "bg-[#C0685C]",
+      textColor: "text-[#C0685C]",
+      bgColor: "bg-[#C0685C]/10",
       label: status === "limited" || status === "限流" ? "限流" : "异常",
     };
   }

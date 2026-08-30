@@ -998,8 +998,8 @@ export function ContentDiagnosisWorkbench({
                   ))}
                 </div>
               ) : attributionError ? (
-                <div className="rounded-xl border border-dashed border-[#C9604D]/30 bg-[#C9604D]/5 p-6 text-center text-[12px] text-[#DC2626]">
-                  <p className="font-semibold">归因数据加载失败</p>
+                <div className="rounded-xl border border-dashed border-[#C0685C]/30 bg-[#C0685C]/5 p-6 text-center text-[12px] text-[#C0685C]">
+                  <p className="font-medium">归因数据加载失败</p>
                   <p className="mt-1 text-[11px]">{attributionError}</p>
                 </div>
               ) : !multiAttribution || !multiAttribution.snapshot_ready ? (
@@ -1378,9 +1378,9 @@ export function ContentDiagnosisWorkbench({
               <div className="h-px bg-[#E5E0D6]/60 pt-0.5" />
             )}
 
-            {/* AI 辅助分析（默认折叠为 AI 参考入口） */}
+            {/* AI 辅助分析（学者边注风格） */}
             {analysisResult && (
-              <div className="rounded-xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-4 space-y-3.5 shadow-2xs">
+              <div className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F5F3EE]/80 via-[#FAF8F4]/50 to-transparent p-4 space-y-3.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-[#292524] font-medium text-[12.5px]">
                     <Sparkles className="size-3.5 text-[#D97757]" />
@@ -1414,7 +1414,7 @@ export function ContentDiagnosisWorkbench({
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="font-serif tracking-tight font-semibold text-[#1C1917] block">
+                    <span className="font-medium text-[#1C1917] block">
                       数据特征总结：
                     </span>
                     <p className="mt-0.5 text-[#292524]">
@@ -1427,7 +1427,7 @@ export function ContentDiagnosisWorkbench({
                       visible: { opacity: 1, y: 0 },
                     }}
                   >
-                    <span className="font-serif tracking-tight font-semibold text-[#1C1917] block">
+                    <span className="font-medium text-[#1C1917] block">
                       改进方向与思路：
                     </span>
                     <p className="mt-0.5 text-[#292524]">
@@ -1442,7 +1442,7 @@ export function ContentDiagnosisWorkbench({
                           visible: { opacity: 1, y: 0 },
                         }}
                       >
-                        <span className="font-serif tracking-tight font-semibold text-[#1C1917] block">
+                        <span className="font-medium text-[#1C1917] block">
                           异常提示点：
                         </span>
                         <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[#292524]">
@@ -1691,8 +1691,8 @@ function MultiRefMetricCard({
               : tone === "warn"
                 ? "text-[#D99E55] bg-[#D99E55]/8 border-[#D99E55]/20"
                 : tone === "bad"
-                  ? "text-[#DC2626] bg-[#DC2626]/8 border-[#DC2626]/20"
-                  : "text-[#78716C] bg-[#FBF9F5] border-[#E5E0D6]/60";
+                ? "text-[#C0685C] bg-[#C0685C]/8 border-[#C0685C]/20"
+                : "text-[#78716C] bg-[#FBF9F5] border-[#E5E0D6]/60";
 
           const toneSymbol =
             tone === "good"

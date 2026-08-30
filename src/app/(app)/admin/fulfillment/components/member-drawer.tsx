@@ -293,57 +293,57 @@ export function MemberDrawer({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="w-full max-w-[480px] bg-white">
-          <SheetHeader>
-            <div className="flex items-center gap-2">
-              <SheetTitle className="font-semibold text-[#1C1917]">{member.userName}</SheetTitle>
+        <SheetContent side="right" className="w-full max-w-[480px] bg-[#FBF9F5] border-l border-[#ECE7DE]">
+          <SheetHeader className="border-b border-[#ECE7DE]/80 pb-4">
+            <div className="flex items-center gap-2.5">
+              <SheetTitle className="font-serif text-xl font-medium tracking-tight text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
-            <SheetDescription>{member.teamName ?? "无团队"}</SheetDescription>
+            <SheetDescription className="text-[12.5px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>
           </SheetHeader>
 
-          <SheetBody className="space-y-6">
+          <SheetBody className="space-y-6 pt-4">
             {/* 当前时间段统计 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-[#78716C]">
+              <h3 className="mb-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                 当前统计
               </h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">应发作品</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="rounded-xl bg-white border border-[#ECE7DE]/80 p-3 shadow-2xs">
+                  <p className="text-[11px] text-[#78716C]">应发作品</p>
+                  <p className="mt-1 text-lg font-medium tabular-nums text-[#1C1917]">
                     {member.requiredCount}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">实发作品</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
+                <div className="rounded-xl bg-white border border-[#ECE7DE]/80 p-3 shadow-2xs">
+                  <p className="text-[11px] text-[#78716C]">实发作品</p>
+                  <p className="mt-1 text-lg font-medium tabular-nums text-[#1C1917]">
                     {member.publishedCount}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">
+                <div className="rounded-xl bg-white border border-[#ECE7DE]/80 p-3 shadow-2xs">
+                  <p className="text-[11px] text-[#78716C]">
                     {member.remainingCount <= 0 ? "目标状态" : "还差"}
                   </p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
+                  <p className="mt-1 text-lg font-medium tabular-nums text-[#1C1917]">
                     {member.remainingCount <= 0 ? "已达标" : member.remainingCount}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">请假</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
+                <div className="rounded-xl bg-white border border-[#ECE7DE]/80 p-3 shadow-2xs">
+                  <p className="text-[11px] text-[#78716C]">请假</p>
+                  <p className="mt-1 text-lg font-medium tabular-nums text-[#1C1917]">
                     {member.leaveDays}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">豁免</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
+                <div className="rounded-xl bg-white border border-[#ECE7DE]/80 p-3 shadow-2xs">
+                  <p className="text-[11px] text-[#78716C]">豁免</p>
+                  <p className="mt-1 text-lg font-medium tabular-nums text-[#1C1917]">
                     {member.waivedDays}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#F5F3EE]/70 p-3">
-                  <p className="text-[12px] text-[#78716C]">缺勤</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-[#1C1917]">
+                <div className="rounded-xl bg-white border border-[#ECE7DE]/80 p-3 shadow-2xs">
+                  <p className="text-[11px] text-[#78716C]">缺勤</p>
+                  <p className="mt-1 text-lg font-medium tabular-nums text-[#1C1917]">
                     {member.absentDays}
                   </p>
                 </div>
@@ -422,27 +422,28 @@ export function MemberDrawer({
               </div>
             </section>
 
-            {/* 员工申诉状态 (新集成) */}
+            {/* 员工申诉状态 (卷首寄语风格) */}
             {dateAppeal && (
-              <section className="rounded-xl bg-[#B98A54]/10 p-4 space-y-3 border border-[#B98A54]/20">
-                <h4 className="flex items-center gap-1.5 text-[12px] font-normal text-[#B98A54]">
-                  <span className="size-2 rounded-full bg-[#B98A54]" />
-                  员工发起申诉
-                </h4>
-                <div className="text-[13px] text-[#292524] bg-white/90 p-2.5 rounded-lg">
+              <section className="rounded-xl border-l-2 border-[#D97757]/60 bg-gradient-to-r from-[#F5F3EE]/80 to-transparent pl-3.5 pr-3 py-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h4 className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-[#B98A54]">
+                    <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                    伙伴申诉复核 ({dateAppeal.status === "pending" ? "待处理" : dateAppeal.status === "approved" ? "已同意" : "已驳回"})
+                  </h4>
+                  <span className="text-[11px] text-[#78716C] tabular-nums">
+                    {new Date(dateAppeal.created_at).toLocaleDateString("zh-CN")}
+                  </span>
+                </div>
+                <div className="font-serif not-italic text-[13px] leading-relaxed text-[#292524] tracking-tight">
                   “{dateAppeal.reason}”
                 </div>
-                <p className="text-[12px] text-[#292524]">
-                  提交时间:{" "}
-                  {new Date(dateAppeal.created_at).toLocaleString("zh-CN")}
-                </p>
 
                 {dateAppeal.status === "pending" && (
                   <div className="flex gap-2 pt-1">
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-[#E5E0D6] text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] font-medium"
+                      className="flex-1 border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-medium text-[12px] active:scale-[0.985]"
                       onClick={() =>
                         handleHandleAppeal(dateAppeal.id, "approve")
                       }
@@ -453,7 +454,7 @@ export function MemberDrawer({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-[#E5E0D6] text-[#292524] hover:bg-[#FBF9F5] hover:text-[#1C1917] font-medium"
+                      className="flex-1 border-[#E5E0D6] bg-white text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] font-medium text-[12px] active:scale-[0.985]"
                       onClick={() =>
                         handleHandleAppeal(dateAppeal.id, "reject")
                       }
@@ -465,13 +466,13 @@ export function MemberDrawer({
                 )}
 
                 {dateAppeal.status !== "pending" && (
-                  <div className="text-[12px] font-medium pt-1 text-[#292524]">
-                    审批状态：
+                  <div className="text-[12px] font-normal pt-1 text-[#78716C]">
+                    审批处理：
                     <span
                       className={
                         dateAppeal.status === "approved"
-                          ? "text-[#6FAA7D]"
-                          : "text-[#C0685C]"
+                          ? "text-[#6FAA7D] font-medium"
+                          : "text-[#C0685C] font-medium"
                       }
                     >
                       {dateAppeal.status === "approved"
@@ -479,8 +480,8 @@ export function MemberDrawer({
                         : "已驳回"}
                     </span>
                     {dateAppeal.handler_name && (
-                      <span className="ml-1.5 text-[12px] text-[#78716C]">
-                        ({dateAppeal.handler_name})
+                      <span className="ml-1.5 text-[11px] text-[#78716C]">
+                        (处理人: {dateAppeal.handler_name})
                       </span>
                     )}
                   </div>
@@ -490,12 +491,12 @@ export function MemberDrawer({
 
             {/* 当日/选中日状态 */}
             <section>
-              <h3 className="mb-3 text-[12px] font-normal tracking-[0.12em] text-[#78716C]">
+              <h3 className="mb-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                 {effectiveDate === date
                   ? "当日状态"
                   : `${effectiveDate?.slice(5)} 状态`}
               </h3>
-              <div className="space-y-2 bg-[#F5F3EE]/60 rounded-xl p-3.5">
+              <div className="space-y-2 bg-white rounded-xl border border-[#ECE7DE]/80 p-3.5 shadow-2xs">
                 {dayRecord ? (
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-[13px]">
@@ -505,11 +506,11 @@ export function MemberDrawer({
                       </span>
                     </div>
                     {dayRecord.reason ? (
-                      <div className="rounded-lg bg-white/90 p-2.5">
-                        <p className="text-[12px] text-[#78716C]">
+                      <div className="rounded-lg bg-[#F5F3EE]/60 p-2.5 border border-[#ECE7DE]/50">
+                        <p className="text-[11px] font-medium text-[#78716C]">
                           备注原因
                         </p>
-                        <p className="mt-1 text-[13px] text-[#292524] leading-normal">
+                        <p className="mt-0.5 text-[12.5px] text-[#292524] leading-relaxed">
                           {dayRecord.reason}
                         </p>
                       </div>
@@ -525,7 +526,7 @@ export function MemberDrawer({
                     {dayRecord.markedAt ? (
                       <div className="flex items-center justify-between text-[13px]">
                         <span className="text-[#78716C]">标记时间</span>
-                        <span className="text-[12px] text-[#292524]">
+                        <span className="text-[12px] text-[#78716C] tabular-nums">
                           {new Date(dayRecord.markedAt).toLocaleString("zh-CN")}
                         </span>
                       </div>

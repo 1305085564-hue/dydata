@@ -130,12 +130,12 @@ export function FilterBar({
   };
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-3">
       {/* 工具栏主体：时间胶囊 + 团队选择 + 飞书开关 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* 微气垫时间预设胶囊 */}
-          <div className="inline-flex items-center gap-0.5 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] p-1">
+          <div className="inline-flex items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#ECE7DE]/70">
             {PRESET_OPTIONS.map((opt) => {
               const isActive = range === opt.value;
               return (
@@ -143,10 +143,10 @@ export function FilterBar({
                   key={opt.value}
                   type="button"
                   onClick={() => handlePresetChange(opt.value)}
-                  className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all duration-150 cursor-pointer ${
+                  className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
                     isActive
                       ? "bg-white text-[#D97757] shadow-2xs font-semibold"
-                      : "text-[#666055] hover:text-[#1C1917] hover:bg-white/60"
+                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
                   }`}
                 >
                   {opt.label}
@@ -159,7 +159,7 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-8.5 w-36 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
+              className="h-8.5 w-36 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 active:scale-[0.985]"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
@@ -176,20 +176,20 @@ export function FilterBar({
 
         {/* 飞书催交开关（沉静平铺） */}
         <div
-          className="flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3 py-1.5 transition-colors"
+          className="flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-colors"
           title="开启后，每天 18:00 会自动核对团队发布进度，向未提交视频的成员发送飞书提醒"
         >
           <span className="text-[12px] font-normal text-[#292524]">
             飞书自动催交
           </span>
           <span className="hidden text-[11px] text-[#78716C] font-normal sm:inline">
-            (18:00 提醒)
+            (每日 18:00)
           </span>
           {settingsError ? (
             <button
               type="button"
               onClick={onRetrySettings}
-              className="text-[12px] font-medium text-[#C9604D] underline-offset-2 hover:underline"
+              className="text-[12px] font-medium text-[#C0685C] underline-offset-2 hover:underline cursor-pointer"
               title={settingsError}
             >
               重试
@@ -229,20 +229,20 @@ export function FilterBar({
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-[#1C1917]">
               {confirmToggleTarget
-                ? "确认开启飞书自动催交"
-                : "确认关闭飞书自动催交"}
+                ? "开启飞书自动催交"
+                : "关闭飞书自动催交"}
             </DialogTitle>
-            <DialogDescription className="text-[13px] text-[#292524] mt-2">
+            <DialogDescription className="text-[13px] text-[#78716C] mt-2 leading-relaxed">
               {confirmToggleTarget
-                ? "开启后，每天 18:00 会自动核对团队发布进度，向未提交视频的成员发送飞书提醒。"
-                : "关闭后，将停止每天 18:00 的飞书自动催交提醒。"}
+                ? "开启后，每天 18:00 将自动核对团队发布进度，向今日尚未提交作品的成员发送提醒。"
+                : "关闭后，将暂停每天 18:00 的定时催流通报。"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="rounded-lg text-[#292524]"
+              className="rounded-lg text-[#292524] active:scale-[0.985]"
               onClick={() => setConfirmToggleTarget(null)}
             >
               取消
@@ -252,8 +252,8 @@ export function FilterBar({
               size="sm"
               className={
                 confirmToggleTarget
-                  ? "rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white"
-                  : "rounded-lg"
+                  ? "rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white active:scale-[0.985]"
+                  : "rounded-lg bg-[#C0685C] hover:bg-[#A8584D] text-white active:scale-[0.985]"
               }
               onClick={handleConfirmToggle}
             >

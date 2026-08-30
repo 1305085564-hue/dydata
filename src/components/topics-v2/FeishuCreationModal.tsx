@@ -202,7 +202,7 @@ export function FeishuCreationModal({
               </button>
             </div>
           ) : copyFailed ? (
-            <div className="flex items-start gap-2 rounded-xl bg-[#DC2626]/5 border border-[#DC2626]/20 p-3 text-xs text-[#DC2626]">
+            <div className="flex items-start gap-2 rounded-xl bg-[#C0685C]/5 border border-[#C0685C]/20 p-3 text-xs text-[#C0685C]">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />
               <div className="space-y-0.5 flex-1">
                 <p className="font-medium">自动复制未生效</p>
@@ -266,7 +266,7 @@ export function FeishuCreationModal({
                   onCancelWriting(topic.id);
                   onClose();
                 }}
-                className="text-xs text-[#C9604D] hover:underline font-medium shrink-0 ml-2"
+                className="text-xs text-[#C0685C] hover:underline font-medium shrink-0 ml-2 cursor-pointer"
               >
                 取消写作状态
               </button>
@@ -275,7 +275,7 @@ export function FeishuCreationModal({
 
           {/* 标记失败：明确报错，不伪装成功 */}
           {markError && (
-            <div className="flex items-start gap-2 rounded-xl bg-[#DC2626]/5 border border-[#DC2626]/20 p-3 text-xs text-[#DC2626]">
+            <div className="flex items-start gap-2 rounded-xl bg-[#C0685C]/5 border border-[#C0685C]/20 p-3 text-xs text-[#C0685C]">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />
               <span className="flex-1">{markError}</span>
             </div>

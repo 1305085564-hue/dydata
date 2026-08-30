@@ -133,7 +133,7 @@ export function QuotaConfigPanel({
           <div className="rounded-2xl border border-[#E5E0D6] bg-white p-5 flex flex-col justify-between h-[105px]">
             <span className="text-[13px] text-[#78716C] font-medium">今日生效发片指标</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-semibold tabular-nums text-[#1C1917]">
+              <span className="text-2xl font-medium tabular-nums text-[#1C1917]">
                 {currentTarget}
               </span>
               <span className="text-[12px] text-[#78716C] ml-1">条 / 天</span>
@@ -276,7 +276,7 @@ export function QuotaConfigPanel({
                     </div>
 
                     <div className="shrink-0 flex items-baseline gap-0.5 ml-4">
-                      <span className="text-lg font-semibold tabular-nums text-[#1C1917]">
+                      <span className="text-lg font-medium tabular-nums text-[#1C1917]">
                         {rule.daily_target}
                       </span>
                       <span className="text-[12px] text-[#78716C]">条/天</span>

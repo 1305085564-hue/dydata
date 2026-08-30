@@ -64,7 +64,7 @@ export function AIConfigShell({ initialTab }: { initialTab: AIConfigTabKey }) {
                 className={cn(
                   "relative inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all select-none",
                   isActive
-                    ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
+                    ? "bg-[#D97757]/10 text-[#D97757] font-medium"
                     : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                 )}
               >

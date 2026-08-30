@@ -1091,7 +1091,7 @@ export default function BindingsClient() {
                     <div className="flex justify-between items-center px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-[14px] text-[#1C1917]">
+                          <h3 className="font-medium text-[14px] text-[#1C1917]">
                             {view.label}
                           </h3>
                           <Badge

@@ -248,7 +248,7 @@ export function OperatorTab({
                       <div className="text-right tabular-nums text-[#292524]">
                         {op.operatedProfileCount} 人
                       </div>
-                      <div className="text-right tabular-nums font-semibold text-[#1C1917]">
+                      <div className="text-right tabular-nums font-medium text-[#1C1917]">
                         {op.reportCount}
                       </div>
                       <div className="text-right tabular-nums text-[#292524]">
@@ -262,7 +262,7 @@ export function OperatorTab({
                       </div>
                       <div className="text-right tabular-nums text-[#292524]">
                         {op.hitCount > 0 ? (
-                          <span className="font-semibold text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
+                          <span className="font-medium text-[#292524] bg-[#F5F3EE] px-1.5 py-0.5 rounded text-[12px] border border-[#E5E0D6]/60">
                             {op.hitCount}
                           </span>
                         ) : (
@@ -273,12 +273,12 @@ export function OperatorTab({
                         {mom == null ? (
                           <span className="text-[#78716C]">—</span>
                         ) : mom > 0 ? (
-                          <span className="inline-flex items-center justify-end gap-0.5 text-[#DC2626]">
+                          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D]">
                             <TrendingUp className="size-3" />+
                             {(mom * 100).toFixed(1)}%
                           </span>
                         ) : mom < 0 ? (
-                          <span className="inline-flex items-center justify-end gap-0.5 text-[#6FAA7D]">
+                          <span className="inline-flex items-center justify-end gap-0.5 text-[#C0685C]">
                             <TrendingDown className="size-3" />
                             {(mom * 100).toFixed(1)}%
                           </span>
@@ -289,35 +289,35 @@ export function OperatorTab({
                     </div>
                   </div>
 
-                  {/* 展开子区域：与父行亲密融合，底部与下一行拉开留白隔断 */}
+                  {/* 展开子区域：学者边注风微手账 */}
                   {isExpanded && (
-                    <div className="bg-[#FBF9F5]/90 px-12 pt-1 pb-5 border-b border-[#E5E0D6]/80 transition-all duration-200">
-                      <div className="rounded-xl border border-[#E5E0D6] bg-white overflow-hidden shadow-2xs">
+                    <div className="bg-[#FAF8F4]/50 px-12 pt-1 pb-4 border-b border-[#ECE7DE]/60 transition-all duration-200">
+                      <div className="rounded-xl border border-[#ECE7DE]/80 bg-white overflow-hidden shadow-2xs">
                         <table className="w-full text-[12px]">
                           <thead>
-                            <tr className="border-b border-[#ECE7DE] bg-[#FBF9F5]/80 text-[#78716C] text-left">
-                              <th className="py-2.5 px-3.5 font-medium">
+                            <tr className="border-b border-[#ECE7DE]/80 bg-transparent text-[#78716C] text-left">
+                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                                 达人姓名
                               </th>
-                              <th className="py-2.5 px-3.5 font-medium">
+                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                                 账号名
                               </th>
-                              <th className="py-2.5 px-3.5 font-medium text-right">
+                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
                                 条数
                               </th>
-                              <th className="py-2.5 px-3.5 font-medium text-right">
+                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
                                 总播放
                               </th>
-                              <th className="py-2.5 px-3.5 font-medium text-right pr-4">
+                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right pr-4">
                                 导粉
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#ECE7DE]">
+                          <tbody className="divide-y divide-[#ECE7DE]/60">
                             {op.accounts.map((acc) => (
                               <tr
                                 key={acc.accountId}
-                                className="hover:bg-[#FBF9F5]/50 transition-colors"
+                                className="hover:bg-[#F5F3EE]/40 transition-colors duration-100"
                               >
                                 <td className="py-2.5 px-3.5 font-medium text-[#292524]">
                                   {acc.ownerName}

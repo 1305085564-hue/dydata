@@ -195,12 +195,12 @@ export function PersonalCard({
                     {data.operatorSummary?.momChange != null && (
                       <span className="font-medium">
                         {data.operatorSummary.momChange > 0 ? (
-                          <span className="text-[#DC2626] inline-flex items-center gap-0.5 font-semibold">
+                          <span className="text-[#6FAA7D] inline-flex items-center gap-0.5 font-medium">
                             <TrendingUp className="size-3" />+
                             {(data.operatorSummary.momChange * 100).toFixed(1)}%
                           </span>
                         ) : data.operatorSummary.momChange < 0 ? (
-                          <span className="text-[#6FAA7D] inline-flex items-center gap-0.5 font-semibold">
+                          <span className="text-[#C0685C] inline-flex items-center gap-0.5 font-medium">
                             <TrendingDown className="size-3" />
                             {(data.operatorSummary.momChange * 100).toFixed(1)}%
                           </span>
@@ -213,31 +213,31 @@ export function PersonalCard({
 
                   {data.operatorSummary ? (
                     <div className="grid grid-cols-2 gap-2 text-center pt-1">
-                      <div className="rounded-lg border border-[#E5E0D6] bg-white p-2">
+                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
                         <div className="text-[10px] text-[#78716C]">总播放</div>
-                        <div className="text-[13px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                           {formatBigNumber(data.operatorSummary.totalPlay)}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#E5E0D6] bg-white p-2">
+                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
                         <div className="text-[10px] text-[#78716C]">
                           人均播放
                         </div>
-                        <div className="text-[13px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                           {formatBigNumber(data.operatorSummary.avgPlay)}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#E5E0D6] bg-white p-2">
+                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
                         <div className="text-[10px] text-[#78716C]">导粉</div>
-                        <div className="text-[13px] font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                        <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                           {data.operatorSummary.totalFollowerConvert.toLocaleString(
                             "zh-CN",
                           )}
                         </div>
                       </div>
-                      <div className="rounded-lg border border-[#E5E0D6] bg-white p-2">
+                      <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
                         <div className="text-[10px] text-[#78716C]">爆款数</div>
-                        <div className="text-[13px] font-semibold text-[#292524] tabular-nums mt-0.5">
+                        <div className="text-[13px] font-medium text-[#292524] tabular-nums mt-0.5">
                           {data.operatorSummary.hitCount}
                         </div>
                       </div>

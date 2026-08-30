@@ -777,7 +777,7 @@ export function VideoSubmitPanelV2({
                     {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
                   </span>
                   <div>
-                    <h3 className="font-serif text-base font-semibold text-[#1C1917] tracking-tight">
+                    <h3 className="text-base font-medium text-[#1C1917]">
                       {activeBizDate} · 停笔调养 ({activeDateStatus.label})
                     </h3>
                     <p className="mt-1 text-[12.5px] leading-relaxed text-[#78716C]">

@@ -457,17 +457,11 @@ export function TopicHubV2({
       {/* Toast 轻提示 (z-[70] 层级) */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 z-[95] animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium shadow-claude-dialog ${
-              toastMsg.type === "success"
-                ? "bg-[#1C1917] text-white"
-                : "bg-[#DC2626] text-white"
-            }`}
-          >
+          <div className="flex items-center gap-2 rounded-xl bg-[#181715] px-4 py-2.5 text-xs font-medium text-[#FAF8F4] shadow-claude-dialog border border-[#292524]">
             {toastMsg.type === "success" ? (
               <CheckCircle2 className="size-4 text-[#6FAA7D]" />
             ) : (
-              <AlertTriangle className="size-4 text-[#FAF8F4]" />
+              <AlertTriangle className="size-4 text-[#C0685C]" />
             )}
             <span>{toastMsg.text}</span>
           </div>

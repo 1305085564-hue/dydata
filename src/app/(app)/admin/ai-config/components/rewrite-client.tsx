@@ -355,7 +355,7 @@ export default function RewriteClient() {
                 <div className="flex justify-between items-center border-b border-[#ECE7DE] pb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-[14px] text-[#1C1917]">{view.label}</h3>
+                      <h3 className="font-medium text-[14px] text-[#1C1917]">{view.label}</h3>
                       <Badge variant="outline" className="font-mono text-[12px] bg-[#FBF9F5]">{view.key}</Badge>
                       {view.is_default && <Badge className="h-5 text-[12px] bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/10 border-0 font-medium">默认规则</Badge>}
                     </div>

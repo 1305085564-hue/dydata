@@ -98,21 +98,21 @@ function getStatusColor(
   status: FulfillmentStatus | undefined,
   hasPendingExemption = false,
 ): string {
-  if (hasPendingExemption) return "bg-[#B98A54]/10 border-[#B98A54]/30";
+  if (hasPendingExemption) return "bg-[#B98A54]/15 border-[#B98A54]/30";
   if (!status) return "border-transparent bg-transparent";
   switch (status) {
     case "published":
     case "confirmed_published":
-      return "bg-[#6FAA7D]/20 border-[#6FAA7D]/40";
+      return "bg-[#6FAA7D]/25 border-[#6FAA7D]/40";
     case "leave":
-      return "bg-[#43718E]/20 border-[#43718E]/35";
+      return "bg-[#43718E]/20 border-[#43718E]/30";
     case "waived":
     case "exempted":
       return "bg-[#43718E]/10 border-[#43718E]/20";
     case "absent":
-      return "bg-[#C0685C]/15 border-[#C0685C]/35";
+      return "bg-[#C0685C]/15 border-[#C0685C]/30";
     case "unconfirmed":
-      return "bg-[#F5F3EE] border-[#E5E0D6]/80";
+      return "bg-[#F5F3EE] border-[#ECE7DE]";
     default:
       return "bg-[#FBF9F5] border-[#ECE7DE]";
   }
@@ -288,11 +288,11 @@ export function MonthlyMatrix({
       {/* 展开内容 */}
       {expanded && (
         <div id="monthly-matrix-panel" className="space-y-3">
-          <div className="overflow-x-auto rounded-xl border border-[#ECE7DE] bg-white">
+          <div className="overflow-x-auto rounded-xl border border-[#ECE7DE] bg-white shadow-2xs">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-[#ECE7DE]/60 bg-transparent">
-                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#ECE7DE]/60 bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-2 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                <tr className="border-b border-[#ECE7DE]/80 bg-transparent">
+                  <th className="sticky left-0 z-10 min-w-[120px] border-r border-[#ECE7DE]/60 bg-[#FBF9F5]/90 backdrop-blur-md px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                     成员
                   </th>
                   {dayNumbers.map((day) => {
@@ -302,7 +302,7 @@ export function MonthlyMatrix({
                     return (
                       <th
                         key={day}
-                        className={`min-w-[26px] px-0.5 py-2 text-center text-[12px] tabular-nums transition-colors duration-150 ${
+                        className={`min-w-[26px] px-0.5 py-2.5 text-center text-[12px] tabular-nums transition-colors duration-150 ${
                           isColHovered
                             ? "text-[#D97757] font-semibold bg-[#F5F3EE]"
                             : isToday
@@ -319,7 +319,7 @@ export function MonthlyMatrix({
                       </th>
                     );
                   })}
-                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#ECE7DE]/60 bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-2 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                  <th className="sticky right-0 z-10 min-w-[76px] border-l border-[#ECE7DE]/60 bg-[#FBF9F5]/90 backdrop-blur-md px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                     实发 / 应发
                   </th>
                 </tr>
@@ -331,12 +331,12 @@ export function MonthlyMatrix({
                   return (
                     <tr
                       key={member.userId}
-                      className={`border-b border-[#ECE7DE] last:border-b-0 transition-colors ${
-                        isRowHovered ? "bg-[#FAF8F4]" : "hover:bg-[#FAF8F4]"
+                      className={`border-b border-[#ECE7DE]/60 last:border-b-0 transition-colors duration-100 ${
+                        isRowHovered ? "bg-[#FAF8F4]" : "hover:bg-[#FAF8F4]/50"
                       }`}
                     >
                       <td
-                        className={`sticky left-0 z-10 border-r border-[#E5E0D6] px-3 py-1.5 shadow-[2px_0_5px_rgba(0,0,0,0.01)] transition-colors ${
+                        className={`sticky left-0 z-10 border-r border-[#ECE7DE]/60 px-3 py-1.5 shadow-[2px_0_5px_rgba(0,0,0,0.01)] transition-colors ${
                           isRowHovered
                             ? "bg-[#FAF8F4] text-[#D97757]"
                             : "bg-white/95 backdrop-blur-sm"
@@ -345,7 +345,7 @@ export function MonthlyMatrix({
                         <button
                           type="button"
                           onClick={() => onCellClick(member, today)}
-                          className="flex items-center gap-1.5 whitespace-nowrap text-left rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40"
+                          className="flex items-center gap-1.5 whitespace-nowrap text-left rounded focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/40 cursor-pointer"
                         >
                           <span
                             className={`text-[13px] font-medium transition-colors ${
@@ -430,7 +430,7 @@ export function MonthlyMatrix({
                           </td>
                         );
                       })}
-                      <td className="sticky right-0 z-10 border-l border-[#E5E0D6] bg-[#FBF9F5]/85 backdrop-blur-md px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
+                      <td className="sticky right-0 z-10 border-l border-[#ECE7DE]/60 bg-[#FBF9F5]/90 backdrop-blur-md px-3 py-1.5 text-right shadow-[-2px_0_5px_rgba(0,0,0,0.01)]">
                         <span
                           className={`text-[12px] tabular-nums font-medium ${
                             member.requiredCount > 0 && member.publishedCount >= member.requiredCount
@@ -457,7 +457,7 @@ export function MonthlyMatrix({
           </div>
 
           {/* 图例（轻量微气垫条） */}
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE] px-3.5 py-2 text-[12px] text-[#5C564B]">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-[#F5F3EE]/80 border border-[#ECE7DE]/80 px-3.5 py-2 text-[12px] text-[#78716C]">
             <span className="flex items-center gap-1.5">
               <span className="inline-block size-2.5 rounded-sm bg-[#6FAA7D]/20 border border-[#6FAA7D]/40" />
               已发布 / 确认

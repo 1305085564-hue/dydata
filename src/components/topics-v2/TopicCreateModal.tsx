@@ -166,21 +166,21 @@ export function TopicCreateModal({
         >
           <DialogBody className="min-h-0 flex-1 space-y-4 overflow-y-auto py-1 pr-1">
             {errorMsg && (
-              <div className="flex items-center gap-2 rounded-r-lg border-l-2 border-l-[#DC2626] bg-red-50/50 p-3 text-[13px] font-normal text-[#292524]">
-                <AlertTriangle className="size-4 shrink-0 text-[#DC2626]" />
+              <div className="flex items-center gap-2 rounded-r-lg border-l-2 border-l-[#C0685C] bg-[#C0685C]/5 p-3 text-[13px] font-normal text-[#292524]">
+                <AlertTriangle className="size-4 shrink-0 text-[#C0685C]" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {topicsError && (
-              <div className="rounded-r-lg border-l-2 border-l-[#DC2626] bg-red-50/50 p-3 text-[13px] font-normal text-[#292524]">
+              <div className="rounded-r-lg border-l-2 border-l-[#C0685C] bg-[#C0685C]/5 p-3 text-[13px] font-normal text-[#292524]">
                 母题列表加载失败：{topicsError}
               </div>
             )}
 
             <div>
               <label className="mb-1 block text-[13px] font-medium text-[#292524]">
-                选择所属母题 <span className="text-[#DC2626]">*</span>
+                选择所属母题 <span className="text-[#C0685C]">*</span>
               </label>
               <Select
                 value={topicId}
@@ -209,7 +209,7 @@ export function TopicCreateModal({
 
             <div>
               <label className="mb-1 block text-[13px] font-medium text-[#292524]">
-                子题标题 <span className="text-[#DC2626]">*</span>
+                子题标题 <span className="text-[#C0685C]">*</span>
               </label>
               <input
                 type="text"
@@ -225,7 +225,7 @@ export function TopicCreateModal({
             <div>
               <label className="mb-1 block text-[13px] font-medium text-[#292524]">
                 一句话选题 Hook / 痛点口号{" "}
-                <span className="text-[#DC2626]">*</span>
+                <span className="text-[#C0685C]">*</span>
               </label>
               <textarea
                 rows={2}

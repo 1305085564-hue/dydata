@@ -52,9 +52,9 @@ export function TeamActivitySection({
   if (error) {
     return (
       <section className="my-2 sm:my-3.5">
-        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-[#C9604D] bg-red-50/50 px-3.5 py-2 text-xs">
+        <div className="flex items-center justify-between rounded-r-xl border-l-2 border-l-[#C0685C] bg-[#C0685C]/5 px-3.5 py-2 text-xs">
           <div className="flex items-center gap-2 text-[#292524]">
-            <AlertCircle className="w-3.5 h-3.5 text-[#DC2626]" />
+            <AlertCircle className="w-3.5 h-3.5 text-[#C0685C]" />
             <span>团队动态加载失败: {error}</span>
           </div>
           <button

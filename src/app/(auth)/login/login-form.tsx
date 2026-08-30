@@ -173,7 +173,7 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
             </button>
           </div>
           {state.error ? (
-            <p className="text-[12px] font-medium text-[#DC2626] animate-in fade-in duration-200" role="alert">
+            <p className="text-[12px] font-medium text-[#C0685C] animate-in fade-in duration-200" role="alert">
               {getLoginErrorMessage(state.error)}
             </p>
           ) : null}

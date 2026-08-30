@@ -875,45 +875,45 @@ export function FulfillmentWorkbench({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE]"
+                  className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE] active:scale-[0.985]"
                   onClick={() => void fetchAppeals()}
                 >
                   重新加载
                 </Button>
               </div>
             ) : appealsLoading || isSubmittingAppeal ? (
-              <div className="flex items-center justify-center py-12 rounded-xl border border-[#E5E0D6] bg-white">
-                <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-[#78716C] font-normal">
+              <div className="flex items-center justify-center py-12 rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
+                <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
+                <span className="text-[12.5px] text-[#78716C] font-normal">
                   正在加载申诉...
                 </span>
               </div>
             ) : pendingAppeals.length === 0 ? (
-              <div className="rounded-xl border border-[#E5E0D6] bg-white py-12">
+              <div className="rounded-xl border border-[#ECE7DE]/80 bg-white py-12 shadow-2xs">
                 <EmptyState
                   title="还没有待审核的申诉"
                   description="所有成员的申诉请求已处理完毕"
                 />
               </div>
             ) : (
-              <div className="overflow-hidden rounded-xl border border-[#E5E0D6] bg-white shadow-2xs">
+              <div className="overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="border-b border-[#E5E0D6] bg-[#F5F3EE]">
-                        <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                      <tr className="border-b border-[#ECE7DE]/80 bg-transparent">
+                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                           成员
                         </th>
-                        <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                           申诉日期
                         </th>
-                        <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                           申诉原因
                         </th>
-                        <th className="px-3 py-2 text-left text-[12px] font-medium tracking-wider text-[#78716C]">
+                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                           提交时间
                         </th>
-                        <th className="px-3 py-2 text-right text-[12px] font-medium tracking-wider text-[#78716C]">
+                        <th className="px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                           操作
                         </th>
                       </tr>
@@ -922,7 +922,7 @@ export function FulfillmentWorkbench({
                       {pendingAppeals.map((appeal) => (
                         <tr
                           key={appeal.id}
-                          className="border-b border-[#ECE7DE] last:border-b-0 hover:bg-[#FAF8F4] bg-white transition-colors"
+                          className="border-b border-[#ECE7DE]/60 last:border-b-0 hover:bg-[#F5F3EE]/40 bg-transparent transition-colors duration-100"
                         >
                           <td className="px-3 py-2.5 font-medium text-[#1C1917]">
                             {appeal.user_name || "未知成员"}
@@ -946,7 +946,7 @@ export function FulfillmentWorkbench({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg"
+                                className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg active:scale-[0.985]"
                                 onClick={() =>
                                   handleHandleAppeal(appeal.id, "approve")
                                 }
@@ -956,7 +956,7 @@ export function FulfillmentWorkbench({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 px-2.5 text-[12px] text-[#C9604D] hover:bg-[#C9604D]/10 font-medium rounded-lg"
+                                className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-medium rounded-lg active:scale-[0.985]"
                                 onClick={() =>
                                   handleHandleAppeal(appeal.id, "reject")
                                 }

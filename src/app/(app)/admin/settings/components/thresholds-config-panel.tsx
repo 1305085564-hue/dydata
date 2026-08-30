@@ -73,7 +73,7 @@ export function ThresholdsConfigPanel({
             <Sliders className="size-5" />
           </span>
           <div>
-            <h3 className="text-[16px] font-semibold text-[#1C1917]">
+            <h3 className="text-[16px] font-medium text-[#1C1917]">
               视频复盘与素材库异常警戒阈值
             </h3>
             <p className="text-[12px] text-[#78716C] mt-0.5">
@@ -122,7 +122,7 @@ export function ThresholdsConfigPanel({
                 disabled={!canManage || isSubmitting}
                 value={thresholds.bounce_rate_2s}
                 onChange={(e) => handleChange("bounce_rate_2s", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 %
@@ -149,7 +149,7 @@ export function ThresholdsConfigPanel({
                 onChange={(e) =>
                   handleChange("completion_rate_5s", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 %
@@ -160,7 +160,7 @@ export function ThresholdsConfigPanel({
           {/* 均播时长 */}
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
-              <span>均播时长</span>
+              <span>平均播放时长</span>
               <span className="text-[#78716C] font-normal text-[11px]">
                 低于此值触发
               </span>
@@ -169,13 +169,13 @@ export function ThresholdsConfigPanel({
               <Input
                 type="number"
                 min={0}
-                step={0.5}
+                step={1}
                 disabled={!canManage || isSubmitting}
-                value={thresholds.avg_play_duration}
+                value={thresholds.avg_play_duration_seconds}
                 onChange={(e) =>
-                  handleChange("avg_play_duration", e.target.value)
+                  handleChange("avg_play_duration_seconds", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 秒
@@ -183,10 +183,10 @@ export function ThresholdsConfigPanel({
             </div>
           </div>
 
-          {/* 完播率 */}
+          {/* 互动率 */}
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
-              <span>整体完播率</span>
+              <span>综合互动率</span>
               <span className="text-[#78716C] font-normal text-[11px]">
                 低于此值触发
               </span>
@@ -196,13 +196,13 @@ export function ThresholdsConfigPanel({
                 type="number"
                 min={0}
                 max={100}
-                step={1}
+                step={0.1}
                 disabled={!canManage || isSubmitting}
-                value={thresholds.completion_rate}
+                value={thresholds.interaction_rate}
                 onChange={(e) =>
-                  handleChange("completion_rate", e.target.value)
+                  handleChange("interaction_rate", e.target.value)
                 }
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 %
@@ -210,12 +210,12 @@ export function ThresholdsConfigPanel({
             </div>
           </div>
 
-          {/* 播放量 */}
+          {/* 最低播放量 */}
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
-              <span>播放量门槛</span>
+              <span>有效样本最低播放</span>
               <span className="text-[#78716C] font-normal text-[11px]">
-                低于此值触发
+                低于此值忽略
               </span>
             </label>
             <div className="relative flex items-center">
@@ -224,9 +224,11 @@ export function ThresholdsConfigPanel({
                 min={0}
                 step={100}
                 disabled={!canManage || isSubmitting}
-                value={thresholds.play_count}
-                onChange={(e) => handleChange("play_count", e.target.value)}
-                className="h-9 pr-8 text-[13px] font-semibold tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
+                value={thresholds.min_play_count_for_analysis}
+                onChange={(e) =>
+                  handleChange("min_play_count_for_analysis", e.target.value)
+                }
+                className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
               <span className="absolute right-3 text-[12px] font-medium text-[#78716C]">
                 次
