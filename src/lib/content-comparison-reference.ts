@@ -40,11 +40,13 @@ export type LegacyRecent3Row = ComparisonMetricRow & {
 type ReferenceMetricsParams = {
   supabase: SupabaseClient;
   videoId: string;
-  video: Pick<ScopedAdminVideoAccess["video"], "account_id" | "user_id" | "published_at">;
+  video: Pick<ScopedAdminVideoAccess["video"], "account_id" | "user_id" | "published_at" | "profiles">;
   ref: RefKey;
   refUserId?: string | null;
   /** 当前操作只允许纳入仍有效且对操作者可见的成员。 */
   activeUserIds?: string[];
+  /** 同一请求内 team/top 共享的"今日团队"扇出工厂（内部记忆首次结果，避免重复扇出）。 */
+  getSharedTeamRows?: () => Promise<MetricRow[]>;
 };
 
 type LegacyComparisonParams = {
@@ -152,6 +154,7 @@ export async function getReferenceMetrics({
   ref,
   refUserId,
   activeUserIds,
+  getSharedTeamRows,
 }: ReferenceMetricsParams): Promise<{
   referenceRows: MetricRow[];
   reference: MetricRow | null;
@@ -161,15 +164,21 @@ export async function getReferenceMetrics({
   let referenceRows: MetricRow[] = [];
   let refLabel = "对比自己近3条";
 
+  const loadTeamRows = () =>
+    getSharedTeamRows
+      ? getSharedTeamRows()
+      : loadTeamReferenceRows({ supabase, videoId, userId: video.user_id, ownerTeamId: readOwnerTeamId(video), activeUserIds });
+
   if (ref === "self") {
     refLabel = "对比自己近3条";
     referenceRows = await getSelfReferenceRows(supabase, videoId, video.account_id, video.published_at);
   } else if (ref === "team") {
     refLabel = "对比团队均值";
-    referenceRows = await getTeamReferenceRows(supabase, videoId, video.user_id, activeUserIds);
+    referenceRows = await loadTeamRows();
   } else if (ref === "top") {
     refLabel = "对比今日团队最高播放";
-    referenceRows = await getTopReferenceRows(supabase, videoId, video.user_id, activeUserIds);
+    const topRow = pickTopRow(await loadTeamRows());
+    referenceRows = topRow ? [topRow] : [];
   } else if (ref === "user" && refUserId) {
     refLabel = "对比指定人近3条";
     referenceRows = await getUserReferenceRows(supabase, refUserId);
@@ -181,6 +190,49 @@ export async function getReferenceMetrics({
     refLabel,
     refCount: referenceRows.length,
   };
+}
+
+function readOwnerTeamId(video: ReferenceMetricsParams["video"]): string | null {
+  const profiles = Array.isArray(video.profiles) ? video.profiles[0] : video.profiles;
+  return profiles?.team_id ?? null;
+}
+
+/**
+ * 今日团队 24h 快照行集。team 与 top 参照系共用同一份扇出
+ * （成员 → 账号 → 今日视频 → 快照），调用方应只创建一次并在两者间共享。
+ */
+export async function loadTeamReferenceRows({
+  supabase,
+  videoId,
+  userId,
+  ownerTeamId,
+  activeUserIds,
+}: {
+  supabase: SupabaseClient;
+  videoId: string;
+  userId: string | null;
+  ownerTeamId?: string | null;
+  activeUserIds?: string[];
+}): Promise<MetricRow[]> {
+  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, ownerTeamId, activeUserIds);
+  if (teamVideoIds.length === 0) return [];
+
+  const { data: snapshots } = await supabase
+    .from("video_metrics_snapshots")
+    .select(SNAPSHOT_SELECT)
+    .in("video_id", teamVideoIds)
+    .eq("snapshot_type", "24h");
+
+  return (snapshots ?? []).map((snapshot) => toMetricRow(snapshot as Record<string, unknown>));
+}
+
+function pickTopRow(rows: MetricRow[]): MetricRow | null {
+  let top: MetricRow | null = null;
+  for (const row of rows) {
+    if (row.play_count == null) continue;
+    if (!top || (top.play_count ?? -1) < row.play_count) top = row;
+  }
+  return top;
 }
 
 export async function getLegacyComparisonData({
@@ -305,52 +357,14 @@ async function getUserReferenceRows(
   return getOrderedSnapshotRows(supabase, recentIds);
 }
 
-async function getTeamReferenceRows(
-  supabase: SupabaseClient,
-  videoId: string,
-  userId: string | null,
-  activeUserIds?: string[],
-): Promise<MetricRow[]> {
-  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, activeUserIds);
-  if (teamVideoIds.length === 0) return [];
-
-  const { data: snapshots } = await supabase
-    .from("video_metrics_snapshots")
-    .select(SNAPSHOT_SELECT)
-    .in("video_id", teamVideoIds)
-    .eq("snapshot_type", "24h");
-
-  return (snapshots ?? []).map((snapshot) => toMetricRow(snapshot as Record<string, unknown>));
-}
-
-async function getTopReferenceRows(
-  supabase: SupabaseClient,
-  videoId: string,
-  userId: string | null,
-  activeUserIds?: string[],
-): Promise<MetricRow[]> {
-  const teamVideoIds = await getTodayTeamVideoIds(supabase, videoId, userId, activeUserIds);
-  if (teamVideoIds.length === 0) return [];
-
-  const { data: topSnapshot } = await supabase
-    .from("video_metrics_snapshots")
-    .select(SNAPSHOT_SELECT)
-    .in("video_id", teamVideoIds)
-    .eq("snapshot_type", "24h")
-    .order("play_count", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return topSnapshot ? [toMetricRow(topSnapshot as Record<string, unknown>)] : [];
-}
-
 async function getTodayTeamVideoIds(
   supabase: SupabaseClient,
   videoId: string,
   userId: string | null,
+  ownerTeamId?: string | null,
   activeUserIds?: string[],
 ): Promise<string[]> {
-  const accountIds = await getTeamAccountIds(supabase, userId, activeUserIds);
+  const accountIds = await getTeamAccountIds(supabase, userId, ownerTeamId, activeUserIds);
   if (accountIds.length === 0) return [];
 
   const { data: teamVideos } = await supabase
@@ -367,16 +381,21 @@ async function getTodayTeamVideoIds(
 async function getTeamAccountIds(
   supabase: SupabaseClient,
   userId: string | null,
+  ownerTeamId?: string | null,
   activeUserIds?: string[],
 ): Promise<string[]> {
   if (!userId) return [];
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("team_id")
-    .eq("id", userId)
-    .maybeSingle();
-  const teamId = (profile as { team_id?: string | null } | null)?.team_id;
+  // owner 的 team_id 已随视频行 join 带回；缺失时才回源查一次 profiles。
+  let teamId = ownerTeamId ?? null;
+  if (!teamId) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("team_id")
+      .eq("id", userId)
+      .maybeSingle();
+    teamId = (profile as { team_id?: string | null } | null)?.team_id ?? null;
+  }
   if (!teamId) return [];
 
   const { data: members } = await supabase

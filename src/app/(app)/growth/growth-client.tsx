@@ -295,12 +295,6 @@ export function GrowthClient({ contract }: GrowthClientProps) {
         </div>
       </div>
 
-      {/* 卷首寄语 */}
-      <EditorialEpigraph
-        quote="灵感偶得，工致乃成。数据记录着作品与读者的每一次相遇，指引下一篇章的航向。"
-        author="创作札记"
-      />
-
       {/* 断流横幅：断流不降级模块，只提醒（累积期已并入进度卡，不重复） */}
       {staleText && phase !== "accumulation" && stage.lastReportDate && stage.daysSinceLastReport !== null ? (
         <断流横幅 lastReportDate={stage.lastReportDate} daysSince={stage.daysSinceLastReport} />

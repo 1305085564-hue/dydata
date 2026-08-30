@@ -29,6 +29,7 @@ function makeAccess(activeVisibleUserIds = ["actor-1", "member-1"]) {
       account_id: "account-1",
       user_id: "member-1",
       published_at: "2026-08-10T08:00:00.000Z",
+      profiles: { name: "作者", team_id: "team-1" },
     },
   };
 }

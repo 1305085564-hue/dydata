@@ -5,6 +5,8 @@ import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import {
   getCurrentMetricRow,
   getReferenceMetrics,
+  loadTeamReferenceRows,
+  type MetricRow,
   type RefKey,
 } from "@/lib/content-comparison-reference";
 import {
@@ -112,6 +114,19 @@ export async function buildContentAttributionResponse(
   const supabase = access.supabase;
   const { video } = access;
 
+  // team/top 参照共用同一份"今日团队"扇出：惰性单例，首次消费时启动，之后共享同一 Promise。
+  let sharedTeamRowsPromise: Promise<MetricRow[]> | undefined;
+  const getSharedTeamRows = () => {
+    sharedTeamRowsPromise ??= loadTeamReferenceRows({
+      supabase,
+      videoId,
+      userId: video.user_id,
+      ownerTeamId: video.profiles?.team_id ?? null,
+      activeUserIds: activeVisibleUserIds,
+    });
+    return sharedTeamRowsPromise;
+  };
+
   const [currentRow, refMetricResults] = await Promise.all([
     dependencies.getCurrentMetricRow(supabase, videoId),
     Promise.all(requestedRefs.map((refKey) =>
@@ -122,6 +137,7 @@ export async function buildContentAttributionResponse(
         ref: refKey,
         refUserId,
         activeUserIds: activeVisibleUserIds,
+        getSharedTeamRows,
       }).then((result) => ({ refKey, ...result })),
     )),
   ]);

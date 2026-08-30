@@ -231,6 +231,7 @@ test("getReferenceMetrics 在 self 下按最近三条且保持视频顺序聚合
       account_id: "acc-1",
       user_id: "user-1",
       published_at: "2026-07-19T10:00:00Z",
+      profiles: { name: "作者" },
     },
     ref: "self",
   });
@@ -313,6 +314,7 @@ test("getReferenceMetrics 在 team 下使用上海今日起点", async (t) => {
       account_id: "acc-1",
       user_id: "user-1",
       published_at: "2026-07-19T10:00:00Z",
+      profiles: { name: "作者" },
     },
     ref: "team",
   });
@@ -328,12 +330,6 @@ test("getReferenceMetrics 在 team 下使用上海今日起点", async (t) => {
 
 test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async () => {
   const responses: ResponseMap = {
-    [responseKey({
-      table: "profiles",
-      selected: "team_id",
-      filters: [{ type: "eq", column: "id", value: "user-1" }],
-      mode: "maybeSingle",
-    })]: { team_id: "team-1" },
     [responseKey({
       table: "profiles",
       selected: "id",
@@ -361,10 +357,10 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
         { type: "in", column: "video_id", value: ["team-video-1", "team-video-2"] },
         { type: "eq", column: "snapshot_type", value: "24h" },
       ],
-      orderBy: { column: "play_count", ascending: false },
-      limitValue: 1,
-      mode: "maybeSingle",
-    })]: makeMetricRow({ video_id: "team-video-2", play_count: 999 }),
+    })]: [
+      makeMetricRow({ video_id: "team-video-1", play_count: 500 }),
+      makeMetricRow({ video_id: "team-video-2", play_count: 999 }),
+    ],
   };
   const stub = createSupabaseStub(responses);
 
@@ -375,6 +371,7 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
       account_id: "acc-1",
       user_id: "user-1",
       published_at: "2026-07-19T10:00:00Z",
+      profiles: { name: "作者", team_id: "team-1" },
     },
     ref: "top",
   });
@@ -383,6 +380,47 @@ test("getReferenceMetrics 在 top 下只返回一条最高播放参照", async (
   assert.equal(result.refCount, 1);
   assert.equal(result.referenceRows[0]?.play_count, 999);
   assert.equal(result.reference?.play_count, 999);
+});
+
+test("team/top 共享 sharedTeamRows 时不再重复扇出查询", async () => {
+  const shared = Promise.resolve([
+    makeMetricRow({ video_id: "team-video-1", play_count: 501 }),
+    makeMetricRow({ video_id: "team-video-2", play_count: 999 }),
+  ]);
+  const stub = createSupabaseStub({});
+
+  const [teamResult, topResult] = await Promise.all([
+    getReferenceMetrics({
+      supabase: stub.client as never,
+      videoId: "video-current",
+      video: {
+        account_id: "acc-1",
+        user_id: "user-1",
+        published_at: "2026-07-19T10:00:00Z",
+        profiles: { name: "作者", team_id: "team-1" },
+      },
+      ref: "team",
+      getSharedTeamRows: () => shared,
+    }),
+    getReferenceMetrics({
+      supabase: stub.client as never,
+      videoId: "video-current",
+      video: {
+        account_id: "acc-1",
+        user_id: "user-1",
+        published_at: "2026-07-19T10:00:00Z",
+        profiles: { name: "作者", team_id: "team-1" },
+      },
+      ref: "top",
+      getSharedTeamRows: () => shared,
+    }),
+  ]);
+
+  assert.equal(teamResult.refCount, 2);
+  assert.equal(teamResult.reference?.play_count, 750);
+  assert.equal(topResult.refCount, 1);
+  assert.equal(topResult.reference?.play_count, 999);
+  assert.equal(stub.queries.length, 0);
 });
 
 test("getReferenceMetrics 在 user 下取指定人近三条", async () => {
@@ -422,6 +460,7 @@ test("getReferenceMetrics 在 user 下取指定人近三条", async () => {
       account_id: "acc-1",
       user_id: "user-1",
       published_at: "2026-07-19T10:00:00Z",
+      profiles: { name: "作者" },
     },
     ref: "user",
     refUserId: "user-2",
