@@ -535,10 +535,10 @@ export function VideoSubmitPanelV2({
 
   return (
     <>
-      <div className="w-full space-y-6">
+      <div className="w-full space-y-4 sm:space-y-6">
         {/* 新版控制栏：创作立卷 · 表达纪事 */}
-        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-6 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-4 sm:p-6 shadow-sm">
+          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -547,20 +547,20 @@ export function VideoSubmitPanelV2({
                   创作立卷 · 表达纪事
                 </h1>
               </div>
-              <p className="text-[12.5px] text-[#78716C] leading-relaxed">
+              <p className="text-[12px] sm:text-[12.5px] text-[#78716C] leading-relaxed">
                 从容记录每一次真实表达 · 数据沉淀与成长复盘
               </p>
             </div>
 
             {/* 右侧：控制区 */}
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
               {/* 日期选择 Popover */}
               <div className="relative inline-flex items-center" ref={calendarPopoverRef}>
                 <button
                   type="button"
                   onClick={() => setIsCalendarOpen((prev) => !prev)}
                   className={cn(
-                    "inline-flex items-center gap-2 h-9 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] shadow-sm transition-all hover:bg-[#F5F3EE] active:scale-[0.985] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer",
+                    "inline-flex items-center gap-1.5 sm:gap-2 h-9 rounded-lg border border-[#E5E0D6] bg-white px-2.5 sm:px-3 text-[12.5px] sm:text-[13px] font-medium text-[#292524] shadow-sm transition-all hover:bg-[#F5F3EE] active:scale-[0.985] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer min-h-[38px]",
                     isCalendarOpen && "border-[#78716C] bg-[#F5F3EE]"
                   )}
                   aria-expanded={isCalendarOpen}
@@ -572,7 +572,7 @@ export function VideoSubmitPanelV2({
 
                 {isCalendarOpen && (
                   <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                    <div className="w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E5E0D6] bg-white p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
+                    <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E5E0D6] bg-white p-4 sm:p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
@@ -600,12 +600,12 @@ export function VideoSubmitPanelV2({
                 }}
                 disabled={isExemptionPending}
                 className={cn(
-                  "h-9 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]",
+                  "h-9 rounded-lg border-[#E5E0D6] bg-white px-2.5 sm:px-3 text-[12px] sm:text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] min-h-[38px]",
                   isExemptionPending && "border-[#B98A54]/40 bg-[#B98A54]/10 text-[#B98A54]"
                 )}
                 title={isExemptionPending ? "已有调养申请审批中" : undefined}
               >
-                <FilePenLine className="size-3.5 mr-1.5 text-[#78716C]" />
+                <FilePenLine className="size-3.5 mr-1 text-[#78716C]" />
                 {isExemptionPending ? "调养审批中" : "停笔调养"}
               </Button>
 
@@ -615,9 +615,9 @@ export function VideoSubmitPanelV2({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsHistoryOpen(true)}
-                className="h-9 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
+                className="h-9 rounded-lg border-[#E5E0D6] bg-white px-2.5 sm:px-3 text-[12px] sm:text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] min-h-[38px]"
               >
-                <History className="size-3.5 mr-1.5 text-[#78716C]" />
+                <History className="size-3.5 mr-1 text-[#78716C]" />
                 历史手稿
               </Button>
             </div>
@@ -657,82 +657,82 @@ export function VideoSubmitPanelV2({
 
         {/* 主内容区 */}
         <Card className="border-[#ECE7DE] shadow-sm">
-          <CardContent className="p-6" ref={formAnchorRef}>
+          <CardContent className="p-3.5 sm:p-6" ref={formAnchorRef}>
             {/* 已提交概览卡片（禅意归档态） */}
             {isPrimarySummaryMode && activeBizDate === today && !submittedViewActive ? (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-6 shadow-sm"
+                className="mb-4 sm:mb-6 rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-4 sm:p-6 shadow-sm"
               >
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
                   {/* 左侧：禅意线描插图 + 温润寄语 */}
-                  <div className="flex items-center gap-4">
-                    <div className="shrink-0 hidden sm:block">
-                      <ZenFinishedIllustration size={88} />
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="shrink-0 hidden xs:block sm:block">
+                      <ZenFinishedIllustration size={72} />
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-1 sm:space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/15 px-2.5 py-0.5 text-[11.5px] font-medium text-[#6FAA7D]">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6FAA7D]/15 px-2.5 py-0.5 text-[11px] sm:text-[11.5px] font-medium text-[#6FAA7D]">
                           <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                           今日已归档
                         </span>
-                        <span className="text-[12px] text-[#78716C] tabular-nums">
+                        <span className="text-[11.5px] sm:text-[12px] text-[#78716C] tabular-nums">
                           {formatDateTime(primarySummary.uploadedAt)}
                         </span>
                       </div>
-                      <h2 className="font-serif text-lg font-medium tracking-tight text-[#1C1917]">
+                      <h2 className="font-serif text-base sm:text-lg font-medium tracking-tight text-[#1C1917]">
                         今日创作已完成收卷
                       </h2>
-                      <p className="text-[12.5px] text-[#78716C] leading-relaxed">
+                      <p className="text-[12px] sm:text-[12.5px] text-[#78716C] leading-relaxed">
                         记录已安全落库。剩下的时间，留给生活与思考。
                       </p>
                     </div>
                   </div>
 
                   {/* 中间/右侧：数据指标与操作 */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 lg:gap-6">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 lg:gap-6">
                     {/* 数据指标三联 */}
-                    <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
-                      <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
-                        <div className="text-[11px] font-medium text-[#78716C]">播放量</div>
-                        <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
+                      <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
+                        <div className="text-[11px] font-medium text-[#78716C] truncate">播放量</div>
+                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-semibold tabular-nums text-[#1C1917] truncate">
                           {primarySummary.playCount !== null && primarySummary.playCount !== undefined
                             ? Number(primarySummary.playCount).toLocaleString("zh-CN")
                             : "—"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
-                        <div className="text-[11px] font-medium text-[#78716C]">涨粉</div>
-                        <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
+                      <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
+                        <div className="text-[11px] font-medium text-[#78716C] truncate">涨粉</div>
+                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-semibold tabular-nums text-[#1C1917] truncate">
                           {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined
                             ? Number(primarySummary.followerGain).toLocaleString("zh-CN")
                             : "—"}
                         </div>
                       </div>
-                      <div className="rounded-xl bg-[#F5F3EE] px-3.5 py-2.5 min-w-[76px] text-center">
-                        <div className="text-[11px] font-medium text-[#78716C]">完播率</div>
-                        <div className="mt-1 text-[16px] font-semibold tabular-nums text-[#1C1917]">
+                      <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
+                        <div className="text-[11px] font-medium text-[#78716C] truncate">完播率</div>
+                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-semibold tabular-nums text-[#1C1917] truncate">
                           {primarySummary.completionRate ?? "—"}
                         </div>
                       </div>
                     </div>
 
                     {/* 操作按钮 */}
-                    <div className="flex flex-col gap-2 shrink-0 sm:w-[140px]">
+                    <div className="flex flex-col gap-2 shrink-0 w-full sm:w-[140px]">
                       <Button
                         type="button"
-                        className="h-9 w-full rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985] inline-flex items-center justify-center gap-1.5"
+                        className="h-9 w-full rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985] inline-flex items-center justify-center gap-1.5 min-h-[38px]"
                         onClick={handleGoToTopics}
                       >
                         <Compass className="size-3.5" />
                         <span>挑选明日选题</span>
                       </Button>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 w-full">
                         <Button
                           type="button"
                           variant="outline"
-                          className="h-8 flex-1 rounded-lg border-[#E5E0D6] text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
+                          className="h-8 flex-1 rounded-lg border-[#E5E0D6] text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] min-h-[36px]"
                           onClick={() => setRequestedMode("editToday")}
                         >
                           <PencilLine className="size-3 mr-1" />
@@ -741,7 +741,7 @@ export function VideoSubmitPanelV2({
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-8 flex-1 rounded-lg text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
+                          className="h-8 flex-1 rounded-lg text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] min-h-[36px]"
                           onClick={handleGoToGrowth}
                         >
                           复盘
@@ -884,9 +884,9 @@ export function VideoSubmitPanelV2({
 
       {/* 历史记录弹窗 */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="flex flex-col overflow-hidden sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
+        <DialogContent className="flex flex-col overflow-hidden max-h-[88dvh] sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-claude-dialog p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
+            <DialogTitle className="text-[16px] sm:text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
           </DialogHeader>
           <DialogBody>
           {activityError ? (
@@ -925,9 +925,9 @@ export function VideoSubmitPanelV2({
 
       {/* 编辑历史记录弹窗 */}
       <Dialog open={editingReport !== null} onOpenChange={(open) => !open && setEditingReport(null)}>
-        <DialogContent className="flex flex-col overflow-hidden p-4 gap-3 sm:max-w-5xl rounded-2xl border-[#E5E0D6] bg-white shadow-lg">
+        <DialogContent className="flex flex-col overflow-hidden max-h-[88dvh] p-3.5 sm:p-4 gap-3 sm:max-w-5xl rounded-2xl border-[#E5E0D6] bg-white shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
+            <DialogTitle className="text-[16px] sm:text-[17px] font-semibold text-[#1C1917]">查看并修改日报数据</DialogTitle>
           </DialogHeader>
           {editingReport ? (
             <HistoryReportEditForm

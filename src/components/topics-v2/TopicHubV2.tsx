@@ -479,23 +479,23 @@ export function TopicHubV2({
 
       <div className="max-w-[1560px] mx-auto space-y-6">
         {/* 全局顶栏：黄金大标题 Header (原版人文手稿装帧) */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 pt-1">
-          <div className="flex items-center gap-3">
-            <div className="size-9.5 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-2.5 pt-1">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="size-9 sm:size-9.5 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] flex items-center justify-center text-[#D97757] shadow-2xs shrink-0">
               <CompassConstellationIllustration size={22} />
             </div>
-            <div className="space-y-1">
-              <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tighter">
+            <div className="space-y-0.5 sm:space-y-1">
+              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-[#1C1917] tracking-tight">
                 灵感手稿 · 选题库
               </h1>
-              <p className="text-[12.5px] text-[#78716C] font-normal leading-relaxed">
+              <p className="text-[12px] sm:text-[12.5px] text-[#78716C] font-normal leading-relaxed">
                 数据验证过的干货选题 · 选定后去飞书创作
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F5F3EE] text-[11.5px] font-medium text-[#57534E]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F5F3EE] text-[11px] sm:text-[11.5px] font-medium text-[#57534E]">
               <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
               <span>八大母题体系</span>
             </span>
@@ -503,7 +503,7 @@ export function TopicHubV2({
               type="button"
               onClick={() => void refreshAll()}
               title="刷新大盘数据"
-              className="p-1.5 rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+              className="p-2 sm:p-1.5 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center rounded-lg text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
               aria-label="刷新大盘数据"
             >
               <RefreshCw

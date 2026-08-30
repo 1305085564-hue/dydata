@@ -341,13 +341,13 @@ export function NavBarClient({
                 <div className="flex size-8.5 items-center justify-center rounded-xl border border-[#292524]/20 bg-[#1C1917] text-white shadow-sm transition-all duration-200 group-hover:scale-[1.03] group-hover:bg-[#292524]">
                   <span className="text-[14px] leading-none text-[#F5F3EE] select-none group-hover:rotate-12 transition-transform duration-200">✦</span>
                 </div>
-                <div className="hidden sm:block">
+                <div className="flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[14.5px] font-semibold text-[#1C1917] leading-none">
                       DYData
                     </span>
                   </div>
-                  <div className="mt-1 text-[11px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#292524]">
+                  <div className="mt-1 text-[11px] font-normal tracking-wide text-[#78716C] leading-none transition-colors duration-200 group-hover:text-[#292524] hidden sm:block">
                     创作数据读本
                   </div>
                 </div>
@@ -503,8 +503,8 @@ export function NavBarClient({
               </div>
             </div>
 
-            {/* RIGHT: Combined User & Workspace Controls / Notifications Hub (Far Right) */}
-            <div className="flex items-center gap-2.5 shrink-0 ml-auto">
+            {/* RIGHT: Combined User & Workspace Controls / Notifications Hub (Far Right, hidden on mobile) */}
+            <div className="hidden md:flex items-center gap-2.5 shrink-0 ml-auto">
               {/* Bell alert Popover button container (Click to Open) */}
               <div className="relative group py-1 -my-1">
                 <button
@@ -537,20 +537,6 @@ export function NavBarClient({
                     </span>
                   )}
                 </button>
-
-                {commandHubLoaded && (
-                  <UnifiedCommandHub
-                    open={commandHubOpen}
-                    onOpenChange={setCommandHubOpen}
-                    activeTab={commandHubTab}
-                    onTabChange={setCommandHubTab}
-                    isAdmin={isAdmin}
-                    pendingApprovalsCount={approvalBadgeCount}
-                    onPendingCountChange={handleHubPendingCountChange}
-                    canViewOrphanDetails={canViewOrphanDetails}
-                    orphanExemptionCount={orphanExemptionCount}
-                  />
-                )}
               </div>
 
               {/* Integrated Persona & Workspace Control (Far Right) */}
@@ -567,6 +553,20 @@ export function NavBarClient({
           </div>
         </div>
       </nav>
+
+      {commandHubLoaded && (
+        <UnifiedCommandHub
+          open={commandHubOpen}
+          onOpenChange={setCommandHubOpen}
+          activeTab={commandHubTab}
+          onTabChange={setCommandHubTab}
+          isAdmin={isAdmin}
+          pendingApprovalsCount={approvalBadgeCount}
+          onPendingCountChange={handleHubPendingCountChange}
+          canViewOrphanDetails={canViewOrphanDetails}
+          orphanExemptionCount={orphanExemptionCount}
+        />
+      )}
 
       {/* Mobile Shell (<768px) */}
       <div className="block md:hidden">

@@ -132,7 +132,7 @@ export function TopicMoreFiltersDrawer({
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <nav
             aria-label="筛选分类"
-            className="w-36 shrink-0 space-y-1 overflow-y-auto border-r border-[#ECE7DE] bg-[#FAF8F4]/80 p-2 sm:w-40"
+            className="w-28 shrink-0 space-y-1 overflow-y-auto border-r border-[#ECE7DE] bg-[#FAF8F4]/80 p-1.5 sm:w-40 sm:p-2"
           >
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
@@ -144,13 +144,13 @@ export function TopicMoreFiltersDrawer({
                   key={category.key}
                   type="button"
                   onClick={() => setActiveCategory(category.key)}
-                  className={`group flex min-h-[44px] w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-xs font-medium transition-all ${
+                  className={`group flex min-h-[44px] w-full items-center justify-between rounded-xl px-2 sm:px-3 py-2 sm:py-2.5 text-left text-xs font-medium transition-all ${
                     isSelected
                       ? "bg-white font-semibold text-[#1C1917] shadow-2xs"
                       : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
                   }`}
                 >
-                  <span className="flex min-w-0 items-center gap-2 truncate">
+                  <span className="flex min-w-0 items-center gap-1.5 sm:gap-2 truncate">
                     <Icon
                       className={`size-3.5 shrink-0 ${
                         isSelected
@@ -171,7 +171,7 @@ export function TopicMoreFiltersDrawer({
             })}
           </nav>
 
-          <div className="flex-1 space-y-4 overflow-y-auto bg-white p-4 sm:p-5">
+          <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto bg-white p-3.5 sm:p-5">
             <div>
               <h4 className="mb-1 text-xs font-semibold text-[#1C1917]">
                 {CATEGORIES.find((category) => category.key === activeCategory)?.label}
@@ -218,7 +218,7 @@ export function TopicMoreFiltersDrawer({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between border-t border-[#ECE7DE] bg-[#FAF8F4] px-5 py-3.5">
+        <div className="flex shrink-0 items-center justify-between border-t border-[#ECE7DE] bg-[#FAF8F4] px-4 sm:px-5 py-3 sm:py-3.5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)]">
           <span className="text-xs text-[#78716C]">条件已实时生效</span>
           <button
             type="button"

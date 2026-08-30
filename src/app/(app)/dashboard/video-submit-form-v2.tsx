@@ -2211,9 +2211,9 @@ export function VideoSubmitFormV2({
               {/* 主工作区 - Claude 设计系统 */}
               <div className="space-y-6">
                 {/* 头部：状态 + 日期 */}
-                <div className="flex items-center justify-between pb-4 border-b border-[#ECE7DE]">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-[15.5px] font-semibold text-[#1C1917]">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#ECE7DE]">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <h2 className="text-[14.5px] sm:text-[15.5px] font-semibold text-[#1C1917]">
                       {isBackfillMode ? `创作纪事补录 (${meta.bizDate})` : "今日创作立卷 · 表达纪事"}
                     </h2>
                     <VideoStatusSegmented
@@ -2717,7 +2717,7 @@ export function VideoSubmitFormV2({
               </Dialog>
 
               {/* 底部提交按钮 */}
-              <div className="flex items-center justify-between gap-3 pt-6 border-t border-[#ECE7DE]">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 sm:pt-6 border-t border-[#ECE7DE]">
                 <div className="flex items-center gap-2">
                   {!canActuallySubmit ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[#B98A54]/25 bg-[#B98A54]/10 px-3 py-1.5 text-[12px] font-medium text-[#B98A54]">
@@ -2730,20 +2730,20 @@ export function VideoSubmitFormV2({
                         <span className="h-1.5 w-1.5 rounded-full bg-[#6FAA7D]" />
                         已就绪，可提交
                       </span>
-                      <span className="text-[12px] text-[#78716C]">
+                      <span className="text-[12px] text-[#78716C] hidden sm:inline">
                         (支持 ⌘/Ctrl + Enter)
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                   {isBackfillMode || submittedViewActive ? (
                     <Button
                       type="button"
                       variant="outline"
                       onClick={onCancel}
-                      className="h-9 rounded-xl px-4 text-[13px] font-medium"
+                      className="h-10 sm:h-9 flex-1 sm:flex-initial rounded-xl px-4 text-[13px] font-medium"
                     >
                       取消
                     </Button>
@@ -2752,7 +2752,7 @@ export function VideoSubmitFormV2({
                     type="button"
                     onClick={triggerSubmit}
                     disabled={isSubmitting || !canActuallySubmit}
-                    className="h-10 rounded-xl px-6 text-[13px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed active:scale-[0.985] transition-all duration-150 flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                    className="h-11 sm:h-10 flex-1 sm:flex-initial rounded-xl px-6 text-[13px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed active:scale-[0.985] transition-all duration-150 flex items-center justify-center gap-2 shadow-sm cursor-pointer min-h-[44px]"
                   >
                     {isSubmitting && (
                       <Loader2 className="size-4 animate-spin text-white" />

@@ -440,7 +440,7 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E5E0D6] bg-[#FBF9F5]/95 p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E5E0D6] bg-[#FBF9F5]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
       >
         {/* 顶部标题栏 */}
         <div className="shrink-0">
@@ -790,7 +790,7 @@ export function TopicWorkBreakdownDrawer({
         </div>
 
         {/* 底栏固定主行动：去工作台入口 */}
-        <div className="shrink-0 border-t border-[#E5E0D6] pt-4 mt-2 bg-[#FBF9F5] flex flex-wrap items-center justify-between gap-3">
+        <div className="shrink-0 border-t border-[#E5E0D6] pt-3 sm:pt-4 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] mt-2 bg-[#FBF9F5] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <a
               href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
