@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -98,6 +99,12 @@ const statusBadgeClass: Record<Video["anomaly_status"], string> = {
 };
 
 export type RefKey = "self" | "team" | "top" | "user";
+
+// AnimatePresence 只保留 isValidElement 的子节点，portal 对象会被过滤；
+// 必须经由组件边界挂 portal，抽屉才能真正渲染到 body（脱离 app-main 的 isolate 层级）。
+function QueueDrawerPortal({ children }: { children: ReactNode }) {
+  return createPortal(children, document.body);
+}
 
 export function ContentDiagnosisWorkbench({
   video,
@@ -731,17 +738,18 @@ export function ContentDiagnosisWorkbench({
       </header>
 
       <div className="relative flex-1 flex overflow-hidden min-h-0">
-        {/* 视口 < 1536px: 悬浮抽屉 + 半透明遮罩 */}
+        {/* 视口 < 1536px: 悬浮抽屉 + 半透明遮罩（portal 到 body，避免被 app-main 的 isolate 层级困住、遭顶栏遮挡） */}
         <AnimatePresence>
           {isQueueOpen && (
-            <>
+            <QueueDrawerPortal>
+              <>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setIsQueueOpen(false)}
-                className="fixed inset-0 z-40 bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
+                className="fixed inset-0 z-[60] bg-[#1C1917]/20 backdrop-blur-[1px] 2xl:hidden"
               />
 
               <motion.aside
@@ -749,7 +757,7 @@ export function ContentDiagnosisWorkbench({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 280 }}
-                className="fixed inset-y-0 left-0 z-50 flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
+                className="fixed inset-y-0 left-0 z-[60] flex w-84 max-w-[85vw] flex-col border-r border-[#E5E0D6] bg-[#FBF9F5]/95 backdrop-blur-xl shadow-claude-dialog 2xl:hidden"
               >
                 <div className="flex items-center justify-between border-b border-[#E5E0D6] px-4 py-3 bg-[#FBF9F5]/80">
                   <div className="flex items-center gap-2">
@@ -834,7 +842,8 @@ export function ContentDiagnosisWorkbench({
                   })}
                 </div>
               </motion.aside>
-            </>
+              </>
+            </QueueDrawerPortal>
           )}
         </AnimatePresence>
 

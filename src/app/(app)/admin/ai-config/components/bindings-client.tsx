@@ -1070,7 +1070,7 @@ export default function BindingsClient() {
             </div>
           </div>
 
-          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 border border-[#E5E0D6] rounded-2xl">
+          <div className="flex-1 bg-white p-4 min-h-[420px] min-w-0 w-full border border-[#E5E0D6] rounded-2xl">
             {activeViewId &&
               (() => {
                 const view = bundle.rewriteModelViews.find(
@@ -1088,7 +1088,7 @@ export default function BindingsClient() {
 
                 return (
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center px-1 pb-2">
+                    <div className="flex flex-wrap justify-between items-center gap-2 px-1 pb-2">
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium text-[14px] text-[#1C1917]">
