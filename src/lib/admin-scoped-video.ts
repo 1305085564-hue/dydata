@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAdminActor, type AdminActor } from "@/app/api/admin/auth-helper";
 import { canAccessAdminPath } from "@/lib/analytics-access";
-import { buildDataAccessScope, type DataAccessScope } from "@/lib/data-access-scope";
+import { buildPermissionContextForActor } from "@/lib/current-permission-context";
+import type { DataAccessScope } from "@/lib/data-access-scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Video } from "@/types";
 
@@ -17,10 +18,10 @@ export type ScopedAdminVideoAccess = {
   actor: AdminActor;
   scope: DataAccessScope;
   supabase: SupabaseClient;
-  video: ScopedVideoRow & {
+  video: Omit<ScopedVideoRow, "accounts" | "profiles"> & {
     accounts: { name: string | null; profile_id?: string | null } | null;
-    profiles: { name: string | null } | null;
-  };
+    profiles: { name: string | null; team_id?: string | null } | null;
+  },
 };
 
 export type ScopedAdminVideoError = {
@@ -50,30 +51,25 @@ export async function requireScopedAdminVideo({
   }
 
   const supabase = createAdminClient();
-  const scope = await buildDataAccessScope(supabase, auth.actor.userId, {
-    profile: {
-      id: auth.actor.userId,
-      role: auth.actor.role,
-      permissions: auth.actor.permissions,
-      data_scope: auth.actor.dataScope,
-      team_id: auth.actor.teamId ?? null,
-      company_role: auth.actor.companyRole,
-      group_mode: auth.actor.groupMode,
-      membership_status: auth.actor.membershipStatus,
-    },
-  });
+  // scope 走 30s TTL 缓存路径（漏失效点最坏 30s 旧范围，写路径已有失效钩子），
+  // 且与视频行查询无依赖，可并行。
+  const [permissionContext, videoResult] = await Promise.all([
+    buildPermissionContextForActor(auth.actor),
+    supabase
+      .from("videos")
+      .select(
+        "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts(name, profile_id), profiles!videos_user_id_fkey(name, team_id)",
+      )
+      .eq("id", videoId)
+      .eq("lifecycle_state", "active")
+      .maybeSingle(),
+  ]);
+  const scope = permissionContext?.scope ?? null;
   if (!scope) {
     return { error: "用户权限范围加载失败", status: 403 as const };
   }
 
-  const { data, error } = await supabase
-    .from("videos")
-    .select(
-      "id, account_id, user_id, video_url, video_title, content, published_at, uploaded_at, anomaly_status, asset_level, asset_note, asset_reviewed_by, asset_reviewed_at, created_at, accounts(name, profile_id), profiles!videos_user_id_fkey(name)",
-    )
-    .eq("id", videoId)
-    .eq("lifecycle_state", "active")
-    .maybeSingle();
+  const { data, error } = videoResult;
 
   if (error || !data) {
     return { error: "视频不存在", status: 404 as const };
@@ -95,9 +91,9 @@ export async function requireScopedAdminVideo({
       ...video,
       accounts: account,
       profiles: firstJoined(video.profiles),
-    } as ScopedVideoRow & {
+    } as Omit<ScopedVideoRow, "accounts" | "profiles"> & {
       accounts: { name: string | null; profile_id?: string | null } | null;
-      profiles: { name: string | null } | null;
+      profiles: { name: string | null; team_id?: string | null } | null;
     },
   };
 }
