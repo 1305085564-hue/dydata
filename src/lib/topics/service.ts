@@ -873,47 +873,57 @@ async function loadScoredTopicPool(
     };
   }
 
+  const aggregates = await tryLoadTopicPoolAggregates(supabase, scope);
+
   let heat: Map<string, Recent7dHeat>;
-  try {
-    heat = await measureAsync("topics.pool.scored.heat", () => loadRecent7dHeat(supabase, subTopicIds));
-  } catch (error) {
-    return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+  if (aggregates) {
+    heat = aggregatesToHeatMap(aggregates);
+  } else {
+    try {
+      heat = await measureAsync("topics.pool.scored.heat", () => loadRecent7dHeat(supabase, subTopicIds));
+    } catch (error) {
+      return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+    }
   }
 
-  // content 一并取出，让汇总统计直接复用这次结果，省掉一次同表全量扫描
-  let worksQuery = supabase
-    .from("videos")
-    .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
-    .eq("lifecycle_state", "active")
-    .in("topic_id", subTopicIds);
-  if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
-
-  const { data: works, error: worksError } = await measureAsync("topics.pool.scored.works", () => worksQuery);
-  if (worksError) return { ok: false, status: 500, message: worksError.message };
-
   const worksBySubTopic = new Map<string, { latestUploadedAt: string; playCounts: number[] }>();
-  const scopedWorks = applyScope(
-    (works ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>,
-    scope,
-  );
-  for (const work of scopedWorks) {
-    const subTopicId = String(work.topic_id ?? "");
-    if (!subTopicId) continue;
-    const uploadedAt = typeof work.uploaded_at === "string" ? work.uploaded_at : "";
-    const snapshots = Array.isArray(work.video_metrics_snapshots)
-      ? work.video_metrics_snapshots as Array<{ play_count?: number | null }>
-      : [];
-    const playCount = snapshots.reduce(
-      (maximum, snapshot) => Math.max(maximum, Number(snapshot.play_count ?? 0)),
-      0,
+  let fallbackWorks: unknown[] = [];
+  if (!aggregates) {
+    // content 一并取出，让汇总统计直接复用这次结果，省掉一次同表全量扫描
+    let worksQuery = supabase
+      .from("videos")
+      .select("topic_id, user_id, content, uploaded_at, video_metrics_snapshots(play_count)")
+      .eq("lifecycle_state", "active")
+      .in("topic_id", subTopicIds);
+    if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+
+    const { data: works, error: worksError } = await measureAsync("topics.pool.scored.works", () => worksQuery);
+    if (worksError) return { ok: false, status: 500, message: worksError.message };
+    fallbackWorks = (works ?? []) as ScopedWorkRow[];
+
+    const scopedWorks = applyScope(
+      (works ?? []) as Array<Record<string, unknown> & { user_id?: string | null }>,
+      scope,
     );
-    const aggregate = worksBySubTopic.get(subTopicId);
-    if (!aggregate) {
-      worksBySubTopic.set(subTopicId, { latestUploadedAt: uploadedAt, playCounts: [playCount] });
-      continue;
+    for (const work of scopedWorks) {
+      const subTopicId = String(work.topic_id ?? "");
+      if (!subTopicId) continue;
+      const uploadedAt = typeof work.uploaded_at === "string" ? work.uploaded_at : "";
+      const snapshots = Array.isArray(work.video_metrics_snapshots)
+        ? work.video_metrics_snapshots as Array<{ play_count?: number | null }>
+        : [];
+      const playCount = snapshots.reduce(
+        (maximum, snapshot) => Math.max(maximum, Number(snapshot.play_count ?? 0)),
+        0,
+      );
+      const aggregate = worksBySubTopic.get(subTopicId);
+      if (!aggregate) {
+        worksBySubTopic.set(subTopicId, { latestUploadedAt: uploadedAt, playCounts: [playCount] });
+        continue;
+      }
+      if (uploadedAt > aggregate.latestUploadedAt) aggregate.latestUploadedAt = uploadedAt;
+      aggregate.playCounts.push(playCount);
     }
-    if (uploadedAt > aggregate.latestUploadedAt) aggregate.latestUploadedAt = uploadedAt;
-    aggregate.playCounts.push(playCount);
   }
 
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
@@ -930,28 +940,45 @@ async function loadScoredTopicPool(
     recent7dInProgressCount: number;
   }> = [];
   for (const item of allSubTopics) {
-    const aggregate = worksBySubTopic.get(String(item.id));
-    if (!aggregate) continue;
-    const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= 30_000);
-    const avgPlayCount = qualifiedPlayCounts.length
-      ? Math.round(qualifiedPlayCounts.reduce((total, playCount) => total + playCount, 0) / qualifiedPlayCounts.length)
-      : null;
-    const latestTimestamp = Date.parse(aggregate.latestUploadedAt);
-    const daysSinceLastWork = Number.isFinite(latestTimestamp)
-      ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
-      : 999;
+    let avgPlayCount: number | null;
+    let bestPlayCount: number | null;
+    let qualifiedCount: number;
+    let daysSinceLastWork: number;
+    if (aggregates) {
+      const aggregate = aggregates.get(String(item.id));
+      if (!aggregate) continue;
+      avgPlayCount = aggregate.averagePlayCount;
+      bestPlayCount = aggregate.bestPlayCount;
+      qualifiedCount = aggregate.qualifiedWorkCount;
+      const latestTimestamp = Date.parse(aggregate.latestUploadedAt ?? "");
+      daysSinceLastWork = Number.isFinite(latestTimestamp)
+        ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
+        : 999;
+    } else {
+      const aggregate = worksBySubTopic.get(String(item.id));
+      if (!aggregate) continue;
+      const qualifiedPlayCounts = aggregate.playCounts.filter((playCount) => playCount >= 30_000);
+      avgPlayCount = qualifiedPlayCounts.length
+        ? Math.round(qualifiedPlayCounts.reduce((total, playCount) => total + playCount, 0) / qualifiedPlayCounts.length)
+        : null;
+      const latestTimestamp = Date.parse(aggregate.latestUploadedAt);
+      daysSinceLastWork = Number.isFinite(latestTimestamp)
+        ? Math.max(0, Math.floor((now - latestTimestamp) / millisecondsPerDay))
+        : 999;
+      bestPlayCount = qualifiedPlayCounts.length ? Math.max(...qualifiedPlayCounts) : null;
+      qualifiedCount = qualifiedPlayCounts.length;
+    }
     if (mode === "trending" && daysSinceLastWork > 30) continue;
     if (mode === "high_potential" && daysSinceLastWork <= 30) continue;
     if (!matchesTopicPoolQuery(item, options.q)) continue;
-    const maxPlayCount = qualifiedPlayCounts.length ? Math.max(...qualifiedPlayCounts) : null;
     const heatEntry = heat.get(String(item.id));
     scored.push({
       item,
       score: calcTopicScore(avgPlayCount, daysSinceLastWork, mode),
       daysSinceLastWork,
       avgPlayCount,
-      bestPlayCount: maxPlayCount,
-      qualifiedCount: qualifiedPlayCounts.length,
+      bestPlayCount,
+      qualifiedCount,
       recent7dParticipants: heatEntry?.participants ?? 0,
       recent7dCompletedCount: heatEntry?.completedCount ?? 0,
       recent7dInProgressCount: heatEntry?.inProgressCount ?? 0,
@@ -992,7 +1019,9 @@ async function loadScoredTopicPool(
   const totalItems = filteredScored.length;
   const from = (options.page - 1) * options.pageSize;
   const pageItems = filteredScored.slice(from, from + options.pageSize);
-  const summaries = summarizeScopedWorksBySubTopic((works ?? []) as ScopedWorkRow[], scope);
+  const summaries = aggregates
+    ? aggregatesToSummaryMap(aggregates)
+    : summarizeScopedWorksBySubTopic(fallbackWorks as ScopedWorkRow[], scope);
 
   return {
     ok: true,
@@ -1044,31 +1073,43 @@ async function loadNeverWorkedTopics(
     };
   }
 
+  const aggregates = await tryLoadTopicPoolAggregates(supabase, scope);
+
   let heat: Map<string, Recent7dHeat>;
-  try {
-    heat = await measureAsync("topics.pool.neverWorked.heat", () => loadRecent7dHeat(supabase, subTopicIds));
-  } catch (error) {
-    return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+  if (aggregates) {
+    heat = aggregatesToHeatMap(aggregates);
+  } else {
+    try {
+      heat = await measureAsync("topics.pool.neverWorked.heat", () => loadRecent7dHeat(supabase, subTopicIds));
+    } catch (error) {
+      return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+    }
   }
 
-  let worksQuery = supabase
-    .from("videos")
-    .select("topic_id, user_id")
-    .eq("lifecycle_state", "active")
-    .in("topic_id", subTopicIds);
-  if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
+  let workedIds: Set<string>;
+  if (aggregates) {
+    // 聚合行只包含"有作品"的子题，缺席即从未写过
+    workedIds = new Set(aggregates.keys());
+  } else {
+    let worksQuery = supabase
+      .from("videos")
+      .select("topic_id, user_id")
+      .eq("lifecycle_state", "active")
+      .in("topic_id", subTopicIds);
+    if (scope.kind !== "all") worksQuery = worksQuery.in("user_id", scope.visibleUserIds);
 
-  const { data: works, error: worksError } = await worksQuery;
-  if (worksError) return { ok: false, status: 500, message: worksError.message };
+    const { data: works, error: worksError } = await worksQuery;
+    if (worksError) return { ok: false, status: 500, message: worksError.message };
 
-  const workedIds = new Set(
-    applyScope(
-      (works ?? []) as Array<{ topic_id?: string | null; user_id?: string | null }>,
-      scope,
-    )
-      .map((work) => work.topic_id)
-      .filter((id): id is string => Boolean(id)),
-  );
+    workedIds = new Set(
+      applyScope(
+        (works ?? []) as Array<{ topic_id?: string | null; user_id?: string | null }>,
+        scope,
+      )
+        .map((work) => work.topic_id)
+        .filter((id): id is string => Boolean(id)),
+    );
+  }
   const neverWorked = allSubTopics
     .filter((item) => !workedIds.has(String(item.id)))
     .filter((item) => matchesTopicPoolQuery(item, options.q));
@@ -1131,6 +1172,26 @@ export async function loadSubTopicDetail(
       works: works.value,
     },
   };
+}
+
+async function tryLoadTopicPoolAggregates(
+  supabase: TopicSupabase,
+  scope: DataAccessScope,
+): Promise<Map<string, TopicPoolWorkAggregate> | null> {
+  try {
+    return await measureAsync("topics.pool.aggregates", () => loadTopicPoolWorkAggregates(supabase, scope));
+  } catch {
+    // RPC 未部署或查询失败时回退到内存聚合路径，行为与迁移前一致
+    return null;
+  }
+}
+
+function aggregatesToHeatMap(aggregates: Map<string, TopicPoolWorkAggregate>) {
+  return new Map(Array.from(aggregates, ([id, aggregate]) => [id, aggregateToHeat(aggregate)]));
+}
+
+function aggregatesToSummaryMap(aggregates: Map<string, TopicPoolWorkAggregate>) {
+  return new Map(Array.from(aggregates, ([id, aggregate]) => [id, aggregateToSummary(aggregate)]));
 }
 
 export async function loadTopicPool(
@@ -1205,20 +1266,30 @@ export async function loadTopicPool(
   const items = ((data ?? []) as Array<Record<string, unknown>>)
     .filter((item) => matchesTopicPoolQuery(item, options.q));
 
+  const aggregates = await tryLoadTopicPoolAggregates(supabase, scope);
+
   let heat: Map<string, Recent7dHeat>;
-  try {
-    heat = await measureAsync("topics.pool.heat", () => loadRecent7dHeat(supabase, items.map((item) => String(item.id))));
-  } catch (error) {
-    return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+  if (aggregates) {
+    heat = aggregatesToHeatMap(aggregates);
+  } else {
+    try {
+      heat = await measureAsync("topics.pool.heat", () => loadRecent7dHeat(supabase, items.map((item) => String(item.id))));
+    } catch (error) {
+      return { ok: false, status: 500, message: error instanceof Error ? error.message : "七天热度加载失败" };
+    }
   }
 
   let summaries: Map<string, TopicWorkSummary>;
-  try {
-    summaries = await measureAsync("topics.pool.summaries", () =>
-      loadTopicSummaries(supabase, items.map((item) => String(item.id)), scope),
-    );
-  } catch (error) {
-    return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
+  if (aggregates) {
+    summaries = aggregatesToSummaryMap(aggregates);
+  } else {
+    try {
+      summaries = await measureAsync("topics.pool.summaries", () =>
+        loadTopicSummaries(supabase, items.map((item) => String(item.id)), scope),
+      );
+    } catch (error) {
+      return { ok: false, status: 500, message: error instanceof Error ? error.message : "选题汇总加载失败" };
+    }
   }
   const builtItems = items.map((item) => buildTopicPoolItem(
     item,
@@ -1456,6 +1527,79 @@ function recent7dHeatExtra(heat: Map<string, Recent7dHeat>, subTopicId: string) 
     recent7dCompletedCount: entry?.completedCount ?? 0,
     recent7dInProgressCount: entry?.inProgressCount ?? 0,
     recent7dParticipants: entry?.participants ?? 0,
+  };
+}
+
+export type TopicPoolWorkAggregate = {
+  workCount: number;
+  internalBestPlay: number | null;
+  internalAvgPlay: number | null;
+  qualifiedWorkCount: number;
+  averagePlayCount: number | null;
+  bestPlayCount: number | null;
+  bestCopy: string | null;
+  latestCopy: string | null;
+  latestUploadedAt: string | null;
+  completedCount: number;
+  inProgressCount: number;
+  participants: number;
+};
+
+/**
+ * 选题池聚合 RPC（20260830120000_topics_pool_aggregates）：一次调用拿到全部 in_library
+ * 子题的内部成绩/达标汇总/最新作品时间/近 7 天热度，替代三条 pool 路径各自的作品全量扫描。
+ * 拉不到 RPC 时（迁移未执行等）由调用方回退到原内存聚合路径，语义一致。
+ */
+export async function loadTopicPoolWorkAggregates(
+  supabase: TopicSupabase,
+  scope: DataAccessScope,
+): Promise<Map<string, TopicPoolWorkAggregate>> {
+  const { data, error } = await supabase.rpc("topics_pool_aggregates", {
+    p_visible_user_ids: scope.kind === "all" ? null : scope.visibleUserIds,
+  });
+  if (error) throw new Error(error.message);
+  const map = new Map<string, TopicPoolWorkAggregate>();
+  for (const [topicId, payload] of Object.entries((data ?? {}) as Record<string, TopicPoolWorkAggregate>)) {
+    if (!payload || typeof payload !== "object") continue;
+    map.set(topicId, {
+      workCount: Number(payload.workCount ?? 0),
+      internalBestPlay: payload.internalBestPlay ?? null,
+      internalAvgPlay: payload.internalAvgPlay ?? null,
+      qualifiedWorkCount: Number(payload.qualifiedWorkCount ?? 0),
+      averagePlayCount: payload.averagePlayCount ?? null,
+      bestPlayCount: payload.bestPlayCount ?? null,
+      bestCopy: payload.bestCopy ?? null,
+      latestCopy: payload.latestCopy ?? null,
+      latestUploadedAt: payload.latestUploadedAt ?? null,
+      completedCount: Number(payload.completedCount ?? 0),
+      inProgressCount: Number(payload.inProgressCount ?? 0),
+      participants: Number(payload.participants ?? 0),
+    });
+  }
+  return map;
+}
+
+function aggregateToSummary(aggregate: TopicPoolWorkAggregate): TopicWorkSummary {
+  return {
+    qualifiedWorkCount: aggregate.qualifiedWorkCount,
+    averagePlayCount: aggregate.averagePlayCount,
+    bestPlayCount: aggregate.bestPlayCount,
+    bestCopy: aggregate.bestCopy,
+    latestCopy: aggregate.latestCopy,
+    internalMetrics: {
+      bestPlayCount: aggregate.internalBestPlay,
+      averagePlayCount: aggregate.internalAvgPlay,
+      qualifiedWorkCount: aggregate.qualifiedWorkCount,
+      workCount: aggregate.workCount,
+    },
+  };
+}
+
+function aggregateToHeat(aggregate: TopicPoolWorkAggregate): Recent7dHeat {
+  return {
+    completedCount: aggregate.completedCount,
+    inProgressCount: aggregate.inProgressCount,
+    participants: aggregate.participants,
   };
 }
 

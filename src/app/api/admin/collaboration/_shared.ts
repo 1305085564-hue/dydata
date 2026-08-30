@@ -491,6 +491,49 @@ export async function loadSummaryData(input: {
   return buildSummary(rows, profiles);
 }
 
+export type CollaborationMonthDataset = {
+  currentRows: CollaborationReport[];
+  previousRows: CollaborationReport[];
+  profiles: CollaborationProfile[];
+  accounts: CollaborationAccount[];
+};
+
+/**
+ * 协作页首屏共享数据集：上月 1 日~当月末的日报一次查询，内存按月切分；
+ * summary/operators/talents 三块原先各扫一遍当月日报（含上月共 4 次），现合并为 1 次。
+ * 口径不变：三块消费同一 CollaborationReport 行集，各自在内存做 stats 起点与角色过滤。
+ */
+export async function loadCollaborationMonthDataset(input: {
+  supabase: SupabaseClient;
+  visibleUserIds: string[];
+  range: MonthRange;
+}): Promise<CollaborationMonthDataset> {
+  const previousRange = getPreviousMonthRange(input.range.year, input.range.month);
+  const rows = await queryScopedReports({
+    supabase: input.supabase,
+    visibleUserIds: input.visibleUserIds,
+    start: previousRange.start,
+    end: input.range.end,
+  });
+  const currentRows = rows.filter((row) => row.report_date >= input.range.start);
+  const previousRows = rows.filter((row) => row.report_date < input.range.start);
+  const { profiles, accounts } = await loadLookups(input.supabase, rows);
+  return { currentRows, previousRows, profiles, accounts };
+}
+
+export function buildCollaborationPageData(dataset: CollaborationMonthDataset) {
+  return {
+    summary: buildSummary(dataset.currentRows, dataset.profiles),
+    operators: buildOperators(
+      dataset.currentRows,
+      dataset.previousRows,
+      dataset.profiles,
+      dataset.accounts,
+    ),
+    talents: buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts),
+  };
+}
+
 export async function loadOperatorsData(input: {
   supabase: SupabaseClient;
   visibleUserIds: string[];

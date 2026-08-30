@@ -48,6 +48,8 @@ interface CollaborationWorkbenchProps {
   operators: OperatorRow[];
   talents: TalentRow[];
   isOwnerOrTeamAdmin: boolean;
+  /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
+  loadFailed?: boolean;
 }
 
 function generateMonthOptions() {
@@ -92,6 +94,7 @@ export function CollaborationWorkbench({
   summary,
   operators,
   talents,
+  loadFailed = false,
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>(defaultTab);
@@ -226,6 +229,12 @@ export function CollaborationWorkbench({
           {/* 右侧：健康度极轻静默芯片 */}
           <HealthBar summary={summary} />
         </div>
+
+        {loadFailed && (
+          <div className="rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/5 px-4 py-3 text-[13px] text-[#C0685C]">
+            协作数据加载失败，当前展示为空；请刷新重试。
+          </div>
+        )}
 
         {/* 暖橙主体风格导航 Tab */}
         <div className="flex items-center gap-1.5 pt-1">
