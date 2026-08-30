@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { invalidatePermissionContextCache } from "@/lib/current-permission-context";
 
 import {
   enterGroupMode,
@@ -15,6 +16,7 @@ export async function POST() {
     if (!result.ok) return NextResponse.json({ error: result.message }, { status: result.status });
 
     const response = NextResponse.json({ active: true, expiresAt: result.expiresAt });
+    invalidatePermissionContextCache();
     response.cookies.set("dydata-group-mode", result.token, groupModeCookieOptions());
     return response;
   } catch {

@@ -7,6 +7,7 @@ import {
 import { archiveMemberWithClient } from "@/lib/member-lifecycle-service";
 import { canArchiveMember } from "@/lib/member-lifecycle";
 import type { Permissions, UserRole } from "@/types";
+import { invalidatePermissionContextCache } from "@/lib/current-permission-context";
 import type { ToolExecutionResult, ToolContext } from "./types";
 import { toOptionalString, toTrimmedString } from "./utils";
 
@@ -196,6 +197,7 @@ export async function changeUserRole(
   }
 
     const { data: after } = await service.from("profiles").select("id, role, company_role, permissions").eq("id", userId).single();
+  invalidatePermissionContextCache();
   return { success: true, data: { userId, newRole: requestedRole }, backupSql, beforeSnapshot: before, afterSnapshot: after };
 }
 
@@ -239,5 +241,6 @@ export async function updateUserPermissions(
   }
 
   const { data: after } = await service.from("profiles").select("id, permissions").eq("id", userId).single();
+  invalidatePermissionContextCache();
   return { success: true, data: { userId }, backupSql, beforeSnapshot: before, afterSnapshot: after };
 }

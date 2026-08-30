@@ -47,11 +47,15 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     return { error: "未登录", status: 401 as const };
   }
 
-  const primary = await supabase
-    .from("profiles")
-    .select("id, name, role, company_role, permissions, data_scope, membership_status, team_id")
-    .eq("id", user.id)
-    .single();
+  const [primaryResult, groupModeState] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, name, role, company_role, permissions, data_scope, membership_status, team_id")
+      .eq("id", user.id)
+      .single(),
+    resolveGroupModeForUser(user.id),
+  ]);
+  const primary = primaryResult;
 
   let profile: {
     id: string;
@@ -95,7 +99,6 @@ export async function requireAdminActor(options: RequireAdminActorOptions = {}):
     return { error: "无权限", status: 403 as const };
   }
 
-  const groupModeState = await resolveGroupModeForUser(user.id);
   const groupMode = groupModeState.active;
   const role = runtimeRoleForCompanyRole(companyRole);
   const permissions = fixedPermissionsForActor(companyRole, profile.permissions, groupMode);

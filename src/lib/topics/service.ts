@@ -1117,7 +1117,12 @@ export async function loadSubTopicDetail(
 
   // 认领状态由前端经 /api/topics/pool?view=my_claims 判定，详情不再重复查 claims（2026-08-26）
 
-  const works = await loadSubTopicWorks(supabase, id, scope, { sort: "best", page: 1, pageSize: 20 });
+  // 复用已取出的子题行，works 内部不再重复查 sub_topics（2026-08-30）
+  const works = await loadSubTopicWorks(supabase, id, scope, { sort: "best", page: 1, pageSize: 20 }, {
+    topic_id: (subTopic as { topic_id?: string | null }).topic_id ?? null,
+    group_id: (subTopic as { group_id?: string | null }).group_id ?? null,
+    library_status: (subTopic as { library_status?: string }).library_status ?? null,
+  }, { includeSimilar: false });
   if (!works.ok) return works;
   return {
     ok: true,
@@ -1507,18 +1512,21 @@ export async function loadSubTopicClaimActivity(
   subTopicId: string,
   scope: DataAccessScope,
 ): Promise<ApiResult<unknown>> {
-  const { data, error } = await supabase
-    .from("sub_topic_claims")
-    .select("user_id, status, claimed_at, profiles(name)")
-    .eq("sub_topic_id", subTopicId)
-    .eq("status", "writing");
-  if (error) return { ok: false, status: 500, message: "加载写作动态失败" };
+  // 写作动态与 7 天热度两查互不依赖，并行取（2026-08-30）
+  const [claimsResult, heatResult] = await Promise.all([
+    supabase
+      .from("sub_topic_claims")
+      .select("user_id, status, claimed_at, profiles(name)")
+      .eq("sub_topic_id", subTopicId)
+      .eq("status", "writing"),
+    loadRecent7dHeat(supabase, [subTopicId]),
+  ]);
+  if (claimsResult.error) return { ok: false, status: 500, message: "加载写作动态失败" };
 
   // 详情页的 7 天热度三值由服务端按唯一口径计算，前端不做本地推算
   let recent7dSummary: Recent7dHeat | null = null;
   try {
-    const heat = await loadRecent7dHeat(supabase, [subTopicId]);
-    recent7dSummary = heat.get(subTopicId) ?? { completedCount: 0, inProgressCount: 0, participants: 0 };
+    recent7dSummary = heatResult.get(subTopicId) ?? { completedCount: 0, inProgressCount: 0, participants: 0 };
   } catch {
     recent7dSummary = null;
   }
@@ -1526,7 +1534,7 @@ export async function loadSubTopicClaimActivity(
   return {
     ok: true,
     value: {
-      ...(buildClaimActivity((data ?? []) as Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>, scope)),
+      ...(buildClaimActivity(((claimsResult.data ?? []) as Array<Record<string, unknown> & { user_id?: string | null; status?: string | null; claimed_at?: string | null }>), scope)),
       recent7dSummary,
     },
   };
@@ -1537,57 +1545,84 @@ export async function loadSubTopicWorks(
   id: string,
   scope: DataAccessScope,
   options: { sort: TopicWorkSort; page: number; pageSize: number },
+  preloadedSubTopic?: { topic_id: string | null; group_id: string | null; library_status: string | null },
+  options2?: { includeSimilar?: boolean },
 ): Promise<ApiResult<unknown>> {
+  const includeSimilar = options2?.includeSimilar ?? true;
   const from = (options.page - 1) * options.pageSize;
   const to = from + options.pageSize - 1;
-  const { data: subTopic, error: subTopicError } = await supabase
-    .from("sub_topics")
-    .select("id, topic_id, group_id, library_status")
-    .eq("id", id)
-    .maybeSingle();
-  if (subTopicError) return { ok: false, status: 500, message: subTopicError.message };
+  // detail 链路传入已取出的子题行，省一次重复查询；独立 /works 入口仍自行查询
+  let subTopic: { topic_id?: string | null; group_id?: string | null; library_status?: string | null } | null;
+  if (preloadedSubTopic) {
+    subTopic = preloadedSubTopic;
+  } else {
+    const { data, error: subTopicError } = await supabase
+      .from("sub_topics")
+      .select("id, topic_id, group_id, library_status")
+      .eq("id", id)
+      .maybeSingle();
+    if (subTopicError) return { ok: false, status: 500, message: subTopicError.message };
+    subTopic = data as { topic_id?: string | null; group_id?: string | null; library_status?: string | null } | null;
+  }
   if (!subTopic) return { ok: false, status: 404, message: "子题不存在" };
-  if ((subTopic as { library_status?: string }).library_status === "removed") {
+  if (subTopic.library_status === "removed") {
     return { ok: false, status: 404, message: "该选题已被管理员移出选题库" };
   }
 
   let directQuery = supabase
       .from("videos")
-      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
+      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(play_count, likes, comments, shares, favorites, follower_gain, follower_convert)")
       .eq("lifecycle_state", "active")
     .eq("topic_id", id);
   if (scope.kind !== "all") directQuery = directQuery.in("user_id", scope.visibleUserIds);
-  const { data: directRows, error: directError } = await directQuery;
-  if (directError) return { ok: false, status: 500, message: directError.message };
 
-  let similarRows: unknown[] = [];
-  const groupId = (subTopic as { group_id?: string | null }).group_id;
-  const topicId = (subTopic as { topic_id?: string | null }).topic_id;
-  if (groupId && topicId) {
+  // 同组子题查询只依赖 topic_id/group_id，与直接作品查询并行
+  const siblingsPromise = (async () => {
+    const groupId = subTopic?.group_id;
+    const topicId = subTopic?.topic_id;
+    if (!groupId || !topicId) return [] as Array<{ id: string }>;
     const { data: siblings, error: siblingError } = await supabase
       .from("sub_topics")
       .select("id")
       .eq("topic_id", topicId)
       .eq("group_id", groupId)
       .neq("id", id);
-    if (siblingError) return { ok: false, status: 500, message: siblingError.message };
-    const siblingIds = ((siblings ?? []) as Array<{ id: string }>).map((row) => row.id);
-    if (siblingIds.length) {
-      let similarQuery = supabase
-        .from("videos")
-        .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, video_metrics_snapshots(play_count)")
-        .eq("lifecycle_state", "active")
-        .in("topic_id", siblingIds);
-      if (scope.kind !== "all") similarQuery = similarQuery.in("user_id", scope.visibleUserIds);
-      const { data, error } = await similarQuery.limit(20);
-      if (error) return { ok: false, status: 500, message: error.message };
-      similarRows = data ?? [];
-    }
+    if (siblingError) throw new Error(siblingError.message);
+    return ((siblings ?? []) as Array<{ id: string }>);
+  })();
+
+  const [directResult, siblings] = await Promise.all([
+    directQuery,
+    siblingsPromise,
+  ]);
+  if (directResult.error) return { ok: false, status: 500, message: directResult.error.message };
+  const directRows = directResult.data;
+
+  let similarRows: unknown[] = [];
+  const siblingIds = includeSimilar ? siblings.map((row) => row.id) : [];
+  if (siblingIds.length) {
+    let similarQuery = supabase
+      .from("videos")
+      .select("id, topic_id, user_id, video_title, content, published_at, uploaded_at, profiles!videos_user_id_fkey(name), video_metrics_snapshots(play_count)")
+      .eq("lifecycle_state", "active")
+      .in("topic_id", siblingIds);
+    if (scope.kind !== "all") similarQuery = similarQuery.in("user_id", scope.visibleUserIds);
+    const { data, error } = await similarQuery.limit(20);
+    if (error) return { ok: false, status: 500, message: error.message };
+    similarRows = data ?? [];
   }
+
+  const withAuthorName = (row: Record<string, unknown>) => {
+    const profileName = (row.profiles as { name?: unknown } | null)?.name;
+    return {
+      ...row,
+      user_name: typeof profileName === "string" ? profileName : null,
+    };
+  };
 
   const rows: Array<Record<string, unknown> & { referenceType: "direct" }> = [
     ...((directRows ?? []) as Array<Record<string, unknown>>),
-  ].map((row) => ({ ...row, referenceType: "direct" }));
+  ].map((row) => ({ ...withAuthorName(row), referenceType: "direct" }));
   const sorted = rows.sort((a, b) => {
     if (options.sort === "recent") {
       return (Date.parse(String(b.uploaded_at ?? "")) || 0) - (Date.parse(String(a.uploaded_at ?? "")) || 0);
@@ -1601,7 +1636,7 @@ export async function loadSubTopicWorks(
     ok: true,
     value: {
       items: sorted.slice(from, to + 1),
-      similarReferences: (similarRows as Array<Record<string, unknown>>).map((row) => ({ ...row, referenceType: "similar" })),
+      similarReferences: (similarRows as Array<Record<string, unknown>>).map((row) => ({ ...withAuthorName(row), referenceType: "similar" })),
       summary: calculateTopicWorkSummary(
         rows.map((row) => ({
           playCount: Array.isArray(row.video_metrics_snapshots)

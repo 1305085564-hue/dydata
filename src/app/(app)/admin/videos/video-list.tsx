@@ -267,7 +267,6 @@ export function VideoList({
   const [isBatchOperating, setIsBatchOperating] = useState(false);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const hasTriggeredDeferredRef = useRef(false);
   const canManageLifecycle = permissionInfo.permissions.manage_videos === true;
   const canPurge = permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true;
   const safeTeams = teams ?? [];
@@ -342,19 +341,6 @@ export function VideoList({
   useEffect(() => {
     setAssetLibraryState(assetLibrary);
   }, [assetLibrary]);
-
-  // 仅在首次需要时安全触发一次背景全量加载，杜绝循环重刷
-  useEffect(() => {
-    if (
-      hasDeferredData &&
-      onLoadDeferredData &&
-      !isDeferredDataLoading &&
-      !hasTriggeredDeferredRef.current
-    ) {
-      hasTriggeredDeferredRef.current = true;
-      void onLoadDeferredData();
-    }
-  }, [hasDeferredData, onLoadDeferredData, isDeferredDataLoading]);
 
   const snapshots24h = useMemo(
     () => snapshotRows.filter((snapshot) => snapshot.snapshot_type === "24h"),
@@ -909,6 +895,21 @@ export function VideoList({
           </span>
         </div>
       </div>
+
+      {/* 全量列表按需加载：首屏只含服务端 RPC 注入的队列，用户需要时再拉全量（总纲标准改法 3） */}
+      {hasDeferredData && onLoadDeferredData ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/70 px-3.5 py-2 text-[12px] text-[#78716C]">
+          <span>当前显示首屏队列 {videoRows.length} 条，全量作品列表未加载。</span>
+          <button
+            type="button"
+            onClick={() => void onLoadDeferredData()}
+            disabled={isDeferredDataLoading}
+            className="rounded-lg border border-[#E5E0D6] bg-white px-2.5 py-1 text-[12px] font-medium text-[#292524] shadow-2xs transition-all hover:border-[#D97757]/40 hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+          >
+            {isDeferredDataLoading ? "正在加载全量列表…" : "加载全量列表"}
+          </button>
+        </div>
+      ) : null}
 
       {/* 表格容器（平铺极简微边框，消除额外卡片阴影） */}
       <div

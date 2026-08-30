@@ -141,19 +141,22 @@ export async function buildDataAccessScope(
     assertSupabaseQuerySucceeded(result.error, "加载全公司可见成员失败");
     visibleRows = (result.data ?? []) as typeof visibleRows;
   } else if (kind === "team" && effectiveTeamId) {
-    const result = await loadWithMembershipFallback({
-      loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status").eq("team_id", effectiveTeamId),
-      loadWithoutMembership: async () => adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId),
-    });
-    assertSupabaseQuerySucceeded(result.error, "加载团队可见成员失败");
-    visibleRows = (result.data ?? []) as typeof visibleRows;
+    // 团队成员与历史归档成员两查互不依赖，并行取（省一次串行往返）
+    const [teamResult, historicalResult] = await Promise.all([
+      loadWithMembershipFallback({
+        loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status").eq("team_id", effectiveTeamId),
+        loadWithoutMembership: async () => adminSupabase.from("profiles").select("id").eq("team_id", effectiveTeamId),
+      }),
+      loadWithMembershipFallback({
+        loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status, archive_snapshot"),
+        loadWithoutMembership: async () => adminSupabase.from("profiles").select("id, archive_snapshot"),
+      }),
+    ]);
+    assertSupabaseQuerySucceeded(teamResult.error, "加载团队可见成员失败");
+    visibleRows = (teamResult.data ?? []) as typeof visibleRows;
 
     // Archived profiles lose their active team assignment, but their snapshot
     // still identifies the company that owns their historical records.
-    const historicalResult = await loadWithMembershipFallback({
-      loadWithMembership: async () => adminSupabase.from("profiles").select("id, membership_status, archive_snapshot"),
-      loadWithoutMembership: async () => adminSupabase.from("profiles").select("id, archive_snapshot"),
-    });
     assertSupabaseQuerySucceeded(historicalResult.error, "加载历史成员范围失败");
     const archivedHistoricalRows = ((historicalResult.data ?? []) as typeof visibleRows)
       .filter((row) => row.membership_status === "archived")

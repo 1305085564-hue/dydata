@@ -49,11 +49,15 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
   if (authError || !user) return null;
 
   const adminSupabase = createAdminClient();
-  const primary = await adminSupabase
-    .from("profiles")
-    .select("id, name, role, company_role, permissions, data_scope, membership_status, team_id")
-    .eq("id", user.id)
-    .single();
+  // 成员档案与分组模式互不依赖，并行取（省一次串行往返）
+  const [primary, groupModeState] = await Promise.all([
+    adminSupabase
+      .from("profiles")
+      .select("id, name, role, company_role, permissions, data_scope, membership_status, team_id")
+      .eq("id", user.id)
+      .single(),
+    resolveGroupModeForUser(user.id, adminSupabase),
+  ]);
 
   let profile: RawProfileRow | null = null;
   let dataScope: DataScope = "self";
@@ -95,7 +99,6 @@ const loadUserPermissions = cache(async (): Promise<UserPermissionInfo | null> =
   const companyRole = resolveCompanyRole(profile.company_role ?? profile.role);
   if (!companyRole) return null;
   if (profile.membership_status === "archived") return null;
-  const groupModeState = await resolveGroupModeForUser(user.id, adminSupabase);
   const groupMode = groupModeState.active;
   const hasGroupOwnerQualification = canEnterGroupMode(companyRole, profile.membership_status);
   const role = runtimeRoleForCompanyRole(companyRole);

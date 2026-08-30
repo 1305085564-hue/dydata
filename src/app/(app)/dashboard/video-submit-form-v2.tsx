@@ -928,28 +928,26 @@ export function VideoSubmitFormV2({
     setOperatorToSelf();
   }, [mode, setOperatorToSelf]);
 
-  // 加载团队成员
-  useEffect(() => {
-    let cancelled = false;
-
+  // 团队成员只在首次打开岗位选择器时加载，不随表单挂载请求（总纲标准改法 3/4）
+  const operatorMembersLoadedRef = useRef(false);
+  const loadOperatorMembers = useCallback(() => {
+    if (operatorMembersLoadedRef.current) return;
+    operatorMembersLoadedRef.current = true;
     void fetch("/api/dashboard/operator-members")
       .then(async (response) => {
         if (!response.ok) throw new Error("load operator members failed");
         return response.json() as Promise<{ members?: OperatorMember[] }>;
       })
       .then((payload) => {
-        if (!cancelled)
-          setOperatorMembers(
-            Array.isArray(payload.members) ? payload.members : [],
-          );
+        setOperatorMembers(
+          Array.isArray(payload.members) ? payload.members : [],
+        );
       })
       .catch(() => {
-        if (!cancelled) setOperatorMembers([]);
+        // 失败允许下次打开选择器时重试
+        operatorMembersLoadedRef.current = false;
+        setOperatorMembers([]);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
@@ -2313,13 +2311,14 @@ export function VideoSubmitFormV2({
                               label="文案"
                               icon={<FileText className="size-3.5 text-[#78716C]" />}
                               display={resolveRoleDisplay(meta.scriptAuthorUserId)}
-                              onOpenSelector={() =>
+                              onOpenSelector={() => {
+                                loadOperatorMembers();
                                 setSelectingRole({
                                   role: "script_author",
                                   label: "文案",
                                   selectedUserId: meta.scriptAuthorUserId,
                                 })
-                              }
+                              }}
                               onResetSelf={() => hideRole("script_author")}
                             />
                           )}
@@ -2328,13 +2327,14 @@ export function VideoSubmitFormV2({
                               label="剪辑"
                               icon={<Scissors className="size-3.5 text-[#78716C]" />}
                               display={resolveRoleDisplay(meta.videoEditorUserId)}
-                              onOpenSelector={() =>
+                              onOpenSelector={() => {
+                                loadOperatorMembers();
                                 setSelectingRole({
                                   role: "video_editor",
                                   label: "剪辑",
                                   selectedUserId: meta.videoEditorUserId,
                                 })
-                              }
+                              }}
                               onResetSelf={() => hideRole("video_editor")}
                             />
                           )}
@@ -2343,13 +2343,14 @@ export function VideoSubmitFormV2({
                               label="运营"
                               icon={<Rocket className="size-3.5 text-[#78716C]" />}
                               display={resolveRoleDisplay(meta.operatorUserId)}
-                              onOpenSelector={() =>
+                              onOpenSelector={() => {
+                                loadOperatorMembers();
                                 setSelectingRole({
                                   role: "operator",
                                   label: "运营",
                                   selectedUserId: meta.operatorUserId,
                                 })
-                              }
+                              }}
                               onResetSelf={() => hideRole("operator")}
                             />
                           )}

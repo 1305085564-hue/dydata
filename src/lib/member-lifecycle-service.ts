@@ -10,6 +10,7 @@ import {
   type MemberLifecycleProfile,
 } from "@/lib/member-lifecycle";
 import type { Permissions, UserRole } from "@/types";
+import { invalidatePermissionContextCache } from "@/lib/current-permission-context";
 
 type PostgrestErrorLike = { code?: string; message?: string } | null;
 
@@ -269,6 +270,8 @@ async function writeProfile(
     .maybeSingle<{ id: string }>();
   if (result.error) return { error: result.error };
   if (!result.data?.id) return { error: new Error("成员资料写入未生效") };
+  // 成员资料/生命周期变更影响数据范围，清空权限上下文缓存
+  invalidatePermissionContextCache();
   return { data: result.data };
 }
 

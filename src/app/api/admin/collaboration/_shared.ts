@@ -633,20 +633,24 @@ export async function loadPersonData(input: {
   month: number;
 }) {
   const ranges = getSixMonthRanges(input.year, input.month);
-  const profileResult = await input.supabase
-    .from("profiles")
-    .select("id, name, team_id")
-    .eq("id", input.targetUserId)
-    .maybeSingle();
+  // 成员档案与 6 个月日报两查互不依赖，并行取（2026-08-30）
+  const [profileResult, reportsResult] = await Promise.all([
+    input.supabase
+      .from("profiles")
+      .select("id, name, team_id")
+      .eq("id", input.targetUserId)
+      .maybeSingle(),
+    queryScopedReports({
+      supabase: input.supabase,
+      visibleUserIds: input.visibleUserIds,
+      start: ranges[0]!.start,
+      end: ranges.at(-1)!.end,
+    }),
+  ]);
   assertSupabaseQuerySucceeded(profileResult.error, "加载个人资料失败");
   if (!profileResult.data) throw new CollaborationNotFoundError("成员不存在");
 
-  const reports = await queryScopedReports({
-    supabase: input.supabase,
-    visibleUserIds: input.visibleUserIds,
-    start: ranges[0]!.start,
-    end: ranges.at(-1)!.end,
-  });
+  const reports = reportsResult;
   const roleReports = reports.filter((row) => roleList(row, input.targetUserId).length > 0);
   const lookups = await loadLookups(input.supabase, roleReports);
   if (!lookups.profiles.some((profile) => profile.id === input.targetUserId)) {
