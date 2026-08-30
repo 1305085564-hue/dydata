@@ -63,7 +63,8 @@ test("全局命令气泡在窄屏和低矮视口内收缩", () => {
 });
 
 test("选题详情编辑表单固定底部保存操作", () => {
-  const source = readSource("src/app/(app)/topics/[id]/page.tsx");
+  // 旧详情页已下线，编辑表单随能力搬迁进选题库抽屉（2026-08-30）
+  const source = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
 
   assert.match(source, /DialogBody/);
   assert.match(source, /max-h-\[calc\(100dvh-2rem\)\]/);

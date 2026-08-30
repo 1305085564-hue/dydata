@@ -54,7 +54,8 @@ test("dashboard V2 表单把新建、异常和完整编辑交给后端 mode 契�
 
 test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁免 Server Action", () => {
   assert.match(panelSource, /mergeDashboardReports\(/);
-  assert.match(panelSource, /activityReports:[\s\S]*activityData\?\.monthReports/);
+  // 活动接口只回历史增量：当月事实以首屏 props 为单一来源（2026-08-30 提速批次）
+  assert.match(panelSource, /activityReports:\s*\[\.\.\.\(activityData\?\.history \?\? \[\]\)\]/);
   assert.match(panelSource, /monthSubmittedDates/);
   assert.match(panelSource, /onSubmitRequest=/);
   assert.match(panelSource, /submitExemptionRequest\(/);

@@ -237,11 +237,9 @@ test("第一批员工端关键交互实体在移动端满足 >=44px 触控热区
   const topicHub = readSource("src/components/topics-v2/TopicHubV2.tsx");
   const pool = readSource("src/components/topics-v2/TopicPoolExplorer.tsx");
   const breakdown = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
-  const topicDetail = readSource("src/app/(app)/topics/[id]/page.tsx");
   assert.match(topicHub, /min-h-\[44px\]/);
   assert.match(pool, /min-h-\[44px\]/);
   assert.match(breakdown, /min-h-\[44px\]/);
-  assert.match(topicDetail, /min-h-\[44px\]/);
 
   // 3. Rewrite 关键控件
   const chatInspector = readSource("src/components/content-tools/rewrite-v3/ChatInspector.tsx");

@@ -12,6 +12,7 @@ import {
   type V2TopicLibraryBootstrap,
 } from "@/lib/topics/v2-client-contract";
 import { JoinBanner } from "../_components/join-banner";
+import { normalizeDashboardTopicId } from "@/lib/topics/dashboard-context";
 
 export const metadata = {
   title: "选题库 - DYData",
@@ -20,7 +21,14 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function TopicsV2Page() {
+export default async function TopicsV2Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ topic_id?: string | string[] }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const initialTopicId = normalizeDashboardTopicId(resolvedSearchParams.topic_id);
+
   const { supabase, user } = await getCurrentUserContext();
   if (!user) redirect("/login");
 
@@ -69,6 +77,7 @@ export default async function TopicsV2Page() {
       canManageTopicLibrary={canManageTopicLibrary}
       feishuWorkspaceUrl={feishuWorkspaceUrl}
       initialBootstrapData={initialBootstrapData}
+      initialTopicId={initialTopicId}
     />
   );
 }

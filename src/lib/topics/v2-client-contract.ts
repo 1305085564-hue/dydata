@@ -160,6 +160,8 @@ export interface V2TopicLibraryBootstrap {
   options: V2TopicOption[];
   pool: V2PoolResponse;
   myWritingTopicIds: string[];
+  /** 当前登录用户 ID：抽屉用于仅作者可见的编辑/移出操作 */
+  currentUserId: string | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -307,6 +309,7 @@ export function parseTopicLibraryBootstrapResponse(value: unknown): V2TopicLibra
     myWritingTopicIds: Array.from(new Set(
       rawWritingIds.filter((id): id is string => typeof id === "string" && Boolean(id.trim())),
     )),
+    currentUserId: nullableString(value.currentUserId) ?? nullableString(value.current_user_id),
   };
 }
 

@@ -1273,6 +1273,7 @@ export async function loadTopicLibraryBootstrap(
   options: { topics: TopicOption[] };
   pool: unknown;
   myWritingTopicIds: string[];
+  currentUserId: string;
 }>> {
   const [active, options, pool, writingRowsResult] = await Promise.all([
     loadActiveTopics(supabase, userId, scope, 8),
@@ -1313,6 +1314,7 @@ export async function loadTopicLibraryBootstrap(
       options: options.value,
       pool: pool.value,
       myWritingTopicIds,
+      currentUserId: userId,
     },
   };
 }

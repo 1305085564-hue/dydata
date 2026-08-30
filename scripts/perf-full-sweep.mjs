@@ -290,8 +290,10 @@ async function measureOverlay(context, route, def, extras) {
 
   let detailHref = null;
   if (def.after === "goto-detail-page") {
-    const link = page.locator('[role="dialog"] a:has-text("完整详情页")').first();
-    detailHref = await link.getAttribute("href").catch(() => null);
+    // 旧详情页已下线：从抽屉的 detail 请求提取子题 ID，改测 /topics?topic_id= 深链自动开抽屉
+    const detailRequest = [...state.requests.values()].reverse().find((r) => r.pathname.startsWith("/api/topics/sub-topics/"));
+    const subTopicId = detailRequest?.pathname.match(/\/api\/topics\/sub-topics\/([^/]+)/)?.[1];
+    if (subTopicId) detailHref = `/topics?topic_id=${subTopicId}`;
   }
 
   if (clicked && !def.keepOpen) await closeOverlay(page);

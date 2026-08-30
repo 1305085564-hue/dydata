@@ -351,9 +351,7 @@ export async function loadDashboardPageData({
     accountIds.length
       ? supabase
           .from("daily_reports")
-          .select(
-            "id, account_id, title, report_date, play_count, completion_rate, avg_play_duration, bounce_rate_2s, completion_rate_5s, likes, comments, shares, favorites, follower_gain, follower_convert, content, published_at, uploaded_at"
-          )
+          .select(DASHBOARD_REPORT_SELECT)
           .in("account_id", accountIds)
           .eq("report_date", today)
           .order("uploaded_at", { ascending: false })

@@ -54,8 +54,6 @@ type MonthReport = Omit<TodaySubmissionReportLike, "account_id"> & {
 };
 
 type AsyncActivityData = {
-  monthSubmittedDates: string[];
-  monthReports: MonthReport[];
   history: MonthReport[];
 };
 
@@ -75,13 +73,11 @@ export async function fetchDashboardActivity(
   if (!response.ok) {
     throw new Error(payload.error || "活动记录加载失败");
   }
-  if (!Array.isArray(payload.monthReports) || !Array.isArray(payload.history)) {
+  if (!Array.isArray(payload.history)) {
     throw new Error("活动记录格式无效");
   }
 
   return {
-    monthSubmittedDates: Array.isArray(payload.monthSubmittedDates) ? payload.monthSubmittedDates : [],
-    monthReports: payload.monthReports,
     history: payload.history,
   };
 }
@@ -323,13 +319,10 @@ export function VideoSubmitPanelV2({
     () =>
       mergeDashboardReports({
         initialReports: [...monthReports, ...history],
-        activityReports: [
-          ...(activityData?.monthReports ?? []),
-          ...(activityData?.history ?? []),
-        ],
+        activityReports: [...(activityData?.history ?? [])],
         overrides: Object.values(reportOverrides),
       }),
-    [activityData?.history, activityData?.monthReports, history, monthReports, reportOverrides],
+    [activityData?.history, history, monthReports, reportOverrides],
   );
 
   const submittedDatesIncludingActivity = useMemo(
@@ -337,11 +330,10 @@ export function VideoSubmitPanelV2({
       Array.from(
         new Set([
           ...monthSubmittedDates,
-          ...(activityData?.monthSubmittedDates ?? []),
           ...getDashboardSubmittedDates(allReportsIncludingOverrides),
         ]),
       ).sort(),
-    [activityData?.monthSubmittedDates, allReportsIncludingOverrides, monthSubmittedDates],
+    [allReportsIncludingOverrides, monthSubmittedDates],
   );
 
   const todayReportsIncludingOverrides = useMemo(
@@ -957,7 +949,6 @@ export function VideoSubmitPanelV2({
           onClose={() => setIsExemptionDialogOpen(false)}
           today={today}
           submittedDates={submittedDatesIncludingActivity}
-          activitySubmittedDates={activityData?.monthSubmittedDates ?? []}
           waiveDates={exemptionDateBuckets.waiveDates}
           leaveDates={exemptionDateBuckets.leaveDates}
           onSubmitRequest={async (request) => {

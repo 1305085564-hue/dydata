@@ -171,9 +171,9 @@ export function ThresholdsConfigPanel({
                 min={0}
                 step={1}
                 disabled={!canManage || isSubmitting}
-                value={thresholds.avg_play_duration_seconds}
+                value={thresholds.avg_play_duration}
                 onChange={(e) =>
-                  handleChange("avg_play_duration_seconds", e.target.value)
+                  handleChange("avg_play_duration", e.target.value)
                 }
                 className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
@@ -183,10 +183,10 @@ export function ThresholdsConfigPanel({
             </div>
           </div>
 
-          {/* 互动率 */}
+          {/* 完播率 */}
           <div className="flex flex-col gap-2">
             <label className="text-[12px] font-medium text-[#292524] flex items-center justify-between">
-              <span>综合互动率</span>
+              <span>完播率</span>
               <span className="text-[#78716C] font-normal text-[11px]">
                 低于此值触发
               </span>
@@ -198,9 +198,9 @@ export function ThresholdsConfigPanel({
                 max={100}
                 step={0.1}
                 disabled={!canManage || isSubmitting}
-                value={thresholds.interaction_rate}
+                value={thresholds.completion_rate}
                 onChange={(e) =>
-                  handleChange("interaction_rate", e.target.value)
+                  handleChange("completion_rate", e.target.value)
                 }
                 className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />
@@ -224,9 +224,9 @@ export function ThresholdsConfigPanel({
                 min={0}
                 step={100}
                 disabled={!canManage || isSubmitting}
-                value={thresholds.min_play_count_for_analysis}
+                value={thresholds.play_count}
                 onChange={(e) =>
-                  handleChange("min_play_count_for_analysis", e.target.value)
+                  handleChange("play_count", e.target.value)
                 }
                 className="h-9 pr-8 text-[13px] font-medium tabular-nums text-[#1C1917] bg-[#FBF9F5]/50 border-[#E5E0D6] focus:bg-white focus:border-[#D97757]/60 transition-colors"
               />

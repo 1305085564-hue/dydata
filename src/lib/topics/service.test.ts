@@ -353,6 +353,7 @@ test("选题库首屏聚合读取返回动态、母题、选题池和当前在�
       options: { topics: [] },
       pool: { items: [], pagination: { page: 1, pageSize: 50, totalItems: 0 } },
       myWritingTopicIds: [],
+      currentUserId: "user-1",
     },
   });
   assert.ok(calls.includes("topics"));

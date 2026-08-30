@@ -66,10 +66,13 @@ export function TopicHubV2({
   canManageTopicLibrary = false,
   feishuWorkspaceUrl = null,
   initialBootstrapData = null,
+  initialTopicId = null,
 }: {
   canManageTopicLibrary?: boolean;
   feishuWorkspaceUrl?: string | null;
   initialBootstrapData?: V2TopicLibraryBootstrap | null;
+  /** /topics?topic_id= 深链：服务端归一化后传入，挂载即打开对应选题抽屉 */
+  initialTopicId?: string | null;
 }) {
   // Toast 轻反馈
   const [toastMsg, setToastMsg] = useState<{
@@ -119,10 +122,15 @@ export function TopicHubV2({
   const [debouncedPoolSearchQuery, setDebouncedPoolSearchQuery] = useState("");
   const [poolPage, setPoolPage] = useState(1);
 
-  // 抽屉与 Modal 控制
-  const [inspectTopicId, setInspectTopicId] = useState<string | null>(null);
+  // 抽屉与 Modal 控制；深链 topic_id 直接打开对应抽屉
+  const [inspectTopicId, setInspectTopicId] = useState<string | null>(initialTopicId);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isBatchImportModalOpen, setIsBatchImportModalOpen] = useState(false);
+
+  // 服务端 bootstrap 下发的当前登录用户 ID（抽屉用于仅作者可见的编辑/移出）
+  const [currentUserId, setCurrentUserId] = useState<string | null>(
+    () => initialBootstrapData?.currentUserId ?? null,
+  );
 
   // 飞书创作弹窗控制
   const [feishuModalTopic, setFeishuModalTopic] =
@@ -182,6 +190,7 @@ export function TopicHubV2({
         setPoolItems(parsed.pool.items);
         setPoolTotalCount(parsed.pool.pagination.totalItems);
         setWritingTopicIds(new Set(parsed.myWritingTopicIds));
+        setCurrentUserId(parsed.currentUserId);
         setAuthError(false);
       } catch (err) {
         if (isTeamMembershipRequiredError(err)) {
@@ -566,13 +575,40 @@ export function TopicHubV2({
       {inspectTopicId && (
         <TopicWorkBreakdownDrawer
           subTopicId={inspectTopicId}
-          onClose={() => setInspectTopicId(null)}
+          onClose={() => {
+            setInspectTopicId(null);
+            // 深链打开的抽屉关闭后清理 URL，避免刷新重复弹出
+            if (typeof window !== "undefined" && window.location.search.includes("topic_id=")) {
+              window.history.replaceState({}, "", "/topics");
+            }
+          }}
           onOpenFeishuModal={(subTopic) => {
             setInspectTopicId(null);
             setFeishuModalTopic(subTopic);
           }}
           onMarkWriting={handleMarkWriting}
           onCancelWriting={handleCancelWriting}
+          currentUserId={currentUserId}
+          onSubTopicUpdated={(updated) => {
+            setPoolItems((prev) =>
+              prev.map((item) =>
+                item.id === updated.id
+                  ? {
+                      ...item,
+                      title: updated.title,
+                      hook: updated.hook,
+                      emotion_tag: updated.emotion_tag,
+                      audience: updated.audience,
+                    }
+                  : item,
+              ),
+            );
+          }}
+          onSubTopicRemoved={(removedId) => {
+            setPoolItems((prev) => prev.filter((item) => item.id !== removedId));
+            setPoolTotalCount((count) => Math.max(0, count - 1));
+            setInspectTopicId(null);
+          }}
         />
       )}
 

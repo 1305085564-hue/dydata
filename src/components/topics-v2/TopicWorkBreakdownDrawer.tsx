@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore }
 import { createPortal } from "react-dom";
 import {
   X,
-  ExternalLink,
   AlertTriangle,
   FileText,
   Sparkles,
@@ -13,6 +12,8 @@ import {
   Building2,
   Globe2,
   Loader2,
+  Edit2,
+  Trash2,
 } from "lucide-react";
 import {
   fetchTopicJson,
@@ -21,6 +22,17 @@ import {
   isTeamMembershipRequiredError,
 } from "@/lib/topics/v2-client-contract";
 import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
+import { parseSubTopicWorksResponse, DETAIL_PAGE_SIZE } from "@/app/(app)/topics/topic-helpers";
+import { feedbackToast } from "@/components/ui/feedback-toast";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type {
   TopicClaimsDetailResponse,
   TopicWorkItem,
@@ -30,12 +42,51 @@ import type {
 
 const emptySubscribe = () => () => {};
 
+type WorksSort = "best" | "recent";
+
+function worksCacheKey(sort: WorksSort, page: number) {
+  return `${sort}:${page}`;
+}
+
+/** /works 接口原始行 → 抽屉统一卡片模型 */
+function mapRawWorksToResponse(data: unknown): TopicWorksResponse {
+  const parsed = parseSubTopicWorksResponse(data);
+  return {
+    items: parsed.items.map((item) => ({
+      id: item.id,
+      videoTitle: item.video_title ?? "",
+      content: null,
+      playCount: item.video_metrics_snapshots?.[0]?.play_count ?? null,
+      uploadedAt: item.uploaded_at ?? item.uploadedAt ?? null,
+      userId: null,
+      displayName: item.account_name ?? null,
+    })),
+    similarReferences: [],
+    summary: parsed.summary
+      ? {
+          qualifiedWorkCount: parsed.summary.qualifiedWorkCount,
+          averagePlayCount: parsed.summary.averagePlayCount,
+          bestPlayCount: parsed.summary.bestPlayCount,
+          bestCopy: null,
+          latestCopy: null,
+        }
+      : null,
+    pagination: { page: parsed.page, pageSize: parsed.pageSize, totalItems: parsed.total },
+  };
+}
+
 export interface TopicWorkBreakdownDrawerProps {
   subTopicId: string | null;
   onClose: () => void;
   onOpenFeishuModal?: (topic: SubTopicItem) => void;
   onMarkWriting?: (subTopicId: string) => Promise<boolean | void> | boolean | void;
   onCancelWriting?: (subTopicId: string) => Promise<void>;
+  /** 服务端 bootstrap 下发的当前登录用户 ID，用于仅作者可见的编辑/移出操作 */
+  currentUserId?: string | null;
+  /** 选题被编辑后通知列表就地刷新（不额外发请求） */
+  onSubTopicUpdated?: (subTopic: SubTopicItem) => void;
+  /** 选题被移出题库后通知列表移除该行并收起抽屉 */
+  onSubTopicRemoved?: (subTopicId: string) => void;
 }
 
 export function TopicWorkBreakdownDrawer({
@@ -43,6 +94,9 @@ export function TopicWorkBreakdownDrawer({
   onClose,
   onOpenFeishuModal,
   onCancelWriting,
+  currentUserId,
+  onSubTopicUpdated,
+  onSubTopicRemoved,
 }: TopicWorkBreakdownDrawerProps) {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
@@ -60,6 +114,27 @@ export function TopicWorkBreakdownDrawer({
   const loadRequestId = useRef(0);
   const previousActiveElement = useRef<HTMLElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // 作品分页 + 排序：详情自带的首页（最高播放）作为缓存种子，翻页/切排序才发请求
+  const [worksCache, setWorksCache] = useState<Record<string, TopicWorksResponse>>({});
+  const [worksQuery, setWorksQuery] = useState<{ page: number; sort: WorksSort }>({ page: 1, sort: "best" });
+  const [worksLoading, setWorksLoading] = useState(false);
+  const [worksError, setWorksError] = useState<string | null>(null);
+  const worksRequestId = useRef(0);
+
+  // 编辑 Modal（仅选题作者可见）
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editHook, setEditHook] = useState("");
+  const [editEmotionTag, setEditEmotionTag] = useState("");
+  const [editAudience, setEditAudience] = useState("");
+  const [editTitleError, setEditTitleError] = useState("");
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  // 移出题库 Dialog（仅选题作者可见）
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
 
   const handleClose = useCallback(() => {
     const targetEl = previousActiveElement.current;
@@ -110,6 +185,33 @@ export function TopicWorkBreakdownDrawer({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [subTopicId, handleClose]);
 
+  const loadWorksPage = useCallback(
+    async (page: number, sort: WorksSort) => {
+      if (!subTopicId) return;
+      const key = worksCacheKey(sort, page);
+      setWorksQuery({ page, sort });
+      setWorksError(null);
+      if (worksCache[key]) return;
+
+      const requestId = ++worksRequestId.current;
+      setWorksLoading(true);
+      try {
+        const data = await fetchTopicJson(
+          `/api/topics/sub-topics/${subTopicId}/works?page=${page}&page_size=${DETAIL_PAGE_SIZE}&sort=${sort}`,
+        );
+        if (requestId !== worksRequestId.current) return;
+        const mapped = mapRawWorksToResponse(data);
+        setWorksCache((prev) => ({ ...prev, [key]: mapped }));
+      } catch (error) {
+        if (requestId !== worksRequestId.current) return;
+        setWorksError(error instanceof Error ? error.message : "作品加载失败");
+      } finally {
+        if (requestId === worksRequestId.current) setWorksLoading(false);
+      }
+    },
+    [subTopicId, worksCache],
+  );
+
   const loadData = useCallback(async () => {
     if (!subTopicId) return;
     const requestId = ++loadRequestId.current;
@@ -120,6 +222,9 @@ export function TopicWorkBreakdownDrawer({
     setDetailError(null);
     setClaimsError(null);
     setMembershipRequired(false);
+    setWorksCache({});
+    setWorksQuery({ page: 1, sort: "best" });
+    setWorksError(null);
 
     // detail 接口内部已用相同参数（sort=best, page=1, pageSize=20）查询 works 并随详情返回，
     // 不再单独请求 /works，避免同一份作品查两次
@@ -143,6 +248,7 @@ export function TopicWorkBreakdownDrawer({
         const parsedDetail = parseSubTopicDetailResponse(detailResult.value);
         setSubTopicInfo(parsedDetail.subTopic as SubTopicItem);
         setWorksData(parsedDetail.works);
+        setWorksCache({ [worksCacheKey("best", 1)]: parsedDetail.works });
       } catch (error) {
         setDetailError(error instanceof Error ? error.message : "详情结构无效");
       }
@@ -189,6 +295,102 @@ export function TopicWorkBreakdownDrawer({
     if (subTopicId) void loadData();
   }, [loadData, subTopicId]);
 
+  const openEditDialog = useCallback(() => {
+    if (!subTopicInfo) return;
+    setEditTitle(subTopicInfo.title ?? "");
+    setEditHook(subTopicInfo.hook ?? "");
+    setEditEmotionTag(subTopicInfo.emotion_tag ?? "");
+    setEditAudience(subTopicInfo.audience ?? "");
+    setEditTitleError("");
+    setEditDialogOpen(true);
+  }, [subTopicInfo]);
+
+  const handleEditSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!subTopicId) return;
+      if (!editTitle.trim()) {
+        setEditTitleError("标题不能为空");
+        return;
+      }
+      setEditTitleError("");
+      setIsSubmittingEdit(true);
+      try {
+        const data = await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: editTitle.trim(),
+            hook: editHook.trim() || null,
+            emotion_tag: editEmotionTag.trim() || null,
+            audience: editAudience.trim() || null,
+          }),
+        });
+        const payload = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
+        const updatedRaw = (payload.value ?? payload) as Record<string, unknown>;
+        setSubTopicInfo((prev) =>
+          prev
+            ? {
+                ...prev,
+                title: typeof updatedRaw.title === "string" ? updatedRaw.title : prev.title,
+                hook: typeof updatedRaw.hook === "string" || updatedRaw.hook === null ? updatedRaw.hook as string | null : prev.hook,
+                emotion_tag: typeof updatedRaw.emotion_tag === "string" || updatedRaw.emotion_tag === null ? updatedRaw.emotion_tag as string | null : prev.emotion_tag,
+                audience: typeof updatedRaw.audience === "string" || updatedRaw.audience === null ? updatedRaw.audience as string | null : prev.audience,
+              }
+            : prev,
+        );
+        setEditDialogOpen(false);
+        feedbackToast.success("修改成功");
+        if (onSubTopicUpdated && subTopicInfo) {
+          onSubTopicUpdated({
+            ...subTopicInfo,
+            title: editTitle.trim(),
+            hook: editHook.trim() || null,
+            emotion_tag: editEmotionTag.trim() || null,
+            audience: editAudience.trim() || null,
+          });
+        }
+      } catch (error) {
+        if (isTeamMembershipRequiredError(error)) setMembershipRequired(true);
+        feedbackToast.error("修改失败", {
+          details: error instanceof Error ? error.message : String(error),
+        });
+      } finally {
+        setIsSubmittingEdit(false);
+      }
+    },
+    [editAudience, editHook, editTitle, onSubTopicUpdated, subTopicId, subTopicInfo],
+  );
+
+  const handleDeleteSubmit = useCallback(async () => {
+    if (!subTopicId) return;
+    setIsDeleting(true);
+    setDeleteErrorMsg(null);
+    try {
+      await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}`, { method: "DELETE" });
+      setDeleteDialogOpen(false);
+      feedbackToast.success("已移出题库，历史作品数据完整保留");
+      onSubTopicRemoved?.(subTopicId);
+      handleClose();
+    } catch (error) {
+      if (isTeamMembershipRequiredError(error)) {
+        setMembershipRequired(true);
+        setDeleteDialogOpen(false);
+        return;
+      }
+      const status = (error as { status?: number }).status;
+      if (status === 409) {
+        setDeleteErrorMsg("该选题已有关联作品，移出将保留历史数据。");
+        return;
+      }
+      feedbackToast.error("移出失败", {
+        details: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [handleClose, onSubTopicRemoved, subTopicId]);
+
   if (
     !subTopicId ||
     !isMounted ||
@@ -198,6 +400,7 @@ export function TopicWorkBreakdownDrawer({
     return null;
 
   const isMyWriting = subTopicInfo?.myClaim?.status === "writing";
+  const isOwner = Boolean(currentUserId && subTopicInfo?.created_by === currentUserId);
 
   // 近 7 天热度三值：只使用服务端唯一口径数据，缺失显示未知态，不回退累计认领或全部作品数
   const total7dParticipants =
@@ -217,6 +420,11 @@ export function TopicWorkBreakdownDrawer({
   const bestPlay = worksData?.summary?.bestPlayCount ?? null;
   const avgPlay = worksData?.summary?.averagePlayCount ?? null;
   const qualifiedCount = worksData?.summary?.qualifiedWorkCount ?? null;
+
+  const activeWorks =
+    worksCache[worksCacheKey(worksQuery.sort, worksQuery.page)] ?? null;
+  const worksTotalItems = activeWorks?.pagination.totalItems ?? worksData?.pagination.totalItems ?? 0;
+  const worksTotalPages = Math.ceil(worksTotalItems / DETAIL_PAGE_SIZE) || 1;
 
   return createPortal(
     <>
@@ -255,14 +463,41 @@ export function TopicWorkBreakdownDrawer({
                 {subTopicInfo?.title || "选题详情"}
               </h3>
             </div>
-            <button
-              ref={closeBtnRef}
-              onClick={handleClose}
-              className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
-              aria-label="关闭抽屉"
-            >
-              <X className="size-5" />
-            </button>
+            <div className="flex items-start gap-1 shrink-0">
+              {isOwner && (
+                <>
+                  <button
+                    type="button"
+                    onClick={openEditDialog}
+                    className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                    aria-label="编辑选题"
+                    title="编辑选题"
+                  >
+                    <Edit2 className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteErrorMsg(null);
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#C9604D]/10 hover:text-[#C9604D] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                    aria-label="移出题库"
+                    title="移出题库"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </>
+              )}
+              <button
+                ref={closeBtnRef}
+                onClick={handleClose}
+                className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                aria-label="关闭抽屉"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -458,14 +693,43 @@ export function TopicWorkBreakdownDrawer({
                     <FileText className="size-3.5 text-[#78716C]" />
                     <span>历史关联作品</span>
                   </h4>
-                  <span className="text-xs text-[#78716C] tabular-nums">
-                    共 {worksData?.pagination.totalItems ?? 0} 条作品
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="inline-flex rounded-lg bg-[#F5F3EE] p-0.5 text-[11px]">
+                      {(["best", "recent"] as WorksSort[]).map((sort) => (
+                        <button
+                          key={sort}
+                          type="button"
+                          onClick={() => void loadWorksPage(1, sort)}
+                          className={`px-2 py-0.5 rounded-md transition-all cursor-pointer min-h-[44px] sm:min-h-0 flex items-center ${
+                            worksQuery.sort === sort
+                              ? "bg-white text-[#1C1917] font-medium shadow-2xs"
+                              : "text-[#78716C] hover:text-[#1C1917]"
+                          }`}
+                        >
+                          {sort === "best" ? "最高播放" : "最新发布"}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-xs text-[#78716C] tabular-nums">
+                      共 {worksTotalItems} 条作品
+                    </span>
+                  </div>
                 </div>
 
-                {worksData?.items && worksData.items.length > 0 ? (
+                {worksError && (
+                  <div className="text-xs text-[#DC2626] bg-red-50/50 rounded-lg p-2.5">
+                    作品加载失败：{worksError}
+                  </div>
+                )}
+
+                {worksLoading ? (
+                  <div className="py-8 text-center text-xs text-[#78716C]">
+                    <Loader2 className="size-4 animate-spin mx-auto mb-2" />
+                    <span>作品加载中...</span>
+                  </div>
+                ) : activeWorks?.items && activeWorks.items.length > 0 ? (
                   <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                    {worksData.items.map((work: TopicWorkItem) => (
+                    {activeWorks.items.map((work: TopicWorkItem) => (
                       <div
                         key={work.id}
                         className="rounded-xl border border-[#ECE7DE] bg-white p-3 space-y-1.5 shadow-2xs hover:border-[#D97757]/30 transition-colors"
@@ -494,22 +758,40 @@ export function TopicWorkBreakdownDrawer({
                     暂无关联作品记录
                   </div>
                 )}
+
+                {worksTotalPages > 1 && !worksLoading && (
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant="outline"
+                      disabled={worksQuery.page <= 1}
+                      onClick={() => void loadWorksPage(worksQuery.page - 1, worksQuery.sort)}
+                    >
+                      上一页
+                    </Button>
+                    <span className="text-xs text-[#78716C] tabular-nums">
+                      {worksQuery.page} / {worksTotalPages}
+                    </span>
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant="outline"
+                      disabled={worksQuery.page >= worksTotalPages}
+                      onClick={() => void loadWorksPage(worksQuery.page + 1, worksQuery.sort)}
+                    >
+                      下一页
+                    </Button>
+                  </div>
+                )}
               </section>
             </>
           )}
         </div>
 
-        {/* 底栏固定主行动：去飞书创作与详情/工作台入口 */}
+        {/* 底栏固定主行动：去工作台入口 */}
         <div className="shrink-0 border-t border-[#E5E0D6] pt-4 mt-2 bg-[#FBF9F5] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <a
-              href={`/topics/${encodeURIComponent(subTopicId)}`}
-              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
-            >
-              <span>完整详情页</span>
-              <ExternalLink className="size-3" />
-            </a>
-            <span className="text-[#E5E0D6] select-none">·</span>
             <a
               href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
               className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
@@ -553,6 +835,121 @@ export function TopicWorkBreakdownDrawer({
           </div>
         </div>
       </div>
+
+      {/* 编辑选题弹窗（仅作者可见入口） */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
+          <form
+            onSubmit={handleEditSubmit}
+            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
+            <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
+              <DialogTitle>编辑干货选题</DialogTitle>
+            </DialogHeader>
+
+            <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-2">
+              <div>
+                <label className="text-xs font-medium text-[#1C1917] block mb-1">
+                  选题标题 *
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                />
+                {editTitleError && (
+                  <p className="text-xs text-[#C0685C] mt-1">{editTitleError}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-[#1C1917] block mb-1">
+                  一句话 Hook
+                </label>
+                <textarea
+                  value={editHook}
+                  onChange={(e) => setEditHook(e.target.value)}
+                  rows={3}
+                  className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-[#1C1917] block mb-1">
+                    情绪标签
+                  </label>
+                  <input
+                    type="text"
+                    value={editEmotionTag}
+                    onChange={(e) => setEditEmotionTag(e.target.value)}
+                    className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-[#1C1917] block mb-1">
+                    目标受众
+                  </label>
+                  <input
+                    type="text"
+                    value={editAudience}
+                    onChange={(e) => setEditAudience(e.target.value)}
+                    className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                  />
+                </div>
+              </div>
+            </DialogBody>
+
+            <DialogFooter className="mt-0 border-t border-[#ECE7DE] pt-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={isSubmittingEdit}>
+                {isSubmittingEdit ? "保存中..." : "保存修改"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 移出题库弹窗（仅作者可见入口） */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>移出干货选题库</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-2 text-xs text-[#78716C]">
+            <p>
+              移出后该选题将停止在员工选题库中展示，但历史作品数据与复盘关联完整保留。
+            </p>
+            {deleteErrorMsg && (
+              <p className="text-[#C0685C] font-medium">{deleteErrorMsg}</p>
+            )}
+          </DialogBody>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              取消
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={() => void handleDeleteSubmit()}
+            >
+              {isDeleting ? "移出中..." : "确认移出"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>,
     document.body,
   );

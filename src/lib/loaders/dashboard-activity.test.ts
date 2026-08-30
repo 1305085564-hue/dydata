@@ -42,11 +42,11 @@ test("loadDashboardActivityData skips report queries when the user has no accoun
 
   const result = await loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" });
 
-  assert.deepEqual(result, { monthSubmittedDates: [], monthReports: [], history: [] });
+  assert.deepEqual(result, { history: [] });
   assert.deepEqual(calls, ["accounts"]);
 });
 
-test("loadDashboardActivityData returns only account-linked reports", async () => {
+test("loadDashboardActivityData returns only account-linked history reports", async () => {
   const report = {
     id: "report-1",
     account_id: "account-1",
@@ -69,8 +69,6 @@ test("loadDashboardActivityData returns only account-linked reports", async () =
   };
   const results = [
     [{ id: "account-1" }],
-    [report],
-    [{ report_date: "2026-05-05" }, { report_date: "2026-05-05" }, { report_date: null }],
     [report, { ...report, id: "report-2", account_id: null }],
   ];
   let queryIndex = 0;
@@ -86,17 +84,14 @@ test("loadDashboardActivityData returns only account-linked reports", async () =
 
   const result = await loadDashboardActivityData({ supabase: supabase as never, userId: "user-1" });
 
-  assert.deepEqual(result.monthSubmittedDates, ["2026-05-05"]);
   assert.deepEqual(result.history, [report]);
-  assert.deepEqual(result.monthReports, [report]);
+  assert.equal(Object.keys(result).length, 1);
 });
 
 test("loadDashboardActivityData 查询失败时抛错，不能伪装成无记录", async () => {
   const results = [
     createQueryResult([{ id: "account-1" }]),
     createQueryResult(null, { message: "daily reports unavailable" }),
-    createQueryResult([]),
-    createQueryResult([]),
   ];
   let queryIndex = 0;
   const supabase = {
