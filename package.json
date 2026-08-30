@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test \"src/**/*.test.ts\" \"src/**/*.test.tsx\"",
+    "gate:static": "npm test && npx tsx --test scripts/create-test-users.test.ts && npx tsc --noEmit --pretty false && npm run lint && npm run build",
+    "gate:browser": "npm run build && node --env-file-if-exists=.env.ai-test.local node_modules/@playwright/test/cli.js test",
     "seed:topics": "tsx scripts/seed-topic-library.ts",
     "import:reports": "npx tsx scripts/import-daily-reports.ts",
     "perf:ttfb": "node scripts/measure-ttfb.mjs",
@@ -46,6 +48,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "16.3.3",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20.19.43",
     "@types/react": "^19.2.17",
