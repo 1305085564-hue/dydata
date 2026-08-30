@@ -453,7 +453,7 @@ export function TopicHubV2({
   }
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] text-[#292524] px-0 py-1 sm:p-6 lg:p-8 font-sans antialiased">
+    <div className="min-h-screen bg-[#FBF9F5] text-[#292524] px-3.5 py-2 sm:p-6 lg:p-8 font-sans antialiased">
       {/* Toast 轻提示 (z-[70] 层级) */}
       {toastMsg && (
         <div className="fixed bottom-6 right-6 z-[95] animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -482,7 +482,7 @@ export function TopicHubV2({
               <CompassConstellationIllustration size={22} />
             </div>
             <div className="space-y-1">
-              <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
+              <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tighter">
                 灵感手稿 · 选题库
               </h1>
               <p className="text-[12.5px] text-[#78716C] font-normal leading-relaxed">

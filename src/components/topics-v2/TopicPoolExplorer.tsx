@@ -656,7 +656,7 @@ export function TopicPoolExplorer({
                   </div>
 
                   {/* 标题：饱满清晰 */}
-                  <h3 className="text-[15px] font-semibold text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-1.5">
+                  <h3 className="text-[15px] font-medium text-[#1C1917] group-hover:text-[#D97757] transition-colors line-clamp-2 leading-snug mb-1.5">
                     {item.title}
                   </h3>
 
@@ -704,11 +704,11 @@ export function TopicPoolExplorer({
                     )}
 
                     {bestPlay === null && qualifiedCount === null && participants7d === null && (
-                      <span className="text-[#A8A29E]">暂无数据</span>
+                      <span className="text-[#A8A29E]">—</span>
                     )}
                   </div>
 
-                  {/* 右侧：主行动按钮 (常态安静，Hover 优雅浮现) */}
+                  {/* 右侧：主行动按钮 (常态安静，Hover 优雅浮现；移动端保持微气垫温润质感，避免单屏橙色过载) */}
                   <div className="shrink-0">
                     <button
                       type="button"
@@ -716,10 +716,10 @@ export function TopicPoolExplorer({
                         e.stopPropagation();
                         onOpenFeishuModal(item);
                       }}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 min-h-[44px] sm:min-h-0 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 min-h-[44px] sm:min-h-0 rounded-lg text-xs font-medium sm:font-semibold transition-all cursor-pointer ${
                         isWriting
                           ? "bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
-                          : "bg-[#D97757] text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100"
+                          : "bg-[#FAF8F4] text-[#57534E] border border-[#ECE7DE] hover:bg-[#D97757] hover:text-white hover:border-transparent md:bg-[#D97757] md:text-white md:border-0 md:opacity-0 md:group-hover:opacity-100 md:hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 focus:opacity-100"
                       }`}
                       aria-label="去飞书创作此题"
                     >
