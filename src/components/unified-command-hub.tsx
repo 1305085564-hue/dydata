@@ -400,6 +400,8 @@ export function UnifiedCommandHub({
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
               "absolute right-0 top-full z-50 mt-2 flex w-[min(440px,calc(100vw-1rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border bg-[#FAF8F4] shadow-claude-float",
+              // <768px 顶栏按钮贴右缘，absolute 挂靠会左溢出视口，改为视口内全宽下拉
+              "max-md:fixed max-md:inset-x-2 max-md:top-[calc(var(--app-top-offset,64px)+0.25rem)] max-md:mt-0 max-md:w-auto",
               "border-[#E5E0D6]",
             )}
           >

@@ -52,7 +52,10 @@
 
 @media (max-width: 767.98px) {
   :root {
-    --app-nav-height: 3.25rem;
+    /* 移动顶栏实测高度：44px 触控热区按钮 + 24px 上下内边距 + 1px 边框（收起态 65px，取大值防遮挡） */
+    --app-nav-height: 69px;
+    /* 移动底栏实测占用：62px 悬浮 pill + 16px 底距 */
+    --app-bottom-nav-height: 78px;
   }
 }
 

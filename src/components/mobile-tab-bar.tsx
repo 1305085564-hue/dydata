@@ -181,7 +181,7 @@ export function MobileTabBar({
   return (
     <nav
       aria-label="移动端主导航"
-      className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-[340px] rounded-full border border-[#E5E0D6] bg-[#FAF8F4]/92 px-2 py-1 shadow-claude-float backdrop-blur-xl md:hidden ring-1 ring-black/5"
+      className="fixed inset-x-4 bottom-[calc(1rem+var(--app-safe-bottom,0px))] z-40 mx-auto max-w-[340px] rounded-full border border-[#E5E0D6] bg-[#FAF8F4]/92 px-2 py-1 shadow-claude-float backdrop-blur-xl md:hidden ring-1 ring-black/5"
     >
       <div className="flex h-13 items-center justify-around">
         {directTabs.map((tab) => {

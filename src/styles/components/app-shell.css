@@ -307,6 +307,13 @@
     border-left: 2px solid var(--color-danger);
   }
 
+  /* 移动端 Toast 默认 bottom-right 会压在悬浮底栏上，统一抬到底栏 pill 上方 */
+  @media (max-width: 767.98px) {
+    [data-sonner-toaster][data-y-position="bottom"] {
+      bottom: calc(var(--app-safe-bottom, 0px) + 5.75rem) !important;
+    }
+  }
+
   .dark .app-shell-section-divider {
     background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--color-border) 88%, transparent) 50%, transparent 100%);
   }
