@@ -27,7 +27,7 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 |---|---|
 | `src/app/(app)/` | 登录后页面（dashboard、growth、admin/* 等） |
 | `src/app/api/` | 接口路由 |
-| `src/lib/loaders/` | 页面首屏数据加载器（一个页面一个 loader） |
+| `src/lib/loaders/` | 页面首屏数据加载器 |
 | `src/lib/ai/`、`src/lib/admin-ai/` | AI 客户端与功能配置 |
 | `src/components/` | 可复用 UI 组件（基础组件在 `components/ui/`） |
 | `supabase/migrations/` | 数据库 migration（只增不改） |
@@ -35,16 +35,18 @@ DYDATA_PERF_LOG=1 npm run dev   # 输出 [perf] 加载器耗时日志
 
 ## 文档导航（权威入口）
 
-- `docs/全站模块地图.md` — 模块组成、依赖连累关系、性能红线与缓存清单
+- `docs/架构与性能总纲.md` — 加载架构、性能证据标准与双层门禁
+- `docs/reference/架构与性能双层门禁设计-2026-08-30.md` — 本轮门禁方案与验收记录
+- `docs/全站模块地图.md` — 模块组成、依赖连累关系、页面预算与缓存事实
 - `docs/代码治理手册.md` — 目录职责、命名、发布纪律
 - `docs/权限与安全说明.md` — 权限模型、RLS、service role 约束
 - `docs/数据口径.md` — 指标口径
 - `docs/reference/项目事实.md` — 产品事实、环境变量、技术栈权威记录
-- `docs/plans/_跨模块/性能优化台账.md` — 性能优化历史实测记录
+- `docs/plans/_跨模块/性能优化台账.md` — 性能优化历史实测记录（按需读取）
 
 ## 开发纪律（摘要）
 
-- 页面首屏数据统一走 `src/lib/loaders/`，loader 内独立查询必须并行。
+- 页面首屏原则上由对应的 `src/lib/loaders/` 协调；加载分层、并行/延迟和证据规则见 `docs/架构与性能总纲.md`。
 - 数据库结构变更只能新增 migration；接口新字段上线需过「migration → 刷新 schema cache → 真实角色验收」三步。
 - 成员当前操作用 `activeVisibleUserIds`，历史查询用 `visibleUserIds`（统一复用 `src/lib/data-access-scope.ts`）。
 - 提交只精确 add 自己改过的文件，禁止 `git add .`；push `main` 需项目负责人确认。
