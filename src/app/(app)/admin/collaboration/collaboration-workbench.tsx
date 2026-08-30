@@ -186,7 +186,7 @@ export function CollaborationWorkbench({
       <div className="space-y-3.5 pb-4 border-b border-[#ECE7DE]/80">
         {/* 控制舱顶栏：月份快捷翻页与标题 */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#ECE7DE]/60">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* 快捷翻月控制组 */}
             <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 border border-[#E5E0D6] shadow-2xs">
               <button
@@ -197,9 +197,9 @@ export function CollaborationWorkbench({
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <div className="w-36">
+              <div className="w-32 sm:w-36">
                 <Select value={currentMonthValue} onValueChange={handleMonthChange}>
-                  <SelectTrigger className="h-7 text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-[#FBF9F5] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
+                  <SelectTrigger className="h-7 text-[12.5px] sm:text-[13px] bg-transparent border-0 shadow-none font-medium hover:bg-[#FBF9F5] transition-colors focus-visible:ring-0 outline-none cursor-pointer">
                     <SelectValue placeholder="选择月份" />
                   </SelectTrigger>
                   <SelectContent>
@@ -221,7 +221,7 @@ export function CollaborationWorkbench({
               </button>
             </div>
 
-            <span className="text-[14px] font-semibold text-[#1C1917]">
+            <span className="text-[13px] sm:text-[14px] font-semibold text-[#1C1917]">
               {year} 年 {month} 月 团队协作概览
             </span>
           </div>
@@ -237,11 +237,11 @@ export function CollaborationWorkbench({
         )}
 
         {/* 暖橙主体风格导航 Tab */}
-        <div className="flex items-center gap-1.5 pt-1">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <button
             type="button"
             onClick={() => handleTabChange("talents")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "talents"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -253,7 +253,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("operators")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "operators"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -265,7 +265,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("writers")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "writers"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -277,7 +277,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("editors")}
-            className={`px-4 py-2 text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
               tab === "editors"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"

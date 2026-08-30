@@ -523,7 +523,7 @@ export function ContentDiagnosisWorkbench({
             className="group active:scale-[0.985] active:duration-75 rounded-xl hover:bg-[#F5F3EE] gap-1 transition-transform text-[12px] text-[#292524] font-medium"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="hidden sm:inline">返回列表</span>
+            <span>返回列表</span>
           </Button>
 
           <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block" />
@@ -768,7 +768,7 @@ export function ContentDiagnosisWorkbench({
                     <X className="size-4" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-1.5">
+                <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-1.5 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] sm:pb-2">
                   {reviewQueue.map((item, idx) => {
                     const isSelected = item.id === video?.id;
                     const snap = snapshotMap.get(item.id);
@@ -919,8 +919,8 @@ export function ContentDiagnosisWorkbench({
           </aside>
         )}
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-10 overflow-hidden min-h-0 min-w-0">
-          <div className="lg:col-span-6 flex flex-col border-r border-[#E5E0D6] bg-white overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-10 overflow-y-auto lg:overflow-hidden min-h-0 min-w-0">
+          <div className="lg:col-span-6 flex flex-col border-b lg:border-b-0 lg:border-r border-[#E5E0D6] bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 space-y-6">
             {/* 一、归因诊断与多参照系对比 */}
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
@@ -1251,7 +1251,7 @@ export function ContentDiagnosisWorkbench({
           </div>
 
           {/* 右侧 40% 栏：台词引用、AI 诊断思路与问题定位 */}
-          <div className="lg:col-span-4 flex flex-col bg-white overflow-y-auto p-6 pb-24 space-y-6 min-w-0">
+          <div className="lg:col-span-4 flex flex-col bg-white overflow-y-visible lg:overflow-y-auto p-4 sm:p-6 pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] lg:pb-24 space-y-6 min-w-0">
             {scriptSections.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

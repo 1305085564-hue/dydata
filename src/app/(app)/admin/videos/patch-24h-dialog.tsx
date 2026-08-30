@@ -170,7 +170,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
-      <DialogContent key={dialogKey} className="flex flex-col overflow-hidden max-w-3xl" showCloseButton={!isPending}>
+      <DialogContent key={dialogKey} className="flex flex-col max-h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] sm:max-w-3xl overflow-hidden p-4 sm:p-6" showCloseButton={!isPending}>
         <DialogHeader>
           <DialogTitle className="font-semibold text-[#1C1917]">补录24h数据</DialogTitle>
           <DialogDescription>
@@ -178,7 +178,7 @@ export function Patch24hDialog({ open, video, snapshot, onOpenChange, onSaved }:
           </DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="space-y-6 pr-1">
+        <DialogBody className="space-y-4 sm:space-y-6 pr-1">
           <ScreenshotImport
             initialValues={toScreenshotInitialValues(form)}
             onConfirm={handleImportConfirm}

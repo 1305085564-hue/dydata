@@ -227,7 +227,7 @@ export function MonthlyMatrix({
   return (
     <div className="space-y-3">
       {/* 矩阵标题与月度切换器（去框出版物排版） */}
-      <div className="flex items-center justify-between gap-2 border-b border-[#E5E0D6]/50 pb-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E0D6]/50 pb-2.5">
         <button
           type="button"
           aria-expanded={expanded}

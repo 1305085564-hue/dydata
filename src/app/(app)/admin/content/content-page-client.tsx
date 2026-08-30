@@ -340,7 +340,7 @@ export function ContentPageClient({
 
           {/* 今日异常细条提醒 */}
           {anomalyVideos.length > 0 && (
-            <div className="flex items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FBF9F5]/80 text-[#292524] border border-[#E5E0D6] rounded-lg shadow-2xs">
+            <div className="flex flex-wrap max-w-full items-center gap-2 px-2.5 py-1 text-[11px] bg-[#FBF9F5]/80 text-[#292524] border border-[#E5E0D6] rounded-lg shadow-2xs">
               <span className="flex size-1.5 shrink-0 rounded-full bg-[#C9604D]" />
               <span className="font-semibold text-[#1C1917]">
                 今日异常 ({anomalyVideos.length})

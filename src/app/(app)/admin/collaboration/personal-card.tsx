@@ -108,10 +108,10 @@ export function PersonalCard({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[94vw] max-h-[85vh] h-auto p-0 rounded-2xl border border-[#E5E0D6] bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[calc(100vw-2rem)] max-h-[88dvh] h-auto p-0 rounded-2xl border border-[#E5E0D6] bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
-        <DialogHeader className="p-5 pb-3.5 border-b border-[#ECE7DE] flex flex-row items-center justify-between shrink-0 bg-[#FBF9F5]/40">
+        <DialogHeader className="p-4 sm:p-5 pb-3.5 border-b border-[#ECE7DE] flex flex-row items-center justify-between shrink-0 bg-[#FBF9F5]/40">
           {loading ? (
             <div className="space-y-1.5">
               <Skeleton className="h-6 w-32 rounded-md" />
@@ -125,7 +125,7 @@ export function PersonalCard({
               <div className="text-[12px] text-[#C0685C]">{error}</div>
             </div>
           ) : data ? (
-            <div className="flex items-center justify-between w-full pr-8">
+            <div className="flex items-center justify-between w-full pr-3 sm:pr-8">
               <div>
                 <div className="flex items-center gap-2">
                   <DialogTitle className="text-lg font-semibold text-[#1C1917]">
@@ -135,7 +135,7 @@ export function PersonalCard({
                     个人协作档案
                   </span>
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-[12px] text-[#78716C]">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11.5px] sm:text-[12px] text-[#78716C]">
                   <span>本月分工：</span>
                   <span className="rounded bg-[#F5F3EE]/80 px-1.5 py-0.5 text-[#43718E] font-medium">
                     文案{" "}
@@ -166,14 +166,14 @@ export function PersonalCard({
           <button
             type="button"
             onClick={onClose}
-            className="size-7 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors"
+            className="size-8 rounded-lg flex items-center justify-center text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors shrink-0 cursor-pointer"
           >
             <X className="size-4" />
           </button>
         </DialogHeader>
 
-        {/* Content Body：取消主容器大滚动，采用 flex-1 弹性垂直布局 */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-5 gap-3.5">
+        {/* Content Body：移动端支持自然纵向滚动，桌面端弹性分配剩余高度 */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto md:overflow-hidden p-4 sm:p-5 gap-3.5 pb-[calc(1.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-5">
           {loading ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -334,8 +334,8 @@ export function PersonalCard({
                     本月还没有明细记录
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto rounded-xl border border-[#ECE7DE] bg-white">
-                    <table className="w-full text-[12px]">
+                  <div className="overflow-x-auto min-h-[160px] md:flex-1 md:overflow-y-auto rounded-xl border border-[#ECE7DE] bg-white">
+                    <table className="w-full text-[12px] min-w-[440px]">
                       <thead className="sticky top-0 bg-[#FBF9F5]/85 backdrop-blur-md border-b border-[#ECE7DE]/60 text-[11px] uppercase tracking-wider font-medium text-[#78716C] text-left z-10">
                         <tr>
                           <th className="py-2 px-3">日期</th>

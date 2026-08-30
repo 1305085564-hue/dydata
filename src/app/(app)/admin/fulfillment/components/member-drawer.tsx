@@ -302,7 +302,7 @@ export function MemberDrawer({
             <SheetDescription className="text-[12.5px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>
           </SheetHeader>
 
-          <SheetBody className="space-y-6 pt-4">
+          <SheetBody className="space-y-6 pt-4 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] sm:pb-6">
             {/* 当前时间段统计 */}
             <section>
               <h3 className="mb-2.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">

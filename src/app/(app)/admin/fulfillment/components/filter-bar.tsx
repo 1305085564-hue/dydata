@@ -135,7 +135,7 @@ export function FilterBar({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* 微气垫时间预设胶囊 */}
-          <div className="inline-flex items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#ECE7DE]/70">
+          <div className="inline-flex max-w-full overflow-x-auto items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#ECE7DE]/70">
             {PRESET_OPTIONS.map((opt) => {
               const isActive = range === opt.value;
               return (
@@ -143,7 +143,7 @@ export function FilterBar({
                   key={opt.value}
                   type="button"
                   onClick={() => handlePresetChange(opt.value)}
-                  className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+                  className={`rounded-lg px-2.5 sm:px-3 py-1.5 text-[11.5px] sm:text-[12px] whitespace-nowrap font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
                     isActive
                       ? "bg-white text-[#D97757] shadow-2xs font-semibold"
                       : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
@@ -208,7 +208,7 @@ export function FilterBar({
 
       {/* 特殊范围说明指示 */}
       {(range === "last7days" || range === "custom") && (
-        <div className="flex items-center gap-1.5 text-[12px] text-[#78716C] pt-0.5">
+        <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-[#78716C] pt-0.5">
           <CalendarDays className="size-3.5 text-[#D97757]" />
           <span>
             当前范围：{formatRangeLabel(range, year, month)}
@@ -225,7 +225,7 @@ export function FilterBar({
         open={confirmToggleTarget !== null}
         onOpenChange={(open) => !open && setConfirmToggleTarget(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-[#1C1917]">
               {confirmToggleTarget

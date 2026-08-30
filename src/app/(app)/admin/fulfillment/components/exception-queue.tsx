@@ -197,14 +197,14 @@ export function ExceptionQueue({
     <div className="space-y-3">
       {/* 批量操作工具栏（深炭浮动胶囊） */}
       {hasSelected && (
-        <div className="flex items-center justify-between rounded-xl bg-[#181715] px-4 py-2.5 text-[#FAF8F4] shadow-claude-float animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#181715] px-3.5 sm:px-4 py-2.5 text-[#FAF8F4] shadow-claude-float animate-in fade-in slide-in-from-top-1 duration-150">
           <div className="flex items-center gap-2 text-[12px] font-medium">
             <span className="flex size-5 items-center justify-center rounded-full bg-[#D97757] text-[11px] font-semibold text-white">
               {selectedIds.size}
             </span>
             <span>已选择 {selectedIds.size} 位成员</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Button
               variant="ghost"
               size="xs"
@@ -342,7 +342,7 @@ export function ExceptionQueue({
                       {member.fulfillmentRate}%
                     </td>
                     <td className="px-3 py-2.5 text-right">
-                      <div className="inline-flex items-center justify-end gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150 pointer-events-auto sm:pointer-events-none sm:group-hover:pointer-events-auto sm:focus-within:pointer-events-auto">
+                      <div className="inline-flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity duration-150 pointer-events-auto lg:pointer-events-none lg:group-hover:pointer-events-auto lg:focus-within:pointer-events-auto">
                         <Button
                           variant="ghost"
                           size="xs"
