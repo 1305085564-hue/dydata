@@ -776,7 +776,7 @@ export function ContentDiagnosisWorkbench({
                     <X className="size-4" />
                   </button>
                 </div>
-                <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-1.5 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] sm:pb-2">
+                <div className="flex-1 overflow-y-auto divide-y divide-[#ECE7DE] p-1.5 pb-[calc(2rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-2">
                   {reviewQueue.map((item, idx) => {
                     const isSelected = item.id === video?.id;
                     const snap = snapshotMap.get(item.id);
