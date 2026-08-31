@@ -91,8 +91,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
         <Table>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-              <TableHead className="text-left font-medium text-[#292524] pl-4">姓名</TableHead>
-              <TableHead className="text-right font-medium text-[#292524]">
+              <TableHead className="text-left font-medium text-[#78716C] pl-4">姓名</TableHead>
+              <TableHead className="text-right font-medium text-[#78716C]">
                 <button
                   type="button"
                   onClick={() => handleSort("reportCount")}
@@ -104,9 +104,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   {renderSortIcon("reportCount")}
                 </button>
               </TableHead>
-              <TableHead className="text-left font-medium text-[#292524] pl-4">负责账号</TableHead>
-              <TableHead className="text-left font-medium text-[#292524] pl-4">最近作品</TableHead>
-              <TableHead className="text-right font-medium text-[#292524]">
+              <TableHead className="text-left font-medium text-[#78716C] pl-4">负责账号</TableHead>
+              <TableHead className="text-left font-medium text-[#78716C] pl-4">最近作品</TableHead>
+              <TableHead className="text-right font-medium text-[#78716C]">
                 <button
                   type="button"
                   onClick={() => handleSort("totalPlay")}
@@ -118,7 +118,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   {renderSortIcon("totalPlay")}
                 </button>
               </TableHead>
-              <TableHead className="text-right font-medium text-[#292524]">
+              <TableHead className="text-right font-medium text-[#78716C]">
                 <button
                   type="button"
                   onClick={() => handleSort("avgPlay")}
@@ -130,7 +130,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   {renderSortIcon("avgPlay")}
                 </button>
               </TableHead>
-              <TableHead className="text-right font-medium text-[#292524] pr-4">
+              <TableHead className="text-right font-medium text-[#78716C] pr-4">
                 <button
                   type="button"
                   onClick={() => handleSort("selfHandledCount")}

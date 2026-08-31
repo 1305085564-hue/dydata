@@ -2163,21 +2163,21 @@ export function VideoSubmitFormV2({
               {initialTopicId ? (
                 <div
                   data-topic-context={initialTopicId}
-                  className="rounded-lg border border-[#D8E7D9] bg-[#F4FAF4] px-3.5 py-2.5 text-[12.5px] text-[#3F7C51]"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-[#6FAA7D]/40 bg-[#FAF8F4] px-3.5 py-2 text-[12.5px] transition-all"
                 >
-                  <span className="font-semibold">已带入选题上下文</span>
-                  <span className="ml-2 text-[#56745E]">
-                    {initialTopicTitle
-                      ? `《${initialTopicTitle}》`
-                      : "来自选题库的脚本中选题"}
-                    ，提交后会保留该选题关联。
-                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="size-1.5 shrink-0 rounded-full bg-[#6FAA7D]" />
+                    <span className="font-medium text-[#292524]">已带入选题上下文</span>
+                    <span className="truncate text-[#78716C]">
+                      · {initialTopicTitle ? `《${initialTopicTitle}》` : "来自选题库的脚本中选题"}，提交后保留关联
+                    </span>
+                  </div>
                 </div>
               ) : null}
 
               {/* 草稿恢复 banner - Claude 人文微气垫设计 */}
               {showDraftBanner && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3.5 py-2 text-[12.5px] transition-all">
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-3.5 py-2 text-[12.5px] transition-all">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54]" />
                     <span className="font-medium text-[#292524]">
@@ -2214,7 +2214,13 @@ export function VideoSubmitFormV2({
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#ECE7DE]">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <h2 className="text-[14.5px] sm:text-[15.5px] font-semibold text-[#1C1917]">
-                      {isBackfillMode ? `创作纪事补录 (${meta.bizDate})` : "今日创作立卷 · 表达纪事"}
+                      {mode === "editToday"
+                        ? meta.bizDate !== today
+                          ? `修改历史作品 · ${meta.bizDate}`
+                          : `微调今日作品 · ${meta.bizDate}`
+                        : isBackfillMode
+                          ? `创作纪事补录 (${meta.bizDate})`
+                          : "今日创作立卷 · 表达纪事"}
                     </h2>
                     <VideoStatusSegmented
                       value={meta.anomalyStatus}

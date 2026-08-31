@@ -18,6 +18,7 @@ import {
   type ExistingSubmissionScreenshotFields,
 } from "./edit-detail";
 import {
+  buildSubmissionAssigneeColumns,
   collectAssigneeIdsRequiringValidation,
   EDIT_BINDING_REPORT_SELECT,
   EDIT_BINDING_SNAPSHOT_SELECT,
@@ -329,8 +330,9 @@ export async function POST(request: NextRequest) {
         scriptAuthorUserId: editBinding.video.script_author_user_id,
         videoEditorUserId: editBinding.video.video_editor_user_id,
         operatorUserId: editBinding.video.operator_user_id,
-      }
+    }
     : null;
+  const assigneeColumns = buildSubmissionAssigneeColumns(roleUserIds);
   const externalAssigneeIds = collectAssigneeIdsRequiringValidation(
     roleUserIds,
     originalAssignees,
@@ -381,9 +383,7 @@ export async function POST(request: NextRequest) {
     platform_notice: normalized.platform_notice,
     appeal: normalized.appeal,
     topic_id: normalized.topic_id,
-    script_author_user_id: roleUserIds.scriptAuthorUserId,
-    video_editor_user_id: roleUserIds.videoEditorUserId,
-    operator_user_id: roleUserIds.operatorUserId,
+    ...assigneeColumns,
   };
 
   const adminSupabase = createAdminClient();
@@ -621,9 +621,7 @@ export async function POST(request: NextRequest) {
     published_at: normalized.published_at,
     uploaded_at: nowIso,
     account_id: normalized.account_id,
-    script_author_user_id: roleUserIds.scriptAuthorUserId,
-    video_editor_user_id: roleUserIds.videoEditorUserId,
-    operator_user_id: roleUserIds.operatorUserId,
+    ...assigneeColumns,
   };
 
   const { data: existingReport, error: existingReportError } = editBinding && editBinding.ok

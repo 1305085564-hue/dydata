@@ -27,7 +27,7 @@ export async function CollaborationDataContainer({
   const context = await getCurrentPermissionContext("company", null);
   if (!context || !canAccessAdminPath("/admin/collaboration", context.permissionInfo.role, context.permissionInfo.permissions)) {
     return (
-      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#DC2626]">
+      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#C0685C]">
         无权访问
       </div>
     );
@@ -36,7 +36,7 @@ export async function CollaborationDataContainer({
   const range = getMonthRange(year, month);
   if (!range) {
     return (
-      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#DC2626]">
+      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#C0685C]">
         日期范围无效
       </div>
     );

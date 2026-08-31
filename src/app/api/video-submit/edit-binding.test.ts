@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildSubmissionAssigneeColumns,
   collectAssigneeIdsRequiringValidation,
   editVideoMatchesBizDate,
   mergePreservedEditSnapshotFields,
@@ -293,6 +294,20 @@ test("编辑时只按岗位豁免未修改的旧责任人，新岗位复用同�
     USER_ID,
   );
   assert.deepEqual(changed, [OTHER_USER_ID]);
+});
+
+test("历史编辑的三岗位字段使用同一份双表写入映射", () => {
+  const columns = buildSubmissionAssigneeColumns({
+    scriptAuthorUserId: USER_ID,
+    videoEditorUserId: OTHER_USER_ID,
+    operatorUserId: null,
+  });
+
+  assert.deepEqual(columns, {
+    script_author_user_id: USER_ID,
+    video_editor_user_id: OTHER_USER_ID,
+    operator_user_id: null,
+  });
 });
 
 test("日期匹配使用上海时区的发布或上传时间", () => {

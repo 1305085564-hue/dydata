@@ -64,6 +64,14 @@ test("dashboard V2 panel 统一合并首屏、活动、本地报告并接入豁�
   assert.match(panelSource, /disabled=\{isExemptionPending\}/);
 });
 
+test("dashboard V2 首次渲染不读取浏览器缓存，避免豁免提示 hydration 不一致", () => {
+  assert.match(
+    panelSource,
+    /const \[dismissedPendingExemption, setDismissedPendingExemption\] = useState\(false\);/,
+  );
+  assert.match(panelSource, /useEffect\(\(\) => \{[\s\S]*dydata:dismissed-pending-exemption/);
+});
+
 test("V2 截图错误文案保持 screenshot_1 互动、screenshot_2 完播", () => {
   assert.match(source, /screenshot_1:\s*"互动截图"/);
   assert.match(source, /screenshot_2:\s*"完播截图"/);

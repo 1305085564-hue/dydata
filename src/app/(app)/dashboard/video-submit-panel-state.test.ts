@@ -297,3 +297,51 @@ test("活动记录错误时补交请求即使由日期状态驱动也必须保�
     "summary",
   );
 });
+
+test("历史日期已有作品触发查看并修改时进入 editToday 模式，取消后回到 summary 态", async () => {
+  const mod = await import(new URL("./video-submit-panel-state.ts", import.meta.url).href).catch(() => null);
+
+  assert.ok(mod, "expected video-submit-panel-state helper to exist");
+
+  const historicalReport = {
+    account_id: "acc-1",
+    title: "历史作品",
+    content: "文案",
+    report_date: "2026-03-20",
+    play_count: 5000,
+    likes: 50,
+    comments: 5,
+    shares: 2,
+    favorites: 3,
+    follower_gain: 1,
+    follower_convert: null,
+    completion_rate: "30",
+    avg_play_duration: "20",
+    bounce_rate_2s: "15",
+    completion_rate_5s: "50",
+    published_at: "2026-03-19 18:00",
+    uploaded_at: "2026-03-20 10:00",
+  };
+
+  // 用户点击查看并修改
+  assert.equal(
+    mod.resolveSubmitPanelMode({
+      summary: null,
+      requestedMode: "editToday",
+      report: historicalReport,
+      activeDateStatus: { state: "submitted", canBackfill: false },
+    }),
+    "editToday",
+  );
+
+  // 用户点击取消回到摘要
+  assert.equal(
+    mod.resolveSubmitPanelMode({
+      summary: null,
+      requestedMode: null,
+      report: historicalReport,
+      activeDateStatus: { state: "submitted", canBackfill: false },
+    }),
+    "summary",
+  );
+});

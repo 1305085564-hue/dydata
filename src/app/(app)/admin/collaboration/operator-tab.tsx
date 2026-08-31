@@ -107,10 +107,10 @@ export function OperatorTab({
         <TableHeader>
           <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
             <TableHead className="w-10" />
-            <TableHead className="text-left font-medium text-[#292524]">
+            <TableHead className="text-left font-medium text-[#78716C]">
               运营姓名
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
@@ -123,7 +123,7 @@ export function OperatorTab({
                 </Tooltip>
               </TooltipProvider>
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               <button
                 type="button"
                 onClick={() => handleSort("reportCount")}
@@ -137,7 +137,7 @@ export function OperatorTab({
                 {renderSortIcon("reportCount")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               <button
                 type="button"
                 onClick={() => handleSort("totalPlay")}
@@ -151,7 +151,7 @@ export function OperatorTab({
                 {renderSortIcon("totalPlay")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               <button
                 type="button"
                 onClick={() => handleSort("avgPlay")}
@@ -165,7 +165,7 @@ export function OperatorTab({
                 {renderSortIcon("avgPlay")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               <button
                 type="button"
                 onClick={() => handleSort("totalFollowerConvert")}
@@ -179,10 +179,10 @@ export function OperatorTab({
                 {renderSortIcon("totalFollowerConvert")}
               </button>
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               爆款数
             </TableHead>
-            <TableHead className="text-right font-medium text-[#292524]">
+            <TableHead className="text-right font-medium text-[#78716C]">
               环比
             </TableHead>
           </TableRow>

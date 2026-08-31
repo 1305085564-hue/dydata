@@ -150,6 +150,15 @@ export type SubmissionRoleAssigneeIds = {
   operatorUserId: string | null;
 };
 
+/** 视频与日报复用同一份岗位列映射，避免历史编辑只更新其中一张表。 */
+export function buildSubmissionAssigneeColumns(roleUserIds: SubmissionRoleAssigneeIds) {
+  return {
+    script_author_user_id: roleUserIds.scriptAuthorUserId,
+    video_editor_user_id: roleUserIds.videoEditorUserId,
+    operator_user_id: roleUserIds.operatorUserId,
+  };
+}
+
 /**
  * 编辑时未修改的旧责任人允许保留原值（即使已归档）；
  * 只有发生变化的外协责任人才要求是在职同队成员。
