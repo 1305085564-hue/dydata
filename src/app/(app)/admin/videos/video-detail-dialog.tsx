@@ -674,7 +674,7 @@ export function VideoDetailDialog({
 
                 <div className="rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
-                    <span className="text-[#78716C]">暂未录入文稿正文。</span>
+                    <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
                 </div>
               </section>
@@ -762,11 +762,10 @@ export function VideoDetailDialog({
           <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
             <h3 className="text-base font-semibold text-[#1C1917] flex items-center gap-2">
               <AlertTriangle className="size-5 text-[#DC2626]" />
-              确定彻底移出文库？
+              确认彻底删除作品？
             </h3>
             <p className="mt-2 text-xs text-[#78716C] leading-relaxed">
-              将永久收纳隐藏作品「{video.video_title || "未命名作品"}
-              」，并清理对应截图。此操作不可撤销，请确认是否继续。
+              将永久隐藏此作品并清理截图，此操作不可撤销，请谨慎操作。
             </p>
             <div className="mt-6 flex justify-end gap-2.5">
               <button
@@ -783,7 +782,7 @@ export function VideoDetailDialog({
                 onClick={() => handleLifecycleAction("purge")}
                 disabled={isOperating}
               >
-                {isOperating ? "正在移出..." : "确认移出"}
+                {isOperating ? "正在删除..." : "彻底删除"}
               </button>
             </div>
           </div>

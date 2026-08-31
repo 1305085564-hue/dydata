@@ -101,12 +101,12 @@ export function FeishuCreationModal({
       try {
         const result = await onMarkWriting(topic.id);
         if (result === false) {
-          setMarkError("领卷状态同步受阻，选题内容已为您备好，可直接复制使用");
+          setMarkError("认领状态同步受阻，选题内容已为您备好，可直接使用");
           return;
         }
       } catch (err) {
         setMarkError(
-          `${err instanceof Error ? err.message : "领卷状态同步受阻"}；选题内容仍可直接复制使用`,
+          `${err instanceof Error ? err.message : "认领状态同步受阻"}；选题内容仍可直接使用`,
         );
         return;
       } finally {
@@ -127,12 +127,12 @@ export function FeishuCreationModal({
     try {
       const result = onMarkWriting ? await onMarkWriting(topic.id) : false;
       if (result === false) {
-        setMarkError("领卷状态同步受阻，选题内容已为您备好，可直接复制使用");
+        setMarkError("认领状态同步受阻，选题内容已为您备好，可直接使用");
         return;
       }
       onClose();
     } catch (err) {
-      setMarkError(err instanceof Error ? err.message : "领卷状态同步受阻，请稍后再试");
+      setMarkError(err instanceof Error ? err.message : "认领状态同步受阻，请稍后再试");
     } finally {
       setIsMarking(false);
     }
@@ -268,7 +268,7 @@ export function FeishuCreationModal({
                 }}
                 className="text-xs text-[#C0685C] hover:underline font-medium shrink-0 ml-2 cursor-pointer"
               >
-                放回选题库
+                暂不执笔
               </button>
             )}
           </div>

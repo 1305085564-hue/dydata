@@ -48,8 +48,8 @@ interface ExceptionQueueProps {
 const ACTION_LABELS: Record<MarkAction, string> = {
   leave: "请假",
   waived: "豁免",
-  absent: "今日停笔",
-  confirmed_published: "标定已发",
+  absent: "今日未发",
+  confirmed_published: "已发",
 };
 
 export function requiresQuickMarkConfirmation(action: MarkAction) {
@@ -63,7 +63,7 @@ function StatusBadge({ status }: { status: FulfillmentStatus }) {
     leave: { label: "请假", dot: "bg-[#43718E]", textClass: "text-[#292524]" },
     waived: { label: "豁免", dot: "bg-[#43718E]", textClass: "text-[#292524]" },
     exempted: { label: "豁免期", dot: "bg-[#43718E]/60", textClass: "text-[#78716C]" },
-    absent: { label: "今日停笔", dot: "bg-[#C0685C]", textClass: "text-[#C0685C]" },
+    absent: { label: "今日未发", dot: "bg-[#C0685C]", textClass: "text-[#C0685C]" },
     unconfirmed: { label: "待确认", dot: "bg-[#B98A54]", textClass: "text-[#B98A54]" },
   };
   const c = config[status] ?? config.unconfirmed;
@@ -211,7 +211,7 @@ export function ExceptionQueue({
               className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.985]"
               onClick={() => openBatchConfirm("confirmed_published")}
             >
-              批量标定已发
+              批量标为已发
             </Button>
             <Button
               variant="ghost"
@@ -235,7 +235,7 @@ export function ExceptionQueue({
               className="text-[#C0685C] hover:bg-[#C0685C]/20 text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.985]"
               onClick={() => openBatchConfirm("absent")}
             >
-              批量标为今日停笔
+              批量标为未发
             </Button>
             <button
               type="button"
@@ -409,7 +409,7 @@ export function ExceptionQueue({
                                 )
                               }
                             >
-                              标为今日停笔
+                              标为今日未发
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -453,10 +453,10 @@ export function ExceptionQueue({
         <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-[#1C1917]">
-              将 {quickConfirm?.userName} 标为今日停笔
+              确认将 {quickConfirm?.userName} 标为今日未发？
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
-              该操作将记为今日未发作品；若后续补发或情况有变，可随时在此改判与撤销。
+              将记为今日未发作品；后续若补发或有变动，可随时在此改判或撤销。
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">
@@ -466,7 +466,7 @@ export function ExceptionQueue({
               className="rounded-lg text-[#292524] active:scale-[0.985]"
               onClick={() => setQuickConfirm(null)}
             >
-              返回
+              暂不调整
             </Button>
             <Button
               variant="destructive"

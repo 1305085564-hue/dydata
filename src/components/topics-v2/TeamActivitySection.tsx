@@ -189,7 +189,7 @@ export function TeamActivitySection({
             </div>
             {pastClaims.length === 0 ? (
               <div className="text-xs text-[#78716C] py-3 text-center">
-                已翻阅完所有往期篇目
+                已展示全部创作记录
               </div>
             ) : (
               pastClaims.map((claim: TopicClaimItem) => (

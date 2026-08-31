@@ -30,7 +30,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmText = "确认继续",
-  cancelText = "返回",
+  cancelText = "取消",
   destructive = false,
   loading = false,
   className,

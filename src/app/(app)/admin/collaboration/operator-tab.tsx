@@ -94,8 +94,8 @@ export function OperatorTab({
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title="本月暂无运营协同篇目"
-          description="自营主理与跨账号协同均在此收录；本台自 2026-07-27 起记录岗位分工"
+          title="本月暂无跨账号协同记录"
+          description="个人自营账号请在达人专栏查看；此处收录跨账号分工与协同作品。"
         />
       </div>
     );

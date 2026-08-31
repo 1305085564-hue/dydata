@@ -88,8 +88,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title={`本月暂无${roleLabel}协同篇目`}
-          description="个人独立主理篇目请在创作者专栏查阅；本台自 2026-07-27 起收录协同分工与作品产出"
+          title={`本月暂无跨账号${roleLabel}协同记录`}
+          description="个人自营账号请在达人专栏查看；此处收录跨账号分工与协同作品。"
         />
       </div>
     );

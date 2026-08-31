@@ -16,8 +16,8 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
 
   return (
     <RouteErrorState
-      title="工作台暂时未能展开"
-      description="卷宗同步稍有延迟，手稿已在本地妥帖保留，不妨稍作歇息后再试。"
+      title="工作台内容未能加载"
+      description="数据同步稍有延迟，本地草稿已妥善保存，请检查网络后重试。"
       reset={reset}
     />
   );

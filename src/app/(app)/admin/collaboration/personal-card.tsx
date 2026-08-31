@@ -331,7 +331,7 @@ export function PersonalCard({
 
                 {data.records.length === 0 ? (
                   <div className="flex-1 rounded-xl border border-[#E5E0D6] p-4 text-center text-[12px] text-[#78716C] flex items-center justify-center">
-                    本月尚无协同篇目
+                    本月暂无协同作品
                   </div>
                 ) : (
                   <div className="overflow-x-auto min-h-[160px] md:flex-1 md:overflow-y-auto rounded-xl border border-[#ECE7DE] bg-white">
