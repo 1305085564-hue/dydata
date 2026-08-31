@@ -111,9 +111,9 @@ export function MetricGroupSection({ fields, onFieldChange, onFocusField, onBlur
       {/* 3-4-4 高密度紧密数据矩阵 (整体收拢，行间亲密) */}
       <div className="flex flex-1 flex-col gap-1.5 sm:gap-2 lg:gap-3.5">
         
-        {/* 1. 核心数据网格 (3列等分) */}
+        {/* 1. 核心数据网格 (4列网格占前3格，与下方严格纵向对齐，不拉宽) */}
         <div>
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
             {CORE_ITEMS.map((item, index) => (
               <指标输入卡
                 key={item.key}

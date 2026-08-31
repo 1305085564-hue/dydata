@@ -72,6 +72,9 @@ export async function submitReport(formData: FormData) {
   const follower_convert = followerConvertRaw ? Number(followerConvertRaw) : null;
   const content = (formData.get("content") as string) || null;
   const published_at = normalizePublishedAtForStorage(formData.get("published_at"));
+  const script_author_user_id = (formData.get("script_author_user_id") as string) || null;
+  const video_editor_user_id = (formData.get("video_editor_user_id") as string) || null;
+  const operator_user_id = (formData.get("operator_user_id") as string) || null;
 
   const { data: account, error: accountError } = await supabase
     .from("accounts")
@@ -123,6 +126,9 @@ export async function submitReport(formData: FormData) {
     content,
     published_at,
     uploaded_at: uploadedAt,
+    script_author_user_id,
+    video_editor_user_id,
+    operator_user_id,
   };
 
   const { error } = existing
@@ -132,6 +138,19 @@ export async function submitReport(formData: FormData) {
   if (error) {
     return { error: error.message };
   }
+
+  // 同步更新对应的视频手稿共创责任人
+  await supabase
+    .from("videos")
+    .update({
+      title,
+      content,
+      script_author_user_id,
+      video_editor_user_id,
+      operator_user_id,
+    })
+    .eq("account_id", account_id)
+    .eq("published_at", published_at || uploadedAt);
 
   if (!existing) {
     notifyFeishu(submitter, title, play_count).catch(() => {});

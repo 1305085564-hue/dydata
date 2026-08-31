@@ -58,6 +58,7 @@ import type { AnomalyStatus, Video, VideoTagReviewDimension } from "@/types";
 import { 指标分组区 } from "@/components/submission/指标分组区";
 import { 导粉话术采集区 } from "@/components/submission/导粉话术采集区";
 import { 截图槽位区 } from "@/components/submission/截图槽位区";
+import { PublishedAtPicker, fetchCachedOperatorMembers } from "./history-report-edit-form";
 
 // 保留所有原有的业务逻辑导入
 import {
@@ -421,7 +422,7 @@ function createEditableFields(): SubmissionState["fields"] {
   return {
     play_count: { ...createFieldState(), key: "play_count" },
     follower_gain: { ...createFieldState(), key: "follower_gain" },
-    follower_convert: { ...createFieldState("0"), key: "follower_convert" },
+    follower_convert: { ...createFieldState(), key: "follower_convert" },
     likes: { ...createFieldState(), key: "likes" },
     comments: { ...createFieldState(), key: "comments" },
     shares: { ...createFieldState(), key: "shares" },
@@ -928,27 +929,18 @@ export function VideoSubmitFormV2({
     setOperatorToSelf();
   }, [mode, setOperatorToSelf]);
 
-  // 团队成员只在首次打开岗位选择器时加载，不随表单挂载请求（总纲标准改法 3/4）
-  const operatorMembersLoadedRef = useRef(false);
+  // 团队成员使用内存快取 + 后台预取（0ms 秒开无延迟）
   const loadOperatorMembers = useCallback(() => {
-    if (operatorMembersLoadedRef.current) return;
-    operatorMembersLoadedRef.current = true;
-    void fetch("/api/dashboard/operator-members")
-      .then(async (response) => {
-        if (!response.ok) throw new Error("load operator members failed");
-        return response.json() as Promise<{ members?: OperatorMember[] }>;
-      })
-      .then((payload) => {
-        setOperatorMembers(
-          Array.isArray(payload.members) ? payload.members : [],
-        );
-      })
-      .catch(() => {
-        // 失败允许下次打开选择器时重试
-        operatorMembersLoadedRef.current = false;
-        setOperatorMembers([]);
-      });
+    void fetchCachedOperatorMembers().then((members) => {
+      if (Array.isArray(members) && members.length > 0) {
+        setOperatorMembers(members as OperatorMember[]);
+      }
+    });
   }, []);
+
+  useEffect(() => {
+    loadOperatorMembers();
+  }, [loadOperatorMembers]);
 
   const metaSectionRef = useRef<HTMLDivElement | null>(null);
   const topicTagSectionRef = useRef<HTMLDivElement | null>(null);
@@ -2475,16 +2467,12 @@ export function VideoSubmitFormV2({
                               className="space-y-2 pt-2"
                             >
                               <div className="space-y-1">
-                                <Label htmlFor="published_at" className="text-[12px] font-medium text-[#292524]">
+                                <Label className="text-[12px] font-medium text-[#292524]">
                                   发布时间
                                 </Label>
-                                <Input
-                                  id="published_at"
-                                  type="datetime-local"
-                                  step={3600}
+                                <PublishedAtPicker
                                   value={meta.publishedAt}
-                                  onChange={(event) => {
-                                    const nextPublishedAt = event.target.value;
+                                  onChange={(nextPublishedAt) => {
                                     const synced = syncPublishedAtAndText({
                                       nextPublishedAt,
                                       nextPublishedAtText: meta.publishedAtText,
@@ -2497,7 +2485,6 @@ export function VideoSubmitFormV2({
                                       publishedAtText: synced.publishedAtText,
                                     }));
                                   }}
-                                  className="h-8 rounded-lg text-[12px]"
                                 />
                               </div>
                               <div className="flex justify-between text-[11px] text-[#78716C]">
@@ -2627,27 +2614,27 @@ export function VideoSubmitFormV2({
                   }
                 }}
               >
-                <DialogContent className="max-w-sm rounded-2xl bg-[#FAF8F4] border border-[#ECE7DE] p-4 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08)]">
-                  <DialogHeader className="pb-3 border-b border-[#ECE7DE]">
-                    <DialogTitle className="text-[15px] font-medium text-[#1C1917]">
+                <DialogContent className="max-w-xs sm:max-w-sm rounded-2xl bg-[#FAF8F4] border border-[#ECE7DE] p-3.5 sm:p-4 shadow-claude-dialog">
+                  <DialogHeader className="pb-2 border-b border-[#ECE7DE]">
+                    <DialogTitle className="text-sm font-semibold text-[#1C1917]">
                       选择{selectingRole?.label}负责人
                     </DialogTitle>
                   </DialogHeader>
 
-                  <div className="space-y-3 pt-3">
+                  <div className="space-y-2.5 pt-2.5">
                     {/* 搜索框 */}
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#78716C]" />
                       <Input
                         value={memberSearchQuery}
                         onChange={(e) => setMemberSearchQuery(e.target.value)}
                         placeholder="搜索团队成员..."
-                        className="h-9 rounded-lg border-[#E5E0D6] bg-white pl-9 text-[13px] text-[#292524] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:border-[#78716C]"
+                        className="h-8 rounded-lg border-[#E5E0D6] bg-white pl-8 text-xs text-[#292524] placeholder:text-[#A8A29E] focus-visible:ring-1 focus-visible:ring-[#D97757]/30 focus-visible:border-[#78716C]"
                       />
                     </div>
 
-                    {/* 成员列表 */}
-                    <div className="max-h-[240px] overflow-y-auto space-y-1 pr-0.5">
+                    {/* 成员列表 (扩大视口至 320px~340px，搭配发丝细滚条) */}
+                    <div className="max-h-[300px] sm:max-h-[340px] overflow-y-auto space-y-0.5 pr-1 scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#D9D3C7] [&::-webkit-scrollbar-track]:bg-transparent [scrollbar-width:thin] [scrollbar-color:#D9D3C7_transparent]">
                       {/* 本人快捷置顶项 */}
                       {!memberSearchQuery && (
                         <button
@@ -2667,20 +2654,20 @@ export function VideoSubmitFormV2({
                             setSelectingRole(null);
                           }}
                           className={cn(
-                            "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] transition-colors border",
+                            "w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs sm:text-[13px] transition-colors border cursor-pointer",
                             selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId
                               ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
                               : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
                           )}
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             <span>{selfLabel}</span>
-                            <span className="rounded bg-[#ECE7DE] px-1.5 py-0.5 text-[10px] text-[#78716C] font-medium">
+                            <span className="rounded bg-[#ECE7DE] px-1 py-0.5 text-[9.5px] text-[#78716C] font-medium">
                               本人
                             </span>
                           </div>
                           {(selectingRole?.selectedUserId === userId || !selectingRole?.selectedUserId) && (
-                            <Check className="size-4 stroke-[2.5] text-[#D97757]" />
+                            <Check className="size-3.5 stroke-[2.5] text-[#D97757]" />
                           )}
                         </button>
                       )}
@@ -2706,14 +2693,14 @@ export function VideoSubmitFormV2({
                                 setSelectingRole(null);
                               }}
                               className={cn(
-                                "w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] transition-colors border",
+                                "w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs sm:text-[13px] transition-colors border cursor-pointer",
                                 isSelected
                                   ? "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6]/70 shadow-2xs"
                                   : "border-transparent text-[#292524] hover:bg-white hover:border-[#ECE7DE]"
                               )}
                             >
                               <span>{member.display_name || member.name}</span>
-                              {isSelected && <Check className="size-4 stroke-[2.5] text-[#D97757]" />}
+                              {isSelected && <Check className="size-3.5 stroke-[2.5] text-[#D97757]" />}
                             </button>
                           );
                         })}

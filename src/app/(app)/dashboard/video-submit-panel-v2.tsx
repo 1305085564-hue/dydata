@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, X } from "lucide-react";
-import { motion } from "framer-motion";
+import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, ArrowLeft, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
@@ -27,6 +27,7 @@ import {
   getDashboardStatusClass,
 } from "./dashboard-visuals";
 import { HistoryList } from "./history-list";
+import { HistoryReportEditForm, type HistoryReportEditData } from "./history-report-edit-form";
 import { VideoSubmitFormV2 } from "./video-submit-form-v2";
 import {
   getVideoSubmissionEditDetailError,
@@ -98,12 +99,12 @@ export async function fetchVideoSubmissionEditDetail(
 
 function DashboardActivityError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-3 text-center">
-      <ShieldAlert className="size-5 text-[#C9604D]" aria-hidden="true" />
-      <p className="text-[13px] font-medium text-[#292524]">记录加载失败</p>
+    <div className="flex min-h-40 flex-col items-center justify-center gap-2.5 text-center">
+      <ShieldAlert className="size-5 text-[#C0685C]" aria-hidden="true" />
+      <p className="text-[13px] font-medium text-[#292524]">手稿记录暂未就绪</p>
       <p className="max-w-sm text-[12px] text-[#78716C]">{message}</p>
-      <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-        重新加载
+      <Button type="button" variant="outline" size="sm" onClick={onRetry} className="mt-1">
+        重新载入
       </Button>
     </div>
   );
@@ -252,6 +253,7 @@ export function VideoSubmitPanelV2({
   const [internalSelectedAccountId, setInternalSelectedAccountId] = useState(accounts[0]?.id ?? "");
   const [internalActiveBizDate, setInternalActiveBizDate] = useState(today);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [viewingReport, setViewingReport] = useState<MonthReport | null>(null);
   const [submittedViewActive, setSubmittedViewActive] = useState(false);
   const [reportOverrides, setReportOverrides] = useState<Record<string, TodaySubmissionReportLike>>({});
   const [activityData, setActivityData] = useState<AsyncActivityData | null>(null);
@@ -609,8 +611,8 @@ export function VideoSubmitPanelV2({
                 </button>
 
                 {isCalendarOpen && (
-                  <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                    <div className="w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border border-[#E5E0D6] bg-white p-4 sm:p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
+                  <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
+                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E5E0D6] bg-white p-3.5 sm:p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
@@ -828,36 +830,38 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowActivityErrorCard ? (
-              <div className="mb-6 rounded-xl border border-[#C9604D]/20 bg-[#C9604D]/10 p-5">
+              <div className="py-8">
                 <DashboardActivityError
-                  message={activeDateStatus.errorMessage ?? "历史记录加载失败，请先重试后再补交。"}
+                  message={activeDateStatus.errorMessage ?? "历史记录加载稍有阻滞，请重试后再补交。"}
                   onRetry={() => void loadActivity()}
                 />
               </div>
             ) : null}
 
             {shouldShowActivityLoadingCard ? (
-              <div className="mb-6 rounded-xl border border-[#D99E55]/20 bg-[#D99E55]/10 p-5">
-                <p className="text-[13px] font-semibold text-[#8A6A2F]">正在核对历史记录</p>
-                <p className="mt-1 text-[13px] text-[#78716C]">
-                  正在确认 {activeBizDate} 是否已有日报，核对完成前不会开放补交。
-                </p>
+              <div className="flex items-center gap-2.5 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-3.5 py-2.5 text-[12.5px]">
+                <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54] animate-pulse" />
+                <span className="font-medium text-[#292524]">正在核对历史纪事</span>
+                <span className="text-[#78716C]">· 正在确认 {activeBizDate} 是否已有日报，核对完成前暂不开放补交</span>
               </div>
             ) : null}
 
             {shouldShowHistoricalSubmittedCard && activeDateReport ? (
-              <div className="mb-6 rounded-xl border border-[#6FAA7D]/20 bg-[#6FAA7D]/10 p-5">
+              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 sm:p-5 shadow-2xs">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-[13px] font-semibold text-[#3F7C51]">该日期已提交</p>
-                    <p className="mt-1 text-[13px] text-[#78716C]">
-                      {activeDateReport.title || "未命名日报"} · {activeDateReport.report_date}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="size-1.5 shrink-0 rounded-full bg-[#6FAA7D]" />
+                      <span className="text-[12.5px] font-medium text-[#292524]">已立卷手稿 · {activeDateReport.report_date}</span>
+                    </div>
+                    <p className="text-[14px] font-medium text-[#1C1917]">
+                      {activeDateReport.title || "未命名手稿"}
                     </p>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-10 rounded-xl border-[#E5E0D6] text-[13px] font-medium cursor-pointer"
+                    className="h-9 rounded-xl border-[#E5E0D6] bg-white hover:bg-[#F5F3EE] text-[13px] font-medium text-[#292524] hover:border-[#78716C]/40 shadow-2xs transition-colors cursor-pointer"
                     onClick={() => setRequestedMode("editToday")}
                   >
                     查看并修改
@@ -867,28 +871,54 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowEditDetailLoading ? (
-              <div className="mb-6 rounded-xl border border-[#D99E55]/30 bg-[#D99E55]/10 p-5">
-                <p className="text-[13px] font-semibold text-[#8A6A2F]">
-                  正在加载原视频完整详情
-                </p>
-                <p className="mt-1 text-[13px] text-[#78716C]">
-                  正在核对旧视频、24小时指标、截图、标签、责任人与导粉话术；完成前不会开放保存。
-                </p>
+              <div className="py-14 flex flex-col items-center justify-center text-center space-y-3">
+                <div className="relative flex h-10 w-10 items-center justify-center">
+                  <span className="size-2 rounded-full bg-[#D97757] motion-safe:animate-ping" />
+                  <span className="absolute size-2 rounded-full bg-[#D97757]" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[13.5px] font-medium text-[#292524]">正在调阅作品原稿档案</p>
+                  <p className="text-[12px] text-[#78716C]">正在核对旧视频、24小时指标与创作伙伴信息...</p>
+                </div>
               </div>
             ) : null}
 
             {shouldShowEditDetailError ? (
-              <div className="mb-6 rounded-xl border border-[#C9604D]/20 bg-[#C9604D]/10 p-5">
-                <p className="text-[13px] font-semibold text-[#A5483D]">无法安全加载原视频详情</p>
-                <p className="mt-1 text-[13px] text-[#78716C]">{editDetailLoadState.error}</p>
-                <div className="mt-3 flex gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => setEditDetailRequestVersion((value) => value + 1)}>
-                    重新加载
+              <div className="py-12 flex flex-col items-center justify-center text-center">
+                <EmptyState
+                  title={
+                    editDetailLoadState.error?.includes("没有可编辑")
+                      ? "未寻得该日期的视频底稿"
+                      : "作品底稿载入暂缓"
+                  }
+                  description={
+                    editDetailLoadState.error?.includes("没有可编辑")
+                      ? "该归属日未收录可编辑的原视频手稿，您可返回概览或切换其他日期。"
+                      : (editDetailLoadState.error || "数据调阅稍有滞碍，原视频与指标底稿暂未就绪。")
+                  }
+                  action={
+                    !editDetailLoadState.error?.includes("没有可编辑")
+                      ? {
+                          label: "重新载入",
+                          onClick: () => setEditDetailRequestVersion((v) => v + 1),
+                        }
+                      : {
+                          label: "返回概览",
+                          onClick: () => setRequestedMode(null),
+                        }
+                  }
+                />
+                {!editDetailLoadState.error?.includes("没有可编辑") && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRequestedMode(null)}
+                    className="mt-2 text-xs text-[#78716C] hover:text-[#292524]"
+                  >
+                    返回概览
                   </Button>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setRequestedMode(null)}>
-                    返回摘要
-                  </Button>
-                </div>
+                )}
               </div>
             ) : null}
 
@@ -922,44 +952,118 @@ export function VideoSubmitPanelV2({
         </Card>
       </div>
 
-      {/* 历史记录弹窗 */}
-      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="flex flex-col overflow-hidden max-h-[88dvh] sm:max-w-6xl rounded-2xl border-[#E5E0D6] bg-white shadow-claude-dialog p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="text-[16px] sm:text-[17px] font-semibold text-[#1C1917]">历史记录</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-          {activityError ? (
-            <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
-          ) : isActivityLoading ? (
-            <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
-              加载历史记录...
-            </div>
-          ) : !historyReports || historyReports.length === 0 ? (
-            <EmptyState
-              title="历史手稿静待立卷"
-              description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
-            />
-          ) : (
-            <HistoryList
-              history={historyReports.map((report) => ({
-                ...report,
-                content: report.content ?? null,
-                follower_convert: report.follower_convert ?? null,
-              }))}
-              accountDisplayNameMap={accountDisplayNameMap}
-              onReportOpen={(report) => {
-                if (!report.report_date) return;
-                handleHistoryReportOpen({
-                  ...report,
-                  report_date: report.report_date,
-                  content: report.content ?? null,
-                  follower_convert: report.follower_convert ?? null,
-                });
-              }}
-            />
-          )}
-          </DialogBody>
+      {/* 历史手稿纪事列表弹窗（内嵌右侧极速微调抽屉） */}
+      <Dialog
+        open={isHistoryOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (viewingReport) {
+              setViewingReport(null);
+            } else {
+              setIsHistoryOpen(false);
+            }
+          } else {
+            setIsHistoryOpen(true);
+          }
+        }}
+      >
+        <DialogContent className="fixed inset-0 m-auto z-50 flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] sm:max-w-4xl md:max-w-[1020px] rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0">
+          <div className="flex flex-col flex-1 min-h-0 p-5 sm:p-6">
+            <DialogHeader className="shrink-0 pb-3">
+              <DialogTitle className="text-[16px] sm:text-[17px] font-semibold text-[#1C1917]">
+                历史手稿纪事
+              </DialogTitle>
+            </DialogHeader>
+
+            <DialogBody className="flex-1 min-h-0 overflow-y-auto">
+              {activityError ? (
+                <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
+              ) : isActivityLoading ? (
+                <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
+                  加载历史记录...
+                </div>
+              ) : !historyReports || historyReports.length === 0 ? (
+                <EmptyState
+                  title="历史手稿静待立卷"
+                  description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
+                />
+              ) : (
+                <HistoryList
+                  history={historyReports.map((report) => ({
+                    ...report,
+                    content: report.content ?? null,
+                    follower_convert: report.follower_convert ?? null,
+                  }))}
+                  accountDisplayNameMap={accountDisplayNameMap}
+                  onReportOpen={(report) => {
+                    if (!report.report_date) return;
+                    setViewingReport({
+                      ...report,
+                      report_date: report.report_date,
+                      content: report.content ?? null,
+                      follower_convert: report.follower_convert ?? null,
+                    });
+                  }}
+                />
+              )}
+            </DialogBody>
+          </div>
+
+          {/* 弹窗内抽屉 (In-Dialog Slide-Over · 严密贴合右侧内壁圆角) */}
+          <AnimatePresence>
+            {viewingReport ? (
+              <>
+                {/* 弹窗内左侧轻度遮罩 */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => setViewingReport(null)}
+                  className="absolute inset-0 z-20 bg-black/10 backdrop-blur-[0.5px] rounded-2xl"
+                />
+
+                {/* 抽屉面板：宽度设为 480px~500px，让 3 列指标自然舒展 */}
+                <motion.div
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{ type: "spring", damping: 28, stiffness: 320 }}
+                  className="absolute inset-y-0 right-0 z-30 flex w-full sm:w-[480px] md:w-[500px] flex-col bg-white border-l border-[#ECE7DE] rounded-r-2xl shadow-2xl overflow-hidden"
+                >
+                  <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#ECE7DE] shrink-0 bg-white">
+                    <div className="flex items-center gap-2">
+                      <span className="size-1.5 rounded-full bg-[#D97757]" />
+                      <h3 className="text-[14.5px] font-semibold text-[#1C1917]">
+                        修改历史手稿 · {viewingReport.report_date}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setViewingReport(null)}
+                      className="rounded-lg p-1 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524] transition-colors cursor-pointer"
+                    >
+                      <X className="size-4" />
+                      <span className="sr-only">收起抽屉</span>
+                    </button>
+                  </div>
+
+                  <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                    <HistoryReportEditForm
+                      key={`history-drawer-${viewingReport.id}-${viewingReport.uploaded_at ?? viewingReport.report_date}`}
+                      report={viewingReport as HistoryReportEditData}
+                      accountDisplayName={accountDisplayNameMap[viewingReport.account_id] ?? viewingReport.account_id}
+                      onClose={() => setViewingReport(null)}
+                      onSaved={() => {
+                        setViewingReport(null);
+                        void loadActivity();
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              </>
+            ) : null}
+          </AnimatePresence>
         </DialogContent>
       </Dialog>
 
