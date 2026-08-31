@@ -12,7 +12,6 @@ export interface OperatorAccount {
   reportCount: number;
   totalPlay: number;
   totalFollowerConvert: number;
-  relation: "self" | "service";
 }
 
 export interface OperatorRow {
@@ -25,8 +24,6 @@ export interface OperatorRow {
   hitCount: number;
   momChange: number | null;
   accountCount: number;
-  selfOperatedAccountCount: number;
-  serviceAccountCount: number;
   operatedProfileCount: number;
   accounts: OperatorAccount[];
 }

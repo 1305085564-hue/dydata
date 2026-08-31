@@ -118,7 +118,7 @@ export function OperatorTab({
                     <HelpCircle className="size-3 text-[#78716C]" />
                   </TooltipTrigger>
                   <TooltipContent className="text-[12px]">
-                    同时统计自己孵化的自营账号与为别人负责的服务账号
+                    只统计该运营为别人孵化、负责的账号
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -236,10 +236,7 @@ export function OperatorTab({
                         </button>
                       </div>
                       <div className="text-right tabular-nums text-[#292524]">
-                        <span className="block">{op.accountCount}</span>
-                        <span className="block text-[10px] text-[#78716C] font-normal whitespace-nowrap">
-                          服务 {op.serviceAccountCount} · 自营 {op.selfOperatedAccountCount}
-                        </span>
+                        {op.accountCount}
                       </div>
                       <div className="text-right tabular-nums font-medium text-[#1C1917]">
                         {op.reportCount}
@@ -295,9 +292,6 @@ export function OperatorTab({
                               <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
                                 账号名
                               </th>
-                              <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                                关系
-                              </th>
                               <th className="py-2.5 px-3.5 text-[11px] font-medium uppercase tracking-wider text-[#78716C] text-right">
                                 条数
                               </th>
@@ -320,11 +314,6 @@ export function OperatorTab({
                                 </td>
                                 <td className="py-2.5 px-3.5 text-[#292524]">
                                   {acc.accountName}
-                                </td>
-                                <td className="py-2.5 px-3.5 text-[#292524]">
-                                  <span className="rounded-full border border-[#E5E0D6] bg-[#F5F3EE] px-2 py-0.5 text-[11px] text-[#57534E]">
-                                    {acc.relation === "self" ? "自营孵化" : "服务账号"}
-                                  </span>
                                 </td>
                                 <td className="py-2.5 px-3.5 text-right tabular-nums text-[#1C1917] font-semibold">
                                   {acc.reportCount}

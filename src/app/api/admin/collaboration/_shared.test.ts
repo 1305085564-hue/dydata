@@ -127,7 +127,7 @@ test("operators 播放不足3万或历史样本不足3条时不计爆款", () =>
   assert.equal(insufficientSamples[0]?.hitCount, 0);
 });
 
-test("operators 保留纯自运营，并明确标记为自营账号", () => {
+test("operators 纯自营属于达人，不进入运营岗", () => {
   const ownAccount: CollaborationAccount = { id: "account-op", name: "运营自己号", profile_id: "operator-1" };
   const rows = [
     report({ id: "self-1", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
@@ -136,14 +136,10 @@ test("operators 保留纯自运营，并明确标记为自营账号", () => {
 
   const result = buildOperators(rows, [], profiles, [ownAccount]);
 
-  assert.equal(result.length, 1);
-  assert.equal(result[0]?.reportCount, 2);
-  assert.equal(result[0]?.selfOperatedAccountCount, 1);
-  assert.equal(result[0]?.serviceAccountCount, 0);
-  assert.equal(result[0]?.accounts[0]?.relation, "self");
+  assert.deepEqual(result, []);
 });
 
-test("operators 混合归属时同时统计自营与服务账号，并分开计数", () => {
+test("operators 混合归属时只统计孵化别人的账号", () => {
   const ownAccount: CollaborationAccount = { id: "account-op", name: "运营自己号", profile_id: "operator-1" };
   const rows = [
     report({ id: "self-1", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
@@ -154,15 +150,10 @@ test("operators 混合归属时同时统计自营与服务账号，并分开计�
   const result = buildOperators(rows, [], profiles, [...accounts, ownAccount]);
 
   assert.equal(result.length, 1);
-  assert.equal(result[0]?.reportCount, 3);
-  assert.equal(result[0]?.totalPlay, 1000100);
-  assert.equal(result[0]?.accountCount, 2);
-  assert.equal(result[0]?.selfOperatedAccountCount, 1);
-  assert.equal(result[0]?.serviceAccountCount, 1);
-  assert.deepEqual(
-    result[0]?.accounts.map((account) => [account.accountId, account.relation]).sort(),
-    [["account-1", "service"], ["account-op", "self"]],
-  );
+  assert.equal(result[0]?.reportCount, 1);
+  assert.equal(result[0]?.totalPlay, 100);
+  assert.equal(result[0]?.accountCount, 1);
+  assert.deepEqual(result[0]?.accounts.map((account) => account.accountId), ["account-1"]);
 });
 
 test("operators 账号未绑定主人时按别人的账号计入", () => {
@@ -175,7 +166,7 @@ test("operators 账号未绑定主人时按别人的账号计入", () => {
   assert.equal(result[0]?.accountCount, 1);
 });
 
-test("staff 过滤自写自剪：只统计给别人的账号干的活", () => {
+test("writer 至少帮别人写过一篇才入选，入选后统计本人当月全部文案", () => {
   const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
   const rows = [
     report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1" }),
@@ -185,8 +176,32 @@ test("staff 过滤自写自剪：只统计给别人的账号干的活", () => {
   const result = buildStaff(rows, "writer", profiles, [...accounts, writerOwn]);
 
   assert.equal(result.length, 1);
+  assert.equal(result[0]?.reportCount, 2);
+  assert.deepEqual(result[0]?.involvedAccounts.map((account) => account.accountId).sort(), ["account-1", "account-w"]);
+  assert.deepEqual(result[0]?.works.map((work) => work.reportId).sort(), ["w-other", "w-self"]);
+});
+
+test("writer 只给自己账号写文案时不进入文案岗", () => {
+  const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
+  const rows = [
+    report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1" }),
+  ];
+
+  assert.deepEqual(buildStaff(rows, "writer", profiles, [writerOwn]), []);
+});
+
+test("editor 只统计帮别人剪辑的作品", () => {
+  const editorOwn: CollaborationAccount = { id: "account-e", name: "剪辑自己号", profile_id: "writer-1" };
+  const rows = [
+    report({ id: "e-self", account_id: "account-e", video_editor_user_id: "writer-1" }),
+    report({ id: "e-other", video_editor_user_id: "writer-1" }),
+  ];
+
+  const result = buildStaff(rows, "editor", profiles, [...accounts, editorOwn]);
+
+  assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 1);
-  assert.equal(result[0]?.involvedAccounts[0]?.accountId, "account-1");
+  assert.deepEqual(result[0]?.works.map((work) => work.reportId), ["e-other"]);
 });
 
 test("staff 在空归属月份返回空列表，并返回全部负责账号", () => {

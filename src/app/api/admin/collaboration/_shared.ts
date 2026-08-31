@@ -195,10 +195,14 @@ export function buildOperators(
   profiles: CollaborationProfile[],
   accounts: CollaborationAccount[],
 ) {
-  const current = fromStatsStart(currentRows).filter((row) => row.operator_user_id);
-  const previous = fromStatsStart(previousRows).filter((row) => row.operator_user_id);
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
+  const current = fromStatsStart(currentRows).filter(
+    (row) => row.operator_user_id && isOtherAccount(accountsById.get(row.account_id), row.operator_user_id),
+  );
+  const previous = fromStatsStart(previousRows).filter(
+    (row) => row.operator_user_id && isOtherAccount(accountsById.get(row.account_id), row.operator_user_id),
+  );
   const currentByOperator = new Map<string, CollaborationReport[]>();
   const previousByOperator = new Map<string, CollaborationReport[]>();
 
@@ -238,7 +242,6 @@ export function buildOperators(
             reportCount: rows.length,
             totalPlay: rows.reduce((sum, row) => sum + asCount(row.play_count), 0),
             totalFollowerConvert: rows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
-            relation: account?.profile_id === userId ? "self" as const : "service" as const,
           };
         })
         .sort((a, b) => b.totalPlay - a.totalPlay || a.accountName.localeCompare(b.accountName, "zh-CN"));
@@ -253,8 +256,6 @@ export function buildOperators(
         hitCount: countHits(operatorRows),
         momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
         accountCount: accountIds.length,
-        selfOperatedAccountCount: accountRows.filter((account) => account.relation === "self").length,
-        serviceAccountCount: accountRows.filter((account) => account.relation === "service").length,
         operatedProfileCount: ownerProfileIds.length,
         accounts: accountRows,
       };
@@ -272,11 +273,17 @@ export function buildStaff(
   const names = profileNameMap(profiles);
   const accountsById = accountMap(accounts);
   const byStaff = new Map<string, CollaborationReport[]>();
+  const qualifiedWriterIds = new Set(
+    scopedRows
+      .filter((row) => isOtherAccount(accountsById.get(row.account_id), roleUserId(row, role)!))
+      .map((row) => roleUserId(row, role)!),
+  );
 
   for (const row of scopedRows) {
     const userId = roleUserId(row, role)!;
-    // 服务岗口径：只统计给别人的账号干的活，达人自写/自剪自己账号不进列表（达人 tab 已覆盖）
-    if (!isOtherAccount(accountsById.get(row.account_id), userId)) continue;
+    if (role === "editor" && !isOtherAccount(accountsById.get(row.account_id), userId)) continue;
+    // 文案至少有一篇服务别人才入岗；入岗后统计本人当月署名的全部文案（含自己账号）。
+    if (role === "writer" && !qualifiedWriterIds.has(userId)) continue;
     const bucket = byStaff.get(userId) ?? [];
     bucket.push(row);
     byStaff.set(userId, bucket);
