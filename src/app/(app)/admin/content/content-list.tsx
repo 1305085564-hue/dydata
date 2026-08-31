@@ -328,7 +328,7 @@ export function ContentList({
               setTopicStatusFilter("all");
               setCurrentPage(1);
             }}
-            className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "all"
                 ? "bg-white text-[#1C1917] font-semibold shadow-2xs"
                 : "text-[#78716C] hover:text-[#1C1917]"
@@ -342,7 +342,7 @@ export function ContentList({
               setTopicStatusFilter("in_library");
               setCurrentPage(1);
             }}
-            className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "in_library"
                 ? "bg-white text-[#6FAA7D] font-semibold shadow-2xs"
                 : "text-[#78716C] hover:text-[#1C1917]"
@@ -356,7 +356,7 @@ export function ContentList({
               setTopicStatusFilter("removed");
               setCurrentPage(1);
             }}
-            className={`px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               topicStatusFilter === "removed"
                 ? "bg-white text-[#C9604D] font-semibold shadow-2xs"
                 : "text-[#78716C] hover:text-[#1C1917]"
@@ -371,7 +371,7 @@ export function ContentList({
           <button
             type="button"
             onClick={() => setViewMode("interaction")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               viewMode === "interaction"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -382,7 +382,7 @@ export function ContentList({
           <button
             type="button"
             onClick={() => setViewMode("completion")}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+            className={`px-2.5 h-7 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer ${
               viewMode === "completion"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -677,7 +677,7 @@ export function ContentList({
                           e.stopPropagation();
                           onSelectVideoId(video.id);
                         }}
-                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.985] active:duration-75 shadow-2xs cursor-pointer"
+                        className="inline-flex items-center justify-center rounded px-2 py-0.5 text-[11px] font-medium text-[#292524] hover:text-white hover:bg-[#D97757] transition-all active:scale-[0.99] active:duration-120 shadow-2xs cursor-pointer"
                       >
                         分析 →
                       </button>

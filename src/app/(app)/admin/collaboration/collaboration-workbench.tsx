@@ -158,7 +158,7 @@ export function CollaborationWorkbench({
                 type="button"
                 onClick={handlePrevMonth}
                 title="上一月"
-                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -180,7 +180,7 @@ export function CollaborationWorkbench({
                 type="button"
                 onClick={handleNextMonth}
                 title="下一月"
-                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                className="size-7 rounded flex items-center justify-center text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -196,8 +196,12 @@ export function CollaborationWorkbench({
         </div>
 
         {loadFailed && (
-          <div className="rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/5 px-4 py-3 text-[13px] text-[#C0685C]">
-            岗位数据加载失败，当前展示为空；请刷新重试。
+          <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
+              <span className="size-1.5 rounded-full bg-[#C0685C]" />
+            </span>
+            <span className="font-medium text-[#292524]">岗位数据加载稍有阻滞</span>
+            <span>· 当前展示为空，请刷新重试</span>
           </div>
         )}
 
@@ -206,7 +210,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("talents")}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "talents"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -218,7 +222,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("operators")}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "operators"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -230,7 +234,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("writers")}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "writers"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
@@ -242,7 +246,7 @@ export function CollaborationWorkbench({
           <button
             type="button"
             onClick={() => handleTabChange("editors")}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 text-[12.5px] sm:text-[13px] font-medium rounded-lg transition-colors duration-100 cursor-pointer ${
+            className={`h-7 px-3 sm:px-3.5 text-[12.5px] sm:text-[13px] font-medium rounded-md transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               tab === "editors"
                 ? "bg-[#D97757]/10 text-[#D97757] font-semibold"
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"

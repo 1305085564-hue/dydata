@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Alert } from "@/components/ui/alert";
 import { Clock } from "lucide-react";
 
 interface StaleBannerProps {
@@ -13,18 +14,21 @@ function 格式化为月日(date: string) {
 
 export function StaleBanner({ lastReportDate, daysSince }: StaleBannerProps) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-[#D99E55]/25 bg-[#D99E55]/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="flex items-center gap-2 text-[13px] text-[#8A6A2F]">
-        <Clock className="h-4 w-4 shrink-0 stroke-[1.5]" />
+    <Alert
+      variant="warning"
+      icon={<Clock className="h-4 w-4 shrink-0 stroke-[1.5] text-[#B98A54]" />}
+      className="justify-between"
+    >
+      <span className="text-[13px] text-[#78716C]">
         数据停在 {格式化为月日(lastReportDate)} · 已停 {daysSince} 天，下面的分析停更在那一天。
-      </p>
+      </span>
       <Link
         href="/dashboard"
-        className="inline-flex w-fit items-center gap-1 text-[13px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
+        className="inline-flex w-fit shrink-0 items-center gap-1 text-[13px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
       >
-        去同步今日数据
+        去同步今日数据 →
       </Link>
-    </div>
+    </Alert>
   );
 }
 

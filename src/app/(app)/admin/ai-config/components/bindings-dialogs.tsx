@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Alert } from "@/components/ui/alert";
 
 export function BindingDialog({
   control,
@@ -64,17 +65,21 @@ export function BindingDialog({
         <DialogHeader>
           <DialogTitle>设置{control?.label ?? "业务功能"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-5 py-3">
+        <div className="space-y-4 py-3">
           <p className="text-[13px] leading-5 text-[#78716C]">{control?.description}</p>
           {control?.key === "ocr_screenshot" && (
-            <div className="rounded-lg border border-[#D99E55]/35 bg-[#FFF8ED] px-3 py-2.5 text-[12px] leading-5 text-[#8A5A22]">
-              「看图回退」通道必须绑定支持图片输入的视觉模型；如果模型只支持文本，切回视觉通道后首页上传会识别失败。
-            </div>
+            <Alert variant="warning">
+              <span className="text-[12.5px] leading-relaxed text-[#292524]">
+                「看图回退」通道必须绑定支持图片输入的视觉模型；如果模型只支持文本，切回视觉通道后首页上传会识别失败。
+              </span>
+            </Alert>
           )}
           {control?.key === "ocr_screenshot_structure" && (
-            <div className="rounded-lg border border-[#43718E]/30 bg-[#F0F5F8] px-3 py-2.5 text-[12px] leading-5 text-[#2E5876]">
-              「文字结构化」只接收 OCR 提取的文字行，绑定文本模型即可，无需图片能力。
-            </div>
+            <Alert variant="info">
+              <span className="text-[12.5px] leading-relaxed text-[#78716C]">
+                「文字结构化」只接收 OCR 提取的文字行，绑定文本模型即可，无需图片能力。
+              </span>
+            </Alert>
           )}
           {control?.key === "ocr_screenshot" && (
             <div className="space-y-2">

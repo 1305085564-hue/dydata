@@ -519,38 +519,37 @@ export function ContentDiagnosisWorkbench({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex flex-col h-full bg-[#FBF9F5]/70 rounded-2xl border border-[#E5E0D6] overflow-hidden"
+      className="flex flex-col h-full bg-white rounded-2xl shadow-card-ring overflow-hidden"
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E0D6] bg-white px-4 py-3 sm:px-6">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ECE7DE] bg-white px-4 py-3 sm:px-6">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button
             variant="ghost"
-            size="sm"
+            size="m"
             onClick={onClose}
-            className="group active:scale-[0.985] active:duration-75 rounded-xl hover:bg-[#F5F3EE] gap-1 transition-transform text-[12px] text-[#292524] font-medium"
+            className="group gap-1 text-[12.5px] text-[#292524] font-medium"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
             <span>返回列表</span>
           </Button>
 
-          <div className="h-4 w-px bg-[#E5E0D6] hidden sm:block" />
+          <div className="h-4 w-px bg-[#ECE7DE] hidden sm:block" />
 
           {/* 队列展开/收起开关 */}
           <Button
-            size="sm"
+            variant="secondary"
+            size="m"
             onClick={() => setIsQueueOpen((prev) => !prev)}
             aria-pressed={isQueueOpen}
-            className={`h-8 rounded-lg text-[12px] font-medium transition-all gap-1.5 ${
+            className={`gap-1.5 text-[12px] font-medium transition-all ${
               isQueueOpen
-                ? "bg-[#1C1917] text-white hover:bg-[#292524] shadow-2xs"
-                : "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] hover:text-[#1C1917]"
+                ? "bg-[#ECE7DE] text-[#1C1917] font-semibold"
+                : "bg-[#F5F3EE] text-[#292524]"
             }`}
           >
             <Layers className="size-3.5" />
             <span>{isQueueOpen ? "收起队列" : "展开队列"}</span>
-            <span
-              className={`text-[11px] tabular-nums font-normal ${isQueueOpen ? "text-[#E5E0D6]" : "text-[#78716C]"}`}
-            >
+            <span className="text-[11px] tabular-nums font-normal text-[#78716C]">
               ({reviewQueue.length})
             </span>
           </Button>
@@ -933,7 +932,7 @@ export function ContentDiagnosisWorkbench({
             {/* 一、归因诊断与多参照系对比 */}
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#ECE7DE] pb-3">
-                <h2 className="flex items-center gap-1.5 text-[12px] font-semibold tracking-[0.08em] text-[#1C1917]">
+                <h2 className="flex items-center gap-1.5 text-[12px] font-medium tracking-[0.08em] text-[#1C1917]">
                   <span className="size-2 rounded-full bg-[#43718E]" />
                   一、归因诊断与多参照系对比
                 </h2>
@@ -1486,10 +1485,10 @@ export function ContentDiagnosisWorkbench({
                   分析结果只供管理端定位问题与复核证据。
                 </span>
                 <Button
-                  size="sm"
+                  size="m"
                   onClick={handleGenerateAnalysis}
                   disabled={isGeneratingAnalysis}
-                  className="h-8 rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-4 gap-1.5 shadow-2xs transition-all active:scale-[0.985] active:duration-75"
+                  className="bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[12px] px-3.5 gap-1.5 shadow-sm"
                 >
                   <Sparkles className="size-3.5" />
                   {isGeneratingAnalysis ? "分析中..." : "生成内部诊断"}
@@ -1586,16 +1585,16 @@ function MultiRefMetricCard({
           : new Intl.NumberFormat("zh-CN").format(Math.round(currentVal));
 
   return (
-    <div className="rounded-xl border border-[#E5E0D6] bg-white p-3.5 shadow-2xs space-y-2.5 transition-all hover:border-[#E5E0D6] hover:shadow-xs">
+    <div className="rounded-xl bg-white p-3.5 shadow-card-ring space-y-2.5 transition-all">
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-semibold text-[#1C1917] tracking-tight">
+        <span className="text-[12px] font-medium text-[#1C1917] tracking-tight">
           {label}
         </span>
         {activeLocateFinding && onLocate && (
           <button
             type="button"
             onClick={() => onLocate(activeLocateFinding!)}
-            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-[#292524] bg-[#F5F3EE] hover:bg-[#E5E0D6]/80 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer"
+            className="inline-flex items-center gap-0.5 text-[10.5px] font-medium text-[#292524] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-1.5 py-0.5 rounded-md transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             <span>
               {activeLocateFinding.locate.segment_hint === "opening"

@@ -73,7 +73,7 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
 
   return (
     <Button
-      className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.985] active:duration-75 shadow-sm hover:shadow"
+      className="w-full h-10 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow"
       disabled={pending || disabled}
       type="submit"
     >

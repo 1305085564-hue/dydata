@@ -28,7 +28,7 @@ export default function HomePage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D97757] shadow-xs">
               <Zap className="size-4 fill-white text-white" />
             </div>
-            <span className="font-serif text-lg font-semibold tracking-tight text-[#1C1917]">
+            <span className="font-serif text-lg font-[580] tracking-tight text-[#1C1917]">
               DYData
             </span>
             <span className="rounded bg-[#F5F3EE] px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-[#78716C]">
@@ -60,7 +60,7 @@ export default function HomePage() {
                 <ShieldCheck className="size-3.5 text-[#D97757]" />
                 <span>专为抖音机构与创作者团队打造</span>
               </div>
-              <h1 className="font-serif text-3xl font-semibold leading-[1.25] tracking-tighter text-[#1C1917] sm:text-4xl lg:text-[2.6rem] text-balance">
+              <h1 className="font-serif text-3xl font-[580] leading-[1.25] tracking-tighter text-[#1C1917] sm:text-4xl lg:text-[2.6rem] text-balance">
                 抖音内容团队的
                 <br className="hidden sm:inline" />
                 数据履约与异常复盘工作台
@@ -109,7 +109,7 @@ export default function HomePage() {
 
           {/* Right — Editorial Preview Card */}
           <div className="relative md:col-span-6 lg:col-span-5">
-            <div className="overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-sm">
+            <div className="overflow-hidden rounded-2xl bg-white p-6 shadow-card-ring">
               {/* Card Header */}
               <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-4">
                 <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export default function HomePage() {
                 <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/60 p-4">
                   <div className="flex items-center justify-between text-[12px] text-[#78716C]">
                     <span>作品 #DY-20260828-01</span>
-                    <span className="font-mono tabular-nums text-[#43718E]">已关联选题</span>
+                    <span className="tabular-nums text-[#43718E]">已关联选题</span>
                   </div>
                   <h4 className="mt-1.5 text-[14px] font-medium text-[#1C1917]">
                     《职场沟通降维指南：如何用三句话说清重点》
@@ -172,7 +172,7 @@ export default function HomePage() {
         {/* Core Pillars Section */}
         <section className="border-t border-[#ECE7DE] py-16 lg:py-20">
           <div className="mb-12 space-y-2 text-center">
-            <h2 className="font-serif text-2xl font-semibold tracking-tight text-[#1C1917]">
+            <h2 className="font-serif text-2xl font-[580] tracking-tight text-[#1C1917]">
               三大核心断点，逐一兑现价值
             </h2>
             <p className="text-[13px] text-[#78716C]">

@@ -638,7 +638,7 @@ export default function BindingsClient() {
                       <button
                         type="button"
                         aria-label="全局兜底模型"
-                        className="h-7.5 min-w-[210px] max-w-[280px] rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs"
+                        className="h-7 min-w-[210px] max-w-[280px] rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2.5 text-[12px] font-mono text-[#1C1917] transition-colors cursor-pointer flex items-center justify-between gap-2 shadow-2xs active:scale-[0.99] active:duration-120"
                       >
                         <span className="truncate">
                           {defaultModelId
@@ -868,7 +868,7 @@ export default function BindingsClient() {
                                 control.providerKeyModelId,
                             });
                           }}
-                          className="h-7.5 rounded-md border border-[#E5E0D6] bg-[#F5F3EE]/80 hover:bg-[#F5F3EE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
+                          className="h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-2 text-[12px] font-mono text-[#1C1917] focus:ring-1 focus:ring-[#D97757]/30 transition-colors cursor-pointer min-w-[200px] max-w-[280px] truncate"
                         >
                           <option value="">
                             全局默认 ({defaultBinding?.model_id || "全量顺位"})

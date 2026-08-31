@@ -66,7 +66,7 @@ function ShellHeader({
       <div className="space-y-2">
         {eyebrow ? <div className="app-shell-kicker">{eyebrow}</div> : null}
         <div className="space-y-2">
-          <h1 className="app-shell-title app-shell-heading">{title}</h1>
+          <h1 className="app-shell-title app-shell-heading font-serif text-xl sm:text-2xl font-[580] tracking-tight text-[#1C1917]">{title}</h1>
           {description ? <p className="app-shell-subtitle">{description}</p> : null}
         </div>
       </div>

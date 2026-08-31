@@ -166,7 +166,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F5F3EE] text-[#78716C] mb-5">
             <Sparkles className="h-8 w-8 text-[#D97757]" />
           </div>
-          <h2 className="text-lg font-semibold text-[#1C1917] leading-[1.4]">
+          <h2 className="text-lg font-[580] text-[#1C1917] leading-[1.4]">
             开启内容成长体检
           </h2>
           <p className="mt-3 text-[13px] text-[#78716C] leading-[1.6]">
@@ -264,7 +264,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
             <CompassConstellationIllustration size={72} />
           </div>
           <div>
-            <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">创作成长体检</h1>
+            <h1 className="font-serif text-2xl font-[580] text-[#1C1917] tracking-tight">创作成长体检</h1>
             <p className="mt-1 text-[13px] text-[#78716C]">
               分析主体：<span className="font-medium text-[#1C1917]">{identity.profileName}</span> · 关联账号 {identity.accountCount} 个 · 累计沉淀 {stage.lifetimeReportCount} 份日报
             </p>
@@ -310,7 +310,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
               <span className="text-[12px] font-medium text-[#78716C] uppercase tracking-widest">
                 VERDICT · 首屏体检焦点
               </span>
-              <h2 className="font-serif text-lg sm:text-xl font-semibold text-[#1C1917] leading-[1.4] text-balance">
+              <h2 className="font-serif text-lg sm:text-xl font-[580] tracking-tight text-[#1C1917] leading-[1.4] text-balance">
                 你现在最该补的是「<span className="text-[#D97757]">{verdict.weakestDimension}</span>」
               </h2>
               {phase === "observation" ? (
@@ -358,7 +358,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
           <span className="text-[12px] font-medium uppercase tracking-widest text-[#78716C]">
             体检暂停
           </span>
-          <h2 className="mt-2 text-lg font-semibold text-[#1C1917] leading-[1.4]">
+          <h2 className="mt-2 text-lg font-[580] text-[#1C1917] leading-[1.4]">
             数据停在 {stage.lastReportDate ? 格式化为月日(stage.lastReportDate) : "很久以前"}，近 30 天没有新日报
           </h2>
           <p className="mt-2 text-[13px] text-[#78716C] leading-[1.6]">
@@ -500,7 +500,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1 text-[13px] text-[#292524]">
                     <div>对标同事：<span className="font-medium text-[#1C1917]">{benchmark.peer.name}</span></div>
-                    <div>指标数据：<span className="font-medium text-[#D97757]">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
+                    <div>指标数据：<span className="font-medium text-[#D97757] tabular-nums">{verdict ? formatMetricValue(verdict.weakestDimension, benchmark.peer.dimensionValue) : benchmark.peer.dimensionValue}</span></div>
                   </div>
 
                   {benchmark.peer.scriptSnippet ? (
@@ -516,7 +516,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                         {ownScriptSnippet ? (
                           <div className="space-y-1.5">
                             <span className="text-[12px] text-[#78716C]">你的写法 · 最近一篇（{格式化为月日(ownScriptSnippet.reportDate)}）</span>
-                            <blockquote className="relative rounded-r-lg border-l-2 border-l-[#E5E0D6] bg-[#F5F3EE] p-3.5 text-[12px] text-[#292524] leading-[1.6] whitespace-pre-wrap">
+                            <blockquote className="relative rounded-r-lg border-l-2 border-l-[#ECE7DE] bg-[#F5F3EE] p-3.5 text-[12px] text-[#292524] leading-[1.6] whitespace-pre-wrap">
                               “{ownScriptSnippet.snippet}”
                             </blockquote>
                           </div>
@@ -534,7 +534,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
                   </p>
                   <p className="mt-1.5 text-[12px] text-[#78716C]">
                     已为您兜底拉取团队在此维度上的均值基准：
-                    <span className="font-semibold text-[#1C1917]">
+                    <span className="font-semibold text-[#1C1917] tabular-nums">
                       {verdict && benchmark.teamAvg !== undefined ? formatMetricValue(verdict.weakestDimension, benchmark.teamAvg) : benchmark.teamAvg}
                     </span>，建议先围绕自己历史最好内容进行优化。
                   </p>

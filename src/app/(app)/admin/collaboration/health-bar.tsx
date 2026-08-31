@@ -54,11 +54,11 @@ export function HealthBar({ summary }: HealthBarProps) {
 
       {/* 极轻明细弹窗 */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent showCloseButton={false} className="sm:max-w-md p-5 rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog">
+        <DialogContent showCloseButton={false} className="sm:max-w-md p-5 rounded-2xl bg-white shadow-claude-dialog">
           <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b border-[#ECE7DE]">
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 text-[#D99E55]" />
-              <DialogTitle className="text-base font-semibold text-[#1C1917]">
+              <DialogTitle className="text-base font-medium text-[#1C1917]">
                 岗位归属明细
               </DialogTitle>
             </div>

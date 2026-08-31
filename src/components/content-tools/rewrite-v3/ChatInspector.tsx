@@ -86,8 +86,9 @@ export function ChatInspector({
 
         {/* 参数 / 技能设置入口 */}
         <button
+          type="button"
           onClick={onToggleSettings}
-          className="inline-flex h-11 sm:h-7 min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-2.5 text-[12px] font-medium text-[#292524] transition-all hover:bg-[#FBF9F5] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 cursor-pointer"
+          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-2.5 text-[12px] font-medium text-[#292524] transition-all hover:bg-[#ECE7DE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
           title="打开参数与技能设置"
         >
           <SlidersHorizontal className="h-3 w-3 text-[#78716C]" />
@@ -199,7 +200,7 @@ export function ChatInspector({
               onClick={handleSendAction}
               disabled={!isSending && !canSend}
               className={cn(
-                'flex h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-[0.985] active:duration-75 cursor-pointer',
+                'flex h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 shrink-0 items-center justify-center rounded-lg transition-all duration-200 active:scale-[0.99] active:duration-120 cursor-pointer',
                 isSending
                   ? 'bg-[#292524] text-white hover:bg-[#1C1917]'
                   : canSend

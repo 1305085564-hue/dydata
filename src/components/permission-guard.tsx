@@ -57,7 +57,7 @@ export function PermissionGuard({
           <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F5F3EE] px-3 py-1 text-[12px] font-medium text-[#292524]">
             <span>需访问权限</span>
           </div>
-          <h2 className="text-lg font-semibold tracking-tight text-[#1C1917]">
+          <h2 className="text-lg font-[580] tracking-tight text-[#1C1917]">
             还没有「{moduleTitle}」权限
           </h2>
           <p className="text-[13px] leading-relaxed text-[#292524]">
@@ -71,7 +71,7 @@ export function PermissionGuard({
             type="button"
             onClick={handlePermissionApply}
             disabled={isApplying}
-            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-[0.985] active:duration-75 transition-all disabled:opacity-70"
+            className="h-10 rounded-xl bg-[#D97757] px-5 text-[13px] font-medium text-white shadow-md shadow-[#D97757]/20 hover:bg-[#C96442] active:scale-[0.99] active:duration-120 transition-all disabled:opacity-70"
           >
             <Send className="mr-1.5 size-4 stroke-[1.8]" />
             {isApplying ? "正在发送…" : "申请查看权限"}

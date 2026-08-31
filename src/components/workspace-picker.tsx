@@ -80,7 +80,7 @@ export function WorkspacePicker({ accounts, selectedAccountId }: WorkspacePicker
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
           "flex items-center justify-between gap-2.5 rounded-xl px-2.5 py-1.5 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
-          "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.985] active:duration-75",
+          "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.99] active:duration-120",
           isOpen && "text-[#1C1917] bg-[#F5F3EE]/80 font-semibold"
         )}
       >

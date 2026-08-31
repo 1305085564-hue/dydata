@@ -911,10 +911,10 @@ export function VideoList({
         </div>
       ) : null}
 
-      {/* 表格容器（平铺极简微边框，消除额外卡片阴影） */}
+      {/* 表格容器 */}
       <div
         ref={tableContainerRef}
-        className="flex-1 w-full overflow-x-auto rounded-xl border border-[#ECE7DE]"
+        className="flex-1 w-full overflow-x-auto rounded-xl bg-white shadow-card-ring"
         style={{ maxHeight: "calc(100dvh - 260px)" }}
       >
         <table className="w-full text-left border-collapse table-auto min-w-full">
@@ -1275,7 +1275,7 @@ export function VideoList({
       {/* 永久删除确认弹窗 */}
       {confirmPurgeVideoId && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1C1917]/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
             <h3 className="text-base font-semibold text-[#1C1917]">
               永久删除确认
             </h3>

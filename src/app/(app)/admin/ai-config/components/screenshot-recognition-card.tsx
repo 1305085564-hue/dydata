@@ -102,9 +102,9 @@ export function ScreenshotRecognitionCard({
           {archived ? (
             <Button
               variant="ghost"
-              size="sm"
+              size="s"
               aria-label="恢复截图识别"
-              className="h-7.5 px-2.5 text-[12px] text-[#292524] hover:bg-[#F5F3EE] cursor-pointer"
+              className="h-7 px-2.5 text-[12px] text-[#292524] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 cursor-pointer"
               onClick={() => restoreFeature("ocr_screenshot")}
             >
               <ArchiveRestore className="size-3.5 mr-1 text-[#78716C]" />
@@ -113,12 +113,12 @@ export function ScreenshotRecognitionCard({
           ) : (
             <>
               <Button
-                size="sm"
+                size="s"
                 className={cn(
-                  "h-7.5 px-3 text-[12px] transition-all cursor-pointer",
+                  "h-7 px-3 text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
                   dirty
-                    ? "bg-[#D97757] hover:bg-[#C86646] text-white shadow-2xs font-medium border-transparent"
-                    : "bg-white border border-[#E5E0D6] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-50",
+                    ? "bg-[#D97757] hover:bg-[#C46A4D] text-white shadow-2xs font-medium border-transparent"
+                    : "bg-white border border-[#ECE7DE] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-50",
                 )}
                 disabled={!dirty || saving}
                 onClick={handleSave}
@@ -127,9 +127,9 @@ export function ScreenshotRecognitionCard({
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="s"
                 aria-label="停止使用截图识别"
-                className="h-7.5 px-2 text-[12px] text-[#78716C] hover:text-[#C9604D] hover:bg-[#F5F3EE]/60 transition-colors cursor-pointer"
+                className="h-7 px-2 text-[12px] text-[#78716C] hover:text-[#C0685C] hover:bg-[#F5F3EE]/60 transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                 onClick={() => archiveFeature("ocr_screenshot")}
               >
                 <Archive className="size-3.5 mr-1 opacity-70" />
@@ -152,7 +152,7 @@ export function ScreenshotRecognitionCard({
               : "单视觉大模型（Vision）直接处理原图，无需第三方 OCR 接口"}
           </div>
         </div>
-        <div className="inline-flex p-0.5 rounded-lg bg-[#F5F3EE] border border-[#E5E0D6] shrink-0 select-none">
+        <div className="inline-flex p-0.5 rounded-lg bg-[#F5F3EE] border border-[#ECE7DE] shrink-0 select-none">
           {(
             [
               { value: "baidu", label: "百度 OCR + 归位" },
@@ -167,9 +167,9 @@ export function ScreenshotRecognitionCard({
                 aria-pressed={active}
                 onClick={() => setChannelDraft(option.value)}
                 className={cn(
-                  "h-7.5 px-3.5 rounded-md text-[12px] transition-all cursor-pointer",
+                  "h-7 px-3 rounded-md text-[12px] transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
                   active
-                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#E5E0D6]/80"
+                    ? "bg-white text-[#1C1917] font-medium shadow-2xs border border-[#ECE7DE]"
                     : "text-[#78716C] hover:text-[#1C1917]",
                 )}
               >

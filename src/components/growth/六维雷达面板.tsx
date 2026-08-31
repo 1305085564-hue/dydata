@@ -392,7 +392,7 @@ export function SixRadarPanel({
               key={item.dimension}
               className={cn(
                 "flex flex-col items-center justify-center rounded-lg py-1.5 text-center transition-all",
-                isWeak && "bg-[#DC2626]/10",
+                isWeak && "bg-[#C0685C]/10",
                 isStrong && "bg-[#6FAA7D]/10",
                 !isWeak && !isStrong && "bg-[#F5F3EE]/70",
               )}
@@ -403,7 +403,7 @@ export function SixRadarPanel({
               <span
                 className={cn(
                   "text-[12px] font-medium mt-0.5",
-                  isWeak && "text-[#DC2626]",
+                  isWeak && "text-[#C0685C]",
                   isStrong && "text-[#6FAA7D]",
                   !isWeak && !isStrong && "text-[#1C1917]",
                 )}

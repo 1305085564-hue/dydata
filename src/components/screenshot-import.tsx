@@ -5,7 +5,6 @@ import { ImagePlus, RefreshCcw, Upload } from "lucide-react";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -105,6 +104,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditableValues(initialValues);
     setConfidence(getEmptyConfidence());
     setFileName("");
@@ -237,7 +237,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2 rounded-2xl border border-[#E5E0D6] bg-[#FBF9F5] p-4 text-[13px] text-[#78716C]">
+      <div className="space-y-1.5 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3.5 text-[13px] text-[#78716C]">
         <p>建议上传包含播放量、点赞、评论、分享、收藏、涨粉的抖音后台截图。</p>
         <p>系统会先识别，再由你确认与修正后写回日报表单。</p>
       </div>
@@ -267,7 +267,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
           "flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors",
           isDragging
             ? "border-[#D97757] bg-[#D97757]/10"
-            : "border-[#E5E0D6] bg-[#FBF9F5] hover:border-[#D97757]/60 hover:bg-[#F5F3EE]"
+            : "border-[#ECE7DE] bg-[#FAF8F4] hover:border-[#D97757]/60 hover:bg-[#F5F3EE]"
         )}
       >
         <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#D97757]/[0.08] text-[#D97757]">
@@ -283,10 +283,10 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {FIELD_META.map((field) => (
-            <div key={field.key} className="animate-pulse rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-4">
-              <div className="h-4 w-20 rounded bg-[#E5E0D6]/60" />
-              <div className="h-8 w-full rounded bg-[#E5E0D6]/60" />
-              <div className="h-3 w-16 rounded bg-[#E5E0D6]/60" />
+            <div key={field.key} className="animate-pulse rounded-xl bg-white shadow-card-ring p-4 space-y-4">
+              <div className="h-4 w-20 rounded bg-[#ECE7DE]" />
+              <div className="h-8 w-full rounded bg-[#ECE7DE]" />
+              <div className="h-3 w-16 rounded bg-[#ECE7DE]" />
             </div>
           ))}
         </div>
@@ -296,7 +296,7 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {FIELD_META.map((field) => (
-              <div key={field.key} className="rounded-xl border border-[#E5E0D6] bg-white p-4 space-y-3">
+              <div key={field.key} className="rounded-xl bg-white shadow-card-ring p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[13px] font-medium text-[#1C1917]">{field.label}</div>
                   <Badge
@@ -330,12 +330,23 @@ export function ScreenshotImport({ initialValues, onConfirm }: ScreenshotImportP
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-[#E5E0D6] pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <Button type="button" variant="outline" onClick={resetAndPickAgain}>
+          <div className="flex flex-col gap-3 border-t border-[#ECE7DE] pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              type="button"
+              variant="secondary"
+              size="m"
+              className="active:scale-[0.99] active:duration-120"
+              onClick={resetAndPickAgain}
+            >
               <RefreshCcw className="size-4" />
               继续识别下一张
             </Button>
-            <Button type="button" onClick={() => onConfirm(editableValues)}>
+            <Button
+              type="button"
+              size="m"
+              className="bg-[#D97757] hover:bg-[#C46A4D] text-white active:scale-[0.99] active:duration-120 shadow-2xs"
+              onClick={() => onConfirm(editableValues)}
+            >
               <ImagePlus className="size-4" />
               确认填入表单
             </Button>

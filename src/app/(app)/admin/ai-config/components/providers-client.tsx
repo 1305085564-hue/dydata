@@ -213,7 +213,7 @@ export default function ProvidersClient() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-white border-b border-[#ECE7DE]">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-[#F5F3EE] flex items-center justify-center font-bold text-[13px] text-[#292524] border border-[#E5E0D6]">
+                    <div className="size-8 rounded-lg bg-[#F5F3EE] flex items-center justify-center font-medium text-[13px] text-[#292524] border border-[#E5E0D6]">
                       {p.name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>

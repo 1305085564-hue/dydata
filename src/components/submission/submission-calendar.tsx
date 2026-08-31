@@ -199,7 +199,7 @@ export function SubmissionCalendar({
         <button
           type="button"
           onClick={handlePrevMonth}
-          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.98] transition-all cursor-pointer"
+          className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
           title="上个月"
           aria-label="上个月"
         >
@@ -217,7 +217,7 @@ export function SubmissionCalendar({
           className={cn(
             "flex size-7 items-center justify-center rounded-lg transition-all",
             canGoNext
-              ? "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.98] cursor-pointer"
+              ? "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer"
               : "text-[#D6D3D1] opacity-30 cursor-not-allowed",
           )}
           title="下个月"
@@ -269,7 +269,7 @@ export function SubmissionCalendar({
               onClick={() => onDateSelect?.(cell.key, isSubmitted || isWaive)}
               className={cn(
                 "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[13.5px] tabular-nums transition-all duration-150 outline-none select-none",
-                !isFuture && "cursor-pointer active:scale-[0.96]",
+                !isFuture && "cursor-pointer active:scale-[0.99] active:duration-120",
 
                 // 选中态：暴雨灰蓝实底 (Storm Blue)
                 isSelected &&

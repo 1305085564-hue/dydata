@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import {
   X,
   AlertTriangle,
@@ -25,14 +26,6 @@ import { buildDashboardTopicHref } from "@/lib/topics/dashboard-context";
 import { parseSubTopicWorksResponse, DETAIL_PAGE_SIZE } from "@/app/(app)/topics/topic-helpers";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type {
   TopicClaimsDetailResponse,
   TopicWorkItem,
@@ -93,7 +86,6 @@ export function TopicWorkBreakdownDrawer({
   subTopicId,
   onClose,
   onOpenFeishuModal,
-  onCancelWriting,
   currentUserId,
   onSubTopicUpdated,
   onSubTopicRemoved,
@@ -122,8 +114,7 @@ export function TopicWorkBreakdownDrawer({
   const [worksError, setWorksError] = useState<string | null>(null);
   const worksRequestId = useRef(0);
 
-  // 编辑 Modal（仅选题作者可见）
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  // 编辑表单字段（仅选题作者可见）
   const [editTitle, setEditTitle] = useState("");
   const [editHook, setEditHook] = useState("");
   const [editEmotionTag, setEditEmotionTag] = useState("");
@@ -131,8 +122,8 @@ export function TopicWorkBreakdownDrawer({
   const [editTitleError, setEditTitleError] = useState("");
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
-  // 移出题库 Dialog（仅选题作者可见）
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // 抽屉内模式切换（detail | edit | confirm_delete · 彻底消除抽屉套弹窗）
+  const [drawerMode, setDrawerMode] = useState<"detail" | "edit" | "confirm_delete">("detail");
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
 
@@ -302,7 +293,7 @@ export function TopicWorkBreakdownDrawer({
     setEditEmotionTag(subTopicInfo.emotion_tag ?? "");
     setEditAudience(subTopicInfo.audience ?? "");
     setEditTitleError("");
-    setEditDialogOpen(true);
+    setDrawerMode("edit");
   }, [subTopicInfo]);
 
   const handleEditSubmit = useCallback(
@@ -339,7 +330,7 @@ export function TopicWorkBreakdownDrawer({
               }
             : prev,
         );
-        setEditDialogOpen(false);
+        setDrawerMode("detail");
         feedbackToast.success("修改成功");
         if (onSubTopicUpdated && subTopicInfo) {
           onSubTopicUpdated({
@@ -359,7 +350,7 @@ export function TopicWorkBreakdownDrawer({
         setIsSubmittingEdit(false);
       }
     },
-    [editAudience, editHook, editTitle, onSubTopicUpdated, subTopicId, subTopicInfo],
+    [editAudience, editEmotionTag, editHook, editTitle, onSubTopicUpdated, subTopicId, subTopicInfo],
   );
 
   const handleDeleteSubmit = useCallback(async () => {
@@ -368,14 +359,14 @@ export function TopicWorkBreakdownDrawer({
     setDeleteErrorMsg(null);
     try {
       await fetchTopicJson(`/api/topics/sub-topics/${subTopicId}`, { method: "DELETE" });
-      setDeleteDialogOpen(false);
+      setDrawerMode("detail");
       feedbackToast.success("已移出题库，历史作品数据完整保留");
       onSubTopicRemoved?.(subTopicId);
       handleClose();
     } catch (error) {
       if (isTeamMembershipRequiredError(error)) {
         setMembershipRequired(true);
-        setDeleteDialogOpen(false);
+        setDrawerMode("detail");
         return;
       }
       const status = (error as { status?: number }).status;
@@ -424,7 +415,6 @@ export function TopicWorkBreakdownDrawer({
   const activeWorks =
     worksCache[worksCacheKey(worksQuery.sort, worksQuery.page)] ?? null;
   const worksTotalItems = activeWorks?.pagination.totalItems ?? worksData?.pagination.totalItems ?? 0;
-  const worksTotalPages = Math.ceil(worksTotalItems / DETAIL_PAGE_SIZE) || 1;
 
   return createPortal(
     <>
@@ -440,7 +430,7 @@ export function TopicWorkBreakdownDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="drawer-title"
-        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#E5E0D6] bg-[#FBF9F5]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
+        className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[80] flex min-h-0 max-h-[calc(100dvh-var(--app-top-offset,64px))] w-full max-w-xl flex-col overflow-hidden border-l border-[#ECE7DE] bg-[#FBF9F5]/95 p-4 sm:p-6 shadow-claude-dialog backdrop-blur-xl animate-in slide-in-from-right duration-200"
       >
         {/* 顶部标题栏 */}
         <div className="shrink-0">
@@ -448,9 +438,13 @@ export function TopicWorkBreakdownDrawer({
             <div className="min-w-0 pr-3 space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[#78716C] bg-[#F5F3EE] px-2 py-0.5 rounded-md">
-                  {subTopicInfo?.topics?.name || "干货选题"}
+                  {drawerMode === "edit"
+                    ? "编辑"
+                    : drawerMode === "confirm_delete"
+                      ? "操作确认"
+                      : subTopicInfo?.topics?.name || "干货选题"}
                 </span>
-                {subTopicInfo?.source_type === "external" && (
+                {drawerMode === "detail" && subTopicInfo?.source_type === "external" && (
                   <span className="text-xs text-[#43718E] bg-[#43718E]/10 px-2 py-0.5 rounded-md font-medium">
                     外部收集干货
                   </span>
@@ -458,13 +452,17 @@ export function TopicWorkBreakdownDrawer({
               </div>
               <h3
                 id="drawer-title"
-                className="text-lg font-semibold text-[#1C1917] leading-snug line-clamp-2"
+                className="text-lg font-[580] text-[#1C1917] leading-snug line-clamp-2 tracking-tight"
               >
-                {subTopicInfo?.title || "选题详情"}
+                {drawerMode === "edit"
+                  ? "编辑干货选题"
+                  : drawerMode === "confirm_delete"
+                    ? "移出干货选题库"
+                    : subTopicInfo?.title || "选题详情"}
               </h3>
             </div>
             <div className="flex items-start gap-1 shrink-0">
-              {isOwner && (
+              {drawerMode === "detail" && isOwner && (
                 <>
                   <button
                     type="button"
@@ -479,9 +477,9 @@ export function TopicWorkBreakdownDrawer({
                     type="button"
                     onClick={() => {
                       setDeleteErrorMsg(null);
-                      setDeleteDialogOpen(true);
+                      setDrawerMode("confirm_delete");
                     }}
-                    className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#C9604D]/10 hover:text-[#C9604D] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                    className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
                     aria-label="移出题库"
                     title="移出题库"
                   >
@@ -489,46 +487,60 @@ export function TopicWorkBreakdownDrawer({
                   </button>
                 </>
               )}
-              <button
-                ref={closeBtnRef}
-                onClick={handleClose}
-                className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
-                aria-label="关闭抽屉"
-              >
-                <X className="size-5" />
-              </button>
+              {drawerMode !== "detail" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="s"
+                  onClick={() => setDrawerMode("detail")}
+                >
+                  ← 返回详情
+                </Button>
+              ) : (
+                <button
+                  ref={closeBtnRef}
+                  onClick={handleClose}
+                  className="rounded-lg p-1.5 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center"
+                  aria-label="关闭抽屉"
+                >
+                  <X className="size-5" />
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* 抽屉滚动内容 */}
-        <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-5">
+        {/* 抽屉滚动内容 (仅详情模式) */}
+        {drawerMode === "detail" && (
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1 space-y-5">
           {isLoading ? (
             <div className="py-20 text-center">
               <Loader2 className="size-6 text-[#D97757] animate-spin mx-auto mb-2" />
               <p className="text-xs text-[#78716C]">正在加载选题详情...</p>
             </div>
           ) : membershipRequired ? (
-            <div className="rounded-xl border border-[#E5E0D6] bg-white p-5 text-center text-xs">
-              <p className="font-semibold text-[#1C1917]">请先申请加入团队</p>
+            <div className="rounded-xl bg-white p-5 text-center text-xs shadow-card-ring">
+              <p className="font-medium text-[#1C1917]">请先申请加入团队</p>
               <p className="mt-1 leading-relaxed text-[#78716C]">
                 当前账号没有有效团队归属，选题详情暂不可用。
               </p>
               <button
                 type="button"
                 onClick={handleClose}
-                className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[#ECE7DE] px-4 py-2 font-medium text-[#292524] sm:min-h-0"
+                className="mt-4 inline-flex h-7 items-center justify-center rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-4 text-xs font-medium text-[#292524] hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 关闭
               </button>
             </div>
           ) : detailError ? (
-            <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-4 text-xs text-[#DC2626] space-y-1">
-              <div className="font-semibold flex items-center gap-1.5">
-                <AlertTriangle className="size-4" />
-                <span>详情加载失败</span>
+            <div className="flex items-start gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#292524]">
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C] mt-0.5">
+                <span className="size-1.5 rounded-full bg-[#C0685C]" />
+              </span>
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <p className="font-medium text-[#1C1917] text-xs">详情加载失败</p>
+                <p className="text-xs text-[#78716C]">{detailError}</p>
               </div>
-              <p className="text-[#78716C]">{detailError}</p>
             </div>
           ) : (
             <>
@@ -549,7 +561,7 @@ export function TopicWorkBreakdownDrawer({
 
                   {subTopicInfo?.outline && (
                     <div className="rounded-xl border border-[#ECE7DE] bg-white p-3.5 space-y-1.5">
-                      <div className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
+                      <div className="text-xs font-medium text-[#1C1917] flex items-center gap-1.5">
                         <FileText className="size-3.5 text-[#78716C]" />
                         <span>内容提纲</span>
                       </div>
@@ -564,7 +576,7 @@ export function TopicWorkBreakdownDrawer({
               {/* 2. 历史数据双轨证明 */}
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-[#1C1917] flex items-center gap-1.5">
                     <Trophy className="size-3.5 text-[#D97757]" />
                     <span>历史数据证明</span>
                   </h4>
@@ -576,7 +588,7 @@ export function TopicWorkBreakdownDrawer({
                 {/* 团队内部验证表现 */}
                 <div className="rounded-2xl border border-[#ECE7DE] bg-white p-4 space-y-3 shadow-2xs">
                   <div className="flex items-center justify-between text-xs border-b border-[#ECE7DE]/60 pb-2">
-                    <span className="font-semibold text-[#1C1917] flex items-center gap-1.5">
+                    <span className="font-medium text-[#1C1917] flex items-center gap-1.5">
                       <Building2 className="size-3.5 text-[#43718E]" />
                       <span>团队内部实测成绩</span>
                     </span>
@@ -588,7 +600,7 @@ export function TopicWorkBreakdownDrawer({
                   <div className="grid grid-cols-3 gap-3 text-center text-xs">
                     <div>
                       <div className="text-[11px] text-[#78716C]">最高播放</div>
-                      <div className="text-base font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-base font-medium text-[#1C1917] tabular-nums mt-0.5">
                         {bestPlay !== null
                           ? bestPlay >= 10000
                             ? `${(bestPlay / 10000).toFixed(1)}万`
@@ -599,7 +611,7 @@ export function TopicWorkBreakdownDrawer({
 
                     <div>
                       <div className="text-[11px] text-[#78716C]">平均播放</div>
-                      <div className="text-base font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-base font-medium text-[#1C1917] tabular-nums mt-0.5">
                         {avgPlay !== null
                           ? avgPlay >= 10000
                             ? `${(avgPlay / 10000).toFixed(1)}万`
@@ -610,7 +622,7 @@ export function TopicWorkBreakdownDrawer({
 
                     <div>
                       <div className="text-[11px] text-[#78716C]">优质作品数</div>
-                      <div className="text-base font-semibold text-[#1C1917] tabular-nums mt-0.5">
+                      <div className="text-base font-medium text-[#1C1917] tabular-nums mt-0.5">
                         {qualifiedCount !== null ? `${qualifiedCount} 条` : "—"}
                       </div>
                     </div>
@@ -620,7 +632,7 @@ export function TopicWorkBreakdownDrawer({
                 {/* 外部干货收集基准 (若有外部数据独立展示，绝不混合伪装) */}
                 {subTopicInfo?.source_type === "external" && (
                   <div className="rounded-2xl border border-[#43718E]/20 bg-[#43718E]/5 p-3.5 space-y-2">
-                    <div className="flex items-center justify-between text-xs font-semibold text-[#43718E]">
+                    <div className="flex items-center justify-between text-xs font-medium text-[#43718E]">
                       <span className="flex items-center gap-1.5">
                         <Globe2 className="size-3.5" />
                         <span>外部干货收集基准</span>
@@ -637,11 +649,11 @@ export function TopicWorkBreakdownDrawer({
               {/* 3. 近 7 天参与热度 (支持多人同时写，展示进展拆解) */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-[#1C1917] flex items-center gap-1.5">
                     <Flame className="size-3.5 text-[#D97757]" />
                     <span>近 7 天参与热度</span>
                   </h4>
-                  <span className="text-xs text-[#D97757] font-semibold tabular-nums">
+                  <span className="text-xs text-[#D97757] font-medium tabular-nums">
                     近 7 天 {total7dParticipants !== null ? `${total7dParticipants} 人参与` : "—"}
                   </span>
                 </div>
@@ -649,13 +661,13 @@ export function TopicWorkBreakdownDrawer({
                 <div className="grid grid-cols-2 gap-3 rounded-xl border border-[#ECE7DE] bg-white p-3.5 text-xs text-center">
                   <div className="border-r border-[#ECE7DE]">
                     <div className="text-[11px] text-[#78716C]">近 7 天已写完</div>
-                    <div className="text-base font-semibold text-[#6FAA7D] tabular-nums mt-0.5">
+                    <div className="text-base font-medium text-[#6FAA7D] tabular-nums mt-0.5">
                       {completed7dCount !== null ? `${completed7dCount} 人` : "—"}
                     </div>
                   </div>
                   <div>
                     <div className="text-[11px] text-[#78716C]">近 7 天仍在写</div>
-                    <div className="text-base font-semibold text-[#43718E] tabular-nums mt-0.5">
+                    <div className="text-base font-medium text-[#43718E] tabular-nums mt-0.5">
                       {inProgress7dCount !== null ? `${inProgress7dCount} 人` : "—"}
                     </div>
                   </div>
@@ -689,7 +701,7 @@ export function TopicWorkBreakdownDrawer({
               {/* 4. 历史关联作品记录 (纯数据展示，不展示原视频封面或播放器) */}
               <section className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-[#1C1917] flex items-center gap-1.5">
+                  <h4 className="text-xs font-medium text-[#1C1917] flex items-center gap-1.5">
                     <FileText className="size-3.5 text-[#78716C]" />
                     <span>历史关联作品</span>
                   </h4>
@@ -755,62 +767,24 @@ export function TopicWorkBreakdownDrawer({
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-[#ECE7DE] p-6 text-center text-xs text-[#78716C]">
-                    暂无关联作品记录
-                  </div>
-                )}
-
-                {worksTotalPages > 1 && !worksLoading && (
-                  <div className="flex items-center justify-center gap-2 pt-1">
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      disabled={worksQuery.page <= 1}
-                      onClick={() => void loadWorksPage(worksQuery.page - 1, worksQuery.sort)}
-                    >
-                      上一页
-                    </Button>
-                    <span className="text-xs text-[#78716C] tabular-nums">
-                      {worksQuery.page} / {worksTotalPages}
-                    </span>
-                    <Button
-                      type="button"
-                      size="xs"
-                      variant="outline"
-                      disabled={worksQuery.page >= worksTotalPages}
-                      onClick={() => void loadWorksPage(worksQuery.page + 1, worksQuery.sort)}
-                    >
-                      下一页
-                    </Button>
+                    暂无关联作品
                   </div>
                 )}
               </section>
             </>
           )}
         </div>
+      )}
 
-        {/* 底栏固定主行动：去工作台入口 */}
-        <div className="shrink-0 border-t border-[#E5E0D6] pt-3 sm:pt-4 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] mt-2 bg-[#FBF9F5] flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <a
+        {/* 详情模式固定底栏 */}
+        {drawerMode === "detail" && (
+          <div className="shrink-0 pt-3 border-t border-[#ECE7DE] mt-auto flex items-center justify-between gap-3">
+            <Link
               href={buildDashboardTopicHref(subTopicId, subTopicInfo?.title)}
-              className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1 text-xs text-[#78716C] hover:text-[#1C1917] transition-colors"
-              title="去工作台提交日报并带入选题上下文"
+              className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] px-3.5 text-xs font-medium text-[#292524] transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
             >
-              <span>去工作台填报</span>
-            </a>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isMyWriting && onCancelWriting && (
-              <button
-                type="button"
-                onClick={() => onCancelWriting(subTopicId)}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center rounded-xl border border-[#ECE7DE] bg-white px-3 py-2 text-xs font-medium text-[#78716C] hover:bg-[#FAF8F4] hover:text-[#DC2626] transition-colors cursor-pointer"
-              >
-                取消写作
-              </button>
-            )}
+              <span>在工作台录入</span>
+            </Link>
 
             <button
               type="button"
@@ -828,26 +802,20 @@ export function TopicWorkBreakdownDrawer({
                   } as unknown as SubTopicItem);
                 }
               }}
-              className="inline-flex min-h-[44px] sm:min-h-0 items-center justify-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-2xs transition-all cursor-pointer"
+              className="inline-flex h-7 items-center justify-center gap-1.5 rounded-md bg-[#D97757] px-4 text-xs font-medium text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 shadow-sm transition-all cursor-pointer"
             >
               <span>{isMyWriting ? "去飞书创作" : "我要写（去飞书）"}</span>
             </button>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* 编辑选题弹窗（仅作者可见入口） */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
+        {/* 抽屉模式视图切换（单层交互 · 零嵌套弹窗） */}
+        {drawerMode === "edit" ? (
           <form
             onSubmit={handleEditSubmit}
-            className="flex min-h-0 flex-1 flex-col overflow-hidden"
+            className="flex min-h-0 flex-1 flex-col overflow-hidden space-y-4"
           >
-            <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
-              <DialogTitle>编辑干货选题</DialogTitle>
-            </DialogHeader>
-
-            <DialogBody className="min-h-0 flex-1 space-y-3 overflow-y-auto py-2">
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
               <div>
                 <label className="text-xs font-medium text-[#1C1917] block mb-1">
                   选题标题 *
@@ -856,7 +824,7 @@ export function TopicWorkBreakdownDrawer({
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                 />
                 {editTitleError && (
                   <p className="text-xs text-[#C0685C] mt-1">{editTitleError}</p>
@@ -871,7 +839,7 @@ export function TopicWorkBreakdownDrawer({
                   value={editHook}
                   onChange={(e) => setEditHook(e.target.value)}
                   rows={3}
-                  className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                  className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                 />
               </div>
 
@@ -884,7 +852,7 @@ export function TopicWorkBreakdownDrawer({
                     type="text"
                     value={editEmotionTag}
                     onChange={(e) => setEditEmotionTag(e.target.value)}
-                    className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                   />
                 </div>
                 <div>
@@ -895,61 +863,63 @@ export function TopicWorkBreakdownDrawer({
                     type="text"
                     value={editAudience}
                     onChange={(e) => setEditAudience(e.target.value)}
-                    className="w-full text-xs rounded-lg border border-[#E5E0D6] p-2 bg-[#FAF8F4]/50 focus:bg-white"
+                    className="w-full text-xs rounded-lg border border-[#ECE7DE] p-2.5 bg-[#FAF8F4]/50 focus:bg-white focus:outline-none focus:border-[#78716C]"
                   />
                 </div>
               </div>
-            </DialogBody>
+            </div>
 
-            <DialogFooter className="mt-0 border-t border-[#ECE7DE] pt-3">
+            <div className="border-t border-[#ECE7DE] pt-3 flex justify-end gap-2 shrink-0">
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => setEditDialogOpen(false)}
+                variant="secondary"
+                size="m"
+                onClick={() => setDrawerMode("detail")}
               >
                 取消
               </Button>
-              <Button type="submit" disabled={isSubmittingEdit}>
+              <Button type="submit" size="m" disabled={isSubmittingEdit}>
                 {isSubmittingEdit ? "保存中..." : "保存修改"}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
-        </DialogContent>
-      </Dialog>
+        ) : drawerMode === "confirm_delete" ? (
+          <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden">
+            <div className="space-y-3 p-4 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE] text-[13px] text-[#78716C]">
+              <div className="flex items-center gap-2 text-[#C0685C] font-semibold text-sm">
+                <AlertTriangle className="size-4" />
+                <span>确认移出干货选题库？</span>
+              </div>
+              <p className="leading-relaxed">
+                移出后该选题将停止在员工选题库中展示，但历史作品数据与复盘关联完整保留。
+              </p>
+              {deleteErrorMsg && (
+                <p className="text-[#C0685C] font-medium">{deleteErrorMsg}</p>
+              )}
+            </div>
 
-      {/* 移出题库弹窗（仅作者可见入口） */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>移出干货选题库</DialogTitle>
-          </DialogHeader>
-          <DialogBody className="space-y-2 text-xs text-[#78716C]">
-            <p>
-              移出后该选题将停止在员工选题库中展示，但历史作品数据与复盘关联完整保留。
-            </p>
-            {deleteErrorMsg && (
-              <p className="text-[#C0685C] font-medium">{deleteErrorMsg}</p>
-            )}
-          </DialogBody>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={isDeleting}
-              onClick={() => void handleDeleteSubmit()}
-            >
-              {isDeleting ? "移出中..." : "确认移出"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="border-t border-[#ECE7DE] pt-3 flex justify-end gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="secondary"
+                size="m"
+                onClick={() => setDrawerMode("detail")}
+              >
+                取消
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="m"
+                disabled={isDeleting}
+                onClick={() => void handleDeleteSubmit()}
+              >
+                {isDeleting ? "移出中..." : "确认移出"}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
     </>,
     document.body,
   );

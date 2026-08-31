@@ -58,6 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { feedbackToast } from "@/components/ui/feedback-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { getRoleLabel } from "@/lib/role-label";
 
@@ -866,7 +867,6 @@ export function AdminModulesContentV3({
             confirmationToken,
           }),
         });
-
         if (res.status === 409) {
           const payload = await res.json();
           setToolConfirmationModal({
@@ -898,16 +898,19 @@ export function AdminModulesContentV3({
   return (
     <div className="mt-4 w-full space-y-5 relative">
       <main className="space-y-5">
-        {/* ── 待审批入团申请预警栏（状态色便签范式：弱底色差 + 左竖线，用完即撕） ── */}
+        {/* ── 待审批入团申请预警栏（复用标准 Alert 规范） ── */}
         {pendingRequests.length > 0 && (
-          <section className="rounded-lg border-l-2 border-[#B98A54] bg-[#B98A54]/10 p-4">
+          <Alert className="rounded-lg border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[13px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[14px] font-medium text-[#1C1917]">待审批入团申请</span>
-              <span className="rounded-md bg-[#B98A54]/20 px-2 py-0.5 text-[12px] font-medium text-[#B98A54] tabular-nums">
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
+                <span className="size-1.5 rounded-full bg-[#B98A54]" />
+              </span>
+              <AlertTitle className="text-[14px] font-medium text-[#1C1917] mb-0">待审批入团申请</AlertTitle>
+              <span className="rounded-md bg-[#B98A54]/15 px-2 py-0.5 text-[12px] font-medium text-[#B98A54] tabular-nums">
                 {pendingRequests.length} 位新成员
               </span>
             </div>
-            <div className="divide-y divide-[#B98A54]/20">
+            <AlertDescription className="divide-y divide-[#ECE7DE]">
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
@@ -915,9 +918,9 @@ export function AdminModulesContentV3({
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-[13px] font-medium text-[#1C1917]">{req.applicantName}</span>
-                    <span className="mx-2 text-[#B98A54]/60">·</span>
+                    <span className="mx-2 text-[#ECE7DE]">·</span>
                     <span className="text-[12px] text-[#292524]">申请加入：{req.targetTeamName}</span>
-                    <span className="mx-2 text-[#B98A54]/60">·</span>
+                    <span className="mx-2 text-[#ECE7DE]">·</span>
                     <span className="text-[12px] text-[#78716C] tabular-nums">
                       {new Date(req.createdAt).toLocaleDateString("zh-CN")}
                     </span>
@@ -926,16 +929,17 @@ export function AdminModulesContentV3({
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Button
                         variant="ghost"
+                        size="s"
                         onClick={() => handleReviewJoinRequest(req.id, "reject")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md transition-colors"
+                        className="text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C]"
                       >
                         拒绝
                       </Button>
                       <Button
+                        size="s"
                         onClick={() => handleReviewJoinRequest(req.id, "approve")}
                         disabled={isPending}
-                        className="h-7 px-2.5 text-[12px] bg-[#1C1917] hover:bg-[#292524] text-white rounded-md shadow-sm cursor-pointer"
                       >
                         同意入团
                       </Button>
@@ -943,21 +947,24 @@ export function AdminModulesContentV3({
                   )}
                 </div>
               ))}
-            </div>
-          </section>
+            </AlertDescription>
+          </Alert>
         )}
 
         {orphanExemptionCount > 0 && (
-          <section className="rounded-lg border-l-2 border-[#C0685C] bg-[#C0685C]/10 p-4">
+          <Alert className="rounded-lg border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[13px] text-[#78716C]">
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[14px] font-medium text-[#1C1917]">待归属申请</span>
+              <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
+                <span className="size-1.5 rounded-full bg-[#C0685C]" />
+              </span>
+              <AlertTitle className="text-[14px] font-medium text-[#1C1917] mb-0">待归属申请</AlertTitle>
               <span className="rounded-md bg-[#C0685C]/15 px-2 py-0.5 text-[12px] font-medium text-[#C0685C] tabular-nums">
                 {orphanExemptionCount} 条
               </span>
             </div>
 
             {isCompanyOwner ? (
-              <div className="divide-y divide-[#C0685C]/20">
+              <AlertDescription className="divide-y divide-[#ECE7DE]">
                 {orphanExemptionRequests.map((request) => {
                   const isArchivedOrDeleted =
                     request.applicant_membership_status === "archived" ||
@@ -993,7 +1000,7 @@ export function AdminModulesContentV3({
                               }
                             }}
                             disabled={isPending}
-                            className="h-7 rounded-md border border-[#E5E0D6] bg-white px-2 text-[12px] text-[#292524] outline-none"
+                            className="h-7 rounded-md border border-[#ECE7DE] bg-white px-2 text-[12px] text-[#292524] outline-none"
                             aria-label={`为${request.applicant_name}分配团队`}
                           >
                             <option value="" disabled>分配至团队…</option>
@@ -1004,9 +1011,10 @@ export function AdminModulesContentV3({
                         )}
                         <Button
                           variant="ghost"
+                          size="s"
                           onClick={() => handleRejectOrphanRequest(request)}
                           disabled={isPending}
-                          className="h-7 px-2.5 text-[12px] text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md"
+                          className="text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C]"
                         >
                           拒绝并留痕
                         </Button>
@@ -1014,17 +1022,17 @@ export function AdminModulesContentV3({
                     </div>
                   );
                 })}
-              </div>
+              </AlertDescription>
             ) : (
-              <p className="text-[13px] leading-[1.7] text-[#78716C]">
+              <AlertDescription className="text-[13px] leading-[1.7] text-[#78716C]">
                 有待公司所有者处理的归属异常
-              </p>
+              </AlertDescription>
             )}
-          </section>
+          </Alert>
         )}
 
         {/* ── 主控制台与高密度成员列表（标准 1 层 L1 白底微岛屿） ── */}
-        <section className="bg-white rounded-2xl border border-[#E5E0D6]/80 shadow-2xs p-5">
+        <section className="bg-white rounded-2xl shadow-card-ring p-5">
           {/* 工具栏：平铺去框，呼吸线分隔，与下方列表以 1px 细线自然区分 */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-3.5 mb-3.5 border-b border-[#ECE7DE]">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1433,7 +1441,7 @@ export function AdminModulesContentV3({
                     e.target.value = "";
                   }
                 }}
-                className="h-7.5 text-[12px] font-medium bg-[#F5F3EE]/70 border-0 rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#E5E0D6]/70 transition-colors"
+                className="h-7 text-[12px] font-medium bg-[#F5F3EE]/70 border-0 rounded-full px-2.5 pr-6 text-[#292524] outline-none appearance-none cursor-pointer hover:bg-[#ECE7DE] transition-colors"
               >
                 <option value="" disabled>
                   调配至团队…
@@ -1444,19 +1452,19 @@ export function AdminModulesContentV3({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-2.5 size-3 text-[#78716C]" />
+              <ChevronDown className="pointer-events-none absolute right-2 top-2 size-3 text-[#78716C]" />
             </div>
           )}
 
           {isCompanyOwner && (
             <Button
               variant="ghost"
-              size="sm"
+              size="s"
               onClick={() => {
                 setBatchArchiveReason("");
                 setBatchArchiveOpen(true);
               }}
-              className="h-7.5 px-3 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-xl font-medium"
+              className="h-7 px-3 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] rounded-md font-medium active:scale-[0.99] active:duration-120"
             >
               <Archive className="size-3 mr-1" />
               批量归档
@@ -1484,18 +1492,18 @@ export function AdminModulesContentV3({
           }
         }}
       >
-        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-[#E5E0D6] shadow-claude-dialog">
+        <SheetContent showCloseButton={false} className="w-full max-w-xl sm:max-w-xl p-0 flex flex-col bg-white border-l border-[#ECE7DE] shadow-claude-dialog">
           {activeMember && (
             <div className="flex flex-col h-full overflow-hidden">
               {/* 抽屉头部 */}
               <div className="px-6 pt-5 pb-4 border-b border-[#ECE7DE] flex items-start justify-between gap-3 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-full bg-[#F5F3EE] text-[#292524] flex items-center justify-center font-semibold text-sm shrink-0">
+                  <div className="size-9 rounded-full bg-[#F5F3EE] text-[#292524] flex items-center justify-center font-medium text-sm shrink-0">
                     {activeMember.name ? activeMember.name.slice(0, 1) : "U"}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <SheetTitle className="text-lg font-semibold text-[#1C1917] truncate">
+                      <SheetTitle className="text-lg font-medium text-[#1C1917] truncate">
                         {activeMember.name || "未命名"}
                       </SheetTitle>
                       <span className="text-[12px] px-1.5 py-0.5 rounded-md font-medium bg-[#F5F3EE] text-[#292524] shrink-0">
@@ -1511,13 +1519,13 @@ export function AdminModulesContentV3({
                       {activeMember.team_name && <span>{activeMember.team_name}</span>}
                       {activeMember.email && (
                         <>
-                          {activeMember.team_name && <span className="text-[#E5E0D6]">·</span>}
+                          {activeMember.team_name && <span className="text-[#ECE7DE]">·</span>}
                           <span className="truncate">{activeMember.email}</span>
                         </>
                       )}
                       {activeMember.last_sign_in_at && (
                         <>
-                          <span className="text-[#E5E0D6]">|</span>
+                          <span className="text-[#ECE7DE]">|</span>
                           <span className="text-[12px] text-[#78716C]">
                             上次登录：{activeMember.last_sign_in_at.slice(0, 16).replace("T", " ")}
                           </span>
@@ -1893,7 +1901,7 @@ export function AdminModulesContentV3({
       <Dialog open={teamManagementDialogOpen} onOpenChange={setTeamManagementDialogOpen}>
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-[460px] p-6 rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#1C1917]">团队架构管理</DialogTitle>
+            <DialogTitle className="text-base font-medium text-[#1C1917]">团队架构管理</DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524]">
               新建团队或维护现有团队架构
             </DialogDescription>
@@ -1911,12 +1919,12 @@ export function AdminModulesContentV3({
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
                     placeholder="例如：深圳一部、杭州运营组"
-                    className="h-8.5 text-[12px] rounded-xl"
+                    className="h-7 text-[12px] rounded-md"
                   />
                   <Button
                     onClick={handleCreateTeam}
                     disabled={isPending || !newTeamName.trim()}
-                    className="h-8.5 px-3.5 bg-[#1C1917] text-white hover:bg-[#292524] rounded-xl text-[12px] shrink-0"
+                    className="h-7 px-3 bg-[#1C1917] text-white hover:bg-[#292524] rounded-md text-[12px] shrink-0 active:scale-[0.99] active:duration-120"
                   >
                     <Plus className="size-3.5 mr-1" />
                     创建
@@ -1967,8 +1975,9 @@ export function AdminModulesContentV3({
           <DialogFooter>
             <Button
               variant="outline"
+              size="s"
               onClick={() => setTeamManagementDialogOpen(false)}
-              className="h-8.5 text-[12px] rounded-xl"
+              className="h-7 text-[12px] rounded-md"
             >
               完成
             </Button>
@@ -2004,7 +2013,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-semibold text-[#1C1917]">确认归档成员账号</DialogTitle>
+            <DialogTitle className="font-medium text-[#1C1917]">确认归档成员账号</DialogTitle>
             <DialogDescription>
               即将归档「{archiveTarget?.name}」的账号。归档将立即封禁登录并移出团队，历史日报不受影响。
             </DialogDescription>
@@ -2054,7 +2063,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-semibold text-[#1C1917]">批量归档成员账号</DialogTitle>
+            <DialogTitle className="font-medium text-[#1C1917]">批量归档成员账号</DialogTitle>
             <DialogDescription>
               即将批量归档选中的 {selectedMemberIds.length} 位成员账号，归档后将封禁登录并移出各自团队。
             </DialogDescription>
@@ -2119,7 +2128,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-semibold text-[#1C1917]">重置登录密码</DialogTitle>
+            <DialogTitle className="font-medium text-[#1C1917]">重置登录密码</DialogTitle>
             <DialogDescription>
               为「{passwordResetTarget?.name}」设置新的临时登录密码（至少 6 位）。
             </DialogDescription>
@@ -2162,7 +2171,7 @@ export function AdminModulesContentV3({
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-semibold text-[#1C1917] flex items-center gap-2">
+            <DialogTitle className="font-medium text-[#1C1917] flex items-center gap-2">
               <AlertCircle className="size-5 text-[#D97757]" />
               确认执行 AI 管理建议动作
             </DialogTitle>

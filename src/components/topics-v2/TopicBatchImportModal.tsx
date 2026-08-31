@@ -182,7 +182,7 @@ export function TopicBatchImportModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="import-modal-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[85] w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[85] w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       >
         {/* 头部 */}
         <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-[#FAF8F4] px-6 py-4 shrink-0">
@@ -406,7 +406,7 @@ export function TopicBatchImportModal({
                             key={row.rowNumber}
                             className={`hover:bg-[#FBF9F5]/70 transition-colors ${
                               row.status === "error"
-                                ? "bg-[#DC2626]/5"
+                                ? "bg-[#C0685C]/5"
                                 : row.status === "warning"
                                   ? "bg-[#D99E55]/5"
                                   : ""
@@ -419,8 +419,8 @@ export function TopicBatchImportModal({
                               {row.topicName || "—"}
                             </td>
                             <td className="py-2.5 px-3 space-y-0.5">
-                              <div className="font-semibold text-[#1C1917] line-clamp-1">
-                                {row.title || <span className="text-[#DC2626]">（标题为空）</span>}
+                              <div className="font-medium text-[#1C1917] line-clamp-1">
+                                {row.title || <span className="text-[#C0685C]">（标题为空）</span>}
                               </div>
                               {row.hook && (
                                 <div className="text-[11px] text-[#78716C] line-clamp-1">
@@ -445,7 +445,7 @@ export function TopicBatchImportModal({
                                     ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
                                     : row.status === "warning"
                                       ? "bg-[#D99E55]/10 text-[#C47A2B]"
-                                      : "bg-[#DC2626]/10 text-[#DC2626]"
+                                      : "bg-[#C0685C]/10 text-[#C0685C]"
                                 }`}
                               >
                                 {row.status === "valid" ? (
@@ -480,7 +480,7 @@ export function TopicBatchImportModal({
                 <CheckCircle2 className="size-7 stroke-[2.5]" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-lg font-semibold text-[#1C1917]">
+                <h4 className="text-lg font-medium text-[#1C1917]">
                   导入处理完成
                 </h4>
                 <p className="text-xs text-[#78716C] leading-relaxed">
@@ -492,19 +492,19 @@ export function TopicBatchImportModal({
               <div className="grid grid-cols-3 gap-3 rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-xs">
                 <div>
                   <div className="text-[#78716C]">成功导入</div>
-                  <div className="text-lg font-semibold text-[#6FAA7D] tabular-nums mt-0.5">
+                  <div className="text-lg font-medium text-[#6FAA7D] tabular-nums mt-0.5">
                     {importResult.successCount}
                   </div>
                 </div>
                 <div>
                   <div className="text-[#78716C]">跳过重复</div>
-                  <div className="text-lg font-semibold text-[#78716C] tabular-nums mt-0.5">
+                  <div className="text-lg font-medium text-[#78716C] tabular-nums mt-0.5">
                     {importResult.skippedCount}
                   </div>
                 </div>
                 <div>
                   <div className="text-[#78716C]">失败数量</div>
-                  <div className="text-lg font-semibold text-[#DC2626] tabular-nums mt-0.5">
+                  <div className="text-lg font-medium text-[#C0685C] tabular-nums mt-0.5">
                     {importResult.failedCount}
                   </div>
                 </div>
@@ -512,15 +512,15 @@ export function TopicBatchImportModal({
 
               {/* 失败明细列表 */}
               {importResult.errors && importResult.errors.length > 0 && (
-                <div className="rounded-xl border border-[#DC2626]/20 bg-[#DC2626]/5 p-3 text-left text-xs space-y-1.5">
-                  <div className="font-semibold text-[#DC2626] flex items-center gap-1.5">
-                    <AlertTriangle className="size-3.5" />
+                <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-left text-xs space-y-1.5">
+                  <div className="font-medium text-[#C0685C] flex items-center gap-1.5">
+                    <span className="size-1.5 rounded-full bg-[#C0685C]" />
                     <span>失败明细</span>
                   </div>
                   <div className="space-y-1 max-h-32 overflow-y-auto pr-1 text-[#292524]">
                     {importResult.errors.map((err, i) => (
                       <div key={i} className="flex items-start gap-2 text-[11.5px]">
-                        <span className="font-mono text-[#78716C]">第 {err.rowNumber} 行:</span>
+                        <span className="tabular-nums font-medium text-[#78716C]">第 {err.rowNumber} 行:</span>
                         <span>{err.reason}</span>
                       </div>
                     ))}
@@ -538,7 +538,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="min-h-[44px] sm:min-h-0 rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+                className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 取消
               </button>
@@ -549,7 +549,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={() => setStep("upload")}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 <RotateCcw className="size-3.5" />
                 <span>重新选择文件</span>
@@ -559,7 +559,7 @@ export function TopicBatchImportModal({
                 type="button"
                 disabled={isSubmitting || !parsedRows.length || !onConfirmImport}
                 onClick={handleConfirm}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-6 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[#D97757] px-4 text-xs font-medium text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
               >
                 <span>
                   {isSubmitting
@@ -576,7 +576,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={() => setStep("upload")}
-                className="min-h-[44px] sm:min-h-0 rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+                className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
               >
                 继续导入其他文件
               </button>
@@ -584,7 +584,7 @@ export function TopicBatchImportModal({
               <button
                 type="button"
                 onClick={handleClose}
-                className="min-h-[44px] sm:min-h-0 rounded-xl bg-[#1C1917] px-6 py-2 text-xs font-semibold text-white hover:bg-[#292524] transition-all shadow-2xs cursor-pointer"
+                className="h-7 rounded-md bg-[#F5F3EE] px-4 text-xs font-medium text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 transition-all shadow-2xs cursor-pointer"
               >
                 完成退出
               </button>

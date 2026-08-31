@@ -36,7 +36,7 @@ function getConfidenceDotProps(score: number | null | undefined) {
     };
   }
   return {
-    color: "bg-[#DC2626]/100",
+    color: "bg-[#C0685C]",
     tooltip: "AI 识别置信度较低，请务必核对",
   };
 }
@@ -48,21 +48,21 @@ function getStatusBadge(field: SubmissionFieldState) {
   if (score >= 0.95) {
     return {
       label: "AI 已识别",
-      className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
+      className: "bg-[#FBF9F5] text-[#292524] border border-[#ECE7DE]",
       dotClass: "bg-[#6FAA7D]",
     };
   }
   if (score >= 0.8) {
     return {
       label: "待确认",
-      className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
+      className: "bg-[#FBF9F5] text-[#292524] border border-[#ECE7DE]",
       dotClass: "bg-[#D99E55]",
     };
   }
   return {
     label: "请核对",
-    className: "bg-[#FBF9F5] text-[#292524] border border-[#E5E0D6]",
-    dotClass: "bg-[#DC2626]/100",
+    className: "bg-[#FBF9F5] text-[#292524] border border-[#ECE7DE]",
+    dotClass: "bg-[#C0685C]",
   };
 }
 
@@ -88,6 +88,7 @@ export function MetricInputCard({
     if (field.source === "ocr") {
       let i = 0;
       const target = String(field.value);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayValue("");
 
       const speed = Math.max(15, 300 / (target.length || 1));

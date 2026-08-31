@@ -117,7 +117,7 @@ export function QuotaConfigPanel({
   return (
     <div className="border-t border-[#E5E0D6] pt-8 space-y-10">
       <div>
-        <h2 className="text-lg font-semibold text-[#1C1917] flex items-center gap-2">
+        <h2 className="text-lg font-[580] text-[#1C1917] flex items-center gap-2">
           <Settings className="size-5 text-[#D97757]" />
           产量目标管理
         </h2>
@@ -130,7 +130,7 @@ export function QuotaConfigPanel({
         {/* 左侧：当前目标与添加表单 */}
         <div className="md:col-span-1 space-y-5">
           {/* 当前生效指标卡 (A.3/C.3) */}
-          <div className="rounded-2xl border border-[#E5E0D6] bg-white p-5 flex flex-col justify-between h-[105px]">
+          <div className="rounded-2xl shadow-card-ring bg-white p-5 flex flex-col justify-between h-[105px]">
             <span className="text-[13px] text-[#78716C] font-medium">今日生效发片指标</span>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-medium tabular-nums text-[#1C1917]">
@@ -142,7 +142,7 @@ export function QuotaConfigPanel({
 
           {/* 新增目标规则表单 (U1) */}
           {isOwner ? (
-            <div className="rounded-2xl border border-[#E5E0D6] bg-white p-5 space-y-4">
+            <div className="rounded-2xl shadow-card-ring bg-white p-5 space-y-4">
               <h3 className="text-[13px] font-medium text-[#1C1917]">
                 配置新发片目标
               </h3>
@@ -158,7 +158,7 @@ export function QuotaConfigPanel({
                     type="date"
                     value={effectiveDate}
                     onChange={(e) => setEffectiveDate(e.target.value)}
-                    className="w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3.5 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-7 rounded-md border border-[#ECE7DE] bg-white px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -174,7 +174,7 @@ export function QuotaConfigPanel({
                     max="50"
                     value={dailyTarget}
                     onChange={(e) => setDailyTarget(e.target.value)}
-                    className="w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3.5 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-7 rounded-md border border-[#ECE7DE] bg-white px-3 text-[13px] text-[#1C1917] hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
@@ -189,24 +189,24 @@ export function QuotaConfigPanel({
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="如：夏季发片量调整..."
-                    className="w-full h-9.5 rounded-lg border border-[#E5E0D6] bg-white shadow-2xs px-3.5 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
+                    className="w-full h-7 rounded-md border border-[#ECE7DE] bg-white px-3 text-[13px] text-[#1C1917] placeholder:text-[#78716C]/60 hover:border-[#78716C]/40 focus-visible:border-[#78716C] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 transition-all"
                   />
                 </div>
 
-                {/* 提交按钮 */}
+                {/* 提交按钮（浅砂副行动，避免与阈值保存 CTA 冲突） */}
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-10 flex items-center justify-center gap-1.5 rounded-xl bg-[#D97757] text-white text-[13px] font-medium shadow-claude-float transition-all hover:bg-[#C96442] active:scale-[0.985] active:duration-75 disabled:opacity-50"
+                  className="w-full h-7 flex items-center justify-center gap-1.5 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] text-[#292524] text-[13px] font-medium transition-all hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? (
                     <>
-                      <Loader2 className="size-4 animate-spin" />
+                      <Loader2 className="size-3.5 animate-spin" />
                       添加规则中...
                     </>
                   ) : (
                     <>
-                      <Plus className="size-4" />
+                      <Plus className="size-3.5" />
                       添加规则
                     </>
                   )}
@@ -214,8 +214,8 @@ export function QuotaConfigPanel({
               </form>
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-[#FBF9F5] p-4 text-[12px] text-[#78716C] leading-[1.6]">
-              <AlertCircle className="size-4 text-[#D99E55] mb-1.5" />
+            <div className="rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 text-[12px] text-[#78716C] leading-[1.6]">
+              <AlertCircle className="size-4 text-[#B98A54] mb-1.5" />
               只有系统 Owner 拥有添加及编辑每日发片指标规则的写入权限。Admin 角色仅供查阅规则历史。
             </div>
           )}
@@ -233,11 +233,11 @@ export function QuotaConfigPanel({
           </div>
 
           {rules.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#E5E0D6] bg-white py-12 text-center text-[#78716C] text-[13px]">
+            <div className="rounded-2xl border border-dashed border-[#ECE7DE] bg-white py-12 text-center text-[#78716C] text-[13px]">
               还没有历史指标配置记录
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white">
+            <div className="overflow-hidden rounded-2xl shadow-card-ring bg-white">
               {rules.map((rule, idx) => {
                 const isLast = idx === rules.length - 1;
                 const isEffectiveToday = rule.effective_date <= todayDate && (idx === 0 || rules[idx - 1].effective_date > todayDate);

@@ -108,7 +108,7 @@ export function PersonalCard({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] sm:max-w-none max-w-[calc(100vw-2rem)] max-h-[88dvh] h-auto p-0 rounded-2xl border border-[#E5E0D6] bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
+        className="w-[800px] sm:max-w-none max-w-[calc(100vw-2rem)] max-h-[88dvh] h-auto p-0 rounded-2xl bg-white/95 shadow-claude-dialog overflow-hidden flex flex-col focus:outline-none"
       >
         {/* Header */}
         <DialogHeader className="p-4 sm:p-5 pb-3.5 border-b border-[#ECE7DE] flex flex-row items-center justify-between shrink-0 bg-[#FBF9F5]/40">
@@ -128,7 +128,7 @@ export function PersonalCard({
             <div className="flex items-center justify-between w-full pr-3 sm:pr-8">
               <div>
                 <div className="flex items-center gap-2">
-                  <DialogTitle className="text-lg font-semibold text-[#1C1917]">
+                  <DialogTitle className="text-lg font-[580] text-[#1C1917]">
                     {data.name}
                   </DialogTitle>
                   <span className="rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-normal text-[#78716C]">
@@ -139,21 +139,21 @@ export function PersonalCard({
                   <span>本月岗位：</span>
                   <span className="rounded bg-[#F5F3EE]/80 px-1.5 py-0.5 text-[#43718E] font-medium">
                     文案{" "}
-                    <strong className="font-semibold">
+                    <strong className="font-medium tabular-nums">
                       {data.currentMonth.writerCount}
                     </strong>{" "}
                     篇
                   </span>
                   <span className="rounded bg-[#F5F3EE]/80 px-1.5 py-0.5 text-[#7E5C99] font-medium">
                     剪辑{" "}
-                    <strong className="font-semibold">
+                    <strong className="font-medium tabular-nums">
                       {data.currentMonth.editorCount}
                     </strong>{" "}
                     条
                   </span>
                   <span className="rounded bg-[#D97757]/10 px-1.5 py-0.5 text-[#D97757] font-medium">
                     运营{" "}
-                    <strong className="font-semibold">
+                    <strong className="font-medium tabular-nums">
                       {data.currentMonth.operatorCount}
                     </strong>{" "}
                     条

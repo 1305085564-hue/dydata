@@ -92,10 +92,10 @@ export function MobileMoreDrawer({
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <AdaptiveSheetTitle className="font-semibold text-[#1C1917] text-[15px]">
+                <AdaptiveSheetTitle className="font-medium text-[#1C1917] text-[15px]">
                   {name || "用户"}
                 </AdaptiveSheetTitle>
-                <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#E5E0D6]">
+                <span className="rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#78716C] border border-[#ECE7DE]">
                   {getRoleLabel(role, { companyRole })}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export function MobileMoreDrawer({
               onOpenChange(false);
               onOpenCommandHub();
             }}
-            className="flex w-full items-center justify-between rounded-xl bg-white border border-[#E5E0D6] p-3 min-h-[48px] text-left shadow-2xs active:scale-[0.985] transition-all"
+            className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-lg bg-[#FAF8F4] text-[#43718E] border border-[#ECE7DE]">
@@ -141,7 +141,7 @@ export function MobileMoreDrawer({
                 <span className="text-[12px] font-medium text-[#78716C]">当前工作账号</span>
                 <span className="text-[11px] text-[#78716C]/80">点击快速切换</span>
               </div>
-              <div className="space-y-1 rounded-xl bg-white border border-[#E5E0D6] p-1.5 shadow-2xs max-h-36 overflow-y-auto">
+              <div className="space-y-1 rounded-xl bg-white border border-[#ECE7DE] p-1.5 shadow-2xs max-h-36 overflow-y-auto">
                 {accounts.map((account) => {
                   const isSelected =
                     account.id === selectedAccountId ||
@@ -152,7 +152,7 @@ export function MobileMoreDrawer({
                       type="button"
                       onClick={() => handleAccountSelect(account.id)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-lg px-3 py-2.5 min-h-[44px] text-left text-[13px] transition-colors",
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[13px] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer",
                         isSelected
                           ? "bg-[#43718E]/10 text-[#43718E] font-medium"
                           : "text-[#292524] hover:bg-[#F5F3EE]",
@@ -186,10 +186,10 @@ export function MobileMoreDrawer({
                             href={child.href}
                             onClick={() => onOpenChange(false)}
                             className={cn(
-                              "flex items-center gap-2.5 rounded-xl border p-2.5 min-h-[44px] text-[13px] font-medium transition-all shadow-2xs active:scale-[0.985]",
+                              "flex items-center gap-2.5 rounded-xl border p-2.5 text-[13px] font-medium transition-all shadow-2xs active:scale-[0.99] active:duration-120",
                               active
                                 ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
-                                : "border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#F5F3EE]",
+                                : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#F5F3EE]",
                             )}
                           >
                             {Icon && (
@@ -219,10 +219,10 @@ export function MobileMoreDrawer({
                     href={group.href}
                     onClick={() => onOpenChange(false)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 min-h-[44px] text-[13px] font-medium transition-all shadow-2xs active:scale-[0.985]",
+                      "flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-all shadow-2xs active:scale-[0.99] active:duration-120",
                       active
                         ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
-                        : "border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#F5F3EE]",
+                        : "border-[#ECE7DE] bg-white text-[#292524] hover:bg-[#F5F3EE]",
                     )}
                   >
                     <div className="flex items-center gap-2.5">
@@ -253,7 +253,7 @@ export function MobileMoreDrawer({
                 onOpenChange(false);
                 onOpenSettings();
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 min-h-[44px] text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] transition-colors active:scale-[0.985]"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-medium text-[#292524] hover:bg-[#F5F3EE] transition-colors active:scale-[0.99] active:duration-120"
             >
               <div className="flex items-center gap-2.5">
                 <Sliders className="size-4 text-[#78716C]" />
@@ -265,7 +265,7 @@ export function MobileMoreDrawer({
             <button
               type="button"
               onClick={handleSignOut}
-              className="flex w-full items-center justify-between rounded-xl px-3 py-2.5 min-h-[44px] text-[13px] font-medium text-[#C0685C] hover:bg-[#C0685C]/10 transition-colors active:scale-[0.985]"
+              className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-[13px] font-medium text-[#C0685C] hover:bg-[#C0685C]/10 transition-colors active:scale-[0.99] active:duration-120"
             >
               <div className="flex items-center gap-2.5">
                 <LogOut className="size-4" />

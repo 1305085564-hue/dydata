@@ -1,4 +1,4 @@
-import { Lightbulb, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { 格式化为月日 } from "./断流横幅";
 import { EditorialSidenote } from "@/components/editorial/editorial-quote";
 
@@ -19,7 +19,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
   return (
     <section className="space-y-4 border-b border-[#ECE7DE]/80 pb-8">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FAF8F4] border border-[#E5E0D6]">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]">
           <Sparkles className="h-4 w-4 stroke-[1.75] text-[#D97757]" />
         </div>
         <div>
@@ -29,7 +29,7 @@ export function CoachCard({ prescription, peer, own }: CoachCardProps) {
       </div>
 
       <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/80 p-4">
-        <p className="font-serif text-[13.5px] font-normal leading-[1.7] text-[#1C1917]">
+        <p className="font-serif not-italic tracking-tight text-[13.5px] font-normal leading-[1.7] text-[#1C1917]">
           {advice}
         </p>
         <EditorialSidenote>

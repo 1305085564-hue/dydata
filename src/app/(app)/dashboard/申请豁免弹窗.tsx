@@ -189,7 +189,7 @@ function ExemptionModal({
         className={cn(
           triggerVariant === "card"
             ? "dashboard-top-action-button app-shell-metric dashboard-top-action-card !h-full !min-h-[5.25rem] !w-full !items-start !justify-between !whitespace-normal !px-4 !py-4"
-            : "h-8 border-[#E5E0D6] px-3 text-[12px] font-medium text-[#292524] shadow-xs transition-colors duration-100 ease-out hover:border-[#E5E0D6] hover:bg-white active:scale-[0.985] active:duration-75",
+            : "h-8 border-[#E5E0D6] px-3 text-[12px] font-medium text-[#292524] shadow-xs transition-colors duration-100 ease-out hover:border-[#E5E0D6] hover:bg-white active:scale-[0.99] active:duration-120",
           triggerClassName,
         )}
       >
@@ -214,7 +214,7 @@ function ExemptionModal({
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white/98 p-0 shadow-claude-dialog sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
+        <DialogContent className="flex flex-col overflow-hidden rounded-2xl bg-white/98 p-0 shadow-claude-dialog sm:max-w-4xl max-sm:max-w-none max-sm:w-full max-sm:h-dvh max-sm:max-h-none max-sm:rounded-none">
           <DialogHeader className="shrink-0 px-6 pb-2 pt-6">
         <DialogTitle className="text-lg font-medium text-[#1C1917]">
               停笔调养 · 申请请假或豁免
@@ -230,7 +230,7 @@ function ExemptionModal({
                 <button
                   type="button"
                   onClick={handleSelectAllUnsubmitted}
-                  className="group inline-flex items-center gap-1 rounded-md border border-transparent bg-[#D97757]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-colors duration-100 hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.985] active:duration-75 cursor-pointer shrink-0"
+                  className="group inline-flex items-center gap-1 rounded-md border border-transparent bg-[#D97757]/10 px-2 py-1 text-[11.5px] font-medium text-[#D97757] shadow-2xs transition-colors duration-100 hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120 cursor-pointer shrink-0"
                 >
                   <Zap className="size-3 stroke-[2] text-[#D97757] transition-transform group-hover:scale-110" />
                   一键全选（七日）
@@ -377,17 +377,19 @@ function ExemptionModal({
             <Button
               type="button"
               variant="ghost"
+              size="l"
               onClick={() => setOpen(false)}
               disabled={isPending}
-              className="h-11 px-6 text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
+              className="h-10 px-5 text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]"
             >
               取消
             </Button>
             <Button
               type="button"
+              size="l"
               onClick={handleSubmit}
               disabled={isPending}
-              className="h-11 bg-[#D97757] px-8 font-medium text-white shadow-sm transition-colors duration-100 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.985] active:duration-75"
+              className="h-10 bg-[#D97757] px-6 font-medium text-white shadow-sm transition-colors duration-100 ease-out hover:bg-[#C46A4D] hover:shadow-md active:scale-[0.99] active:duration-120"
             >
               {isPending ? "提交中..." : "提交申请"}
             </Button>

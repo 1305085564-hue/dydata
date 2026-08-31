@@ -18,7 +18,7 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
         initial={{ opacity: 0, y: 12, scale: 0.99 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: [0.215, 0.610, 0.355, 1.000] }}
-        className="relative w-full max-w-[440px] overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white px-8 py-9 shadow-claude-float"
+        className="relative w-full max-w-[440px] overflow-hidden rounded-2xl bg-white px-8 py-9 shadow-card-ring"
       >
         {/* 顶部静谧陶土微徽印（遵循系统减少动效偏好） */}
         <div className="absolute right-7 top-7 flex items-center justify-center size-2.5">
@@ -35,7 +35,7 @@ export function AuthShell({ eyebrow = "DYData", title, subtitle, children }: Aut
           <p className="text-[11px] font-medium uppercase tracking-[0.25em] text-[#78716C]">
             {eyebrow}
           </p>
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-[#1C1917]">
+          <h1 className="font-serif text-2xl font-[580] tracking-tight text-[#1C1917]">
             {title}
           </h1>
           {subtitle ? (

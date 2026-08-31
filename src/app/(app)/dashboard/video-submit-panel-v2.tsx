@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, ArrowLeft, X } from "lucide-react";
+import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, ArrowLeft, X, Check, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -144,14 +144,20 @@ function ExemptionReviewNoticeCard({
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-3.5 py-2 text-[12.5px] transition-all">
-      <div className="flex items-center gap-2 min-w-0">
+    <div className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all">
+      <div className="flex items-center gap-2.5 min-w-0">
         <span
           className={cn(
-            "size-1.5 shrink-0 rounded-full",
-            isApproved ? "bg-[#6FAA7D]" : "bg-[#C0685C]",
+            "flex size-4 shrink-0 items-center justify-center rounded-full",
+            isApproved ? "bg-[#6FAA7D]/10 text-[#6FAA7D]" : "bg-[#C0685C]/10 text-[#C0685C]",
           )}
-        />
+        >
+          {isApproved ? (
+            <Check className="size-3 stroke-[2.5]" />
+          ) : (
+            <span className="size-1.5 rounded-full bg-[#C0685C]" />
+          )}
+        </span>
         <span className="font-medium text-[#292524]">
           {dateText} {categoryText}{isApproved ? "已通过" : "未通过"}
         </span>
@@ -577,13 +583,13 @@ export function VideoSubmitPanelV2({
     <>
       <div className="w-full space-y-4 sm:space-y-6">
         {/* 新版控制栏：创作立卷 · 表达纪事 */}
-        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-4 sm:p-6 shadow-sm">
+        <div className="rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-white via-white to-[#FAF8F4] p-4 sm:p-6 shadow-card-ring">
           <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* 左侧：标题和描述 */}
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tighter">
+                <h1 className="font-serif text-2xl font-[580] text-[#1C1917] tracking-tighter">
                   创作立卷 · 表达纪事
                 </h1>
               </div>
@@ -600,19 +606,19 @@ export function VideoSubmitPanelV2({
                   type="button"
                   onClick={() => setIsCalendarOpen((prev) => !prev)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 sm:gap-2 h-9 rounded-lg border border-[#E5E0D6] bg-white px-2.5 sm:px-3 text-[12.5px] sm:text-[13px] font-medium text-[#292524] shadow-sm transition-all hover:bg-[#F5F3EE] active:scale-[0.985] focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer min-h-[38px]",
-                    isCalendarOpen && "border-[#78716C] bg-[#F5F3EE]"
+                    "inline-flex items-center gap-1.5 sm:gap-2 h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] px-2.5 text-[12px] sm:text-[13px] font-medium text-[#292524] transition-all hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120 focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 cursor-pointer",
+                    isCalendarOpen && "border-[#78716C] bg-[#ECE7DE]"
                   )}
                   aria-expanded={isCalendarOpen}
                   aria-label="切换填报日期"
                 >
-                  <CalendarDays className="size-4 text-[#78716C]" />
+                  <CalendarDays className="size-3.5 text-[#78716C]" />
                   <span className="tabular-nums">{activeBizDate}</span>
                 </button>
 
                 {isCalendarOpen && (
                   <div className="absolute left-0 top-full mt-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-150">
-                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl border border-[#E5E0D6] bg-white p-3.5 sm:p-5 shadow-[0_12px_32px_-4px_rgba(28,25,23,0.08),0_2px_6px_rgba(0,0,0,0.02)]">
+                    <div className="w-[290px] sm:w-[320px] max-w-[calc(100vw-2.5rem)] rounded-2xl bg-white p-3.5 sm:p-5 shadow-claude-dialog">
                       <SubmissionCalendar
                         today={today}
                         submittedDates={submittedDatesIncludingActivity}
@@ -633,15 +639,14 @@ export function VideoSubmitPanelV2({
               {/* 停笔调养申请按钮 */}
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
+                variant="secondary"
+                size="m"
                 onClick={() => {
                   if (!isExemptionPending) setIsExemptionDialogOpen(true);
                 }}
                 disabled={isExemptionPending}
                 className={cn(
-                  "h-9 rounded-lg border-[#E5E0D6] bg-white px-2.5 sm:px-3 text-[12px] sm:text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] min-h-[38px]",
-                  isExemptionPending && "border-[#B98A54]/40 bg-[#B98A54]/10 text-[#B98A54]"
+                  isExemptionPending && "border border-[#B98A54]/40 bg-[#B98A54]/10 text-[#B98A54]"
                 )}
                 title={isExemptionPending ? "已有调养申请审批中" : undefined}
               >
@@ -652,10 +657,9 @@ export function VideoSubmitPanelV2({
               {/* 历史手稿按钮 */}
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
+                variant="secondary"
+                size="m"
                 onClick={() => setIsHistoryOpen(true)}
-                className="h-9 rounded-lg border-[#E5E0D6] bg-white px-2.5 sm:px-3 text-[12px] sm:text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] min-h-[38px]"
               >
                 <History className="size-3.5 mr-1 text-[#78716C]" />
                 历史手稿
@@ -665,7 +669,7 @@ export function VideoSubmitPanelV2({
         </div>
 
         {/* 主内容区 */}
-        <Card className="border-[#ECE7DE] shadow-sm">
+        <Card className="rounded-2xl">
           <CardContent className="p-3.5 sm:p-6 space-y-4 sm:space-y-6" ref={formAnchorRef}>
             {/* 待审批豁免与审批结果提示区 */}
             {((isExemptionPending && !dismissedPendingExemption) || userExemptionReviewNotice) && (
@@ -674,10 +678,12 @@ export function VideoSubmitPanelV2({
                   <motion.div
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-3.5 py-2 text-[12.5px] transition-all"
+                    className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54] animate-pulse" />
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
+                        <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
+                      </span>
                       <span className="font-medium text-[#292524]">
                         豁免申请审批中
                       </span>
@@ -702,12 +708,12 @@ export function VideoSubmitPanelV2({
               </div>
             )}
 
-            {/* 已提交概览卡片（禅意归档态） */}
+            {/* 已提交概览卡片（禅意归档态 · 微气垫底色消灭白卡套娃） */}
             {isPrimarySummaryMode && activeBizDate === today && !submittedViewActive ? (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 sm:mb-6 rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-4 sm:p-6 shadow-sm"
+                className="mb-4 sm:mb-6 rounded-xl bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 border border-[#ECE7DE] p-4 sm:p-6"
               >
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
                   {/* 左侧：禅意线描插图 + 温润寄语 */}
@@ -721,42 +727,46 @@ export function VideoSubmitPanelV2({
                           <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
                           今日已归档
                         </span>
-                        <span className="text-[11.5px] sm:text-[12px] text-[#78716C] tabular-nums">
-                          {formatDateTime(primarySummary.uploadedAt)}
+                        <span className="text-[12px] sm:text-[12.5px] font-medium text-[#78716C]">
+                          已完成今日记录
                         </span>
                       </div>
-                      <h2 className="font-serif text-base sm:text-lg font-medium tracking-tight text-[#1C1917]">
-                        今日创作已完成收卷
-                      </h2>
-                      <p className="text-[12px] sm:text-[12.5px] text-[#78716C] leading-relaxed">
-                        记录已安全落库。剩下的时间，留给生活与思考。
+                      <h3 className="font-serif not-italic tracking-tight text-[17px] sm:text-[19px] font-[580] text-[#1C1917]">
+                        万事俱备，静候佳音
+                      </h3>
+                      <p className="text-[12px] sm:text-[13px] text-[#78716C]">
+                        今日作品已妥善入库，数据已同步至总览。
                       </p>
                     </div>
                   </div>
 
-                  {/* 中间/右侧：数据指标与操作 */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 lg:gap-6">
-                    {/* 数据指标三联 */}
-                    <div className="grid grid-cols-3 gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">
+                  {/* 右侧：3 核心指标 + 操作 */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 shrink-0">
+                    {/* 指标三联 */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
                       <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">播放量</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-semibold tabular-nums text-[#1C1917] truncate">
-                          {primarySummary.playCount !== null && primarySummary.playCount !== undefined
-                            ? Number(primarySummary.playCount).toLocaleString("zh-CN")
+                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
+                          {primarySummary.playCount !== null
+                            ? primarySummary.playCount >= 10000
+                              ? `${(primarySummary.playCount / 10000).toFixed(1)}万`
+                              : primarySummary.playCount.toLocaleString()
                             : "—"}
                         </div>
                       </div>
                       <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
-                        <div className="text-[11px] font-medium text-[#78716C] truncate">涨粉</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-semibold tabular-nums text-[#1C1917] truncate">
-                          {primarySummary.followerGain !== null && primarySummary.followerGain !== undefined
-                            ? Number(primarySummary.followerGain).toLocaleString("zh-CN")
+                        <div className="text-[11px] font-medium text-[#78716C] truncate">点赞量</div>
+                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
+                          {primarySummary.likes !== null
+                            ? primarySummary.likes >= 10000
+                              ? `${(primarySummary.likes / 10000).toFixed(1)}万`
+                              : primarySummary.likes.toLocaleString()
                             : "—"}
                         </div>
                       </div>
                       <div className="rounded-xl bg-[#F5F3EE] px-2 py-2 sm:px-3.5 sm:py-2.5 min-w-0 text-center">
                         <div className="text-[11px] font-medium text-[#78716C] truncate">完播率</div>
-                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-semibold tabular-nums text-[#1C1917] truncate">
+                        <div className="mt-0.5 sm:mt-1 text-[14.5px] sm:text-[16px] font-[580] tabular-nums text-[#1C1917] truncate">
                           {primarySummary.completionRate ?? "—"}
                         </div>
                       </div>
@@ -766,17 +776,19 @@ export function VideoSubmitPanelV2({
                     <div className="flex flex-col gap-2 shrink-0 w-full sm:w-[140px]">
                       <Button
                         type="button"
-                        className="h-9 w-full rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white text-[12.5px] font-medium transition-colors duration-100 shadow-sm active:scale-[0.985] inline-flex items-center justify-center gap-1.5 min-h-[38px]"
+                        size="m"
+                        className="w-full"
                         onClick={handleGoToTopics}
                       >
-                        <Compass className="size-3.5" />
+                        <Compass className="size-3.5 mr-1" />
                         <span>挑选明日选题</span>
                       </Button>
                       <div className="flex items-center gap-1.5 w-full">
                         <Button
                           type="button"
-                          variant="outline"
-                          className="h-8 flex-1 rounded-lg border-[#E5E0D6] text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] min-h-[36px]"
+                          variant="secondary"
+                          size="s"
+                          className="flex-1"
                           onClick={() => setRequestedMode("editToday")}
                         >
                           <PencilLine className="size-3 mr-1" />
@@ -785,7 +797,8 @@ export function VideoSubmitPanelV2({
                         <Button
                           type="button"
                           variant="ghost"
-                          className="h-8 flex-1 rounded-lg text-[11.5px] font-medium text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] min-h-[36px]"
+                          size="s"
+                          className="flex-1 text-[#78716C] hover:text-[#1C1917]"
                           onClick={handleGoToGrowth}
                         >
                           复盘
@@ -799,28 +812,37 @@ export function VideoSubmitPanelV2({
 
             {/* 豁免/请假状态卡片 */}
             {selectedAccount && shouldShowBlockedStateCard ? (
-              <div
-                className={cn(
-                  "mb-6 p-5 rounded-2xl border border-[#ECE7DE] bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 shadow-sm border-l-4",
-                  activeDateStatus.state === "waive"
-                    ? "border-l-[#6FAA7D]"
-                    : "border-l-[#D99E55]",
-                )}
-              >
+              <div className="mb-6 rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] p-4 sm:p-5 shadow-2xs">
                 <div className="space-y-2.5">
-                  <span className={getDashboardStatusClass(activeDateStatus.tone)}>
-                    <FilePenLine className="size-3.5" />
-                    {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "flex size-4 shrink-0 items-center justify-center rounded-full",
+                        activeDateStatus.state === "waive"
+                          ? "bg-[#6FAA7D]/10 text-[#6FAA7D]"
+                          : "bg-[#B98A54]/10 text-[#B98A54]",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "size-1.5 rounded-full",
+                          activeDateStatus.state === "waive" ? "bg-[#6FAA7D]" : "bg-[#B98A54]",
+                        )}
+                      />
+                    </span>
+                    <span className="text-[12.5px] font-medium text-[#292524]">
+                      {activeBizDate === today ? `今日${activeDateStatus.label}` : `${activeDateStatus.label}状态`}
+                    </span>
+                  </div>
                   <div>
                     <h3 className="text-base font-medium text-[#1C1917]">
                       {activeBizDate} · 停笔调养 ({activeDateStatus.label})
                     </h3>
-                    <p className="mt-1 text-[12.5px] leading-relaxed text-[#78716C]">
+                    <p className="mt-1 text-[13px] leading-relaxed text-[#78716C]">
                       {activeDateStatus.description}
                     </p>
                     {activeExemptionState.reason && (
-                      <p className="mt-1 text-[12.5px] text-[#78716C]">
+                      <p className="mt-1 text-[13px] text-[#78716C]">
                         事由：{activeExemptionState.reason}
                       </p>
                     )}
@@ -839,8 +861,10 @@ export function VideoSubmitPanelV2({
             ) : null}
 
             {shouldShowActivityLoadingCard ? (
-              <div className="flex items-center gap-2.5 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-3.5 py-2.5 text-[12.5px]">
-                <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54] animate-pulse" />
+              <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+                <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
+                  <span className="size-1.5 rounded-full bg-[#B98A54] animate-pulse" />
+                </span>
                 <span className="font-medium text-[#292524]">正在核对历史纪事</span>
                 <span className="text-[#78716C]">· 正在确认 {activeBizDate} 是否已有日报，核对完成前暂不开放补交</span>
               </div>
@@ -860,8 +884,9 @@ export function VideoSubmitPanelV2({
                   </div>
                   <Button
                     type="button"
-                    variant="outline"
-                    className="h-9 rounded-xl border-[#E5E0D6] bg-white hover:bg-[#F5F3EE] text-[13px] font-medium text-[#292524] hover:border-[#78716C]/40 shadow-2xs transition-colors cursor-pointer"
+                    variant="secondary"
+                    size="default"
+                    className="h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[12px] font-medium text-[#292524] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                     onClick={() => setRequestedMode("editToday")}
                   >
                     查看并修改
@@ -967,103 +992,84 @@ export function VideoSubmitPanelV2({
           }
         }}
       >
-        <DialogContent className="fixed inset-0 m-auto z-50 flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] sm:max-w-4xl md:max-w-[1020px] rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0">
+        <DialogContent className="fixed inset-0 m-auto z-50 flex flex-col overflow-hidden h-fit max-h-[85dvh] w-[calc(100%-2rem)] sm:max-w-4xl md:max-w-[1020px] rounded-2xl bg-white shadow-claude-dialog p-0 !top-0 !left-0 !translate-x-0 !translate-y-0">
           <div className="flex flex-col flex-1 min-h-0 p-5 sm:p-6">
-            <DialogHeader className="shrink-0 pb-3">
-              <DialogTitle className="text-[16px] sm:text-[17px] font-semibold text-[#1C1917]">
-                历史手稿纪事
-              </DialogTitle>
-            </DialogHeader>
-
-            <DialogBody className="flex-1 min-h-0 overflow-y-auto">
-              {activityError ? (
-                <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
-              ) : isActivityLoading ? (
-                <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
-                  加载历史记录...
-                </div>
-              ) : !historyReports || historyReports.length === 0 ? (
-                <EmptyState
-                  title="历史手稿静待立卷"
-                  description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
-                />
-              ) : (
-                <HistoryList
-                  history={historyReports.map((report) => ({
-                    ...report,
-                    content: report.content ?? null,
-                    follower_convert: report.follower_convert ?? null,
-                  }))}
-                  accountDisplayNameMap={accountDisplayNameMap}
-                  onReportOpen={(report) => {
-                    if (!report.report_date) return;
-                    setViewingReport({
-                      ...report,
-                      report_date: report.report_date,
-                      content: report.content ?? null,
-                      follower_convert: report.follower_convert ?? null,
-                    });
-                  }}
-                />
-              )}
-            </DialogBody>
-          </div>
-
-          {/* 弹窗内抽屉 (In-Dialog Slide-Over · 严密贴合右侧内壁圆角) */}
-          <AnimatePresence>
             {viewingReport ? (
               <>
-                {/* 弹窗内左侧轻度遮罩 */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  onClick={() => setViewingReport(null)}
-                  className="absolute inset-0 z-20 bg-black/10 backdrop-blur-[0.5px] rounded-2xl"
-                />
-
-                {/* 抽屉面板：宽度设为 480px~500px，让 3 列指标自然舒展 */}
-                <motion.div
-                  initial={{ x: "100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x: "100%" }}
-                  transition={{ type: "spring", damping: 28, stiffness: 320 }}
-                  className="absolute inset-y-0 right-0 z-30 flex w-full sm:w-[480px] md:w-[500px] flex-col bg-white border-l border-[#ECE7DE] rounded-r-2xl shadow-2xl overflow-hidden"
-                >
-                  <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#ECE7DE] shrink-0 bg-white">
+                <DialogHeader className="shrink-0 pb-3 border-b border-[#ECE7DE]">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="size-1.5 rounded-full bg-[#D97757]" />
-                      <h3 className="text-[14.5px] font-semibold text-[#1C1917]">
-                        修改历史手稿 · {viewingReport.report_date}
-                      </h3>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="s"
+                        onClick={() => setViewingReport(null)}
+                      >
+                        ← 返回手稿列表
+                      </Button>
+                      <span className="text-[#ECE7DE]">|</span>
+                      <DialogTitle className="text-base font-[580] text-[#1C1917] tracking-tight">
+                        修改历史手稿 · <span className="tabular-nums">{viewingReport.report_date}</span>
+                      </DialogTitle>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setViewingReport(null)}
-                      className="rounded-lg p-1 text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524] transition-colors cursor-pointer"
-                    >
-                      <X className="size-4" />
-                      <span className="sr-only">收起抽屉</span>
-                    </button>
                   </div>
+                </DialogHeader>
+                <DialogBody className="flex-1 min-h-0 overflow-y-auto pt-4">
+                  <HistoryReportEditForm
+                    key={`history-edit-${viewingReport.id}-${viewingReport.uploaded_at ?? viewingReport.report_date}`}
+                    report={viewingReport as HistoryReportEditData}
+                    accountDisplayName={accountDisplayNameMap[viewingReport.account_id] ?? viewingReport.account_id}
+                    onClose={() => setViewingReport(null)}
+                    onSaved={() => {
+                      setViewingReport(null);
+                      void loadActivity();
+                    }}
+                  />
+                </DialogBody>
+              </>
+            ) : (
+              <>
+                <DialogHeader className="shrink-0 pb-3">
+                  <DialogTitle className="text-base font-[580] text-[#1C1917] tracking-tight">
+                    历史手稿纪事
+                  </DialogTitle>
+                </DialogHeader>
 
-                  <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                    <HistoryReportEditForm
-                      key={`history-drawer-${viewingReport.id}-${viewingReport.uploaded_at ?? viewingReport.report_date}`}
-                      report={viewingReport as HistoryReportEditData}
-                      accountDisplayName={accountDisplayNameMap[viewingReport.account_id] ?? viewingReport.account_id}
-                      onClose={() => setViewingReport(null)}
-                      onSaved={() => {
-                        setViewingReport(null);
-                        void loadActivity();
+                <DialogBody className="flex-1 min-h-0 overflow-y-auto">
+                  {activityError ? (
+                    <DashboardActivityError message={activityError} onRetry={() => void loadActivity()} />
+                  ) : isActivityLoading ? (
+                    <div className="flex h-40 items-center justify-center text-[13px] text-[#78716C]">
+                      加载历史记录...
+                    </div>
+                  ) : !historyReports || historyReports.length === 0 ? (
+                    <EmptyState
+                      title="历史手稿静待立卷"
+                      description="完成创作立卷或补交后，这里将收录最近 30 份纪事手稿。"
+                    />
+                  ) : (
+                    <HistoryList
+                      history={historyReports.map((report) => ({
+                        ...report,
+                        content: report.content ?? null,
+                        follower_convert: report.follower_convert ?? null,
+                      }))}
+                      accountDisplayNameMap={accountDisplayNameMap}
+                      onReportOpen={(report) => {
+                        if (!report.report_date) return;
+                        setViewingReport({
+                          ...report,
+                          report_date: report.report_date,
+                          content: report.content ?? null,
+                          follower_convert: report.follower_convert ?? null,
+                        });
                       }}
                     />
-                  </div>
-                </motion.div>
+                  )}
+                </DialogBody>
               </>
-            ) : null}
-          </AnimatePresence>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 

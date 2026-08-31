@@ -461,7 +461,7 @@ export function ModelDialog({
                         <button
                           key={mId}
                           type="button"
-                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.985] active:duration-75 transition-all shadow-2xs"
+                          className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
                           onClick={() => setFormData({ ...formData, model_id: mId })}
                         >
                           {mId}
@@ -478,7 +478,7 @@ export function ModelDialog({
                           <button
                             key={item.id}
                             type="button"
-                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.985] active:duration-75 transition-all shadow-2xs"
+                            className="font-mono text-[12px] px-2.5 py-1 rounded-md bg-white border border-[#E5E0D6] text-[#292524] hover:border-[#D97757] hover:text-[#D97757] active:scale-[0.99] active:duration-120 transition-all shadow-2xs"
                             onClick={() => setFormData({ ...formData, model_id: item.id })}
                           >
                             {item.id}

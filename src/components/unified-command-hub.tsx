@@ -324,13 +324,13 @@ export function UnifiedCommandHub({
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case "critical":
-        return "bg-[#DC2626]/10 text-[#DC2626] border-transparent ";
+        return "bg-[#C0685C]/10 text-[#C0685C] border-transparent ";
       case "warning":
         return "bg-[#D99E55]/10 text-[#8A6A2F] border-transparent/50 ";
       case "success":
         return "bg-[#6FAA7D]/10 text-[#6FAA7D] border-transparent ";
       default:
-        return "bg-[#FBF9F5] text-[#292524] border-[#E5E0D6]";
+        return "bg-[#FBF9F5] text-[#292524] border-[#ECE7DE]";
     }
   };
 
@@ -556,7 +556,7 @@ export function UnifiedCommandHub({
                             "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all",
                             selectedApprovalIds.size === 0 || batchProcessing
                               ? "cursor-not-allowed bg-[#F5F3EE] text-[#78716C]"
-                              : "bg-[#D97757] text-white hover:bg-[#C96442] shadow-xs active:scale-[0.985] active:duration-75",
+                              : "bg-[#D97757] text-white hover:bg-[#C96442] shadow-xs active:scale-[0.99] active:duration-120",
                           )}
                         >
                           {batchProcessing ? (
@@ -676,7 +676,7 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewApproval(item, "approved")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#1C1917] transition-all hover:bg-[#6FAA7D]/20 active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#1C1917] transition-all hover:bg-[#6FAA7D]/20 active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 {isApproving ? (
                                   <Loader2 className="size-3 animate-spin" />
@@ -696,7 +696,7 @@ export function UnifiedCommandHub({
                                 onClick={() =>
                                   void handleReviewApproval(item, "rejected")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.985] active:duration-75 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40"
                               >
                                 {isRejecting ? (
                                   <Loader2 className="size-3 animate-spin" />
@@ -759,7 +759,7 @@ export function UnifiedCommandHub({
                         <Link
                           href="/admin/fulfillment"
                           onClick={() => onOpenChange(false)}
-                          className="mt-3.5 inline-flex h-7 items-center gap-1 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3 text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-all active:scale-[0.985] active:duration-75 shadow-2xs"
+                          className="mt-3.5 inline-flex h-7 items-center gap-1 rounded-lg border border-[#E5E0D6] bg-[#FBF9F5] px-3 text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-all active:scale-[0.99] active:duration-120 shadow-2xs"
                         >
                           <span>前往发布管理</span>
                           <ArrowRight className="size-3" />

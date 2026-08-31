@@ -123,7 +123,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage <= 1}
             onClick={() => onPageChange(safeCurrentPage - 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
+            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="上一页"
           >
             <ChevronLeft className="size-3.5" />
@@ -153,7 +153,7 @@ export function TablePagination({
                   className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-[11.5px] tabular-nums font-medium transition-all cursor-pointer ${
                     isCurrent
                       ? "bg-[#D97757]/10 text-[#D97757] font-medium pointer-events-none"
-                      : "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.985] active:duration-75"
+                      : "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] active:scale-[0.99] active:duration-120"
                   }`}
                   aria-current={isCurrent ? "page" : undefined}
                 >
@@ -168,7 +168,7 @@ export function TablePagination({
             type="button"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => onPageChange(safeCurrentPage + 1)}
-            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.985] active:duration-75"
+            className="inline-flex h-7 items-center justify-center gap-0.5 rounded-md px-2 text-[11.5px] font-medium text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-[#292524] transition-all cursor-pointer active:scale-[0.99] active:duration-120"
             aria-label="下一页"
           >
             <span>下一页</span>

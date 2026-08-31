@@ -154,6 +154,7 @@ export function TopicHubV2({
   }, [poolSearchQuery]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPoolPage(1);
   }, [
     debouncedPoolSearchQuery,
@@ -443,7 +444,7 @@ export function TopicHubV2({
   if (membershipRequired) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-8 text-center shadow-claude-dialog">
+        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-card-ring">
           <h3 className="mb-2 text-lg font-medium text-[#1C1917]">
             请先申请加入团队
           </h3>
@@ -452,7 +453,7 @@ export function TopicHubV2({
           </p>
           <a
             href="/dashboard"
-            className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#D97757] px-5 py-2.5 text-xs font-semibold text-white"
+            className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-[#D97757] hover:bg-[#C46A4D] px-5 text-sm font-medium text-white shadow-xs transition-all active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             去工作台申请加入团队
           </a>
@@ -485,7 +486,7 @@ export function TopicHubV2({
               <CompassConstellationIllustration size={22} />
             </div>
             <div className="space-y-0.5 sm:space-y-1">
-              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-[#1C1917] tracking-tight">
+              <h1 className="font-serif text-xl sm:text-2xl font-[580] text-[#1C1917] tracking-tight">
                 灵感手稿 · 选题库
               </h1>
               <p className="text-[12px] sm:text-[12.5px] text-[#78716C] font-normal leading-relaxed">

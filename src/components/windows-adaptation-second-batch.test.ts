@@ -14,7 +14,7 @@ test("选题详情抽屉在低矮视口下固定标题和操作区", () => {
   assert.match(workDrawer, /max-h-\[calc\(100dvh-var\(--app-top-offset,64px\)\)\]/);
   assert.match(workDrawer, /flex min-h-0[\s\S]*flex-col overflow-hidden/);
   assert.match(workDrawer, /min-h-0 flex-1 overflow-y-auto/);
-  assert.match(workDrawer, /shrink-0[\s\S]*border-t border-\[#E5E0D6\]/);
+  assert.match(workDrawer, /shrink-0[\s\S]*border-t border-\[#ECE7DE\]/);
 });
 
 test("AI 型号同步弹窗把筛选区、列表和底部保存操作分层", () => {
@@ -63,12 +63,12 @@ test("全局命令气泡在窄屏和低矮视口内收缩", () => {
 });
 
 test("选题详情编辑表单固定底部保存操作", () => {
-  // 旧详情页已下线，编辑表单随能力搬迁进选题库抽屉（2026-08-30）
+  // 单层抽屉内联视图切换（消灭弹窗套抽屉套娃）
   const source = readSource("src/components/topics-v2/TopicWorkBreakdownDrawer.tsx");
 
-  assert.match(source, /DialogBody/);
-  assert.match(source, /max-h-\[calc\(100dvh-2rem\)\]/);
-  assert.match(source, /<DialogHeader[\s\S]*<DialogBody[\s\S]*<DialogFooter/);
+  assert.match(source, /drawerMode === "edit"/);
+  assert.match(source, /min-h-0 flex-1 space-y-4 overflow-y-auto/);
+  assert.match(source, /border-t border-\[#ECE7DE\] pt-3 flex justify-end/);
 });
 
 test("AI 配置编辑弹窗在低矮视口下分层滚动", () => {

@@ -47,9 +47,9 @@ export function ErrorState({
         )}
       </div>
       <Button
-        variant="outline"
-        size="sm"
-        className="mt-3 h-8 rounded-lg border-[#E5E0D6] bg-white text-[12.5px] font-medium text-[#292524] hover:bg-[#F5F3EE]"
+        variant="secondary"
+        size="s"
+        className="mt-3 h-7 rounded-md border border-[#ECE7DE] bg-[#F5F3EE] text-[12px] font-medium text-[#292524] hover:bg-[#ECE7DE] active:scale-[0.99] active:duration-120"
         onClick={handleRetry}
       >
         重新对齐同步

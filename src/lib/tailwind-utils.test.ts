@@ -29,9 +29,9 @@ test("buttonClass 复用现有按钮 variants", () => {
   const ghost = buttonClass("ghost", "sm");
 
   assert.match(primary, /bg-\[#D97757\]/);
-  assert.match(primary, /h-9/);
+  assert.match(primary, /h-7/);
   assert.match(ghost, /hover:bg-\[#F5F3EE\]/);
-  assert.match(ghost, /h-8/);
+  assert.match(ghost, /h-7/);
 });
 
 test("badgeClass 根据语义色返回对应 badge class", () => {

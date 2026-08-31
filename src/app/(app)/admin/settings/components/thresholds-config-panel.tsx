@@ -69,11 +69,11 @@ export function ThresholdsConfigPanel({
     <div className="space-y-6 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#ECE7DE]">
         <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#FBF9F5] text-[#D97757]">
-            <Sliders className="size-5" />
+          <span className="flex size-9 items-center justify-center rounded-xl bg-[#F5F3EE] text-[#D97757]">
+            <Sliders className="size-4.5" />
           </span>
           <div>
-            <h3 className="text-[16px] font-medium text-[#1C1917]">
+            <h3 className="text-[15px] font-medium text-[#1C1917]">
               视频复盘与素材库异常警戒阈值
             </h3>
             <p className="text-[12px] text-[#78716C] mt-0.5">
@@ -85,10 +85,9 @@ export function ThresholdsConfigPanel({
         {canManage && (
           <Button
             type="button"
-            variant="outline"
-            size="sm"
+            variant="secondary"
+            size="m"
             onClick={handleResetToDefault}
-            className="h-8 gap-1.5 rounded-xl border-[#E5E0D6] text-[12px] text-[#292524] hover:bg-[#FBF9F5]"
           >
             <RotateCcw className="size-3.5" />
             恢复系统默认
@@ -97,8 +96,8 @@ export function ThresholdsConfigPanel({
       </div>
 
       {!canManage && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#E5E0D6]/60 bg-[#F5F3EE]/50 p-3 text-[12px] text-[#292524]">
-          <Info className="size-4 shrink-0 text-[#D99E55]" />
+        <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+          <Info className="size-4 shrink-0 text-[#78716C]" />
           <span>您当前为只读视角，仅 Team Admin 或 Owner 可修改警戒阈值。</span>
         </div>
       )}
@@ -241,8 +240,8 @@ export function ThresholdsConfigPanel({
           <div className="flex items-center justify-end gap-3 pt-2">
             <Button
               type="submit"
+              size="m"
               disabled={isSubmitting || !hasChanges}
-              className="h-9 gap-1.5 rounded-xl bg-[#D97757] px-5 text-[12px] font-medium text-white transition-all hover:bg-[#C96442] active:scale-[0.985] active:duration-75 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

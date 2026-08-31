@@ -294,9 +294,9 @@ export function VideoDetailDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#E5E0D6]/80 bg-[#FBF9F5]/60 backdrop-blur-xl"
+        className="w-full max-w-4xl p-0 sm:max-w-4xl border-l border-[#ECE7DE] bg-[#FBF9F5]/95 shadow-claude-dialog"
       >
-        <SheetHeader className="border-b border-[#E5E0D6]/80 bg-white/90 px-6 py-4 backdrop-blur-md">
+        <SheetHeader className="border-b border-[#ECE7DE] bg-white px-6 py-3.5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-[12px] font-medium text-[#78716C]">
               <span className="flex items-center gap-1 text-[#292524] font-semibold">
@@ -311,15 +311,17 @@ export function VideoDetailDialog({
               <div className="flex items-center gap-2">
                 {video.lifecycle_state === "trashed" ? (
                   <>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="s"
                       onClick={() => handleLifecycleAction("restore")}
                       disabled={isOperating}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#6FAA7D]/10 px-3 text-[12px] font-medium text-[#292524] hover:bg-[#6FAA7D]/20 transition-colors disabled:opacity-50"
+                      className="bg-[#6FAA7D]/10 text-[#6FAA7D] hover:bg-[#6FAA7D]/20"
                     >
-                      <RotateCcw className="size-3.5" />
+                      <RotateCcw className="size-3" />
                       恢复作品
-                    </button>
+                    </Button>
                     {canPurge &&
                       (() => {
                         const eligible = isPurgeEligible(
@@ -329,34 +331,67 @@ export function VideoDetailDialog({
                           video.trashed_at ?? null,
                         );
                         return (
-                          <button
+                          <Button
                             type="button"
+                            variant="secondary"
+                            size="s"
                             onClick={() => setShowConfirmPurge(true)}
                             disabled={!eligible || isOperating}
                             title={tooltip || undefined}
-                            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-[#F5F3EE]/80 px-3 text-[12px] font-medium text-[#292524] hover:bg-[#F5F3EE]/80 transition-colors disabled:text-[#78716C] disabled:bg-[#F5F3EE] disabled:border-[#E5E0D6] disabled:cursor-not-allowed"
                           >
-                            <Trash2 className="size-3.5" />
+                            <Trash2 className="size-3" />
                             永久删除
-                          </button>
+                          </Button>
                         );
                       })()}
                   </>
                 ) : (
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="s"
                     onClick={() => handleLifecycleAction("trash")}
                     disabled={isOperating}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[12px] font-medium text-[#292524] hover:text-[#DC2626] hover:border-[#E5E0D6] transition-colors disabled:opacity-50 shadow-2xs"
+                    className="hover:text-[#C0685C]"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Trash2 className="size-3" />
                     移入回收站
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
           </div>
         </SheetHeader>
+
+        {/* 永久删除就地确认横幅（消除 Sheet 外再叠弹窗） */}
+        {showConfirmPurge && video && (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ECE7DE] bg-[#FAF8F4] px-6 py-3 text-[13px] animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="flex items-center gap-2 text-[#78716C] min-w-0">
+              <AlertTriangle className="size-4 text-[#C0685C] shrink-0" />
+              <span>确认彻底删除此作品？将永久隐藏并清理截图，此操作不可撤销。</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                type="button"
+                variant="secondary"
+                size="s"
+                onClick={() => setShowConfirmPurge(false)}
+                disabled={isOperating}
+              >
+                暂保留
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="s"
+                onClick={() => handleLifecycleAction("purge")}
+                disabled={isOperating}
+              >
+                {isOperating ? "正在删除..." : "彻底删除"}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <SheetBody className="p-4 sm:p-6 space-y-5 overflow-y-auto max-h-[calc(100dvh-65px)] pb-[calc(2.5rem+var(--app-bottom-nav-height,0px)+env(safe-area-inset-bottom,0px))] md:pb-6">
           {video ? (
@@ -384,7 +419,7 @@ export function VideoDetailDialog({
                 )}
 
               {/* 1. 顶部全景单大卡片 (视频元数据 + 爆款数据核心大盘 融为一体) */}
-              <section className="rounded-2xl border border-[#E5E0D6]/80 bg-white p-5 shadow-xs space-y-5">
+              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-5">
                 {/* 1.1 视频元信息 header */}
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between border-b border-[#ECE7DE] pb-4">
                   <div className="space-y-1.5">
@@ -407,7 +442,7 @@ export function VideoDetailDialog({
                         {statusBadgeConfig[video.anomaly_status]?.label ??
                           video.anomaly_status}
                       </Badge>
-                      <h2 className="text-lg font-semibold text-[#1C1917] leading-snug">
+                      <h2 className="text-lg font-[580] text-[#1C1917] leading-snug">
                         {video.video_title?.trim() || "未命名视频"}
                       </h2>
                     </div>
@@ -451,7 +486,7 @@ export function VideoDetailDialog({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="size-2 rounded-full bg-[#D97757]" />
-                      <h3 className="text-[13px] font-semibold text-[#1C1917] tracking-tight">
+                      <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
                         爆款数据核心大盘
                       </h3>
                     </div>
@@ -467,7 +502,7 @@ export function VideoDetailDialog({
                         <span>播放量</span>
                         <Play className="size-3.5 text-[#78716C]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-semibold tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
                         {formatNumber(snapshot?.play_count)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
@@ -483,7 +518,7 @@ export function VideoDetailDialog({
                         <span>完播率</span>
                         <Activity className="size-3.5 text-[#6FAA7D]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-semibold tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
                         {formatPercent(snapshot?.completion_rate)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
@@ -500,7 +535,7 @@ export function VideoDetailDialog({
                         <span>综合互动率</span>
                         <TrendingUp className="size-3.5 text-[#D97757]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-semibold tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
                         {formatPercent(interaction)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
@@ -514,7 +549,7 @@ export function VideoDetailDialog({
                         <span>粉转率</span>
                         <Sparkles className="size-3.5 text-[#43718E]" />
                       </div>
-                      <div className="mt-1.5 text-2xl font-semibold tabular-nums text-[#1C1917] tracking-tight">
+                      <div className="mt-1.5 text-2xl font-[580] tabular-nums text-[#1C1917] tracking-tight">
                         {formatPercent(followerConv)}
                       </div>
                       <div className="mt-0.5 text-[11px] text-[#78716C] font-normal">
@@ -530,7 +565,7 @@ export function VideoDetailDialog({
 
               {/* 2. 全量快照指标数据 (放在文案内容库上方，默认展开) */}
               {snapshot && (
-                <section className="rounded-2xl border border-[#E5E0D6]/80 bg-white p-5 shadow-xs space-y-3">
+                <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
                   <div className="flex items-center justify-between border-b border-[#ECE7DE] pb-3">
                     <div className="flex items-center gap-2">
                       <Layers className="size-4 text-[#78716C]" />
@@ -645,11 +680,11 @@ export function VideoDetailDialog({
               )}
 
               {/* 3. 脚本文案与内容库 */}
-              <section className="rounded-2xl border border-[#E5E0D6]/80 bg-white p-5 shadow-xs space-y-3">
+              <section className="rounded-2xl bg-white p-5 shadow-card-ring space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="size-4 text-[#292524]" />
-                    <h3 className="text-[13px] font-semibold text-[#1C1917] tracking-tight">
+                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
                       视频文案内容库
                     </h3>
                     <span className="text-[11px] text-[#78716C] font-normal">
@@ -660,7 +695,7 @@ export function VideoDetailDialog({
                     <button
                       type="button"
                       onClick={handleCopyContent}
-                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors"
+                      className="inline-flex items-center gap-1 text-[12px] font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                     >
                       {copiedContent ? (
                         <Check className="size-3.5 text-[#6FAA7D]" />
@@ -672,7 +707,7 @@ export function VideoDetailDialog({
                   )}
                 </div>
 
-                <div className="rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
+                <div className="rounded-xl border border-[#ECE7DE] bg-[#FAF8F4]/50 p-4 max-h-60 overflow-y-auto text-[13px] leading-[1.7] text-[#292524] whitespace-pre-wrap break-words">
                   {video.content?.trim() || (
                     <span className="text-[#78716C]">暂未录入视频文案</span>
                   )}
@@ -680,19 +715,19 @@ export function VideoDetailDialog({
               </section>
 
               {/* 4. 素材评价与评级 (置于最底部，精简尺寸) */}
-              <section className="rounded-2xl border border-[#E5E0D6]/80 bg-white p-4 shadow-xs space-y-3">
+              <section className="rounded-2xl bg-white p-4 shadow-card-ring space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Award className="size-4 text-[#D99E55]" />
-                    <h3 className="text-[13px] font-semibold text-[#1C1917] tracking-tight">
+                    <h3 className="text-[13px] font-medium text-[#1C1917] tracking-tight">
                       素材评价与评级
                     </h3>
                   </div>
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7.5 rounded-lg border-[#E5E0D6] text-[12px] font-medium hover:bg-[#FBF9F5] shadow-2xs"
+                    variant="secondary"
+                    size="s"
+                    className="h-7 rounded-md border-[#ECE7DE] text-[12px] font-medium shadow-2xs active:scale-[0.99] active:duration-120"
                     onClick={handleSaveAsset}
                     disabled={isAssetSaving}
                   >
@@ -730,7 +765,7 @@ export function VideoDetailDialog({
                               onClick={() =>
                                 setAssetLevel(isSelected ? null : level)
                               }
-                              className={`h-7 flex-1 rounded-lg border text-[12px] transition-all active:scale-[0.985] active:duration-75 ${levelStyles[level]}`}
+                              className={`h-7 flex-1 rounded-lg border text-[12px] transition-all active:scale-[0.99] active:duration-120 ${levelStyles[level]}`}
                             >
                               {level}
                             </button>
@@ -755,39 +790,6 @@ export function VideoDetailDialog({
           ) : null}
         </SheetBody>
       </SheetContent>
-
-      {/* 永久删除二次确认弹窗 */}
-      {showConfirmPurge && video && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#1C1917]/40 backdrop-blur-[2px]">
-          <div className="w-full max-w-md rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-semibold text-[#1C1917] flex items-center gap-2">
-              <AlertTriangle className="size-5 text-[#DC2626]" />
-              确认彻底删除作品？
-            </h3>
-            <p className="mt-2 text-xs text-[#78716C] leading-relaxed">
-              将永久隐藏此作品并清理截图，此操作不可撤销，请谨慎操作。
-            </p>
-            <div className="mt-6 flex justify-end gap-2.5">
-              <button
-                type="button"
-                className="h-8.5 rounded-xl border border-[#E5E0D6] px-4 text-[#292524] hover:bg-[#FBF9F5] text-[12px] font-medium transition-colors"
-                onClick={() => setShowConfirmPurge(false)}
-                disabled={isOperating}
-              >
-                暂保留
-              </button>
-              <button
-                type="button"
-                className="h-8.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white px-4 text-[12px] font-medium transition-colors disabled:opacity-50"
-                onClick={() => handleLifecycleAction("purge")}
-                disabled={isOperating}
-              >
-                {isOperating ? "正在删除..." : "彻底删除"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </Sheet>
   );
 }

@@ -30,7 +30,11 @@ const config: Config = {
       fontFamily: {
         serif: ['"Iowan Old Style"', "Charter", "Georgia", '"Songti SC"', "STSong", "SimSun", "NSimSun", "serif"],
       },
+      fontWeight: {
+        580: "580",
+      },
       boxShadow: {
+        "card-ring": "0 0 0 1px rgba(28,25,23,0.08), 0 1px 2px 0 rgba(28,25,23,0.05)",
         "claude-float": "var(--shadow-claude-float)",
         "claude-dialog": "var(--shadow-claude-dialog)",
       },

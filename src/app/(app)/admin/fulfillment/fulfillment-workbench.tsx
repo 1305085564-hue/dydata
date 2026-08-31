@@ -818,7 +818,7 @@ export function FulfillmentWorkbench({
           <button
             type="button"
             onClick={() => handleViewChange("todo")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "todo"
                 ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
                 : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
@@ -838,7 +838,7 @@ export function FulfillmentWorkbench({
           <button
             type="button"
             onClick={() => handleViewChange("matrix")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
               mainView === "matrix"
                 ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
                 : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
@@ -886,7 +886,7 @@ export function FulfillmentWorkbench({
                     <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
                       待审核申诉
                       {appealsError ? (
-                        <span className="ml-1.5 rounded-full bg-[#C9604D]/10 px-1.5 py-0.5 text-[11px] text-[#C9604D] font-semibold">
+                        <span className="ml-1.5 rounded-full bg-[#C0685C]/10 px-1.5 py-0.5 text-[11px] text-[#C0685C] font-semibold">
                           !
                         </span>
                       ) : pendingAppeals.length > 0 ? (
@@ -905,7 +905,7 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="exceptions" className="mt-3">
                   {isLoadingCalendar ? (
-                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#E5E0D6] bg-white">
+                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#ECE7DE] bg-white">
                       <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
                       <span className="text-[13px] text-[#78716C] font-normal">
                         正在刷新数据...
@@ -927,16 +927,16 @@ export function FulfillmentWorkbench({
 
                 <TabsContent value="appeals" className="mt-3">
                   {appealsError ? (
-                    <div className="flex flex-col items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#FBF9F5] px-6 py-10 text-center">
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-[#ECE7DE] bg-[#FAF8F4] px-6 py-10 text-center">
                       <p className="text-[13px] font-medium text-[#1C1917]">
-                        申诉数据加载失败
+                        申诉数据加载稍有阻滞
                       </p>
                       <p className="mt-1 text-[12px] text-[#78716C]">{appealsError}</p>
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE] active:scale-[0.985]"
+                        className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120"
                         onClick={() => void fetchAppeals()}
                       >
                         重新加载
@@ -950,7 +950,7 @@ export function FulfillmentWorkbench({
                       </span>
                     </div>
                   ) : pendingAppeals.length === 0 ? (
-                    <div className="rounded-xl border border-[#ECE7DE]/80 bg-white py-12 shadow-2xs">
+                    <div className="rounded-xl bg-white py-12 shadow-card-ring">
                       <EmptyState
                         title="还没有待审核的申诉"
                         description="所有成员的申诉请求已处理完毕"
@@ -1007,7 +1007,7 @@ export function FulfillmentWorkbench({
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg active:scale-[0.985]"
+                                      className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg active:scale-[0.99] active:duration-120"
                                       onClick={() =>
                                         handleHandleAppeal(appeal.id, "approve")
                                       }
@@ -1017,7 +1017,7 @@ export function FulfillmentWorkbench({
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-medium rounded-lg active:scale-[0.985]"
+                                      className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-medium rounded-lg active:scale-[0.99] active:duration-120"
                                       onClick={() =>
                                         handleHandleAppeal(appeal.id, "reject")
                                       }
@@ -1053,7 +1053,7 @@ export function FulfillmentWorkbench({
           /* P2 — 月度矩阵全景大盘 */
           <section className="space-y-4">
             {isLoadingCalendar ? (
-              <div className="flex items-center justify-center py-16 rounded-xl border border-[#ECE7DE]/80 bg-white">
+              <div className="flex items-center justify-center py-16 rounded-xl bg-white shadow-card-ring">
                 <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
                 <span className="text-[13px] font-normal text-[#78716C]">
                   正在刷新日历数据...

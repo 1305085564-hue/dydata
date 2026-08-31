@@ -10,29 +10,36 @@
 
 | Token 类别 | 语义别名 | 语义 / 名称 | 色值 HEX | 适用场景 | 禁忌 |
 |---|---|---|---|---|---|
-| **Action** | primary | 暖陶土橙 (Terracotta) | `#D97757` (Hover: `#C46A4D`) | 主 CTA 按钮、主链接、核心操作 | 严禁多处并列乱点缀 |
+| **Action** | primary | 暖陶土橙 (Terracotta) | `#D97757` (Hover: `#C46A4D`) | 全屏唯一主 CTA 按钮、主链接、核心行动 | 严禁多处并列乱点缀 |
+| **Secondary** | secondary | 浅砂微气垫 (Surface Cushion) | `#F5F3EE` (Hover: `#ECE7DE`) | 辅助按钮、次要操作（与主 CTA 组成双星） | 禁使用高反差冷灰 |
 | **Location** | position | 暴雨灰蓝 (Storm Blue) | `#43718E` | 侧栏选中态、当前面包屑、位置指引 | 禁与行动色同组件混用 |
+| **Accent Plum** | accent-plum | 石楠紫 / 李子紫 | `#CBCADB` (底) / `#827DBD` (墨) | 复盘分析、AI 洞察类微印记与标签 | 仅限局部微点缀，禁大面积铺色 |
+| **Accent Mineral** | accent-mineral | 仙人掌绿 / 矿石绿 | `#BCD1CA` (底) / `#629987` (墨) | 履约流、成长状态类微印记与标签 | 仅限局部微点缀，禁大面积铺色 |
 | **Canvas** | canvas | 温润象牙暖纸底 | `#FBF9F5` | 页面大背景，桌面底层 | 禁大面积纯白刺眼背景 |
 | **Surface** | surface / surface-soft | 纯白纸层 / 极浅砂岩气垫 | `#FFFFFF` / `#F5F3EE` | 业务主容器、辅助配角微气垫 | 禁嵌套多层白卡纸 |
 | **Surface Dark** | surface-dark | 深炭产品底 | `#181715` | 代码窗口、深色模式容器 | 禁用于常规页面背景 |
 | **Ink 950** | ink-heading | 暖炭浓墨 (Heading Ink) | `#1C1917` | 页面大标题 (H1/H2) | 禁用于大段正文 |
 | **Ink 800** | ink-body | 正文暖墨 (Body Ink) | `#292524` | 正文、常规数据文本、表单输入 | 保持阅读舒适清透 |
 | **Ink 600** | ink-muted | 辅助墨 (Muted Ink) | `#78716C` | 表头、副标题、次级元数据 | 不得浅于此底线 (防糊) |
-| **Border** | hairline | 暖砂岩细边 (Hairline) | `#E5E0D6` / `#ECE7DE` | 表格防串行线、极细分割线 | 禁全页面厚重边框 |
+| **Border / Ring** | hairline / card-ring | 暖砂细边 / 微环投影 | `#E5E0D6` / `shadow-card-ring` | 表格防串行线、卡片无框微光圈 | 禁全页面厚重黑边框 |
 
 ### 1.2 色彩使用原则
 
 **结构层与信号层分离**：
 - **结构层**（标题/导航/布局框架）：仅用灰阶墨度（Ink 950/800/600）与留白建立层次
-- **信号层**（行动/状态）：行动色 `#D97757` + 位置色 `#43718E`
+- **信号层**（行动/状态）：主行动色 `#D97757` + 位置色 `#43718E` + 自然辅助色（石楠紫/矿石绿微印记）
+
+**双星行动原则 (Action Pair)**：
+- 每个独立操作区至多 1 个暖陶土橙实底主 CTA（`bg-[#D97757]`，可配 `→` 微箭头）；辅助操作一律用浅砂微气垫（`bg-[#F5F3EE]`），避免多色抢镜。
 
 **视觉杠杆不叠加原则**：
 - 单个元素禁止同时叠加：超大字号 + 重字重 + 鲜艳色 + 有色背景
 - 大尺寸指标 (24-36px) 必须用中性灰阶，不可配彩色渐变
 - 用对比、微气垫（`bg-[#F5F3EE]`）、状态点突出内容，不用放大字号
 
-**输入框纸层**：
-- 输入框与文本域采用宣纸漫反射底（`bg-[#FAF8F4]/50`，聚焦时提亮转白 `focus:bg-white`）+ 暖砂发丝边（`border-[#E5E0D6]`）+ 微投影（`shadow-2xs`），在象牙暖底上建立清晰可交互的纸面层级。
+**输入框与卡片纸层**：
+- **卡片微环压痕**：主容器优先采用 `shadow-card-ring` 构建无生硬边框的纸面立体感。
+- **输入框纸层**：采用宣纸漫反射底（`bg-[#FAF8F4]/50`，聚焦时提亮 `focus:bg-white`）+ 暖砂发丝边 + 微投影（`shadow-2xs`），在象牙暖底上建立清晰可交互的纸面层级。
 
 ---
 
@@ -47,16 +54,18 @@
 
 ### 2.2 字阶与字重锁死
 
-| 层级 | 语义与场景 | 字号 | 字重 | 墨度（暗色） |
+| 层级 | 语义与场景 | 字号 | 字重（精准度） | 墨度（暗色） |
 |---|---|---|---|---|
-| **H1 页面级** | 页面大标题 (Page Hero) | `24px` (`text-2xl`) | `600` (Semibold) | `#1C1917` (Ink 950) |
-| **H2 区域级** | 侧边栏/抽屉主标题、独立面板 | `18px` (`text-lg`) | `600` (Semibold) | `#1C1917` (Ink 950) |
+| **H1 页面级** | 页面大标题 (Page Hero) | `24px` (`text-2xl`) | `580` / `600` (Semibold) | `#1C1917` (Ink 950) |
+| **H2 区域级** | 侧边栏/抽屉主标题、独立面板 | `18px` (`text-lg`) | `580` / `600` (Semibold) | `#1C1917` (Ink 950) |
 | **H3 容器级** | 卡片标题、弹窗标题 | `16px` (`text-base`) | `500` (Medium) | `#292524` (Ink 800) |
 | **H4 内容级** | 卡片内部子模块 | `14px` (`text-sm`) | `500` (Medium) | `#292524` (Ink 800) |
 | **H5 辅助标头** | 表头、微型分组名 | `13px` | `500` (Medium) | `#78716C` (Ink 600) |
 | **Body 正文** | 列表数据、大段描述、输入框 | `14px` (`text-sm`) | `400` (Normal) | `#292524` (Ink 800) |
 | **Caption 次级** | 次级副标题、时间戳、元数据 | `13px` | `400` (Normal) | `#78716C` (Ink 600) |
 | **Badge 微缩** | 状态徽章、极小提示、占位符 | `12px` | `500` / `400` | `#78716C` / `#A8A29E` |
+
+> ✦ **580 柔和 Semibold 原则**：汉字在 600+ 加粗时易发黑糊眼。大标题优先采用柔和中重（`font-[580]`），保持骨肉匀称、清爽透气。
 
 ### 2.3 中文排版三禁令
 
@@ -66,7 +75,7 @@
    - 数字混排必须用 `tabular-nums`
 
 2. **字重防糊锁死**：
-   - `font-semibold (600)` 仅特许给 H1/H2 大标题
+   - `font-semibold (580/600)` 仅特许给 H1/H2 大标题
    - H3 及以下严禁使用 600
    - 全站正文严禁脱离 400
 
@@ -161,7 +170,7 @@
 | 层 | 表现 | 代码 |
 |---|---|---|
 | **Hover** | 底色轻微提亮、文字墨度加深 | `hover:bg-[#F5F3EE] hover:text-[#1C1917]`，`transition-all duration-150` |
-| **Active** | 微按压感 | `active:scale-[0.98]`，松手即消失 |
+| **Active** | 微按压感 | `active:scale-[0.99] active:duration-120`，1% 沉稳沉降 |
 | **Selected** | 菜单/Tab用微气垫，列表行用极弱暖底色 | `bg-[#F5F3EE]`（菜单）/ `bg-[#FAF8F4]`（列表） |
 
 ### 4.2 操作显隐规则
@@ -172,7 +181,7 @@
 
 ### 4.3 主 CTA 规则
 
-- 暖橙实底（`bg-[#D97757]`）+ 白字 + `shadow-sm`
+- 暖橙实底（`bg-[#D97757]`）+ 白字 + `shadow-sm`（可配 `→` 或 `↗` 导向微箭头）
 - **每屏至多 1 个**
 
 ---
@@ -186,11 +195,12 @@
 - **内容**：单行不超 20 字
 - **时长**：3 秒消失
 
-### 5.2 Tag / Badge
+### 5.2 Tag / Badge / 元数据药丸
 
 - **最小点击高度**：20px（防点击盲区）
 - **圆角**：`rounded-md`（6px）
 - **字号**：`12px`，字重 `500`
+- **元数据药丸 (Pills)**：视频/选题卡片附带微图标胶囊（如 `⏱ 耗时` `📈 播放量`），每处上限 ≤ 3 个，保持页面紧凑不杂乱。
 
 ### 5.3 图表标注
 
@@ -198,10 +208,13 @@
 - **图例触发**：≥3 系列才引入图例
 - **色彩限制**：同一图表最多 3 色系列
 
-### 5.4 控制栏 
+### 5.4 控制栏与标准控件尺度 (Control Heights)
 
 - **去框平铺**：`bg-transparent`，功能群之间用 16px 微竖线隔离
-- **按钮高度**：`h-7`（28px），内边距 `px-2.5`
+- **S/M/L 三档标准高度**：
+  * **S 紧凑级 (24px, `h-6`)**：表格行内小操作、标签按钮，内边距 `px-2`
+  * **M 标准级 (28px, `h-7`)**：工具栏按钮、筛选器、次级操作，内边距 `px-2.5`
+  * **L 主控级 (40px, `h-10`)**：页面主搜索栏、核心大按钮，内边距 `px-3`
 
 ### 5.5 下拉选择器 (Select)
 
@@ -209,13 +222,18 @@
 - **展开定位**：在触发器正下方左对齐展开（`align="start" side="bottom"`），保持原按钮视野清晰。
 - **选中标定**：以浅砂暖底（`bg-[#ECE7DE]`）+ 正黑加重（`text-[#1C1917]`）+ 陶土橙微勾（`#D97757`）清晰标定当前项。
 
-### 5.6 出版物装帧组件 (Editorial Craft)
+### 5.6 出版物装帧与业务组件 (Editorial & Workbench Craft)
 
 | 组件 | Tailwind 规格 | 适用场景 |
 |---|---|---|
 | **卷首寄语 (Epigraph)** | `font-serif not-italic tracking-tight text-[13.5px] text-[#292524]/90 border-l-2 border-[#D97757]/60 pl-4 bg-gradient-to-r from-[#F5F3EE]/60 to-transparent rounded-r-lg` | 仅限深度诊断、复盘报告中的 AI 洞察开篇或立意金句 |
 | **学者边注 (Marginalia)** | `text-[12.5px] leading-[1.65] text-[#78716C] border-t border-[#ECE7DE]/80 pt-2.5 flex items-start gap-2` (带 `text-[#D97757]` ✦ 微符) | 表单/数据列表旁同行经验批注 |
 | **完卷徽记 (Colophon)** | `flex items-center justify-center gap-3 py-6` + `h-[1px] w-8 bg-[#ECE7DE]` + `text-[12px] text-[#A8A29E] ✦` | 长页面收尾、卡片底部分隔 |
+| **真实文件资产卡** | `flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white shadow-card-ring text-[13px] text-[#292524]` (绿色 Excel / 红色 PDF 图标) | 文件上传预览、报表导出下载条 |
+| **发丝边温和提示 (Banner)** | `flex items-center gap-2 p-3 rounded-lg bg-[#FAF8F4] border border-[#ECE7DE] text-[13px] text-[#78716C]` (带 `ⓘ` 单线图标) | 状态通知、豁免提示、静默说明 |
+| **单行功能开关 (Toggle)** | `flex items-center justify-between p-3 rounded-xl bg-white shadow-card-ring` | 配置中心、AI 深度思考开关、豁免设置 |
+| **学者目录 (TOC)** | `text-[13px] text-[#78716C] border-l border-[#ECE7DE] pl-3 data-[active]:border-[#1C1917] data-[active]:text-[#1C1917] data-[active]:font-medium` | 仅限长篇复盘/周报详情页右侧导航 |
+| **紧凑路线图 (Roadmap)** | `flex items-center gap-3 p-3 rounded-xl bg-[#FAF8F4] border border-[#ECE7DE]` (紧凑数字序号) | 履约流、协作多步骤进度展示 |
 
 ### 5.7 暖墨矢量插图规格 (Editorial Illustrations)
 
@@ -268,11 +286,12 @@
 ### 6.4 漫反射阴影
 
 ```css
+--shadow-card-ring:     0 0 0 1px rgba(28,25,23,0.08), 0 1px 2px 0 rgba(28,25,23,0.05);
 --shadow-claude-float:  0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -4px rgba(28,25,23,0.05);
 --shadow-claude-dialog: 0 1px 3px rgba(0,0,0,0.02), 0 12px 32px -4px rgba(28,25,23,0.06);
 ```
 
-下拉/Popover → `--shadow-claude-float`；Dialog/Drawer → `--shadow-claude-dialog`。
+主卡片/容器 → `--shadow-card-ring`；下拉/Popover → `--shadow-claude-float`；Dialog/Drawer → `--shadow-claude-dialog`。
 
 **禁止**：`shadow-lg/xl/2xl`。
 
@@ -280,7 +299,7 @@
 
 | 场景 | 规格 |
 |---|---|
-| 按钮按压 | `active:scale-[0.985] active:duration-75` |
+| 按钮/卡片按压 | `active:scale-[0.99] active:duration-120`（沉稳微压感，杜绝夸张弹跳） |
 | 抽屉/折叠 | `ease-[cubic-bezier(0.16,1,0.3,1)] duration-300` |
 | 聚焦光晕 | `focus-visible:border-[#78716C] focus-visible:ring-1 ring-[#D97757]/25 focus-visible:ring-offset-0` |
 

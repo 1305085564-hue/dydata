@@ -175,7 +175,7 @@ export function TeamActivitySection({
 
       {/* 展开的往期历史动态面板（从第 2 条开始展示，上下绝不重复） */}
       {isExpanded && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 bg-white border border-[#E5E0D6]/90 rounded-2xl shadow-xs animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2.5 p-4 bg-white rounded-2xl shadow-card-ring animate-in fade-in slide-in-from-top-1 duration-150">
           {/* 往期写作列表 */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between pb-1.5 border-b border-[#ECE7DE] text-xs">

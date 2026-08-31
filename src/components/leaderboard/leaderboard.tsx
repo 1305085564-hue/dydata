@@ -200,9 +200,9 @@ export function Leaderboard({
         </div>
         <Button
           type="button"
-          size="sm"
+          size="s"
           variant="ghost"
-          className="h-auto min-h-[44px] rounded-lg bg-[#F5F3EE]/70 hover:bg-[#F5F3EE] hover:text-[#1C1917] px-3 text-xs text-[#292524] font-medium cursor-pointer"
+          className="h-7 min-h-[44px] sm:min-h-0 rounded-md bg-[#F5F3EE] hover:bg-[#ECE7DE] hover:text-[#1C1917] px-2.5 text-xs text-[#292524] font-medium active:scale-[0.99] active:duration-120 cursor-pointer"
           onClick={() => setCompact((prev) => !prev)}
         >
           {compact ? (
@@ -309,10 +309,10 @@ export function Leaderboard({
                       type="button"
                       onClick={() => handleSortClick(metric.key)}
                       className={cn(
-                        "inline-flex items-center gap-1 px-3 py-1.5 min-h-[44px] rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0",
+                        "inline-flex items-center gap-1 px-2.5 h-7 min-h-[44px] sm:min-h-0 rounded-md text-xs font-medium transition-all active:scale-[0.99] active:duration-120 cursor-pointer shrink-0",
                         isSelected
-                          ? "bg-[#D97757]/10 text-[#D97757] font-semibold border border-[#D97757]/30"
-                          : "bg-[#F5F3EE] text-[#292524] hover:bg-[#E5E0D6] border border-transparent"
+                          ? "bg-[#D97757]/10 text-[#D97757] font-medium border border-[#D97757]/30"
+                          : "bg-[#F5F3EE] text-[#292524] hover:bg-[#ECE7DE] border border-transparent"
                       )}
                     >
                       <span>{metric.label}</span>
@@ -330,8 +330,8 @@ export function Leaderboard({
               <div
                 key={item.accountId}
                 className={cn(
-                  "rounded-2xl border border-[#E5E0D6] bg-white p-3.5 shadow-2xs space-y-2.5 transition-colors",
-                  item.isOwn && "bg-[#D97757]/5 border-[#D97757]/30",
+                  "rounded-2xl bg-white p-3.5 shadow-card-ring space-y-2.5 transition-colors",
+                  item.isOwn && "bg-[#D97757]/5 ring-1 ring-[#D97757]/30",
                 )}
               >
                 {/* 卡片头部：名次、账号、主维度高亮、环比 */}
@@ -340,7 +340,7 @@ export function Leaderboard({
                     <RankBadge rank={item.rank} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="truncate font-semibold text-[14px] text-[#1C1917]">
+                        <span className="truncate font-medium text-[14px] text-[#1C1917]">
                           {item.accountName}
                         </span>
                         {item.isOwn && (
@@ -478,9 +478,9 @@ function SegmentedControl({
             key={option.value}
             type="button"
             className={cn(
-              "px-3 py-1.5 min-h-[44px] text-xs font-medium rounded-lg transition-all cursor-pointer flex items-center justify-center",
+              "px-3 h-7 text-xs font-medium rounded-md transition-all active:scale-[0.99] active:duration-120 cursor-pointer flex items-center justify-center",
               active
-                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                ? "bg-white text-[#1C1917] shadow-2xs font-medium"
                 : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
             )}
             onClick={() => onChange(option.value)}

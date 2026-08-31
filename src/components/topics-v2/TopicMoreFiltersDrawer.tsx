@@ -104,7 +104,7 @@ export function TopicMoreFiltersDrawer({
         className="fixed top-[var(--app-top-offset,64px)] bottom-0 right-0 z-[70] flex w-full max-w-lg flex-col overflow-hidden border-l border-[#E5E0D6] bg-[#FBF9F5] shadow-claude-dialog animate-in slide-in-from-right duration-200"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#ECE7DE] bg-white px-5 py-3.5">
-          <h3 className="text-base font-semibold text-[#1C1917]">更多筛选</h3>
+          <h3 className="text-base font-medium text-[#1C1917]">更多筛选</h3>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -173,7 +173,7 @@ export function TopicMoreFiltersDrawer({
 
           <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto bg-white p-3.5 sm:p-5">
             <div>
-              <h4 className="mb-1 text-xs font-semibold text-[#1C1917]">
+              <h4 className="mb-1 text-xs font-medium text-[#1C1917]">
                 {CATEGORIES.find((category) => category.key === activeCategory)?.label}
               </h4>
               <p className="text-[11.5px] leading-relaxed text-[#78716C]">

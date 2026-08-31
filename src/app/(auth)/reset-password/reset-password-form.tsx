@@ -36,6 +36,8 @@ function isRecoverySession(accessToken: string): boolean {
   }
 }
 
+import { Alert } from "@/components/ui/alert";
+
 export function ResetPasswordErrorNotice({
   href,
   message,
@@ -44,16 +46,12 @@ export function ResetPasswordErrorNotice({
   message: string;
 }) {
   return (
-    <div
-      aria-live="polite"
-      className="space-y-2 rounded-lg border border-[#C0685C]/20 bg-[#C0685C]/10 px-3 py-2.5 text-[13px] text-[#C0685C]"
-      role="alert"
-    >
-      <p>{message}</p>
-      <Link className="font-medium underline underline-offset-4" href={href}>
-        重新发送重置邮件
+    <Alert variant="error" className="flex-col items-start gap-2">
+      <p className="text-[13px] text-[#292524]">{message}</p>
+      <Link className="font-medium text-[#D97757] hover:text-[#C46A4D] transition-colors" href={href}>
+        重新发送重置邮件 →
       </Link>
-    </div>
+    </Alert>
   );
 }
 

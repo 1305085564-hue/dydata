@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 import { buildAuthPathWithNext, getLoginErrorMessage, sanitizeNextPath } from "@/lib/auth-password";
 
@@ -36,52 +37,59 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <Button className="w-full h-9 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.985] active:duration-75 shadow-sm hover:shadow" disabled={pending} type="submit">
+    <Button className="w-full h-10 text-[13.5px] font-medium relative overflow-hidden rounded-md transition-colors duration-100 active:scale-[0.99] active:duration-120 shadow-sm hover:shadow" disabled={pending} type="submit">
       {pending ? (
-        <span className="flex items-center justify-center gap-1.5">
-          <Loader2 className="size-3.5 animate-spin" />
-          <span>验证凭证中...</span>
+        <span className="inline-flex items-center gap-2">
+          <Loader2 className="size-4 animate-spin text-white" />
+          <span>正在开启工作台...</span>
         </span>
       ) : (
-        "进入工作台"
+        "登录"
       )}
     </Button>
   );
 }
 
-export function LoginForm({ action, initialEmail = "", notice = null, archived = false }: LoginFormProps) {
+export function LoginForm({
+  action,
+  initialEmail = "",
+  notice,
+  archived = false,
+}: LoginFormProps) {
   const searchParams = useSearchParams();
-  const isExpired = searchParams?.get("expired") === "1";
-  const isArchived = archived || searchParams?.get("archived") === "1";
   const next = sanitizeNextPath(searchParams?.get("next"), "");
   const forgotPasswordHref = buildAuthPathWithNext("/forgot-password", next);
   const registerHref = buildAuthPathWithNext("/register", next);
-  const [showExpiredAlert, setShowExpiredAlert] = useState(isExpired);
-  const [showArchivedAlert, setShowArchivedAlert] = useState(isArchived);
-  const [showPassword, setShowPassword] = useState(false);
-  const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  const [state, formAction] = useActionState(action, { ...initialState, email: initialEmail });
+  const [state, formAction] = useActionState(action, {
+    ...initialState,
+    email: initialEmail,
+  });
+
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
-
-  useEffect(() => {
-    setShowExpiredAlert(isExpired);
-  }, [isExpired]);
-
-  useEffect(() => {
-    setShowArchivedAlert(isArchived);
-  }, [isArchived]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showArchivedAlert, setShowArchivedAlert] = useState(archived);
+  const [showExpiredAlert, setShowExpiredAlert] = useState(
+    searchParams?.get("error") === "expired"
+  );
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
     if (state.email) setEmail(state.email);
   }, [state.email]);
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     if (state.error) {
       setPassword("");
       passwordInputRef.current?.focus();
+      feedbackToast.error(getLoginErrorMessage(state.error));
     }
   }, [state.error]);
 
@@ -93,34 +101,34 @@ export function LoginForm({ action, initialEmail = "", notice = null, archived =
     <AuthShell title="回到工作台" subtitle="翻开今日篇章，记录每一次真实表达">
       <form action={formAction} className="space-y-5">
         {showArchivedAlert && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#C0685C]/30 bg-[#C0685C]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
-            <span className="text-[12.5px] font-medium text-[#C0685C]">
+          <Alert variant="error">
+            <span className="text-[12.5px] font-medium text-[#292524]">
               账号已归档，请联系 owner 恢复
             </span>
             <button
               type="button"
               onClick={() => setShowArchivedAlert(false)}
-              className="shrink-0 text-[#C0685C] transition-colors hover:opacity-80 p-0.5"
+              className="shrink-0 text-[#78716C] transition-colors hover:text-[#1C1917] p-0.5 cursor-pointer"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
             </button>
-          </div>
+          </Alert>
         )}
         {showExpiredAlert && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-[#D99E55]/30 bg-[#D99E55]/10 px-3 py-2.5 backdrop-blur-sm transition-all">
-            <span className="text-[12.5px] font-medium text-[#8A6A2F] dark:text-[#D99E55]">
+          <Alert variant="warning">
+            <span className="text-[12.5px] font-medium text-[#8F641B] dark:text-[#D99E55]">
               登录会话已过期，请重新登录
             </span>
             <button
               type="button"
               onClick={() => setShowExpiredAlert(false)}
-              className="shrink-0 text-[#8F641B] transition-colors hover:text-[#6F4D13] dark:text-[#D99E55] dark:hover:text-[#E2B46F] p-0.5"
+              className="shrink-0 text-[#8F641B] hover:text-[#6F4D13] dark:text-[#D99E55] dark:hover:text-[#E2B46F] p-0.5 cursor-pointer"
               aria-label="关闭提示"
             >
               <X className="size-3.5" />
             </button>
-          </div>
+          </Alert>
         )}
 
         <div className="space-y-2">

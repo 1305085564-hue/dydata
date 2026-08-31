@@ -27,8 +27,12 @@ export async function CollaborationDataContainer({
   const context = await getCurrentPermissionContext("company", null);
   if (!context || !canAccessAdminPath("/admin/collaboration", context.permissionInfo.role, context.permissionInfo.permissions)) {
     return (
-      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#C0685C]">
-        无权访问
+      <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+        <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#C0685C]/10 text-[#C0685C]">
+          <span className="size-1.5 rounded-full bg-[#C0685C]" />
+        </span>
+        <span className="font-medium text-[#292524]">访问权限不足</span>
+        <span>· 当前账号无权查看协作工作台</span>
       </div>
     );
   }
@@ -36,8 +40,12 @@ export async function CollaborationDataContainer({
   const range = getMonthRange(year, month);
   if (!range) {
     return (
-      <div className="rounded-xl border border-[#E5E0D6] bg-[#F5F3EE] px-4 py-3 text-[13px] text-[#C0685C]">
-        日期范围无效
+      <div className="flex items-center gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C]">
+        <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
+          <span className="size-1.5 rounded-full bg-[#B98A54]" />
+        </span>
+        <span className="font-medium text-[#292524]">日期范围无效</span>
+        <span>· 所选月份超出系统支持的日期区间</span>
       </div>
     );
   }

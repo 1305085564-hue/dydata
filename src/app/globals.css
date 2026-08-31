@@ -64,6 +64,7 @@
   --color-claude-ink-600: #78716C;
   --color-claude-border: #E5E0D6;
   --color-claude-border-light: #ECE7DE;
+  --shadow-card-ring: 0 0 0 1px rgba(28, 25, 23, 0.08), 0 1px 2px 0 rgba(28, 25, 23, 0.05);
   --shadow-claude-float: 0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -4px rgba(28,25,23,0.05);
   --shadow-claude-dialog: 0 1px 3px rgba(0,0,0,0.02), 0 12px 32px -4px rgba(28,25,23,0.06);
   --radius-sm: 4px;

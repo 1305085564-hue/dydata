@@ -1949,7 +1949,7 @@ export function VideoSubmitFormV2({
                 今日创作已成功立卷
               </h3>
               <p className="text-[13px] text-[#78716C]">
-                归属日期：<span className="font-mono tabular-nums text-[#1C1917]">{meta.bizDate}</span> · 记录已安全落库
+                归属日期：<span className="tabular-nums font-medium text-[#1C1917]">{meta.bizDate}</span> · 记录已安全落库
               </p>
             </div>
 
@@ -1957,12 +1957,13 @@ export function VideoSubmitFormV2({
             <div className="pt-2 flex flex-col items-center gap-3">
               <Button
                 type="button"
+                size="l"
                 onClick={(e) => {
                   e.stopPropagation();
                   setHasUserInteracted(true);
                   handleGoToTopics();
                 }}
-                className="w-full max-w-xs h-10 rounded-xl bg-[#D97757] hover:bg-[#C46A4D] text-white font-medium text-[13px] transition-colors duration-100 flex items-center justify-center gap-2 shadow-xs active:scale-[0.985] active:duration-75 cursor-pointer"
+                className="w-full max-w-xs font-medium text-[13px] shadow-sm cursor-pointer"
               >
                 <Compass className="size-4" />
                 <span>去选题库挑选明日选题</span>
@@ -1971,8 +1972,8 @@ export function VideoSubmitFormV2({
               {/* 辅助操作 */}
               <div className="flex items-center gap-2.5">
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="secondary"
+                  size="m"
                   onClick={(e) => {
                     e.stopPropagation();
                     setHasUserInteracted(true);
@@ -1981,20 +1982,20 @@ export function VideoSubmitFormV2({
                     setQualityCheck({ data: null, loading: false });
                     onCancel?.();
                   }}
-                  className="h-8 rounded-lg border-[#E5E0D6] px-3 text-[12px] text-[#292524] hover:bg-[#F5F3EE] cursor-pointer"
+                  className="px-3 text-[12px] text-[#292524] cursor-pointer"
                 >
                   留在工作台
                 </Button>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="secondary"
+                  size="m"
                   disabled={qualityCheck.loading}
                   onClick={(e) => {
                     e.stopPropagation();
                     setHasUserInteracted(true);
                     handleQualityCheck();
                   }}
-                  className="h-8 rounded-lg border-[#E5E0D6] px-3 text-[12px] text-[#292524] hover:bg-[#F5F3EE] cursor-pointer"
+                  className="px-3 text-[12px] text-[#292524] cursor-pointer"
                 >
                   {qualityCheck.loading ? (
                     <>AI 分析中…</>
@@ -2007,13 +2008,13 @@ export function VideoSubmitFormV2({
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="m"
                   onClick={(e) => {
                     e.stopPropagation();
                     setHasUserInteracted(true);
                     handleGoToGrowth();
                   }}
-                  className="h-8 rounded-lg px-3 text-[12px] text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] cursor-pointer"
+                  className="px-3 text-[12px] text-[#78716C] hover:text-[#1C1917] cursor-pointer"
                 >
                   成长复盘
                 </Button>
@@ -2155,10 +2156,12 @@ export function VideoSubmitFormV2({
               {initialTopicId ? (
                 <div
                   data-topic-context={initialTopicId}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-[#6FAA7D]/40 bg-[#FAF8F4] px-3.5 py-2 text-[12.5px] transition-all"
+                  className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="size-1.5 shrink-0 rounded-full bg-[#6FAA7D]" />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#6FAA7D]/10 text-[#6FAA7D]">
+                      <span className="size-1.5 rounded-full bg-[#6FAA7D]" />
+                    </span>
                     <span className="font-medium text-[#292524]">已带入选题上下文</span>
                     <span className="truncate text-[#78716C]">
                       · {initialTopicTitle ? `《${initialTopicTitle}》` : "来自选题库的脚本中选题"}，提交后保留关联
@@ -2167,11 +2170,13 @@ export function VideoSubmitFormV2({
                 </div>
               ) : null}
 
-              {/* 草稿恢复 banner - Claude 人文微气垫设计 */}
+              {/* 草稿恢复 banner - Claude 人文发丝边设计 */}
               {showDraftBanner && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4] px-3.5 py-2 text-[12.5px] transition-all">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="size-1.5 shrink-0 rounded-full bg-[#B98A54]" />
+                <div className="flex items-center justify-between gap-2.5 rounded-lg border border-[#ECE7DE] bg-[#FAF8F4] p-3 text-[13px] text-[#78716C] transition-all">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#B98A54]/10 text-[#B98A54]">
+                      <span className="size-1.5 rounded-full bg-[#B98A54]" />
+                    </span>
                     <span className="font-medium text-[#292524]">
                       发现未提交的草稿
                     </span>
@@ -2205,7 +2210,7 @@ export function VideoSubmitFormV2({
                 {/* 头部：状态 + 日期 */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 sm:pb-4 border-b border-[#ECE7DE]">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <h2 className="text-[14.5px] sm:text-[15.5px] font-semibold text-[#1C1917]">
+                    <h2 className="text-[14.5px] sm:text-[15.5px] font-[580] text-[#1C1917]">
                       {mode === "editToday"
                         ? meta.bizDate !== today
                           ? `修改历史作品 · ${meta.bizDate}`
@@ -2414,9 +2419,9 @@ export function VideoSubmitFormV2({
 
                       {/* 异常状态补充 */}
                       {meta.anomalyStatus === "abnormal" && (
-                        <div className="space-y-2 rounded-lg bg-amber-50/60 p-3 border border-amber-200/50">
+                        <div className="space-y-2.5 rounded-lg bg-[#FAF8F4] p-3 border border-[#ECE7DE]">
                           <div className="space-y-1">
-                            <Label htmlFor="platform_notice" className="text-[12px] font-medium text-amber-950/80">
+                            <Label htmlFor="platform_notice" className="text-[12px] font-medium text-[#292524]">
                               平台通知 (选填)
                             </Label>
                             <Input
@@ -2424,11 +2429,11 @@ export function VideoSubmitFormV2({
                               value={meta.platformNotice || ""}
                               onChange={(e) => updateMeta("platformNotice", e.target.value)}
                               placeholder="如处罚通知文案"
-                              className="h-8 rounded-lg bg-[#FAF8F4]/50 border-amber-200/60 text-[12px]"
+                              className="h-8 rounded-lg bg-white border-[#E5E0D6] text-[12px] text-[#292524] shadow-2xs focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="appeal" className="text-[12px] font-medium text-amber-950/80">
+                            <Label htmlFor="appeal" className="text-[12px] font-medium text-[#292524]">
                               申诉进展 (选填)
                             </Label>
                             <Input
@@ -2436,7 +2441,7 @@ export function VideoSubmitFormV2({
                               value={meta.appeal || ""}
                               onChange={(e) => updateMeta("appeal", e.target.value)}
                               placeholder="如申诉处理中"
-                              className="h-8 rounded-lg bg-[#FAF8F4]/50 border-amber-200/60 text-[12px]"
+                              className="h-8 rounded-lg bg-white border-[#E5E0D6] text-[12px] text-[#292524] shadow-2xs focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25"
                             />
                           </div>
                         </div>
@@ -2734,18 +2739,20 @@ export function VideoSubmitFormV2({
                   {isBackfillMode || submittedViewActive ? (
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
+                      size="l"
                       onClick={onCancel}
-                      className="h-10 sm:h-9 flex-1 sm:flex-initial rounded-xl px-4 text-[13px] font-medium"
+                      className="flex-1 sm:flex-initial px-4 text-[13px] font-medium"
                     >
                       取消
                     </Button>
                   ) : null}
                   <Button
                     type="button"
+                    size="l"
                     onClick={triggerSubmit}
                     disabled={isSubmitting || !canActuallySubmit}
-                    className="h-11 sm:h-10 flex-1 sm:flex-initial rounded-xl px-6 text-[13px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed active:scale-[0.985] transition-all duration-150 flex items-center justify-center gap-2 shadow-sm cursor-pointer min-h-[44px]"
+                    className="flex-1 sm:flex-initial px-6 text-[14px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white disabled:opacity-40 disabled:bg-[#D97757] disabled:text-white disabled:cursor-not-allowed shadow-sm cursor-pointer"
                   >
                     {isSubmitting && (
                       <Loader2 className="size-4 animate-spin text-white" />

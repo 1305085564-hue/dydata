@@ -74,7 +74,7 @@ export function TalentTab({
   };
 
   return (
-    <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden">
+    <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-[13px]">
           <thead>

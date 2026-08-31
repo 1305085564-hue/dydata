@@ -106,10 +106,10 @@ export function AdaptiveSheetContent({
           // 通用层
           "fixed z-50 flex flex-col bg-[#FBF9F5] text-[13px] text-[#292524] outline-none shadow-claude-dialog duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:duration-0 motion-reduce:transition-none",
           // 移动端：底部抽屉模式 (Bottom Sheet)
-          "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#E5E0D6] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
+          "inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[20px] border-t border-[#ECE7DE] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] px-4 pt-2.5",
           "data-open:animate-in data-open:slide-in-from-bottom-6 data-open:fade-in-0 data-closed:animate-out data-closed:slide-out-to-bottom-6 data-closed:fade-out-0",
           // 桌面端：居中弹窗模式 (Centered Dialog)
-          "md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:border md:border-[#E5E0D6] md:p-6 md:pb-6",
+          "md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:p-6 md:pb-6",
           "md:data-open:zoom-in-95 md:data-closed:zoom-out-95",
           className,
         )}
@@ -170,7 +170,7 @@ export function AdaptiveSheetTitle({
     <DialogPrimitive.Title
       data-slot="adaptive-sheet-title"
       className={cn(
-        "text-[16px] font-semibold text-[#1C1917] tracking-tight md:text-[18px]",
+        "text-[16px] font-medium text-[#1C1917] tracking-tight md:text-[18px] md:font-[580]",
         className,
       )}
       {...props}

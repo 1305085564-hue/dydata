@@ -263,6 +263,7 @@ export function useRewriteV3Logic() {
   useEffect(() => {
     if (conversations.length > 0 && !currentConversationId) {
       const first = conversations[0].id;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentConversationId(first);
       void loadConversationData(first);
     }
@@ -271,6 +272,7 @@ export function useRewriteV3Logic() {
   // 从消息中解析 polishedText
   useEffect(() => {
     if (messages.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPolishedText('');
       return;
     }

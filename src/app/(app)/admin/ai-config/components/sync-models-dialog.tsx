@@ -148,10 +148,10 @@ export function SyncModelsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[94vw] flex-col overflow-hidden rounded-2xl border border-[#ECE7DE] bg-white p-6 shadow-claude-dialog sm:max-w-3xl">
         {/* 弹窗 Header */}
         <DialogHeader className="gap-1.5 pb-2 border-b border-[#ECE7DE]/70">
-          <DialogTitle className="text-base font-semibold text-[#1C1917] flex items-center gap-2">
+          <DialogTitle className="text-base font-medium text-[#1C1917] flex items-center gap-2">
             <span>{providerName}</span>
             <span className="text-[13px] font-normal text-[#78716C]">
               · {keyLabel}
@@ -171,7 +171,7 @@ export function SyncModelsDialog({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="按关键词过滤型号..."
-                className="h-9 border-[#E5E0D6] pl-9 pr-8 text-[13px] focus-visible:ring-[#D97757]/20"
+                className="h-7 border-[#ECE7DE] pl-9 pr-8 text-[12px] focus-visible:ring-[#D97757]/20 rounded-md"
               />
               {searchQuery && (
                 <button
@@ -186,7 +186,7 @@ export function SyncModelsDialog({
 
             <div className="flex flex-wrap items-center justify-between gap-2 px-0.5 text-[13px] text-[#78716C]">
               <div>
-                已启用 <span className="font-mono font-medium tabular-nums text-[#1C1917]">{selectedModelIds.size}</span> / {availableModels.length} 个型号
+                已启用 <span className="font-medium tabular-nums text-[#1C1917]">{selectedModelIds.size}</span> / <span className="tabular-nums">{availableModels.length}</span> 个型号
                 {searchQuery.trim() && (
                   <span className="ml-1.5 text-[#78716C]/80">
                     (匹配 {filteredModels.length} 项)
@@ -260,18 +260,18 @@ export function SyncModelsDialog({
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size="s"
               onClick={() => onOpenChange(false)}
               disabled={saving}
-              className="h-9 border-[#E5E0D6] text-[13px] hover:bg-[#F5F3EE]"
+              className="h-7 border-[#ECE7DE] text-[12px] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120"
             >
               取消
             </Button>
             <Button
-              size="sm"
+              size="s"
               onClick={handleSave}
               disabled={saving}
-              className="h-9 gap-1.5 bg-[#D97757] text-[13px] text-white hover:bg-[#C46A4D]"
+              className="h-7 gap-1.5 bg-[#D97757] text-[12px] text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120"
             >
               {saving ? (
                 <Loader2 className="size-3.5 animate-spin" />

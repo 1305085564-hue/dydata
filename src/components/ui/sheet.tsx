@@ -11,13 +11,13 @@ type SheetSide = "right" | "left" | "top" | "bottom"
 
 const sideClasses: Record<SheetSide, string> = {
   right:
-    "top-[var(--app-top-offset,64px)] bottom-0 right-0 h-[calc(100dvh-var(--app-top-offset,64px))] border-l data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right",
+    "top-[var(--app-top-offset,64px)] bottom-0 right-0 h-[calc(100dvh-var(--app-top-offset,64px))] data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right",
   left:
-    "top-[var(--app-top-offset,64px)] bottom-0 left-0 h-[calc(100dvh-var(--app-top-offset,64px))] border-r data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left",
+    "top-[var(--app-top-offset,64px)] bottom-0 left-0 h-[calc(100dvh-var(--app-top-offset,64px))] data-open:animate-in data-open:slide-in-from-left data-closed:animate-out data-closed:slide-out-to-left",
   top:
-    "top-[var(--app-top-offset,64px)] inset-x-0 w-full border-b data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
+    "top-[var(--app-top-offset,64px)] inset-x-0 w-full data-open:animate-in data-open:slide-in-from-top data-closed:animate-out data-closed:slide-out-to-top",
   bottom:
-    "inset-x-0 bottom-0 w-full border-t data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
+    "inset-x-0 bottom-0 w-full data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom",
 }
 
 function Sheet({ ...props }: DialogPrimitive.Root.Props) {
@@ -67,7 +67,7 @@ function SheetContent({
       <DialogPrimitive.Popup
         data-slot="sheet-content"
         className={cn(
-          "fixed z-50 flex flex-col gap-4 border-[#E5E0D6] bg-white text-[13px] text-[#292524] shadow-claude-dialog outline-none duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+          "fixed z-50 flex flex-col gap-4 bg-white text-[13px] text-[#292524] shadow-claude-dialog outline-none duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
           sideClasses[side],
           className,
         )}
@@ -99,7 +99,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-header"
       className={cn(
-        "flex flex-col gap-1 border-b border-[#E5E0D6] px-6 pt-6 pb-4",
+        "flex flex-col gap-1 border-b border-[#ECE7DE] px-6 pt-6 pb-4",
         className,
       )}
       {...props}
@@ -122,7 +122,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "flex flex-col-reverse gap-2 border-t border-[#E5E0D6] px-6 py-4 sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-2 border-t border-[#ECE7DE] px-6 py-4 sm:flex-row sm:justify-end",
         className,
       )}
       {...props}
@@ -135,7 +135,7 @@ function SheetTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="sheet-title"
       className={cn(
-        "text-lg font-semibold leading-none text-[#1C1917]",
+        "text-lg font-[580] leading-none text-[#1C1917]",
         className,
       )}
       {...props}

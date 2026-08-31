@@ -72,6 +72,7 @@ export function FeishuCreationModal({
   // 打开弹窗时自动执行一次复制
   useEffect(() => {
     if (isOpen && topic) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCopied(false);
       setCopyFailed(false);
       void copyToClipboard();
@@ -152,7 +153,7 @@ export function FeishuCreationModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="feishu-modal-title"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-[#E5E0D6] bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[90] w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-claude-dialog overflow-hidden animate-in fade-in zoom-in-95 duration-150"
       >
         {/* 头部 */}
         <div className="flex items-center justify-between border-b border-[#ECE7DE] bg-[#FAF8F4] px-5 py-3.5 shrink-0">
@@ -163,7 +164,7 @@ export function FeishuCreationModal({
             <div>
               <h3
                 id="feishu-modal-title"
-                className="text-sm font-semibold text-[#1C1917]"
+                className="text-sm font-medium text-[#1C1917]"
               >
                 前往飞书创作立卷
               </h3>
@@ -287,7 +288,7 @@ export function FeishuCreationModal({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-[44px] sm:min-h-0 rounded-xl px-4 py-2 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors cursor-pointer"
+            className="h-7 rounded-md px-3 text-xs font-medium text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             完成并关闭
           </button>
@@ -298,7 +299,7 @@ export function FeishuCreationModal({
                 type="button"
                 onClick={() => void handleGoToFeishu()}
                 disabled={isMarking}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[#D97757] px-4 text-xs font-medium text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isMarking ? "正在标记..." : isWriting ? "前往团队飞书空间" : "标记在写并前往飞书"}</span>
                 <ExternalLink className="size-3.5" />
@@ -308,7 +309,7 @@ export function FeishuCreationModal({
                 type="button"
                 onClick={() => void handleMarkOnly()}
                 disabled={isMarking}
-                className="inline-flex min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-xl bg-[#D97757] px-5 py-2 text-xs font-semibold text-white hover:bg-[#C46A4D] active:scale-[0.985] active:duration-75 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[#D97757] px-4 text-xs font-medium text-white hover:bg-[#C46A4D] active:scale-[0.99] active:duration-120 shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isMarking ? "正在标记..." : isWriting ? "完成并关闭" : "标记在写并关闭"}</span>
               </button>

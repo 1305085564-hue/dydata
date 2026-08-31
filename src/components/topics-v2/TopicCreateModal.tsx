@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface TopicCreateModalProps {
   isOpen: boolean;
@@ -59,6 +60,7 @@ export function TopicCreateModal({
   // 输入标题或 Hook 后调用真实建议接口，帮助录入者发现已有相似选题。
   useEffect(() => {
     if (!isOpen || (!title.trim() && !hook.trim())) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSuggestions([]);
       return;
     }
@@ -153,9 +155,9 @@ export function TopicCreateModal({
         if (!open && !loading) onClose();
       }}
     >
-      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[#E5E0D6] bg-white/95 p-6 shadow-claude-dialog sm:max-w-lg">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl bg-white/95 p-6 shadow-claude-dialog sm:max-w-lg">
         <DialogHeader className="mb-0 border-b border-[#ECE7DE] pb-3">
-          <DialogTitle className="text-base font-semibold text-[#1C1917]">
+          <DialogTitle className="text-base font-medium text-[#1C1917]">
             录入选题
           </DialogTitle>
         </DialogHeader>
@@ -292,25 +294,26 @@ export function TopicCreateModal({
             )}
           </DialogBody>
 
-          <DialogFooter className="flex-row justify-end border-t border-[#ECE7DE] pt-3">
-            <button
+          <DialogFooter className="border-t border-[#ECE7DE]/80 bg-[#FAF8F4]/30 px-6 py-3.5 flex items-center justify-end gap-2.5">
+            <Button
               type="button"
+              variant="secondary"
+              size="m"
               onClick={onClose}
               disabled={loading}
-              className="rounded-lg border border-[#E5E0D6] px-4 py-1.5 text-[13px] font-medium text-[#292524] transition-all hover:bg-[#FBF9F5] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="取消录入"
             >
               取消
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              size="m"
               disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#D97757] px-4 py-1.5 text-[13px] font-medium text-white shadow-2xs transition-all hover:bg-[#C46A4D] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="保存选题"
             >
               {loading && <RefreshCw className="size-3.5 animate-spin" />}
               <span>{loading ? "录入中..." : "保存选题"}</span>
-            </button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

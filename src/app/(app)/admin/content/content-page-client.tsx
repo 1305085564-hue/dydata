@@ -291,7 +291,7 @@ export function ContentPageClient({
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
               }`}
             >
-              待分析 ({data.summary.pendingReviewCount})
+              待分析 (<span className="tabular-nums">{data.summary.pendingReviewCount}</span>)
             </button>
             <button
               type="button"
@@ -302,7 +302,7 @@ export function ContentPageClient({
                   : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
               }`}
             >
-              全部 ({data.summary.totalVideos})
+              全部 (<span className="tabular-nums">{data.summary.totalVideos}</span>)
             </button>
           </div>
 
@@ -318,7 +318,7 @@ export function ContentPageClient({
                 }
               }}
             >
-              <SelectTrigger className="h-7.5 min-w-36 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] hover:border-[#E5E0D6] shadow-2xs cursor-pointer">
+              <SelectTrigger className="h-7 min-w-36 rounded-md border border-[#ECE7DE] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] hover:border-[#78716C]/40 shadow-2xs cursor-pointer active:scale-[0.99] active:duration-120">
                 <SelectValue placeholder="选择范围">
                   {perspective === "company" ? "全公司 (全部团队)" : (selectedTeamName ?? "选择团队")}
                 </SelectValue>
@@ -369,7 +369,7 @@ export function ContentPageClient({
               <button
                 type="button"
                 onClick={handleDirectReview}
-                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.985] active:duration-75 transition-all cursor-pointer"
+                className="text-[11px] font-semibold text-[#D97757] hover:text-[#C46A4D] shrink-0 ml-0.5 active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
               >
                 直接去盘 →
               </button>

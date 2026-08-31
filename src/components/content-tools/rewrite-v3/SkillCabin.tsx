@@ -87,7 +87,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
               key={skill.id}
               onClick={() => onToggleSkill(skill)}
               className={cn(
-                'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.985] active:duration-75 cursor-pointer',
+                'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-medium transition-all duration-200 border active:scale-[0.99] active:duration-120 cursor-pointer',
                 isActive
                   ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757] shadow-[0_1px_2px_rgba(0,0,0,0.01)]'
                   : 'bg-white border-[#E5E0D6] text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#1C1917]'
@@ -107,7 +107,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.985] active:duration-75 cursor-pointer',
+          'inline-flex shrink-0 min-h-[44px] sm:min-h-0 items-center gap-1 px-2.5 py-1 rounded-md border text-[12px] font-medium transition-all duration-200 active:scale-[0.99] active:duration-120 cursor-pointer',
           isOpen
             ? 'bg-[#E5E0D6]/80 border-[#E5E0D6] text-[#1C1917]'
             : 'bg-white border-[#E5E0D6] text-[#78716C] hover:border-[#E5E0D6] hover:text-[#1C1917] shadow-sm'
@@ -151,7 +151,7 @@ export function SkillCabin({ availableSkills, activeSkills, onToggleSkill }: Ski
                           key={skill.id}
                           onClick={() => handleSelectSkill(skill)}
                           className={cn(
-                            'group flex min-h-[44px] sm:min-h-0 items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.985] active:duration-75 cursor-pointer',
+                            'group flex min-h-[44px] sm:min-h-0 items-start justify-between rounded-lg px-2.5 py-2 text-left transition-all duration-200 border active:scale-[0.99] active:duration-120 cursor-pointer',
                             isActive
                               ? 'bg-[#D97757]/10 border-[#D97757]/20 text-[#D97757]'
                               : 'bg-white border-[#E5E0D6] text-[#292524] hover:border-[#E5E0D6] hover:bg-[#FBF9F5]/85'

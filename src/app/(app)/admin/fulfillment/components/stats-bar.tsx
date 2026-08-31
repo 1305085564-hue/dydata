@@ -31,7 +31,7 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-[580] tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.publishedCount}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">
@@ -54,7 +54,7 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-[580] tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.totalMembers}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">位伙伴</span>
@@ -85,7 +85,7 @@ export function StatsBar({ stats }: StatsBarProps) {
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-medium tabular-nums tracking-tight leading-none text-[#1C1917]">
+              <span className="text-3xl font-[580] tabular-nums tracking-tight leading-none text-[#1C1917]">
                 {stats.consecutiveMissingMembers}
               </span>
               <span className="text-[13px] font-normal text-[#78716C]">人连续未发</span>

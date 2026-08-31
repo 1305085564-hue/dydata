@@ -192,7 +192,7 @@ export function MobileTabBar({
               key={tab.key}
               href={tab.href}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.92]",
+                "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
                 active
                   ? "text-[#D97757]"
                   : "text-[#78716C] hover:text-[#1C1917]",
@@ -229,7 +229,7 @@ export function MobileTabBar({
           aria-controls="mobile-navigation-menu"
           aria-label="更多与个人中心"
           className={cn(
-            "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.92]",
+            "relative flex flex-1 flex-col items-center justify-center min-h-[44px] py-1 transition-transform duration-150 ease-out active:scale-[0.99] active:duration-120",
             isMoreActive || isMoreOpen
               ? "text-[#D97757]"
               : "text-[#78716C] hover:text-[#1C1917]",

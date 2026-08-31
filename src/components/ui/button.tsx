@@ -6,32 +6,42 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center border border-transparent text-[13px] font-medium tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] hover:-translate-y-[1px] active:scale-[0.985] active:duration-75 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg]:stroke-[1.5]",
+  "group/button inline-flex shrink-0 items-center justify-center border border-transparent font-medium tracking-tight whitespace-nowrap outline-none select-none transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] active:scale-[0.99] active:duration-120 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:stroke-[1.5]",
   {
     variants: {
       variant: {
         default:
-          "bg-[#D97757] text-white hover:bg-[#C46A4D] hover:shadow-[0_2px_8px_rgba(217,119,87,0.03)]",
+          "bg-[#D97757] text-white hover:bg-[#C46A4D] shadow-sm",
         outline:
-          "border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
+          "border-[#ECE7DE] bg-[#F5F3EE] text-[#292524] hover:bg-[#ECE7DE] hover:text-[#1C1917]",
         secondary:
-          "bg-[#F5F3EE] text-[#292524] hover:bg-[#FBF9F5]",
+          "bg-[#F5F3EE] text-[#292524] hover:bg-[#ECE7DE]",
         ghost:
           "text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917]",
         destructive:
-          "bg-[#C0685C] text-white hover:bg-[#B0584D]",
+          "bg-[#C0685C] text-white hover:bg-[#B0584D] shadow-sm",
         link: "text-[#D97757] underline-offset-4 hover:underline hover:translate-y-0",
       },
       size: {
+        // M 标准级 (28px, h-7 px-2.5 text-[13px]) - 工具栏、筛选器、次要操作
         default:
-          "h-9 min-h-[44px] sm:min-h-0 gap-1.5 rounded-md px-3.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 min-h-[28px] gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 min-h-[36px] gap-1 rounded-md px-3 text-[13px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-11 min-h-[44px] gap-1.5 rounded-md px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        icon: "size-9 min-h-[36px] rounded-md",
+          "h-7 gap-1.5 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        m: "h-7 gap-1.5 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-7 gap-1.5 rounded-md px-2.5 text-[13px] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        // S 紧凑级 (24px, h-6 px-2 text-[12px]) - 表格行内小操作、标签按钮
+        s: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        xs: "h-6 gap-1 rounded-md px-2 text-[12px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        // L 主控级 (40px, h-10 px-4 text-[14px]) - 页面主搜索栏、核心大提交按钮
+        l: "h-10 gap-2 rounded-md px-4 text-[14px] has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-4",
+        lg: "h-10 gap-2 rounded-md px-4 text-[14px] has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3 [&_svg:not([class*='size-'])]:size-4",
+        // 图标按钮
+        icon: "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-m": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-sm": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3.5",
+        "icon-s": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8 min-h-[32px] rounded-md",
-        "icon-lg": "size-11 min-h-[44px] rounded-md",
+        "icon-l": "size-10 rounded-md [&_svg:not([class*='size-'])]:size-4",
+        "icon-lg": "size-10 rounded-md [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {
@@ -58,4 +68,4 @@ function Button({
 
 export { Button, buttonVariants }
 
-/* [规范对齐] 圆角已调整：按钮 6px（rounded-md） */
+/* [Claude 设计规范] S(24px) / M(28px) / L(40px) 三档高度体系，双星行动（陶土橙主 + 浅砂副），微压感 active:scale-[0.99] */

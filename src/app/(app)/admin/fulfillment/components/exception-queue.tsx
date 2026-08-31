@@ -208,7 +208,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.985]"
+              className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.99] active:duration-120"
               onClick={() => openBatchConfirm("confirmed_published")}
             >
               批量标为已发
@@ -216,7 +216,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.985]"
+              className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.99] active:duration-120"
               onClick={() => openBatchConfirm("leave")}
             >
               批量请假
@@ -224,7 +224,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.985]"
+              className="text-[#ECE7DE] hover:text-white hover:bg-[#292524] text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.99] active:duration-120"
               onClick={() => openBatchConfirm("waived")}
             >
               批量豁免
@@ -232,7 +232,7 @@ export function ExceptionQueue({
             <Button
               variant="ghost"
               size="xs"
-              className="text-[#C0685C] hover:bg-[#C0685C]/20 text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.985]"
+              className="text-[#C0685C] hover:bg-[#C0685C]/20 text-[12px] h-7 px-2.5 rounded-lg active:scale-[0.99] active:duration-120"
               onClick={() => openBatchConfirm("absent")}
             >
               批量标为未发
@@ -345,9 +345,9 @@ export function ExceptionQueue({
                       <div className="inline-flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity duration-150 pointer-events-auto lg:pointer-events-none lg:group-hover:pointer-events-auto lg:focus-within:pointer-events-auto">
                         <Button
                           variant="ghost"
-                          size="xs"
+                          size="s"
                           disabled={isMarking}
-                          className="h-7 px-2.5 text-[12px] font-medium text-[#D97757] hover:bg-[#D97757]/10 rounded-lg active:scale-[0.985]"
+                          className="px-2 text-[12px] font-medium text-[#D97757] hover:bg-[#D97757]/10"
                           onClick={() =>
                             requestQuickMark(
                               member.userId,
@@ -360,9 +360,9 @@ export function ExceptionQueue({
                         </Button>
                         <Button
                           variant="ghost"
-                          size="xs"
+                          size="s"
                           disabled={isMarking}
-                          className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] rounded-lg active:scale-[0.985]"
+                          className="px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                           onClick={() =>
                             requestQuickMark(
                               member.userId,
@@ -375,9 +375,9 @@ export function ExceptionQueue({
                         </Button>
                         <Button
                           variant="ghost"
-                          size="xs"
+                          size="s"
                           disabled={isMarking}
-                          className="h-7 px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] rounded-lg active:scale-[0.985]"
+                          className="px-2 text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
                           onClick={() =>
                             requestQuickMark(
                               member.userId,
@@ -390,14 +390,14 @@ export function ExceptionQueue({
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            className="flex size-7 items-center justify-center rounded-lg text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
+                            className="flex size-6 items-center justify-center rounded-md text-[#78716C] hover:text-[#292524] hover:bg-[#F5F3EE] transition-colors cursor-pointer"
                             title="更多操作"
                           >
                             ···
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="rounded-xl border border-[#E5E0D6]/80 bg-white/95 backdrop-blur-md shadow-claude-float"
+                            className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float"
                           >
                             <DropdownMenuItem
                               className="text-[12px] text-[#C0685C] focus:text-[#C0685C] focus:bg-[#C0685C]/10"
@@ -450,9 +450,9 @@ export function ExceptionQueue({
         open={quickConfirm !== null}
         onOpenChange={(open) => !open && setQuickConfirm(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
+        <DialogContent className="max-w-sm rounded-2xl bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#1C1917]">
+            <DialogTitle className="text-base font-medium text-[#1C1917]">
               确认将 {quickConfirm?.userName} 标为今日未发？
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
@@ -461,17 +461,15 @@ export function ExceptionQueue({
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              className="rounded-lg text-[#292524] active:scale-[0.985]"
+              variant="secondary"
+              size="m"
               onClick={() => setQuickConfirm(null)}
             >
               暂不调整
             </Button>
             <Button
               variant="destructive"
-              size="sm"
-              className="rounded-lg bg-[#C0685C] hover:bg-[#A8584D] text-white active:scale-[0.985]"
+              size="m"
               onClick={handleQuickConfirm}
             >
               确认标记
@@ -485,9 +483,9 @@ export function ExceptionQueue({
         open={batchConfirmOpen}
         onOpenChange={(open) => !open && setBatchConfirmOpen(false)}
       >
-        <DialogContent className="max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog border-[#E5E0D6]">
+        <DialogContent className="max-w-md rounded-2xl bg-white p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#1C1917]">
+            <DialogTitle className="text-base font-medium text-[#1C1917]">
               标记选中项为{batchAction ? ACTION_LABELS[batchAction] : ""}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#292524] mt-2">
@@ -508,22 +506,16 @@ export function ExceptionQueue({
           </div>
           <DialogFooter className="mt-6 gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              className="rounded-lg text-[#292524] active:scale-[0.985]"
+              variant="secondary"
+              size="m"
               onClick={() => setBatchConfirmOpen(false)}
             >
               取消
             </Button>
             <Button
               variant={batchAction === "absent" ? "destructive" : "default"}
-              size="sm"
+              size="m"
               disabled={batchSubmitting}
-              className={
-                batchAction === "absent"
-                  ? "rounded-lg bg-[#C0685C] hover:bg-[#A8584D] text-white active:scale-[0.985]"
-                  : "rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white active:scale-[0.985]"
-              }
               onClick={handleBatchConfirm}
             >
               {batchSubmitting ? "正在提交..." : "确认批量标记"}

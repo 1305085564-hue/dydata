@@ -112,7 +112,7 @@ export function UserWorkspacePopover({
         onClick={() => setIsOpen((current) => !current)}
         className={cn(
           "flex min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 items-center justify-center sm:justify-start gap-2 rounded-xl p-1 pr-2 text-left transition-all duration-200 group focus-visible:ring-2 focus-visible:ring-[#43718E]/20 outline-none",
-          "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.985] active:duration-75",
+          "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]/70 active:scale-[0.99] active:duration-120",
           isOpen && "text-[#1C1917] bg-[#F5F3EE]/80 font-semibold",
         )}
       >
@@ -145,7 +145,7 @@ export function UserWorkspacePopover({
         <div
           id={menuId}
           className={cn(
-            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl border bg-[#FAF8F4]/98 p-1.5 shadow-claude-float duration-150 border-[#E5E0D6] backdrop-blur-xl",
+            "animate-in fade-in zoom-in-95 slide-in-from-top-2 absolute right-0 mt-1.5 z-50 w-68 origin-top-right overflow-hidden rounded-xl bg-[#FAF8F4]/98 p-1.5 shadow-claude-float duration-150 backdrop-blur-xl",
           )}
         >
           {/* Section 1: Workspace Selector */}

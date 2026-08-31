@@ -509,7 +509,7 @@ export default function ModelsClient() {
                             }))
                           }
                           className={cn(
-                            "group relative inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[12px] font-mono cursor-pointer transition-all border select-none active:scale-[0.985]",
+                            "group relative inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[12px] font-mono cursor-pointer transition-all border select-none active:scale-[0.99] active:duration-120",
                             isSelected
                               ? "bg-[#D97757]/10 text-[#D97757] border-[#D97757]/30 font-medium shadow-2xs"
                               : "bg-white text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE]",
@@ -725,7 +725,7 @@ export default function ModelsClient() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 text-[12px] gap-1 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75"
+                                  className="h-7 text-[12px] gap-1 text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120"
                                   disabled={syncingKeyId === keyItem.keyId}
                                   onClick={() =>
                                     handleSyncKeyModelsClick(keyItem)
@@ -746,7 +746,7 @@ export default function ModelsClient() {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-7 text-[12px] gap-1 text-[#292524] hover:text-[#D97757] hover:bg-[#D97757]/10 active:scale-[0.985] active:duration-75"
+                                        className="h-7 text-[12px] gap-1 text-[#292524] hover:text-[#D97757] hover:bg-[#D97757]/10 active:scale-[0.99] active:duration-120"
                                         disabled={
                                           testingKeyId === keyItem.keyId
                                         }

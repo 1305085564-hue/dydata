@@ -76,7 +76,7 @@ export function ActionHub({
 
   return (
     <div className="flex h-full flex-col space-y-6">
-      <h2 className="text-lg font-semibold text-[#1C1917]">工作流中心</h2>
+      <h2 className="text-lg font-[580] text-[#1C1917]">工作流中心</h2>
 
       <div className="space-y-6">
         <div>
@@ -91,7 +91,7 @@ export function ActionHub({
                   render={
                     <button
                       type="button"
-                      className="group flex w-full items-start gap-4 border-b border-[#ECE7DE] py-3 text-left transition-all duration-150 hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 last:border-b-0 cursor-pointer"
+                      className="group flex w-full items-start gap-4 border-b border-[#ECE7DE] py-3 text-left transition-all duration-150 hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 last:border-b-0 cursor-pointer"
                     />
                   }
                 >
@@ -171,7 +171,7 @@ export function ActionHub({
                 <Link
                   key={item.label}
                   href={item.href!}
-                  className="flex items-center justify-between border-b border-[#ECE7DE] py-2.5 transition-all duration-150 hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 last:border-b-0"
+                  className="flex items-center justify-between border-b border-[#ECE7DE] py-2.5 transition-all duration-150 hover:bg-[#F5F3EE] active:scale-[0.99] active:duration-120 last:border-b-0"
                 >
                   <div className="flex items-center gap-2">
                     <div className="size-1.5 rounded-full bg-[#E5E0D6]" />

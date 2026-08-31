@@ -59,7 +59,7 @@ export function CaseRejectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle className="text-sm font-semibold">
+          <DialogTitle className="text-sm font-medium">
             {count > 1 ? `批量驳回 ${count} 条` : "驳回这条提交"}
           </DialogTitle>
           <DialogDescription>
@@ -80,10 +80,10 @@ export function CaseRejectDialog({
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setReason(r)}
                 className={cn(
-                  "rounded-md border px-2.5 py-1 text-[12px] font-medium transition-colors",
+                  "rounded-md border px-2.5 py-1 text-[12px] font-medium transition-colors cursor-pointer",
                   reason === r
-                    ? "border-[#C9604D]/40 bg-[#C9604D]/10 text-[#C9604D]"
-                    : "border-[#E5E0D6] text-[#78716C] hover:border-[#E5E0D6] hover:text-[#292524]",
+                    ? "border-[#D97757]/40 bg-[#D97757]/10 text-[#D97757]"
+                    : "border-[#ECE7DE] text-[#78716C] hover:border-[#78716C]/40 hover:text-[#292524]",
                 )}
               >
                 {r}
@@ -96,7 +96,7 @@ export function CaseRejectDialog({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="也可以补充更具体的驳回原因（必填）"
-            className="min-h-[100px] resize-none rounded-xl border-[#E5E0D6] bg-white text-[13px] leading-[1.7]"
+            className="min-h-[100px] resize-none rounded-xl border-[#ECE7DE] bg-white text-[13px] leading-[1.7]"
             autoFocus
             onKeyDown={(e) => {
               const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
@@ -116,7 +116,7 @@ export function CaseRejectDialog({
             type="button"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="h-9 rounded-lg bg-[#F5F3EE] px-4 text-[12px] font-medium text-[#292524] transition-colors hover:bg-[#E5E0D6] hover:text-[#1C1917] disabled:opacity-60"
+            className="h-7 rounded-md bg-[#F5F3EE] px-3.5 text-[12px] font-medium text-[#292524] transition-colors hover:bg-[#ECE7DE] hover:text-[#1C1917] disabled:opacity-60 active:scale-[0.99] active:duration-120 cursor-pointer"
           >
             取消
           </button>
@@ -125,10 +125,10 @@ export function CaseRejectDialog({
             onClick={handleConfirm}
             disabled={!canConfirm}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#DC2626] px-4 text-[12px] font-medium text-white shadow-sm transition-all active:translate-y-[1px]",
+              "inline-flex h-7 items-center gap-1.5 rounded-md bg-[#C0685C] px-3.5 text-[12px] font-medium text-white shadow-sm transition-all active:scale-[0.99] active:duration-120 cursor-pointer",
               !canConfirm
                 ? "cursor-not-allowed opacity-60"
-                : "hover:bg-[#DC2626]/90 hover:shadow-sm",
+                : "hover:bg-[#B0584D] hover:shadow-sm",
             )}
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}

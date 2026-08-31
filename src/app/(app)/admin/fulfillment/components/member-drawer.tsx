@@ -280,10 +280,10 @@ export function MemberDrawer({
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full max-w-[480px]">
           <SheetHeader>
-            <SheetTitle className="font-semibold text-[#1C1917]">成员详情</SheetTitle>
+            <SheetTitle className="font-[580] text-[#1C1917]">成员详情</SheetTitle>
           </SheetHeader>
           <SheetBody>
-            <p className="text-[13px] text-[#78716C]">未选择成员</p>
+            <div className="py-8 text-center text-[#78716C] text-[13px]">未找到成员数据</div>
           </SheetBody>
         </SheetContent>
       </Sheet>
@@ -295,8 +295,8 @@ export function MemberDrawer({
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent side="right" className="w-full max-w-[480px] bg-[#FBF9F5] border-l border-[#ECE7DE]">
           <SheetHeader className="border-b border-[#ECE7DE]/80 pb-4">
-            <div className="flex items-center gap-2.5">
-              <SheetTitle className="font-serif text-xl font-medium tracking-tight text-[#1C1917]">{member.userName}</SheetTitle>
+            <div className="flex items-center gap-2">
+              <SheetTitle className="font-serif text-xl font-[580] tracking-tight text-[#1C1917]">{member.userName}</SheetTitle>
               {dayRecord ? <StatusBadge status={dayRecord.status} /> : null}
             </div>
             <SheetDescription className="text-[12.5px] text-[#78716C]">{member.teamName ?? "无团队归属"}</SheetDescription>
@@ -443,7 +443,7 @@ export function MemberDrawer({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-medium text-[12px] active:scale-[0.985]"
+                      className="flex-1 border-[#E5E0D6] bg-white text-[#292524] hover:bg-[#F5F3EE] hover:text-[#1C1917] font-medium text-[12px] active:scale-[0.99] active:duration-120"
                       onClick={() =>
                         handleHandleAppeal(dateAppeal.id, "approve")
                       }
@@ -454,7 +454,7 @@ export function MemberDrawer({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-[#E5E0D6] bg-white text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] font-medium text-[12px] active:scale-[0.985]"
+                      className="flex-1 border-[#E5E0D6] bg-white text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] font-medium text-[12px] active:scale-[0.99] active:duration-120"
                       onClick={() =>
                         handleHandleAppeal(dateAppeal.id, "reject")
                       }

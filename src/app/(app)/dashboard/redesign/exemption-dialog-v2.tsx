@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   formatShanghaiDateOnlyParts,
@@ -332,23 +333,24 @@ export function ExemptionDialogV2({
             </div>
         </DialogBody>
 
-        <DialogFooter className="flex-row items-center justify-end gap-3 border-t border-[#ECE7DE]/80 px-6 py-4">
-          <button
+        <DialogFooter className="flex-row items-center justify-end gap-2.5 border-t border-[#ECE7DE]/80 px-6 py-3.5">
+          <Button
             type="button"
+            variant="secondary"
+            size="m"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-[#78716C] transition-colors hover:bg-[#F5F3EE] disabled:opacity-50"
           >
             取消
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            size="m"
             onClick={handleSubmit}
             disabled={isSubmitting || !calendar.isValid}
-            className="rounded-lg bg-[#D97757] px-6 py-2 text-sm font-medium text-white transition-all hover:bg-[#C46A4D] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? "提交中..." : "提交申请"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

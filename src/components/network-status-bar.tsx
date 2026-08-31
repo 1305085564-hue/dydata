@@ -63,19 +63,27 @@ export function NetworkStatusBar() {
   if (!visible) return null;
 
   const isOffline = state === "offline";
-  const bgColor = isOffline ? "bg-[#C9604D]" : "bg-[#6FAA7D]";
-  const text = isOffline ? "网络已断开，部分功能可能不可用" : "网络已恢复";
 
   return (
     <div
       className={cn(
-        "fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-center text-[13px] font-medium text-white transition-[background-color,color,border-color,transform,box-shadow] duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        bgColor,
+        "fixed inset-x-0 top-0 z-[60] flex h-8 items-center justify-center gap-2 border border-[#ECE7DE] bg-[#FAF8F4] px-4 text-[13px] text-[#292524] backdrop-blur-md shadow-2xs transition-all duration-200",
       )}
       role="status"
       aria-live="polite"
     >
-      {text}
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          isOffline ? "bg-[#C0685C] animate-pulse" : "bg-[#6FAA7D]",
+        )}
+      />
+      <span className="font-medium text-[#1C1917]">
+        {isOffline ? "网络已断开" : "网络已恢复"}
+      </span>
+      {isOffline && (
+        <span className="text-[#78716C]">· 部分功能可能暂不可用</span>
+      )}
     </div>
   );
 }

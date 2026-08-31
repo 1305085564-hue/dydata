@@ -379,7 +379,7 @@ export function NavBarClient({
                           "relative inline-flex h-8 shrink-0 items-center rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive
                             ? "text-[#1C1917] font-semibold bg-[#F5F3EE] shadow-2xs"
-                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.985]",
+                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.99] active:duration-120",
                         )}
                       >
                         {Icon && (
@@ -420,7 +420,7 @@ export function NavBarClient({
                           "relative inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-3 text-[13px] tracking-tight transition-colors duration-100 ease-out group origin-center select-none",
                           isGroupActive || isDropdownOpen
                             ? "text-[#1C1917] font-semibold bg-[#F5F3EE] shadow-2xs"
-                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.985]",
+                            : "text-[#78716C] font-medium hover:text-[#1C1917] hover:bg-[#F5F3EE]/80 active:scale-[0.99] active:duration-120",
                         )}
                       >
                         {isGroupActive && (
@@ -454,7 +454,7 @@ export function NavBarClient({
                           onMouseEnter={() => handleDropdownOpen(group.key)}
                           onMouseLeave={handleDropdownCloseLater}
                         >
-                          <div className="w-56 rounded-xl border border-[#E5E0D6] bg-[#FAF8F4]/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
+                          <div className="w-56 rounded-xl bg-[#FAF8F4]/98 p-1.5 shadow-claude-float backdrop-blur-2xl">
                             <div className="space-y-0.5">
                               {group.children.map((child: NavSubItem) => {
                                 const active = child.match(pathname);
@@ -511,12 +511,12 @@ export function NavBarClient({
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-8.5 items-center justify-center rounded-xl px-2.5 transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0",
+                    "relative flex h-7 items-center justify-center rounded-md px-2.5 transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer active:scale-[0.99] active:duration-120",
                     bellBadgeCount > 0
                       ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
-                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] active:scale-[0.985] active:duration-75 border border-transparent",
+                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] border border-transparent",
                     commandHubOpen &&
-                      "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#E5E0D6] shadow-sm",
+                      "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#ECE7DE] shadow-sm",
                   )}
                   title="待办与通知中心"
                   aria-label="待办与通知中心"

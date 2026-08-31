@@ -143,7 +143,7 @@ export function FilterBar({
                   key={opt.value}
                   type="button"
                   onClick={() => handlePresetChange(opt.value)}
-                  className={`rounded-lg px-2.5 sm:px-3 py-1.5 text-[11.5px] sm:text-[12px] whitespace-nowrap font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+                  className={`rounded-lg px-2.5 sm:px-3 py-1.5 text-[11.5px] sm:text-[12px] whitespace-nowrap font-medium transition-all duration-150 cursor-pointer active:scale-[0.99] active:duration-120 ${
                     isActive
                       ? "bg-white text-[#D97757] shadow-2xs font-semibold"
                       : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
@@ -159,11 +159,11 @@ export function FilterBar({
           <Select value={selectedTeam ?? ""} onValueChange={handleTeamChange}>
             <SelectTrigger
               size="sm"
-              className="h-8.5 w-36 rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0 active:scale-[0.985]"
+              className="h-7 w-36 rounded-md border border-[#E5E0D6] bg-[#FAF8F4]/50 text-[12px] font-medium text-[#292524] shadow-2xs transition-colors hover:border-[#78716C]/40 focus-visible:ring-1 focus-visible:ring-[#D97757]/25 focus-visible:ring-offset-0"
             >
               <SelectValue placeholder="全部团队" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl border border-[#E5E0D6]/80 bg-white/95 backdrop-blur-md shadow-claude-float">
+            <SelectContent className="rounded-xl bg-white/95 backdrop-blur-md shadow-claude-float">
               <SelectItem value="">全部团队</SelectItem>
               {teams.map((team) => (
                 <SelectItem key={team} value={team} className="text-[12px]">
@@ -222,9 +222,9 @@ export function FilterBar({
         open={confirmToggleTarget !== null}
         onOpenChange={(open) => !open && setConfirmToggleTarget(null)}
       >
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-claude-dialog border-[#E5E0D6]">
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-claude-dialog">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-[#1C1917]">
+            <DialogTitle className="text-base font-medium text-[#1C1917]">
               {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#78716C] mt-2 leading-relaxed">
@@ -235,21 +235,15 @@ export function FilterBar({
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">
             <Button
-              variant="outline"
-              size="sm"
-              className="rounded-lg text-[#292524] active:scale-[0.985]"
+              variant="secondary"
+              size="m"
               onClick={() => setConfirmToggleTarget(null)}
             >
               保留现状
             </Button>
             <Button
               variant={confirmToggleTarget ? "default" : "destructive"}
-              size="sm"
-              className={
-                confirmToggleTarget
-                  ? "rounded-lg bg-[#D97757] hover:bg-[#C46A4D] text-white active:scale-[0.985]"
-                  : "rounded-lg bg-[#C0685C] hover:bg-[#A8584D] text-white active:scale-[0.985]"
-              }
+              size="m"
               onClick={handleConfirmToggle}
             >
               {confirmToggleTarget ? "确认开启" : "确认暂停"}

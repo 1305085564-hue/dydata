@@ -99,7 +99,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   return (
     <TooltipProvider>
-      <div className="rounded-xl border border-[#ECE7DE] bg-white overflow-hidden">
+      <div className="rounded-xl bg-white shadow-card-ring overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">

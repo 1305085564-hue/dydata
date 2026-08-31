@@ -256,7 +256,7 @@ export function PublishedAtPicker({
         disabled={disabled}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "h-8.5 w-full flex items-center justify-between rounded-lg border border-[#E5E0D6] bg-[#FAF8F4]/50 hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer",
+          "h-7 w-full flex items-center justify-between rounded-md border border-[#ECE7DE] bg-[#FAF8F4]/50 hover:bg-[#F5F3EE] focus-visible:bg-white focus-visible:border-[#78716C] focus-visible:ring-1 focus-visible:ring-[#D97757]/25 px-2.5 text-xs text-[#292524] transition-colors cursor-pointer active:scale-[0.99] active:duration-120",
           isOpen && "border-[#78716C] bg-white ring-1 ring-[#D97757]/25"
         )}
       >
@@ -537,7 +537,7 @@ export function HistoryReportEditForm({
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="history-report-date" className="text-[11.5px] text-[#78716C]">归属日期</Label>
-              <Input id="history-report-date" value={report.report_date} disabled className="h-8.5 bg-[#F5F3EE]/60 text-xs text-[#78716C] rounded-lg border-[#E5E0D6]" />
+              <Input id="history-report-date" value={report.report_date} disabled className="h-7 bg-[#F5F3EE]/60 text-xs text-[#78716C] rounded-md border-[#ECE7DE]" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11.5px] text-[#78716C]">发布时间</Label>
@@ -553,7 +553,7 @@ export function HistoryReportEditForm({
                 name="title"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
-                className="h-8.5 text-xs rounded-lg border-[#E5E0D6] bg-[#FAF8F4]/50 focus:bg-white"
+                className="h-7 text-xs rounded-md border-[#ECE7DE] bg-[#FAF8F4]/50 focus:bg-white"
                 placeholder="补充或修正视频标题"
               />
             </div>
@@ -668,8 +668,9 @@ export function HistoryReportEditForm({
           <div className="flex items-center gap-2 ml-auto">
             <Button
               type="submit"
+              size="m"
               disabled={isPending}
-              className="h-8.5 px-4 text-xs font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white rounded-lg cursor-pointer shadow-sm active:scale-[0.985]"
+              className="px-3.5 text-[13px] font-medium bg-[#D97757] hover:bg-[#C46A4D] text-white cursor-pointer shadow-sm"
             >
               {isPending ? "保存中..." : "保存历史修改"}
             </Button>

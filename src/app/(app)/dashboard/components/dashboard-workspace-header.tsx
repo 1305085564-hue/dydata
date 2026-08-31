@@ -90,11 +90,11 @@ export function DashboardWorkspaceHeader({
             <button
               type="button"
               onClick={() => setIsCalendarOpen((prev) => !prev)}
-              className="group inline-flex min-h-[44px] items-center gap-2 rounded-xl text-left outline-none select-none cursor-pointer transition-colors active:scale-[0.985] active:duration-75"
+              className="group inline-flex min-h-[44px] items-center gap-2 rounded-xl text-left outline-none select-none cursor-pointer transition-colors active:scale-[0.99] active:duration-120"
               aria-expanded={isCalendarOpen}
               aria-label="切换填报日期"
             >
-              <h1 className="font-serif text-2xl font-semibold tracking-tight text-[#1C1917] group-hover:text-[#D97757] transition-colors flex items-center gap-2">
+              <h1 className="font-serif text-2xl font-[580] tracking-tighter text-[#1C1917] group-hover:text-[#D97757] transition-colors flex items-center gap-2">
                 {activeBizDate === today ? (
                   <>
                     <span>今日提交</span>
@@ -158,7 +158,7 @@ export function DashboardWorkspaceHeader({
                 key={action.key}
                 type="button"
                 onClick={() => onDashboardAction(action.key)}
-                className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] transition-all duration-150 hover:bg-[#F5F3EE] hover:text-[#1C1917] hover:shadow-sm active:scale-[0.98]"
+                className="group inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E5E0D6] bg-white px-3 text-[13px] font-medium text-[#292524] transition-all duration-150 hover:bg-[#F5F3EE] hover:text-[#1C1917] hover:shadow-sm active:scale-[0.99] active:duration-120"
               >
                 <Icon
                   size={14}

@@ -59,7 +59,7 @@ export function SubmissionSlotsSection({
   onDelete,
   onRetry,
   onManualFill,
-  screenshotsRequired = true,
+  screenshotsRequired: _screenshotsRequired = true,
   focusedRole = null,
   highlightedOcrIndex = null,
 }: SubmissionSlotsProps) {
@@ -281,7 +281,7 @@ export function SubmissionSlotsSection({
                           待核对
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#DC2626]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#DC2626]">
+                        <span className="inline-flex items-center gap-0.5 lg:gap-1 rounded-full bg-[#C0685C]/10 px-1.5 py-0.2 lg:py-0.5 text-[10px] sm:text-[11px] font-medium text-[#C0685C]">
                           失败
                         </span>
                       )}
@@ -296,7 +296,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onRetry?.(item.role);
                           }}
-                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#E5E0D6] text-[#292524] border border-[#E5E0D6] transition-colors cursor-pointer"
+                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded bg-[#F5F3EE] hover:bg-[#ECE7DE] text-[#292524] border border-[#ECE7DE] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="重新识别"
                         >
                           <RefreshCw className="size-2.5" />
@@ -309,7 +309,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onManualFill?.(item.role);
                           }}
-                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 lg:text-[10.5px] items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#E5E0D6] shadow-2xs transition-colors cursor-pointer"
+                          className="inline-flex h-7 sm:h-5.5 min-h-[28px] sm:min-h-0 lg:text-[10.5px] items-center justify-center rounded bg-white px-1.5 text-[10px] sm:text-[11px] font-medium text-[#292524] hover:bg-[#F5F3EE] border border-[#ECE7DE] shadow-2xs transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                         >
                           手输
                         </button>
@@ -321,7 +321,7 @@ export function SubmissionSlotsSection({
                             e.stopPropagation();
                             onDelete(item.role);
                           }}
-                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#DC2626] transition-colors cursor-pointer"
+                          className="inline-flex size-7 sm:size-5.5 min-h-[28px] min-w-[28px] sm:min-h-0 sm:min-w-0 items-center justify-center rounded text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#C0685C] transition-colors active:scale-[0.99] active:duration-120 cursor-pointer"
                           title="删除截图"
                         >
                           <Trash2 className="size-2.5 stroke-[1.6]" />
