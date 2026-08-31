@@ -9,6 +9,6 @@ test("成长页加载失败时提供明确说明与重试入口", () => {
     <GrowthError error={new Error("network failed")} reset={() => {}} />,
   );
 
-  assert.match(html, /成长数据加载失败/);
+  assert.match(html, /成长轨迹暂时未能展开/);
   assert.match(html, /重试/);
 });

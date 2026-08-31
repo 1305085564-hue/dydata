@@ -204,15 +204,12 @@ export function buildOperators(
 
   for (const row of current) {
     const userId = row.operator_user_id!;
-    // 服务岗口径：只统计给别人的账号做运营的日报，达人自运营不进运营列表（达人 tab 已覆盖）
-    if (!isOtherAccount(accountsById.get(row.account_id), userId)) continue;
     const bucket = currentByOperator.get(userId) ?? [];
     bucket.push(row);
     currentByOperator.set(userId, bucket);
   }
   for (const row of previous) {
     const userId = row.operator_user_id!;
-    if (!isOtherAccount(accountsById.get(row.account_id), userId)) continue;
     const bucket = previousByOperator.get(userId) ?? [];
     bucket.push(row);
     previousByOperator.set(userId, bucket);
@@ -241,6 +238,7 @@ export function buildOperators(
             reportCount: rows.length,
             totalPlay: rows.reduce((sum, row) => sum + asCount(row.play_count), 0),
             totalFollowerConvert: rows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
+            relation: account?.profile_id === userId ? "self" as const : "service" as const,
           };
         })
         .sort((a, b) => b.totalPlay - a.totalPlay || a.accountName.localeCompare(b.accountName, "zh-CN"));
@@ -255,6 +253,8 @@ export function buildOperators(
         hitCount: countHits(operatorRows),
         momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
         accountCount: accountIds.length,
+        selfOperatedAccountCount: accountRows.filter((account) => account.relation === "self").length,
+        serviceAccountCount: accountRows.filter((account) => account.relation === "service").length,
         operatedProfileCount: ownerProfileIds.length,
         accounts: accountRows,
       };
@@ -292,6 +292,15 @@ export function buildStaff(
           accountName: accountsById.get(accountId)?.name?.trim() || "未命名账号",
         }))
         .sort((a, b) => a.accountName.localeCompare(b.accountName, "zh-CN"));
+      const works = [...staffRows]
+        .sort((a, b) => b.report_date.localeCompare(a.report_date) || b.id.localeCompare(a.id))
+        .map((row) => ({
+          reportId: row.id,
+          reportDate: row.report_date,
+          title: row.title?.trim() || "未命名作品",
+          accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
+          playCount: asCount(row.play_count),
+        }));
       return {
         userId,
         name: names.get(userId) ?? "未命名成员",
@@ -299,18 +308,10 @@ export function buildStaff(
         totalPlay,
         avgPlay: Math.floor(totalPlay / staffRows.length),
         selfHandledCount: staffRows.filter(isSelfHandled).length,
-        involvedAccounts: involvedAccounts.slice(0, 3),
+        involvedAccounts,
         involvedAccountTotal: involvedAccounts.length,
-        recentWorks: [...staffRows]
-          .sort((a, b) => b.report_date.localeCompare(a.report_date) || b.id.localeCompare(a.id))
-          .slice(0, 3)
-          .map((row) => ({
-            reportId: row.id,
-            reportDate: row.report_date,
-            title: row.title?.trim() || "未命名作品",
-            accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
-            playCount: asCount(row.play_count),
-          })),
+        recentWorks: works.slice(0, 3),
+        works,
       };
     })
     .sort((a, b) => b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"));

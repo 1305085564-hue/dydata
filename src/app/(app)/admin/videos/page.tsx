@@ -11,7 +11,7 @@ import type { AdminVideosView } from "@/lib/loaders/admin-videos-page";
 
 export const metadata: Metadata = {
   title: "素材库 - DYData",
-  description: "管理团队视频素材、审核状态与归档记录。",
+  description: "沉淀团队作品资产，研读数据表现与归档复盘。",
 };
 
 type VideoView = AdminVideosView;

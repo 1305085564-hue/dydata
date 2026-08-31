@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -31,6 +31,16 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
 
   const [sortField, setSortField] = useState<SortField>("reportCount");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [expandedUserIds, setExpandedUserIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (userId: string) => {
+    setExpandedUserIds((previous) => {
+      const next = new Set(previous);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -78,8 +88,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title={`本月还没有给别人账号做${roleLabel}的记录`}
-          description="达人自己干自己账号的记录在达人 tab 查看；2026-07-27 起开始统计岗位归属与作品产量"
+          title={`本月暂无${roleLabel}协同篇目`}
+          description="个人独立主理篇目请在创作者专栏查阅；本台自 2026-07-27 起收录协同分工与作品产出"
         />
       </div>
     );
@@ -91,6 +101,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
         <Table>
           <TableHeader>
             <TableRow className="bg-transparent hover:bg-transparent border-b border-[#ECE7DE]/60 text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+              <TableHead className="w-10" />
               <TableHead className="text-left font-medium text-[#78716C] pl-4">姓名</TableHead>
               <TableHead className="text-right font-medium text-[#78716C]">
                 <button
@@ -146,12 +157,26 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
           </TableHeader>
           <TableBody className="text-[13px]">
             {sortedRows.map((row) => {
-              const displayedAccounts = row.involvedAccounts.map((a) => a.accountName).join("、");
-              const extraCount = row.involvedAccountTotal - row.involvedAccounts.length;
+              const displayedAccounts = row.involvedAccounts.slice(0, 2).map((a) => a.accountName).join("、");
+              const extraCount = row.involvedAccountTotal - Math.min(row.involvedAccounts.length, 2);
               const recentTitles = row.recentWorks.map((work) => work.title).join("、");
+              const isExpanded = expandedUserIds.has(row.userId);
 
               return (
-                <TableRow key={row.userId} className="hover:bg-[#FBF9F5]/50 transition-colors">
+                <Fragment key={row.userId}>
+                <TableRow className={isExpanded ? "bg-[#FBF9F5]/70 hover:bg-[#FBF9F5]/70" : "hover:bg-[#FBF9F5]/50 transition-colors"}>
+                  <TableCell className="w-10 px-2 py-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(row.userId)}
+                      aria-label={isExpanded ? `收起${row.name}的全部作品` : `查看${row.name}的全部作品`}
+                      className={`flex size-8 items-center justify-center rounded-md transition-colors ${
+                        isExpanded ? "text-[#D97757]" : "text-[#78716C] hover:bg-[#F5F3EE] hover:text-[#292524]"
+                      }`}
+                    >
+                      {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                    </button>
+                  </TableCell>
                   <TableCell className="text-left font-medium pl-4 py-3">
                     <button
                       type="button"
@@ -178,7 +203,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                         <TooltipContent className="text-[12px] max-w-xs">
                           <p className="font-medium text-[#FBF9F5] mb-1">经手账号：</p>
                           <p className="text-[#FBF9F5] leading-relaxed">
-                            {displayedAccounts} 等共 {row.involvedAccountTotal} 个账号（点击成员姓名查看个人档案明细）
+                            {row.involvedAccounts.map((account) => account.accountName).join("、")}（展开本行可查看逐篇明细）
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -192,9 +217,9 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                         <span className="block truncate" title={recentTitles}>
                           {row.recentWorks[0]?.title || "—"}
                         </span>
-                        {row.reportCount > 1 && (
+                        {row.works.length > 1 && (
                           <span className="mt-0.5 block text-[11px] text-[#78716C]">
-                            最近 {row.recentWorks.length} 条 · 共 {row.reportCount} 条
+                            最近 {row.recentWorks.length} 条 · 共 {row.works.length} 条 · 可展开
                           </span>
                         )}
                       </TooltipTrigger>
@@ -218,6 +243,35 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     {row.selfHandledCount}
                   </TableCell>
                 </TableRow>
+                {isExpanded && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={8} className="border-b border-[#ECE7DE]/60 bg-[#FAF8F4]/50 px-12 pb-4 pt-1">
+                      <div className="overflow-hidden rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
+                        <table className="w-full text-[12px]">
+                          <thead>
+                            <tr className="border-b border-[#ECE7DE]/80 text-left text-[#78716C]">
+                              <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider">日期</th>
+                              <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider">账号</th>
+                              <th className="px-3.5 py-2.5 text-[11px] font-medium uppercase tracking-wider">作品</th>
+                              <th className="px-3.5 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider">播放</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#ECE7DE]/60">
+                            {row.works.map((work) => (
+                              <tr key={work.reportId} className="hover:bg-[#F5F3EE]/40">
+                                <td className="whitespace-nowrap px-3.5 py-2.5 tabular-nums text-[#78716C]">{work.reportDate}</td>
+                                <td className="px-3.5 py-2.5 text-[#292524]">{work.accountName}</td>
+                                <td className="px-3.5 py-2.5 font-medium text-[#1C1917]">{work.title}</td>
+                                <td className="px-3.5 py-2.5 text-right tabular-nums text-[#292524]">{formatBigNumber(work.playCount)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </Fragment>
               );
             })}
           </TableBody>

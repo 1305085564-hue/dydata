@@ -12,6 +12,7 @@ export interface OperatorAccount {
   reportCount: number;
   totalPlay: number;
   totalFollowerConvert: number;
+  relation: "self" | "service";
 }
 
 export interface OperatorRow {
@@ -24,6 +25,8 @@ export interface OperatorRow {
   hitCount: number;
   momChange: number | null;
   accountCount: number;
+  selfOperatedAccountCount: number;
+  serviceAccountCount: number;
   operatedProfileCount: number;
   accounts: OperatorAccount[];
 }
@@ -43,6 +46,13 @@ export interface StaffRow {
   involvedAccounts: StaffAccount[];
   involvedAccountTotal: number;
   recentWorks: Array<{
+    reportId: string;
+    reportDate: string;
+    title: string;
+    accountName: string;
+    playCount: number;
+  }>;
+  works: Array<{
     reportId: string;
     reportDate: string;
     title: string;

@@ -181,15 +181,15 @@ export function TeamActivitySection({
             <div className="flex items-center justify-between pb-1.5 border-b border-[#ECE7DE] text-xs">
               <span className="font-semibold text-[#292524] flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 text-[#43718E]" />
-                往期写作记录
+                往期创作轨迹
               </span>
               <span className="text-[11px] text-[#78716C] tabular-nums">
-                {pastClaims.length} 条
+                {pastClaims.length} 篇
               </span>
             </div>
             {pastClaims.length === 0 ? (
               <div className="text-xs text-[#78716C] py-3 text-center">
-                没有更多往期写作记录
+                已翻阅完所有往期篇目
               </div>
             ) : (
               pastClaims.map((claim: TopicClaimItem) => (

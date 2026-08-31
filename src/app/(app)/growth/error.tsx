@@ -16,8 +16,8 @@ export default function GrowthError({ error, reset }: GrowthErrorProps) {
 
   return (
     <RouteErrorState
-      title="成长数据加载失败"
-      description="暂时无法取得成长数据，请检查网络后重试。"
+      title="成长轨迹暂时未能展开"
+      description="历史数据同步稍有延迟，请检查网络连接后重新尝试。"
       reset={reset}
     />
   );

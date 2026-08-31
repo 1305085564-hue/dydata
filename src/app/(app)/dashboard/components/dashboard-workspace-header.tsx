@@ -37,7 +37,7 @@ export function DashboardWorkspaceHeader({
   const calendarPopoverRef = useRef<HTMLDivElement | null>(null);
 
   const utilityActions = [
-    { key: "history", label: "历史记录", icon: History },
+    { key: "history", label: "历史手稿", icon: History },
   ];
 
   // 点击外部及 Esc 键收起 Popover

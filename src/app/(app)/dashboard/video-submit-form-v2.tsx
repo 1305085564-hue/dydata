@@ -1291,7 +1291,7 @@ export function VideoSubmitFormV2({
       const data = (await res.json()) as SampleQualityResponse;
       setQualityCheck({ data, loading: false });
     } catch {
-      feedbackToast.error("AI 检查失败");
+      feedbackToast.error("AI 审阅暂未完成，不影响您直接提交");
       setQualityCheck({ data: null, loading: false });
     }
   }
@@ -1551,7 +1551,7 @@ export function VideoSubmitFormV2({
         });
 
         if (data.slot_status === "failed") {
-          feedbackToast.error("识别失败，可手动填写指标");
+          feedbackToast.error("截图未能完全识读，您可直接补全指标");
           return;
         }
 

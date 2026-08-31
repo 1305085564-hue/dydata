@@ -15,6 +15,7 @@ import { StatsBar } from "./components/stats-bar";
 import { ExceptionQueue } from "./components/exception-queue";
 import { MonthlyMatrix } from "./components/monthly-matrix";
 import { MemberDrawer } from "./components/member-drawer";
+import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -70,6 +71,7 @@ export async function fetchFulfillmentSettings(
 interface FulfillmentWorkbenchProps {
   initialData: FulfillmentCalendarData;
   initialRange: TimeRangePreset;
+  initialView?: "todo" | "matrix";
   currentUserId?: string;
 }
 
@@ -182,9 +184,13 @@ function calcStats(members: FulfillmentMemberSummary[], today: string) {
 export function FulfillmentWorkbench({
   initialData,
   initialRange,
+  initialView = "todo",
   currentUserId,
 }: FulfillmentWorkbenchProps) {
   const today = formatTodayDateOnly();
+
+  // 顶层视图切换状态：今日待办与异常 ↔ 月度全景矩阵
+  const [mainView, setMainView] = useState<"todo" | "matrix">(initialView);
 
   // 默认定位到当前登录用户所属的团队，若无则定位到首个有团队名的团队
   const defaultTeam = useMemo(() => {
@@ -318,6 +324,17 @@ export function FulfillmentWorkbench({
   };
 
   // 8. 客户端无感日历加载器
+  const handleViewChange = useCallback((newView: "todo" | "matrix") => {
+    setMainView(newView);
+    const url = new URL(window.location.href);
+    if (newView === "matrix") {
+      url.searchParams.set("view", "matrix");
+    } else {
+      url.searchParams.delete("view");
+    }
+    window.history.pushState(null, "", url.pathname + url.search);
+  }, []);
+
   const loadCalendar = useCallback(
     async (
       targetYear: number,
@@ -338,6 +355,11 @@ export function FulfillmentWorkbench({
         url.searchParams.set("year", String(targetYear));
         url.searchParams.set("month", String(targetMonth));
         url.searchParams.set("range", targetRange);
+        if (mainView === "matrix") {
+          url.searchParams.set("view", "matrix");
+        } else {
+          url.searchParams.delete("view");
+        }
         window.history.pushState(null, "", url.pathname + url.search);
       } catch {
         toast.error("加载发布日历失败，请重试");
@@ -345,7 +367,7 @@ export function FulfillmentWorkbench({
         setIsLoadingCalendar(false);
       }
     },
-    [],
+    [mainView],
   );
 
   const handlePresetChange = useCallback(
@@ -782,232 +804,288 @@ export function FulfillmentWorkbench({
     [calendarData.members, calendarData.year, calendarData.month, today],
   );
 
+  const totalExceptions = exceptionMembers.length + pendingAppeals.length;
+
   return (
-    <div className="space-y-6">
-      {/* 筛选工具栏 */}
-      <FilterBar
-        year={calendarData.year}
-        month={calendarData.month}
-        range={range}
-        members={calendarData.members}
-        selectedTeam={selectedTeam}
-        onTeamChange={handleTeamChange}
-        onPresetChange={handlePresetChange}
-        feishuEnabled={feishuEnabled}
-        settingsLoading={settingsLoading}
-        settingsError={settingsError}
-        isUpdatingSettings={isUpdatingSettings}
-        onRetrySettings={() => void loadSettings()}
-        onFeishuChange={handleFeishuChange}
-      />
+    <AdminWorkspaceLayout
+      eyebrow="FULFILLMENT DISPATCH · 履约大盘"
+      title="发布与履约总览"
+      description="随时了解每位成员的发布节奏，断更与申诉都有去处。"
+      indexItems={[]}
+      width="wide"
+      actions={
+        <div className="inline-flex items-center gap-1 rounded-xl bg-[#F5F3EE] p-1 border border-[#ECE7DE]/70 shadow-2xs">
+          <button
+            type="button"
+            onClick={() => handleViewChange("todo")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+              mainView === "todo"
+                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
+            }`}
+          >
+            <span>异常待办</span>
+            {totalExceptions > 0 ? (
+              <span className="inline-flex items-center justify-center rounded-full bg-[#D97757]/15 px-1.5 py-0.2 text-[11px] font-semibold text-[#D97757] tabular-nums">
+                {totalExceptions}
+              </span>
+            ) : (
+              <span className="inline-flex items-center justify-center rounded-full bg-[#6FAA7D]/10 px-1.5 py-0.2 text-[11px] font-medium text-[#6FAA7D]">
+                0
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleViewChange("matrix")}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+              mainView === "matrix"
+                ? "bg-white text-[#1C1917] shadow-2xs font-semibold"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/50"
+            }`}
+          >
+            <span>月度全景</span>
+          </button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* 单行工具栏：时间预设 + 团队筛选 + 飞书开关 */}
+        <FilterBar
+          year={calendarData.year}
+          month={calendarData.month}
+          range={range}
+          members={calendarData.members}
+          selectedTeam={selectedTeam}
+          onTeamChange={handleTeamChange}
+          onPresetChange={handlePresetChange}
+          feishuEnabled={feishuEnabled}
+          settingsLoading={settingsLoading}
+          settingsError={settingsError}
+          isUpdatingSettings={isUpdatingSettings}
+          onRetrySettings={() => void loadSettings()}
+          onFeishuChange={handleFeishuChange}
+        />
 
-      {/* 统计条 */}
-      <StatsBar stats={stats} />
+        {mainView === "todo" ? (
+          <>
+            {/* 统计条 */}
+            <StatsBar stats={stats} />
 
-      {/* P0 — 待处理工作流 (Tab 整合：异常处理队列 与 待处理申诉列表) */}
-      <section className="space-y-3">
-        <Tabs defaultValue="exceptions" className="w-full">
-          <div className="flex items-center justify-between border-b border-[#E5E0D6] pb-2">
-            <TabsList variant="line" className="gap-4">
-              <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
-                待处理异常
-                <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
-                  {exceptionMembers.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
-                待审核申诉
-                {appealsError ? (
-                  <span className="ml-1.5 rounded-full bg-[#C9604D]/10 px-1.5 py-0.5 text-[11px] text-[#C9604D] font-semibold">
-                    !
-                  </span>
-                ) : pendingAppeals.length > 0 ? (
-                  <span className="ml-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-semibold tabular-nums">
-                    <span className="size-1.5 rounded-full bg-[#D97757]" />
-                    {pendingAppeals.length}
-                  </span>
-                ) : (
-                  <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
-                    0
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </div>
+            {/* P0 — 待处理工作流 (Tab 整合：异常处理队列 与 待处理申诉列表) */}
+            <section className="space-y-3">
+              <Tabs defaultValue="exceptions" className="w-full">
+                <div className="flex items-center justify-between border-b border-[#E5E0D6] pb-2">
+                  <TabsList variant="line" className="gap-4">
+                    <TabsTrigger value="exceptions" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
+                      待处理异常
+                      <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
+                        {exceptionMembers.length}
+                      </span>
+                    </TabsTrigger>
+                    <TabsTrigger value="appeals" className="text-[13px] font-medium text-[#78716C] data-[state=active]:text-[#1C1917]">
+                      待审核申诉
+                      {appealsError ? (
+                        <span className="ml-1.5 rounded-full bg-[#C9604D]/10 px-1.5 py-0.5 text-[11px] text-[#C9604D] font-semibold">
+                          !
+                        </span>
+                      ) : pendingAppeals.length > 0 ? (
+                        <span className="ml-1.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-[#D97757]/15 text-[#D97757] font-semibold tabular-nums">
+                          <span className="size-1.5 rounded-full bg-[#D97757]" />
+                          {pendingAppeals.length}
+                        </span>
+                      ) : (
+                        <span className="ml-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F5F3EE] text-[#78716C] tabular-nums">
+                          0
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
 
-          <TabsContent value="exceptions" className="mt-3">
+                <TabsContent value="exceptions" className="mt-3">
+                  {isLoadingCalendar ? (
+                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#E5E0D6] bg-white">
+                      <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
+                      <span className="text-[13px] text-[#78716C] font-normal">
+                        正在刷新数据...
+                      </span>
+                    </div>
+                  ) : (
+                    <ExceptionQueue
+                      members={exceptionMembers}
+                      today={today}
+                      selectedIds={selectedIds}
+                      onSelectToggle={handleSelectToggle}
+                      onSelectAll={handleSelectAll}
+                      onQuickMark={handleQuickMark}
+                      onBatchMark={handleBatchMark}
+                      onMemberClick={handleQueueMemberClick}
+                    />
+                  )}
+                </TabsContent>
+
+                <TabsContent value="appeals" className="mt-3">
+                  {appealsError ? (
+                    <div className="flex flex-col items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#FBF9F5] px-6 py-10 text-center">
+                      <p className="text-[13px] font-medium text-[#1C1917]">
+                        申诉数据加载失败
+                      </p>
+                      <p className="mt-1 text-[12px] text-[#78716C]">{appealsError}</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE] active:scale-[0.985]"
+                        onClick={() => void fetchAppeals()}
+                      >
+                        重新加载
+                      </Button>
+                    </div>
+                  ) : appealsLoading || isSubmittingAppeal ? (
+                    <div className="flex items-center justify-center py-12 rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
+                      <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
+                      <span className="text-[12.5px] text-[#78716C] font-normal">
+                        正在加载申诉...
+                      </span>
+                    </div>
+                  ) : pendingAppeals.length === 0 ? (
+                    <div className="rounded-xl border border-[#ECE7DE]/80 bg-white py-12 shadow-2xs">
+                      <EmptyState
+                        title="还没有待审核的申诉"
+                        description="所有成员的申诉请求已处理完毕"
+                      />
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-[13px]">
+                          <thead>
+                            <tr className="border-b border-[#ECE7DE]/80 bg-transparent">
+                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                成员
+                              </th>
+                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                申诉日期
+                              </th>
+                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                申诉原因
+                              </th>
+                              <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                提交时间
+                              </th>
+                              <th className="px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
+                                操作
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pendingAppeals.map((appeal) => (
+                              <tr
+                                key={appeal.id}
+                                className="border-b border-[#ECE7DE]/60 last:border-b-0 hover:bg-[#F5F3EE]/40 bg-transparent transition-colors duration-100"
+                              >
+                                <td className="px-3 py-2.5 font-medium text-[#1C1917]">
+                                  {appeal.user_name || "未知成员"}
+                                </td>
+                                <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#292524]">
+                                  {appeal.record_date}
+                                </td>
+                                <td
+                                  className="max-w-[240px] truncate px-3 py-2.5 text-[#292524]"
+                                  title={appeal.reason}
+                                >
+                                  {appeal.reason}
+                                </td>
+                                <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#78716C]">
+                                  {new Date(appeal.created_at).toLocaleString(
+                                    "zh-CN",
+                                  )}
+                                </td>
+                                <td className="px-3 py-2.5 text-right">
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg active:scale-[0.985]"
+                                      onClick={() =>
+                                        handleHandleAppeal(appeal.id, "approve")
+                                      }
+                                    >
+                                      同意并改判
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-medium rounded-lg active:scale-[0.985]"
+                                      onClick={() =>
+                                        handleHandleAppeal(appeal.id, "reject")
+                                      }
+                                    >
+                                      驳回
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </section>
+
+            {/* 底部导航提示 */}
+            <div className="pt-2 flex items-center justify-between text-[12px] text-[#78716C]">
+              <span>需要查看全月 31 天走势与热力图？</span>
+              <button
+                type="button"
+                onClick={() => handleViewChange("matrix")}
+                className="inline-flex items-center gap-1 font-medium text-[#D97757] hover:underline cursor-pointer transition-colors"
+              >
+                切换到「月度全景」大盘 →
+              </button>
+            </div>
+          </>
+        ) : (
+          /* P2 — 月度矩阵全景大盘 */
+          <section className="space-y-4">
             {isLoadingCalendar ? (
-              <div className="flex items-center justify-center py-12 rounded-xl border border-[#E5E0D6] bg-white">
-                <span className="size-5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2" />
-                <span className="text-[13px] text-[#78716C] font-normal">
-                  正在刷新数据...
+              <div className="flex items-center justify-center py-16 rounded-xl border border-[#ECE7DE]/80 bg-white">
+                <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
+                <span className="text-[13px] font-normal text-[#78716C]">
+                  正在刷新日历数据...
                 </span>
               </div>
             ) : (
-              <ExceptionQueue
-                members={exceptionMembers}
+              <MonthlyMatrix
+                year={calendarData.year}
+                month={calendarData.month}
+                members={filteredMembers}
                 today={today}
-                selectedIds={selectedIds}
-                onSelectToggle={handleSelectToggle}
-                onSelectAll={handleSelectAll}
-                onQuickMark={handleQuickMark}
-                onBatchMark={handleBatchMark}
-                onMemberClick={handleQueueMemberClick}
+                onCellClick={handleMatrixCellClick}
+                onMonthChange={handleMonthChange}
+                appeals={appeals}
+                onQuickMarkCell={handleQuickMarkCell}
+                onReviewPendingExemption={handleReviewPendingExemption}
               />
             )}
-          </TabsContent>
-
-          <TabsContent value="appeals" className="mt-3">
-            {appealsError ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-[#E5E0D6] bg-[#FBF9F5] px-6 py-10 text-center">
-                <p className="text-[13px] font-medium text-[#1C1917]">
-                  申诉数据加载失败
-                </p>
-                <p className="mt-1 text-[12px] text-[#78716C]">{appealsError}</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 rounded-lg text-[#292524] border-[#E5E0D6] hover:bg-[#F5F3EE] active:scale-[0.985]"
-                  onClick={() => void fetchAppeals()}
-                >
-                  重新加载
-                </Button>
-              </div>
-            ) : appealsLoading || isSubmittingAppeal ? (
-              <div className="flex items-center justify-center py-12 rounded-xl border border-[#ECE7DE]/80 bg-white shadow-2xs">
-                <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent mr-2.5" />
-                <span className="text-[12.5px] text-[#78716C] font-normal">
-                  正在加载申诉...
-                </span>
-              </div>
-            ) : pendingAppeals.length === 0 ? (
-              <div className="rounded-xl border border-[#ECE7DE]/80 bg-white py-12 shadow-2xs">
-                <EmptyState
-                  title="还没有待审核的申诉"
-                  description="所有成员的申诉请求已处理完毕"
-                />
-              </div>
-            ) : (
-              <div className="overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[13px]">
-                    <thead>
-                      <tr className="border-b border-[#ECE7DE]/80 bg-transparent">
-                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                          成员
-                        </th>
-                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                          申诉日期
-                        </th>
-                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                          申诉原因
-                        </th>
-                        <th className="px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                          提交时间
-                        </th>
-                        <th className="px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-[#78716C]">
-                          操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pendingAppeals.map((appeal) => (
-                        <tr
-                          key={appeal.id}
-                          className="border-b border-[#ECE7DE]/60 last:border-b-0 hover:bg-[#F5F3EE]/40 bg-transparent transition-colors duration-100"
-                        >
-                          <td className="px-3 py-2.5 font-medium text-[#1C1917]">
-                            {appeal.user_name || "未知成员"}
-                          </td>
-                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#292524]">
-                            {appeal.record_date}
-                          </td>
-                          <td
-                            className="max-w-[240px] truncate px-3 py-2.5 text-[#292524]"
-                            title={appeal.reason}
-                          >
-                            {appeal.reason}
-                          </td>
-                          <td className="px-3 py-2.5 text-[12px] tabular-nums text-[#78716C]">
-                            {new Date(appeal.created_at).toLocaleString(
-                              "zh-CN",
-                            )}
-                          </td>
-                          <td className="px-3 py-2.5 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2.5 text-[12px] text-[#6FAA7D] hover:bg-[#6FAA7D]/10 font-medium rounded-lg active:scale-[0.985]"
-                                onClick={() =>
-                                  handleHandleAppeal(appeal.id, "approve")
-                                }
-                              >
-                                同意并改判
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2.5 text-[12px] text-[#C0685C] hover:bg-[#C0685C]/10 font-medium rounded-lg active:scale-[0.985]"
-                                onClick={() =>
-                                  handleHandleAppeal(appeal.id, "reject")
-                                }
-                              >
-                                驳回
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </section>
-
-      {/* P2 — 月度矩阵（可折叠 · 48px 宏观呼吸断层） */}
-      <section className="pt-8 border-t border-[#E5E0D6]">
-        {isLoadingCalendar ? (
-          <div className="flex flex-col gap-3">
-            <button
-              disabled
-              className="flex w-full items-center justify-between py-3 text-left"
-            >
-              <span className="text-[13px] font-normal text-[#78716C]">
-                正在刷新日历数据...
-              </span>
-              <span className="size-4 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
-            </button>
-          </div>
-        ) : (
-          <MonthlyMatrix
-            year={calendarData.year}
-            month={calendarData.month}
-            members={filteredMembers}
-            today={today}
-            onCellClick={handleMatrixCellClick}
-            onMonthChange={handleMonthChange}
-            appeals={appeals}
-            onQuickMarkCell={handleQuickMarkCell}
-            onReviewPendingExemption={handleReviewPendingExemption}
-          />
+          </section>
         )}
-      </section>
 
-      {/* P3 — 成员履约抽屉 */}
-      <MemberDrawer
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        member={selectedMember}
-        date={selectedDate}
-        source={source}
-        onActionComplete={handleActionComplete}
-        appeals={appeals}
-      />
-    </div>
+        {/* P3 — 成员履约抽屉 */}
+        <MemberDrawer
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          member={selectedMember}
+          date={selectedDate}
+          source={source}
+          onActionComplete={handleActionComplete}
+          appeals={appeals}
+        />
+      </div>
+    </AdminWorkspaceLayout>
   );
 }

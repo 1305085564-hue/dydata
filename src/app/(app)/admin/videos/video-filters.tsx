@@ -152,7 +152,7 @@ export function VideoFilters({ profiles, accounts, onFilter }: VideoFiltersProps
         className="h-8 rounded-lg text-[12px] text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE] cursor-pointer"
         onClick={handleReset}
       >
-        重置
+        清空筛选
       </Button>
     </div>
   );

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 interface FulfillmentPageProps {
-  searchParams: Promise<{ year?: string; month?: string; range?: string }>;
+  searchParams: Promise<{ year?: string; month?: string; range?: string; view?: string }>;
 }
 
 function clampMonth(value: number) {
@@ -45,6 +45,11 @@ function resolveRange(range: string | undefined): TimeRangePreset {
   return "today";
 }
 
+function resolveView(view: string | undefined): "todo" | "matrix" {
+  if (view === "matrix") return "matrix";
+  return "todo";
+}
+
 export default async function FulfillmentPage({ searchParams }: FulfillmentPageProps) {
   const params = await searchParams;
   const context = await getCurrentPermissionContext("company", null);
@@ -57,28 +62,20 @@ export default async function FulfillmentPage({ searchParams }: FulfillmentPageP
 
   const { year, month } = resolveYearMonth(params.year, params.month);
   const range = resolveRange(params.range);
+  const view = resolveView(params.view);
 
   return (
     <div className="w-full min-h-screen bg-[#FBF9F5] text-[#1C1917] -mx-4 -my-6 px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 transition-colors duration-200">
-      <AdminWorkspaceLayout
-        eyebrow="FULFILLMENT DISPATCH · 履约大盘"
-        title="发布与履约总览"
-        description="随时了解每位成员的发布节奏，断更与申诉都有去处。"
-        indexItems={[]}
-        width="wide"
-      >
-        <div className="space-y-6">
-          <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
-            <FulfillmentDataContainer
-              year={year}
-              month={month}
-              visibleUserIds={getActiveVisibleUserIds(scope)}
-              currentUserId={permissionInfo.userId}
-              range={range}
-            />
-          </Suspense>
-        </div>
-      </AdminWorkspaceLayout>
+      <Suspense fallback={<TableSkeleton columnCount={7} rowCount={6} showHeader={true} />}>
+        <FulfillmentDataContainer
+          year={year}
+          month={month}
+          visibleUserIds={getActiveVisibleUserIds(scope)}
+          currentUserId={permissionInfo.userId}
+          range={range}
+          view={view}
+        />
+      </Suspense>
     </div>
   );
 }
@@ -89,13 +86,15 @@ async function FulfillmentDataContainer({
   visibleUserIds,
   currentUserId,
   range,
+  view,
 }: {
   year: number;
   month: number;
   visibleUserIds: string[];
   currentUserId: string;
   range: TimeRangePreset;
+  view: "todo" | "matrix";
 }) {
   const data = await loadFulfillmentCalendar(year, month, visibleUserIds);
-  return <FulfillmentWorkbench initialData={data} initialRange={range} currentUserId={currentUserId} />;
+  return <FulfillmentWorkbench initialData={data} initialRange={range} initialView={view} currentUserId={currentUserId} />;
 }

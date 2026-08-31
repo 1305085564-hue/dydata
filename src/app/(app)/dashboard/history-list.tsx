@@ -189,7 +189,7 @@ export function HistoryList({ history, accountDisplayNameMap, onReportOpen }: Hi
       {/* 过滤后空状态 */}
       {filteredHistory.length === 0 ? (
         <div className="py-12 text-center rounded-xl border border-dashed border-[#E5E0D6] bg-[#FBF9F5]/50 p-6">
-          <p className="text-xs font-medium text-[#292524]">没有符合该账号/月份的日报记录</p>
+          <p className="text-xs font-medium text-[#292524]">此筛选下尚未寻得手稿篇目</p>
           <p className="text-xs text-[#78716C] mt-1 font-normal">可以尝试切换或清空上方筛选条件</p>
           {isFiltered && (
             <Button

@@ -174,22 +174,19 @@ export function FilterBar({
           </Select>
         </div>
 
-        {/* 飞书催交开关（沉静平铺） */}
+        {/* 飞书提醒开关（极简微气垫 · 划入展示详情） */}
         <div
-          className="flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-colors"
-          title="开启后，每天 18:00 会自动核对团队发布进度，向未提交视频的成员发送飞书提醒"
+          className="group flex items-center gap-2 rounded-xl bg-[#F5F3EE] border border-[#ECE7DE]/80 px-3 py-1.5 transition-colors hover:border-[#78716C]/30"
+          title="每日 18:00 自动查阅发布进度，向未提交作品的成员送达轻提醒"
         >
-          <span className="text-[12px] font-normal text-[#292524]">
-            飞书自动催交
-          </span>
-          <span className="hidden text-[11px] text-[#78716C] font-normal sm:inline">
-            (每日 18:00)
+          <span className="text-[12px] font-normal text-[#292524] group-hover:text-[#1C1917] transition-colors">
+            飞书提醒
           </span>
           {settingsError ? (
             <button
               type="button"
               onClick={onRetrySettings}
-              className="text-[12px] font-medium text-[#C0685C] underline-offset-2 hover:underline cursor-pointer"
+              className="text-[11px] font-medium text-[#C0685C] underline-offset-2 hover:underline cursor-pointer"
               title={settingsError}
             >
               重试
@@ -198,7 +195,7 @@ export function FilterBar({
             <div className="size-3.5 animate-spin rounded-full border-2 border-[#D97757] border-t-transparent" />
           ) : (
             <Switch
-              aria-label="飞书自动催交总开关"
+              aria-label="飞书每日提醒开关"
               checked={feishuEnabled}
               onCheckedChange={(checked) => setConfirmToggleTarget(checked)}
             />
@@ -228,14 +225,12 @@ export function FilterBar({
         <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-claude-dialog border-[#E5E0D6]">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold text-[#1C1917]">
-              {confirmToggleTarget
-                ? "开启飞书自动催交"
-                : "关闭飞书自动催交"}
+              {confirmToggleTarget ? "开启飞书提醒" : "暂停飞书提醒"}
             </DialogTitle>
             <DialogDescription className="text-[13px] text-[#78716C] mt-2 leading-relaxed">
               {confirmToggleTarget
-                ? "开启后，每天 18:00 将自动核对团队发布进度，向今日尚未提交作品的成员发送提醒。"
-                : "关闭后，将暂停每天 18:00 的定时催流通报。"}
+                ? "开启后，系统将在每日 18:00 查阅全员发布进度，向今日尚未提交作品的伙伴送达轻提醒。"
+                : "暂停后，将不再自动发送每日 18:00 的晚间提醒，可在需要时随时恢复。"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">
@@ -245,7 +240,7 @@ export function FilterBar({
               className="rounded-lg text-[#292524] active:scale-[0.985]"
               onClick={() => setConfirmToggleTarget(null)}
             >
-              取消
+              保留现状
             </Button>
             <Button
               variant={confirmToggleTarget ? "default" : "destructive"}
@@ -257,7 +252,7 @@ export function FilterBar({
               }
               onClick={handleConfirmToggle}
             >
-              {confirmToggleTarget ? "确认开启" : "确认关闭"}
+              {confirmToggleTarget ? "确认开启" : "确认暂停"}
             </Button>
           </DialogFooter>
         </DialogContent>

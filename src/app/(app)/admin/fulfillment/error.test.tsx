@@ -9,6 +9,6 @@ test("履约页加载失败时提供明确说明与重试入口", () => {
     <FulfillmentError error={new Error("network failed")} reset={() => {}} />,
   );
 
-  assert.match(html, /发布管理加载失败/);
+  assert.match(html, /履约总览暂时未能展开/);
   assert.match(html, /重试/);
 });

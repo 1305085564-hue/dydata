@@ -127,17 +127,23 @@ test("operators 播放不足3万或历史样本不足3条时不计爆款", () =>
   assert.equal(insufficientSamples[0]?.hitCount, 0);
 });
 
-test("operators 过滤纯自运营：达人只运营自己账号时不进入运营列表", () => {
+test("operators 保留纯自运营，并明确标记为自营账号", () => {
   const ownAccount: CollaborationAccount = { id: "account-op", name: "运营自己号", profile_id: "operator-1" };
   const rows = [
     report({ id: "self-1", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
     report({ id: "self-2", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
   ];
 
-  assert.deepEqual(buildOperators(rows, [], profiles, [ownAccount]), []);
+  const result = buildOperators(rows, [], profiles, [ownAccount]);
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.reportCount, 2);
+  assert.equal(result[0]?.selfOperatedAccountCount, 1);
+  assert.equal(result[0]?.serviceAccountCount, 0);
+  assert.equal(result[0]?.accounts[0]?.relation, "self");
 });
 
-test("operators 混合归属时只统计给别人的账号做运营的日报", () => {
+test("operators 混合归属时同时统计自营与服务账号，并分开计数", () => {
   const ownAccount: CollaborationAccount = { id: "account-op", name: "运营自己号", profile_id: "operator-1" };
   const rows = [
     report({ id: "self-1", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
@@ -148,10 +154,15 @@ test("operators 混合归属时只统计给别人的账号做运营的日报", (
   const result = buildOperators(rows, [], profiles, [...accounts, ownAccount]);
 
   assert.equal(result.length, 1);
-  assert.equal(result[0]?.reportCount, 1);
-  assert.equal(result[0]?.totalPlay, 100);
-  assert.equal(result[0]?.accountCount, 1);
-  assert.equal(result[0]?.accounts[0]?.accountId, "account-1");
+  assert.equal(result[0]?.reportCount, 3);
+  assert.equal(result[0]?.totalPlay, 1000100);
+  assert.equal(result[0]?.accountCount, 2);
+  assert.equal(result[0]?.selfOperatedAccountCount, 1);
+  assert.equal(result[0]?.serviceAccountCount, 1);
+  assert.deepEqual(
+    result[0]?.accounts.map((account) => [account.accountId, account.relation]).sort(),
+    [["account-1", "service"], ["account-op", "self"]],
+  );
 });
 
 test("operators 账号未绑定主人时按别人的账号计入", () => {
@@ -178,7 +189,7 @@ test("staff 过滤自写自剪：只统计给别人的账号干的活", () => {
   assert.equal(result[0]?.involvedAccounts[0]?.accountId, "account-1");
 });
 
-test("staff 在空归属月份返回空列表，且只返回前 3 个账号和真实总数", () => {
+test("staff 在空归属月份返回空列表，并返回全部负责账号", () => {
   assert.deepEqual(buildStaff([report()], "writer", profiles, accounts), []);
 
   const manyAccounts = [1, 2, 3, 4].map((index) => ({
@@ -196,7 +207,7 @@ test("staff 在空归属月份返回空列表，且只返回前 3 个账号和�
   );
 
   const result = buildStaff(rows, "writer", profiles, manyAccounts);
-  assert.equal(result[0]?.involvedAccounts.length, 3);
+  assert.equal(result[0]?.involvedAccounts.length, 4);
   assert.equal(result[0]?.involvedAccountTotal, 4);
 });
 
@@ -221,6 +232,24 @@ test("staff 单账号也进入岗位月报，并返回最近作品供页面直�
   assert.equal(result.length, 1);
   assert.equal(result[0]?.reportCount, 2);
   assert.deepEqual(result[0]?.recentWorks.map((work) => work.title), ["第二条作品", "第一条作品"]);
+  assert.deepEqual(result[0]?.works.map((work) => work.title), ["第二条作品", "第一条作品"]);
+});
+
+test("staff 返回当月全部篇目，不把第 4 篇以后藏掉", () => {
+  const rows = Array.from({ length: 5 }, (_, index) =>
+    report({
+      id: `writer-work-${index + 1}`,
+      report_date: `2026-08-${String(index + 1).padStart(2, "0")}`,
+      title: `第${index + 1}篇`,
+      script_author_user_id: "writer-1",
+    }),
+  );
+
+  const result = buildStaff(rows, "writer", profiles, accounts);
+
+  assert.equal(result[0]?.recentWorks.length, 3);
+  assert.equal(result[0]?.works.length, 5);
+  assert.deepEqual(result[0]?.works.map((work) => work.title), ["第5篇", "第4篇", "第3篇", "第2篇", "第1篇"]);
 });
 
 test("岗位页服务端数据包含当前文案或剪辑标签，避免路由切换后误报空数据", () => {

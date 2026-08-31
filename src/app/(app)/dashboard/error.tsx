@@ -16,8 +16,8 @@ export default function DashboardError({ error, reset }: DashboardErrorProps) {
 
   return (
     <RouteErrorState
-      title="数据台加载失败"
-      description="暂时无法取得数据台内容，请检查网络后重试。"
+      title="工作台暂时未能展开"
+      description="卷宗同步稍有延迟，手稿已在本地妥帖保留，不妨稍作歇息后再试。"
       reset={reset}
     />
   );
