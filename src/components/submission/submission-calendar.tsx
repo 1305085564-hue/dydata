@@ -271,29 +271,29 @@ export function SubmissionCalendar({
                 "relative flex h-9 w-full flex-col items-center justify-center rounded-lg text-[13.5px] tabular-nums transition-all duration-150 outline-none select-none",
                 !isFuture && "cursor-pointer active:scale-[0.96]",
 
-                // 选中态：暴风灰蓝实底 (Storm Blue)
+                // 选中态：暴雨灰蓝实底 (Storm Blue)
                 isSelected &&
-                  "bg-[#3D687A] text-white font-medium shadow-xs z-10",
+                  "bg-[#43718E] text-white font-medium shadow-xs z-10",
 
                 // 已提交 (未选中态)
                 !isSelected &&
                   isSubmitted &&
-                  "bg-[#EAF3EC] text-[#2E7D32] font-medium hover:bg-[#DDF0E1]",
+                  "bg-[#6FAA7D]/12 text-[#3D7A4D] font-medium hover:bg-[#6FAA7D]/20",
 
                 // 豁免 (未选中态)
                 !isSelected &&
                   isWaive &&
-                  "bg-[#FAF4ED] text-[#B98A54] font-medium hover:bg-[#F5EDE0]",
+                  "bg-[#B98A54]/12 text-[#966C38] font-medium hover:bg-[#B98A54]/20",
 
                 // 请假 (未选中态)
                 !isSelected &&
                   isLeave &&
-                  "bg-[#F0F4F8] text-[#43718E] font-medium hover:bg-[#E4ECF2]",
+                  "bg-[#43718E]/10 text-[#43718E] font-medium hover:bg-[#43718E]/18",
 
                 // 审批中 (未选中态)
                 !isSelected &&
                   isPendingState &&
-                  "bg-[#FAF4ED] text-[#B98A54] font-medium border border-[#B98A54]/40",
+                  "bg-[#B98A54]/10 text-[#966C38] font-medium border border-[#B98A54]/40",
 
                 // 常规未提交工作日 (未选中态)
                 !isSelected &&
@@ -313,7 +313,7 @@ export function SubmissionCalendar({
                   className={cn(
                     "absolute bottom-1 size-1 rounded-full",
                     isSelected && "bg-white",
-                    !isSelected && isSubmitted && "bg-[#2E7D32]",
+                    !isSelected && isSubmitted && "bg-[#6FAA7D]",
                     !isSelected && isWaive && "bg-[#B98A54]",
                     !isSelected && isLeave && "bg-[#43718E]",
                     !isSelected && isPendingState && "bg-[#B98A54] animate-pulse",
@@ -330,7 +330,7 @@ export function SubmissionCalendar({
       {showLegend && (
         <div className="pt-3 mt-3 border-t border-[#ECE7DE]/80 flex items-center justify-between px-1 text-[11.5px] text-[#78716C]">
           <span className="inline-flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-[#2E7D32]" /> 已交
+            <span className="size-1.5 rounded-full bg-[#6FAA7D]" /> 已交
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-[#B98A54]" /> 豁免

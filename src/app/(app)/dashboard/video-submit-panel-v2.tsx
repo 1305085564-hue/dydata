@@ -543,7 +543,7 @@ export function VideoSubmitPanelV2({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D97757]" />
-                <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tight">
+                <h1 className="font-serif text-2xl font-semibold text-[#1C1917] tracking-tighter">
                   创作立卷 · 表达纪事
                 </h1>
               </div>

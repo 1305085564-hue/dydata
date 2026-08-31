@@ -322,10 +322,10 @@ export function NavBarClient({
     <>
       <nav
         className={cn(
-          "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-150 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
+          "fixed inset-x-0 top-[var(--network-bar-offset,0px)] z-50 transition-all duration-200 ease-in-out border-b pt-[max(env(safe-area-inset-top),0px)]",
           isScrolled
-            ? "border-[#E5E0D6]/80 bg-white/90 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)]"
-            : "border-[#E5E0D6]/40 bg-[#FBF9F5]/70 py-3 backdrop-blur-md",
+            ? "border-[#ECE7DE] bg-white/95 py-2.5 backdrop-blur-2xl shadow-[0_4px_20px_-4px_rgba(28,25,23,0.03)]"
+            : "border-[#ECE7DE]/80 bg-[#FBF9F5]/85 py-3 backdrop-blur-md",
         )}
       >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">

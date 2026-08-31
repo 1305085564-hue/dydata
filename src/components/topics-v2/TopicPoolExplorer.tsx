@@ -169,16 +169,16 @@ export function TopicPoolExplorer({
       aria-label="干货选题大盘"
     >
       {/* 顶栏控制中枢 */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-2.5 sm:p-3 rounded-2xl border border-[#E5E0D6] shadow-2xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-gradient-to-br from-[#FAF8F4] via-white to-[#F5F3EE]/40 p-2.5 sm:p-3.5 rounded-2xl border border-[#ECE7DE] shadow-sm">
         {/* 左侧：Tab 视角切换 */}
-        <div className="inline-flex items-center gap-1 bg-[#F5F3EE]/70 p-1 rounded-xl select-none shrink-0">
+        <div className="inline-flex items-center gap-1 bg-[#F5F3EE] p-1 rounded-xl select-none shrink-0 border border-[#E5E0D6]/60">
           <button
             type="button"
             onClick={() => onViewChange("all")}
-            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.985] ${
               currentView === "all"
-                ? "bg-white text-[#1C1917] font-medium shadow-2xs"
-                : "text-[#292524] hover:text-[#1C1917] hover:bg-[#E5E0D6]/50"
+                ? "bg-white text-[#1C1917] font-semibold shadow-2xs"
+                : "text-[#78716C] hover:text-[#1C1917] hover:bg-white/60"
             }`}
           >
             <span>全部选题</span>
