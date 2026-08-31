@@ -226,7 +226,6 @@ export function useCountUp(target: number, duration = ANIMATION_TIMINGS.number, 
     previousTargetRef.current = to;
 
     if (!startOnMount && !hasStartedRef.current) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(to);
       hasStartedRef.current = true;
       return;
@@ -277,16 +276,13 @@ export function useTypewriter(text: string, speed = 25) {
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 减少动态偏好时直接显示完整文本（动画外部系统同步）
       setDisplayText(text);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsComplete(true);
       return;
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayText("");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsComplete(text.length === 0);
 
     if (text.length === 0) {

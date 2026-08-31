@@ -51,6 +51,7 @@ export function VideoPageClient({
 
   useEffect(() => {
     if (initialView === "trash" && !canAccessTrash) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 无回收站权限时回退到待办视图（权限降级兜底）
       setView("pending");
       window.history.replaceState({}, "", buildVideoPageUrl("pending", initialPerspective, initialTeamId));
     }

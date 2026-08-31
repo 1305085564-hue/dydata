@@ -75,7 +75,7 @@ export async function kickUser(
   ]);
 
   if ("error" in profilesResult) return { success: false, error: profilesResult.error };
-  const { actor, target: profile } = profilesResult;
+  const { target: profile } = profilesResult;
   if (!profile) return { success: false, error: "用户不存在" };
   if (context.actorPermissions.manage_members !== true) return { success: false, error: "无权限归档账号" };
   if (context.actorId === userId) return { success: false, error: "不能归档自己" };

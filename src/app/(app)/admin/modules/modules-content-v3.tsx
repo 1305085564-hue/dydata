@@ -328,25 +328,30 @@ export function AdminModulesContentV3({
 
   // Sync props → state
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步可编辑成员副本（支持就地编辑/邮箱回填）
     setLocalProfiles(allProfiles);
     setLocalArchivedProfiles(initialArchivedProfiles);
   }, [allProfiles, initialArchivedProfiles]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 可见团队选项变化时同步本地团队列表
     setLocalTeams(visibleTeamOptions);
   }, [visibleTeamOptions]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 待审批申请变化时同步本地队列
     setPendingRequests(initialPendingRequests);
   }, [initialPendingRequests]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 孤立豁免申请变化时同步本地队列与计数
     setOrphanExemptionRequests(initialOrphanExemptionRequests);
     setOrphanExemptionCount(initialOrphanExemptionCount);
   }, [initialOrphanExemptionRequests, initialOrphanExemptionCount]);
 
   useEffect(() => {
     if (selectedTeamId !== ALL_TEAMS_ID && !localTeams.some((t) => t.id === selectedTeamId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 选中团队被删除时回退到「全部团队」
       setSelectedTeamId(ALL_TEAMS_ID);
     }
   }, [localTeams, selectedTeamId]);
@@ -401,6 +406,7 @@ export function AdminModulesContentV3({
   }, [filteredProfiles, currentUserId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 可选成员变化时裁剪失效勾选（保留原引用避免无意义重渲染）
     setSelectedMemberIds((prev) => {
       const next = retainSelectableMemberIds(prev, selectableFilteredMemberIds);
       return next.length === prev.length ? prev : next;
@@ -438,6 +444,7 @@ export function AdminModulesContentV3({
     const member = findFocusMember(localProfiles, focusMemberId);
     if (!member) return;
     appliedFocusMemberId.current = focusMemberId;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL 指定成员时定位并打开抽屉（一次性跳转语义）
     setSelectedTeamId(ALL_TEAMS_ID);
     setSearchQuery("");
     openMemberDrawer(member);

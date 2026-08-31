@@ -13,7 +13,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronDown } from "lucide-react";
 import { getNavGroups } from "@/components/nav-bar-items";
-import type { NavGroup, NavSubItem } from "@/components/nav-bar-items";
+import type { NavSubItem } from "@/components/nav-bar-items";
 import { UserWorkspacePopover } from "@/components/user-workspace-popover";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { MobileMoreDrawer } from "@/components/mobile-more-drawer";

@@ -280,6 +280,7 @@ export function useAiConfig() {
 
   useEffect(() => {
     if (!cachedBundle) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 首次无缓存时加载配置（请求生命周期状态）
       void loadData();
     }
   }, [loadData]);

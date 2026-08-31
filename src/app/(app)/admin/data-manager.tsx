@@ -118,6 +118,7 @@ export function DataManager({
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地可编辑副本（支持行内增删改）
     setLocalReports(reports);
   }, [reports]);
 

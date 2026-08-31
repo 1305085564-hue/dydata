@@ -5,10 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { callAiJson } from "@/lib/ai/client";
 import {
-  countIssueSeverities,
   parseSampleQualityResult,
   type SampleQualityIssue,
-  type SampleQualityResult,
 } from "@/lib/sample-quality";
 
 type DailyReportRow = {

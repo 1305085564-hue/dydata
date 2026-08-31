@@ -6,7 +6,6 @@ import { canAccessAdminPath } from "@/lib/analytics-access";
 import { getCurrentPermissionContext } from "@/lib/current-permission-context";
 import { getActiveVisibleUserIds } from "@/lib/data-access-scope";
 import { loadFulfillmentCalendar } from "@/lib/loaders/fulfillment-page";
-import { AdminWorkspaceLayout } from "@/components/admin-workspace-layout";
 import { TableSkeleton } from "@/components/ui/table-skeleton";
 import type { TimeRangePreset } from "@/types/fulfillment";
 

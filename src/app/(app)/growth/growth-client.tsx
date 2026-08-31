@@ -22,7 +22,6 @@ import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/lib/utils";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { CompassConstellationIllustration, ColophonMark } from "@/components/editorial/editorial-illustrations";
-import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 import {
   GROWTH_DIMENSION_RULES,
   GROWTH_RATE_UNLOCK_SAMPLE_COUNT,
@@ -154,6 +153,7 @@ export function GrowthClient({ contract }: GrowthClientProps) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 首屏加载成长趋势与排行榜（请求生命周期状态）
     void loadTrend();
     void loadLeaderboard();
   }, [loadLeaderboard, loadTrend]);

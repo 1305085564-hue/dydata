@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { getDefaultPublishedAtForBizDate, normalizePublishedAtInputValue } from "@/lib/日报";
 import { formatShanghaiDateOnly } from "@/lib/loaders/shared";
 import { fetchVideoSubmissionEditDetail } from "./video-submit-panel-v2";
+import type { VideoSubmissionEditDetail } from "./video-submit-form-state";
 
 export interface HistoryReportEditData {
   id: string;
@@ -136,7 +137,7 @@ export async function fetchCachedOperatorMembers(): Promise<TeamMember[]> {
   return teamMembersPromise;
 }
 
-const editDetailCache = new Map<string, any>();
+const editDetailCache = new Map<string, VideoSubmissionEditDetail>();
 
 export function PublishedAtPicker({
   value,
@@ -175,6 +176,7 @@ export function PublishedAtPicker({
     if (isOpen && parsed.date) {
       const d = new Date(parsed.date);
       if (!isNaN(d.getTime())) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 打开选择器时同步日历视图到当前日期（受控弹窗重置惯例）
         setViewYear(d.getFullYear());
         setViewMonth(d.getMonth());
       }
@@ -372,12 +374,10 @@ export function PublishedAtPicker({
 export function HistoryReportEditForm({
   report,
   accountDisplayName,
-  onClose,
   onSaved,
 }: {
   report: HistoryReportEditData;
   accountDisplayName?: string;
-  onClose?: () => void;
   onSaved?: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -413,6 +413,7 @@ export function HistoryReportEditForm({
       const cacheKey = `${report.account_id}:${report.report_date}`;
       if (editDetailCache.has(cacheKey)) {
         const detail = editDetailCache.get(cacheKey);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 编辑详情内存缓存命中时同步回填共创人（缓存回填惯例）
         if (detail?.meta?.scriptAuthorUserId) setScriptAuthorId(detail.meta.scriptAuthorUserId);
         if (detail?.meta?.videoEditorUserId) setVideoEditorId(detail.meta.videoEditorUserId);
         if (detail?.meta?.operatorUserId) setOperatorId(detail.meta.operatorUserId);

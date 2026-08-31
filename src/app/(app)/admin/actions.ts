@@ -216,15 +216,6 @@ async function getProfileTeamId(
   return getTeamMeta(data.user?.user_metadata).teamId;
 }
 
-function isMissingProfileTeamColumnError(error: { message?: string } | null | undefined) {
-  return Boolean(
-    error?.message &&
-      (error.message.includes("profiles.team_id") ||
-        error.message.includes("column profiles.team_id does not exist") ||
-        error.message.includes("Could not find the 'team_id' column of 'profiles'")),
-  );
-}
-
 async function applyGrantToProfile(
   supabase: Awaited<ReturnType<typeof createClient>>,
   input: {

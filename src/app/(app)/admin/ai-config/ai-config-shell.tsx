@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles, Route, Server } from "lucide-react";
 
-import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
-
 export type AIConfigTabKey = "models" | "bindings" | "providers" | "rewrite";
 
 const TAB_ITEMS: Array<{ key: "bindings" | "models" | "providers"; label: string; icon: typeof Sparkles }> = [

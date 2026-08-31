@@ -336,6 +336,7 @@ export function ContentDiagnosisWorkbench({
 
   useEffect(() => {
     if (!video?.id) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 切换视频时重置分析结果（受控对象切换重置）
     setAnalysisResult(null);
     setHighlightedSegmentIndex(null);
     setQuotedIndices(new Set());
@@ -347,6 +348,7 @@ export function ContentDiagnosisWorkbench({
     const controller = new AbortController();
     const activeArr = Array.from(selectedRefs);
     if (activeArr.includes("user") && !selectedRefUserId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 缺少用户归因引用时清空归因状态（数据依赖分支重置）
       setMultiAttribution(null);
       setAttributionError(null);
       setAttributionLoading(false);
@@ -397,7 +399,7 @@ export function ContentDiagnosisWorkbench({
       .split(/[\n]+/)
       .map((seg) => seg.trim())
       .filter(Boolean);
-  }, [video?.content]);
+  }, [video]);
 
   const scriptSections = useMemo(() => {
     if (scriptSegments.length === 0) return [];

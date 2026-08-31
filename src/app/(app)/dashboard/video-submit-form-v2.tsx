@@ -18,7 +18,6 @@ import {
   CheckCircle,
   ClipboardPaste,
   ChevronDown,
-  Plus,
   Search,
   Check,
   X,
@@ -678,11 +677,16 @@ export function VideoSubmitFormV2({
   const selfLabel = userDisplayName?.trim() || "我";
 
   // 保留所有原有状态管理
-  const [meta, setMeta] = useState<FormMetaState>(() =>
-    editDetail
-      ? createMetaFromEditDetail(editDetail, today, userId)
-      : createInitialMeta(today, userId, initialBizDate ?? today),
-  );
+  const [meta, setMeta] = useState<FormMetaState>(() => {
+    const initial =
+      editDetail
+        ? createMetaFromEditDetail(editDetail, today, userId)
+        : createInitialMeta(today, userId, initialBizDate ?? today);
+    // 上传时间戳默认取挂载时刻，与提交时的"已上传"语义一致
+    return initial.uploadedAt
+      ? initial
+      : { ...initial, uploadedAt: new Date().toLocaleString("zh-CN") };
+  });
   const [fields, setFields] = useState<SubmissionState["fields"]>(() =>
     editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields(),
   );
@@ -747,11 +751,6 @@ export function VideoSubmitFormV2({
   } | null>(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
 
-  const [activeRoleDropdown, setActiveRoleDropdown] = useState<
-    "script_author" | "video_editor" | "operator" | null
-  >(null);
-  const [roleSearchQuery, setRoleSearchQuery] = useState("");
-
   const [hiddenRoles, setHiddenRoles] = useState<Set<SubmissionAssigneeRole>>(
     new Set(),
   );
@@ -802,16 +801,6 @@ export function VideoSubmitFormV2({
       }),
     [historicalAssigneeProfiles, operatorMembers, userId, selfLabel],
   );
-
-  const filteredMembersForRole = useMemo(() => {
-    if (!roleSearchQuery.trim()) return operatorMembers;
-    const q = roleSearchQuery.trim().toLowerCase();
-    return operatorMembers.filter(
-      (m) =>
-        m.name?.toLowerCase().includes(q) ||
-        m.display_name?.toLowerCase().includes(q),
-    );
-  }, [operatorMembers, roleSearchQuery]);
 
   useEffect(() => {
     slotsRef.current = slots;
@@ -926,6 +915,7 @@ export function VideoSubmitFormV2({
   // 初始化 operator
   useEffect(() => {
     if (mode === "editToday") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 新建/补交默认责任人设为本人，mode 切换时重置
     setOperatorToSelf();
   }, [mode, setOperatorToSelf]);
 
@@ -960,19 +950,11 @@ export function VideoSubmitFormV2({
 
   useEffect(() => {
     if (!isSubmitted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 提交完成后复位交互标记，等待下一次提交
       setHasUserInteracted(false);
       shouldAutoRedirectAfterSubmitRef.current = false;
     }
   }, [isSubmitted]);
-
-  // 设置上传时间
-  useEffect(() => {
-    setMeta((prev) =>
-      prev.uploadedAt
-        ? prev
-        : { ...prev, uploadedAt: new Date().toLocaleString("zh-CN") },
-    );
-  }, []);
 
   // 草稿管理：新建 / 补交 / 编辑使用互相隔离的草稿 key
   const draftMode: VideoSubmitDraftMode =
@@ -1133,6 +1115,7 @@ export function VideoSubmitFormV2({
       nextMeta.uploadedAt = initialSummary.uploadedAt ?? nextMeta.uploadedAt;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 账号/编辑对象切换时整体重置表单（含草稿清理语义）
     setMeta(nextMeta);
     setFields(editDetail ? createEditableFieldsFromEditDetail(editDetail) : createEditableFields());
     updateSlotsState(editDetail ? createEditableSlotsFromEditDetail(editDetail) : createEditableSlots());
@@ -1455,17 +1438,6 @@ export function VideoSubmitFormV2({
         } else if (detectedType === "retention") {
           targetRole = "screenshot_2";
         }
-
-        const targetSlotSnapshot = slotsRef.current[targetRole];
-        const targetSlotCanReceive =
-          targetSlotSnapshot.status === "empty" ||
-          targetSlotSnapshot.status === "failed";
-        const targetSlotCanSwap =
-          !targetSlotCanReceive &&
-          (targetSlotSnapshot.status === "pending_confirm" ||
-            Boolean(targetSlotSnapshot.ocrFallback));
-        const shouldAutoMoveSlot =
-          role !== targetRole && (targetSlotCanReceive || targetSlotCanSwap);
 
         updateSlotsState((current) => {
           const newSlotData = {

@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, ArrowLeft, X, Check, Info } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { CalendarDays, Compass, FilePenLine, History, PencilLine, ShieldAlert, X, Check } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ZenFinishedIllustration } from "@/components/editorial/editorial-illustrations";
@@ -23,9 +23,6 @@ import {
   type ExemptionGrantLike,
   type ExemptionProfileLike,
 } from "@/lib/豁免";
-import {
-  getDashboardStatusClass,
-} from "./dashboard-visuals";
 import { HistoryList } from "./history-list";
 import { HistoryReportEditForm, type HistoryReportEditData } from "./history-report-edit-form";
 import { VideoSubmitFormV2 } from "./video-submit-form-v2";
@@ -179,22 +176,6 @@ function ExemptionReviewNoticeCard({
   );
 }
 
-const formatDateTime = (isoString: string | null | undefined) => {
-  if (!isoString) return "—";
-  try {
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return isoString;
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
-    return `${y}-${m}-${d} ${hh}:${mm}`;
-  } catch {
-    return isoString;
-  }
-};
-
 interface VideoSubmitPanelV2Props {
   accounts: { id: string; name: string; display_name: string; content_direction: string | null }[];
   userId: string;
@@ -302,6 +283,7 @@ export function VideoSubmitPanelV2({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地待审批标记（提交豁免后本地乐观置真）
     setLocalHasPendingExemption(hasPendingExemption);
   }, [hasPendingExemption]);
   const setActiveBizDate = useCallback(
@@ -525,21 +507,6 @@ export function VideoSubmitPanelV2({
       }
     },
     [activityData, activityError, loadActivity, setActiveBizDate, today],
-  );
-
-  const handleHistoryReportOpen = useCallback(
-    (report: MonthReport) => {
-      setIsHistoryOpen(false);
-      if (report.account_id) {
-        setSelectedAccountId(report.account_id);
-      }
-      if (report.report_date) {
-        setActiveBizDate(report.report_date);
-      }
-      setRequestedMode("editToday");
-      setSubmittedViewActive(false);
-    },
-    [setActiveBizDate, setSelectedAccountId],
   );
 
   const dismissPendingExemption = useCallback(() => {
@@ -1019,7 +986,6 @@ export function VideoSubmitPanelV2({
                     key={`history-edit-${viewingReport.id}-${viewingReport.uploaded_at ?? viewingReport.report_date}`}
                     report={viewingReport as HistoryReportEditData}
                     accountDisplayName={accountDisplayNameMap[viewingReport.account_id] ?? viewingReport.account_id}
-                    onClose={() => setViewingReport(null)}
                     onSaved={() => {
                       setViewingReport(null);
                       void loadActivity();

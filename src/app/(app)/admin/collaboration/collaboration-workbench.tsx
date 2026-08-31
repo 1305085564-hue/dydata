@@ -106,6 +106,7 @@ export function CollaborationWorkbench({
   const currentMonthValue = `${year}-${month}`;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 默认 Tab 来自服务端默认参数，随路由变化同步
     setTab(defaultTab);
   }, [defaultTab]);
 

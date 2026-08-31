@@ -147,20 +147,6 @@ function toDocumentParagraph(row: DocumentParagraphRow): DocumentParagraph {
   };
 }
 
-function toVariant(row: VariantRow): Variant {
-  return {
-    id: row.id,
-    documentId: row.document_id,
-    generationRunId: row.generation_run_id,
-    targetParagraphIds: row.target_paragraph_ids,
-    content: row.content,
-    label: row.label,
-    isAdopted: row.is_adopted,
-    adoptedRevisionId: row.adopted_revision_id,
-    createdAt: row.created_at,
-  };
-}
-
 export async function getOrCreateDocument(
   service: MinimalClient,
   conversationId: string,

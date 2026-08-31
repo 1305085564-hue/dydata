@@ -81,7 +81,6 @@ export function ContentPageClient({
     if (signature === topicStatusKeyRef.current) return;
     if (!ids.length) {
       topicStatusKeyRef.current = signature;
-      setTopicLibraryStatuses({});
       return;
     }
     // 新请求发起时取消仍在途的旧请求，避免过期结果覆盖新列表状态
@@ -104,6 +103,7 @@ export function ContentPageClient({
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 列表变化时按需拉取选题库状态（请求生命周期状态）
     void loadTopicLibraryStatuses(data.videos);
   }, [data.videos, loadTopicLibraryStatuses]);
 
@@ -228,7 +228,7 @@ export function ContentPageClient({
       }
     }
     return { deletedCount: deleted, limitedCount: limited, halvedCount: halved };
-  }, [data?.videos]);
+  }, [data.videos]);
 
 
   // Direct Review handler

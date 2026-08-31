@@ -47,6 +47,7 @@ export function SyncModelsDialog({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时重置勾选与搜索（受控弹窗重置惯例）
       setSelectedModelIds(new Set(initialSelectedModelIds));
       setSearchQuery("");
       isMouseDownRef.current = false;

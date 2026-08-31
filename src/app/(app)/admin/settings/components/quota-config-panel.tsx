@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { 
   Settings, 
-  Calendar, 
-  Sparkles, 
   Plus, 
   Loader2, 
   AlertCircle,
@@ -105,7 +103,7 @@ export function QuotaConfigPanel({
           description: result.error || "服务接口出错",
         });
       }
-    } catch (err) {
+    } catch {
       toast.error("配置添加失败", {
         description: "网络连接失败，请重试",
       });

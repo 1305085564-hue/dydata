@@ -20,7 +20,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { trackUsageEvent } from "@/lib/usage-events/client";
-import { EditorialEpigraph } from "@/components/editorial/editorial-quote";
 import {
   dispatchFulfillmentDataChanged,
   FULFILLMENT_DATA_CHANGED_EVENT,
@@ -263,6 +262,7 @@ export function FulfillmentWorkbench({
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 首屏加载履约设置与申诉列表（请求生命周期状态）
     void loadSettings();
     void fetchAppeals();
   }, [fetchAppeals, loadSettings]);

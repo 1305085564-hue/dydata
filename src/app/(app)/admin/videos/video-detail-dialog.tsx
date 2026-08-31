@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   ExternalLink,
   Copy,
@@ -14,8 +14,6 @@ import {
   FileText,
   Activity,
   Layers,
-  ChevronDown,
-  ChevronUp,
   UserCheck,
   TrendingUp,
   Sparkles,
@@ -184,6 +182,8 @@ export function VideoDetailDialog({
   onLifecycleChanged,
 }: VideoDetailDialogProps) {
   const [isAssetSaving, setIsAssetSaving] = useState(false);
+  // 捕获挂载时刻用于回收站 30 天保护期判断，避免 render 中调用 Date.now()（React Compiler purity）
+  const [now] = useState(() => Date.now());
   const [assetLevel, setAssetLevel] = useState<VideoAssetLevel | null>(
     assetRecord?.asset_level ?? null,
   );
@@ -191,12 +191,12 @@ export function VideoDetailDialog({
   const [isOperating, setIsOperating] = useState(false);
   const [showConfirmPurge, setShowConfirmPurge] = useState(false);
   const [copiedContent, setCopiedContent] = useState(false);
-  const [showFullMetrics, setShowFullMetrics] = useState(false);
 
   const canOperate = permissionInfo.permissions.manage_videos === true;
   const canPurge = permissionInfo.companyRole === "company_owner" || permissionInfo.groupMode === true;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 素材记录变化时同步可编辑表单（支持就地保存）
     setAssetLevel(assetRecord?.asset_level ?? null);
     setAssetNote(assetRecord?.asset_note ?? "");
   }, [assetRecord?.asset_level, assetRecord?.asset_note]);
@@ -211,7 +211,7 @@ export function VideoDetailDialog({
     } catch {
       feedbackToast.error("复制失败，请重试");
     }
-  }, [video?.content]);
+  }, [video]);
 
   const handleLifecycleAction = async (
     action: "trash" | "restore" | "purge",
@@ -239,7 +239,7 @@ export function VideoDetailDialog({
 
   const isPurgeEligible = (trashedAt: string | null | undefined) => {
     if (!trashedAt) return false;
-    const diff = Date.now() - new Date(trashedAt).getTime();
+    const diff = now - new Date(trashedAt).getTime();
     return diff >= 30 * 24 * 60 * 60 * 1000;
   };
 
@@ -248,7 +248,7 @@ export function VideoDetailDialog({
     const targetDate = new Date(
       new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000,
     );
-    const diff = targetDate.getTime() - Date.now();
+    const diff = targetDate.getTime() - now;
     if (diff <= 0) return "";
     const daysLeft = Math.ceil(diff / (24 * 60 * 60 * 1000));
     return `未满 30 天（剩余约 ${daysLeft} 天，可于 ${targetDate.toLocaleString("zh-CN")} 后删除）`;

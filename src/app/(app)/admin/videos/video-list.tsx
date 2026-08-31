@@ -241,6 +241,8 @@ export function VideoList({
   onRefresh,
 }: VideoListProps) {
   const [filters, setFilters] = useState<VideoFilterValue>(INITIAL_FILTERS);
+  // 捕获挂载时刻用于回收站 30 天保护期判断，避免 render 中调用 Date.now()（React Compiler purity）
+  const [now] = useState(() => Date.now());
   const [sortField, setSortField] = useState<SortField>("published_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -311,7 +313,7 @@ export function VideoList({
 
   const isPurgeEligible = (trashedAt: string | null | undefined) => {
     if (!trashedAt) return false;
-    const diff = Date.now() - new Date(trashedAt).getTime();
+    const diff = now - new Date(trashedAt).getTime();
     return diff >= 30 * 24 * 60 * 60 * 1000;
   };
 
@@ -320,25 +322,29 @@ export function VideoList({
     const targetDate = new Date(
       new Date(trashedAt).getTime() + 30 * 24 * 60 * 60 * 1000,
     );
-    const diff = targetDate.getTime() - Date.now();
+    const diff = targetDate.getTime() - now;
     if (diff <= 0) return "";
     const daysLeft = Math.ceil(diff / (24 * 60 * 60 * 1000));
     return `未满 30 天（剩余约 ${daysLeft} 天，可于 ${targetDate.toLocaleString("zh-CN")} 后删除）`;
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地可编辑视频行（支持行内补录/删除）
     setVideoRows(videos);
   }, [videos]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地快照行（支持行内补录）
     setSnapshotRows(snapshots);
   }, [snapshots]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地标签行（支持行内补录）
     setTagRows(videoTags);
   }, [videoTags]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地素材库状态（支持行内补录）
     setAssetLibraryState(assetLibrary);
   }, [assetLibrary]);
 
@@ -498,7 +504,7 @@ export function VideoList({
 
       return sortDir === "desc" ? valB - valA : valA - valB;
     });
-  }, [filters, snapshotMap, sortDir, sortField, videoRows, view]);
+  }, [filters, snapshotMap, sortDir, sortField, tagMap, videoRows, view]);
 
   const pagedVideos = useMemo(() => {
     const start = (currentPage - 1) * pageSize;

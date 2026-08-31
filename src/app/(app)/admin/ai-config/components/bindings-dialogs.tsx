@@ -32,6 +32,7 @@ export function BindingDialog({
   const modelOptions = useMemo(() => (bundle ? buildModelDirectory(bundle) : []), [bundle]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步功能开关表单初始值（受控弹窗重置惯例）
     setModelId(control?.modelId ?? null);
     setOcrChannel(control?.key === "ocr_screenshot" ? (control?.ocrChannel ?? "baidu") : "baidu");
     setIsEnabled(control?.isEnabled ?? true);

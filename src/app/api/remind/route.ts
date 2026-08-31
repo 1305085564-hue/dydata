@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
     profilesResult,
     { data: accounts, error: accountsError },
     { data: reports, error: reportsError },
-    { data: exemptionRequests, error: exemptionRequestsError },
+    { data: exemptionRequests },
   ] = await Promise.all([
     loadWithMembershipFallback({
       loadWithMembership: async () =>

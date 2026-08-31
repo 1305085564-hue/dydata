@@ -78,6 +78,7 @@ export function ProviderDialog({
   const [urlError, setUrlError] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步渠道表单初始值（受控弹窗重置惯例）
     setFormData(provider ? { ...defaultProviderForm, ...provider } : defaultProviderForm);
     setNameError("");
     setUrlError("");
@@ -195,6 +196,7 @@ export function KeyDialog({
   const [keyError, setKeyError] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步密钥表单初始值（受控弹窗重置惯例）
     setFormData(apiKey ? { ...defaultKeyForm, ...apiKey } : defaultKeyForm);
     setSelectedProviderId(providerId || apiKey?.provider_id || bundle?.providers[0]?.id || "");
     setApiKeyValue("");
@@ -350,6 +352,7 @@ export function ModelDialog({
   }, [bundle]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步模型表单初始值（受控弹窗重置惯例）
     setFormData(
       model
         ? { ...defaultModelForm, ...model }

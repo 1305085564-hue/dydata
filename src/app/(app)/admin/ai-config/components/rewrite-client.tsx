@@ -35,6 +35,7 @@ function RewriteViewDialog({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步视图表单初始值（受控弹窗重置惯例）
     setFormData(open ? (view ? { ...defaultViewDraft, ...view } : defaultViewDraft) : defaultViewDraft);
   }, [open, view]);
 
@@ -109,6 +110,7 @@ function RewriteRouteDialog({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗打开时同步路由表单初始值（受控弹窗重置惯例）
     setFormData(
       open
         ? route

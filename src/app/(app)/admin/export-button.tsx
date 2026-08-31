@@ -7,8 +7,13 @@ import { Label } from "@/components/ui/label";
 import { feedbackToast } from "@/components/ui/feedback-toast";
 
 export function ExportButton() {
-  const today = new Date().toISOString().split("T")[0];
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  // 默认日期范围取挂载时刻，避免 render 中调用 Date.now()/new Date()（React Compiler purity）
+  const [initialDates] = useState(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+    return { today, weekAgo };
+  });
+  const { today, weekAgo } = initialDates;
   const [from, setFrom] = useState(weekAgo);
   const [to, setTo] = useState(today);
   const [dateError, setDateError] = useState("");

@@ -120,6 +120,7 @@ function ExemptionRequestList({ requests, onHandled, onRestore }: Props) {
   const [localRequests, setLocalRequests] = useState(requests);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- props 更新时同步本地待审批列表（处理/恢复后本地即时更新）
     setLocalRequests(requests);
   }, [requests]);
 

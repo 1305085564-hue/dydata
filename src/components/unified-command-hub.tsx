@@ -98,6 +98,8 @@ export function UnifiedCommandHub({
   const { notifications, loading, markRead, markAllRead, markDone } =
     useNotifications();
   const drawerRef = useRef<HTMLDivElement>(null);
+  // 捕获挂载时刻用于相对时间显示，避免 render 中调用 Date.now()（React Compiler purity）
+  const [now] = useState(() => Date.now());
 
   // Approvals State
   const [approvalsLoading, setApprovalsLoading] = useState(false);
@@ -141,6 +143,7 @@ export function UnifiedCommandHub({
 
   useEffect(() => {
     if (!isAdmin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 权限变化时清空审批队列与勾选
       setPendingApprovals([]);
       setSelectedApprovalIds(new Set());
       onPendingCountChange?.(0);
@@ -349,7 +352,7 @@ export function UnifiedCommandHub({
   const relativeTime = (iso: string) => {
     const ts = new Date(iso).getTime();
     if (Number.isNaN(ts)) return "";
-    const diff = Date.now() - ts;
+    const diff = now - ts;
     const hr = Math.floor(diff / 3_600_000);
     if (hr < 24) return `${hr} 小时前`;
     const day = Math.floor(hr / 24);

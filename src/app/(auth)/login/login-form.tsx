@@ -77,9 +77,7 @@ export function LoginForm({
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const isFirstRender = useRef(true);
 
-  useEffect(() => {
-    if (state.email) setEmail(state.email);
-  }, [state.email]);
+  const emailValue = state.email || email;
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -87,6 +85,7 @@ export function LoginForm({
       return;
     }
     if (state.error) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 登录失败后清空密码并聚焦，属错误响应的一次性重置
       setPassword("");
       passwordInputRef.current?.focus();
       feedbackToast.error(getLoginErrorMessage(state.error));
@@ -141,7 +140,7 @@ export function LoginForm({
             placeholder="you@dydata.cc"
             required
             type="email"
-            value={email}
+            value={emailValue}
             className="h-9 text-[13px]"
           />
         </div>

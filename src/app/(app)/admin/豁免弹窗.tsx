@@ -86,11 +86,13 @@ export function ExemptionDialog({
     useState<ExemptionFormValues>(initialValues);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 选中成员变化时重置表单初始值（受控弹窗重置惯例）
     setFormValues(initialValues);
   }, [initialValues]);
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 弹窗关闭时重置确认状态
       setShowClearConfirm(false);
       setShowPermanentConfirm(false);
     }
