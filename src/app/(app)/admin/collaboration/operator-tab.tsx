@@ -94,8 +94,8 @@ export function OperatorTab({
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title="本月还没有运营归属记录"
-          description="2026-07-27 起开始统计团队运营分工"
+          title="本月还没有给别人账号做运营的记录"
+          description="达人自己运营自己账号的记录在达人 tab 查看；2026-07-27 起开始统计岗位分工"
         />
       </div>
     );
@@ -118,7 +118,7 @@ export function OperatorTab({
                     <HelpCircle className="size-3 text-[#78716C]" />
                   </TooltipTrigger>
                   <TooltipContent className="text-[12px]">
-                    按本月运营归属作品统计
+                    按本月给别人的账号做运营的作品统计
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -189,10 +189,6 @@ export function OperatorTab({
         </TableHeader>
         <TableBody className="text-[13px]">
           {sortedOperators.map((op) => {
-            const isSelfAccountOnly =
-              op.accounts.length === 1 &&
-              (op.accounts[0].ownerName === op.name ||
-                op.accounts[0].accountId === op.userId);
             const canExpand = op.accounts.length > 0;
             const isExpanded = canExpand && expandedUserIds.has(op.userId);
             const mom = op.momChange;
@@ -238,11 +234,6 @@ export function OperatorTab({
                         >
                           {op.name}
                         </button>
-                        {isSelfAccountOnly && (
-                          <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5 text-[11px] font-normal text-[#78716C] border border-[#E5E0D6]">
-                            本人账号
-                          </span>
-                        )}
                       </div>
                       <div className="text-right tabular-nums text-[#292524]">
                         {op.accountCount}

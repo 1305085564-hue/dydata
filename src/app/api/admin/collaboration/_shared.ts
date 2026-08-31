@@ -104,6 +104,11 @@ function roleUserId(row: CollaborationReport, role: "writer" | "editor") {
   return role === "writer" ? row.script_author_user_id : row.video_editor_user_id;
 }
 
+function isOtherAccount(account: CollaborationAccount | undefined, userId: string) {
+  // 账号未绑定主人时无法证明是自己的，按别人的账号计入，避免漏掉真服务岗
+  return !account?.profile_id || account.profile_id !== userId;
+}
+
 function roleList(row: CollaborationReport, targetUserId: string): CollaborationRole[] {
   const roles: CollaborationRole[] = [];
   if (row.script_author_user_id === targetUserId) roles.push("writer");
@@ -199,12 +204,15 @@ export function buildOperators(
 
   for (const row of current) {
     const userId = row.operator_user_id!;
+    // 服务岗口径：只统计给别人的账号做运营的日报，达人自运营不进运营列表（达人 tab 已覆盖）
+    if (!isOtherAccount(accountsById.get(row.account_id), userId)) continue;
     const bucket = currentByOperator.get(userId) ?? [];
     bucket.push(row);
     currentByOperator.set(userId, bucket);
   }
   for (const row of previous) {
     const userId = row.operator_user_id!;
+    if (!isOtherAccount(accountsById.get(row.account_id), userId)) continue;
     const bucket = previousByOperator.get(userId) ?? [];
     bucket.push(row);
     previousByOperator.set(userId, bucket);
@@ -267,6 +275,8 @@ export function buildStaff(
 
   for (const row of scopedRows) {
     const userId = roleUserId(row, role)!;
+    // 服务岗口径：只统计给别人的账号干的活，达人自写/自剪自己账号不进列表（达人 tab 已覆盖）
+    if (!isOtherAccount(accountsById.get(row.account_id), userId)) continue;
     const bucket = byStaff.get(userId) ?? [];
     bucket.push(row);
     byStaff.set(userId, bucket);

@@ -78,8 +78,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
     return (
       <div className="py-16 text-center">
         <EmptyState
-          title={`本月还没有${roleLabel}归属记录`}
-          description="2026-07-27 起开始统计岗位归属与作品产量"
+          title={`本月还没有给别人账号做${roleLabel}的记录`}
+          description="达人自己干自己账号的记录在达人 tab 查看；2026-07-27 起开始统计岗位归属与作品产量"
         />
       </div>
     );

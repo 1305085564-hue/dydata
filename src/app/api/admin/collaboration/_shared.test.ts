@@ -127,6 +127,57 @@ test("operators 播放不足3万或历史样本不足3条时不计爆款", () =>
   assert.equal(insufficientSamples[0]?.hitCount, 0);
 });
 
+test("operators 过滤纯自运营：达人只运营自己账号时不进入运营列表", () => {
+  const ownAccount: CollaborationAccount = { id: "account-op", name: "运营自己号", profile_id: "operator-1" };
+  const rows = [
+    report({ id: "self-1", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
+    report({ id: "self-2", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
+  ];
+
+  assert.deepEqual(buildOperators(rows, [], profiles, [ownAccount]), []);
+});
+
+test("operators 混合归属时只统计给别人的账号做运营的日报", () => {
+  const ownAccount: CollaborationAccount = { id: "account-op", name: "运营自己号", profile_id: "operator-1" };
+  const rows = [
+    report({ id: "self-1", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
+    report({ id: "self-2", account_id: "account-op", play_count: 500000, operator_user_id: "operator-1" }),
+    report({ id: "other-1", play_count: 100, operator_user_id: "operator-1" }),
+  ];
+
+  const result = buildOperators(rows, [], profiles, [...accounts, ownAccount]);
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.reportCount, 1);
+  assert.equal(result[0]?.totalPlay, 100);
+  assert.equal(result[0]?.accountCount, 1);
+  assert.equal(result[0]?.accounts[0]?.accountId, "account-1");
+});
+
+test("operators 账号未绑定主人时按别人的账号计入", () => {
+  const unbound: CollaborationAccount = { id: "account-free", name: "无主账号", profile_id: null };
+  const rows = [report({ id: "free-1", account_id: "account-free", operator_user_id: "operator-1" })];
+
+  const result = buildOperators(rows, [], profiles, [unbound]);
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.accountCount, 1);
+});
+
+test("staff 过滤自写自剪：只统计给别人的账号干的活", () => {
+  const writerOwn: CollaborationAccount = { id: "account-w", name: "文案自己号", profile_id: "writer-1" };
+  const rows = [
+    report({ id: "w-self", account_id: "account-w", script_author_user_id: "writer-1" }),
+    report({ id: "w-other", script_author_user_id: "writer-1" }),
+  ];
+
+  const result = buildStaff(rows, "writer", profiles, [...accounts, writerOwn]);
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.reportCount, 1);
+  assert.equal(result[0]?.involvedAccounts[0]?.accountId, "account-1");
+});
+
 test("staff 在空归属月份返回空列表，且只返回前 3 个账号和真实总数", () => {
   assert.deepEqual(buildStaff([report()], "writer", profiles, accounts), []);
 
