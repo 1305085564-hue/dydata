@@ -3,7 +3,6 @@ export interface SummaryData {
   attributed: number;
   selfHandled: number;
   unattributed: number;
-  neverFillMembers: Array<{ userId: string; name: string }>;
 }
 
 export interface OperatorAccount {
@@ -24,6 +23,7 @@ export interface OperatorRow {
   totalFollowerConvert: number;
   hitCount: number;
   momChange: number | null;
+  accountCount: number;
   operatedProfileCount: number;
   accounts: OperatorAccount[];
 }
@@ -42,6 +42,13 @@ export interface StaffRow {
   selfHandledCount: number;
   involvedAccounts: StaffAccount[];
   involvedAccountTotal: number;
+  recentWorks: Array<{
+    reportId: string;
+    reportDate: string;
+    title: string;
+    accountName: string;
+    playCount: number;
+  }>;
 }
 
 export interface PersonCurrentMonth {
@@ -57,6 +64,7 @@ export interface PersonOperatorSummary {
   totalFollowerConvert: number;
   hitCount: number;
   momChange: number | null;
+  accountCount: number;
   operatedProfileCount: number;
 }
 

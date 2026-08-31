@@ -36,7 +36,7 @@ test("管理员 5 大分组结构完整解析", () => {
         href: undefined,
         children: [
           { href: "/growth", label: "数据分析" },
-          { href: "/admin/collaboration", label: "协作管理" },
+          { href: "/admin/collaboration", label: "岗位管理" },
         ],
       },
       {

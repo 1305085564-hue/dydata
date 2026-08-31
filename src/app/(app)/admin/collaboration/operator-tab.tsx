@@ -14,7 +14,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -115,11 +114,11 @@ export function OperatorTab({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="inline-flex items-center gap-1 cursor-help">
-                    带达人数
+                    负责账号
                     <HelpCircle className="size-3 text-[#78716C]" />
                   </TooltipTrigger>
                   <TooltipContent className="text-[12px]">
-                    按本月经手作品反推，非固定配置
+                    按本月运营归属作品统计
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -134,7 +133,7 @@ export function OperatorTab({
                     : "hover:text-[#1C1917]"
                 }`}
               >
-                本月条数
+                本月作品
                 {renderSortIcon("reportCount")}
               </button>
             </TableHead>
@@ -162,7 +161,7 @@ export function OperatorTab({
                     : "hover:text-[#1C1917]"
                 }`}
               >
-                人均播放
+                条均播放
                 {renderSortIcon("avgPlay")}
               </button>
             </TableHead>
@@ -194,7 +193,7 @@ export function OperatorTab({
               op.accounts.length === 1 &&
               (op.accounts[0].ownerName === op.name ||
                 op.accounts[0].accountId === op.userId);
-            const canExpand = !isSelfAccountOnly && op.accounts.length > 0;
+            const canExpand = op.accounts.length > 0;
             const isExpanded = canExpand && expandedUserIds.has(op.userId);
             const mom = op.momChange;
 
@@ -241,12 +240,12 @@ export function OperatorTab({
                         </button>
                         {isSelfAccountOnly && (
                           <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5 text-[11px] font-normal text-[#78716C] border border-[#E5E0D6]">
-                            自运营
+                            本人账号
                           </span>
                         )}
                       </div>
                       <div className="text-right tabular-nums text-[#292524]">
-                        {op.operatedProfileCount} 人
+                        {op.accountCount}
                       </div>
                       <div className="text-right tabular-nums font-medium text-[#1C1917]">
                         {op.reportCount}

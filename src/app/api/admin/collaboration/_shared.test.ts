@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   STATS_START_DATE,
+  buildCollaborationPageData,
   buildOperators,
   buildPersonPayload,
   buildStaff,
@@ -60,35 +61,12 @@ test("summary 识别空归属、自处理，并彻底排除统计起点之前的
     }),
   ];
 
-  assert.deepEqual(buildSummary(rows, profiles), {
+  assert.deepEqual(buildSummary(rows), {
     total: 2,
     attributed: 1,
     selfHandled: 1,
     unattributed: 1,
-    neverFillMembers: [],
   });
-});
-
-test("summary 只把本月所有记录都由本人全包的成员列为从不填分工", () => {
-  const rows = [
-    report({
-      id: "self-a",
-      script_author_user_id: "owner-1",
-      video_editor_user_id: "owner-1",
-      operator_user_id: "owner-1",
-    }),
-    report({
-      id: "self-b",
-      report_date: "2026-07-28",
-      script_author_user_id: "owner-1",
-      video_editor_user_id: "owner-1",
-      operator_user_id: "owner-1",
-    }),
-  ];
-
-  assert.deepEqual(buildSummary(rows, profiles).neverFillMembers, [
-    { userId: "owner-1", name: "达人甲" },
-  ]);
 });
 
 test("operators 播放未达3万不判爆款，无前5条历史也不判爆款，上月无记录时环比为 null", () => {
@@ -107,9 +85,9 @@ test("operators 播放未达3万不判爆款，无前5条历史也不判爆款�
   assert.equal(result[0]?.momChange, null);
 });
 
-test("operators 新爆款口径：≥3万且≥前5条均值×3才命中，上月零播放不产生 Infinity", () => {
+test("operators 爆款口径：至少3条历史样本、播放≥3万且≥前5条均值×3才命中", () => {
   const current = [
-    ...[10000, 10000, 10000, 10000].map((playCount, index) =>
+    ...[10000, 10000, 10000].map((playCount, index) =>
       report({
         id: `current-${index}`,
         report_date: `2026-08-${String(index + 1).padStart(2, "0")}`,
@@ -117,17 +95,36 @@ test("operators 新爆款口径：≥3万且≥前5条均值×3才命中，上�
         operator_user_id: "operator-1",
       }),
     ),
-    report({ id: "current-hit", report_date: "2026-08-05", play_count: 35000, operator_user_id: "operator-1" }),
-    report({ id: "account2", account_id: "account-2", report_date: "2026-08-03", play_count: 5000, operator_user_id: "operator-1" }),
+    report({ id: "current-hit", report_date: "2026-08-04", play_count: 30000, operator_user_id: "operator-1" }),
   ];
-  const previous = [
-    report({ id: "previous", report_date: "2026-07-28", play_count: 0, operator_user_id: "operator-1" }),
-  ];
+  const result = buildOperators(current, [], profiles, accounts);
 
-  const result = buildOperators(current, previous, profiles, accounts);
-
+  assert.equal(result.length, 1, "只负责一个账号的运营也应进入岗位月报");
   assert.equal(result[0]?.hitCount, 1);
   assert.equal(result[0]?.momChange, null);
+  assert.equal(result[0]?.accountCount, 1);
+});
+
+test("operators 播放不足3万或历史样本不足3条时不计爆款", () => {
+  const belowThreshold = buildOperators([
+    ...[10000, 10000, 10000].map((playCount, index) =>
+      report({
+        id: `threshold-${index}`,
+        report_date: `2026-08-${String(index + 1).padStart(2, "0")}`,
+        play_count: playCount,
+        operator_user_id: "operator-1",
+      }),
+    ),
+    report({ id: "below-threshold", report_date: "2026-08-04", play_count: 29999, operator_user_id: "operator-1" }),
+  ], [], profiles, accounts);
+  const insufficientSamples = buildOperators([
+    report({ id: "sample-1", report_date: "2026-08-01", play_count: 10000, operator_user_id: "operator-1" }),
+    report({ id: "sample-2", report_date: "2026-08-02", play_count: 10000, operator_user_id: "operator-1" }),
+    report({ id: "too-early", report_date: "2026-08-03", play_count: 30000, operator_user_id: "operator-1" }),
+  ], [], profiles, accounts);
+
+  assert.equal(belowThreshold[0]?.hitCount, 0);
+  assert.equal(insufficientSamples[0]?.hitCount, 0);
 });
 
 test("staff 在空归属月份返回空列表，且只返回前 3 个账号和真实总数", () => {
@@ -152,7 +149,44 @@ test("staff 在空归属月份返回空列表，且只返回前 3 个账号和�
   assert.equal(result[0]?.involvedAccountTotal, 4);
 });
 
-test("person 软配对失败返回 anomaly null，并保持近 6 个月完整零值趋势", () => {
+test("staff 单账号也进入岗位月报，并返回最近作品供页面直接查看", () => {
+  const rows = [
+    report({
+      id: "writer-old",
+      report_date: "2026-08-01",
+      title: "第一条作品",
+      script_author_user_id: "writer-1",
+    }),
+    report({
+      id: "writer-new",
+      report_date: "2026-08-02",
+      title: "第二条作品",
+      script_author_user_id: "writer-1",
+    }),
+  ];
+
+  const result = buildStaff(rows, "writer", profiles, accounts);
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.reportCount, 2);
+  assert.deepEqual(result[0]?.recentWorks.map((work) => work.title), ["第二条作品", "第一条作品"]);
+});
+
+test("岗位页服务端数据包含当前文案或剪辑标签，避免路由切换后误报空数据", () => {
+  const currentRows = [
+    report({ id: "writer-work", title: "文案作品", script_author_user_id: "writer-1" }),
+  ];
+
+  const pageData = buildCollaborationPageData(
+    { currentRows, previousRows: [], profiles, accounts },
+    "writer",
+  );
+
+  assert.equal(pageData.staff.length, 1);
+  assert.equal(pageData.staff[0]?.recentWorks[0]?.title, "文案作品");
+});
+
+test("person 单账号运营仍返回岗位数据，软配对失败返回 anomaly null，并保持近 6 个月完整零值趋势", () => {
   const payload = buildPersonPayload({
     targetUserId: "operator-1",
     year: 2026,
@@ -179,7 +213,8 @@ test("person 软配对失败返回 anomaly null，并保持近 6 个月完整零
   assert.equal(payload.records[0]?.anomaly, null);
   assert.equal(payload.trend.length, 6);
   assert.equal(payload.currentMonth.operatorCount, 1);
-  assert.equal(payload.operatorSummary, null);
+  assert.equal(payload.operatorSummary?.reportCount, 1);
+  assert.equal(payload.operatorSummary?.accountCount, 1);
 });
 
 test("日报聚合查询和补录目标查询都在数据库层强制统计起点下限", async () => {

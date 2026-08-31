@@ -14,19 +14,19 @@ interface HealthBarProps {
   summary: SummaryData | null;
 }
 
+export function calculateAttributionCompleteness(summary: Pick<SummaryData, "total" | "unattributed">) {
+  if (summary.total <= 0) return 100;
+  return Math.floor(((summary.total - summary.unattributed) / summary.total) * 100);
+}
+
 export function HealthBar({ summary }: HealthBarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!summary) return null;
 
-  const isHealthy =
-    summary.unattributed === 0 && summary.neverFillMembers.length === 0;
+  const isHealthy = summary.unattributed === 0;
 
-  const healthRate = Math.round(
-    ((summary.total - summary.unattributed) / (summary.total || 1)) * 100,
-  );
-  const neverFillCount = summary.neverFillMembers.length;
-  const displayedMembers = summary.neverFillMembers.map((m) => m.name);
+  const healthRate = calculateAttributionCompleteness(summary);
 
   return (
     <>
@@ -47,8 +47,8 @@ export function HealthBar({ summary }: HealthBarProps) {
         )}
         <span>
           {isHealthy
-            ? "全量归属健康"
-            : `归属健康度 ${healthRate}% (${summary.unattributed}条待归属)`}
+            ? "岗位归属完整"
+            : `岗位完整度 ${healthRate}%（${summary.unattributed} 条待补）`}
         </span>
       </button>
 
@@ -59,7 +59,7 @@ export function HealthBar({ summary }: HealthBarProps) {
             <div className="flex items-center gap-2">
               <AlertCircle className="size-4 text-[#D99E55]" />
               <DialogTitle className="text-base font-semibold text-[#1C1917]">
-                归属健康度明细
+                岗位归属明细
               </DialogTitle>
             </div>
             <button
@@ -83,16 +83,6 @@ export function HealthBar({ summary }: HealthBarProps) {
               </strong>{" "}
               条作品缺乏明确的文案、剪辑或运营归属。
             </p>
-            {neverFillCount > 0 && (
-              <div className="rounded-xl border border-transparent bg-[#D99E55]/[0.08] p-3 space-y-1">
-                <div className="font-medium text-[#8A6A2F] text-[12px]">
-                  仅标注自运营的成员：
-                </div>
-                <div className="text-[12px] text-[#8A6A2F]">
-                  {displayedMembers.join("、")}（共 {neverFillCount} 人）
-                </div>
-              </div>
-            )}
           </div>
         </DialogContent>
       </Dialog>

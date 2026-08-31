@@ -139,21 +139,8 @@ export function parseMonthParams(searchParams: URLSearchParams) {
   return range ? { ok: true as const, range } : { ok: false as const, error: "year 或 month 参数不正确" };
 }
 
-export function buildSummary(rows: CollaborationReport[], profiles: CollaborationProfile[]) {
+export function buildSummary(rows: CollaborationReport[]) {
   const scopedRows = fromStatsStart(rows);
-  const names = profileNameMap(profiles);
-  const rowsByOwner = new Map<string, CollaborationReport[]>();
-
-  for (const row of scopedRows) {
-    const bucket = rowsByOwner.get(row.user_id) ?? [];
-    bucket.push(row);
-    rowsByOwner.set(row.user_id, bucket);
-  }
-
-  const neverFillMembers = Array.from(rowsByOwner.entries())
-    .filter(([, ownerRows]) => ownerRows.length > 0 && ownerRows.every(isSelfHandled))
-    .map(([userId]) => ({ userId, name: names.get(userId) ?? "未命名成员" }))
-    .sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
 
   return {
     total: scopedRows.length,
@@ -164,7 +151,6 @@ export function buildSummary(rows: CollaborationReport[], profiles: Collaboratio
     unattributed: scopedRows.filter(
       (row) => !row.script_author_user_id || !row.video_editor_user_id || !row.operator_user_id,
     ).length,
-    neverFillMembers,
   };
 }
 
@@ -181,9 +167,9 @@ function countHits(rows: CollaborationReport[]): number {
     const sorted = [...accountRows].sort((a, b) => a.report_date.localeCompare(b.report_date));
     for (let i = 0; i < sorted.length; i++) {
       const play = asCount(sorted[i]!.play_count);
-      if (play < 20000) continue;
+      if (play < 30000) continue;
       const prior = sorted.slice(Math.max(0, i - 5), i);
-      if (prior.length === 0) continue;
+      if (prior.length < 3) continue;
       const priorMean = prior.reduce((sum, r) => sum + asCount(r.play_count), 0) / prior.length;
       if (priorMean > 0 && play >= priorMean * 3) hits++;
     }
@@ -234,10 +220,6 @@ export function buildOperators(
       }
       const totalPlay = operatorRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
       const accountIds = Array.from(byAccount.keys());
-      const ownAccountIds = new Set(
-        accounts.filter((a) => a.profile_id === userId).map((a) => a.id),
-      );
-      const otherAccountCount = accountIds.filter((id) => !ownAccountIds.has(id)).length;
       const ownerProfileIds = unique(
         accountIds.map((accountId) => accountsById.get(accountId)?.profile_id),
       );
@@ -264,12 +246,11 @@ export function buildOperators(
         totalFollowerConvert: operatorRows.reduce((sum, row) => sum + asCount(row.follower_convert), 0),
         hitCount: countHits(operatorRows),
         momChange: monthOverMonth(totalPlay, previousByOperator.get(userId) ?? []),
+        accountCount: accountIds.length,
         operatedProfileCount: ownerProfileIds.length,
-        otherAccountCount,
         accounts: accountRows,
       };
     })
-    .filter((row) => row.accounts.length >= 2 && row.otherAccountCount >= 1)
     .sort((a, b) => b.totalPlay - a.totalPlay || a.name.localeCompare(b.name, "zh-CN"));
 }
 
@@ -295,10 +276,6 @@ export function buildStaff(
     .map(([userId, staffRows]) => {
       const totalPlay = staffRows.reduce((sum, row) => sum + asCount(row.play_count), 0);
       const accountIds = unique(staffRows.map((row) => row.account_id));
-      const ownAccountIds = new Set(
-        accounts.filter((a) => a.profile_id === userId).map((a) => a.id),
-      );
-      const otherAccountCount = accountIds.filter((id) => !ownAccountIds.has(id)).length;
       const involvedAccounts = accountIds
         .map((accountId) => ({
           accountId,
@@ -314,10 +291,18 @@ export function buildStaff(
         selfHandledCount: staffRows.filter(isSelfHandled).length,
         involvedAccounts: involvedAccounts.slice(0, 3),
         involvedAccountTotal: involvedAccounts.length,
-        otherAccountCount,
+        recentWorks: [...staffRows]
+          .sort((a, b) => b.report_date.localeCompare(a.report_date) || b.id.localeCompare(a.id))
+          .slice(0, 3)
+          .map((row) => ({
+            reportId: row.id,
+            reportDate: row.report_date,
+            title: row.title?.trim() || "未命名作品",
+            accountName: accountsById.get(row.account_id)?.name?.trim() || "未命名账号",
+            playCount: asCount(row.play_count),
+          })),
       };
     })
-    .filter((row) => row.involvedAccountTotal >= 2 && row.otherAccountCount >= 1)
     .sort((a, b) => b.reportCount - a.reportCount || a.name.localeCompare(b.name, "zh-CN"));
 }
 
@@ -386,6 +371,7 @@ export function buildPersonPayload(input: {
         totalFollowerConvert: operator.totalFollowerConvert,
         hitCount: operator.hitCount,
         momChange: operator.momChange,
+        accountCount: operator.accountCount,
         operatedProfileCount: operator.operatedProfileCount,
       }
     : null;
@@ -487,8 +473,7 @@ export async function loadSummaryData(input: {
   range: MonthRange;
 }) {
   const rows = await queryScopedReports({ ...input, start: input.range.start, end: input.range.end });
-  const profiles = await loadProfiles(input.supabase, unique(rows.map((row) => row.user_id)));
-  return buildSummary(rows, profiles);
+  return buildSummary(rows);
 }
 
 export type CollaborationMonthDataset = {
@@ -500,8 +485,8 @@ export type CollaborationMonthDataset = {
 
 /**
  * 协作页首屏共享数据集：上月 1 日~当月末的日报一次查询，内存按月切分；
- * summary/operators/talents 三块原先各扫一遍当月日报（含上月共 4 次），现合并为 1 次。
- * 口径不变：三块消费同一 CollaborationReport 行集，各自在内存做 stats 起点与角色过滤。
+ * summary/operators/talents/staff 原先分别扫描当月日报，现共享 1 份行集。
+ * 各岗位在内存完成统计起点与责任人过滤。
  */
 export async function loadCollaborationMonthDataset(input: {
   supabase: SupabaseClient;
@@ -521,9 +506,12 @@ export async function loadCollaborationMonthDataset(input: {
   return { currentRows, previousRows, profiles, accounts };
 }
 
-export function buildCollaborationPageData(dataset: CollaborationMonthDataset) {
+export function buildCollaborationPageData(
+  dataset: CollaborationMonthDataset,
+  staffRole: "writer" | "editor" | null = null,
+) {
   return {
-    summary: buildSummary(dataset.currentRows, dataset.profiles),
+    summary: buildSummary(dataset.currentRows),
     operators: buildOperators(
       dataset.currentRows,
       dataset.previousRows,
@@ -531,6 +519,9 @@ export function buildCollaborationPageData(dataset: CollaborationMonthDataset) {
       dataset.accounts,
     ),
     talents: buildTalents(dataset.currentRows, dataset.profiles, dataset.accounts),
+    staff: staffRole
+      ? buildStaff(dataset.currentRows, staffRole, dataset.profiles, dataset.accounts)
+      : [],
   };
 }
 

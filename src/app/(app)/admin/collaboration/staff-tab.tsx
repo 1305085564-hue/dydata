@@ -79,7 +79,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
       <div className="py-16 text-center">
         <EmptyState
           title={`本月还没有${roleLabel}归属记录`}
-          description="2026-07-27 起开始统计团队作品分工"
+          description="2026-07-27 起开始统计岗位归属与作品产量"
         />
       </div>
     );
@@ -104,7 +104,8 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                   {renderSortIcon("reportCount")}
                 </button>
               </TableHead>
-              <TableHead className="text-left font-medium text-[#292524] pl-4">给谁做的</TableHead>
+              <TableHead className="text-left font-medium text-[#292524] pl-4">负责账号</TableHead>
+              <TableHead className="text-left font-medium text-[#292524] pl-4">最近作品</TableHead>
               <TableHead className="text-right font-medium text-[#292524]">
                 <button
                   type="button"
@@ -125,7 +126,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     sortField === "avgPlay" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
                   }`}
                 >
-                  人均播放 <span className="text-[11px] font-normal text-[#78716C] ml-0.5">（参考）</span>
+                  条均播放 <span className="text-[11px] font-normal text-[#78716C] ml-0.5">（参考）</span>
                   {renderSortIcon("avgPlay")}
                 </button>
               </TableHead>
@@ -137,7 +138,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     sortField === "selfHandledCount" ? "text-[#1C1917] font-semibold" : "hover:text-[#1C1917]"
                   }`}
                 >
-                  自运营条数
+                  独立完成
                   {renderSortIcon("selfHandledCount")}
                 </button>
               </TableHead>
@@ -147,6 +148,7 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
             {sortedRows.map((row) => {
               const displayedAccounts = row.involvedAccounts.map((a) => a.accountName).join("、");
               const extraCount = row.involvedAccountTotal - row.involvedAccounts.length;
+              const recentTitles = row.recentWorks.map((work) => work.title).join("、");
 
               return (
                 <TableRow key={row.userId} className="hover:bg-[#FBF9F5]/50 transition-colors">
@@ -183,6 +185,28 @@ export function StaffTab({ rows, role, isLoading, onSelectPerson, onPrefetchPers
                     ) : (
                       <span>{displayedAccounts || "—"}</span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-left py-3 pl-4 text-[#292524] max-w-[260px]">
+                    <Tooltip>
+                      <TooltipTrigger className="block max-w-full cursor-help text-left">
+                        <span className="block truncate" title={recentTitles}>
+                          {row.recentWorks[0]?.title || "—"}
+                        </span>
+                        {row.reportCount > 1 && (
+                          <span className="mt-0.5 block text-[11px] text-[#78716C]">
+                            最近 {row.recentWorks.length} 条 · 共 {row.reportCount} 条
+                          </span>
+                        )}
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm text-[12px]">
+                        <p className="font-medium text-[#FBF9F5] mb-1">最近作品：</p>
+                        {row.recentWorks.map((work) => (
+                          <p key={work.reportId} className="leading-relaxed text-[#FBF9F5]">
+                            {work.reportDate} · {work.accountName} · {work.title}
+                          </p>
+                        ))}
+                      </TooltipContent>
+                    </Tooltip>
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-[#292524] py-3">
                     {formatBigNumber(row.totalPlay)}

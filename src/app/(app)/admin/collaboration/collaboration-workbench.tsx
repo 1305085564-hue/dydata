@@ -47,6 +47,7 @@ interface CollaborationWorkbenchProps {
   summary: SummaryData | null;
   operators: OperatorRow[];
   talents: TalentRow[];
+  staff: StaffRow[];
   isOwnerOrTeamAdmin: boolean;
   /** 首屏共享数据集加载失败：明确报错，不把失败伪装成空数据 */
   loadFailed?: boolean;
@@ -94,14 +95,12 @@ export function CollaborationWorkbench({
   summary,
   operators,
   talents,
+  staff,
   loadFailed = false,
 }: CollaborationWorkbenchProps) {
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>(defaultTab);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
-
-  const [staffCache, setStaffCache] = useState<Record<string, StaffRow[]>>({});
-  const [staffLoading, setStaffLoading] = useState(false);
 
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const currentMonthValue = `${year}-${month}`;
@@ -110,36 +109,9 @@ export function CollaborationWorkbench({
     setTab(defaultTab);
   }, [defaultTab]);
 
-  const fetchStaffData = (targetRole: "writer" | "editor") => {
-    const key = `${year}-${month}-${targetRole}`;
-    if (staffCache[key]) return;
-
-    setStaffLoading(true);
-    fetch(`/api/admin/collaboration/staff?year=${year}&month=${month}&role=${targetRole}`)
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "加载数据失败");
-        return data as StaffRow[];
-      })
-      .then((rows) => {
-        setStaffCache((prev) => ({ ...prev, [key]: rows }));
-      })
-      .catch((err) => {
-        console.error("Failed to fetch staff data", err);
-      })
-      .finally(() => {
-        setStaffLoading(false);
-      });
-  };
-
   const handleTabChange = (nextTab: TabKey) => {
     setTab(nextTab);
     router.push(`/admin/collaboration?year=${year}&month=${month}&tab=${nextTab}`, { scroll: false });
-    if (nextTab === "writers") {
-      fetchStaffData("writer");
-    } else if (nextTab === "editors") {
-      fetchStaffData("editor");
-    }
   };
 
   const handleMonthChange = (val: string | null) => {
@@ -172,13 +144,6 @@ export function CollaborationWorkbench({
     if (nextY > currentY || (nextY === currentY && nextM > currentM)) return;
     router.push(`/admin/collaboration?year=${nextY}&month=${nextM}&tab=${tab}`);
   };
-
-  const currentStaffRows = useMemo(() => {
-    if (tab === "operators") return [];
-    const role = tab === "writers" ? "writer" : "editor";
-    const key = `${year}-${month}-${role}`;
-    return staffCache[key] ?? [];
-  }, [tab, year, month, staffCache]);
 
   return (
     <div className="space-y-6">
@@ -222,7 +187,7 @@ export function CollaborationWorkbench({
             </div>
 
             <span className="text-[13px] sm:text-[14px] font-semibold text-[#1C1917]">
-              {year} 年 {month} 月 团队协作概览
+              {year} 年 {month} 月 岗位月报
             </span>
           </div>
 
@@ -232,7 +197,7 @@ export function CollaborationWorkbench({
 
         {loadFailed && (
           <div className="rounded-xl border border-[#C0685C]/30 bg-[#C0685C]/5 px-4 py-3 text-[13px] text-[#C0685C]">
-            协作数据加载失败，当前展示为空；请刷新重试。
+            岗位数据加载失败，当前展示为空；请刷新重试。
           </div>
         )}
 
@@ -259,7 +224,7 @@ export function CollaborationWorkbench({
                 : "text-[#292524] hover:text-[#1C1917] hover:bg-[#F5F3EE]"
             }`}
           >
-            运营团队 ({operators.length})
+            运营 ({operators.length})
           </button>
 
           <button
@@ -303,9 +268,9 @@ export function CollaborationWorkbench({
         />
       ) : (
         <StaffTab
-          rows={currentStaffRows}
+          rows={staff}
           role={tab === "writers" ? "writer" : "editor"}
-          isLoading={staffLoading && currentStaffRows.length === 0}
+          isLoading={false}
           onSelectPerson={(id) => setSelectedPersonId(id)}
           onPrefetchPerson={(id) => prefetchPerson(id, year, month)}
         />

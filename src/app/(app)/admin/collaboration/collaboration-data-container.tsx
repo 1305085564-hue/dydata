@@ -7,7 +7,7 @@ import {
   loadCollaborationMonthDataset,
 } from "@/app/api/admin/collaboration/_shared";
 import { CollaborationWorkbench } from "./collaboration-workbench";
-import type { OperatorRow, SummaryData, TalentRow } from "./types";
+import type { OperatorRow, StaffRow, SummaryData, TalentRow } from "./types";
 
 interface CollaborationDataContainerProps {
   year: number;
@@ -45,18 +45,21 @@ export async function CollaborationDataContainer({
   const supabase = createAdminClient();
   const visibleUserIds = context.scope.visibleUserIds;
 
-  // 共享月度数据集：当月/上月日报一次查询 + 一次 lookups，三块在内存分发；
+  // 共享月度数据集：当月/上月日报一次查询 + 一次 lookups，各岗位在内存分发；
   // 任一环节失败时保持与旧 allSettled 相同的全空兜底，不伪装成数据为空成功。
   let summary: SummaryData | null = null;
   let operators: OperatorRow[] = [];
   let talents: TalentRow[] = [];
+  let staff: StaffRow[] = [];
   let loadFailed = false;
   try {
     const dataset = await loadCollaborationMonthDataset({ supabase, visibleUserIds, range });
-    const pageData = buildCollaborationPageData(dataset);
+    const staffRole = tab === "writers" ? "writer" : tab === "editors" ? "editor" : null;
+    const pageData = buildCollaborationPageData(dataset, staffRole);
     summary = pageData.summary as SummaryData;
     operators = pageData.operators as OperatorRow[];
     talents = pageData.talents as TalentRow[];
+    staff = pageData.staff as StaffRow[];
   } catch {
     loadFailed = true;
   }
@@ -69,6 +72,7 @@ export async function CollaborationDataContainer({
       summary={summary}
       operators={operators}
       talents={talents}
+      staff={staff}
       isOwnerOrTeamAdmin={isOwnerOrTeamAdmin}
       loadFailed={loadFailed}
     />

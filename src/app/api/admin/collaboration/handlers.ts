@@ -37,7 +37,7 @@ export async function buildSummaryResponse(
       range: parsed.range,
     }));
   } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载协作归属统计失败";
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载岗位归属统计失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -59,7 +59,7 @@ export async function buildOperatorsResponse(
       range: parsed.range,
     }));
   } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载运营协作统计失败";
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载运营岗位统计失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -86,7 +86,7 @@ export async function buildStaffResponse(
       role,
     }));
   } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载岗位协作统计失败";
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载岗位产量统计失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -142,7 +142,7 @@ export async function buildPersonResponse(
     if (error instanceof CollaborationNotFoundError) {
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载个人协作数据失败";
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "加载个人岗位数据失败";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -171,7 +171,7 @@ export async function buildAttributionResponse(
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
   if (auth.actor.role !== "owner" && auth.actor.role !== "admin" && auth.actor.groupMode !== true) {
-    return NextResponse.json({ ok: false, error: "无权限补录协作归属" }, { status: 403 });
+    return NextResponse.json({ ok: false, error: "无权限补录岗位归属" }, { status: 403 });
   }
   const context = await deps.buildPermissionContextForActor(auth.actor);
   if (!context) {
@@ -181,7 +181,7 @@ export async function buildAttributionResponse(
     const supabase = deps.createAdminClient();
     const report = await deps.loadAttributionReport(supabase, parsed.data.reportId);
     if (!report) {
-      return NextResponse.json({ ok: false, error: "日报不存在或早于协作统计起点" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "日报不存在或早于岗位统计起点" }, { status: 404 });
     }
     if (report.user_id === auth.actor.userId) {
       return NextResponse.json({ ok: false, error: "不能修改自己提交的日报" }, { status: 403 });
@@ -208,7 +208,7 @@ export async function buildAttributionResponse(
       message: result.videoUpdated ? null : "暂未匹配到视频，日报已保存，后续可手动关联",
     });
   } catch (error) {
-    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "更新协作归属失败";
+    const message = error instanceof SupabaseQueryFailure ? error.publicMessage : "更新岗位归属失败";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

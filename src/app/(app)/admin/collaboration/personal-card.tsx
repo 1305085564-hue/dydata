@@ -132,11 +132,11 @@ export function PersonalCard({
                     {data.name}
                   </DialogTitle>
                   <span className="rounded-md bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-normal text-[#78716C]">
-                    个人协作档案
+                    个人岗位档案
                   </span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11.5px] sm:text-[12px] text-[#78716C]">
-                  <span>本月分工：</span>
+                  <span>本月岗位：</span>
                   <span className="rounded bg-[#F5F3EE]/80 px-1.5 py-0.5 text-[#43718E] font-medium">
                     文案{" "}
                     <strong className="font-semibold">
@@ -190,7 +190,7 @@ export function PersonalCard({
                 <div className="md:col-span-2 space-y-2 rounded-xl border border-[#E5E0D6]/80 bg-[#FBF9F5]/60 p-3.5 flex flex-col justify-between">
                   <div className="flex items-center justify-between text-[12px]">
                     <span className="font-medium text-[#292524]">
-                      运营核心表现
+                      运营数据
                     </span>
                     {data.operatorSummary?.momChange != null && (
                       <span className="font-medium">
@@ -221,7 +221,7 @@ export function PersonalCard({
                       </div>
                       <div className="rounded-lg border border-[#ECE7DE]/80 bg-white p-2 shadow-2xs">
                         <div className="text-[10px] text-[#78716C]">
-                          人均播放
+                          条均播放
                         </div>
                         <div className="text-[13px] font-medium text-[#1C1917] tabular-nums mt-0.5">
                           {formatBigNumber(data.operatorSummary.avgPlay)}
@@ -244,7 +244,7 @@ export function PersonalCard({
                     </div>
                   ) : (
                     <div className="text-center py-6 text-[12px] text-[#78716C]">
-                      本月还没有带人运营记录
+                      本月还没有运营作品
                     </div>
                   )}
                 </div>

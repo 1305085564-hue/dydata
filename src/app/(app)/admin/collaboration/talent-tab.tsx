@@ -93,7 +93,7 @@ export function TalentTab({
                 className="py-2.5 px-2 text-right font-medium text-[#78716C] cursor-pointer hover:text-[#1C1917] transition-colors"
                 onClick={() => toggleSort("reportCount")}
               >
-                本月发布
+                本月作品
                 <SortIcon field="reportCount" sortField={sortField} sortOrder={sortOrder} />
               </th>
               <th

@@ -100,7 +100,7 @@ export function getNavGroups(input: GetNavItemsInput): NavGroup[] {
     },
     {
       href: "/admin/collaboration",
-      label: "协作管理",
+      label: "岗位管理",
       icon: UsersRound,
       match: (pathname) => pathname === "/admin/collaboration" || pathname.startsWith("/admin/collaboration/"),
     },

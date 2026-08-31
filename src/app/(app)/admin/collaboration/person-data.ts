@@ -19,7 +19,7 @@ function requestPersonData(
   ).then(async (res) => {
     const json = await res.json();
     if (!res.ok) {
-      throw new Error(json.error || "加载个人协作数据失败");
+      throw new Error(json.error || "加载个人岗位数据失败");
     }
     return json as PersonDetailData;
   });
