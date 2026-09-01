@@ -115,11 +115,11 @@ export function MobileMoreDrawer({
               onOpenCommandHub();
             }}
             aria-label="打开行动中枢：待办、审批与风险"
-            className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition-all cursor-pointer"
+            className="flex w-full items-center justify-between rounded-xl bg-white shadow-card-ring p-3 text-left active:scale-[0.99] active:duration-120 transition-all cursor-pointer group"
           >
             <div className="flex items-center gap-3">
-              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FAF8F4] text-[#43718E] border border-[#ECE7DE]">
-                <Bell className="size-4.5" />
+              <div className="flex size-9 items-center justify-center rounded-lg bg-[#FAF8F4] text-[#1C1917] border border-[#ECE7DE] group-hover:bg-[#F5F3EE] transition-colors">
+                <Bell className="size-4.5 stroke-[1.8]" />
               </div>
               <div>
                 <p className="font-medium text-[#1C1917] text-[13px]">行动中枢</p>
@@ -127,8 +127,8 @@ export function MobileMoreDrawer({
               </div>
             </div>
             {bellBadgeCount > 0 ? (
-              <span className="rounded-full bg-[#D97757] px-2 py-0.5 text-[11px] font-medium text-white">
-                {bellBadgeCount}
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D97757] px-1.5 text-[10.5px] font-semibold text-white tabular-nums shadow-xs">
+                {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
               </span>
             ) : (
               <ChevronRight className="size-4 text-[#78716C]" />

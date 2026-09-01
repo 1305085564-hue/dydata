@@ -71,6 +71,147 @@ const EXEMPTION_LABELS: Record<string, string> = {
   permanent: "永久豁免",
 };
 
+function formatShortDate(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const match = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/.exec(dateStr.trim());
+  if (match) {
+    const [, _year, m, d] = match;
+    return `${Number(m)}月${Number(d)}日`;
+  }
+  return dateStr;
+}
+
+export interface GroupedApprovalItem {
+  groupKey: string;
+  applicant_user_id: string;
+  applicant_name: string;
+  team_name: string | null;
+  nature: "leave" | "waive"; // 请假 vs 豁免/免交
+  isPermanent: boolean;
+  categoryBadge: string;
+  dateRangeText: string;
+  dayCount: number;
+  reasons: string[];
+  created_at: string;
+  requestIds: string[];
+  items: ExemptionRequest[];
+}
+
+function parseDateDaysDifference(startStr: string, endStr: string): number {
+  const d1 = new Date(startStr);
+  const d2 = new Date(endStr);
+  const diffTime = Math.abs(d2.getTime() - d1.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+}
+
+export function groupPendingApprovals(items: ExemptionRequest[]): GroupedApprovalItem[] {
+  const groupsMap = new Map<string, ExemptionRequest[]>();
+
+  for (const item of items) {
+    const isPermanent = item.exemption_type === "permanent";
+    // 严格区分请假与免交/豁免：
+    // permanent 属于豁免；其他 single/yesterday/3days/4days/5days/range 属于请假
+    const nature: "leave" | "waive" = isPermanent ? "waive" : "leave";
+    const groupKey = `${item.applicant_user_id}_${nature}_${isPermanent ? "perm" : "temp"}`;
+
+    if (!groupsMap.has(groupKey)) {
+      groupsMap.set(groupKey, []);
+    }
+    groupsMap.get(groupKey)!.push(item);
+  }
+
+  const result: GroupedApprovalItem[] = [];
+
+  for (const [groupKey, groupItems] of groupsMap.entries()) {
+    const first = groupItems[0];
+    const isPermanent = first.exemption_type === "permanent";
+    const nature: "leave" | "waive" = isPermanent ? "waive" : "leave";
+    const applicant_name = first.applicant_name || "未命名成员";
+    const team_name = first.team_name || null;
+
+    // 收集全部日期
+    const allDatesSet = new Set<string>();
+    for (const gi of groupItems) {
+      if (gi.start_date) allDatesSet.add(gi.start_date);
+      if (gi.end_date) allDatesSet.add(gi.end_date);
+    }
+    const sortedDates = Array.from(allDatesSet).sort();
+
+    let dateRangeText = "";
+    let dayCount = 0;
+
+    if (isPermanent) {
+      dateRangeText = "长期 / 永久";
+      dayCount = 0;
+    } else if (sortedDates.length === 0) {
+      dateRangeText = "未指定日期";
+      dayCount = 1;
+    } else if (sortedDates.length === 1) {
+      dateRangeText = formatShortDate(sortedDates[0]);
+      dayCount = 1;
+    } else {
+      const minDate = sortedDates[0];
+      const maxDate = sortedDates[sortedDates.length - 1];
+      const spanDays = parseDateDaysDifference(minDate, maxDate);
+
+      // 若日期天数与跨度一致，说明连续
+      if (spanDays === sortedDates.length) {
+        dateRangeText = `${formatShortDate(minDate)} 至 ${formatShortDate(maxDate)}`;
+        dayCount = spanDays;
+      } else {
+        // 不连续
+        dateRangeText = sortedDates.map(formatShortDate).join(" · ");
+        dayCount = sortedDates.length;
+      }
+    }
+
+    // 徽标文案：严格区分请假与豁免
+    let categoryBadge = "";
+    if (isPermanent) {
+      categoryBadge = "永久豁免";
+    } else if (nature === "leave") {
+      categoryBadge = dayCount > 1 ? `请假${dayCount}天` : "请假1天";
+    } else {
+      categoryBadge = dayCount > 1 ? `免交${dayCount}天` : "免交申请";
+    }
+
+    // 去重事由
+    const reasons = Array.from(
+      new Set(
+        groupItems
+          .map((gi) => gi.reason?.trim())
+          .filter((r): r is string => Boolean(r)),
+      ),
+    );
+
+    // 最新提交时间
+    const created_at = groupItems.reduce(
+      (latest, gi) => (gi.created_at > latest ? gi.created_at : latest),
+      first.created_at,
+    );
+
+    const requestIds = collectApprovalRequestIds(groupItems);
+
+    result.push({
+      groupKey,
+      applicant_user_id: first.applicant_user_id,
+      applicant_name,
+      team_name,
+      nature,
+      isPermanent,
+      categoryBadge,
+      dateRangeText,
+      dayCount,
+      reasons,
+      created_at,
+      requestIds,
+      items: groupItems,
+    });
+  }
+
+  return result;
+}
+
 interface UnifiedCommandHubProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -243,16 +384,77 @@ export function UnifiedCommandHub({
     }
   };
 
-  const handleReviewApproval = async (
-    item: ExemptionRequest,
+  const submitMultiExemptionReview = async (
+    requestIds: string[],
     action: "approved" | "rejected",
   ) => {
-    const requestId = resolveApprovalRequestId(item);
-    if (!requestId) {
+    if (requestIds.length === 0) return false;
+    if (requestIds.length === 1) {
+      return submitExemptionReview(requestIds[0], action);
+    }
+
+    const primaryId = requestIds[0];
+    setActionProcessing({ id: primaryId, action });
+    try {
+      const results = await Promise.all(
+        requestIds.map(async (id) => {
+          try {
+            const res = await fetch("/api/exemptions/review", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ request_id: id, action }),
+            });
+            return { id, ok: res.ok };
+          } catch {
+            return { id, ok: false };
+          }
+        }),
+      );
+      const successIds = results.filter((r) => r.ok).map((r) => r.id);
+      if (successIds.length > 0) {
+        const succSet = new Set(successIds);
+        setPendingApprovals((current) => {
+          return current.filter((item) => {
+            const reqId = resolveApprovalRequestId(item);
+            return !reqId || !succSet.has(reqId);
+          });
+        });
+        setDismissedSummaryApprovalIds((current) => {
+          const next = new Set(current);
+          for (const id of successIds) next.add(id);
+          return next;
+        });
+        setSelectedApprovalIds((current) => {
+          const next = new Set(current);
+          for (const id of successIds) next.delete(id);
+          return next;
+        });
+        dispatchFulfillmentDataChanged({
+          source: "command-hub",
+          requestIds: successIds,
+        });
+        onActionCenterChanged?.();
+        return true;
+      }
+      toast.error("审批未能保存，请重试");
+      return false;
+    } catch {
+      toast.error("网络连接异常，请重试");
+      return false;
+    } finally {
+      setActionProcessing(null);
+    }
+  };
+
+  const handleReviewGroup = async (
+    group: GroupedApprovalItem,
+    action: "approved" | "rejected",
+  ) => {
+    if (group.requestIds.length === 0) {
       toast.error("申请编号无效，刷新后再试");
       return;
     }
-    await submitExemptionReview(requestId, action);
+    await submitMultiExemptionReview(group.requestIds, action);
   };
 
   const handleReviewActionItem = async (
@@ -262,6 +464,23 @@ export function UnifiedCommandHub({
     if (!isReviewExemptionAction(item.action)) return;
     await submitExemptionReview(item.action.requestId, action);
   };
+
+  const toggleGroupSelection = (group: GroupedApprovalItem, checked: boolean) => {
+    setSelectedApprovalIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        for (const id of group.requestIds) next.add(id);
+      } else {
+        for (const id of group.requestIds) next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const groupedApprovals = useMemo(
+    () => groupPendingApprovals(pendingApprovals),
+    [pendingApprovals],
+  );
 
   const handleBatchApproveApprovals = async () => {
     if (selectedApprovalIds.size === 0) return;
@@ -486,132 +705,88 @@ export function UnifiedCommandHub({
     <AnimatePresence>
       {open && (
         <>
-          {/* Invisible Backdrop to handle click outside seamlessly */}
-          <div
+          {/* Subtle Backdrop to handle click outside seamlessly */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             onClick={() => onOpenChange(false)}
-            className="fixed inset-0 z-40 bg-transparent"
+            className="fixed inset-0 z-40 bg-[#1C1917]/10 backdrop-blur-[1.5px]"
           />
 
           {/* Raycast / macOS style Topbar Command Popover */}
           <motion.div
             ref={drawerRef}
-            initial={{ opacity: 0, scale: 0.96, y: -6 }}
+            initial={{ opacity: 0, scale: 0.97, y: -6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -6 }}
-            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, scale: 0.97, y: -6 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
-              "fixed right-4 top-[calc(var(--app-top-offset,64px)+0.5rem)] z-[60] flex w-[min(440px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border bg-[#FAF8F4] shadow-claude-float sm:right-6 lg:right-8 xl:right-[calc((100vw-80rem)/2+2rem)]",
-              "max-md:inset-x-2 max-md:top-[calc(var(--app-top-offset,64px)+0.25rem)] max-md:w-auto",
-              "border-[#E5E0D6]",
+              "fixed right-4 top-[calc(var(--app-top-offset,64px)+0.5rem)] z-[60] flex w-[min(440px,calc(100vw-2rem))] max-h-[min(580px,calc(100dvh-var(--app-top-offset,64px)-1rem))] flex-col overflow-hidden rounded-2xl border border-[#ECE7DE] bg-[#FAF8F4] shadow-claude-float sm:right-6 lg:right-8 xl:right-[calc((100vw-80rem)/2+2rem)]",
+              "max-md:inset-x-3 max-md:top-[calc(var(--app-top-offset,64px)+0.5rem)] max-md:w-auto",
             )}
           >
             {/* Header & Spring Segmented Controller */}
-            <div className="shrink-0 border-b border-[#ECE7DE] bg-[#FBF9F5]/80 px-3.5 py-2.5">
-              <div className="flex items-start justify-between gap-3">
+            <div className="shrink-0 border-b border-[#ECE7DE]/80 bg-[#FAF8F4] px-4 pt-3 pb-2.5">
+              <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[14px] font-semibold tracking-tight text-[#1C1917]">
+                    <h3 className="text-[14px] font-semibold text-[#1C1917] tracking-tight">
                       行动中枢
-                    </span>
-                    {summaryLoading && (
-                      <span className="text-[10px] text-[#78716C]">同步中</span>
+                    </h3>
+                    {summaryLoading ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-[#78716C]">
+                        <Loader2 className="size-2.5 animate-spin text-[#D97757]" />
+                        同步中
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-[#78716C]/75 font-normal">
+                        待办与审批
+                      </span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-[11px] text-[#78716C]">
-                    只显示需要你处理的事
-                  </p>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
                     onClick={() => void onRefreshSummary?.()}
                     disabled={summaryLoading || !onRefreshSummary}
                     aria-label="刷新行动中枢"
                     title="刷新行动中枢"
-                    className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors hover:bg-[#E5E0D6]/60 hover:text-[#292524] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors duration-150 hover:bg-[#F5F3EE] hover:text-[#1C1917] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <RefreshCw className={cn("size-3.5", summaryLoading && "animate-spin")} />
+                    <RefreshCw className={cn("size-3.5 stroke-[1.8]", summaryLoading && "animate-spin")} />
                   </button>
                   <button
                     type="button"
                     onClick={() => onOpenChange(false)}
                     aria-label="关闭行动中枢"
-                    className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors duration-100 hover:bg-[#E5E0D6]/60 hover:text-[#292524]"
+                    className="flex size-7 items-center justify-center rounded-lg text-[#78716C] transition-colors duration-150 hover:bg-[#F5F3EE] hover:text-[#1C1917]"
                   >
-                    <X className="size-3.5 stroke-[2]" />
+                    <X className="size-3.5 stroke-[1.9]" />
                   </button>
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center gap-1.5 text-[10px] text-[#78716C] tabular-nums">
-                <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5">
-                  待处理 {todoTabCount}
-                </span>
-                <span className="rounded-md bg-[#F5F3EE] px-1.5 py-0.5">
-                  审批 {approvalTabCount}
-                </span>
-                {summary?.urgentCount ? (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-[#C0685C]/10 px-1.5 py-0.5 text-[#C0685C]">
-                    <TriangleAlert className="size-3" />
-                    风险 {summary.urgentCount}
-                  </span>
-                ) : null}
-              </div>
-
-              {/* Spring Segmented Tab Bar */}
-              <TooltipProvider>
-              <div className="mt-2 flex w-fit items-center gap-0.5 rounded-lg border border-[#E5E0D6]/60 bg-[#F5F3EE] p-0.5">
-                <Tooltip>
-                  <TooltipTrigger
+              {/* Segmented Controller & Status Indicators */}
+              <div className="mt-2.5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-0.5 rounded-lg bg-[#F5F3EE] p-0.5 border border-[#ECE7DE]/50">
+                  <button
                     type="button"
                     onClick={() => onTabChange("todos")}
                     className={cn(
-                    "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
-                    activeTab === "todos"
-                      ? "text-[#1C1917] font-medium"
-                      : "text-[#78716C] hover:text-[#292524] font-medium",
-                  )}
-                  >
-                  {activeTab === "todos" && (
-                    <motion.div
-                      layoutId="popoverSegmentedTab"
-                      className="absolute inset-0 rounded-md bg-white border border-[#E5E0D6]/80 shadow-2xs -z-10"
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 35,
-                      }}
-                    />
-                  )}
-                  <span>待办</span>
-                  {todoTabCount > 0 && (
-                    <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium text-white tabular-nums">
-                      {todoTabCount > 99 ? "99+" : todoTabCount}
-                    </span>
-                  )}
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" align="start" className="max-w-[260px] text-left leading-relaxed">
-                    {getActionTabExplanation("todos")}
-                  </TooltipContent>
-                </Tooltip>
-
-                {isAdmin && (
-                  <Tooltip>
-                    <TooltipTrigger
-                      type="button"
-                      onClick={() => onTabChange("approvals")}
-                      className={cn(
-                    "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10",
-                    activeTab === "approvals"
-                      ? "text-[#1C1917] font-medium"
-                      : "text-[#78716C] hover:text-[#292524] font-medium",
+                      "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none",
+                      activeTab === "todos"
+                        ? "text-[#1C1917] font-medium"
+                        : "text-[#78716C] hover:text-[#292524]",
                     )}
-                    >
-                    {activeTab === "approvals" && (
+                  >
+                    {activeTab === "todos" && (
                       <motion.div
-                        layoutId="popoverSegmentedTab"
-                        className="absolute inset-0 rounded-md bg-white border border-[#E5E0D6]/80 shadow-2xs -z-10"
+                        layoutId="commandHubTabIndicator"
+                        className="absolute inset-0 rounded-md bg-white shadow-2xs border border-[#ECE7DE]/70 -z-10"
                         transition={{
                           type: "spring",
                           stiffness: 500,
@@ -619,20 +794,76 @@ export function UnifiedCommandHub({
                         }}
                       />
                     )}
-                    <span>审批</span>
-                    {approvalTabCount > 0 && (
-                      <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-medium text-white tabular-nums">
-                        {approvalTabCount > 99 ? "99+" : approvalTabCount}
+                    <span>待办</span>
+                    {todoTabCount > 0 && (
+                      <span
+                        className={cn(
+                          "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                          activeTab === "todos"
+                            ? "bg-[#D97757] text-white"
+                            : "bg-[#E5E0D6] text-[#292524]",
+                        )}
+                      >
+                        {todoTabCount > 99 ? "99+" : todoTabCount}
                       </span>
                     )}
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" align="end" className="max-w-[260px] text-left leading-relaxed">
-                      {getActionTabExplanation("approvals")}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                  </button>
+
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => onTabChange("approvals")}
+                      className={cn(
+                        "relative flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] transition-colors duration-150 z-10 select-none",
+                        activeTab === "approvals"
+                          ? "text-[#1C1917] font-medium"
+                          : "text-[#78716C] hover:text-[#292524]",
+                      )}
+                    >
+                      {activeTab === "approvals" && (
+                        <motion.div
+                          layoutId="commandHubTabIndicator"
+                          className="absolute inset-0 rounded-md bg-white shadow-2xs border border-[#ECE7DE]/70 -z-10"
+                          transition={{
+                            type: "spring",
+                            stiffness: 500,
+                            damping: 35,
+                          }}
+                        />
+                      )}
+                      <span>审批</span>
+                      {approvalTabCount > 0 && (
+                        <span
+                          className={cn(
+                            "inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
+                            activeTab === "approvals"
+                              ? "bg-[#D97757] text-white"
+                              : "bg-[#E5E0D6] text-[#292524]",
+                          )}
+                        >
+                          {approvalTabCount > 99 ? "99+" : approvalTabCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Right: Urgent risk badge or calm status */}
+                <div className="flex items-center gap-1.5 text-[11px] tabular-nums">
+                  {summary?.urgentCount ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-[#C0685C]/10 px-2 py-0.5 text-[11px] font-medium text-[#C0685C]">
+                      <TriangleAlert className="size-3" />
+                      {summary.urgentCount} 风险
+                    </span>
+                  ) : (
+                    <span className="text-[#78716C] text-[11px]">
+                      {activeTab === "todos"
+                        ? `${todoTabCount} 项需处理`
+                        : `${approvalTabCount} 份待审批`}
+                    </span>
+                  )}
+                </div>
               </div>
-              </TooltipProvider>
             </div>
 
             {/* Content Body */}
@@ -662,21 +893,21 @@ export function UnifiedCommandHub({
 
               {/* APPROVALS TAB */}
               {activeTab === "approvals" && isAdmin && (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {/* Header Flat Toolbar */}
-                  <div className="flex items-center justify-between pb-1 px-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-semibold text-[#1C1917]">
-                        需要处理的审批
+                  <div className="flex items-center justify-between pb-0.5 px-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12.5px] font-medium text-[#1C1917]">
+                        待审请假与豁免
                       </span>
-                      <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
-                        {approvalTabCount} 条
+                      <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-1.5 py-0.2 text-[10.5px] font-medium text-[#78716C] tabular-nums">
+                        {approvalTabCount}
                       </span>
                     </div>
 
                     {pendingApprovals.length > 0 && (
                       <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 cursor-pointer rounded-lg px-2 py-1 hover:bg-[#F5F3EE] transition-colors text-[12px] text-[#292524] select-none">
+                        <label className="flex items-center gap-1.5 cursor-pointer rounded-md px-1.5 py-1 hover:bg-[#F5F3EE] transition-colors text-[11.5px] text-[#292524] select-none">
                           <Checkbox
                             checked={allSelected}
                             aria-label="全选"
@@ -688,11 +919,11 @@ export function UnifiedCommandHub({
                                   : new Set(),
                               );
                             }}
-                            className="size-3.5 border-[#E5E0D6] rounded"
+                            className="size-3.5 border-[#ECE7DE] rounded"
                           />
                           <span>全选</span>
                           {selectedApprovalIds.size > 0 && (
-                            <span className="text-[11px] font-medium text-[#1C1917] tabular-nums">
+                            <span className="text-[11px] font-semibold text-[#1C1917] tabular-nums">
                               ({selectedApprovalIds.size})
                             </span>
                           )}
@@ -705,10 +936,10 @@ export function UnifiedCommandHub({
                           }
                           onClick={() => void handleBatchApproveApprovals()}
                           className={cn(
-                            "inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-[12px] font-medium transition-all",
+                            "inline-flex h-6.5 items-center gap-1 rounded-md px-2 text-[11.5px] font-medium transition-all active:scale-[0.99] select-none",
                             selectedApprovalIds.size === 0 || batchProcessing
                               ? "cursor-not-allowed bg-[#F5F3EE] text-[#78716C]"
-                              : "bg-[#D97757] text-white hover:bg-[#C96442] shadow-xs active:scale-[0.99] active:duration-120",
+                              : "bg-[#D97757] text-white hover:bg-[#C46A4D] shadow-2xs",
                           )}
                         >
                           {batchProcessing ? (
@@ -745,10 +976,10 @@ export function UnifiedCommandHub({
                   {approvalsLoading && pendingApprovals.length === 0 ? (
                     <div className="space-y-2">
                       {summaryApprovalItems.length > 0 && (
-                        <div className="rounded-xl border border-[#E5E0D6]/70 bg-[#FBF9F5]/50 p-3">
+                        <div className="rounded-xl border border-[#ECE7DE] bg-white/60 p-3">
                           <div className="mb-2 flex items-center gap-2 text-[11px] text-[#78716C]">
                             <Loader2 className="size-3.5 animate-spin text-[#D97757]" />
-                            <span>先展示缓存，正在同步审批详情...</span>
+                            <span>正在同步审批详情...</span>
                           </div>
                           <div className="space-y-2">
                             {summaryApprovalItems.map((item) => {
@@ -756,11 +987,11 @@ export function UnifiedCommandHub({
                               if (!isReviewExemptionAction(reviewAction)) return null;
                               const isProcessing = actionProcessing?.id === reviewAction.requestId;
                               return (
-                                <div key={item.dedupeKey} className="rounded-lg border border-[#E5E0D6]/60 bg-white/70 p-2.5">
+                                <div key={item.dedupeKey} className="rounded-lg border border-[#ECE7DE]/70 bg-white p-2.5 shadow-2xs">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
-                                      <p className="text-[12px] font-semibold text-[#1C1917]">{item.title}</p>
-                                      <p className="mt-0.5 text-[11px] leading-relaxed text-[#78716C]">{item.description}</p>
+                                      <p className="text-[12.5px] font-medium text-[#1C1917]">{item.title}</p>
+                                      <p className="mt-0.5 text-[11.5px] leading-relaxed text-[#78716C]">{item.description}</p>
                                     </div>
                                     <span className="shrink-0 rounded-md bg-[#D99E55]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#8A6A2F]">P1</span>
                                   </div>
@@ -769,7 +1000,7 @@ export function UnifiedCommandHub({
                                       type="button"
                                       disabled={isProcessing || batchProcessing}
                                       onClick={() => void handleReviewActionItem(item, "approved")}
-                                      className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#1C1917] hover:bg-[#6FAA7D]/20 disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="inline-flex h-6 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2 text-[11px] font-medium text-[#2E5E3B] hover:bg-[#6FAA7D]/25 disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.99]"
                                     >
                                       {isProcessing && actionProcessing?.action === "approved" ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
                                       通过
@@ -778,7 +1009,7 @@ export function UnifiedCommandHub({
                                       type="button"
                                       disabled={isProcessing || batchProcessing}
                                       onClick={() => void handleReviewActionItem(item, "rejected")}
-                                      className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] hover:bg-[#C0685C]/10 hover:text-[#C0685C] disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="inline-flex h-6 items-center gap-1 rounded-md bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#78716C] hover:bg-[#C0685C]/10 hover:text-[#C0685C] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.99]"
                                     >
                                       {isProcessing && actionProcessing?.action === "rejected" ? <Loader2 className="size-3 animate-spin" /> : null}
                                       拒绝
@@ -799,102 +1030,126 @@ export function UnifiedCommandHub({
                     </div>
                   ) : pendingApprovals.length === 0 && (approvalError || actionStateUnavailable) ? (
                     <div className="flex flex-col items-center justify-center rounded-xl border border-[#C0685C]/15 bg-[#C0685C]/[0.03] py-10 text-center">
-                      <div className="mb-2.5 flex size-10 items-center justify-center rounded-xl bg-[#C0685C]/10 text-[#C0685C]">
-                        <TriangleAlert className="size-5 stroke-[1.8]" />
+                      <div className="mb-2.5 flex size-9 items-center justify-center rounded-xl bg-[#C0685C]/10 text-[#C0685C]">
+                        <TriangleAlert className="size-4.5 stroke-[1.8]" />
                       </div>
                       <h3 className="text-[13px] font-medium text-[#1C1917]">
                         暂时无法确认审批状态
                       </h3>
-                      <p className="mt-1 max-w-[240px] text-[12px] leading-relaxed text-[#78716C]">
+                      <p className="mt-1 max-w-[240px] text-[11.5px] leading-relaxed text-[#78716C]">
                         请点击上方重试，确认当前范围内是否有待处理申请。
                       </p>
                     </div>
                   ) : pendingApprovals.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-xl py-12 text-center">
                       <div className="flex size-10 items-center justify-center rounded-xl bg-[#6FAA7D]/10 text-[#6FAA7D] mb-2.5">
-                        <CheckCircle2 className="size-5 stroke-[2]" />
+                        <CheckCircle2 className="size-5 stroke-[1.9]" />
                       </div>
-                      <h3 className="text-[13px] font-medium text-[#1C1917]">
-                        还没有待审的豁免
+                      <h3 className="text-[13.5px] font-medium text-[#1C1917]">
+                        暂无待审批申请
                       </h3>
                       <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-[#78716C]">
-                        当前范围内没有待审批。
+                        当前团队所有请假与豁免均已处理完毕。
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {pendingApprovals.map((item) => {
-                        const requestId = resolveApprovalRequestId(item);
-                        const rowKey =
-                          requestId ??
-                          item.request_id ??
-                          item.id ??
-                          `${item.applicant_user_id}-${item.created_at}`;
-                        const isSelected = requestId
-                          ? selectedApprovalIds.has(requestId)
-                          : false;
+                      {groupedApprovals.map((group) => {
+                        const isSelected =
+                          group.requestIds.length > 0 &&
+                          group.requestIds.every((id) =>
+                            selectedApprovalIds.has(id),
+                          );
                         const isApproving =
-                          requestId != null &&
-                          actionProcessing?.id === requestId &&
-                          actionProcessing.action === "approved";
+                          group.requestIds.some(
+                            (id) =>
+                              actionProcessing?.id === id &&
+                              actionProcessing.action === "approved",
+                          );
                         const isRejecting =
-                          requestId != null &&
-                          actionProcessing?.id === requestId &&
-                          actionProcessing.action === "rejected";
+                          group.requestIds.some(
+                            (id) =>
+                              actionProcessing?.id === id &&
+                              actionProcessing.action === "rejected",
+                          );
+                        const hasInvalidId =
+                          group.requestIds.length < group.items.length;
+
                         return (
                           <div
-                            key={rowKey}
+                            key={group.groupKey}
                             className={cn(
-                              "group relative rounded-xl border p-3 transition-colors duration-100 space-y-1.5",
+                              "group relative rounded-xl border p-3 transition-all duration-150 space-y-2",
                               isSelected
-                                ? "border-[#D97757]/40 bg-[#D97757]/[0.03] shadow-xs"
-                                : "border-[#E5E0D6]/70 bg-[#FBF9F5]/50 hover:bg-white hover:border-[#E5E0D6] hover:shadow-xs",
+                                ? "border-[#D97757]/40 bg-[#FAF8F4] shadow-2xs"
+                                : "border-[#ECE7DE]/70 bg-white/70 hover:bg-white hover:border-[#ECE7DE] hover:shadow-2xs",
                             )}
                           >
-                            {/* Row 1: Checkbox + User Info + Type Tag + Time */}
+                            {/* Row 1: Checkbox + User Info + Nature Badge + Time */}
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex items-center gap-2 min-w-0">
                                 <Checkbox
                                   checked={isSelected}
-                                  aria-label={`选择 ${item.applicant_name || "未命名成员"}`}
-                                  disabled={!requestId}
+                                  aria-label={`选择 ${group.applicant_name}`}
+                                  disabled={group.requestIds.length === 0}
                                   onCheckedChange={(checked) => {
-                                    if (!requestId) return;
-                                    toggleApprovalSelection(
-                                      requestId,
+                                    toggleGroupSelection(
+                                      group,
                                       Boolean(checked),
                                     );
                                   }}
-                                  className="size-3.5 border-[#E5E0D6] rounded shrink-0"
+                                  className="size-3.5 border-[#ECE7DE] rounded shrink-0"
                                 />
-                                <span className="truncate text-[13px] font-semibold text-[#1C1917]">
-                                  {item.applicant_name || "未命名成员"}
+                                <span className="truncate text-[13px] font-medium text-[#1C1917]">
+                                  {group.applicant_name}
                                 </span>
-                                <span className="inline-flex items-center rounded-md bg-[#E5E0D6]/70 px-1.5 py-0.5 text-[11px] font-medium text-[#292524] shrink-0">
-                                  {EXEMPTION_LABELS[item.exemption_type] || item.exemption_type}
+                                <span
+                                  className={cn(
+                                    "inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium shrink-0",
+                                    group.isPermanent
+                                      ? "bg-[#E5E0D6] text-[#1C1917]"
+                                      : group.nature === "leave"
+                                        ? "bg-[#F5F3EE] text-[#292524]"
+                                        : "bg-[#BCD1CA]/30 text-[#2E5E3B]",
+                                  )}
+                                >
+                                  {group.categoryBadge}
                                 </span>
                               </div>
 
                               <span className="shrink-0 text-[11px] text-[#78716C] tabular-nums">
-                                {relativeTime(item.created_at)}
+                                {relativeTime(group.created_at)}
                               </span>
                             </div>
 
                             {/* Row 2: Department & Date */}
-                            <div className="pl-5.5 text-[11px] text-[#78716C] tabular-nums">
-                              {item.team_name || "未分组"} · {item.start_date}
-                              {item.end_date ? ` 至 ${item.end_date}` : ""}
+                            <div className="pl-5.5 text-[11.5px] text-[#78716C] tabular-nums">
+                              {group.team_name || "未分组"} · {group.dateRangeText}
                             </div>
 
-                            {/* Row 3: Reason Text */}
+                            {/* Row 3: Reason Text in subtle paper container */}
                             <div className="pl-5.5 text-[12px] text-[#292524] leading-relaxed">
-                              <span className="text-[#78716C]">原因：</span>
-                              {item.reason?.trim() || "未填写原因"}
+                              <div className="rounded-lg bg-[#FAF8F4] border border-[#ECE7DE]/50 px-2.5 py-1.5 text-[11.5px] text-[#292524] space-y-1">
+                                <span className="text-[#78716C]">事由：</span>
+                                {group.reasons.length > 0 ? (
+                                  group.reasons.map((reason, idx) => (
+                                    <p key={idx} className="leading-relaxed">
+                                      {group.reasons.length > 1
+                                        ? `${idx + 1}. ${reason}`
+                                        : reason}
+                                    </p>
+                                  ))
+                                ) : (
+                                  <span className="text-[#78716C]">
+                                    未填写事由
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
-                            {!requestId && (
-                              <div className="pl-5.5 text-[11px] font-medium text-[#DC2626]">
-                                申请编号异常，请刷新后再试
+                            {hasInvalidId && (
+                              <div className="pl-5.5 text-[11px] font-medium text-[#C0685C]">
+                                部分申请编号异常，请刷新后再试
                               </div>
                             )}
 
@@ -903,14 +1158,16 @@ export function UnifiedCommandHub({
                               <button
                                 type="button"
                                 disabled={
-                                  !requestId ||
+                                  group.requestIds.length === 0 ||
                                   batchProcessing ||
-                                  actionProcessing?.id === requestId
+                                  group.requestIds.some(
+                                    (id) => actionProcessing?.id === id,
+                                  )
                                 }
                                 onClick={() =>
-                                  void handleReviewApproval(item, "approved")
+                                  void handleReviewGroup(group, "approved")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#6FAA7D]/10 px-2.5 text-[11px] font-medium text-[#1C1917] transition-all hover:bg-[#6FAA7D]/20 active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#6FAA7D]/15 px-2.5 text-[11.5px] font-medium text-[#2E5E3B] transition-all hover:bg-[#6FAA7D]/25 active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40 select-none"
                               >
                                 {isApproving ? (
                                   <Loader2 className="size-3 animate-spin" />
@@ -923,14 +1180,16 @@ export function UnifiedCommandHub({
                               <button
                                 type="button"
                                 disabled={
-                                  !requestId ||
+                                  group.requestIds.length === 0 ||
                                   batchProcessing ||
-                                  actionProcessing?.id === requestId
+                                  group.requestIds.some(
+                                    (id) => actionProcessing?.id === id,
+                                  )
                                 }
                                 onClick={() =>
-                                  void handleReviewApproval(item, "rejected")
+                                  void handleReviewGroup(group, "rejected")
                                 }
-                                className="inline-flex h-6.5 items-center gap-1 rounded-lg bg-[#F5F3EE] px-2 text-[11px] font-medium text-[#292524] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40"
+                                className="inline-flex h-6.5 items-center gap-1 rounded-md bg-[#F5F3EE] px-2 text-[11.5px] font-medium text-[#78716C] transition-all hover:bg-[#C0685C]/10 hover:text-[#C0685C] active:scale-[0.99] active:duration-120 disabled:cursor-not-allowed disabled:opacity-40 select-none"
                               >
                                 {isRejecting ? (
                                   <Loader2 className="size-3 animate-spin" />
@@ -948,21 +1207,21 @@ export function UnifiedCommandHub({
 
               {/* TODOS TAB */}
               {activeTab === "todos" && (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {/* Header Flat Toolbar */}
-                  <div className="flex items-center justify-between pb-1 px-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-semibold text-[#1C1917]">
-                        待办与风险
+                  <div className="flex items-center justify-between pb-0.5 px-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12.5px] font-medium text-[#1C1917]">
+                        待办与跟进
                       </span>
-                      <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-2 py-0.5 text-[11px] font-medium text-[#292524] tabular-nums">
-                        {todoTabCount} 条
+                      <span className="inline-flex items-center rounded-full bg-[#F5F3EE] px-1.5 py-0.2 text-[10.5px] font-medium text-[#78716C] tabular-nums">
+                        {todoTabCount}
                       </span>
                     </div>
 
-                    {summary && (
-                      <span className="text-[10px] text-[#78716C]">已按优先级排序</span>
-                    )}
+                    <span className="text-[10.5px] text-[#78716C]">
+                      处理完成后自动消失
+                    </span>
                   </div>
 
                   {actionsLoading && todoItems.length === 0 && (
@@ -985,10 +1244,10 @@ export function UnifiedCommandHub({
                         {actionStateUnavailable ? (
                           <TriangleAlert className="size-5 stroke-[1.8]" />
                         ) : (
-                          <CheckCircle2 className="size-5 stroke-[2]" />
+                          <CheckCircle2 className="size-5 stroke-[1.9]" />
                         )}
                       </div>
-                      <h3 className="text-[13px] font-medium text-[#1C1917]">
+                      <h3 className="text-[13.5px] font-medium text-[#1C1917]">
                         {actionStateUnavailable ? "暂时无法确认待办状态" : "今日待办已全部完成"}
                       </h3>
                       <p className="mt-1 max-w-[220px] text-[12px] leading-relaxed text-[#78716C]">
@@ -1012,7 +1271,7 @@ export function UnifiedCommandHub({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{
                                 opacity: 0,
-                                x: -30,
+                                x: -20,
                                 height: 0,
                                 marginBottom: 0,
                                 padding: 0,
@@ -1023,12 +1282,12 @@ export function UnifiedCommandHub({
                                 damping: 30,
                               }}
                               className={cn(
-                                "group flex items-start gap-2.5 rounded-xl border p-3 transition-all",
+                                "group flex items-start gap-2.5 rounded-xl border p-3 transition-all duration-150",
                                 isCritical
-                                  ? "border-l-[3px] border-l-[#DC2626] border-[#E5E0D6]/80 bg-rose-50/[0.15] hover:bg-white hover:border-[#E5E0D6] hover:shadow-xs"
+                                  ? "border-[#C0685C]/30 bg-white/85 hover:border-[#C0685C]/60 hover:shadow-2xs"
                                   : isWarning
-                                    ? "border-l-[3px] border-l-[#D99E55] border-[#E5E0D6]/80 bg-amber-50/[0.1] hover:bg-white hover:border-[#E5E0D6] hover:shadow-xs"
-                                    : "border-[#E5E0D6]/70 bg-[#FBF9F5]/50 hover:bg-white hover:border-[#E5E0D6] hover:shadow-xs",
+                                    ? "border-[#D99E55]/30 bg-white/80 hover:border-[#D99E55]/60 hover:shadow-2xs"
+                                    : "border-[#ECE7DE]/70 bg-white/70 hover:bg-white hover:border-[#ECE7DE] hover:shadow-2xs",
                               )}
                             >
                               {canMarkDone ? (
@@ -1040,13 +1299,13 @@ export function UnifiedCommandHub({
                                   className="mt-0.5 shrink-0 text-[#78716C] transition-colors outline-none hover:text-[#D97757] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {isProcessing ? (
-                                    <Loader2 className="size-4 animate-spin" />
+                                    <Loader2 className="size-4 animate-spin text-[#D97757]" />
                                   ) : (
-                                    <Circle className="size-4 stroke-[1.8]" />
+                                    <Circle className="size-4 stroke-[1.8] hover:stroke-[#D97757]" />
                                   )}
                                 </button>
                               ) : (
-                                <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center text-[#D99E55]">
+                                <div className="mt-0.5 flex size-4 shrink-0 items-center justify-center text-[#B98A54]">
                                   <TriangleAlert className="size-3.5" />
                                 </div>
                               )}
@@ -1059,7 +1318,7 @@ export function UnifiedCommandHub({
                                     )}
                                   >
                                     {isCritical
-                                      ? "P0 风险"
+                                      ? "P0 紧急"
                                       : isWarning
                                         ? "P1 待处理"
                                         : "P2 常规"}
@@ -1068,11 +1327,11 @@ export function UnifiedCommandHub({
                                     {getSourceLabel(todo.source)} · {relativeTime(todo.createdAt)}
                                   </span>
                                 </div>
-                                <h4 className="text-[12px] font-semibold text-[#1C1917] leading-snug mt-1">
+                                <h4 className="text-[12.5px] font-medium text-[#1C1917] leading-snug mt-1">
                                   {todo.title}
                                 </h4>
                                 {todo.description && (
-                                  <p className="text-[11px] text-[#78716C] leading-relaxed mt-0.5">
+                                  <p className="text-[11.5px] text-[#78716C] leading-relaxed mt-0.5">
                                     {todo.description}
                                   </p>
                                 )}
@@ -1085,13 +1344,14 @@ export function UnifiedCommandHub({
                                         if (todo.source !== "exemption") void markRead(todo.id);
                                         onOpenChange(false);
                                       }}
-                                      className="inline-flex h-6 items-center gap-1 rounded-md bg-[#D97757]/10 px-2 text-[11px] font-medium text-[#D97757] hover:bg-[#D97757]/20 transition-colors"
+                                      className="inline-flex h-6 items-center gap-1 rounded-md bg-[#D97757]/10 px-2 text-[11px] font-medium text-[#D97757] hover:bg-[#D97757]/15 transition-colors select-none"
                                     >
                                       <span>{todo.actionLabel}</span>
-                                      <ArrowRight className="size-2.5" />
+                                      <ArrowRight className="size-2.5 stroke-[2]" />
                                     </Link>
                                   </div>
-                                )}                              </div>
+                                )}
+                              </div>
                             </motion.div>
                           );
                         })}
@@ -1101,20 +1361,20 @@ export function UnifiedCommandHub({
 
                   {/* Completed List (in this session) */}
                   {completedSessionIds.length > 0 && (
-                    <div className="pt-2 border-t border-[#ECE7DE]">
-                      <div className="text-[11px] font-semibold text-[#78716C] mb-1 px-0.5">
-                        已完成 ({completedSessionIds.length})
+                    <div className="pt-2 border-t border-[#ECE7DE]/80">
+                      <div className="text-[11px] font-medium text-[#78716C] mb-1.5 px-0.5">
+                        本次已完成 ({completedSessionIds.length})
                       </div>
-                      <div className="space-y-1.5 opacity-70">
+                      <div className="space-y-1.5 opacity-75">
                         {completedSessionIds.map((id) => (
                           <div
                             key={id}
-                            className="flex items-center gap-2 rounded-lg p-2 bg-[#FBF9F5] border border-[#E5E0D6]/50"
+                            className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-[#F5F3EE]/60 border border-[#ECE7DE]/50"
                           >
                             <span className="text-[#6FAA7D] shrink-0">
-                              <CheckCircle2 className="size-3.5 fill-[#6FAA7D] text-white" />
+                              <CheckCircle2 className="size-3.5 stroke-[2]" />
                             </span>
-                            <span className="text-[11px] font-medium text-[#78716C] line-through truncate flex-1">
+                            <span className="text-[11.5px] font-normal text-[#78716C] line-through truncate flex-1">
                               {completedSessionTitles[id] || "完成的待办事项"}
                             </span>
                           </div>
@@ -1127,13 +1387,13 @@ export function UnifiedCommandHub({
             </div>
 
             {/* Footer summary & shortcut bar */}
-            <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE] bg-[#FBF9F5]/80 px-4 py-2 text-[11px] text-[#78716C]">
-              <span className="font-normal">行动项处理结果会同步到业务页</span>
+            <div className="shrink-0 flex items-center justify-between border-t border-[#ECE7DE]/80 bg-[#FAF8F4] px-4 py-2 text-[11px] text-[#78716C]">
+              <span className="font-normal">处理结果实时同步至业务页</span>
               <div className="hidden sm:flex items-center gap-2 tabular-nums text-[10px] text-[#78716C]">
-                <span className="inline-flex items-center gap-1 bg-[#E5E0D6]/60 px-1.5 py-0.5 rounded-md">
-                  <kbd className="font-sans">1-2</kbd> 切换页签
+                <span className="inline-flex items-center gap-1 bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
+                  <kbd className="font-sans">1-2</kbd> 切换
                 </span>
-                <span className="inline-flex items-center gap-1 bg-[#E5E0D6]/60 px-1.5 py-0.5 rounded-md">
+                <span className="inline-flex items-center gap-1 bg-[#F5F3EE] border border-[#ECE7DE] px-1.5 py-0.5 rounded-md">
                   <kbd className="font-sans">Esc</kbd> 收起
                 </span>
               </div>

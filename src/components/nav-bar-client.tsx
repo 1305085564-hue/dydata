@@ -528,33 +528,31 @@ export function NavBarClient({
             {/* RIGHT: Combined User & Workspace Controls / Notifications Hub (Far Right, hidden on mobile) */}
             <div className="hidden md:flex items-center gap-2.5 shrink-0 ml-auto">
               {/* Bell alert Popover button container (Click to Open) */}
-              <div className="relative group py-1 -my-1">
+              <div className="relative group">
                 <button
                   type="button"
                   onClick={() => void handleCommandHubOpen()}
                   className={cn(
-                    "relative flex h-7 items-center justify-center rounded-md px-2.5 transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer active:scale-[0.99] active:duration-120",
-                    bellBadgeCount > 0
-                      ? "bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] hover:bg-[#D97757]/15 shadow-sm shadow-[#D97757]/5"
-                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE] border border-transparent",
-                    commandHubOpen &&
-                      "bg-[#F5F3EE] text-[#1C1917] font-medium border-[#ECE7DE] shadow-sm",
+                    "relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-150 group outline-none focus-visible:ring-2 focus-visible:ring-[#43718E]/20 cursor-pointer active:scale-[0.99] active:duration-120 select-none",
+                    commandHubOpen
+                      ? "bg-[#F5F3EE] text-[#1C1917] shadow-2xs"
+                      : "text-[#78716C] hover:text-[#1C1917] hover:bg-[#F5F3EE]",
                   )}
                   title="行动中枢：待办、审批与风险"
                   aria-label="行动中枢：待办、审批与风险"
                 >
                   <Bell
                     className={cn(
-                      "size-4 stroke-[1.9] transition-transform duration-200 ease-out group-hover:rotate-6 group-hover:scale-105",
-                      bellBadgeCount > 0
-                        ? "text-[#D97757] fill-[#D97757]/20"
-                        : "text-[#78716C] group-hover:text-[#292524]",
+                      "size-4 stroke-[1.8] transition-transform duration-200 ease-out group-hover:rotate-6 group-hover:scale-105",
+                      commandHubOpen
+                        ? "text-[#1C1917]"
+                        : "text-[#78716C] group-hover:text-[#1C1917]",
                     )}
                   />
 
-                  {/* Functional Count Label */}
+                  {/* Refined Badge: 精致克制右上角徽标 */}
                   {bellBadgeCount > 0 && (
-                    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1.5 text-[12px] font-medium text-white tabular-nums shadow-sm">
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D97757] px-1 text-[10px] font-semibold text-white tabular-nums ring-2 ring-[#FBF9F5] shadow-xs">
                       {bellBadgeCount > 99 ? "99+" : bellBadgeCount}
                     </span>
                   )}
